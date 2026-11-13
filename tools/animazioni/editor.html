@@ -118,9 +118,12 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 #messaggio { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--testo); color: var(--fondo); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px) }
 #messaggio.si { opacity: 1 }
 /* gli strumenti per i pezzi e i personaggi nuovi: in fondo alla colonna dei canali, chiusi */
-#strumenti { border-top: 1px solid var(--riga); margin-top: 6px }
-#strumenti > summary { padding: 10px; cursor: pointer; font: 800 15px/1.2 var(--f-titolo) }
-#strumenti > summary span { display: block; font: 400 12px var(--f-testo); color: var(--tenue) }
+#strumenti, #mantello-box { border-top: 1px solid var(--riga); margin-top: 6px }
+#strumenti > summary, #mantello-box > summary { padding: 10px; cursor: pointer; font: 800 15px/1.2 var(--f-titolo) }
+#strumenti > summary span, #mantello-box > summary span { display: block; font: 400 12px var(--f-testo); color: var(--tenue) }
+.mt-cursore { display: grid; grid-template-columns: 7.5em 1fr 4.5em; gap: 6px; align-items: center; color: var(--tenue) }
+.mt-cursore input[type=range] { width: 100% }
+.mt-cursore output { text-align: right; font-variant-numeric: tabular-nums }
 .strumenti { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0 10px 10px }
 .strumento { border: 1px solid var(--riga); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px }
 .strumento h3 { font: 600 15px/1.2 var(--f-titolo); margin: 0 }
@@ -276,6 +279,34 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 					<button id="rt-togli" title="Togli i ritocchi di questo pezzo">Come prima</button>
 					<button id="rt-salva" title="Salva ritocchi.json sul PC">Salva</button>
 					<button id="rt-manda" class="primario" hidden>Manda a Claude</button>
+				</div>
+			</div>
+		</div>
+	</details>
+	<details id="mantello-box">
+		<summary>Mantello <span>peso, aria, piega e misura del mantello, dal vivo</span></summary>
+		<div class="strumenti">
+			<div class="strumento">
+				<p>Il mantello pende da una catena simulata, come nel gioco (stessa fisica, stesso disegno piegato). Scegli il mantello nelle pelli sopra il palco, una clip (corsa, aria, mira...) e un movimento: il diavoletto resta al centro ma per il mantello corre e salta davvero. Muovi i cursori e guarda. "Manda a Claude": Claude lo mette nel gioco (client/battle/cape_tuning.lua, vale per tutti i mantelli).</p>
+				<div class="righe">
+					<label>movimento <select id="mt-moto">
+						<option value="fermo">fermo</option>
+						<option value="corsa" selected>corre e si ferma</option>
+						<option value="salti">salta da fermo</option>
+						<option value="salti_corsa">salta correndo</option>
+						<option value="avanti_indietro">avanti e indietro</option>
+					</select></label>
+					<button id="mt-rinculo" title="Il colpo dell'arma: il mantello va indietro">Rinculo</button>
+					<button id="mt-colpo" title="Colpito da davanti">Colpo</button>
+					<label title="I punti della catena e i cerchi del corpo in cui il mantello non entra"><input type="checkbox" id="mt-vedi"> catena</label>
+				</div>
+				<div id="mt-cursori"></div>
+				<div class="righe">
+					<span id="mt-stato" style="color: var(--tenue)"></span>
+					<span class="spazio"></span>
+					<button id="mt-gioco" title="I numeri di adesso del gioco">Come nel gioco</button>
+					<button id="mt-salva" title="Salva cape_tuning.lua (va in client/battle/)">Salva</button>
+					<button id="mt-manda" class="primario" hidden>Manda a Claude</button>
 				</div>
 			</div>
 		</div>
@@ -1221,8 +1252,11 @@ function disegna(dt) {
 	};
 	strati.braccio_a = pende("braccio", "braccio_a", J("braccio")[0] + po.braccio_a_x, J("braccio")[1] + po.braccio_a_y, braccia[0]);
 	strati.manina_a = manina("a");
+	// il mantello, subito sopra l'ala (come i livelli di battle/scoria.lua)
+	strati.mantello = () => mantello(mBusto, forma, s);
 	// dal fondo, nell'ordine dei livelli della clip
-	for (const l of livelliOra()) strati[l]();
+	for (const l of livelliOra()) { strati[l](); if (l === "ala") strati.mantello(); }
+	mantelloSopra(s);
 
 	// l'immagine di un pezzo nuovo (strumenti), mezza trasparente, alta quanto il diavoletto
 	const nu = nuovo.img;
@@ -2242,7 +2276,7 @@ document.addEventListener("keydown", (e) => {
 // Aprire e salvare
 let claudeDl = null, claudeDb = null, claudeAssets = null;
 // "Manda a Claude" c'è (claude.ai o Cloudflare): anche negli strumenti
-function mostraManda() { for (const id of ["claude", "nu-manda", "rt-manda"]) $(id).hidden = false; }
+function mostraManda() { for (const id of ["claude", "nu-manda", "rt-manda", "mt-manda"]) $(id).hidden = false; }
 // Salva il testo come file nomeFile (da mettere in cartella); f.file tiene il
 // file scelto sul PC. Restituisce true se è salvato.
 async function scrivi(testo, nomeFile, cartella, f) {
@@ -2330,7 +2364,7 @@ $("file").onchange = async () => {
 };
 // "Manda a Claude": su claude.ai nel database della pagina (documenti
 // animazioni/ultima, animazioni_favilla/ultima, corpo/ultima, perni/ultima, impugnature/ultima,
-// ritocchi/ultima; le richieste
+// ritocchi/ultima, mantello/ultima; le richieste
 // degli strumenti in richieste/<nome>); su Cloudflare
 // (tools/animazioni/cloudflare) nel ramo editor-ultima di GitHub, con la
 // chiave che si scrive la prima volta
@@ -2378,6 +2412,334 @@ $("ripristina").onclick = () => {
 	costruisciClip(); dopo();
 	messaggio("Tornate le animazioni del gioco per " + personaggioAttivo() + " (Annulla per riprendere le tue).");
 };
+
+// ---------------------------------------------------------------------------
+// Il mantello, come nel gioco: la catena simulata (battle/cloth.lua) nel mondo
+// (pixel del mondo, y in su), lo stesso shader che piega il disegno
+// (battle/cape.fp) e i numeri di battle/cape_tuning.lua, da tarare qui
+const MT_GIOCO = leggiLua(DATI.mantello);
+const copiaMt = (t) => JSON.parse(JSON.stringify(t));
+let mt = copiaMt(MT_GIOCO);
+function mantelloInLua(t) {
+	const n = (v) => String(Math.round(v * 1000) / 1000);
+	const corpo = [];
+	for (let i = 0; i < t.body.length; i += 3) corpo.push(t.body.slice(i, i + 3).map(n).join(", "));
+	return DATI.mantello.replace(/return \{[\s\S]*$/, "return {\n" +
+		["gravity", "drag", "bend", "back", "forward", "hit", "fire", "size"].map((k) => `\t${k} = ${n(t[k])},\n`).join("") +
+		`\tat = { ${n(t.at[0])}, ${n(t.at[1])} },\n\tbody = { ${corpo.join(", ")} },\n}\n`);
+}
+const MT_DEL_GIOCO = mantelloInLua(MT_GIOCO);
+let mtSalvato = MT_DEL_GIOCO;
+const fileMantello = {};
+
+// battle/cloth.lua, riga per riga
+const CL = { STEP: 1 / 120, ITERATIONS: 4, TELEPORT: 1.5 };
+function clNuova(n, seg) {
+	const c = { n, seg, x: [], y: [], ox: [], oy: [], t: 0, ax: null, ay: null };
+	for (let i = 0; i < n; i++) { c.x[i] = c.ox[i] = 0; c.y[i] = c.oy[i] = -i * seg; }
+	return c;
+}
+function clReset(c, x, y, dir) {
+	const a = -Math.PI / 2 + 0.12 * (dir || 0);
+	for (let i = 0; i < c.n; i++) {
+		const d = i * c.seg;
+		c.x[i] = c.ox[i] = x + Math.cos(a) * d;
+		c.y[i] = c.oy[i] = y + Math.sin(a) * d;
+	}
+	c.ax = x; c.ay = y;
+}
+function clPush(c, vx, vy) {
+	for (let i = 1; i < c.n; i++) {
+		const w = i / (c.n - 1);
+		c.ox[i] -= vx * CL.STEP * w; c.oy[i] -= vy * CL.STEP * w;
+	}
+}
+const modulo = (a, b) => ((a % b) + b) % b;
+function clCerchi(c, l) {
+	if (!l) return;
+	for (let i = 1; i < c.n; i++) for (let j = 0; j < l.length; j += 3) {
+		let dx = c.x[i] - l[j], dy = c.y[i] - l[j + 1];
+		const r = l[j + 2], d2 = dx * dx + dy * dy;
+		if (d2 < r * r) {
+			let d = Math.sqrt(d2);
+			if (d < 1e-6) { dx = -1; dy = 0; d = 1; }
+			c.x[i] = l[j] + dx / d * r; c.y[i] = l[j + 1] + dy / d * r;
+		}
+	}
+}
+function clVincoli(c, bend, from, to) {
+	const x = c.x, y = c.y, seg = c.seg;
+	for (let i = 1; i < c.n; i++) {
+		let dx = x[i] - x[i - 1], dy = y[i] - y[i - 1];
+		const d = Math.sqrt(dx * dx + dy * dy);
+		if (d < 1e-6) { dx = 0; dy = -1; }
+		let a = Math.atan2(dy, dx);
+		if (i === 1 && from !== undefined) {
+			const da = modulo(a - from, 2 * Math.PI), span = modulo(to - from, 2 * Math.PI);
+			if (da > span) a = da - span < 2 * Math.PI - da ? to : from;
+		} else if (i > 1 && bend) {
+			const pa = Math.atan2(y[i - 1] - y[i - 2], x[i - 1] - x[i - 2]);
+			const da = modulo(a - pa + Math.PI, 2 * Math.PI) - Math.PI;
+			if (da > bend) a = pa + bend; else if (da < -bend) a = pa - bend;
+		}
+		x[i] = x[i - 1] + Math.cos(a) * seg; y[i] = y[i - 1] + Math.sin(a) * seg;
+	}
+}
+function clPasso(c, dt, ax, ay, o) {
+	const lx = c.ax === null ? ax : c.ax, ly = c.ay === null ? ay : c.ay;
+	const jx = ax - lx, jy = ay - ly;
+	if (c.ax === null || jx * jx + jy * jy > (CL.TELEPORT * c.seg * (c.n - 1)) ** 2) { clReset(c, ax, ay, o.dir); return; }
+	c.ax = ax; c.ay = ay;
+	c.t += dt;
+	let n = Math.max(1, Math.ceil(c.t / CL.STEP - 1e-6));
+	n = Math.min(n, 12);
+	c.t = Math.max(0, c.t - n * CL.STEP);
+	const h = CL.STEP, g = (o.gravity || 0) * h * h, keep = 1 - Math.min(1, (o.drag || 0) * h);
+	const x = c.x, y = c.y, ox = c.ox, oy = c.oy;
+	for (let s = 1; s <= n; s++) {
+		const f = s / n;
+		x[0] = ox[0] = lx + jx * f; y[0] = oy[0] = ly + jy * f;
+		for (let i = 1; i < c.n; i++) {
+			const vx = (x[i] - ox[i]) * keep, vy = (y[i] - oy[i]) * keep;
+			ox[i] = x[i]; oy[i] = y[i];
+			x[i] += vx; y[i] += vy - g;
+		}
+		for (let k = 0; k < CL.ITERATIONS; k++) { clVincoli(c, o.bend, o.from, o.to); clCerchi(c, o.circles); }
+		if (o.solid) for (let i = 1; i < c.n; i++) if (o.solid(x[i], y[i])) { x[i] = ox[i]; y[i] = oy[i]; }
+	}
+}
+
+// battle/cape.fp in WebGL (lo stesso conto per pixel), su un canvas a parte
+// che poi si disegna sul palco
+const MT_VS = "attribute vec2 a; varying vec2 v; void main() { v = a * 0.5; gl_Position = vec4(a, 0.0, 1.0); }";
+const MT_FS = `precision highp float;
+varying vec2 v;
+uniform sampler2D tex;
+uniform vec2 c[6];
+uniform vec4 frame;
+void main() {
+	vec2 p = v;
+	float best = 1e9, s = 0.0, d = 0.0, run = 0.0;
+	for (int i = 0; i < 5; i++) {
+		vec2 a0 = c[i];
+		vec2 sg = c[i + 1] - a0;
+		float len = max(length(sg), 1e-5);
+		vec2 dir = sg / len;
+		float t = dot(p - a0, dir);
+		float lo = i == 0 ? -1.0 : 0.0;
+		float hi = i == 4 ? 1.0 : len;
+		t = clamp(t, lo, hi);
+		vec2 q = a0 + dir * t;
+		float dist = length(p - q);
+		if (dist < best) { best = dist; s = run + t; d = dir.x * (p.y - q.y) - dir.y * (p.x - q.x); }
+		run += len;
+	}
+	vec2 uv = vec2(frame.x + d / frame.z, frame.y + s / frame.w);
+	float up = step(texture2D(tex, vec2(0.0005, 1.0 - 0.0005)).a, texture2D(tex, vec2(0.0005, 0.0005)).a);
+	vec4 col = texture2D(tex, vec2(uv.x, mix(1.0 - uv.y, uv.y, up)));
+	col *= step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
+	gl_FragColor = col;
+}`;
+const MTG = { gl: null, prog: null, tex: {}, u: {} };
+function mtGl() {
+	if (MTG.gl !== null) return MTG.gl;
+	const cv = document.createElement("canvas");
+	const gl = cv.getContext("webgl", { premultipliedAlpha: true, alpha: true });
+	MTG.gl = gl || false;
+	if (!gl) return false;
+	const sh = (t, src) => { const x = gl.createShader(t); gl.shaderSource(x, src); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
+	const p = gl.createProgram();
+	gl.attachShader(p, sh(gl.VERTEX_SHADER, MT_VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, MT_FS));
+	gl.linkProgram(p); gl.useProgram(p);
+	MTG.prog = p;
+	const b = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, b);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+	const la = gl.getAttribLocation(p, "a");
+	gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 0, 0);
+	MTG.u = { c: gl.getUniformLocation(p, "c"), frame: gl.getUniformLocation(p, "frame"), tex: gl.getUniformLocation(p, "tex") };
+	return gl;
+}
+function mtTex(gl, nomeImg) {
+	if (MTG.tex[nomeImg]) return MTG.tex[nomeImg];
+	const im = IMG[nomeImg];
+	if (!im || !im.complete) return null;
+	const t = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_2D, t);
+	gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im);
+	for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+	return (MTG.tex[nomeImg] = t);
+}
+
+// il movimento finto (pixel del mondo, dai piedi): il diavoletto resta al centro
+// del palco, ma il mantello lo vede correre e saltare come nel gioco
+const moto = { x: 0, y: 0, vx: 0, vy: 0, t: 0 };
+let mtCloth = null, mtUltimo = 0, mtVisto = null;
+function muovi(dt) {
+	const m = $("mt-moto").value, g = DATI.gravita;
+	moto.t += dt;
+	const fase = moto.t % 2;
+	let vx = 0, salta = false;
+	if (m === "corsa") vx = fase < 1.2 ? DATI.corsa : 0;
+	else if (m === "avanti_indietro") vx = fase < 1 ? DATI.corsa : -DATI.corsa;
+	else if (m === "salti") salta = true;
+	else if (m === "salti_corsa") { vx = DATI.corsa; salta = true; }
+	moto.vx = vx;
+	if (salta && moto.y <= 0 && moto.vy <= 0 && fase > 0.3 && fase < 0.4) moto.vy = Math.sqrt(2 * g * DATI.salto);
+	moto.x += moto.vx * dt;
+	moto.vy -= g * dt;
+	moto.y += moto.vy * dt;
+	if (moto.y < 0) { moto.y = 0; moto.vy = 0; }
+}
+// il mantello addosso, alla misura e nel posto tarati (come make_cape di scoria.lua)
+function mantelloOra() {
+	const pl = addosso.mantello && PL.pelli[addosso.mantello];
+	const c = pl && pl.cape;
+	if (!c) return null;
+	const z = mt.size;
+	const cp = { img: c.img, x: c.x * z, y: c.y * z, w: c.w * z, h: c.h * z, at: [c.at[0] + mt.at[0], c.at[1] + mt.at[1]] };
+	cp.left = cp.w / 2 - cp.x; cp.top = cp.h / 2 + cp.y;
+	let reach = 0;
+	for (const [ex, ey] of [[-cp.left, cp.top], [cp.w - cp.left, cp.top], [-cp.left, cp.top - cp.h], [cp.w - cp.left, cp.top - cp.h]]) reach = Math.max(reach, Math.hypot(ex, ey));
+	cp.side = 2 * (reach + 4);
+	return cp;
+}
+function mantello(mBusto, forma, s) {
+	const cp = mantelloOra();
+	mtVisto = null;
+	if (!cp || posaOra().mostra_busto <= 0.5) return;
+	const ora = performance.now(), dt = Math.min(0.05, mtUltimo ? (ora - mtUltimo) / 1000 : 0);
+	mtUltimo = ora;
+	muovi(dt);
+	// dal canvas alle unità del disegno (dai piedi, y in su) e al mondo
+	const inv = inversa(schermo), dis = (p) => punto(inv, p[0], p[1]);
+	const Jb = J("busto");
+	const ad = dis(punto(mBusto, cp.at[0] - Jb[0], cp.at[1] - Jb[1]));
+	const mondo = (d) => [d[0] * K + moto.x, d[1] * K + moto.y];
+	const pin = mondo(ad);
+	const cerchi = [];
+	for (let i = 0; i < mt.body.length; i += 3) {
+		const w = mondo(dis(punto(forma, mt.body[i], mt.body[i + 1])));
+		cerchi.push(w[0], w[1], mt.body[i + 2] * K);
+	}
+	const seg = (cp.h - cp.top) * 0.96 * K / 5;
+	if (!mtCloth || Math.abs(mtCloth.seg - seg) > 1e-6) mtCloth = clNuova(6, seg);
+	clPasso(mtCloth, dt, pin[0], pin[1], {
+		gravity: DATI.gravita * mt.gravity, drag: mt.drag, bend: mt.bend, circles: cerchi, dir: -1,
+		from: -Math.PI / 2 - mt.back, to: -Math.PI / 2 + mt.forward, solid: (x, y) => y < 0,
+	});
+	// i punti della catena nel nodo (da -0.5 a 0.5 sul lato, y in su)
+	const nodo = [];
+	for (let i = 0; i < 6; i++) nodo.push(((mtCloth.x[i] - moto.x) / K - ad[0]) / cp.side, ((mtCloth.y[i] - moto.y) / K - ad[1]) / cp.side);
+	mtVisto = { cerchi, ad };
+	const gl = mtGl();
+	if (!gl) return;
+	const tex = mtTex(gl, "mantelli/" + cp.img);
+	if (!tex) return;
+	const px = Math.max(64, Math.min(1024, Math.ceil(cp.side * s)));
+	if (gl.canvas.width !== px) { gl.canvas.width = gl.canvas.height = px; }
+	gl.viewport(0, 0, px, px);
+	gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+	gl.bindTexture(gl.TEXTURE_2D, tex);
+	gl.uniform1i(MTG.u.tex, 0);
+	gl.uniform2fv(MTG.u.c, new Float32Array(nodo));
+	gl.uniform4f(MTG.u.frame, cp.left / cp.w, cp.top / cp.h, cp.w / cp.side, cp.h / cp.side);
+	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+	const m = scala(sposta(schermo, ad[0], ad[1]), cp.side, -cp.side);
+	g.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
+	g.drawImage(gl.canvas, -0.5, -0.5, 1, 1);
+}
+// sopra tutto, se si vuole: la catena e i cerchi del corpo
+function mantelloSopra(s) {
+	if (!mtVisto || !$("mt-vedi").checked || !mtCloth) return;
+	const css = getComputedStyle(document.documentElement);
+	const aDis = (x, y) => [(x - moto.x) / K, (y - moto.y) / K];
+	g.setTransform(...schermo);
+	g.lineWidth = 2 / s;
+	g.strokeStyle = css.getPropertyValue("--colpi");
+	const l = mtVisto.cerchi;
+	for (let i = 0; i < l.length; i += 3) { const [x, y] = aDis(l[i], l[i + 1]); g.beginPath(); g.arc(x, y, l[i + 2] / K, 0, 2 * Math.PI); g.stroke(); }
+	g.strokeStyle = css.getPropertyValue("--brace");
+	g.beginPath();
+	for (let i = 0; i < 6; i++) { const [x, y] = aDis(mtCloth.x[i], mtCloth.y[i]); if (i) g.lineTo(x, y); else g.moveTo(x, y); }
+	g.stroke();
+	g.fillStyle = css.getPropertyValue("--brace");
+	for (let i = 0; i < 6; i++) { const [x, y] = aDis(mtCloth.x[i], mtCloth.y[i]); g.beginPath(); g.arc(x, y, 3 / s, 0, 2 * Math.PI); g.fill(); }
+}
+
+// i cursori: nome, chiave, minimo, massimo, passo, e come si mostra (gradi, %)
+const GRADI = 180 / Math.PI;
+const MT_CURSORI = [
+	["peso", "gravity", 0, 2.5, 0.05, (v) => `${Math.round(v * 100)}%`, "Quanta gravità del gioco sente il mantello"],
+	["aria", "drag", 0, 15, 0.1, (v) => v.toFixed(1), "Quanto l'aria lo frena: più alta, più lento e morbido"],
+	["piega", "bend", 0.05, 1.4, 0.01, (v) => `${Math.round(v * GRADI)}°`, "Quanto si piega al massimo ogni giunto: bassa è un mantello rigido, alta è stoffa leggera"],
+	["indietro", "back", 0, 2.9, 0.01, (v) => `${Math.round(v * GRADI)}°`, "Quanto può alzarsi verso dietro dalla spalla (90° è orizzontale)"],
+	["avanti", "forward", 0, 1.6, 0.01, (v) => `${Math.round(v * GRADI)}°`, "Quanto può andare avanti dalla spalla"],
+	["colpo", "hit", 0, 20, 0.5, (v) => v.toFixed(1), "Quanto lo sbatte un colpo preso"],
+	["rinculo", "fire", 0, 20, 0.5, (v) => v.toFixed(1), "Quanto lo spinge indietro lo sparo"],
+	["grandezza", "size", 0.5, 2, 0.01, (v) => `${Math.round(v * 100)}%`, "Quanto è grande il disegno (tutti i mantelli)"],
+	["attacco avanti", "at.0", -40, 40, 0.5, (v) => v.toFixed(1), "Dove è attaccato: avanti e indietro (unità del disegno)"],
+	["attacco su", "at.1", -40, 40, 0.5, (v) => v.toFixed(1), "Dove è attaccato: su e giù (unità del disegno)"],
+];
+const mtLeggi = (k) => k.startsWith("at.") ? mt.at[+k[3]] : mt[k];
+function mtScrivi(k, v) { if (k.startsWith("at.")) mt.at[+k[3]] = v; else mt[k] = v; }
+function costruisciMantello() {
+	const box = $("mt-cursori");
+	box.textContent = "";
+	for (const [testo, k, a, b, passo, mostra, aiuto] of MT_CURSORI) {
+		const l = document.createElement("label");
+		l.className = "mt-cursore"; l.title = aiuto;
+		const r = Object.assign(document.createElement("input"), { type: "range", min: a, max: b, step: passo });
+		const o = document.createElement("output");
+		r.value = mtLeggi(k); o.textContent = mostra(mtLeggi(k));
+		r.oninput = () => { mtScrivi(k, +r.value); o.textContent = mostra(+r.value); mtCambiato(); };
+		l.append(testo, r, o);
+		box.appendChild(l);
+	}
+	mtCambiato();
+}
+function mtCambiato() {
+	const lua = mantelloInLua(mt);
+	try { if (lua === MT_DEL_GIOCO) localStorage.removeItem("megablast-mantello"); else localStorage.setItem("megablast-mantello", lua); } catch (e) { /* niente memoria del browser */ }
+	$("mt-stato").textContent = lua === MT_DEL_GIOCO ? "come nel gioco" : lua === mtSalvato ? "mandato" : "cambiato •";
+	if (!suona) disegna(0);
+}
+$("mt-gioco").onclick = () => { mt = copiaMt(MT_GIOCO); costruisciMantello(); };
+$("mt-rinculo").onclick = () => { if (mtCloth) clPush(mtCloth, -mt.fire * DATI.disegno_h, 0); };
+$("mt-colpo").onclick = () => { if (mtCloth) clPush(mtCloth, -mt.hit * DATI.disegno_h, mt.hit * DATI.disegno_h * 0.4); };
+$("mt-salva").onclick = async () => { if (await scrivi(mantelloInLua(mt), "cape_tuning.lua", "client/battle", fileMantello)) { mtSalvato = mantelloInLua(mt); mtCambiato(); } };
+$("mt-manda").onclick = async () => {
+	try {
+		const lua = mantelloInLua(mt);
+		await manda("mantello", lua, new Date().toISOString());
+		mtSalvato = lua; mtCambiato();
+		messaggio("Mandato il mantello: di' a Claude di prenderlo dall'editor.");
+	} catch (e) { messaggio("Non sono riuscito a mandarlo: " + ((e && e.message) || "errore") + "."); }
+};
+$("mt-moto").onchange = () => { moto.t = 0; };
+// aperto il pannello il mantello vive anche a clip ferma; senza mantello addosso
+// si mette il primo che c'è
+let mtGira = false;
+function mtCiclo() {
+	if (!$("mantello-box").open) { mtGira = false; return; }
+	if (!suona) disegna(0);
+	requestAnimationFrame(mtCiclo);
+}
+$("mantello-box").ontoggle = () => {
+	if (!$("mantello-box").open) return;
+	if (!addosso.mantello) {
+		const primo = Object.keys(PL.pelli).filter((n) => PL.pelli[n].categoria === "mantello").sort()[0];
+		const sel = [...$("pelli").querySelectorAll("label")].find((l) => l.firstChild.textContent.trim() === "mantello");
+		if (primo && sel) { sel.querySelector("select").value = primo; sel.querySelector("select").onchange(); }
+	}
+	if (!mtGira) { mtGira = true; mtUltimo = 0; requestAnimationFrame(mtCiclo); }
+};
+try {
+	const bozza = localStorage.getItem("megablast-mantello");
+	if (bozza && bozza !== MT_DEL_GIOCO) mt = leggiLua(bozza);
+} catch (e) { /* niente memoria del browser o bozza rotta */ }
+costruisciMantello();
 
 // ---------------------------------------------------------------------------
 // Gli strumenti: un pezzo o un personaggio nuovo da un'immagine, i ritocchi ai

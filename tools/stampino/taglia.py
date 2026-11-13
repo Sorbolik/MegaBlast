@@ -49,6 +49,9 @@ SOPRA = ["pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "mantell
 # dei pezzi (pixel per unità), perché lo shader la stira.
 CAPES = os.path.join(RADICE, "client", "assets", "capes")
 PX_MANTELLO = 3.0
+# quanto il mantello è più grande della casella: con la casella dello stampino
+# sull'apprendista restava quasi tutto dietro il corpo (WB-019 Vuoto, 13 nov)
+GRANDE_MANTELLO = 1.35
 CATEGORIE = SOSTITUISCE + SOPRA
 # i pezzi di dietro, fatti da quelli davanti un po' più scuri se mancano
 DIETRO = {"braccio_dietro": "braccio", "gamba_dietro": "gamba"}
@@ -645,7 +648,8 @@ def metti_mantello(pezzi, pz, nome, scala, px, perno):
     al = pz[..., 3]
     ys, xs = np.nonzero(al > 8)
     x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
-    w, h = (x1 - x0) / scala, (y1 - y0) / scala
+    g = GRANDE_MANTELLO
+    w, h = (x1 - x0) / scala * g, (y1 - y0) / scala * g
     img = Image.fromarray(np.clip(pz[y0:y1, x0:x1], 0, 255).astype(np.uint8), "RGBA")
     pw, ph = max(1, round(w * PX_MANTELLO)), max(1, round(h * PX_MANTELLO))
     img = img.resize((pw, ph), Image.LANCZOS)
@@ -656,7 +660,7 @@ def metti_mantello(pezzi, pz, nome, scala, px, perno):
     tela.save(os.path.join(CAPES, nome_img + ".png"), optimize=True)
     # il bordo vuoto conta nella misura
     w, h = (pw + 2) / PX_MANTELLO, (ph + 2) / PX_MANTELLO
-    cx, cy = ((x0 + x1) / 2 - perno[0]) / scala, (perno[1] - (y0 + y1) / 2) / scala
+    cx, cy = ((x0 + x1) / 2 - perno[0]) / scala * g, (perno[1] - (y0 + y1) / 2) / scala * g
     return {"mantello": {"img": nome_img, "x": round(cx, 1), "y": round(cy, 1), "w": round(w, 1), "h": round(h, 1),
                          "attacco": list(ST.ATTACCO)}}
 

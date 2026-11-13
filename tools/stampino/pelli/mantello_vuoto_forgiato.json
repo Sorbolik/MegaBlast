@@ -1,0 +1,16 @@
+{
+ "nome": "mantello_vuoto_forgiato",
+ "categoria": "mantello",
+ "mantello": {
+  "img": "mantello_vuoto_forgiato_mantello",
+  "x": -12.0,
+  "y": -63.4,
+  "w": 94.0,
+  "h": 136.7,
+  "attacco": [
+   -2,
+   116
+  ]
+ },
+ "pezzi": {}
+}
