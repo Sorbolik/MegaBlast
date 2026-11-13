@@ -3638,6 +3638,14 @@ local function render(self, dt)
 		end
 		scoria.set_weapon(r.rig, weapon)
 		scoria.empty_hands(r.rig, rb.disarmed == true)
+		-- the terrain, for the cape (battle/cloth.lua: graphics only)
+		if not self.solid_at then
+			self.solid_at = function(x, y)
+				local t = self.g and self.g.terrain
+				return t ~= nil and t:solid(x, y)
+			end
+		end
+		st.solid = self.solid_at
 		scoria.update(r.rig, dt, st)
 	end
 

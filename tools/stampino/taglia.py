@@ -43,12 +43,12 @@ LUA = os.path.join(RADICE, "client", "battle", "skins.lua")
 # del diavoletto, le altre si disegnano sopra, in quest'ordine.
 SOSTITUISCE = ["personaggio", "testa", "corpo", "ali", "coda"]
 SOPRA = ["pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "mantello"]
-# Il mantello (WB-019): si disegna intero nella sua casella e si taglia in tre
-# strisce che il gioco muove da sole; le altre categorie non lo usano.
-STRISCE = [f"mantello_{i + 1}" for i in range(len(ST.STRISCE))]
-# quanto le strisce si sovrappongono (unità, per lato): poco in alto, di più in
-# fondo, dove si aprono a ventaglio quando il mantello si muove
-SOVRAPPOSTE = (2, 0.12)
+# Il mantello (WB-019): si disegna intero nella sua casella e resta intero: il
+# gioco lo piega lungo una catena simulata (battle/cloth.lua, battle/cape.fp).
+# Non va nell'atlante: un'immagine a parte in client/assets/capes, più fitta
+# dei pezzi (pixel per unità), perché lo shader la stira.
+CAPES = os.path.join(RADICE, "client", "assets", "capes")
+PX_MANTELLO = 3.0
 CATEGORIE = SOSTITUISCE + SOPRA
 # i pezzi di dietro, fatti da quelli davanti un po' più scuri se mancano
 DIETRO = {"braccio_dietro": "braccio", "gamba_dietro": "gamba"}
@@ -452,6 +452,7 @@ def file_della_pelle(nome):
     altre = [os.path.basename(f)[:-5] for f in glob.glob(os.path.join(JSON, nome + "_*.json"))]
     fuori = tuple(n + "_" for n in altre)
     return [f for f in glob.glob(os.path.join(ASSETS, nome + "_*.png")) + glob.glob(os.path.join(SVG, nome + "_*.svg"))
+            + glob.glob(os.path.join(CAPES, nome + "_*.png"))
             if not os.path.basename(f).startswith(fuori)]
 
 
@@ -531,7 +532,7 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste
                 forma = metti_mantello(pezzi, pz, nome, F["scala"], px, (c["perno"][0] - x0, c["perno"][1] - y0))
             else:
                 metti(pezzi, pz, nome, posto, (c["perno"][0] - x0, c["perno"][1] - y0), F["scala"], px, sopra)
-    if not pezzi:
+    if not pezzi and "mantello" not in forma:
         sys.exit("nessun pezzo disegnato nello stampino")
     if senza:
         if sopra:
@@ -636,27 +637,28 @@ def salva(pz, nome, posto, px0, py0, scala, px, scatola=None):
 
 
 def metti_mantello(pezzi, pz, nome, scala, px, perno):
-    """Il mantello intero nelle sue tre strisce (ST.TAGLI), un po' sovrapposte;
-    ognuna gira attorno al centro del suo bordo in alto. Torna dove stanno i
-    perni delle strisce nel diavoletto (unità)."""
-    h, w = pz.shape[:2]
-    yy, xx = np.mgrid[0:h, 0:w]
-    u, v = (xx - perno[0]) / scala, (perno[1] - yy) / scala   # unità dal perno, y in su
-    ya, yf = ST.MANTELLO_ALTO[2], ST.MANTELLO_FONDO[2]
-    t = np.clip((v - ya) / (yf - ya), 0, None)                # 0 in alto, 1 in fondo
-    giu = np.clip(ya - v, 0, None)
-    ov = SOVRAPPOSTE[0] + SOVRAPPOSTE[1] * giu
-    tagli = [xa + (xf - xa) * t for xa, xf in ST.TAGLI]
-    bordi = [np.full_like(u, -1e9)] + tagli + [np.full_like(u, 1e9)]
-    perni = [v for sx, sy in ST.STRISCE for v in (ST.ATTACCO[0] + sx, ST.ATTACCO[1] + sy)]
-    for i, (sx, sy) in enumerate(ST.STRISCE):
-        dentro = (u >= bordi[i] - ov) & (u < bordi[i + 1] + ov)
-        st = pz.copy()
-        st[~dentro, 3] = 0
-        if (st[..., 3] > 128).sum() < 20:
-            continue
-        metti(pezzi, st, nome, STRISCE[i], (perno[0] + sx * scala, perno[1] - sy * scala), scala, px, True)
-    return {"mantello": perni}
+    """Il mantello intero: un'immagine a parte (CAPES), con un bordo vuoto di un
+    pixel e nell'angolo in alto a sinistra un pixel quasi trasparente, che dice
+    allo shader dov'è l'alto. Torna dov'è rispetto all'attacco (unità) e dove
+    è attaccato nel diavoletto."""
+    os.makedirs(CAPES, exist_ok=True)
+    al = pz[..., 3]
+    ys, xs = np.nonzero(al > 8)
+    x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    w, h = (x1 - x0) / scala, (y1 - y0) / scala
+    img = Image.fromarray(np.clip(pz[y0:y1, x0:x1], 0, 255).astype(np.uint8), "RGBA")
+    pw, ph = max(1, round(w * PX_MANTELLO)), max(1, round(h * PX_MANTELLO))
+    img = img.resize((pw, ph), Image.LANCZOS)
+    tela = Image.new("RGBA", (pw + 2, ph + 2), (0, 0, 0, 0))
+    tela.paste(img, (1, 1))
+    tela.putpixel((0, 0), (0, 0, 0, 6))
+    nome_img = f"{nome}_mantello"
+    tela.save(os.path.join(CAPES, nome_img + ".png"), optimize=True)
+    # il bordo vuoto conta nella misura
+    w, h = (pw + 2) / PX_MANTELLO, (ph + 2) / PX_MANTELLO
+    cx, cy = ((x0 + x1) / 2 - perno[0]) / scala, (perno[1] - (y0 + y1) / 2) / scala
+    return {"mantello": {"img": nome_img, "x": round(cx, 1), "y": round(cy, 1), "w": round(w, 1), "h": round(h, 1),
+                         "attacco": list(ST.ATTACCO)}}
 
 
 def leggi_diavoletto():
@@ -682,17 +684,22 @@ def rifai():
            "-- center relative to the pivot, size) and replaces the base piece or is",
            "-- drawn over it. One skin per category; the \"over\" ones in order. A new",
            "-- tail has its own lengths, its rest angles (radians) and, if the editor",
-           "-- moved it, how far its root is moved (tail_root). A cape: where the pivots",
-           "-- of its strips sit in the devil (cape = { x1, y1, x2, y2, x3, y3 }).",
+           "-- moved it, how far its root is moved (tail_root). A cape: its drawing",
+           "-- (client/assets/capes), its center and size from where it is attached",
+           "-- (drawing units) and where it is attached in the devil (at).",
            "return {",
            "\treplace = { " + ", ".join(f'"{c}"' for c in SOSTITUISCE) + " },",
            "\tover = { " + ", ".join(f'"{c}"' for c in SOPRA) + " },",
            "\tskins = {"]
     # the skin JSON files (tools/stampino/pelli) keep the tool's names
-    forme = {"coda": "tail", "coda_riposo": "tail_rest", "coda_radice": "tail_root", "mantello": "cape"}
+    forme = {"coda": "tail", "coda_riposo": "tail_rest", "coda_radice": "tail_root"}
     modi = {"sostituisce": "replace", "sopra": "over"}
     for p in pelli:
         forma = "".join(f'{forme[k]} = {{ {", ".join(str(v) for v in p[k])} }}, ' for k in forme if k in p)
+        if "mantello" in p:
+            m = p["mantello"]
+            forma += (f'cape = {{ img = "{m["img"]}", x = {m["x"]}, y = {m["y"]}, w = {m["w"]}, h = {m["h"]}, '
+                      f'at = {{ {m["attacco"][0]}, {m["attacco"][1]} }} }}, ')
         lua.append(f'\t\t{p["nome"]} = {{ category = "{p["categoria"]}", {forma}pieces = {{')
         for posto in sorted(p["pezzi"]):
             z = p["pezzi"][posto]

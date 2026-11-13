@@ -1,0 +1,16 @@
+{
+ "nome": "mantello_vuoto_prova",
+ "categoria": "mantello",
+ "mantello": {
+  "img": "mantello_vuoto_prova_mantello",
+  "x": -19.3,
+  "y": -46.3,
+  "w": 86.7,
+  "h": 104.7,
+  "attacco": [
+   -2,
+   116
+  ]
+ },
+ "pezzi": {}
+}

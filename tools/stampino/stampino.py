@@ -58,17 +58,14 @@ NOMI = {
 
 # Il mantello (WB-019): un posto fuori dalle righe, nel vuoto fra busto e ala, così
 # le caselle di prima restano dove sono. Si disegna intero, appeso dietro le
-# spalle; taglia.py lo divide in tre strisce che nel gioco si muovono da sole
-# (scoria.lua). Unità del disegno dal perno (ATTACCO, il centro dietro le spalle),
-# y in su: il bordo in alto, quello in fondo, i tagli fra le strisce (in alto e in
-# fondo) e il perno di ogni striscia (il centro del suo bordo in alto).
+# spalle: nel gioco lo piega una catena simulata (battle/cloth.lua, cape.fp).
+# Unità del disegno dal perno (ATTACCO, dove è attaccato, dietro le spalle), y in
+# su: il bordo in alto e quello in fondo della sagoma.
 MANTELLO_CENTRO = (1078, 1150)          # pixel del foglio, centro della casella
 MARGINE_MANTELLO = 12
 ATTACCO = (-2, 116)                     # il perno del mantello nel diavoletto
 MANTELLO_ALTO = (-24, 24, 0)            # da x a x, a quota y
 MANTELLO_FONDO = (-58, 22, -82)
-TAGLI = [(-8, -31.3), (8, -4.7)]        # x in alto e x in fondo di ogni taglio
-STRISCE = [(-16, 0), (0, 0), (16, 0)]   # i perni delle tre strisce
 
 
 def gruppi_mantello():
@@ -268,19 +265,7 @@ def casella(n, pz, im, bx, by, guida, ai, dg, caselle):
     # i giunti da tenere tondi: lì i pezzi si piegano uno sull'altro
     for gx, gy, gr in giunti(n):
         cerchio(dg, px + gx * S, py - gy * S, gr * S)
-    if n == "mantello":
-        # i tagli fra le strisce (tratteggiati) e il perno di ognuna
-        ya, yf = MANTELLO_ALTO[2], MANTELLO_FONDO[2]
-        for xa, xf in TAGLI:
-            for i in range(0, 12, 2):
-                t0, t1 = i / 12, (i + 1) / 12
-                dg.line([px + (xa + (xf - xa) * t0) * S, py - (ya + (yf - ya) * t0) * S,
-                         px + (xa + (xf - xa) * t1) * S, py - (ya + (yf - ya) * t1) * S],
-                        fill=(40, 150, 90, 255), width=4)
-        for sx, sy in STRISCE:
-            croce(dg, px + sx * S, py - sy * S, 10)
-    else:
-        croce(dg, px, py)
+    croce(dg, px, py)
 
 
 def giunti(nome):
