@@ -1,0 +1,10 @@
+Images 1 and 2 are two APPROVED backgrounds for the home screen of a mobile game about little devils in Dante's hell (circle of Limbo and circle of Gluttony). Image 3 shows image 1 in use, with the game's comic-style interface on top (do not draw the interface). Paint a NEW background of exactly the same series, same style and same hand as images 1 and 2: flat comic-book illustration, thick near-black ink outlines, flat fills with at most 3 tones per shape, hard-edged shadow shapes, a banded sky with soft hard-edged light beams, a flat dark floor band with a thick ink line on top. Wide 16:9.
+
+The place: LUSSURIA, the second circle, the storm: broken zig-zag cliffs on both sides with indestructible steel spikes sticking out of the rock, purple storm clouds swirling, bolts of lightning, wind streaks. Palette: dark violet #1b1229, plum #4b2d6b, magenta glow #e05fa8, pale lilac #c9b8ff.
+
+Composition rules, follow exactly: the whole CENTRE of the picture is empty and calm, with nothing in it that attracts the eye (a devil character stands there and four buttons sit at its sides). The big masses of the place (buildings, rocks, statues, trees) stand at the left and right sides and frame the centre, like in images 1 and 2. IMPORTANT: the phone crops about 10% from each side and a little from the top, so the main masses and every recognizable shape must sit between 10% and 40% of the width from each edge, NOT against the edges: the outer 10% on each side only continues the masses, nothing important there. The horizon floor line is at 86% of the height from the top; below it only a plain dark floor band. Keep contrast moderate so light text stays readable on top. No characters, no creatures that look alive, no text, no letters, no numbers, no interface, no frame, no signature.
+
+Riferimenti (in ordine)
+R1: art/WB-031/riferimenti/R1_limbo_fumetto.jpg
+R2: art/WB-031/riferimenti/R2_gola_fumetto.jpg
+R3: art/WB-031/riferimenti/R3_limbo_nella_home.jpg
