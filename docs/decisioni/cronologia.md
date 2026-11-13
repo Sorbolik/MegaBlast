@@ -242,3 +242,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 13 nov | Pannello Mantello nell'editor (taratura dal vivo in `cape_tuning.lua`) e scheda WB-032 per un mantello ampio del Vuoto. | personaggio.md, questa PR |
 | 13 nov | Mantello ampio del Vuoto (WB-032 B, base e forgiata) nel gioco, a 4,5 pixel per unità. | personaggio.md, #306 |
 | 13 nov | Il mantello finisce sopra i piedi e si piega in curva (non si spezza più toccando terra). | personaggio.md, questa PR |
+| 13 nov | **Il nuovo apprendista (WB-037) è il personaggio principale** con le clip mandate da Sergio dall'editor, la fiammella viva e le sue hitbox: capsula larga 14,9 (era 29,4), alta 39,2 come prima (Sergio: «se l'ho fatto più basso di prima riportalo all'altezza standard»); cerchio dei colpi raggio 20 a 20,5 da terra (era 20,49 a 19,6). | personaggio.md, #308, #310, questa PR |

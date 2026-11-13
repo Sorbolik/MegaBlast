@@ -2004,8 +2004,11 @@ function M:update_cannon(rb)
 		rb.x, rb.y = nx, ny
 		for _, o in ipairs(self.robots) do
 			if o ~= rb and not o.dead and not c.hit[o.id] and not o.ghost then
-				local dx, dy = o.x - rb.x, o.y - rb.y
-				if math.abs(dx) < 2 * M.ROBOT_HALF_W and math.abs(dy) < M.ROBOT_H then
+				-- the flyer's capsule touches the target's hit circle (sim/body.lua)
+				local dx = o.x - rb.x
+				local dy = o.y + M.HURT_Y - math.max(rb.y, math.min(rb.y + M.ROBOT_H, o.y + M.HURT_Y))
+				local reach = M.HURT_R + M.ROBOT_HALF_W
+				if dx * dx + dy * dy < reach * reach then
 					c.hit[o.id] = true
 					local k = self:knock_mul(o)
 					o.vx, o.vy = (c.vx < 0 and -1 or 1) * s.push * k, s.lift * k
