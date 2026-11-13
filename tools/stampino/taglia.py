@@ -48,10 +48,12 @@ SOPRA = ["pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "mantell
 # Non va nell'atlante: un'immagine a parte in client/assets/capes, più fitta
 # dei pezzi (pixel per unità), perché lo shader la stira.
 CAPES = os.path.join(RADICE, "client", "assets", "capes")
-PX_MANTELLO = 3.0
+PX_MANTELLO = 4.5
 # quanto il mantello è più grande della casella: con la casella dello stampino
 # sull'apprendista restava quasi tutto dietro il corpo (WB-019 Vuoto, 13 nov)
 GRANDE_MANTELLO = 1.35
+# il mantello disegnato da solo (--mantello-px): l'attacco, quante unità sotto il bordo in alto
+ATTACCO_GIU = 4
 CATEGORIE = SOSTITUISCE + SOPRA
 # i pezzi di dietro, fatti da quelli davanti un po' più scuri se mancano
 DIETRO = {"braccio_dietro": "braccio", "gamba_dietro": "gamba"}
@@ -459,7 +461,8 @@ def file_della_pelle(nome):
             if not os.path.basename(f).startswith(fuori)]
 
 
-def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste=None, foglio_pugni=None, aggiungi=False):
+def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste=None, foglio_pugni=None, aggiungi=False,
+           mantello_px=None):
     with open(ST.FOGLIO) as f:
         F = json.load(f)
     D = leggi_diavoletto()
@@ -511,6 +514,17 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste
             metti(pezzi, pz, nome, v, perno, F["scala"], px, sopra)
             if not pugno:
                 pezzi[posto] = dict(pezzi[v])
+    elif mantello_px:
+        # un mantello solo, grande sul foglio (WB-032): la misura la dà mantello_px,
+        # uguale per i fogli della stessa scheda; l'attacco è in mezzo al bordo in alto
+        if categoria != "mantello":
+            sys.exit("--mantello-px solo con --categoria mantello")
+        pz = fondo_via(Image.open(foglio))
+        ys, xs = np.nonzero(pz[..., 3] > 128)
+        y0 = ys.min()
+        alto = xs[ys < y0 + 3 * mantello_px]
+        perno = ((alto.min() + alto.max() + 1) / 2, y0 + ATTACCO_GIU * mantello_px)
+        forma = metti_mantello(pezzi, pz, nome, mantello_px * GRANDE_MANTELLO, px, perno)
     elif foglio_teste or foglio_pugni or aggiungi:
         sys.exit("--teste, --pugni e --aggiungi solo con --allinea, per i personaggi")
     else:
@@ -809,6 +823,7 @@ def main():
     ap.add_argument("--pugni", help="foglio con le due braccia col pugno chiuso (davanti, dietro): versioni in più delle braccia, per le impugnature")
     ap.add_argument("--aggiungi", action="store_true", help="aggiunge i pezzi alla pelle che c'è già, come versioni in più (busto_2...)")
     ap.add_argument("--tavolozza", help="la tavolozza del personaggio (tools/stampino/tavolozze): fa anche gli SVG dei pezzi")
+    ap.add_argument("--mantello-px", type=float, help="il foglio ha solo il mantello, grande: quanti pixel del foglio per unità del gioco")
     ap.add_argument("--rifai", action="store_true")
     ap.add_argument("--togli")
     ap.add_argument("--ritocchi", help="i ritocchi dell'editor delle animazioni (ritocchi.json)")
@@ -833,7 +848,7 @@ def main():
         if a.tavolozza:
             import vettoriale as VT
             TAVOLOZZA = VT.leggi_tavolozza(a.tavolozza)
-        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza, a.teste, a.pugni, a.aggiungi)
+        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza, a.teste, a.pugni, a.aggiungi, a.mantello_px)
     rifai()
 
 

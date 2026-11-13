@@ -67,4 +67,18 @@ scheda su `main`.
 
 ## Consegna di Codex
 
+13 nov, ramo `design/WB-032` (e3c4c8e9): le quattro tavole 1536×1024 con i loro prompt (`.txt`).
+
 ## Resoconto di Claude
+
+- Tutte e quattro buone: un mantello per foglio, magenta pulito, contorno chiuso, bordo in alto
+  dritto a destra, largo in fondo, pieghe lunghe; le forgiate hanno la stessa sagoma con l'occhio
+  e la finitura ciano. Codex non le ha messe nella casella: le ha disegnate circa tre volte più
+  grandi (A circa 560×650 pixel, B circa 620×810). Meglio così: c'è più dettaglio.
+- Tagliate con `taglia.py --mantello-px 4.8` (opzione nuova per un mantello disegnato da solo:
+  4,8 pixel del foglio per unità, la stessa per le quattro, così A è alto come il mantello di
+  prima e B un po' più lungo). Salvate a 4,5 pixel per unità (prima 3): nel gioco non sono mai
+  ingrandite.
+- Nel gioco va B, base e forgiata (`mantello_vuoto`, `mantello_vuoto_forgiato`), al posto del
+  mantello stretto di WB-019; A resta fra le tavole. Foto: fermo, corsa, salto, salto in corsa
+  (scenario `mantello.txt`).
