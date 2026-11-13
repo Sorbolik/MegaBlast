@@ -1,6 +1,6 @@
 # WB-030 · Sfondi della home per i gironi: tre stili a fumetto da scegliere
 
-- **Stato:** PROPOSTA (Claude, 2026-11-13; Sergio ha chiesto di farli fare a Codex, tutti e 3: «così decido»)
+- **Stato:** APPROVATA (Claude, 2026-11-13, immagini di prova reversibili; Sergio ha chiesto di farli fare a Codex, tutti e 3: «così decido»)
 - **Data:** 2026-11-13
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-030`
 
@@ -124,7 +124,7 @@ Composition rules, follow exactly: the whole CENTRE of the picture is empty, cal
 
 ## Decisione
 
-(da approvare: Claude la approva perché sono immagini di prova, reversibili)
+Approvata da Claude il 2026-11-13 su richiesta di Sergio («faglieli fare a Codex, tutti e 3»): immagini di prova, reversibili.
 
 ## Consegna di Codex
 
