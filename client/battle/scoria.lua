@@ -71,6 +71,7 @@ local PIVOTS = require "battle.pivots"
 local GRIPS = require "battle.grips"
 local FLAME = require "battle.flame"
 local CLOTH = require "battle.cloth"
+local LIGHTS = require "battle.lights"
 -- the cape drawings loaded (the battle gui lives as long as the game)
 local made_capes = {}
 
@@ -233,15 +234,15 @@ local function piece(s, parent, p, k, flash_fx, d)
 	if p.tint then
 		local t = box(parent, x, y, p.w * k, p.h * k)
 		gui.set_texture(t, "diavoletto")
-		gui.set_material(t, "pezzi")
+		gui.set_material(t, s.mat_tint)
 		gui.play_flipbook(t, p.tint)
 		s.tinte[#s.tinte + 1] = t
 	end
 	if flash_fx or not p.tint then
-		gui.set_material(n, "lampo")
+		gui.set_material(n, s.mat_flash)
 		s.flashes[#s.flashes + 1] = n
 	else
-		gui.set_material(n, "pezzi")
+		gui.set_material(n, s.mat_tint)
 	end
 	return n
 end
@@ -358,6 +359,7 @@ local function make_cape(s, k)
 	local n = box(s.forma, cp.at[1] * k, cp.at[2] * k, side * k, side * k)
 	gui.set_texture(n, key)
 	gui.set_material(n, "mantello")
+	if s.lit then gui.set(n, "ambient", LIGHTS.AMBIENT) end
 	gui.set(n, "frame", vmath.vector4(left / W, top / H, W / side, H / side))
 	s.mantello = n
 	-- the chain: as long as the drawing below where it is attached
@@ -443,10 +445,10 @@ local function levels(s, l)
 	for i = 1, #LEVELS do above(LEVELS[i]) end
 end
 
-local function weapon_figure(parent, img, x, y, w, h)
+local function weapon_figure(s, parent, img, x, y, w, h)
 	local n = box(parent, x, y, w, h)
 	gui.set_texture(n, "armi")
-	gui.set_material(n, "pezzi")
+	gui.set_material(n, s.mat_tint)
 	gui.play_flipbook(n, img)
 	return n
 end
@@ -456,14 +458,14 @@ end
 local function weapon_name(s, name, color)
 	local a = FROM[name]
 	local g = joint(s.giro, 0, 0)
-	weapon_figure(g, a.img, a.x, a.y, a.w, a.h)
+	weapon_figure(s, g, a.img, a.x, a.y, a.w, a.h)
 	if a.tint then
-		s.weapon_tints[#s.weapon_tints + 1] = setup(weapon_figure(g, a.tint, a.x, a.y, a.w, a.h), nil, color)
+		s.weapon_tints[#s.weapon_tints + 1] = setup(weapon_figure(s, g, a.tint, a.x, a.y, a.w, a.h), nil, color)
 	end
 	-- the Grapple's hook in the barrel: a piece of its own, it vanishes when it flies off
 	if name == "hook" then
 		local u = require("battle.weapons").pieces.uncino
-		s.uncino = weapon_figure(g, u.img, HOOK_TIP + u.x, u.y, u.w, u.h)
+		s.uncino = weapon_figure(s, g, u.img, HOOK_TIP + u.x, u.y, u.w, u.h)
 	end
 	gui.set_enabled(g, false)
 	s.armi[name] = g
@@ -503,7 +505,9 @@ local ANIMAZIONI_PERSONAGGIO = {
 	favilla = { A = A_FAVILLA, armed = make_armed(A_FAVILLA) },
 }
 
-function M.new(color, look, weapon_only)
+-- lit: a devil of the battle, that takes its lights (battle/lights.lua: the
+-- lit materials and the cape's ambient); the figures of the menus and cards don't
+function M.new(color, look, weapon_only, lit)
 	local H = game.DISEGNO_H
 	-- three quarters of the height wide, like the starting capsule (sim/body.lua)
 	local Wd = H * 0.75
@@ -525,7 +529,8 @@ function M.new(color, look, weapon_only)
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
 		-- this frame's pose from the clips and the angles (radians) of the hanging
 		-- arms and legs, which chase it
-		posa = pose.new(), braccia = { 0, 0 }, gambe = { 0, 0 } }
+		posa = pose.new(), braccia = { 0, 0 }, gambe = { 0, 0 },
+		lit = lit, mat_tint = lit and "pezzi_luce" or "pezzi", mat_flash = lit and "lampo_luce" or "lampo" }
 	s.strati, s.tail_shape, s.cape = dress(look)
 	s.root = joint(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
@@ -590,7 +595,7 @@ function M.new(color, look, weapon_only)
 		s.teste[i] = piece(s, s.testa, s.facce.testa[i] or s.facce.testa[1], k, true, shift("testa"))
 		s.heads_t[i] = box(s.testa, 0, 0, 0, 0)
 		gui.set_texture(s.heads_t[i], "diavoletto")
-		gui.set_material(s.heads_t[i], "pezzi")
+		gui.set_material(s.heads_t[i], s.mat_tint)
 		s.tinte[#s.tinte + 1] = s.heads_t[i]
 	end
 	s.fiamma = joint(s.collo, PT.cima[1] * k, PT.cima[2] * k)

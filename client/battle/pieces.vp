@@ -1,0 +1,25 @@
+#version 140
+
+// The gui vertex program, plus where the pixel is in gui coordinates (var_pos):
+// the lit pieces (battle/pieces.fp, flash.fp) measure the lights from there.
+
+in mediump vec3 position;
+in mediump vec2 texcoord0;
+in mediump vec4 color;
+
+out mediump vec2 var_texcoord0;
+out mediump vec4 var_color;
+out highp vec2 var_pos;
+
+uniform vs_uniforms
+{
+    mediump mat4 view_proj;
+};
+
+void main()
+{
+    var_texcoord0 = texcoord0;
+    var_color = vec4(color.rgb * color.a, color.a);
+    var_pos = position.xy;
+    gl_Position = view_proj * vec4(position.xyz, 1.0);
+}

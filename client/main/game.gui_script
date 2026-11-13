@@ -10,6 +10,7 @@ local gconfig = require "sim.config"
 local scoria = require "battle.scoria"
 local plate = require "battle.plate"
 local impact = require "battle.impact"
+local lights = require "battle.lights"
 local home = require "menu.home"
 local profile = require "menu.profile"
 local TP = require("lang.text").pill
@@ -733,7 +734,7 @@ end
 local function dress(self, i, look)
 	local r = self.robots[i]
 	if table.concat(r.look, ",") == table.concat(look, ",") then return end
-	local rig = scoria.new(TEAM_COLORS[i], look)
+	local rig = scoria.new(TEAM_COLORS[i], look, nil, true)
 	gui.set_parent(rig.root, self.mondo)
 	gui.move_above(rig.root, r.rig.root)
 	scoria.set_enabled(rig, gui.is_enabled(r.rig.root))
@@ -786,6 +787,7 @@ local function new_match(self, seed, map, opts)
 	score.match(self.punti, self.g, TEAM_NAMES, plates)
 	self.trail_n = 0
 	if self.fx then impact.reset(self.fx) end
+	if self.lights then self.lights:reset() end
 	self.pose_dt = game.DT
 	reset_pose(self)
 	self.aiming = false
@@ -823,6 +825,7 @@ local function hide_node(_, node) gui.set_enabled(node, false) end
 
 local function explosion(self, x, y, r)
 	impact.explosion(self.fx, x, y, r)
+	if self.lights then self.lights:flash(x, y, r) end
 	sound.play("#boom", { gain = 0.7 + 0.3 * math.min(1, r / 40), speed = 1.25 - math.min(0.45, r / 90) + math.random() * 0.1 })
 
 	-- debris: pieces of rock and ember thrown upward
@@ -844,6 +847,19 @@ local function explosion(self, x, y, r)
 	camera.shake(self.cam, math.random() - 0.5, -1, 3 + r * 0.2)
 	camera.punch(self.cam, FEEL.punch[2] * math.min(1.5, r / 30))
 	self.shot_x, self.shot_y, self.shot_t = x, y, self.clock
+end
+
+-- The lights of the battle (battle/lights.lua): the flame of every devil on
+-- screen, and the explosions' flashes. Out of a match, none.
+local function light_up(self, dt)
+	if not self.lights then self.lights, self.light_flames = lights.new(self.mondo), {} end
+	if not self.g or not self.cam_s then return self.lights:off() end
+	local f = self.light_flames
+	for i = 1, game.MAX_PLAYERS do
+		local rig = self.robots[i].rig
+		f[i] = gui.is_enabled(rig.fiamma, true) and rig.fiamma or nil
+	end
+	self.lights:update(dt, f, game.MAX_PLAYERS, self.cam_tx, self.cam_ty, self.cam_s)
 end
 
 local function move_debris(self, dt)
@@ -4175,7 +4191,7 @@ function init(self)
 	self.look = look
 	self.robots = {}
 	for i = 1, game.MAX_PLAYERS do
-		local r = { rig = scoria.new(TEAM_COLORS[i], look), look = look, st = {} }
+		local r = { rig = scoria.new(TEAM_COLORS[i], look, nil, true), look = look, st = {} }
 		self.robots[i] = r
 	end
 
@@ -4630,6 +4646,7 @@ function update(self, dt)
 	frames.scope("disegno")
 	render(self, dt_world)
 	move_debris(self, dt_world)
+	light_up(self, dt_world)
 	impact.update(self.fx, dt_world)
 	frames.scope_end()
 	if self.mode == "menu" then

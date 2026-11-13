@@ -51,6 +51,14 @@ materials {
   material: "/battle/pieces.material"
 }
 materials {
+  name: "lampo_luce"
+  material: "/battle/flash_lit.material"
+}
+materials {
+  name: "pezzi_luce"
+  material: "/battle/pieces_lit.material"
+}
+materials {
   name: "forgia"
   material: "/circles/forgia.material"
 }
