@@ -1,0 +1,10 @@
+Image 1 is the head of our little devil "Apprendista" with a narrow vertical glowing slit on top of the skull. Image 2 is the same head with his flame, drawn with an older horizontal rip. Image 3 is the first drawing of the character: the flame grows out of the vertical slit.
+
+Redraw image 1 EXACTLY, same size, same position on the canvas, pixel for pixel, and add the flame of image 2 (same shape, colors and black outline) growing OUT of the top of the vertical slit, as in image 3: the bottom of the flame sits inside the wide top of the slit, so the flame is clearly part of his skull, not a fire floating above it. Nothing else changes.
+
+Background: flat pure magenta #FF00FF everywhere outside the head and the flame. No text, no labels. Square 1024x1024.
+
+Riferimenti (in ordine)
+Base: art/WB-035/testa_nuda_1.png
+R3: art/WB-035/riferimenti/R3_testa_fiamma_WB-034.png
+R2: art/WB-035/riferimenti/R2_fessura_prima_generazione.png

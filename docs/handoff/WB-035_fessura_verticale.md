@@ -65,4 +65,33 @@ Approvata da Sergio il 13 nov (correzione di WB-034).
 
 ## Consegna di Codex
 
+### 2026-11-13
+
+Quattro PNG RGB originali da 1254 × 1254 px in `art/WB-035/`, con
+prompt e riferimenti nei TXT omonimi. Generati con imagegen da
+`main` aggiornato (`0a2df678`), usando i prompt integrali e i
+riferimenti nell'ordine indicato.
+
+| Nome | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `testa_nuda_1` | 3 | 1 |
+| `testa_nuda_2` | 3 | 2 |
+| `testa_fiamma_1` | 3 | 1 |
+| `testa_fiamma_2` | 3 | 2 |
+
+Ho verificato la fessura verticale fra le corna, che si stringe
+verso la fronte, e l'assenza dello squarcio orizzontale.
+In entrambe le versioni con fiamma, generata da `testa_nuda_1.png`
+con R3 e R2, la base della fiamma entra nella fessura.
+Le due versioni con fiamma sono molto simili. Non ci sono scritte.
+
+Le due teste nude hanno lo stesso riquadro della sagoma di R1.
+Dalla riga 400 in giù l'intersezione delle sagome copre circa il
+99,8% della loro unione. Questo confronto riguarda il contorno.
+La corrispondenza pixel per pixel dei colori e dei bordi resta
+imperfetta. Il generatore ha restituito 1254 × 1254 px, la misura
+di R1, anche se la scheda chiede 1024 × 1024. Il magenta appare
+uniforme ma presenta valori diversi da `#FF00FF`. La resa degli
+strati ricavati per differenza in Godot resta da verificare.
+
 ## Resoconto di Claude

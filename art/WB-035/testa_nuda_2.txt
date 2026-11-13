@@ -1,0 +1,9 @@
+Image 1 is the head of our little devil "Apprendista" without a face, on a flat magenta background, with a small horizontal glowing rip on top of the skull. Image 2 is the first drawing of the same character: look at the top of his head, the flame comes out of a VERTICAL slit, a narrow crease that runs down from the top of the skull toward the forehead, between the horns.
+
+Redraw image 1 EXACTLY: same head, horns, ears, muzzle, nose, colors, thick black outline, flat rendering, and the SAME SIZE and SAME POSITION on the canvas, pixel for pixel, so the two images can be laid one over the other. Only one change: replace the horizontal rip with a VERTICAL slit like image 2: a narrow opening that starts at the very top of the skull, between the horns, and runs straight down toward the forehead for about one fifth of the head's height, with a thin black outline and glowing orange-yellow inside, wider at the top where the flame will come out and closing to a point at the bottom. No horizontal rip any more.
+
+No face (no eyes, no eyebrows, no mouth), no flame, no neck. Background: flat pure magenta #FF00FF everywhere outside the head. No text, no labels. Square 1024x1024.
+
+Riferimenti (in ordine)
+R1: art/WB-035/riferimenti/R1_testa_nuda_WB-034.png
+R2: art/WB-035/riferimenti/R2_fessura_prima_generazione.png
