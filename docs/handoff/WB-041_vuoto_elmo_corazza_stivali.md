@@ -1,6 +1,6 @@
 # WB-041 · Il Vuoto addosso all'apprendista nuovo: cappuccio, corazza, stivali
 
-- **Stato:** PROPOSTA
+- **Stato:** APPROVATA (Sergio, 13 nov: «Vai»)
 - **Data:** 2026-11-13
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-041`
 
@@ -108,7 +108,7 @@ Rendering rules, very strict, because these parts will be traced into vector sha
 
 ## Decisione
 
-In attesa di Sergio.
+Approvata da Sergio il 13 nov («Vai»).
 
 ## Consegna di Codex
 
