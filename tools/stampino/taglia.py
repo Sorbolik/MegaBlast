@@ -676,8 +676,28 @@ def leggi_diavoletto():
     raise SystemExit("px non trovato in devil.lua")
 
 
+PX_ALTO = 4.0   # pixel per unità dei pezzi con l'SVG: più di ogni schermo (home sul telefono grande: ~3,5)
+
+
+def da_svg():
+    """I PNG dei pezzi che hanno l'SVG si rifanno dal vettoriale a PX_ALTO pixel per
+    unità (Sergio, 13 nov: il diavoletto sempre alla massima qualità, mai
+    ingrandito). Le misure in unità (skins.lua) non cambiano."""
+    import cairosvg
+    px_base = leggi_diavoletto()["px"]
+    k = PX_ALTO / px_base
+    for f in sorted(glob.glob(os.path.join(SVG, "*.svg"))):
+        nome = os.path.basename(f)[:-4]
+        t = open(f).read()
+        m = re.search(r'<svg[^>]* width="(\d+)" height="(\d+)"', t)
+        w, h = round(int(m.group(1)) * k), round(int(m.group(2)) * k)
+        percorso = os.path.join(ASSETS, nome + ".png")
+        cairosvg.svg2png(bytestring=t.encode(), write_to=percorso, output_width=w, output_height=h)
+
+
 def rifai():
     """client/battle/skins.lua e l'atlante del diavoletto da tutte le pelli."""
+    da_svg()
     pelli = []
     for f in sorted(glob.glob(os.path.join(JSON, "*.json"))):
         with open(f) as fh:
