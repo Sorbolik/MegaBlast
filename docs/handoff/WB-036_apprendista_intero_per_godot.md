@@ -12,7 +12,7 @@ approvato (questa scheda), Sergio sceglie; poi i pezzi ricalcati da quello sullo
 (fase 2, scheda successiva) e le teste con le espressioni. Nessun pezzo viene montato a occhio
 (lezione di WB-033).
 
-Una sola cosa nuova rispetto a R1: **la fiammella esce da una fessura** in cima alla testa, come
+Una sola cosa nuova rispetto a R1: **la fiammella esce da una fessura appena percettibile, quasi solo una linea** (Sergio, 13 nov), in cima alla testa, come
 nella prima generazione (R2). La fessura segue **l'asse della testa**: corre lungo la linea di
 mezzo del cranio, inclinata come è inclinata la testa nel tre quarti, non dritta rispetto al
 foglio (Sergio, 13 nov, su WB-035). La fiamma è parte della testa e la segue.
@@ -37,7 +37,7 @@ Le varianti si chiamano `tre_quarti_1.png` … `tre_quarti_4.png`.
 ```
 Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right. It is the EXACT model: redraw him as he is, with the same head, face, horns, ears, neckerchief, torso, belly patch, arms, hands, legs, tail, proportions, contours, colors and flat style, standing and facing right, both feet pointing to the right.
 
-Add ONE thing: his head flame, coming out of a SLIT in his skull, like in image 2 (the first drawing of the character). The slit is a narrow opening on the top of the skull, between the horns, glowing orange-yellow inside, with a thin black outline: it starts at the top of the skull and runs DOWN THE MIDDLE OF HIS HEAD toward his forehead, for about one fifth of the head's height. IMPORTANT: the slit follows the head's own axis. In the three-quarter view the head is turned and tilted, so the slit lies along the center line of the skull and is tilted exactly like the head (like the parting of hair on his own head), NOT straight up and down on the page. The flame (orange #F07A1E with yellow #FFD34A inside and a thick black outline, about as tall as his head without the horns, leaning slightly back) grows out of the top of the slit: its bottom sits inside the slit, so the flame is clearly part of his skull, not a fire floating above it.
+Add ONE thing: his head flame, coming out of a SLIT in his skull, like in image 2 (the first drawing of the character). The slit is BARELY VISIBLE, almost just a line: a single thin dark crease on the skin with only a hair-thin glow of yellow inside, no open hole, no torn edges, no wound. It starts at the top of the skull, between the horns, and runs DOWN THE MIDDLE OF HIS HEAD toward his forehead, for about one sixth of the head's height. IMPORTANT: the slit follows the head's own axis. In the three-quarter view the head is turned and tilted, so the slit lies along the center line of the skull and is tilted exactly like the head (like the parting of hair on his own head), NOT straight up and down on the page. The flame (orange #F07A1E with yellow #FFD34A inside and a thick black outline, about as tall as his head without the horns, leaning slightly back) grows out of the top end of that line: its narrow bottom touches the skull right there, so the flame is clearly part of his head, not a fire floating above it.
 
 Pose for the rig: arms hanging slightly away from the body, not touching it, hands in loose fists; legs slightly apart; tail free behind him, not crossing the legs. Nothing overlaps more than needed.
 
@@ -52,7 +52,7 @@ Rendering rules, very strict, because this drawing will be traced and cut into p
 ## Criteri di accettazione
 
 - [ ] lo stesso apprendista di R1: proporzioni, forme, colori della tavolozza, contorno nero spesso
-- [ ] fessura sul cranio lungo l'asse della testa (inclinata con la testa, non dritta sul foglio)
+- [ ] fessura appena percettibile, quasi solo una linea (Sergio, 13 nov), lungo l'asse della testa (inclinata con la testa, non dritta sul foglio)
 - [ ] la fiamma esce dalla cima della fessura, attaccata alla testa
 - [ ] braccia staccate dal corpo, gambe un po' aperte, coda libera; piedi a destra
 - [ ] sfondo bianco pieno, colori piatti, nessuna scritta
