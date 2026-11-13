@@ -67,4 +67,32 @@ scheda su `main`.
 
 ## Consegna di Codex
 
+### 2026-11-13
+
+Quattro PNG RGB originali da 1536 × 1024 px in `art/WB-032/`, con
+prompt e riferimenti nei TXT omonimi. Generati con imagegen da `main`
+aggiornato (`90da680e`). R3 proviene da `origin/design/WB-019`.
+
+| File | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `vuoto_base_A` | 3 | 1 |
+| `vuoto_base_B` | 3 | 1 |
+| `vuoto_forgiata_A` | 3 | 3 |
+| `vuoto_forgiata_B` | 3 | 3 |
+
+Ho controllato che ciascun foglio contenga un solo mantello, con attacco
+corto e orizzontale, apertura a sinistra, pieghe lunghe, contorno scuro
+chiuso e nessuna scritta. A ha l'orlo a campana con intagli e B ha lembi
+più lunghi. Le forgiate hanno l'occhio e l'orlo ciano.
+
+**Scostamenti.** I mantelli consegnati sono più grandi della casella
+e l'attacco è spostato rispetto allo stampino. Due tentativi di base A
+più vicini alla casella includevano anche le sagome grigie dello
+stampino. Ho selezionato i fogli con il mantello isolato. Le sagome
+forgiate sono simili alle basi, con differenze lungo l'orlo e una
+variazione di larghezza più evidente nella coppia A. Il magenta e il
+ciano presentano variazioni RGB rispetto ai valori esatti richiesti.
+L'allineamento e la resa in movimento in Defold e Godot restano da
+verificare.
+
 ## Resoconto di Claude
