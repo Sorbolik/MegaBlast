@@ -1,6 +1,6 @@
 # WB-038 · Colletto del mantello del Vuoto, attorno al collo
 
-- **Stato:** PROPOSTA
+- **Stato:** APPROVATA (Sergio, 13 nov: «Sì»)
 - **Data:** 2026-11-13
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-038`
 
@@ -78,7 +78,7 @@ Rendering rules, very strict, because these parts will be traced into vector sha
 
 ## Decisione
 
-In attesa di Sergio.
+Approvata da Sergio il 13 nov («Sì», colore della squadra sul colletto).
 
 ## Consegna di Codex
 
