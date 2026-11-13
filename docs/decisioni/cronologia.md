@@ -238,3 +238,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 12 nov | Mantelli liberi: casella `mantello` nello stampino, tagliato in tre strisce che si muovono con le molle (solo grafica); categoria `stivali`. Pronto per WB-019 fase 2. | personaggio.md, questa PR |
 | 13 nov | Mantello vero (strada B): catena simulata e shader che piega il disegno intero al posto delle tre strisce; prova col mantello del Vuoto (finto). | personaggio.md, questa PR |
 | 13 nov | Mantello del Vuoto vero (WB-019 fase 2, base e forgiato) nel gioco, 1,35 volte la casella; gli altri pezzi del Vuoto aspettano il passo delle corna. | personaggio.md, questa PR |
+| 13 nov | Pannello Mantello nell'editor (taratura dal vivo in `cape_tuning.lua`) e scheda WB-032 per un mantello ampio del Vuoto. | personaggio.md, questa PR |

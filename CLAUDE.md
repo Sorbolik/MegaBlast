@@ -137,6 +137,9 @@ impugna l'arma (`held_by`) e l'ordine dei pezzi davanti e dietro (`layers`).
 "Manda a Claude" li mette nei documenti `corpo/ultima`, `perni/ultima` e
 `impugnature/ultima` (campo `lua`). Una clip con l'arma può avere la versione di
 una sola arma (`fermo_arma_mallet`): il gioco la preferisce a quella di tutte.
+Nel pannello Mantello dell'editor Sergio tara dal vivo il mantello (peso, aria, piega, angoli,
+spinte, grandezza, attacco: la stessa catena e lo stesso shader del gioco); "Manda a Claude"
+scrive il documento `mantello/ultima` (campo `lua`), da copiare in `client/battle/cape_tuning.lua`.
 
 Nella sezione Strumenti dell'editor Sergio manda anche: le richieste di pezzi o
 personaggi nuovi (immagine e note; su claude.ai documento `richieste/<nome>` con

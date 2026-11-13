@@ -116,21 +116,16 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 local FLASH = 0.85
 
 -- The cape (WB-019): one whole drawing bent along a simulated chain
--- (battle/cloth.lua, battle/cape.fp). The chain's points; how much of the
--- game's gravity the cloth feels (the air holds it a little); the air's drag
--- (1/s); how much a joint bends at most (radians)
+-- (battle/cloth.lua, battle/cape.fp). The chain's points (the shader takes six).
+-- The numbers come from battle/cape_tuning.lua (the editor's Mantello panel):
+-- how much of the game's gravity the cloth feels, the air's drag (1/s), how
+-- much a joint bends at most (radians); where the first segment can go from
+-- straight down (radians: back, forward); the push of a hit and of a shot
+-- (world units per second, per character height); the drawing's size, where it
+-- is attached (moved, drawing units) and the body it doesn't go into (circles
+-- x, y, r in drawing units, on the devil standing still)
 local CAPE_POINTS = 6
-local CAPE_GRAVITY = 1
-local CAPE_DRAG = 4
-local CAPE_BEND = 0.45
--- where the cape can go from where it is attached (radians from straight down):
--- back up to nearly flat, forward only a little
-local CAPE_BACK, CAPE_FORWARD = 1.45, 0.35
--- the body the cape doesn't go into: circles (drawing units: x, y, r) of the
--- torso, the hips and the legs, on the devil standing still
-local CAPE_BODY = { 8, 90, 20, 4, 64, 17, 12, 34, 10, -12, 34, 10 }
--- a hit and a shot push the cape (world units per second, per character height)
-local CAPE_HIT, CAPE_FIRE = 6, 3
+local CT = require "battle.cape_tuning"
 
 -- springs: position, velocity, stiffness, damping
 local SQ, LEAN, SHOVE, KICK, HEAD, TAIL = 1, 2, 3, 4, 5, 6
@@ -338,7 +333,10 @@ local LEVELS = { "coda", "ala", "mantello", "braccio_d", "manina_d", "gamba_d", 
 -- shader reads it from 0 to 1) in a square around where it is attached, big
 -- enough for the drawing turned any way; and the chain, hanging
 local function make_cape(s, k)
-	local cp = s.cape
+	-- the skin's cape, at the tuned size and place (s.cape is this rig's copy)
+	local c, z = s.cape, CT.size
+	local cp = { img = c.img, x = c.x * z, y = c.y * z, w = c.w * z, h = c.h * z, at = { c.at[1] + CT.at[1], c.at[2] + CT.at[2] } }
+	s.cape = cp
 	local key = "mantello_" .. cp.img
 	if not made_capes[key] then
 		local data = sys and sys.load_resource and sys.load_resource("/assets/capes/" .. cp.img .. ".png")
@@ -366,7 +364,7 @@ local function make_cape(s, k)
 	local length = (H - top) * 0.96 * k
 	s.cloth = CLOTH.new(CAPE_POINTS, length / (CAPE_POINTS - 1))
 	s.cape_body = {}
-	s.cape_opts = { gravity = game.GRAVITY * CAPE_GRAVITY, drag = CAPE_DRAG, bend = CAPE_BEND, circles = s.cape_body }
+	s.cape_opts = { gravity = game.GRAVITY * CT.gravity, drag = CT.drag, bend = CT.bend, circles = s.cape_body }
 end
 
 local function little_hand(s, point, k)
@@ -797,17 +795,18 @@ local function cape(s, dt, st, po, lx, q)
 	pos(s.mantello, ax, ay)
 	local wx, wy = out(ax, ay)
 	local list = s.cape_body
-	for i = 1, #CAPE_BODY, 3 do
-		list[i], list[i + 1] = out(CAPE_BODY[i] * k, CAPE_BODY[i + 1] * k)
-		list[i + 2] = CAPE_BODY[i + 2] * k
+	local body = CT.body
+	for i = 1, #body, 3 do
+		list[i], list[i + 1] = out(body[i] * k, body[i + 1] * k)
+		list[i + 2] = body[i + 2] * k
 	end
 	local o = s.cape_opts
 	o.solid, o.dir = st.solid, -s.face
 	-- the first segment's angles, in the world: down is -pi/2, back is -face
 	if s.face > 0 then
-		o.from, o.to = -pi / 2 - CAPE_BACK, -pi / 2 + CAPE_FORWARD
+		o.from, o.to = -pi / 2 - CT.back, -pi / 2 + CT.forward
 	else
-		o.from, o.to = -pi / 2 - CAPE_FORWARD, -pi / 2 + CAPE_BACK
+		o.from, o.to = -pi / 2 - CT.forward, -pi / 2 + CT.back
 	end
 	CLOTH.step(s.cloth, dt, wx, wy, o)
 	-- to the shader
@@ -1087,7 +1086,7 @@ function M.hit(s, dx)
 	s.v[LEAN] = s.v[LEAN] - 5 * d
 	s.v[HEAD] = s.v[HEAD] - 8 * d
 	s.v[TAIL] = s.v[TAIL] + 4 * d
-	if s.cloth then CLOTH.push(s.cloth, (dx and dx ~= 0) and (dx > 0 and 1 or -1) * CAPE_HIT * s.h or 0, CAPE_HIT * s.h * 0.4) end
+	if s.cloth then CLOTH.push(s.cloth, (dx and dx ~= 0) and (dx > 0 and 1 or -1) * CT.hit * s.h or 0, CT.hit * s.h * 0.4) end
 	s.ui_action, s.action_t = "colpito", 0
 end
 
@@ -1098,7 +1097,7 @@ function M.fire(s, kind)
 	s.v[KICK] = s.v[KICK] + 14 * k
 	s.v[HEAD] = s.v[HEAD] + 3 * k
 	s.v[TAIL] = s.v[TAIL] - 1.5 * k
-	if s.cloth then CLOTH.push(s.cloth, -s.face * CAPE_FIRE * k * s.h, 0) end
+	if s.cloth then CLOTH.push(s.cloth, -s.face * CT.fire * k * s.h, 0) end
 end
 
 -- Lunge dash: stretches forward and bends
