@@ -29,6 +29,17 @@ def leggi(p):
     return (REPO / p).read_text(encoding="utf-8")
 
 
+def shader_web(fp):
+    """client/battle/cape.fp (GLSL 140 di Defold) in GLSL ES 1.0 per il WebGL
+    dell'editor: lo stesso shader del gioco, senza copiarlo a mano."""
+    righe = [r for r in fp.splitlines() if not r.startswith("#version") and r.strip() != "out vec4 out_fragColor;"]
+    fp = "\n".join(righe)
+    fp = re.sub(r"^in ", "varying ", fp, flags=re.M)
+    fp = re.sub(r"uniform \w+\s*\{(.*?)\};", lambda m: "".join("uniform " + x.strip() + "\n" for x in m.group(1).split("\n") if x.strip()), fp, flags=re.S)
+    fp = re.sub(r"\btexture\(", "texture2D(", fp).replace("out_fragColor", "gl_FragColor")
+    return "#extension GL_OES_standard_derivatives : enable\nprecision highp float;\n" + fp
+
+
 def main():
     diavoletto = leggi("client/battle/devil.lua")
     # le immagini che i pezzi usano (img e tinta)
@@ -90,6 +101,7 @@ def main():
         "corpo": leggi("client/sim/body.lua"),
         "squadre": colori,
         "mantello": leggi("client/battle/cape_tuning.lua"),
+        "cape_fp": shader_web(leggi("client/battle/cape.fp")),
         "gravita": 25 * u,
         "corsa": passo["walk_speed"],
         "salto": passo["jump_height"],
