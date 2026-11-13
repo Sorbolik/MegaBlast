@@ -1,0 +1,11 @@
+Image 1 is our approved character, the little devil "Apprendista". Image 2 shows his approved facial expressions: copy their style exactly. Draw ONLY the face layers, as separate pieces for a 2D rig, on one sheet, in a neat grid, pieces separated by at least 40 pixels, all at the same scale, as big as they would be on the head of image 1 drawn 900 pixels tall:
+
+Row 1, EYES: the near eye and the far eye as in image 1, yellow, each in two pieces: the EYE WHITE (the yellow eye shape with its black outline, empty, no pupil) and the PUPIL (the black pupil with its white highlight, alone). So four pieces.
+Row 2, EYEBROWS: five pairs of black eyebrows, each pair side by side: calm, angry (down toward the nose), surprised (high and round), worried (up toward the middle), sly (one up, one down).
+Row 3 and 4, MOUTHS: eight mouths in the same style, each alone, drawn on a cream patch the color of the muzzle so the edges blend: calm smile, big open laugh with tongue, angry clenched teeth, surprised small "o", sad, worried wavy line, sly half smile, shouting wide open.
+
+No head, no face outline around the pieces. No shading gradients. Background: flat pure magenta #FF00FF everywhere outside the pieces. No text, no labels. Landscape 3:2.
+
+Riferimenti (in ordine)
+R1b: art/WB-009/riferimenti/R1b_apprendista_senza_fiammella.png
+apprendista.png: art/WB-012/scelti/apprendista.png

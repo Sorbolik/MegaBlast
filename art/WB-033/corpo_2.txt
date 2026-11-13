@@ -1,0 +1,14 @@
+Image 1 is our approved character, the little devil "Apprendista", in three-quarter view facing right. Redraw the SAME character, same proportions, same colors, same thick black outline, same flat cartoon rendering, but cut into separate pieces made to be bent by a 2D skeleton (cut-out animation with mesh deformation). Lay the pieces out on one sheet, separated from each other by at least 40 pixels, all at the same scale as each other, nothing overlapping:
+
+1. TORSO: chest, belly and hips in ONE piece, the cream belly patch included, no arms, no legs, no head, no scarf. The top ends in a short neck stub; the shoulders and the hips are rounded domes, so the arms and legs can rotate on them without gaps.
+2. SCARF: the blue scarf with its knot, alone.
+3. FRONT ARM: the whole arm in ONE piece, from the shoulder to the closed fist, hanging perfectly straight down, the elbow in the middle. The arm keeps the same width along its length and has NO line, crease or seam at the elbow, so it can bend smoothly anywhere. The top is a rounded dome.
+4. BACK ARM: the same, for the arm on the far side (slightly darker red, as in image 1).
+5. FRONT LEG: the whole leg in ONE piece, from the hip to the foot with its cream toes, perfectly straight, the knee in the middle, same width along its length, NO line or seam at the knee. The top is a rounded dome.
+6. BACK LEG: the same, for the far leg (slightly darker red).
+7. TAIL: the whole tail in ONE piece, drawn almost straight (a gentle curve), thicker at the root, ending with the arrow tip.
+
+No head on this sheet. No shading gradients: one flat color per area plus at most one hard-edged shadow. Background: flat pure magenta #FF00FF everywhere outside the pieces. No text, no labels, no numbers. Landscape 3:2.
+
+Riferimenti (in ordine)
+R1b: art/WB-009/riferimenti/R1b_apprendista_senza_fiammella.png

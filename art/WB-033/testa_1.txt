@@ -1,0 +1,12 @@
+Image 1 is our approved character, the little devil "Apprendista", three-quarter view facing right. Image 2 shows his approved facial expressions. Redraw his HEAD, same shape, colors, thick black outline and flat rendering, split into separate pieces for a 2D rig, on one sheet, pieces separated by at least 40 pixels, all at the same scale:
+
+1. HEAD BASE: the head with the cream muzzle area, but with NO eyes, NO eyebrows and NO mouth: the face is bare skin, ready for the face layers to be drawn on top. No horns, no ears on this piece.
+2. NEAR HORN and FAR HORN: the two horns, each alone, with a flat base where they meet the skull.
+3. NEAR EAR and FAR EAR: the two pointed ears, each alone, with a rounded base.
+4. The same HEAD BASE again, but squashed: 15% shorter and 10% wider (for the landing squash), no horns, no ears, no face.
+
+No scarf, no body. No shading gradients. Background: flat pure magenta #FF00FF everywhere outside the pieces. No text, no labels. Landscape 3:2.
+
+Riferimenti (in ordine)
+R1b: art/WB-009/riferimenti/R1b_apprendista_senza_fiammella.png
+apprendista.png: art/WB-012/scelti/apprendista.png

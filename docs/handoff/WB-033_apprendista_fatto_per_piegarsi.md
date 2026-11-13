@@ -91,4 +91,34 @@ Approvata da Sergio il 13 nov (scelta «Approvata»). Claude porta la scheda su 
 
 ## Consegna di Codex
 
+### 2026-11-13
+
+Sei fogli PNG RGB originali da 1536 × 1024 px in `art/WB-033/`,
+con prompt e riferimenti nei TXT omonimi. Generati con imagegen da
+`main` aggiornato (`e6b5fb66`), con i prompt integrali e i riferimenti
+nell'ordine della scheda.
+
+| File | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `corpo_1` | 1 | 1 |
+| `corpo_2` | 2 | 2 |
+| `testa_1` | 3 | 3 |
+| `testa_2` | 3 | 2 |
+| `viso_1` | 3 | 3 |
+| `viso_2` | 3 | 3 |
+
+Ho controllato contorni, pezzi interi e staccati e assenza di scritte.
+Ogni corpo contiene sette pezzi, con arti dritti senza cuciture al
+gomito o al ginocchio e busto con pancia. Ogni foglio testa contiene
+due basi senza occhi, sopracciglia o bocca, due corna e due orecchie.
+Ogni viso contiene quattro componenti oculari, dieci sopracciglia
+e otto bocche. Il sorriso calmo e quello furbo sono molto simili.
+
+I riquadri dei pezzi distano almeno 51 px nei corpi e 68 px nelle
+teste. Nei fogli del viso lo spazio fra alcuni riquadri scende a
+28–29 px. Le teste schiacciate sono circa il 20–22% più basse e
+il 9–10% più larghe, misurate sui riquadri. Il magenta visibile è
+vicino a `#FF00FF` con variazioni RGB. Restano da verificare scala,
+sovrapposizione degli strati e deformazione in Godot.
+
 ## Resoconto di Claude
