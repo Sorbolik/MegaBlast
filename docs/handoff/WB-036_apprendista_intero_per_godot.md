@@ -66,4 +66,27 @@ quattro varianti, Claude scrive la fase 2 (pezzi sullo stampino e nove teste) co
 
 ## Consegna di Codex
 
+### 2026-11-13
+
+Quattro PNG originali da 1024 × 1536 px in `art/WB-036/`, con
+prompt integrale e riferimenti R1 e R2 nei TXT omonimi. Ho usato
+imagegen dopo il pull e l'aggiornamento del ramo alla scheda
+`de964d8b`, che chiede la fessura appena percettibile. Le prove
+del prompt precedente sono state escluse.
+
+| File | Tentativi con il prompt aggiornato | Tentativo consegnato |
+|---|---:|---:|
+| `tre_quarti_1` | 3 | 3 |
+| `tre_quarti_2` | 3 | 2 |
+| `tre_quarti_3` | 3 | 1 |
+| `tre_quarti_4` | 3 | 3 |
+
+Ho controllato figura intera, fiamma attaccata alla testa, fessura
+sottile e inclinata, fazzoletto verde, sfondo chiaro, contorno scuro
+e assenza di scritte. Le quattro varianti sono simili. Come in R1,
+il piede vicino resta più frontale dell'altro. La radice della coda
+passa dietro il braccio vicino e alcune dita restano distese.
+Sfondo e campiture mostrano lievi variazioni rispetto ai valori
+RGB esatti. Il taglio dei pezzi e la resa nel rig restano da verificare.
+
 ## Resoconto di Claude
