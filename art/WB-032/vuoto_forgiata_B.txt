@@ -1,0 +1,13 @@
+Image 1 is the chosen armour set of our game (left: BASIC form, right: FORGED form). Image 2 is our "stampino": a sheet with grey body parts on magenta; the grey trapezoid between the torso and the wing is the box "mantello". Image 3 shows our previous cape (middle right): it was too narrow and too stiff, do NOT copy its shape.
+
+Draw ONE cape of the FORGED form of image 1, alone, exactly inside the box "mantello" of image 2 and filling it completely (same position, the cape may go a little beyond its bottom and its left side). Seen from the side, hanging straight down behind the shoulders as if the wearer stood still: the top edge is short, straight and horizontal, at the top right corner of the box (where it is tied to the shoulders), no hood, no collar roll, no clasp hanging over the edge. The cape gets much wider toward the bottom: at the hem it is about twice as wide as at the top, flaring out to the left (the back). A cape torn into four or five long tatters in its lower third, each tatter ending in a point, of different lengths. Long folds run from the top edge all the way down to the hem, so the cloth can bend anywhere. Length: down to the knee of the wearer. No body, no arms, no shoulders, nothing else on the sheet.
+
+Same rendering rules as image 1: flat colors, indigo #2B2147 cloth with darker #1A1430 folds, thick closed black outline, trims in pure cyan #00FFFF. Background: flat pure magenta #FF00FF everywhere outside the cape. Do not draw the box, crosses or labels. No text. Landscape 3:2.
+
+Image 4 is the basic cape: draw the same cape, forged: same outline, add the cyan eye emblem near the top and a thin cyan trim along the hem
+
+Riferimenti (in ordine)
+R1: art/WB-019/scelti/vuoto.png
+R2: art/WB-019/riferimenti/R2_stampino_ai.png
+R3: origin/design/WB-019:art/WB-019/vuoto_base.png
+R4: art/WB-032/vuoto_base_B.png

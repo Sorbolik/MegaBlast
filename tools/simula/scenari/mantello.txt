@@ -1,6 +1,6 @@
 # Il mantello piegato dalla catena simulata (battle/cloth.lua) sull'apprendista:
 # fermo, corsa, frenata, salto (sale e scende), atterraggio, giro dall'altra
-# parte. mantello_vuoto è il mantello del Vuoto di WB-019 fase 2
+# parte. mantello_vuoto è il mantello ampio del Vuoto di WB-032
 # (mantello_vuoto_forgiato la forma forgiata). Da vicino: --scala 2.
 imposta prova_pelli apprendista,mantello_vuoto
 
