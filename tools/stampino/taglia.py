@@ -691,8 +691,8 @@ def da_svg():
         t = open(f).read()
         m = re.search(r'<svg[^>]* width="(\d+)" height="(\d+)"', t)
         w, h = round(int(m.group(1)) * k), round(int(m.group(2)) * k)
-        cairosvg.svg2png(bytestring=t.encode(), write_to=os.path.join(ASSETS, nome + ".png"),
-                         output_width=w, output_height=h)
+        percorso = os.path.join(ASSETS, nome + ".png")
+        cairosvg.svg2png(bytestring=t.encode(), write_to=percorso, output_width=w, output_height=h)
 
 
 def rifai():
