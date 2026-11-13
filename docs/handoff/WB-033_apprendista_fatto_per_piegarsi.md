@@ -11,7 +11,9 @@ dalle ossa. I pezzi di oggi sono tagliati per stare rigidi: braccia e gambe spez
 gomito e al ginocchio, faccia disegnata dentro la testa. Piegati, mostrano le cuciture e la
 faccia non può recitare. Serve lo stesso apprendista, stesso stile e stessi colori, ridisegnato
 a pezzi pensati per piegarsi e per le espressioni: braccia e gambe intere e dritte, busto con
-la pancia, testa senza faccia, e la faccia a strati (occhi, pupille, sopracciglia, bocche).
+la pancia, testa senza faccia, e la faccia a strati (occhi, pupille, sopracciglia, bocche). La fiammella esce da un piccolo squarcio
+in cima alla testa, come nelle prime generazioni di apprendista, Favilla e Fabbro: è un pezzo a
+parte solo per seguire il movimento (una catena simulata), ma resta attaccata alla testa.
 È la fase 2 del piano «Apprendista rifatto in Godot» (https://claude.ai/artifact/FuyRsi18ViZeokoeZYeYRw).
 
 ## Riferimenti da allegare
@@ -55,10 +57,11 @@ No head on this sheet. No shading gradients: one flat color per area plus at mos
 ```
 Image 1 is our approved character, the little devil "Apprendista", three-quarter view facing right. Image 2 shows his approved facial expressions. Redraw his HEAD, same shape, colors, thick black outline and flat rendering, split into separate pieces for a 2D rig, on one sheet, pieces separated by at least 40 pixels, all at the same scale:
 
-1. HEAD BASE: the head with the cream muzzle area, but with NO eyes, NO eyebrows and NO mouth: the face is bare skin, ready for the face layers to be drawn on top. No horns, no ears on this piece.
+1. HEAD BASE: the head with the cream muzzle area, but with NO eyes, NO eyebrows and NO mouth: the face is bare skin, ready for the face layers to be drawn on top. No horns, no ears on this piece. On the top of the skull, between where the horns go, a SMALL TORN OPENING in the skin, like a little rip about one fifth of the head wide, with ragged edges and glowing orange-yellow inside: this is where his flame comes out.
 2. NEAR HORN and FAR HORN: the two horns, each alone, with a flat base where they meet the skull.
 3. NEAR EAR and FAR EAR: the two pointed ears, each alone, with a rounded base.
-4. The same HEAD BASE again, but squashed: 15% shorter and 10% wider (for the landing squash), no horns, no ears, no face.
+4. The same HEAD BASE again, but squashed: 15% shorter and 10% wider (for the landing squash), no horns, no ears, no face, with the same torn opening on top.
+5. FLAME: his head flame alone, upright, orange and yellow with a black outline, as tall as the head base. Its bottom is narrow and ragged and has exactly the width and shape of the torn opening of piece 1, so that placed on it the flame grows OUT of the rip in the skull and is clearly part of him, not a separate fire floating on his head.
 
 No scarf, no body. No shading gradients. Background: flat pure magenta #FF00FF everywhere outside the pieces. No text, no labels. Landscape 3:2.
 ```
@@ -81,6 +84,7 @@ No head, no face outline around the pieces. No shading gradients. Background: fl
 - [ ] braccia e gambe intere, dritte, larghe uguali, senza segni al gomito e al ginocchio
 - [ ] spalle e anche a cupola; busto con la pancia in un pezzo solo
 - [ ] testa senza occhi, sopracciglia e bocca; corna e orecchie a parte
+- [ ] in cima alla testa un piccolo squarcio acceso; la fiammella a parte, con la base larga come lo squarcio, così esce dalla testa e non galleggia sopra (Sergio, 13 nov)
 - [ ] pezzi del viso nello stile di R2, staccati, nessuna scritta
 
 ---
