@@ -33,13 +33,14 @@ disegno; il diavoletto è alto 200 unità): `foglio.json`.
   quest'ordine: `pantaloni`, `stivali`, `maglia`, `corazza`, `guanti`, `elmo`, `mantello`.
   Il diavoletto porta al massimo una pelle per categoria.
 - **Il mantello si disegna intero** nella casella `mantello`, appeso dritto dietro le
-  spalle col bordo in alto sulle tre croci rosse. `taglia.py` lo divide lungo le righe
-  verdi tratteggiate in tre strisce (`mantello_1` dietro, `mantello_2`, `mantello_3`),
-  un po' sovrapposte (di più in fondo); nel gioco ognuna gira attorno alla sua croce con
-  la sua molla (`client/battle/scoria.lua`): resta indietro nella corsa, si alza cadendo,
-  sbatte quando arriva un colpo. Solo grafica. La casella si usa solo con
-  `--categoria mantello`, e il mantello solo da quella casella. Prova: scenario
-  `tools/simula/scenari/mantello.txt` (con `mantello_prova`, il mantello finto).
+  spalle col bordo in alto sulla croce rossa. `taglia.py` lo salva intero in
+  `client/assets/capes/` (fuori dall'atlante). Nel gioco pende da una catena di sei punti
+  simulata (`client/battle/cloth.lua`: peso, aria, non entra nel corpo né nel terreno) e
+  uno shader (`client/battle/cape.fp`) piega tutto il disegno lungo la catena: resta
+  indietro nella corsa, si alza cadendo, sbatte col rinculo e coi colpi. Solo grafica.
+  La casella si usa solo con `--categoria mantello`, e il mantello solo da quella casella.
+  Prova: scenario `tools/simula/scenari/mantello.txt` (con `mantello_vuoto_prova`, un
+  mantello finto nei colori del Vuoto).
 - **Si disegnano solo le caselle che cambiano.** Le vuote restano come sono.
 - **Le facce:** una testa nuova senza le altre facce le fa tutte (non cambia
   espressione). Un elmo disegnato sulla `testa` sta su tutte le facce.

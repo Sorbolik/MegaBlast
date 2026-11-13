@@ -4,8 +4,9 @@
 -- center relative to the pivot, size) and replaces the base piece or is
 -- drawn over it. One skin per category; the "over" ones in order. A new
 -- tail has its own lengths, its rest angles (radians) and, if the editor
--- moved it, how far its root is moved (tail_root). A cape: where the pivots
--- of its strips sit in the devil (cape = { x1, y1, x2, y2, x3, y3 }).
+-- moved it, how far its root is moved (tail_root). A cape: its drawing
+-- (client/assets/capes), its center and size from where it is attached
+-- (drawing units) and where it is attached in the devil (at).
 return {
 	replace = { "personaggio", "testa", "corpo", "ali", "coda" },
 	over = { "pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "mantello" },
@@ -107,10 +108,7 @@ return {
 			testa_sconfitta = { img = "favilla_testa_sconfitta_1", tint = nil, x = 6.5, y = 51.8, w = 126.0, h = 139.4, mode = "replace" },
 			testa_sconfitta_1 = { img = "favilla_testa_sconfitta_1", tint = nil, x = 6.5, y = 51.8, w = 126.0, h = 139.4, mode = "replace" },
 		} },
-		mantello_prova = { category = "mantello", cape = { -18, 116, -2, 116, 14, 116 }, pieces = {
-			mantello_1 = { img = "mantello_prova_mantello_1", tint = "mantello_prova_mantello_1_tinta", x = -17.6, y = -41.1, w = 55.1, h = 93.7, mode = "over" },
-			mantello_2 = { img = "mantello_prova_mantello_2", tint = "mantello_prova_mantello_2_tinta", x = -17.3, y = -41.0, w = 54.6, h = 94.0, mode = "over" },
-			mantello_3 = { img = "mantello_prova_mantello_3", tint = "mantello_prova_mantello_3_tinta", x = -11.0, y = -41.1, w = 46.0, h = 93.7, mode = "over" },
+		mantello_vuoto_prova = { category = "mantello", cape = { img = "mantello_vuoto_prova_mantello", x = -19.3, y = -46.3, w = 86.7, h = 104.7, at = { -2, 116 } }, pieces = {
 		} },
 	},
 }

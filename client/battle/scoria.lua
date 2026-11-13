@@ -70,6 +70,9 @@ local SKINS = require "battle.skins"
 local PIVOTS = require "battle.pivots"
 local GRIPS = require "battle.grips"
 local FLAME = require "battle.flame"
+local CLOTH = require "battle.cloth"
+-- the cape drawings loaded (the battle gui lives as long as the game)
+local made_capes = {}
 
 local M = {}
 
@@ -112,12 +115,22 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- how white the hit flash is at most (1 all white)
 local FLASH = 0.85
 
--- the cape's strips (from the back): how much each one follows the motion,
--- its spring's stiffness, the damping; the order they are drawn in
-local CAPE_GAIN = { 1.25, 1, 0.75 }
-local CAPE_W = { 6.5, 7.5, 8.5 }
-local CAPE_Z = 0.32
-local CAPE_ORDER = { 1, 3, 2 }
+-- The cape (WB-019): one whole drawing bent along a simulated chain
+-- (battle/cloth.lua, battle/cape.fp). The chain's points; how much of the
+-- game's gravity the cloth feels (the air holds it a little); the air's drag
+-- (1/s); how much a joint bends at most (radians)
+local CAPE_POINTS = 6
+local CAPE_GRAVITY = 1
+local CAPE_DRAG = 4
+local CAPE_BEND = 0.45
+-- where the cape can go from where it is attached (radians from straight down):
+-- back up to nearly flat, forward only a little
+local CAPE_BACK, CAPE_FORWARD = 1.45, 0.35
+-- the body the cape doesn't go into: circles (drawing units: x, y, r) of the
+-- torso, the hips and the legs, on the devil standing still
+local CAPE_BODY = { 8, 90, 20, 4, 64, 17, 12, 34, 10, -12, 34, 10 }
+-- a hit and a shot push the cape (world units per second, per character height)
+local CAPE_HIT, CAPE_FIRE = 6, 3
 
 -- springs: position, velocity, stiffness, damping
 local SQ, LEAN, SHOVE, KICK, HEAD, TAIL = 1, 2, 3, 4, 5, 6
@@ -321,6 +334,41 @@ local TOWARD_D = atan2(HAND_BACK[2] - J.braccio_dietro[2], HAND_BACK[1] - J.brac
 -- have its own order (layers), otherwise this one
 local LEVELS = { "coda", "ala", "mantello", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "arma",
 	"braccio_a", "manina_a" }
+-- The cape's node: the drawing (loaded on its own, like the live flames: the
+-- shader reads it from 0 to 1) in a square around where it is attached, big
+-- enough for the drawing turned any way; and the chain, hanging
+local function make_cape(s, k)
+	local cp = s.cape
+	local key = "mantello_" .. cp.img
+	if not made_capes[key] then
+		local data = sys and sys.load_resource and sys.load_resource("/assets/capes/" .. cp.img .. ".png")
+		local pic = data and image and image.load(data, { premultiply_alpha = true })
+		if not pic then return end
+		local ok, code = gui.new_texture(key, pic.width, pic.height, pic.type, pic.buffer)
+		if not ok and code ~= gui.RESULT_TEXTURE_ALREADY_EXISTS then return end
+		made_capes[key] = true
+	end
+	-- the drawing: its center from where it is attached (drawing units), its size
+	local W, H = cp.w, cp.h
+	local left, top = W / 2 - cp.x, H / 2 + cp.y
+	local reach = 0
+	for _, e in ipairs({ { -left, top }, { W - left, top }, { -left, top - H }, { W - left, top - H } }) do
+		reach = max(reach, sqrt(e[1] * e[1] + e[2] * e[2]))
+	end
+	local side = 2 * (reach + 4)
+	s.cape_side = side * k
+	local n = box(s.forma, cp.at[1] * k, cp.at[2] * k, side * k, side * k)
+	gui.set_texture(n, key)
+	gui.set_material(n, "mantello")
+	gui.set(n, "frame", vmath.vector4(left / W, top / H, W / side, H / side))
+	s.mantello = n
+	-- the chain: as long as the drawing below where it is attached
+	local length = (H - top) * 0.96 * k
+	s.cloth = CLOTH.new(CAPE_POINTS, length / (CAPE_POINTS - 1))
+	s.cape_body = {}
+	s.cape_opts = { gravity = game.GRAVITY * CAPE_GRAVITY, drag = CAPE_DRAG, bend = CAPE_BEND, circles = s.cape_body }
+end
+
 local function little_hand(s, point, k)
 	local g = joint(s.forma, (point[1] + shift("pugno")[1]) * k, (point[2] + shift("pugno")[2]) * k)
 	dresses(s, g, "pugno", k)
@@ -476,7 +524,7 @@ function M.new(color, look, weapon_only)
 		fire = {}, fire_nodes = {}, fire_col = vmath.vector4(1, 1, 1, 1), white = 0,
 		personaggio = char_name, A = anim_data.A, armed = anim_data.armed,
 		teste = {}, heads_t = {}, facce = {}, vis = {},
-		x = {}, v = {}, goal = {}, coda = {}, coda_a = {}, mantello = {}, cape_a = {}, cape_v = {},
+		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
 		-- this frame's pose from the clips and the angles (radians) of the hanging
 		-- arms and legs, which chase it
 		posa = pose.new(), braccia = { 0, 0 }, gambe = { 0, 0 } }
@@ -517,14 +565,8 @@ function M.new(color, look, weapon_only)
 	end
 	s.ala = joint(s.forma, J.ala[1] * k, J.ala[2] * k)
 	dresses(s, s.ala, "ala", k)
-	-- the cape (WB-019): three strips hanging behind the shoulders, each turning
-	-- around the middle of its top edge; the middle one on top of the others
-	if s.cape then
-		for _, i in ipairs(CAPE_ORDER) do
-			s.mantello[i] = joint(s.forma, s.cape[2 * i - 1] * k, s.cape[2 * i] * k)
-			dresses(s, s.mantello[i], "mantello_" .. i, k)
-		end
-	end
+	-- the cape, right above the wing
+	if s.cape then make_cape(s, k) end
 	s.braccio_d = joint(s.forma, J.braccio_dietro[1] * k, J.braccio_dietro[2] * k)
 	dresses(s, s.braccio_d, "braccio_dietro", k)
 	s.manina_d = little_hand(s, HAND_BACK, k)
@@ -577,7 +619,7 @@ function M.new(color, look, weapon_only)
 	s.manina_a = little_hand(s, HAND_FRONT, k)
 	-- the nodes of each layer, in the order they were made (LEVELS)
 	s.level_nodes = { coda = { s.coda[1][1], s.coda[1][2] }, ala = { s.ala }, braccio_d = { s.braccio_d },
-		mantello = s.cape and { s.mantello[CAPE_ORDER[1]], s.mantello[CAPE_ORDER[2]], s.mantello[CAPE_ORDER[3]] },
+		mantello = s.mantello and { s.mantello },
 		manina_d = { s.manina_d }, gamba_d = { s.gamba_d }, gamba_a = { s.gamba_a }, busto = { s.busto },
 		testa = { s.collo }, arma = { s.presa }, braccio_a = { s.braccio_a }, manina_a = { s.manina_a } }
 	s.z_order = LEVELS
@@ -640,7 +682,7 @@ function M.reset(s)
 	for i = 1, 2 do s.braccia[i], s.gambe[i] = 0, 0 end
 	local rest = s.tail_shape.riposo
 	for i = 1, #rest do s.coda_a[i] = rest[i] - (i > 1 and rest[i - 1] or 0) end
-	for i = 1, #CAPE_GAIN do s.cape_a[i], s.cape_v[i] = 0, 0 end
+	if s.cloth then s.cloth.ax = nil end
 	s.flash = 0
 	s.morte, s.morto = nil, nil
 	s.skit, s.skit_t, s.n_skits = nil, 0, 0
@@ -719,39 +761,68 @@ local function coda(s, dt, turn_around)
 	end
 end
 
--- The cape: each strip hangs from its pivot (moved with the torso) and chases
--- its angle with its own spring: it trails behind running and falling, lifts a
--- little going up, keeps hanging down when the body tilts (tilt) and flutters
--- more the faster it goes. The back strip moves the most, so the cape opens like
--- cloth. Graphics only: the simulation doesn't know it
-local function cape(s, dt, po, tilt)
-	-- speeds in character heights per second
-	local run = max(-1, min(1, s.vx / (2.5 * s.h)))
-	local fall = max(-1, min(1, -s.vy / (7 * s.h)))
-	local speed = min(1, (abs(s.vx) + abs(s.vy)) / (8 * s.h))
-	local n = max(1, math.ceil(dt * 120))
-	local h = dt / n
-	local bx, by = J.busto[1] + po.busto_x, J.busto[2] + po.busto_y
+-- The cape: the chain hangs from the shoulders (moved with the torso), in the
+-- world, so whatever moves the devil moves it: running, jumping, falling, the
+-- pushes, turning around. It doesn't go into the body or the terrain
+-- (st.solid, in battle). Then the chain goes to the shader in the node's
+-- coordinates (-0.5 .. 0.5 on the side, y up), which bends the drawing on it.
+-- The node is in the shape like the other pieces: the chain's points are
+-- brought back through the shape's squash, the body's tilt and the facing.
+local CAPE_V = { vmath.vector4(), vmath.vector4(), vmath.vector4() }
+local CAPE_C = vmath.vector4(1, 1, 1, 1)
+-- the shape's transform this frame: squash, the body's tilt and position, the facing, the feet
+local T = { lx = 1, q = 1, cr = 1, sr = 0, cx = 0, cy = 0, face = 1, x = 0, y = 0 }
+-- from the shape (world units) to the world, and back
+local function out(x, y)
+	x, y = x * T.lx, y * T.q
+	x, y = T.cx + x * T.cr - y * T.sr, T.cy + x * T.sr + y * T.cr
+	return T.x + T.face * x, T.y + y
+end
+local function back(x, y)
+	x, y = (x - T.x) * T.face - T.cx, y - T.y - T.cy
+	x, y = x * T.cr + y * T.sr, -x * T.sr + y * T.cr
+	return x / T.lx, y / T.q
+end
+local function cape(s, dt, st, po, lx, q)
+	local k = s.k
+	local r = s.x[LEAN] + po.corpo
+	T.lx, T.q, T.cr, T.sr = lx, q, cos(r), sin(r)
+	T.cx, T.cy = -s.x[SHOVE] * s.w + po.corpo_x * k, po.salto * k
+	T.face, T.x, T.y = s.face, st.x, st.y
+	-- where it is attached: the torso's point, turned with the torso
 	local c, sn = cos(po.busto), sin(po.busto)
-	for i = 1, #CAPE_GAIN do
-		local g = CAPE_GAIN[i]
-		local goal = -tilt - g * (0.7 * run + 0.9 * max(0, fall) - 0.2 * max(0, -fall))
-			+ sin(s.t * (4.5 + i) + i * 1.7) * (0.02 + 0.07 * speed)
-		goal = max(-1.4, min(0.35, goal))
-		local w, a, v = CAPE_W[i], s.cape_a[i], s.cape_v[i]
-		for _ = 1, n do
-			v = v + (w * w * (goal - a) - 2 * CAPE_Z * w * v) * h
-			a = a + v * h
-		end
-		s.cape_a[i], s.cape_v[i] = a, v
-		local m = s.mantello[i]
-		if m then
-			-- the pivot turns with the torso around the torso's joint
-			local dx, dy = s.cape[2 * i - 1] - J.busto[1], s.cape[2 * i] - J.busto[2]
-			pos(m, (bx + dx * c - dy * sn) * s.k, (by + dx * sn + dy * c) * s.k)
-			rot(m, a)
-		end
+	local bx, by = J.busto[1] + po.busto_x, J.busto[2] + po.busto_y
+	local dx, dy = s.cape.at[1] - J.busto[1], s.cape.at[2] - J.busto[2]
+	local ax, ay = (bx + dx * c - dy * sn) * k, (by + dx * sn + dy * c) * k
+	pos(s.mantello, ax, ay)
+	local wx, wy = out(ax, ay)
+	local list = s.cape_body
+	for i = 1, #CAPE_BODY, 3 do
+		list[i], list[i + 1] = out(CAPE_BODY[i] * k, CAPE_BODY[i + 1] * k)
+		list[i + 2] = CAPE_BODY[i + 2] * k
 	end
+	local o = s.cape_opts
+	o.solid, o.dir = st.solid, -s.face
+	-- the first segment's angles, in the world: down is -pi/2, back is -face
+	if s.face > 0 then
+		o.from, o.to = -pi / 2 - CAPE_BACK, -pi / 2 + CAPE_FORWARD
+	else
+		o.from, o.to = -pi / 2 - CAPE_FORWARD, -pi / 2 + CAPE_BACK
+	end
+	CLOTH.step(s.cloth, dt, wx, wy, o)
+	-- to the shader
+	local side, cl = s.cape_side, s.cloth
+	for i = 1, CAPE_POINTS do
+		local x, y = back(cl.x[i], cl.y[i])
+		x, y = (x - ax) / side, (y - ay) / side
+		local v = CAPE_V[math.floor((i + 1) / 2)]
+		if i % 2 == 1 then v.x, v.y = x, y else v.z, v.w = x, y end
+	end
+	gui.set(s.mantello, "chain_a", CAPE_V[1])
+	gui.set(s.mantello, "chain_b", CAPE_V[2])
+	gui.set(s.mantello, "chain_c", CAPE_V[3])
+	CAPE_C.z = 1 - s.white
+	gui.set_color(s.mantello, CAPE_C)
 end
 
 -- Defeat: the weapon drops, it falls backward with X eyes (the sconfitta
@@ -798,8 +869,6 @@ function M.update(s, dt, st)
 		s.v[SQ] = s.v[SQ] - min(7, -s.vy / 40)
 		s.v[HEAD] = s.v[HEAD] - min(4, -s.vy / 80)
 		s.v[TAIL] = s.v[TAIL] - min(3, -s.vy / 100)
-		-- the cape, lifted by the fall, swings forward
-		for i = 1, #CAPE_GAIN do s.cape_v[i] = s.cape_v[i] + min(4, -s.vy / 120) * CAPE_GAIN[i] end
 	elseif not ground and s.ground and s.vy > 20 then
 		s.v[SQ] = s.v[SQ] + 4
 		s.v[TAIL] = s.v[TAIL] + 2
@@ -948,7 +1017,7 @@ function M.update(s, dt, st)
 	pos(s.coda[1][1], (rc[1] + po.coda_x) * s.k, (rc[2] + po.coda_y) * s.k)
 	pos(s.coda[1][2], (rc[1] + po.coda_x) * s.k, (rc[2] + po.coda_y) * s.k)
 	coda(s, dt, po.coda_gira)
-	if s.cape then cape(s, dt, po, s.x[LEAN] + po.corpo) end
+	if s.mantello then cape(s, dt, st, po, lx, q) end
 	pos(s.collo, (J.testa[1] + po.testa_x) * s.k, (J.testa[2] + po.testa_y) * s.k)
 	rot(s.collo, s.x[HEAD])
 	scale(s.collo, 1 / lx, 1 / q)
@@ -986,9 +1055,7 @@ function M.update(s, dt, st)
 	visible(s, s.gamba_d, po.mostra_gamba_d > 0.5)
 	visible(s, s.coda[1][1], po.mostra_coda > 0.5)
 	visible(s, s.coda[1][2], po.mostra_coda > 0.5)
-	for i = 1, #CAPE_GAIN do
-		if s.mantello[i] then visible(s, s.mantello[i], po.mostra_busto > 0.5) end
-	end
+	if s.mantello then visible(s, s.mantello, po.mostra_busto > 0.5) end
 end
 
 function M.set_weapon(s, name)
@@ -1020,7 +1087,7 @@ function M.hit(s, dx)
 	s.v[LEAN] = s.v[LEAN] - 5 * d
 	s.v[HEAD] = s.v[HEAD] - 8 * d
 	s.v[TAIL] = s.v[TAIL] + 4 * d
-	for i = 1, #CAPE_GAIN do s.cape_v[i] = s.cape_v[i] - 5 * d * CAPE_GAIN[i] end
+	if s.cloth then CLOTH.push(s.cloth, (dx and dx ~= 0) and (dx > 0 and 1 or -1) * CAPE_HIT * s.h or 0, CAPE_HIT * s.h * 0.4) end
 	s.ui_action, s.action_t = "colpito", 0
 end
 
@@ -1031,6 +1098,7 @@ function M.fire(s, kind)
 	s.v[KICK] = s.v[KICK] + 14 * k
 	s.v[HEAD] = s.v[HEAD] + 3 * k
 	s.v[TAIL] = s.v[TAIL] - 1.5 * k
+	if s.cloth then CLOTH.push(s.cloth, -s.face * CAPE_FIRE * k * s.h, 0) end
 end
 
 -- Lunge dash: stretches forward and bends
@@ -1039,7 +1107,6 @@ function M.lunge(s)
 	s.v[LEAN] = s.v[LEAN] + 8
 	s.v[HEAD] = s.v[HEAD] + 4
 	s.v[TAIL] = s.v[TAIL] - 3
-	for i = 1, #CAPE_GAIN do s.cape_v[i] = s.cape_v[i] - 4 * CAPE_GAIN[i] end
 end
 
 -- Defeat: the weapon drops, it falls backward and fades
