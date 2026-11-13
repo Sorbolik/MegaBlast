@@ -10,6 +10,8 @@ Fase 2 di [PERSONAGGI.md](PERSONAGGI.md) per l'apprendista scelto in WB-036 (var
 con gli stessi prompt che hanno funzionato in WB-009 (`8_corpo_fedele`, `7_teste`,
 `9_braccia_chiuse`) e due fogli nuovi per la prova con Godot:
 
+- **fazzoletto a parte**: il busto ha il collo nudo e il fazzoletto è un pezzo suo, così sparisce
+  quando si mette il mantello, che allora gira attorno al collo (Sergio, 13 nov);
 - **palpebre**: la testa di base tre volte, occhi aperti, socchiusi e chiusi, identica in tutto
   il resto, per un battito di ciglia pulito (si scambia il disegno, niente shader che sporca);
 - **fiamma**: la fiammella da sola, dritta, come nel riferimento iniziale di Sergio (R6), che in
@@ -62,8 +64,8 @@ Image 1 is the main character of our game, a little blacksmith-apprentice imp, i
 
 Image 2 is a layout sheet: grey placeholder parts on a flat magenta #FF00FF background, in three rows. Use image 2 ONLY to know where each part goes on the sheet and roughly how big it is. Do NOT copy the grey parts' shapes. Image 3 shows how the grey parts attach to each other.
 
-Make the BODY PARTS SHEET of the imp of image 1, cut apart like a paper puppet, on the same canvas as image 2 with the same flat magenta #FF00FF background. Leave the WHOLE FIRST ROW EMPTY (pure magenta, no heads: the heads are done separately). Draw only these parts, each over its grey placeholder, well separated from each other, each COMPLETE even where other parts would hide it in image 1:
-Row 2: the TORSO of image 1 without head, arms, legs and tail: the same shape as in image 1, with the same belly patch, the neckerchief knotted around the neck painted in pure bright green #00FF00 shaded only with #00B400, and a short neck stub on top. NO shoulder bumps and no stubby arms: at each shoulder the torso simply ends with a smooth, round, full edge of plain skin. Then NOTHING where the grey wing is (leave that spot empty magenta: he has no wings). Then the WHOLE TAIL of image 1 in one piece, with the same curve, the same thickness and the same arrowhead tip: one smooth continuous tube, thick at the root and thinner towards the tip, with no breaks, seams or joints along it.
+Make the BODY PARTS SHEET of the imp of image 1, cut apart like a paper puppet, on the same canvas as image 2 with the same flat magenta #FF00FF background. In the FIRST ROW draw only ONE part, in the middle of the row: the NECKERCHIEF of image 1 alone, knotted, as it sits around his neck, painted in pure bright green #00FF00 shaded only with #00B400, with its thick black outline closed all around (no heads in this row: they are done separately). Then draw these parts, each over its grey placeholder, well separated from each other, each COMPLETE even where other parts would hide it in image 1:
+Row 2: the TORSO of image 1 without head, arms, legs and tail: the same shape as in image 1, with the same belly patch and a short neck stub on top, but WITHOUT the neckerchief: the neck and the top of the chest are plain bare skin and belly, as if he took the neckerchief off (it is the separate piece of the first row). NO shoulder bumps and no stubby arms: at each shoulder the torso simply ends with a smooth, round, full edge of plain skin. Then NOTHING where the grey wing is (leave that spot empty magenta: he has no wings). Then the WHOLE TAIL of image 1 in one piece, with the same curve, the same thickness and the same arrowhead tip: one smooth continuous tube, thick at the root and thinner towards the tip, with no breaks, seams or joints along it.
 Row 3: the near arm and the far arm, copied from image 1 (same slim shape, same relaxed hand), each straight and hanging down from a round shoulder end; the near leg and the far leg, copied from image 1 (same thigh and calf, same bare three-toed foot pointing right), each straight, round at the hip end; one closed four-fingered fist, the size of the hands in image 1 (a small round piece, outlined all around).
 
 OUTLINE AND JOINTS, very important: every part has a thick, clean pure-black #000000 outline, EXCEPT at its joint ends. At a joint end the black outline gets gradually thinner and disappears completely; the last stretch of the part is filled with its flat color right to the edge, rounded and full, with NO black line across it. Joint ends are: the neck stub and the two shoulder edges of the torso; the top of each arm (shoulder end); the top of each leg (hip end); the root of the tail. The color near every joint end must be PERFECTLY UNIFORM plain skin #B8432A: no shadow, no highlight, no line, no color change in the last stretch before the joint, so that two overlapping parts of bare skin blend into one surface with no visible seam. Keep shadow shapes well away from the joint ends.
@@ -126,7 +128,8 @@ Square 1024x1024.
 
 - [ ] ogni pezzo copiato forma per forma da R1, nella casella giusta dello stampino
 - [ ] contorno nero spesso, che sparisce alle estremità delle giunture; pelle uniforme lì
-- [ ] busto senza spalline, coda intera senza giunture, piedi a destra
+- [ ] busto senza spalline e SENZA fazzoletto (collo nudo); il fazzoletto da solo nella prima riga (Sergio, 13 nov: deve poter sparire quando si mette il mantello)
+- [ ] coda intera senza giunture, piedi a destra
 - [ ] nove teste senza collo e senza fiamma, contorno chiuso, identiche tranne la faccia
 - [ ] palpebre: tre teste identiche tranne gli occhi (aperti, socchiusi, chiusi)
 - [ ] fiamma dritta e da sola, uguale a R6, base stretta e chiusa
