@@ -72,4 +72,33 @@ che chiedeva pezzi sciolti.
 
 ## Consegna di Codex
 
+### 2026-11-13
+
+Quattro PNG RGB originali da 1254 × 1254 px in `art/WB-034/`,
+con prompt integrali e riferimenti nei TXT. Generati con imagegen
+da `main` aggiornato (`68221e1c`).
+
+| Nome | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `testa_nuda_1` | 3 | 3 |
+| `testa_nuda_2` | 3 | 3 |
+| `testa_fiamma_1` | 3 | 1 |
+| `testa_fiamma_2` | 3 | 1 |
+
+Ho verificato che occhi, sopracciglia e bocca siano assenti e che
+naso, orecchie e corna siano presenti. Le basi hanno uno squarcio
+acceso fra le corna. Le fiammelle sono attaccate allo squarcio.
+Non ci sono scritte, collo o corpo.
+
+Il generatore ha restituito 1254 × 1254 px in tutti i tentativi,
+rispetto ai 1024 × 1024 richiesti. Anche nel confronto alla scala
+di R1, il contorno delle basi non coincide: la testa è più alta
+nel foglio e il muso varia. Le fiammelle sono state generate
+entrambe da `testa_nuda_1.png` e R3. Il contorno inferiore è
+vicino alla base, con piccole differenze. Il magenta è visivamente
+uniforme, con valori RGB diversi da `#FF00FF`.
+La corrispondenza pixel per pixel richiesta per ricavare gli
+strati del viso per differenza non è soddisfatta. La resa degli
+strati in Godot resta da verificare.
+
 ## Resoconto di Claude

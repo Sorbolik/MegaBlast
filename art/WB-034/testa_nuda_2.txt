@@ -1,0 +1,11 @@
+Image 1 is the head of our little devil "Apprendista" on a flat magenta background. Image 2 shows the same head with his nine expressions. Redraw image 1 EXACTLY: same head, same horns, same ears, same muzzle, same nose, same colors, same thick black outline, same flat rendering, and above all the SAME SIZE and the SAME POSITION on the canvas, pixel for pixel, so the two images can be laid one over the other.
+
+Only two changes:
+1. Remove the face: NO eyes, NO eyebrows, NO mouth line. Where they were, paint the skin and the cream muzzle as if they had never been there, with the same flat colors. Keep the nose and the inner ear lines.
+2. On the top of the skull, between the horns, add a SMALL TORN OPENING in the skin: a little rip about one sixth of the head wide, with ragged edges and glowing orange-yellow inside. This is where his flame comes out.
+
+No flame, no neck, no body. Background: flat pure magenta #FF00FF everywhere outside the head, like image 1. No text, no labels. Square 1024x1024.
+
+Riferimenti (in ordine)
+R1: art/WB-034/riferimenti/R1_testa_guida.png
+R2: art/WB-009/7_teste.png

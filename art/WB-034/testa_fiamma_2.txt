@@ -1,0 +1,7 @@
+Image 1 is the head of our little devil "Apprendista" with a small glowing torn opening on top of the skull. Image 2 shows the same character with his head flame. Redraw image 1 EXACTLY, same size, same position on the canvas, pixel for pixel, and add his flame coming OUT of the torn opening: orange and yellow like image 2, with a thick black outline, about as tall as the head without the horns, leaning slightly back. The bottom of the flame is narrow and ragged and sits INSIDE the rip, so the flame clearly grows out of his skull and is part of him, not a separate fire floating above the head. Nothing else changes.
+
+Background: flat pure magenta #FF00FF everywhere outside the head and the flame. No text, no labels. Square 1024x1024.
+
+Riferimenti (in ordine)
+Base: art/WB-034/testa_nuda_1.png
+R3: art/WB-018/riferimenti/R1_apprendista_concept.png
