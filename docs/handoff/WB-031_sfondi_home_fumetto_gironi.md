@@ -145,4 +145,40 @@ Approvata da Sergio il 2026-11-13 (stile fumetto di WB-030 per tutti i gironi).
 
 ## Consegna di Codex
 
+### 2026-11-13
+
+Nove sfondi PNG RGB da 1672 × 941 px, generati con imagegen da `main`
+aggiornato (`5696ce47`). Ogni tentativo ha usato il prompt integrale
+e R1, R2, R3 nell'ordine indicato. In `art/WB-031/` ogni PNG è
+affiancato da un TXT omonimo con il prompt e i riferimenti.
+
+| File | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `sfondo_home_cortile` | 3 | 2 |
+| `sfondo_home_forgia` | 3 | 3 |
+| `sfondo_home_lussuria` | 3 | 1 |
+| `sfondo_home_avarizia` | 3 | 3 |
+| `sfondo_home_ira` | 3 | 3 |
+| `sfondo_home_eresia` | 3 | 2 |
+| `sfondo_home_violenza` | 3 | 2 |
+| `sfondo_home_frode` | 3 | 2 |
+| `sfondo_home_tradimento` | 3 | 1 |
+
+Ho verificato contorni scuri, campiture, cieli a bande, palette
+distinguibili, fascia scura con linea vicina all'86% dell'altezza e
+assenza di scritte, personaggi vivi, cornici e interfaccia.
+
+Ho confrontato le prove anche con un ritaglio di simulazione del 10%
+per lato e del 3% in alto. La scena resta riconoscibile in ogni
+sfondo, ma la fascia laterale richiesta è rispettata solo in parte.
+Il ritaglio intacca soprattutto i massi di Avarizia, i rilievi di
+Frode, le torri di Ira ed Eresia e gli alberi di Violenza. Nel
+Cortile il portone e in Eresia il cancello illuminato si leggono
+ancora al centro, come elementi lontani. Anche il trono di Avarizia
+e il pozzo di Tradimento restano visibili in lontananza.
+
+La resa con l'interfaccia sovrapposta e il ritaglio effettivo del
+telefono restano da verificare nel gioco.
+
+
 ## Resoconto di Claude
