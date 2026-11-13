@@ -83,6 +83,7 @@ return {
 			coda_4_bordo = { img = "apprendista_nuovo_coda_4_bordo", tint = nil, x = 11.4, y = 0.4, w = 43.7, h = 21.4, mode = "replace" },
 			coda_5 = { img = "apprendista_nuovo_coda_5", tint = nil, x = 26.1, y = 2.5, w = 67.7, h = 19.7, mode = "replace" },
 			coda_5_bordo = { img = "apprendista_nuovo_coda_5_bordo", tint = nil, x = 32.1, y = 2.8, w = 84.3, h = 40.9, mode = "replace" },
+			fiamma = { img = "apprendista_fiamma", tint = nil, x = 0.0, y = 27.0, w = 38.3, h = 54.0, mode = "replace" },
 			gamba = { img = "apprendista_nuovo_gamba_1", tint = nil, x = 4.5, y = -30.8, w = 58.6, h = 82.3, mode = "replace" },
 			gamba_1 = { img = "apprendista_nuovo_gamba_1", tint = nil, x = 4.5, y = -30.8, w = 58.6, h = 82.3, mode = "replace" },
 			gamba_dietro = { img = "apprendista_nuovo_gamba_dietro_1", tint = nil, x = 4.7, y = -29.9, w = 60.6, h = 79.7, mode = "replace" },
