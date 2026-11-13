@@ -108,9 +108,9 @@ return {
 			testa_sconfitta = { img = "favilla_testa_sconfitta_1", tint = nil, x = 6.5, y = 51.8, w = 126.0, h = 139.4, mode = "replace" },
 			testa_sconfitta_1 = { img = "favilla_testa_sconfitta_1", tint = nil, x = 6.5, y = 51.8, w = 126.0, h = 139.4, mode = "replace" },
 		} },
-		mantello_vuoto = { category = "mantello", cape = { img = "mantello_vuoto_mantello", x = -32.6, y = -80.1, w = 129.8, h = 168.7, at = { -2, 116 } }, pieces = {
+		mantello_vuoto = { category = "mantello", cape = { img = "mantello_vuoto_mantello", x = -21.5, y = -52.0, w = 86.7, h = 112.4, at = { -2, 116 } }, pieces = {
 		} },
-		mantello_vuoto_forgiato = { category = "mantello", cape = { img = "mantello_vuoto_forgiato_mantello", x = -32.6, y = -80.1, w = 130.4, h = 168.7, at = { -2, 116 } }, pieces = {
+		mantello_vuoto_forgiato = { category = "mantello", cape = { img = "mantello_vuoto_forgiato_mantello", x = -21.5, y = -52.0, w = 87.1, h = 112.4, at = { -2, 116 } }, pieces = {
 		} },
 	},
 }

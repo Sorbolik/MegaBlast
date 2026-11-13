@@ -3,10 +3,10 @@
  "categoria": "mantello",
  "mantello": {
   "img": "mantello_vuoto_mantello",
-  "x": -32.6,
-  "y": -80.1,
-  "w": 129.8,
-  "h": 168.7,
+  "x": -21.5,
+  "y": -52.0,
+  "w": 86.7,
+  "h": 112.4,
   "attacco": [
    -2,
    116
