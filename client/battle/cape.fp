@@ -2,7 +2,8 @@
 
 // The cape (battle/scoria.lua, battle/cloth.lua): the whole drawing of the
 // cape, bent along the simulated chain. The node is a square around the point
-// where the cape is attached. The chain is a strip of five quads, like a mesh:
+// where the cape is attached. The chain is smoothed into a curve (Catmull-Rom
+// through its six points) and the curve is a strip of fifteen quads, like a mesh:
 // each segment goes from one joint to the next, and at each joint the side
 // edge is the bisector of the two segments (the miter), so neighbouring quads
 // share it and the drawing bends without tearing. For each pixel, every quad
@@ -57,46 +58,76 @@ void main()
     mediump float a = max(var_color.a, 0.0001);
     highp vec2 p = var_texcoord0 - 0.5;
 
-    highp vec2 c[6];
-    c[0] = chain_a.xy; c[1] = chain_a.zw;
-    c[2] = chain_b.xy; c[3] = chain_b.zw;
-    c[4] = chain_c.xy; c[5] = chain_c.zw;
+    // the six points, with one more at each end to start and end the curve
+    highp vec2 k[8];
+    k[1] = chain_a.xy; k[2] = chain_a.zw;
+    k[3] = chain_b.xy; k[4] = chain_b.zw;
+    k[5] = chain_c.xy; k[6] = chain_c.zw;
+    k[0] = 2.0 * k[1] - k[2];
+    k[7] = 2.0 * k[6] - k[5];
+
+    // the chain smoothed: a Catmull-Rom curve through the six points, three
+    // quads for each segment, so the folds bend in a curve and not at a corner
+    highp vec2 c[16];
+    highp float total = 0.0;
+    for (int j = 0; j < 5; j++) {
+        highp vec2 p0 = k[j];
+        highp vec2 p1 = k[j + 1];
+        highp vec2 p2 = k[j + 2];
+        highp vec2 p3 = k[j + 3];
+        total += length(p2 - p1);
+        for (int h = 0; h < 3; h++) {
+            highp float u = float(h) / 3.0;
+            c[j * 3 + h] = 0.5 * (2.0 * p1 + (p2 - p0) * u + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * u * u
+                                  + (3.0 * p1 - p0 - 3.0 * p2 + p3) * u * u * u);
+        }
+    }
+    c[15] = k[6];
 
     // each segment's length and its side (to the right of the chain going down)
-    highp vec2 n[5];
-    highp float len[5];
-    for (int i = 0; i < 5; i++) {
+    highp vec2 n[15];
+    highp float len[15];
+    highp float curve = 0.0;
+    for (int i = 0; i < 15; i++) {
         highp vec2 sg = c[i + 1] - c[i];
         len[i] = max(length(sg), 1e-5);
+        curve += len[i];
         highp vec2 dir = sg / len[i];
         n[i] = vec2(-dir.y, dir.x);
     }
+    // along the curve the drawing keeps the chain's length
+    highp float stretch = total / curve;
     // the side edge at each joint: the miter, as long as it takes to keep the width
-    highp vec2 m[6];
+    highp vec2 m[16];
     m[0] = n[0];
-    m[5] = n[4];
-    for (int i = 1; i < 5; i++) m[i] = (n[i - 1] + n[i]) / max(1.0 + dot(n[i - 1], n[i]), 0.2);
+    m[15] = n[14];
+    for (int i = 1; i < 15; i++) m[i] = (n[i - 1] + n[i]) / max(1.0 + dot(n[i - 1], n[i]), 0.2);
 
     mediump float up = step(texture(texture_sampler, vec2(0.0005, 1.0 - 0.0005)).a,
                             texture(texture_sampler, vec2(0.0005, 0.0005)).a);
     // a quarter of a pixel, in the drawing
     highp vec2 duv = fwidth(p) / frame.zw * 0.25;
 
+    // how far the drawing goes to the side of the chain, at most
+    highp float wide = max(frame.x, 1.0 - frame.x) * frame.z + 0.01;
     mediump vec4 col = vec4(0.0);
     highp float run = 0.0;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 15; i++) {
         // p = A + t e + d (Na + t f): find t (0-1 along the segment) and d
         highp vec2 A = c[i];
         highp vec2 e = c[i + 1] - A;
         highp vec2 Na = m[i];
         highp vec2 f = m[i + 1] - Na;
         highp vec2 q = p - A;
+        // too far from this quad: skip it (most pixels are near one or two)
+        highp float reach = 0.5 * len[i] + wide * max(length(Na), length(m[i + 1])) + (i == 0 || i == 14 ? 1.0 : 0.0);
+        if (length(q - 0.5 * e) > reach) { run += len[i]; continue; }
         highp float k2 = -cross2(e, f);
         highp float k1 = cross2(q, f) - cross2(e, Na);
         highp float k0 = cross2(q, Na);
         // the first quad goes on above the attachment (the collar), the last past the end
         highp float lo = i == 0 ? -1.0 / len[i] : 0.0;
-        highp float hi = i == 4 ? 1.0 + 1.0 / len[i] : 1.0;
+        highp float hi = i == 14 ? 1.0 + 1.0 / len[i] : 1.0;
         highp float t = -1e9;
         if (abs(k2) < 1e-7) {
             if (abs(k1) > 1e-9) t = -k0 / k1;
@@ -112,7 +143,7 @@ void main()
         if (t >= lo && t < hi) {
             highp vec2 side = Na + t * f;
             highp float d = dot(q - t * e, side) / dot(side, side);
-            highp float s = run + t * len[i];
+            highp float s = (run + t * len[i]) * stretch;
             highp vec2 uv = vec2(frame.x + d / frame.z, frame.y + s / frame.w);
             // only where the drawing is: the rest of the square reads nothing
             if (uv.x > -duv.x && uv.x < 1.0 + duv.x && uv.y > -duv.y && uv.y < 1.0 + duv.y) {

@@ -82,3 +82,7 @@ scheda su `main`.
 - Nel gioco va B, base e forgiata (`mantello_vuoto`, `mantello_vuoto_forgiato`), al posto del
   mantello stretto di WB-019; A resta fra le tavole. Foto: fermo, corsa, salto, salto in corsa
   (scenario `mantello.txt`).
+- 13 nov, dopo l'«ancora si spezzetta» di Sergio nell'editor: B così era lungo fino a terra; da
+  fermo la catena toccava il suolo e piegava ad angolo retto, e il disegno si spezzava. Ritagliato
+  con `--mantello-px 7.2`: ora appeso dritto finisce poco sopra i piedi (e ha più pixel per unità).
+  In più lo shader piega il disegno lungo una curva liscia (Catmull-Rom) invece che a spigoli.
