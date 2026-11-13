@@ -1,6 +1,6 @@
 # WB-031 · Sfondi della home a fumetto per tutti i gironi
 
-- **Stato:** APPROVATA (Sergio, 2026-11-13: «molto fighe, facciamole tutte con la prima versione»)
+- **Stato:** IMPLEMENTATA (nel gioco con la PR dello sfondo del posto raggiunto) · prima APPROVATA (Sergio, 2026-11-13: «molto fighe, facciamole tutte con la prima versione»)
 - **Data:** 2026-11-13
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-031`
 
@@ -182,3 +182,8 @@ telefono restano da verificare nel gioco.
 
 
 ## Resoconto di Claude
+
+Tutte e nove buone, nessuna scartata (Claude, 13 nov). Nel gioco come `client/paintings/backdrops/<posto>.jpg`
+(`tools/grafica/fucina.py`, con Limbo e Gola a fumetto di WB-030), dietro a ogni schermata secondo il posto
+raggiunto (`kit.reached`). Verificato: `simula.py` con ogni posto nella home e in ALLENAMENTO (foto
+`home_luoghi.jpg` nei file del progetto), `tutti.sh` OK. Non verificato: schermi 20:9 e 4:3.

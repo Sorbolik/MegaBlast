@@ -78,7 +78,7 @@ end
 function M.new(color)
 	local h = { tops = {}, buttons = {}, doors = {}, t = 0, colore = color }
 
-	h.scene = kit.scene(BODY_X, 350, { bg = "home" })
+	h.scene = kit.scene(BODY_X, 350, { bg = true })
 
 	-- the apprentice, in the middle, its feet on the thread
 	local mid = kit.anchor(BODY_X, BODY_Y, nil, gui.ANCHOR_BOTTOM)

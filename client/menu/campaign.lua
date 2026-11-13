@@ -460,7 +460,7 @@ function M.new(choice, stars, story)
 		end
 	end
 	-- the backdrop (ui/kit.lua)
-	c.scene = kit.scene(funnel_on(c) and choice.view ~= "board" and 540 or 225, 360, { bg = "campagna" })
+	c.scene = kit.scene(funnel_on(c) and choice.view ~= "board" and 540 or 225, 360, { bg = true })
 	build(c)
 	return c
 end

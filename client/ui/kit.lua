@@ -714,29 +714,27 @@ end
 -- bottom left and a cold one at the top right (fire against ice, on every
 -- screen), and at the bottom the thread, ember on the left and frost on the
 -- right, with a spark running along it now and then. opt: bg (the screen's
--- painting, a name of ui/backdrops.lua), seam (false: no thread), dim (0..1: how
+-- painting of the place reached: true), seam (false: no thread), dim (0..1: how
 -- much the world behind is covered; the screens over a battle just ended).
 -- There is ONE backdrop for every menu: kit.scene returns the screen's hold
 -- on it; kit.scene_drop(s) when the screen goes away
 local S
 
--- The painting of each screen (WB-028; ui/backdrops.lua): one picture, big
--- soft masses at the sides that frame the screen, the middle empty. Only one
--- is loaded at a time. It covers the screen keeping its shape (never
--- stretched: on a long screen it grows and loses a little at the top), its
--- painted floor on the thread
+-- The painting behind every screen (ui/backdrops.lua): the place of the
+-- campaign the player has reached (Sergio, 13 Nov; WB-030/031, comic style,
+-- big masses at the sides, the middle empty). Only one is loaded at a time.
+-- It covers the screen keeping its shape (never stretched: on a long screen
+-- it grows and loses a little at the top), its painted floor on the thread
 local BACKDROPS = require "ui.backdrops"
 local THREAD_Y = M.BAND
 
--- The place of the campaign the player has reached (Sergio, 13 Nov): its
--- painting (WB-030/031, luogo_<place>) goes behind every screen that has one;
--- a place still without its painting leaves each screen its own
-local PLACE
+-- the place of each chapter of the campaign (its id in sim/campaign.lua)
 local PLACES = { addestramento = "cortile", girone_1 = "forgia" }
+local PLACE = "cortile"
 
-local function backdrop(name)
-	if not (name and BACKDROPS[name]) then name = nil end
-	if name and PLACE and BACKDROPS["luogo_" .. PLACE] then name = "luogo_" .. PLACE end
+-- on: the screen has the painting (false: only the soot, over a battle)
+local function backdrop(on)
+	local name = on and PLACE or nil
 	if S.bg_name ~= name then
 		if S.bg_name then
 			gui.set_texture(S.bg, "ui")
@@ -750,11 +748,11 @@ local function backdrop(name)
 			gui.set_texture(S.bg, "sfondo")
 		end
 	end
-	local on = S.bg_name ~= nil
-	gui.set_enabled(S.bg, on)
+	local shown = S.bg_name ~= nil
+	gui.set_enabled(S.bg, shown)
 	-- the two lights are in the painting already
-	gui.set_enabled(S.warm, not on)
-	gui.set_enabled(S.cold, not on)
+	gui.set_enabled(S.warm, not shown)
+	gui.set_enabled(S.cold, not shown)
 end
 
 -- the painting covers the real screen, whatever its shape: wide enough, tall
@@ -832,7 +830,7 @@ local function claim(s)
 	for _, n in ipairs(S.tops) do gui.set_enabled(n, true) end
 	gui.set_color(S.base, with_alpha(C.SOOT, s.opt.dim or 1))
 	gui.set_enabled(S.low, s.opt.seam ~= false)
-	backdrop(not s.opt.dim and s.opt.bg or nil)
+	backdrop(not s.opt.dim and s.opt.bg)
 	M.scene_fit()
 end
 
@@ -841,10 +839,10 @@ end
 -- scenarios "imposta prova_luogo limbo" picks the place
 function M.reached(chapter_id)
 	local place = sys.get_config_string("megablast.prova_luogo", "")
-	if place == "" then place = PLACES[chapter_id] end
+	if place == "" or not BACKDROPS[place] then place = PLACES[chapter_id] or PLACE end
 	if place == PLACE then return end
 	PLACE = place
-	if S and S.owner then backdrop(not S.owner.opt.dim and S.owner.opt.bg or nil); M.scene_fit() end
+	if S and S.owner then backdrop(not S.owner.opt.dim and S.owner.opt.bg); M.scene_fit() end
 end
 
 -- The screen's backdrop, above everything made so far (what the screen
