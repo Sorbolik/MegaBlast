@@ -41,7 +41,13 @@ disegno; il diavoletto è alto 200 unità): `foglio.json`.
   indietro nella corsa, si alza cadendo, sbatte col rinculo e coi colpi. Solo grafica.
   La casella si usa solo con `--categoria mantello`, e il mantello solo da quella casella.
   Prova: scenario `tools/simula/scenari/mantello.txt` (con `mantello_vuoto`, il mantello del Vuoto
-  di WB-019; c'è anche `mantello_vuoto_forgiato`).
+  di WB-032; c'è anche `mantello_vuoto_forgiato`).
+- **Un mantello disegnato da solo, grande** (come in WB-032), non sta nella casella: si
+  taglia con `--mantello-px N`, dove N sono i pixel del foglio per unità del gioco, lo stesso
+  numero per tutti i fogli della scheda (così base e forgiata hanno la stessa misura).
+  L'attacco è in mezzo al bordo in alto, 4 unità sotto (`ATTACCO_GIU`). I mantelli si salvano
+  a 4,5 pixel per unità (`PX_MANTELLO`), sempre dal disegno più grande, mai ingranditi:
+  `python3 tools/stampino/taglia.py art/WB-032/vuoto_base_B.png --nome mantello_vuoto --categoria mantello --mantello-px 4.8`
 - **Si disegnano solo le caselle che cambiano.** Le vuote restano come sono.
 - **Le facce:** una testa nuova senza le altre facce le fa tutte (non cambia
   espressione). Un elmo disegnato sulla `testa` sta su tutte le facce.
