@@ -71,4 +71,12 @@ Approvata da Sergio il 13 nov («Ok, 1»: testa senza corna fatta da Codex e con
 
 ## Consegna di Codex
 
+- `art/WB-039/teste_senza_corna_1.png` e `art/WB-039/teste_senza_corna_2.png` — due fogli con tutte e nove le espressioni, senza corna e con il profilo superiore del cranio chiuso.
+- `art/WB-039/corna_1.png` e `art/WB-039/corna_2.png` — due coppie isolate nell'angolo in alto a sinistra, con il bordo nero interrotto alla base. L'estensione delle basi dentro il cranio è breve, soprattutto sul corno destro, e l'ombra raggiunge la base in alcuni punti.
+- Accanto a ciascun PNG c'è il TXT con il prompt originale, le regole comuni e i riferimenti nell'ordine R1, R2.
+
+Eseguiti tre tentativi per ciascun prompt. Per le teste sono stati scelti i tentativi 1 e 2, per le corna i tentativi 1 e 3. Tutti i PNG consegnati sono RGB, 1024 × 1024, ridimensionati uniformemente dall'uscita del generatore (1254 × 1254).
+
+Controllo visivo dei quattro PNG: griglia 3 × 3 nei fogli delle teste, due corna isolate nei fogli delle corna, sfondo magenta, nessuna scritta. Il magenta ha variazioni e la tavolozza non coincide esattamente con i valori richiesti. La griglia e la posizione delle corna sono vicine a R1. Il confronto con R1 nelle fasce delle facce, fuori dalle zone delle corna, ha rilevato differenze di pixel in entrambe le varianti (scarto mediano di 3 e 4 livelli sul canale con lo scarto maggiore, su 255). La corrispondenza al pixel resta da ottenere prima di usare la separazione per differenza.
+
 ## Resoconto di Claude

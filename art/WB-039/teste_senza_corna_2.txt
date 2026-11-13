@@ -1,0 +1,13 @@
+Image 1 is a sheet of nine heads of our little devil, the main character of our game. Image 2 is the whole character.
+
+Redraw image 1 EXACTLY, identical in every line, color and position, with ONE change: on all nine heads REMOVE THE TWO HORNS. Where each horn was, the top of the skull continues as plain smooth skin #B8432A, following the round shape of the skull, closed by the same thick black outline as the rest of the head, as if he had never had horns. No bumps, no holes, no stumps, no marks where the horns were. Everything else stays exactly as in image 1: the head outline, the ears, the faces, the eyes, the mouths, the shadows, the size and the position of every head on the canvas.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes and compared pixel by pixel with image 1:
+- Keep EXACTLY the canvas, size and position of image 1: same 1024x1024 square, same 3 by 3 grid, every head in the same place and the same size as in image 1. Do not move, resize, recenter or redraw anything that is not asked.
+- FLAT COLORS ONLY, the same as image 1: outline black #000000; skin #B8432A, skin shadow #8E2F1C; muzzle #F1DFB0, its shadow #D6BC86; horns #EFE3C8, their shadow #C9B48E; eyes #F2C45A with white #FFFFFF highlight; mouth #5A1A10, tongue #E0605A. No gradients, no textures, no glow.
+- Background: flat pure magenta #FF00FF everywhere, with no halo.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti, nell’ordine:
+1. art/WB-039/riferimenti/R1_teste_scelte.png
+2. art/WB-039/riferimenti/R2_tre_quarti_scelto.png
