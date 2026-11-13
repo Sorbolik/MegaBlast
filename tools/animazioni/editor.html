@@ -2509,37 +2509,10 @@ function clPasso(c, dt, ax, ay, o) {
 	}
 }
 
-// battle/cape.fp in WebGL (lo stesso conto per pixel), su un canvas a parte
-// che poi si disegna sul palco
-const MT_VS = "attribute vec2 a; varying vec2 v; void main() { v = a * 0.5; gl_Position = vec4(a, 0.0, 1.0); }";
-const MT_FS = `precision highp float;
-varying vec2 v;
-uniform sampler2D tex;
-uniform vec2 c[6];
-uniform vec4 frame;
-void main() {
-	vec2 p = v;
-	float best = 1e9, s = 0.0, d = 0.0, run = 0.0;
-	for (int i = 0; i < 5; i++) {
-		vec2 a0 = c[i];
-		vec2 sg = c[i + 1] - a0;
-		float len = max(length(sg), 1e-5);
-		vec2 dir = sg / len;
-		float t = dot(p - a0, dir);
-		float lo = i == 0 ? -1.0 : 0.0;
-		float hi = i == 4 ? 1.0 : len;
-		t = clamp(t, lo, hi);
-		vec2 q = a0 + dir * t;
-		float dist = length(p - q);
-		if (dist < best) { best = dist; s = run + t; d = dir.x * (p.y - q.y) - dir.y * (p.x - q.x); }
-		run += len;
-	}
-	vec2 uv = vec2(frame.x + d / frame.z, frame.y + s / frame.w);
-	float up = step(texture2D(tex, vec2(0.0005, 1.0 - 0.0005)).a, texture2D(tex, vec2(0.0005, 0.0005)).a);
-	vec4 col = texture2D(tex, vec2(uv.x, mix(1.0 - uv.y, uv.y, up)));
-	col *= step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
-	gl_FragColor = col;
-}`;
+// battle/cape.fp in WebGL (lo stesso shader: prepara.py lo traduce in GLSL ES,
+// DATI.cape_fp), su un canvas a parte che poi si disegna sul palco
+const MT_VS = "attribute vec2 a; varying mediump vec2 var_texcoord0; varying mediump vec4 var_color;" +
+	" void main() { var_texcoord0 = a * 0.5 + 0.5; var_color = vec4(1.0); gl_Position = vec4(a, 0.0, 1.0); }";
 const MTG = { gl: null, prog: null, tex: {}, u: {} };
 function mtGl() {
 	if (MTG.gl !== null) return MTG.gl;
@@ -2549,7 +2522,8 @@ function mtGl() {
 	if (!gl) return false;
 	const sh = (t, src) => { const x = gl.createShader(t); gl.shaderSource(x, src); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
 	const p = gl.createProgram();
-	gl.attachShader(p, sh(gl.VERTEX_SHADER, MT_VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, MT_FS));
+	gl.getExtension("OES_standard_derivatives");
+	gl.attachShader(p, sh(gl.VERTEX_SHADER, MT_VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, DATI.cape_fp));
 	gl.linkProgram(p); gl.useProgram(p);
 	MTG.prog = p;
 	const b = gl.createBuffer();
@@ -2557,7 +2531,7 @@ function mtGl() {
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
 	const la = gl.getAttribLocation(p, "a");
 	gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 0, 0);
-	MTG.u = { c: gl.getUniformLocation(p, "c"), frame: gl.getUniformLocation(p, "frame"), tex: gl.getUniformLocation(p, "tex") };
+	MTG.u = { a: gl.getUniformLocation(p, "chain_a"), b: gl.getUniformLocation(p, "chain_b"), c: gl.getUniformLocation(p, "chain_c"), frame: gl.getUniformLocation(p, "frame"), tex: gl.getUniformLocation(p, "texture_sampler") };
 	return gl;
 }
 function mtTex(gl, nomeImg) {
@@ -2643,7 +2617,7 @@ function mantello(mBusto, forma, s) {
 	gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
 	gl.bindTexture(gl.TEXTURE_2D, tex);
 	gl.uniform1i(MTG.u.tex, 0);
-	gl.uniform2fv(MTG.u.c, new Float32Array(nodo));
+	gl.uniform4fv(MTG.u.a, nodo.slice(0, 4)); gl.uniform4fv(MTG.u.b, nodo.slice(4, 8)); gl.uniform4fv(MTG.u.c, nodo.slice(8, 12));
 	gl.uniform4f(MTG.u.frame, cp.left / cp.w, cp.top / cp.h, cp.w / cp.side, cp.h / cp.side);
 	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 	const m = scala(sposta(schermo, ad[0], ad[1]), cp.side, -cp.side);
