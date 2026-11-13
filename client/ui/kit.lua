@@ -728,8 +728,15 @@ local S
 local BACKDROPS = require "ui.backdrops"
 local THREAD_Y = M.BAND
 
+-- The place of the campaign the player has reached (Sergio, 13 Nov): its
+-- painting (WB-030/031, luogo_<place>) goes behind every screen that has one;
+-- a place still without its painting leaves each screen its own
+local PLACE
+local PLACES = { addestramento = "cortile", girone_1 = "forgia" }
+
 local function backdrop(name)
 	if not (name and BACKDROPS[name]) then name = nil end
+	if name and PLACE and BACKDROPS["luogo_" .. PLACE] then name = "luogo_" .. PLACE end
 	if S.bg_name ~= name then
 		if S.bg_name then
 			gui.set_texture(S.bg, "ui")
@@ -827,6 +834,17 @@ local function claim(s)
 	gui.set_enabled(S.low, s.opt.seam ~= false)
 	backdrop(not s.opt.dim and s.opt.bg or nil)
 	M.scene_fit()
+end
+
+-- The chapter of the campaign the player has reached (its id in
+-- sim/campaign.lua): its place gives the backdrop of every screen. In the
+-- scenarios "imposta prova_luogo limbo" picks the place
+function M.reached(chapter_id)
+	local place = sys.get_config_string("megablast.prova_luogo", "")
+	if place == "" then place = PLACES[chapter_id] end
+	if place == PLACE then return end
+	PLACE = place
+	if S and S.owner then backdrop(not S.owner.opt.dim and S.owner.opt.bg or nil); M.scene_fit() end
 end
 
 -- The screen's backdrop, above everything made so far (what the screen

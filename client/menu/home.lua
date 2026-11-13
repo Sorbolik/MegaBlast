@@ -277,6 +277,7 @@ function M.profile(h, p)
 		if done < #cap.missioni then break end
 	end
 	h.chapter = string.upper(chapter.titolo)
+	kit.reached(chapter.id)
 	set_pips(h.campaign, #chapter.missioni, done)
 	if not h.in_queue then set_sub(h.campaign, h.chapter) end
 	for _, q in ipairs(h.campaign.pips) do gui.set_enabled(q.node, not h.in_queue) end

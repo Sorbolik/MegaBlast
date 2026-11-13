@@ -255,6 +255,7 @@ def fai_fette():
         f.write("}\n")
 
 
+LUOGHI = ["cortile", "forgia", "limbo", "lussuria", "gola", "avarizia", "ira", "eresia", "violenza", "frode", "tradimento"]
 SFONDI = ["home", "armeria", "allenamento", "eventi", "gioca", "diavoletto", "impostazioni", "podio"]
 
 
@@ -266,6 +267,14 @@ def fai_sfondi():
     os.makedirs(out, exist_ok=True)
     fogli = [(n, os.path.join(ART, "WB-028", "sfondo_%s.png" % n)) for n in SFONDI]
     fogli.append(("campagna", os.path.join(ART, "WB-027", "sfondo_campagna_A.png")))
+    # il posto della campagna a cui e' arrivato il giocatore, dietro a ogni schermata
+    # (Sergio, 13 nov; stile fumetto di WB-030, gli altri di WB-031): solo quelli consegnati
+    for luogo in LUOGHI:
+        for wb in ("WB-030", "WB-031"):
+            percorso = os.path.join(ART, wb, "sfondo_home_%s%s.png" % (luogo, "_fumetto" if wb == "WB-030" else ""))
+            if os.path.exists(percorso):
+                fogli.append(("luogo_" + luogo, percorso))
+                break
     righe = []
     for nome, percorso in fogli:
         # alla risoluzione del disegno, senza rimpicciolire, e quasi senza perdita

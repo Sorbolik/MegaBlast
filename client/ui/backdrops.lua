@@ -11,4 +11,6 @@ return {
 	impostazioni = 0.133,
 	podio = 0.130,
 	campagna = 0.132,
+	luogo_limbo = 0.140,
+	luogo_gola = 0.138,
 }

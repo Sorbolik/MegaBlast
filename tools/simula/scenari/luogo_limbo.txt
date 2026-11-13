@@ -1,0 +1,8 @@
+# lo sfondo del posto raggiunto dietro a ogni schermata
+imposta prova_profilo 1
+imposta prova_luogo limbo
+aspetta 4.25
+foto 01_home
+tocca_bordo 250 334 mezzo sinistra    # ALLENAMENTO
+aspetta 1.2
+foto 02_allenamento
