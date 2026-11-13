@@ -242,4 +242,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 13 nov | Pannello Mantello nell'editor (taratura dal vivo in `cape_tuning.lua`) e scheda WB-032 per un mantello ampio del Vuoto. | personaggio.md, questa PR |
 | 13 nov | Mantello ampio del Vuoto (WB-032 B, base e forgiata) nel gioco, a 4,5 pixel per unità. | personaggio.md, #306 |
 | 13 nov | Il mantello finisce sopra i piedi e si piega in curva (non si spezza più toccando terra). | personaggio.md, questa PR |
-| 13 nov | Luci della battaglia come in Godot: fiamma in testa ed esplosioni illuminano i diavoletti, col rilievo dei pezzi ricavato dallo shader (niente mappe delle normali). | grafica.md, questa PR |
+| 13 nov | Luci della battaglia come in Godot: fiamma in testa ed esplosioni scaldano i diavoletti vicini (solo la distanza: il rilievo dei pezzi macchiava ed è stato tolto). | grafica.md, questa PR |

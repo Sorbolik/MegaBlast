@@ -12,9 +12,9 @@ M.__index = M
 
 local SLOTS = 6
 -- the head flame: radius in world units, energy (Godot: 1.5 on a darker scene)
-local FLAME = { radius = 1.6 * game.DISEGNO_H, energy = 1.2 }
+local FLAME = { radius = 1.6 * game.DISEGNO_H, energy = 0.8 }
 -- an explosion's flash: radius in times the explosion's, energy, seconds
-local FLASH = { radius = 2.6, energy = 2.4, life = 0.5 }
+local FLASH = { radius = 2.6, energy = 1.6, life = 0.5 }
 -- in battle, with no light near: a bit darker and cooler, so the lights show
 -- (Godot darkens the scene too); out of a match the pieces as drawn
 M.AMBIENT = vmath.vector4(0.72, 0.70, 0.82, 1)
@@ -48,11 +48,10 @@ local function by_energy(a, b)
 	return a.k < b.k
 end
 
--- flames: the flame nodes of the devils on screen (nil holes allowed up to n);
--- cam_s: the camera's scale. The lights are in screen pixels, like the
--- positions the pieces' shader sees (on the phone the screen has more pixels
--- than the 1280 x 720 of the gui)
-function M.update(L, dt, flames, n, cam_s)
+-- flames: the flame nodes of the devils on screen (nil holes allowed up to n).
+-- The lights are in screen pixels, like the positions the pieces' shader sees
+-- (on the phone the screen has more pixels than the 1280 x 720 of the gui)
+function M.update(L, dt, flames, n)
 	L.t = L.t + dt
 	local list, k = L.list, 0
 	-- screen to world: the world's origin and the probe, on the screen
@@ -89,8 +88,6 @@ function M.update(L, dt, flames, n, cam_s)
 		end
 	end
 	for i = k + 1, #list do list[i] = nil end
-	-- w: screen pixels per gui pixel, for the width of the pieces' edges
-	M.AMBIENT.w = per ~= 0 and per / cam_s or 1
 	L.msg.ambient = M.AMBIENT
 	if k == 0 and L.sent_off == "battle" then return end
 	L.sent_off = k == 0 and "battle"

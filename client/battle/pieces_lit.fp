@@ -15,6 +15,6 @@ uniform mediump sampler2D texture_sampler;
 
 void main()
 {
-    vec4 t = lit(texture_sampler, texture(texture_sampler, var_texcoord0.xy, -0.5), var_texcoord0.xy, var_pos);
+    vec4 t = lit(texture(texture_sampler, var_texcoord0.xy, -0.5), var_pos);
     out_fragColor = t * var_color;
 }
