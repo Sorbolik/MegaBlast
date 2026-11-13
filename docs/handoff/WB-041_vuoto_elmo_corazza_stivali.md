@@ -19,7 +19,7 @@ cappuccio, come nella tavola del Vuoto; la fiamma esce dal cappuccio fra le corn
 | Codice | File | Cos'è |
 |---|---|---|
 | R1 | `art/WB-041/riferimenti/R1_corpo_collo_nudo.png` | il foglio del corpo di WB-037 (`corpo_1`): busto col collo nudo, braccia, gambe, coda, pugno |
-| R2 | `art/WB-041/riferimenti/R2_teste_senza_corna.png` | le nove teste senza corna di WB-039 |
+| R2 | `art/WB-041/riferimenti/R2_teste_senza_corna.png` | le nove teste senza corna di WB-039 (`teste_senza_corna_2`, quelle scelte) |
 | R3 | `art/WB-019/scelti/vuoto.png` | la tavola scelta del Vuoto: a sinistra base, a destra forgiata |
 
 ## Immagini da generare
