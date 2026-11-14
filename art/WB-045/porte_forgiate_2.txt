@@ -1,0 +1,15 @@
+Image 1 is the home screen of our game: on the left two big buttons (CAMPAIGN, TRAINING), on the right two (EVENTS, ARMOURY), and the gold ingot PLAY button at the bottom right. Image 2 shows today's buttons, dark iron plates with random shapes: we want to replace them with something that has a clear meaning. Image 3 is the gold ingot PLAY button and is the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+
+Draw FOUR wide menu buttons, one under the other with green space between them, each made of the MATERIAL of the place it leads to, with a small round medallion EMBLEM set into its LEFT end; the rest of each button is plain, even and empty, because the game writes the name there. Each is about four times wider than tall, with soft slightly crooked corners.
+1. CAMPAIGN: a slab of cooling lava rock (#3A2A2A) with glowing ember cracks only along its bottom edge (#F26419, #FFB703), medallion with a winding road going down into a flaming pit;
+2. TRAINING: a wooden practice plank (#8A6A4A, highlight #B48A60) held by two iron straps, medallion with a straw training dummy;
+3. EVENTS: a gold-trimmed dark plate (#2B2530 with a #FFB703 rim) with a short hanging pennant under its right end, medallion with a crown;
+4. ARMOURY: a forged iron plate (#2B2530, highlight #6B6375) with ice crystals (#38B6FF, #CAF0F8) growing on its top right corner, medallion with an anvil and a hammer.
+The four buttons have the same height and the same layout; they must look calmer than the gold ingot of image 3.
+
+Thick black ink outline, cartoon comic style like image 3. Flat colors only, at most six per button, no detail thinner than the outline, so the buttons can be traced into vectors. No texture, no soft gradients, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The buttons are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine:
+1. art/WB-045/riferimenti/R1_home_oggi.jpg
+2. art/WB-022/pezzo_piastre.png
+3. art/WB-022/pezzo_lingotto_1.png

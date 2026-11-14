@@ -131,4 +131,29 @@ la sceglie Sergio.
 
 ## Consegna di Codex
 
+Generati sei fogli con `image_gen` dal `main` aggiornato (`f187bcce`). Ogni PNG
+è affiancato dal TXT con il prompt integrale e i riferimenti R1, R2, R3 nell'ordine usato.
+
+| Nome in `art/WB-045/` (PNG e TXT) | Tentativi | Dimensioni PNG |
+|---|---:|---:|
+| `porte_insegne_1` | 1 | 1024×1536 |
+| `porte_insegne_2` | 1 | 1086×1448 |
+| `porte_stemmi_1` | 2 | 1086×1448 |
+| `porte_stemmi_2` | 1 | 1086×1448 |
+| `porte_forgiate_1` | 1 | 1199×1312 |
+| `porte_forgiate_2` | 1 | 1199×1312 |
+
+Controllati a vista i quattro pulsanti per foglio, la separazione, i margini,
+gli emblemi a sinistra, il centro libero, la china e l'assenza di scritte.
+Per `porte_stemmi_1` ho scartato il primo tentativo per lo spazio ridotto tra
+gli scudi. Nei fogli delle piastre forgiate il pennone e i cristalli sono vicini.
+
+Il generatore ha restituito formati verticali. Nessun PNG ha le dimensioni
+richieste di 1536×1024. Gli originali conservano le proporzioni e lo sfondo verde
+prescritto, che a campione non è esattamente `#00FF00`. Le campiture presentano
+lievi variazioni di tono e alcuni emblemi hanno dettagli più sottili della china.
+Non verificati il limite di sei colori, il ricalco, l'allungamento e la resa
+accanto a GIOCA nella home. La decisione del 5 novembre sull'aspetto dei pulsanti
+dopo lo sblocco va tenuta presente durante l'integrazione.
+
 ## Resoconto di Claude

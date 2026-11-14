@@ -1,0 +1,15 @@
+Image 1 is the home screen of our game: on the left two big buttons (CAMPAIGN, TRAINING), on the right two (EVENTS, ARMOURY), and the gold ingot PLAY button at the bottom right. Image 2 shows today's buttons, dark iron plates with random shapes: we want to replace them with something that has a clear meaning. Image 3 is the gold ingot PLAY button and is the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+
+Draw FOUR wide menu buttons, one under the other with green space between them, as a family of HANGING SHOP SIGNS of a hellish blacksmith town: each is a wide wooden-and-iron sign board, about four times wider than tall, hanging from two short chains at the top, with a carved EMBLEM on a round boss at its LEFT end; the rest of the board is plain, even and empty, because the game writes the name there.
+1. CAMPAIGN: board of dark charred wood (#3A2A24) with iron bands, emblem: a winding road going down into a flaming pit, ember (#F26419, #FFB703);
+2. TRAINING: board of pale worn wood (#8A6A4A) with iron bands, emblem: a straw training dummy with a target on its chest;
+3. EVENTS: board of dark iron with a gold rim (#FFB703), emblem: a crown over a small banner;
+4. ARMOURY: board of dark iron (#2B2530) with an ice-blue rim (#38B6FF, highlight #CAF0F8), emblem: an anvil with a hammer on it.
+The four signs have the same height and the same layout, only material, rim and emblem change; they must look calmer than the gold ingot of image 3.
+
+Thick black ink outline, cartoon comic style like image 3. Flat colors only, at most six per button, no detail thinner than the outline, so the buttons can be traced into vectors. No texture, no wood grain lines thinner than the outline, no soft gradients, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The buttons are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine:
+1. art/WB-045/riferimenti/R1_home_oggi.jpg
+2. art/WB-022/pezzo_piastre.png
+3. art/WB-022/pezzo_lingotto_1.png
