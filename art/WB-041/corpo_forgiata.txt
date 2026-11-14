@@ -1,0 +1,14 @@
+Image 1 is a sheet of body parts of our character. Image 2 is the chosen armour set "Void" (right: FORGED form). Image 3 is image 1 with the basic armour on the torso and the basic boots on both legs.
+
+Return image 3 again, the SAME sheet with every part exactly where it is and the same pixels, and change only the armour and the boots: make them the FORGED armour and boots of image 2, with the same outlines as in image 3: on the armour add the two pointed cyan shoulder edges of image 2 at the top of the torso and a thin cyan trim along the bandages; on the boots a double cyan band with the round cyan studs of image 2. Nothing else on the sheet changes.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Cloth indigo #2B2147 with folds #1A1430, thick closed black #000000 outline, cyan #00FFFF trims, white #FFFFFF and black only inside the eye clasp.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+R1: art/WB-041/riferimenti/R1_corpo_collo_nudo.png
+R3: art/WB-019/scelti/vuoto.png
+Base: art/WB-041/corpo_base_1.png

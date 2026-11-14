@@ -113,4 +113,37 @@ Approvata da Sergio il 13 nov («Vai»).
 
 ## Consegna di Codex
 
+### 2026-11-14
+
+Nuova generazione con imagegen da `main` (`3b596194`). In
+`art/WB-041/` ogni PNG ha un TXT con prompt integrale e riferimenti.
+
+| Foglio | Tentativi | Tentativo consegnato | Misura |
+|---|---:|---:|---|
+| `cappuccio_base_1` | 3 | 3 | 1254 × 1254 |
+| `cappuccio_base_2` | 3 | 3 | 1254 × 1254 |
+| `cappuccio_forgiata` | 3 | 1 | 1254 × 1254 |
+| `corpo_base_1` | 3 | 3 | 1536 × 1024 |
+| `corpo_base_2` | 3 | 3 | 1536 × 1024 |
+| `corpo_forgiata` | 3 | 2 | 1536 × 1024 |
+
+Ho scelto `cappuccio_base_2` e `corpo_base_1` come riferimenti
+per le forgiate. Fra le basi consegnate sono quelle con la minore
+differenza RGB media nelle aree campionate da preservare, confrontate
+alla scala dei riferimenti. Il primo tentativo di `cappuccio_base_1`
+aveva un errore medio inferiore ma le aperture apparivano nere.
+
+Ho verificato cappuccio solo sulla prima testa, faccia e orecchie
+visibili, assenza di corna, fiamme e scritte, corazza sul busto con
+collo libero e stivali su entrambe le gambe. Le forgiate aggiungono
+le finiture ciano previste. Sul cappuccio forgiato l'emblema rende
+poco leggibile una delle aperture. Le spalline forgiate allargano
+il contorno del busto.
+
+I fogli delle teste sono da 1254 × 1254, rispetto ai 1024 × 1024
+richiesti. Il magenta e il ciano variano rispetto ai valori RGB
+esatti. Le parti da preservare presentano differenze di colore e
+contorno. Il requisito di identità pixel per pixel resta
+insoddisfatto e il ritaglio per differenza resta da verificare.
+
 ## Resoconto di Claude
