@@ -46,7 +46,7 @@ function M.new(o, sound)
 	local pose = gui.new_box_node(vec(640, 720 - 636), vec(0, 0))
 	gui.set_visible(pose, false)
 	gui.set_parent(pose, f.radice)
-	f.figure = scoria.new(ui.C.SQUADRA[1], scoria.PERSONAGGIO)
+	f.figure = scoria.new(ui.C.SQUADRA[1], scoria.player)
 	f.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true, vittoria = not o.fallita, fermo = o.fallita }
 	scoria.update(f.figure, 0, f.st)
 	local k = 300 / game.DISEGNO_H

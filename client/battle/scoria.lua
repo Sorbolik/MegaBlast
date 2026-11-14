@@ -80,6 +80,39 @@ local M = {}
 -- everyone's character (the skins worn), until the armory picks it
 M.PERSONAGGIO = { "apprendista_nuovo", "corna_apprendista" }
 
+-- The skins of each family's pieces, by slot (sim/gear.lua): only the families
+-- already drawn, the others leave everyone's character as it is. From
+-- FORGED_TIER (gold, level 20: Sergio, 14 Nov) a piece shows its forged form.
+M.FAMILY_SKINS = {
+	vuoto = { mask = "cappuccio_vuoto", chest = "corazza_vuoto", legs = "stivali_vuoto", cloak = "mantello_vuoto" },
+}
+M.FORGED_TIER = 3
+local WEAR_ORDER = { "mask", "chest", "legs", "cloak" }
+
+-- The look of whoever wears gear ({ mask = family id, ... }) with those tiers
+-- ({ mask = 1..4, ... }, menu/wallet.lua)
+function M.look_of(gear, tiers)
+	local look = { M.PERSONAGGIO[1], M.PERSONAGGIO[2] }
+	for _, slot in ipairs(WEAR_ORDER) do
+		local skins = gear and M.FAMILY_SKINS[gear[slot] or ""]
+		local name = skins and skins[slot]
+		if name then
+			if ((tiers or {})[slot] or 1) >= M.FORGED_TIER then name = name .. "_forgiato" end
+			look[#look + 1] = name
+		end
+	end
+	return look
+end
+
+-- The look of the one playing on this phone (the active loadout's pieces): the
+-- menus' figures and their devils in the offline battles. main/game sets it.
+M.player = M.PERSONAGGIO
+function M.set_player(look)
+	local changed = table.concat(look, ",") ~= table.concat(M.player, ",")
+	M.player = look
+	return changed
+end
+
 local P, PT = D.pieces, D.points
 
 -- where each spot turns in the idle body: the skeleton point plus the moved

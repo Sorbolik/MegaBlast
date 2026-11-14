@@ -89,7 +89,7 @@ function M.new(color)
 	gui.set_parent(body_shape, mid.node)
 	V.x, V.y, V.z = BODY_K, BODY_K, 1
 	gui.set_scale(body_shape, V)
-	h.corpo = scoria.new(color, scoria.PERSONAGGIO)
+	h.corpo, h.look, h.color = scoria.new(color, scoria.player), scoria.player, color
 	gui.set_parent(h.corpo.root, body_shape)
 	scoria.set_enabled(h.corpo, true)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
@@ -281,6 +281,22 @@ function M.profile(h, p)
 	set_pips(h.campaign, #chapter.missioni, done)
 	if not h.in_queue then set_sub(h.campaign, h.chapter) end
 	for _, q in ipairs(h.campaign.pips) do gui.set_enabled(q.node, not h.in_queue) end
+end
+
+-- The devil puts on the pieces of the active loadout of the profile p: they
+-- become the look of whoever plays here (scoria.player), for every menu and
+-- the offline battles
+function M.wear(h, p)
+	local profile = require "menu.profile"
+	local a = profile.active_loadout(p)
+	scoria.set_player(scoria.look_of(a.gear, profile.tier(p, a)))
+	if h.look == scoria.player then return end
+	local parent = gui.get_parent(h.corpo.root)
+	local enabled = gui.is_enabled(h.corpo.root)
+	gui.delete_node(h.corpo.root)
+	h.corpo, h.look = scoria.new(h.color, scoria.player), scoria.player
+	gui.set_parent(h.corpo.root, parent)
+	scoria.set_enabled(h.corpo, enabled)
 end
 
 function M.queued(h, on)

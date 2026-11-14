@@ -122,7 +122,7 @@ function M.devil(s, line)
 	-- (its feet on the thread)
 	local pose = box(M.devil_x() + kit.lean(), kit.BAND + 8, 0, 0, C.LIGHT, s.radice)
 	gui.set_visible(pose, false)
-	s.figure = scoria.new(s.colore, scoria.PERSONAGGIO)
+	s.figure = scoria.new(s.colore, scoria.player)
 	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	scoria.update(s.figure, 0, s.st)
 	local k = 300 / game.DISEGNO_H

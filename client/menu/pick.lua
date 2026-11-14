@@ -192,7 +192,7 @@ local function refresh(s)
 	-- your devil, behind the picks
 	local pose = gui_node(250 - g.ox, 104 - (720 - g.oy), 0, 0, KC.INK, g.node)
 	gui.set_visible(pose, false)
-	s.figure = scoria.new(color, scoria.PERSONAGGIO)
+	s.figure = scoria.new(color, scoria.player)
 	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	scoria.update(s.figure, 0, s.st)
 	local k = 265 / game.DISEGNO_H
