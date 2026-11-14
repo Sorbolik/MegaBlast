@@ -98,3 +98,11 @@ Si vedono lievi variazioni di tono nelle campiture. Il limite di sei colori e il
 ricalco in SVG restano da verificare.
 
 ## Resoconto di Claude
+
+Entrambi i fogli sono buoni: contorno pulito, colori pieni, niente difetti visibili. Ritagliati
+dal verde in `art/WB-048/ritagli/`: `zaino_chiuso_1`, `zaino_aperto_1`, `zaino_chiuso_2`,
+`zaino_aperto_2` (l'aperto ha la scintilla, per quando ci sono pezzi nuovi). Scelta di Claude: la
+variante 1, più inclinata come chiedeva la scheda; la 2 resta di scorta. Montato nel Figma al posto
+del segnaposto (proposta «Zaino dal diavoletto/4»), appoggiato al piede destro del diavoletto. Da
+decidere con Sergio se tenerlo al posto dei medaglioni al tocco; con la pedana di WB-050 può stare
+sul suo ripiano.
