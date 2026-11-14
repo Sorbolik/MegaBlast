@@ -1,4 +1,31 @@
 images {
+  image: "/assets/fucina/attacco_scudo.png"
+}
+images {
+  image: "/assets/fucina/badge_1.png"
+}
+images {
+  image: "/assets/fucina/badge_2.png"
+}
+images {
+  image: "/assets/fucina/badge_3.png"
+}
+images {
+  image: "/assets/fucina/badge_4.png"
+}
+images {
+  image: "/assets/fucina/banda_allenamento.png"
+}
+images {
+  image: "/assets/fucina/banda_armeria.png"
+}
+images {
+  image: "/assets/fucina/banda_campagna.png"
+}
+images {
+  image: "/assets/fucina/banda_eventi.png"
+}
+images {
   image: "/assets/fucina/barra_brace_cx.png"
 }
 images {
@@ -26,10 +53,40 @@ images {
   image: "/assets/fucina/barra_gelo_sx.png"
 }
 images {
+  image: "/assets/fucina/barrato.png"
+}
+images {
+  image: "/assets/fucina/bordino_brace.png"
+}
+images {
+  image: "/assets/fucina/bordino_gelo.png"
+}
+images {
   image: "/assets/fucina/brace.png"
 }
 images {
   image: "/assets/fucina/brace_spenta.png"
+}
+images {
+  image: "/assets/fucina/buono.png"
+}
+images {
+  image: "/assets/fucina/casella.png"
+}
+images {
+  image: "/assets/fucina/casella_scelta.png"
+}
+images {
+  image: "/assets/fucina/casella_vuota.png"
+}
+images {
+  image: "/assets/fucina/chiodo.png"
+}
+images {
+  image: "/assets/fucina/cornice_argento.png"
+}
+images {
+  image: "/assets/fucina/cornice_bronzo.png"
 }
 images {
   image: "/assets/fucina/corona.png"
@@ -47,6 +104,9 @@ images {
   image: "/assets/fucina/gemma.png"
 }
 images {
+  image: "/assets/fucina/gioca_sigillo.png"
+}
+images {
   image: "/assets/fucina/guscio_cx.png"
 }
 images {
@@ -54,6 +114,144 @@ images {
 }
 images {
   image: "/assets/fucina/guscio_sx.png"
+}
+images {
+  image: "/assets/fucina/ic_2contro2.png"
+}
+images {
+  image: "/assets/fucina/ic_calendario.png"
+}
+images {
+  image: "/assets/fucina/ic_corvo_corazza_base.png"
+}
+images {
+  image: "/assets/fucina/ic_corvo_corazza_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_corvo_elmo_base.png"
+}
+images {
+  image: "/assets/fucina/ic_corvo_elmo_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_corvo_mantello_base.png"
+}
+images {
+  image: "/assets/fucina/ic_corvo_mantello_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_corvo_stivali_base.png"
+}
+images {
+  image: "/assets/fucina/ic_corvo_stivali_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_fabbro_corazza_base.png"
+}
+images {
+  image: "/assets/fucina/ic_fabbro_corazza_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_fabbro_elmo_base.png"
+}
+images {
+  image: "/assets/fucina/ic_fabbro_elmo_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_fabbro_mantello_base.png"
+}
+images {
+  image: "/assets/fucina/ic_fabbro_mantello_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_fabbro_stivali_base.png"
+}
+images {
+  image: "/assets/fucina/ic_fabbro_stivali_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_fornace_corazza_base.png"
+}
+images {
+  image: "/assets/fucina/ic_fornace_corazza_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_fornace_elmo_base.png"
+}
+images {
+  image: "/assets/fucina/ic_fornace_elmo_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_fornace_mantello_base.png"
+}
+images {
+  image: "/assets/fucina/ic_fornace_mantello_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_fornace_stivali_base.png"
+}
+images {
+  image: "/assets/fucina/ic_fornace_stivali_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_leviatano_corazza_base.png"
+}
+images {
+  image: "/assets/fucina/ic_leviatano_corazza_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_leviatano_elmo_base.png"
+}
+images {
+  image: "/assets/fucina/ic_leviatano_elmo_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_leviatano_mantello_base.png"
+}
+images {
+  image: "/assets/fucina/ic_leviatano_mantello_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_leviatano_stivali_base.png"
+}
+images {
+  image: "/assets/fucina/ic_leviatano_stivali_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_maglio.png"
+}
+images {
+  image: "/assets/fucina/ic_notte.png"
+}
+images {
+  image: "/assets/fucina/ic_stanza.png"
+}
+images {
+  image: "/assets/fucina/ic_torneo.png"
+}
+images {
+  image: "/assets/fucina/ic_vuoto_corazza_base.png"
+}
+images {
+  image: "/assets/fucina/ic_vuoto_corazza_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_vuoto_elmo_base.png"
+}
+images {
+  image: "/assets/fucina/ic_vuoto_elmo_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_vuoto_mantello_base.png"
+}
+images {
+  image: "/assets/fucina/ic_vuoto_mantello_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_vuoto_stivali_base.png"
+}
+images {
+  image: "/assets/fucina/ic_vuoto_stivali_forgiato.png"
 }
 images {
   image: "/assets/fucina/indietro.png"
@@ -87,6 +285,12 @@ images {
 }
 images {
   image: "/assets/fucina/linguetta_sx.png"
+}
+images {
+  image: "/assets/fucina/livello_ferro.png"
+}
+images {
+  image: "/assets/fucina/livello_oro.png"
 }
 images {
   image: "/assets/fucina/lucchetto.png"
@@ -176,6 +380,9 @@ images {
   image: "/assets/fucina/pannello_chiaro_9.png"
 }
 images {
+  image: "/assets/fucina/pedana.png"
+}
+images {
   image: "/assets/fucina/piastra_calda_cx.png"
 }
 images {
@@ -248,6 +455,54 @@ images {
   image: "/assets/fucina/piastrina_sx.png"
 }
 images {
+  image: "/assets/fucina/pillola_cx.png"
+}
+images {
+  image: "/assets/fucina/pillola_dx.png"
+}
+images {
+  image: "/assets/fucina/pillola_sx.png"
+}
+images {
+  image: "/assets/fucina/podio_1.png"
+}
+images {
+  image: "/assets/fucina/podio_2.png"
+}
+images {
+  image: "/assets/fucina/podio_3.png"
+}
+images {
+  image: "/assets/fucina/porta_allenamento.png"
+}
+images {
+  image: "/assets/fucina/porta_armeria.png"
+}
+images {
+  image: "/assets/fucina/porta_campagna.png"
+}
+images {
+  image: "/assets/fucina/porta_eventi.png"
+}
+images {
+  image: "/assets/fucina/riga_oro_cx.png"
+}
+images {
+  image: "/assets/fucina/riga_oro_dx.png"
+}
+images {
+  image: "/assets/fucina/riga_oro_sx.png"
+}
+images {
+  image: "/assets/fucina/riga_scura_cx.png"
+}
+images {
+  image: "/assets/fucina/riga_scura_dx.png"
+}
+images {
+  image: "/assets/fucina/riga_scura_sx.png"
+}
+images {
   image: "/assets/fucina/scaglia.png"
 }
 images {
@@ -258,6 +513,63 @@ images {
 }
 images {
   image: "/assets/fucina/scheggia_sx.png"
+}
+images {
+  image: "/assets/fucina/scia_acciaio.png"
+}
+images {
+  image: "/assets/fucina/scia_brace.png"
+}
+images {
+  image: "/assets/fucina/scia_cristallo.png"
+}
+images {
+  image: "/assets/fucina/scia_cuoio.png"
+}
+images {
+  image: "/assets/fucina/scia_ferro.png"
+}
+images {
+  image: "/assets/fucina/scia_fiamma.png"
+}
+images {
+  image: "/assets/fucina/scia_fiocco.png"
+}
+images {
+  image: "/assets/fucina/scia_gelo.png"
+}
+images {
+  image: "/assets/fucina/scia_ghiaccio.png"
+}
+images {
+  image: "/assets/fucina/scia_moneta.png"
+}
+images {
+  image: "/assets/fucina/scia_nastro.png"
+}
+images {
+  image: "/assets/fucina/scia_oro.png"
+}
+images {
+  image: "/assets/fucina/scia_paglia.png"
+}
+images {
+  image: "/assets/fucina/scia_ricciolo.png"
+}
+images {
+  image: "/assets/fucina/scia_scintilla.png"
+}
+images {
+  image: "/assets/fucina/scia_stella.png"
+}
+images {
+  image: "/assets/fucina/sconto.png"
+}
+images {
+  image: "/assets/fucina/sei_qui.png"
+}
+images {
+  image: "/assets/fucina/spunta.png"
 }
 images {
   image: "/assets/fucina/stella.png"
@@ -276,6 +588,21 @@ images {
 }
 images {
   image: "/assets/fucina/tondo_oro.png"
+}
+images {
+  image: "/assets/fucina/vuoto_corazza.png"
+}
+images {
+  image: "/assets/fucina/vuoto_elmo.png"
+}
+images {
+  image: "/assets/fucina/vuoto_mantello.png"
+}
+images {
+  image: "/assets/fucina/vuoto_stivali.png"
+}
+images {
+  image: "/assets/fucina/zainetto.png"
 }
 margin: 2
 extrude_borders: 2

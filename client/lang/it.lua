@@ -502,10 +502,12 @@ return {
 	-- menu/home.lua: the home
 	home = {
 		leave_queue_first = "esci dalla coda per giocarla",
-		your_devil = "DIAVOLETTO",
+		-- in the profile's round: the name, until the online accounts give one (placeholder)
+		player = "APPRENDISTA",
 		level = "LIV %d",
-		play_sub = "2 CONTRO 2",
+		play_sub = "ONLINE",
 		training_sub = "CONTRO I BOT",
+		armory_sub = "IL FABBRO",
 	},
 
 	-- menu/queue.lua: GIOCA ONLINE, the queues online

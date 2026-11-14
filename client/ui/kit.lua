@@ -176,6 +176,52 @@ function M.piece(g, name, cx, cy, h)
 	return whole(name, cx - g.ox, g.oy - cy, h, g.node)
 end
 
+-- A long piece in three parts filling the Figma box x..x+w, y..y+h (a row, a
+-- bar): the ends whole, the middle stretched. Returns { node, parts, g }
+function M.strip(g, name, x, y, w, h)
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, 0, 0, g.node)
+	local parts = three(n, name, w, h)
+	local b = room(name, cx, cy, w, h)
+	return { node = n, parts = parts, g = { node = n, ox = cx, oy = cy, box = b }, box = b, name = name, w = w, h = h }
+end
+
+-- Changes the width of a strip, keeping its left end where it is
+function M.strip_width(s, w)
+	three_fit(s.parts, s.name, w, s.h)
+	local p = gui.get_position(s.node)
+	gui.set_position(s.node, vec(p.x + (w - s.w) / 2, p.y))
+	s.w = w
+end
+
+-- A whole piece filling the Figma box x..x+w, y..y+h (its drawing's shape:
+-- give w and h in its proportions)
+function M.pic(g, name, x, y, w, h)
+	return pic(name, x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
+end
+
+-- A whole drawn button (the home's doors and GIOCA, WB-046) w wide, its top
+-- left at the Figma point (x, y), as tall as its drawing: nothing is
+-- stretched. Like a plate it goes down when pressed (M.press, M.button), and
+-- what is written on p.g stays in the room measured on the drawing
+-- (pieces.lua, box)
+function M.sign(g, name, x, y, w)
+	local m = P[name]
+	local h = w * m.h / m.w
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local p = { node = n, x = x, y = y, w = w, h = h, d = 4 }
+	p.face_node = empty(0, 0, 0, 0, n)
+	p.pic = pic(name, 0, 0, w, h, p.face_node)
+	p.g = { node = p.face_node, ox = cx, oy = cy }
+	local b, k = m.box, w / m.w
+	if b then
+		p.box = { x0 = x + b[1] * k, x1 = x + w - b[3] * k, y0 = y + b[2] * k, y1 = y + h - b[4] * k }
+		p.g.box = p.box
+	end
+	return p
+end
+
 -- ---------------------------------------------------------------- groups
 
 -- A top-level group at the Figma point (x, y), optionally stuck to a real

@@ -5603,6 +5603,8 @@ function PAD.on_input(self, action_id, action)
 				impostazioni = function() open_screen(self, menu.settings, self.profilo, self.ctrl) end,
 				campagna = function() open_campaign(self) end,
 				profilo = function() CP.open_profile(self, "scheda") end,
+				-- the ZAINO (from the apprentice): for now its pieces are in the profile's sheet
+				zaino = function() CP.open_profile(self, "scheda") end,
 			}
 			if open_view[choice] then CP.slide(self, 1, open_view[choice]) end
 		end
