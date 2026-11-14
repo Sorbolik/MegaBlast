@@ -135,7 +135,9 @@ impugnature di ogni arma: presa (`grip`, dove la tiene chi la impugna), perno (`
 dove gira) e spalla (`shoulder`, dove sta il perno nel corpo) in `client/battle/grips.lua`. Ogni clip sceglie chi
 impugna l'arma (`held_by`) e l'ordine dei pezzi davanti e dietro (`layers`).
 "Manda a Claude" li mette nei documenti `corpo/ultima`, `perni/ultima` e
-`impugnature/ultima` (campo `lua`). Una clip con l'arma può avere la versione di
+`impugnature/ultima` (campo `lua`). Il "Manda a Claude" in alto manda tutto quello che è cambiato, anche i
+ritocchi dei pezzi (`ritocchi/ultima`) e il mantello: se il gioco non è uguale all'editor,
+guarda prima `ritocchi/ultima`. Una clip con l'arma può avere la versione di
 una sola arma (`fermo_arma_mallet`): il gioco la preferisce a quella di tutte.
 Nel pannello Mantello dell'editor Sergio tara dal vivo il mantello (peso, aria, piega, angoli,
 spinte, grandezza, attacco: la stessa catena e lo stesso shader del gioco); "Manda a Claude"
