@@ -1,0 +1,20 @@
+Image 1 is the approved style sheet of the armour family "VUOTO" of our game: the same little devil wears the four pieces, on the LEFT in the BASIC form and on the RIGHT in the FORGED form. Image 2 is a mock-up of the game's inventory, where every piece is shown as an icon inside a dark square.
+
+Draw an ICON SHEET of this family's eight pieces, alone, without the devil: a grid of 4 columns and 2 rows on flat magenta.
+- Columns, left to right: HELMET, CHEST ARMOUR, CAPE, BOOTS.
+- Top row: the BASIC form of each piece, exactly as on the left of image 1. Bottom row: the FORGED form, exactly as on the right of image 1.
+- Each piece is the SAME object as in image 1 (same shapes, colors, cyan #00FFFF trims, details), shown alone as a game item icon, three-quarter view, slightly from the front, centered in its cell and filling about 80% of it. Nothing of the devil: no head, horns, skin, face, arms or legs inside or around the pieces (the helmet is empty inside, the boots are a pair seen together, the cape hangs open as a short cloak, the chest armour is seen as a worn breastplate without a body).
+- All eight pieces at the same scale feeling, so they read as one set; leave a clear magenta gap of at least 60 pixels between cells.
+
+Rendering rules, very strict, because the icons will be cut out and shown small:
+- Same comic style as image 1: thick closed black #000000 outline, flat colors, at most one hard-edged shadow shape per area. No gradients, no glow, no textures, no soft shading.
+- Keep the cyan #00FFFF trims exactly cyan: the game tints them by grade.
+- Background: flat pure magenta #FF00FF everywhere, no halo around the pieces, no shadow on the ground.
+- No text, numbers, labels, frames, squares or signatures.
+
+Riferimenti allegati in ordine
+art/WB-019/scelti/vuoto.png
+art/WB-043/riferimenti/R6_inventario_bozza.jpg
+
+Controllo visivo
+Restano corna sui cappucci. Il tentativo selezionato evita la pelle delle orecchie.

@@ -1,0 +1,14 @@
+Image 1 is a mock-up of the game's inventory: dark squares that hold the icon of each armour piece.
+
+Draw an icon sheet of four EMPTY SLOT silhouettes, in a row, left to right: HELMET, CHEST ARMOUR, CAPE, BOOTS. Each one is a simple, generic, flat silhouette of that kind of piece (not any specific family), filled with a single steel grey #4A4550 with a slightly lighter inner shape #5A5560, and a thick closed black #000000 outline; it is shown in a slot when nothing is worn there, so it must look quiet and clearly "empty". Same three-quarter view and size for all four, centered in four equal cells with wide magenta gaps between them.
+
+Rendering rules, very strict:
+- Flat colors only, no gradients, no glow, no textures, no soft shading.
+- Background: flat pure magenta #FF00FF everywhere, no halo, no ground shadow.
+- No text, numbers, labels, frames or signatures.
+
+Riferimenti allegati in ordine
+art/WB-043/riferimenti/R6_inventario_bozza.jpg
+
+Controllo visivo
+Quattro sagome generiche. L'ultima è rappresentata da uno stivale singolo.

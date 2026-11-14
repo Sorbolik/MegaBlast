@@ -1,0 +1,18 @@
+Image 1 is the "Scaglia" coin of our game (style and size reference). Image 2 is a mock-up of the shop, where the voucher sits in the wallet at the top right next to the coins. Image 3 shows the armour of the Smith (Fabbro) family.
+
+Draw ONE icon: the "Smith's voucher", a small forged iron token that the old Smith gives to the player and that buys any armour piece. It is a thick rectangular iron tag with rounded corners, slightly tilted, with a hole at one end and a short loop of red cord through it; on the face a hammer-and-anvil mark stamped in glowing molten gold #FFB703 with a darker ember #F26419 edge. It must read clearly at 40 pixels next to the coin of image 1, with the same thickness of outline and the same comic look, and it must not look like a coin (no round shape) and not like a medal.
+
+Rendering rules, very strict:
+- Comic style like image 1: thick closed black #000000 outline, flat colors, at most one hard-edged shadow shape per area. No gradients, no glow, no textures.
+- Iron in #4A4550 with darker #262329 shadow, cord #FF3B4E.
+- Centered, filling about 80% of the square canvas.
+- Background: flat pure magenta #FF00FF everywhere, no halo, no ground shadow.
+- No text, numbers or signatures.
+
+Riferimenti allegati in ordine
+client/assets/fucina/scaglia.png
+art/WB-043/riferimenti/R7_bottega_bozza.jpg
+art/WB-019/scelti/fabbro.png
+
+Controllo visivo
+Cordino con nodo e due capi. Il marchio ha bordo arancione.

@@ -113,4 +113,20 @@ menu fra le proposte del Figma; le icone servono a tutte.
 
 ## Consegna di Codex
 
+Nove PNG generati con ImageGen dai prompt integrali, con i riferimenti nell'ordine indicato. I TXT omonimi riportano prompt, riferimenti e controllo visivo.
+
+| File PNG e TXT in `art/WB-043/` | Tentativi | Controllo visivo |
+|---|---:|---|
+| `icone_fabbro` | 3 | Restano corna sugli elmi e il martello è ciano come nella tavola allegata. |
+| `icone_corvo` | 3 | Restano corna sugli elmi. Il cimiero forgiato lascia poco spazio alla corazza adiacente. |
+| `icone_fornace` | 3 | Restano corna sugli elmi. Il mantello riprende anche le punte al colletto. |
+| `icone_leviatano` | 3 | Restano corna sugli elmi. Il tentativo selezionato evita la pelle delle orecchie. |
+| `icone_vuoto` | 3 | Restano corna sui cappucci. Il tentativo selezionato evita la pelle delle orecchie. |
+| `buono_1` | 1 | Cordino ad anello chiuso. Il marchio è ben distinto a vista. |
+| `buono_2` | 1 | Cordino con nodo e due capi. Il marchio è ben distinto a vista. |
+| `buono_3` | 1 | Cordino con nodo e due capi. Il marchio ha bordo arancione. |
+| `sagome_vuote` | 1 | Quattro sagome generiche. L'ultima è rappresentata da uno stivale singolo. |
+
+Ho verificato a vista le otto icone per famiglia, l'ordine delle colonne e delle righe, le quattro sagome vuote e l'assenza di scritte. Ho ridimensionato proporzionalmente e centrato i fogli su tele magenta da 1536 × 1024 e i buoni su tele da 1024 × 1024. Il fondo generato può presentare piccole variazioni rispetto al magenta puro. Alcune ombre sono morbide. Restano da verificare la purezza del ciano e del nero, i 60 pixel fra le celle e la leggibilità delle icone a 64 pixel e del buono a 40 pixel accanto alla Scaglia.
+
 ## Resoconto di Claude
