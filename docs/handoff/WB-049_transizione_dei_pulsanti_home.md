@@ -130,3 +130,11 @@ differisce da `#00FF00`. Non verificati il conteggio delle tinte, il ricalco, la
 delle schegge in piccolo o l'allungamento delle bande durante la transizione.
 
 ## Resoconto di Claude
+
+Tutti e quattro i fogli sono buoni, senza difetti visibili. Ritagliati dal verde in
+`art/WB-049/ritagli/`: le quattro bande e l'attacco dello scudo (`banda_<pulsante>_1|2`,
+`attacco_scudo_1|2`) e le sedici schegge per foglio (`scia_<nome>_1|2`: brace, scintilla, fiamma,
+ricciolo; ferro, cuoio, paglia, acciaio; stella, moneta, nastro, oro; ghiaccio, fiocco, cristallo,
+gelo). Scelta di Claude: le bande e l'attacco della variante 1 (cima arrotondata, si allungano meglio
+in alto), le schegge della variante 1; la 2 resta di scorta. Vanno nella prova animata allo stesso
+indirizzo al posto della banda segnaposto.

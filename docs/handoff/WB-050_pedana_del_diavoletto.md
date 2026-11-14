@@ -89,3 +89,8 @@ Due fogli ImageGen a 1536 × 1024, con quattro proposte ciascuno. I TXT omonimi 
 Ho verificato i piani ovali liberi, i ripiani a destra, la separazione delle sagome e l'assenza di scritte, personaggi e ombre a terra. Ho uniformato il verde dominante a #00FF00 e verificato le dimensioni e i margini esterni a livello di pixel. Le fasce oro e lava sono più vistose degli accenti piccoli richiesti e conservano lievi variazioni di tono. Il limite cromatico, il rapporto di scala con il diavoletto e la resa con lo zainetto sulla home restano da verificare.
 
 ## Resoconto di Claude
+
+Fogli buoni, ritagliati dal verde in `art/WB-050/ritagli/` (`pedana_pietra|lava|incudine|griglia_1|2`).
+Montate le quattro pedane del foglio 1 sotto l'apprendista nella home del Figma (sezione «Pedana»,
+sotto le proposte dello zaino), larghe 340 su 1280, il diavoletto sul piano e lo zainetto piccolo di
+WB-048 sul ripiano a destra. Stanno fra le porte senza toccarle. Da scegliere con Sergio.
