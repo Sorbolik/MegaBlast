@@ -327,13 +327,77 @@ end
 
 -- Saving -------------------------------------------------------------------------
 
+-- The end-game test profile (Sergio, 14 Nov: "voglio provare l'end game",
+-- to tune the top of the progression and then go back down): a second save,
+-- picked in the settings, that never touches the real one. Online it changes
+-- nothing: the server plays everyone with the base stats.
+M.test = false
+-- the balance it always has (topped up at every load)
+M.TEST_COINS = 999999
+M.TEST_VOUCHERS = 99
+
+-- Fills p as the end game: the devil at the last level (the Sigilli's points
+-- all to spend), every piece owned at the last level, the whole campaign done
+-- with the three stars, every weapon seen, the story already read, the wallet
+-- full. The caps come from sim/skills.lua and sim/gear.lua, so they follow them.
+function M.endgame(p)
+	local equip = require "sim.gear"
+	p.livello, p.xp = M.LEVEL_MAX, 0
+	for _, f in ipairs(equip.SETS) do
+		for _, s in ipairs(equip.SLOTS) do
+			local k = wallet.key(f.id, s.id)
+			p.posseduti[k], p.pezzi[k], p.prova[k] = true, equip.LIVELLO_MAX, nil
+		end
+	end
+	for _, cap in ipairs(require("sim.campaign").CAPITOLI) do
+		for _, l in ipairs(cap.missioni) do p.stelle[l.id] = { true, true, true } end
+	end
+	for _, ch in ipairs(require("ui.story").CHAPTERS) do p.storia[ch.id] = true end
+	for w in pairs(require("sim.game").WEAPONS) do p.armi[w] = true end
+	-- the gifts count as given, so they don't pop up
+	wallet.gifts(p, M.statistics(p, "tutte"), p.livello)
+	p.scaglie, p.ossidiana, p.buoni = M.TEST_COINS, M.TEST_COINS, M.TEST_VOUCHERS
+	return p
+end
+
 local function file()
-	return sys.get_save_file("megablast", "profilo")
+	return sys.get_save_file("megablast", M.test and "profilo_prova" or "profilo")
+end
+
+-- which profile the phone uses: its own small file, outside both profiles
+local function choice_file()
+	return sys.get_save_file("megablast", "profilo_scelto")
+end
+
+function M.test_chosen()
+	local ok, t = pcall(sys.load, choice_file())
+	return ok and type(t) == "table" and t.prova == true
+end
+
+-- Switches to the test profile (on = true) or back to the real one. p (the
+-- profile in use) is refilled in place, so whoever holds it sees the other
+-- one; the settings (aim, controller buttons...) belong to the phone and
+-- come along.
+function M.choose_test(p, on)
+	if (on and true or false) == M.test then return p end
+	M.save(p)
+	local settings = p.impostazioni
+	sys.save(choice_file(), { prova = on and true or false })
+	local other = M.load_up()
+	for k in pairs(p) do p[k] = nil end
+	for k, v in pairs(other) do p[k] = v end
+	p.impostazioni = settings
+	M.save(p)
+	return p
 end
 
 function M.load_up()
+	M.test = M.test_chosen()
 	local ok, p = pcall(sys.load, file())
-	if not ok or type(p) ~= "table" or p.versione ~= M.VERSION then return M.new() end
+	if not ok or type(p) ~= "table" or p.versione ~= M.VERSION then
+		p = M.new()
+		return M.test and M.endgame(p) or p
+	end
 	-- a field added to nuovo() later is missing from older saves of the same
 	-- version: it starts empty, without resetting the profile
 	for k, v in pairs(M.new()) do
@@ -351,6 +415,8 @@ function M.load_up()
 		if not skills.valid(a.tree or {}, math.huge) then a.tree = {} end
 	end
 	p.livello = math.min(p.livello, M.LEVEL_MAX)
+	-- the test profile: everything at the top again (new pieces, new missions, coins spent)
+	if M.test then M.endgame(p) end
 	return p
 end
 

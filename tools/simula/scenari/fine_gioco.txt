@@ -1,0 +1,26 @@
+# Il profilo di prova della fine del gioco (Sergio, 14 nov): nelle IMPOSTAZIONI
+# la riga PROFILO passa da IL MIO a PROVA FINE GIOCO, un secondo profilo salvato
+# a parte: livello 50, tutti i pezzi al massimo, tutta la campagna, il portafoglio pieno.
+aspetta 9
+tocca_bordo 74 54 basso sinistra       # la rotellina delle impostazioni
+aspetta 1
+foto 01_impostazioni
+tocca 372 133                         # PROVA FINE GIOCO
+aspetta 0.5
+foto 02_prova_fine_gioco
+tocca 72 60                           # indietro: la home del profilo di prova
+aspetta_stato modo=menu 3
+aspetta 2
+foto 03_home_prova
+tocca 1020 330                        # DIAVOLETTO: il profilo, livello 50
+aspetta 1
+foto 04_profilo
+tocca 697 589                         # SIGILLI: tutti i punti da spendere
+aspetta 0.5
+foto 05_sigilli
+tocca 72 60                           # indietro
+aspetta_stato modo=menu 3
+aspetta 2
+tocca 230 460                         # CAMPAGNA: tutta fatta, i gironi aperti
+aspetta 2
+foto 06_campagna

@@ -38,6 +38,8 @@ local CHOICES = {
 	choice_of("potenza", { "levetta", "grilletto" }),
 	choice_of("levette", { "sinistra", "destra" }),
 	choice_of("fps", { "spento", "acceso" }),
+	-- the end-game test profile (menu/profile.lua, endgame): its own save
+	choice_of("profilo", { "vero", "prova" }),
 }
 local KC = kit.C
 
@@ -54,12 +56,13 @@ local function build(s)
 
 	for i, sc in ipairs(CHOICES) do
 		local v = profile.setting(s.p, sc[1])
+		if sc[1] == "profilo" then v = profile.test and "prova" or "vero" end
 		local opts, on = {}, 1
 		for k, m in ipairs(sc[3]) do
 			opts[k] = { m[2], sc[1] .. ":" .. m[1] }
 			if v == m[1] then on = k end
 		end
-		kit.choice(g, s.buttons, 50 + (i - 1) * 6, 134 + (i - 1) * 98, sc[2], opts, on, 200)
+		kit.choice(g, s.buttons, 50 + (i - 1) * 5, 134 + (i - 1) * 84, sc[2], opts, on, 200)
 	end
 
 	-- the controller's buttons: two columns of commands
@@ -148,6 +151,8 @@ function M.on_input(s, action_id, action)
 		local kind, value = ui_action:match("^(%a+):(.*)$")
 		if kind == "tasto" then
 			s.attesa = s.attesa ~= value and value or nil
+		elseif kind == "profilo" then
+			profile.choose_test(s.p, value == "prova")
 		else
 			profile.set(s.p, kind, value)
 			profile.save(s.p)
