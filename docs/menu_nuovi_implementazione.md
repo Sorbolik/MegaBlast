@@ -34,8 +34,8 @@ Regole che valgono per tutto (Sergio):
 - Pulsante: parte veloce verso il suo bordo e frena; l'inversione al bordo è il momento più lento;
   poi riparte accelerando trascinando la schermata; il pulsante intero è la linguetta della
   schermata, sul bordo disegnato (WB-049) con la sua scia di schegge. Ritorno: al contrario.
-- Arrivati, lo scudo resta nella testata della schermata come segno di dove sei (lettura di
-  Claude di «mantenere l'indicazione nella pagina in cui siamo approdati»).
+- Arrivati, la linguetta (il pulsante sul bordo disegnato) resta sul bordo della schermata
+  come segno di dove sei (Sergio, 15 nov 00:05: «mi riferivo a questa linguetta»).
 - ZAINO: esce dall'apprendista e ci rientra.
 - Le altre schermate (profilo, gioca online, impostazioni) tengono il passaggio di oggi.
 
