@@ -7,11 +7,11 @@
 --
 --   local level_end = require "menu.level_end"
 --   local f = level_end.new({ titolo = "Il Rampino", stelle = { true, true, false },
---     criteria = { "FATTA", "CON 100 PUNTI DI VANTAGGIO", "SENZA MORIRE" }, vantaggio = 85, record = 3, avanti = true }, sound)
+--     criteria = { "FATTA", "ALMENO 120 PUNTI", "ALMENO 200 PUNTI" }, punti = 85, record_punti = 140, avanti = true }, sound)
 --     stelle: which ones it took (each with its criterion); criteria: what each
---     one takes (missions.criteria); vantaggio: the lead points made (nil where
---     points don't count: the lessons); record: how many stars the mission
---     already had; medaglia: the second is Favilla's medal (the cortile);
+--     one takes (missions.criteria); punti: the points made (nil where they
+--     don't count: the lessons); record_punti: the level's record of points
+--     (record_prima: before this run); medaglia: the second is Favilla's medal (the cortile);
 --     avanti: there is a next level; sound(v): the tick, v = speed (pitch);
 --     gain: profile.missione's experience and coins (the receipt on the right, ui/receipt.lua), prof: the profile;
 --     coin(kind, i): the sound of a coin landing in the wallet pill; xp(i, n, level_up): a spark landing in the bar
@@ -96,17 +96,12 @@ function M.new(o, sound)
 			gui.set_scale(what, vec(sc.x * 124 / wide, sc.y * 124 / wide))
 		end
 	end
-	local under = o.vantaggio and T.lead:format(o.vantaggio) or ""
-	if o.record and o.record > n then
-		local record = (o.record == 1 and T.record_one or T.record):format(o.record)
-		under = under == "" and record or under .. "  -  " .. record
-	end
-	kit.text(g, kit.upper(under), 86, 400, 13, KC.MUTE, "start", 1.5)
-	-- the level's record of lead points, always and well in sight (Sergio, 14
+	if o.punti then kit.text(g, kit.upper(T.points:format(o.punti)), 86, 400, 13, KC.MUTE, "start", 1.5) end
+	-- the level's record of points, always and well in sight (Sergio, 14
 	-- Nov): new in fire, otherwise in gold; with all three stars, beat it
 	local best, before = o.record_punti, o.record_prima
 	if best then
-		local new = o.vantaggio and o.vantaggio == best and (not before or o.vantaggio > before)
+		local new = o.punti and o.punti == best and (not before or o.punti > before)
 		local all = n == count and count == 3
 		local t = new and T.record_new or all and T.record_beat or T.record_points
 		kit.text(g, t:format(best), 86, 440, 24, new and KC.HOT_TOP or KC.STAR, "start", 2)

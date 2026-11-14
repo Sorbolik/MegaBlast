@@ -2709,7 +2709,7 @@ local function open_campaign(self)
 	-- a chapter of the story not seen yet comes first (ui/story.lua)
 	if CP.story(self, nil, function() open_campaign(self) end) then return end
 	open_screen(self, menu.campaign, self.chosen_campaign, self.profilo.stelle,
-		#CP.tale.read_again(self.profilo) > 0, self.profilo.lead_records)
+		#CP.tale.read_again(self.profilo) > 0, self.profilo.point_records)
 end
 
 -- The campaign's story (ui/story.lua, menu/story.lua): the chapter due now
@@ -2815,9 +2815,8 @@ local function mission_update(self, dt)
 	end
 	if r.esito == "fatta" and not r.was_saved then
 		r.was_saved = true
-		local record = missions.count(self.profilo.stelle[r.l.id] or {})
 		local chapters = CP.wallet.chapters_done(self.profilo, CP.chapters)
-		self.mission_gain = profile.mission(self.profilo, r.l.id, missions.stars(r), missions.lead(r))
+		self.mission_gain = profile.mission(self.profilo, r.l.id, missions.stars(r), missions.points(r))
 		self.mission_gain.coins = CP.mission_coins(self, self.mission_gain, chapters)
 		profile.save(self.profilo)
 		if not r.l.guidata then
@@ -2825,7 +2824,7 @@ local function mission_update(self, dt)
 			show_message(self, TM.mission_done, true)
 			self.mode = "ended"
 			set_controls_visible(self, false)
-			self.end_t, self.record_end = PODIUM_WAIT, record
+			self.end_t = PODIUM_WAIT
 		end
 	elseif r.esito == "fallita" and not r.was_saved then
 		r.was_saved = true
@@ -2835,7 +2834,7 @@ local function mission_update(self, dt)
 			show_message(self, TM.mission_retry, true)
 			self.mode = "ended"
 			set_controls_visible(self, false)
-			self.end_t, self.record_end = PODIUM_WAIT, 0
+			self.end_t = PODIUM_WAIT
 		else
 			show_message(self, TM.mission_retry)
 			self.missione_attesa = 1.5
@@ -2858,9 +2857,9 @@ local function open_level_end(self)
 		titolo = r.l.titolo, stelle = won and missions.stars(r) or { false, false, false },
 		criteria = missions.criteria(r.l),
 		medaglia = r.l.medaglia ~= nil,
-		-- the lead points, where they count
-		vantaggio = won and missions.lead(r) or nil,
-		record = self.record_end, record_punti = profile.points_record(self.profilo, r.l.id),
+		-- the points made, where they count, and the level's record
+		punti = won and missions.points(r) or nil,
+		record_punti = profile.points_record(self.profilo, r.l.id),
 		record_prima = (won and self.mission_gain or {}).record_before,
 		avanti = won and (missions.after(r.l.id) ~= nil),
 		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo, coin = CP.coin_sound, xp = CP.xp_sound,
@@ -2900,7 +2899,7 @@ function CP.enter_mission(self, id, from, told)
 	local got = {}
 	for i, taken in ipairs(self.profilo.stelle[id] or {}) do got[i] = taken and true or false end
 	self.cartolina = self.vign_on and l and menu.postcard.open(id, l.titolo, from, l.tipo,
-		first and menu.level_types.line(l.tipo) or nil, { criteria = missions.criteria(l), stars = got })
+		first and menu.level_types.line(l.tipo) or nil, { criteria = missions.criteria(l), stars = got, record = profile.points_record(self.profilo, id) })
 	if not self.cartolina then return flame() end
 	self.cartolina.go = flame
 end

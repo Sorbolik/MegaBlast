@@ -1,6 +1,7 @@
 # Due mani (imposta prova_missione due_mani): la Lama e il Lanciarune nello
 # stesso turno sul bot che si rimette in sesto, poi la fine del livello con la
-# stella dei punti di vantaggio (non più dei turni) e sotto i punti fatti.
+# seconda stella a soglia dei punti fatti (Sergio, 14 nov: non più i punti di
+# vantaggio) e sotto i punti fatti e il record del livello, in punti.
 # Barra: Lanciarune 1, Lama 2.
 imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_profilo 1              # la Forgia aperta, due record già fatti
@@ -18,8 +19,8 @@ premi 1
 mira 160 60 0.4                      # il Lanciarune sul bot
 aspetta_evento death 8
 aspetta 4
-foto 02_fine_livello                 # la seconda stella: CON 110 PUNTI DI VANTAGGIO
+foto 02_fine_livello                 # una stella (FATTA; ALMENO 130 e 180 PUNTI spente), PUNTI FATTI: 95
                                      # e sotto il record dei punti del livello: NUOVO RECORD
 tocca 345 82                         # CAMPAGNA
 aspetta 3
-foto 03_bacheca_record               # sulla carta del livello, in alto a destra: RECORD 115
+foto 03_bacheca_record               # sulla carta del livello, in alto a destra: RECORD 95

@@ -32,7 +32,7 @@
 --   local i, text = missions.battuta(r)             -- what Favilla says over her head now (once), or nil
 --   missions.stelle(r)                              -- { true, false, true }: each star with its criterion
 --   missions.quante(stars)                          -- how many are lit
---   missions.criteria(l)                            -- what each star needs: { "FATTA", "CON 60 PUNTI DI VANTAGGIO", ... }
+--   missions.criteria(l)                            -- what each star needs: { "FATTA", "ALMENO 120 PUNTI", ... }
 --   missions.dopo(id)                               -- the next mission in the chapter (nil after the last)
 --
 -- A mission (fields, all data except where stated):
@@ -88,10 +88,10 @@
 --   turni: past this many player turns it starts over
 --   al_posto: everyone respawns at their spawn, as in the lessons (the sniper
 --     knocked off its island comes back there, not within reach)
---   stelle = { punti = 60, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } }
---     (the second with at least that point lead over the opponents at the end:
---     the circles, where points count; Sergio, 31 Oct: no longer turns) or
---     { bonus = { ... }, bonus2 = { ... } } (two bonuses: the lessons)
+--   stelle = { punti = { 120, 200 } }: after the Training (Sergio, 14 Nov) the
+--     first star is the win, the second and the third the points the player
+--     made (their own robot, not the team, not the lead over the opponents) at
+--     least that many; without the win no star
 --   medaglia = { conta = "scintille", at_least = 1, testo = "LA SCINTILLA" }: the lessons
 --     of the cortile have no three stars (Sergio, 3 Nov): «Fatta» and, where
 --     there's a real challenge, Favilla's optional medal (a bonus, below)
@@ -173,7 +173,7 @@
 --   { down = 2 | "nemico", come = "vuoto", con = weapon, times = 3 }
 --   { win = true }                          the match ends and your team won
 -- Other verbs (survive, protect...) come with the missions that use them.
--- The counters for star bonuses: morti, teletrasporti, vuoto (your
+-- The counters for the medals: morti, teletrasporti, vuoto (your
 -- environmental kills), abbattuti, danni (taken by you), misses (without_time),
 -- globi (earned), globi_turno (the most earned in one turn), scintille, prima.
 
@@ -538,17 +538,6 @@ local function enemies_list(g, a, b)
 	return g.robots[a].team ~= g.robots[b].team
 end
 
--- The player's team points minus those of the leading opposing team
-local function lead(g)
-	local team_points_of = {}
-	for _, rb in ipairs(g.robots) do team_points_of[rb.team] = (team_points_of[rb.team] or 0) + rb.points end
-	local my_team, others = g.robots[PLAYER].team, nil
-	for t = 1, #g.robots do
-		if t ~= my_team and team_points_of[t] and (not others or team_points_of[t] > others) then others = team_points_of[t] end
-	end
-	return team_points_of[my_team] - (others or 0)
-end
-
 local function target(g, wanted, robot)
 	if wanted == "nemico" then return enemies_list(g, PLAYER, robot) end
 	return wanted == robot
@@ -836,7 +825,7 @@ function M.event(r, g, e, bots)
 	elseif e.type == "over" then
 		st.finished, st.won = true, e.winner == g.robots[PLAYER].team
 	end
-	if e.type == "points" or e.type == "over" then st.gap = lead(g) end
+	if e.type == "points" or e.type == "over" then st.made = g.robots[PLAYER].points end
 	local first_one = forward(st)
 	check_event(r, g, e)
 	-- lessons and still targets: downed by you, if no longer needed it stays down
@@ -1352,8 +1341,8 @@ function M.spark(r)
 	if sp and not r.scintilla_presa and not r.esito then return sp.x, sp.y end
 end
 
-local function lead_text(n)
-	return "CON " .. n .. " PUNTI DI VANTAGGIO"
+local function points_text(n)
+	return "ALMENO " .. n .. " PUNTI"
 end
 
 -- What each star needs
@@ -1361,14 +1350,14 @@ function M.criteria(l)
 	if l.medaglia then return { "FATTA", l.medaglia.testo } end
 	local s = l.stelle
 	if not s then return { "FATTA" } end
-	if s.bonus2 then return { "FATTA", s.bonus.testo, s.bonus2.testo } end
-	return { "FATTA", lead_text(s.punti), s.bonus.testo }
+	return { "FATTA", points_text(s.punti[1]), points_text(s.punti[2]) }
 end
 
--- The point lead at the end of the mission (nil where there are no points)
-function M.lead(r)
+-- The points the player made in the mission (nil where they don't count: the
+-- lessons); the level's record (menu/profile.lua)
+function M.points(r)
 	local l = r.l
-	if l.stelle and l.stelle.punti then return math.floor((r.st.gap or 0) + 0.5) end
+	if l.stelle and l.stelle.punti then return math.floor((r.st.made or 0) + 0.5) end
 end
 
 local function bonus(b, st)
@@ -1377,18 +1366,16 @@ local function bonus(b, st)
 	return n >= b.at_least
 end
 
--- Stars: one for completing it, then the point lead and the bonus (or two
--- bonuses). Each counts on its own: you can have the third without the second.
--- The cortile: «Fatta» and the medal (or nothing more).
+-- Stars: one for completing it (without it none), then the two thresholds on
+-- the points the player made. The cortile: «Fatta» and the medal (or nothing more).
 function M.stars(r)
 	if r.esito ~= "fatta" then return { false, false, false } end
 	local l, st = r.l, r.st
-	local d = st.gap or 0
 	if l.medaglia then return { true, bonus(l.medaglia, st), false } end
 	local s = l.stelle
 	if not s then return { true, false, false } end
-	if s.bonus2 then return { true, bonus(s.bonus, st), bonus(s.bonus2, st) } end
-	return { true, d >= s.punti, bonus(s.bonus, st) }
+	local made = M.points(r)
+	return { true, made >= s.punti[1], made >= s.punti[2] }
 end
 
 function M.count(stars)

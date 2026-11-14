@@ -12,7 +12,8 @@
 --   local p = postcard.open(id, titolo, from, tipo, line, o)  -- from: { x, y, w, h } the picture
 --        -- on the card you tapped (it zooms from there); tipo: the mission's kind
 --        -- (ui/level_types.lua); line: what that kind is, or nil;
---        -- o: { criteria = { "FATTA", ... }, stars = { true, false, ... } } what you already took
+--        -- o: { criteria = { "FATTA", ... }, stars = { true, false, ... }, record = 140 } what you
+--        -- already took and the level's record of points (nil if never counted)
 --   postcard.press(p, x, y)  -- "avanti" on GIOCA, "indietro" on the plate at the bottom left, or nil
 --   postcard.pad(p, n)       -- controller: "a" avanti, "b" indietro
 --   postcard.leave(p, done)  -- GIOCA: it shrinks into the middle, the backdrop goes black
@@ -71,11 +72,9 @@ function M.open(id, titolo, from, tipo, line, o)
 		end
 	end
 	-- the stars: what each one takes, lit if you already have it
-	local n = 0
 	for i, what in ipairs(o.criteria or {}) do
 		local x = 860 + (i - 1) * 140
 		local got = o.stars and o.stars[i]
-		if got then n = n + 1 end
 		ui.star(x, 720 - 300, 72, got and KC.STAR or KC.LINE, p.radice)
 		local t = kit.text(g, what, x, 372, 16, KC.MUTE, "middle", 0.5)
 		local wide = kit.width(t)
@@ -84,9 +83,7 @@ function M.open(id, titolo, from, tipo, line, o)
 			gui.set_scale(t, vec(sc.x * 132 / wide, sc.y * 132 / wide))
 		end
 	end
-	if n > 0 then
-		kit.text(g, kit.upper((n == 1 and T.record_one or T.record):format(n)), 1000, 430, 16, KC.MUTE, "middle", 1.5)
-	end
+	if o.record then kit.text(g, T.record_points:format(o.record), 1000, 430, 16, KC.STAR, "middle", 1.5) end
 	p.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	top(p.right.node)
 	p.go_plate = kit.action(p.right, common.play, 930, 560, 270, 84, { size = 54 })
