@@ -1,0 +1,15 @@
+Image 1 is the home screen of our game: the gold PLAY button is at the bottom right, it is the main button of the screen. Image 2 and image 3 show the new family of the other menu buttons: a round medallion emblem with a metal rim and rivets at the left end (image 2), a plain body with a meaningful tail at the right end and flat bold colors (image 3). Image 4 is today's PLAY button, a gold ingot: we want to replace it with something more special. Copy its ink style: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+
+Draw THREE different proposals for the new PLAY ONLINE button, one under the other with green space between them. Each belongs to the same family as images 2 and 3 but is bigger, richer and warmer, clearly the most important button of the game: about three and a half times wider than tall, with a plain, even, empty middle where the game writes "PLAY" and "online" (leave it empty).
+1. FORGED GOLD BLADE: a thick gold body (#FFB703, lighter band #FFE08A, darker band #F26419), on its LEFT end a BIG round medallion with a dark iron rim and rivets, inside two crossed pitchforks over a small round world; on its RIGHT end a big double flame tongue (#F26419, #FFB703) curling upward;
+2. MOLTEN SEAL: a gold body with a thin ember rim, on its LEFT end a BIG round wax-seal medallion in deep red (#8E1E1E) with a gold rim, inside two little devil horns facing each other (two players meeting); its RIGHT end shaped like the hot glowing tip of a blade fresh from the forge (#F26419 with a #FFE08A core);
+3. ANVIL SIGN: a gold body resting on a dark iron base (#2B2530) that sticks out a little below it, on its LEFT end a BIG round medallion with a gold rim, inside a little globe with a flame on top; its RIGHT end like a forged arrow point pointing right, with two small flames trailing behind it.
+Each proposal is one single piece with a strong silhouette, warm fire colors, at most six flat colors, and must stay readable when small.
+
+Thick black ink outline, cartoon comic style like image 4. Flat colors only, no detail thinner than the outline, so the buttons can be traced into vectors. No texture, no soft gradients, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The three buttons are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+1. art/WB-045/riferimenti/R1_home_oggi.jpg
+2. art/WB-046/riferimenti/R2_emblema_tondo.png
+3. art/WB-046/riferimenti/R3_coda_e_colori.png
+4. art/WB-022/pezzo_lingotto_1.png

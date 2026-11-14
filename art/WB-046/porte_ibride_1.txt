@@ -1,0 +1,16 @@
+Image 1 is the home screen of our game: on the left two big buttons (CAMPAIGN, TRAINING), on the right two (EVENTS, ARMOURY), and the gold PLAY button at the bottom right. Image 2 and image 3 are two earlier proposals for these four buttons; we want a MIX of the two. From image 2 take ONLY the round EMBLEM at the left end: a round medallion with a thick metal rim, four small rivets on the rim and a carved emblem inside. Do NOT take the chains of image 2. From image 3 take the BODY and its COLORS and the special TAIL at the right end of each button. Image 4 shows the ink style to copy: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+
+Draw FOUR wide menu buttons, one under the other with green space between them. Each button is about four times wider than tall: on its LEFT end a big round medallion (like image 2) that is a little taller than the body and overlaps it, in the middle a plain, even, empty body (the game writes the name there), and on its RIGHT end the tail of image 3.
+1. CAMPAIGN: ember body (#F26419 with a lighter band #FFB703), right end like a flame tongue; medallion with a dark iron rim, inside a winding road going down into a flaming pit;
+2. TRAINING: worn steel body (#8C929C, highlight #C9CED6), right end like the blunt tip of a wooden practice sword held by an iron band; medallion with a dark iron rim, inside a straw target with an arrow in the middle;
+3. EVENTS: gold body (#FFB703, lighter band #FFE08A, darker band #F26419), right end like a swallow-tail banner; medallion with a gold rim on dark red (#8E1E1E), inside a crown;
+4. ARMOURY: dark iron body (#2B2530) with an ice-blue edge (#38B6FF, highlight #CAF0F8), right end cut like a chipped ice shard; medallion with an ice-blue rim, inside an anvil with a hammer.
+The four buttons have the same height, the same medallion size and the same layout; only colors, emblem and tail change. They must look calmer than the gold PLAY button of image 1.
+
+Thick black ink outline, cartoon comic style like image 4. Flat colors only, at most six per button, no detail thinner than the outline, so the buttons can be traced into vectors. No texture, no soft gradients, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The buttons are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+1. art/WB-045/riferimenti/R1_home_oggi.jpg
+2. art/WB-046/riferimenti/R2_emblema_tondo.png
+3. art/WB-046/riferimenti/R3_coda_e_colori.png
+4. art/WB-022/pezzo_lingotto_1.png

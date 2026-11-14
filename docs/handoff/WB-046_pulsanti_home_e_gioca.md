@@ -96,4 +96,27 @@ Reversibile (solo proposte in un ramo): approvata su richiesta di Sergio. Il GIO
 
 ## Consegna di Codex
 
+Generati con `image_gen` integrato da `main` (`63dbbed9`). Ogni PNG in
+`art/WB-046/` ha il TXT omonimo con prompt integrale e riferimenti R1–R4 in ordine.
+
+| Nome | Tentativi | Selezione | Dimensioni PNG |
+|---|---:|---:|---:|
+| `porte_ibride_1` | 1 | 1 | 1086×1448 |
+| `porte_ibride_2` | 1 | 1 | 1086×1448 |
+| `gioca_online_1` | 3 | 1 | 2172×724 |
+| `gioca_online_2` | 3 | 1 | 2172×724 |
+
+Controllati a vista numero di pulsanti, emblemi a sinistra, colori, code, centri
+liberi, margini e assenza di scritte. Gli ibridi hanno quattro rivetti per medaglione
+e sono senza catene. I fogli GIOCA hanno le tre idee richieste, con proporzioni
+più allungate di 3,5:1. Ho preferito i primi tentativi per lo spazio tra le righe.
+In `gioca_online_1` il margine tra medaglioni è minimo. In `gioca_online_2` alcuni
+contorni si toccano anche nella versione selezionata. Va separato in fase di ricalco.
+
+Nessun PNG è a 1536×1024. Conservati gli originali del generatore. Lo sfondo verde
+richiesto dalla scheda non è esattamente `#00FF00` nei punti campionati. Le campiture
+hanno lievi variazioni di tono. Non verificati il limite di sei colori, il ricalco,
+l'allungamento e la gerarchia visiva nella home. Per il montaggio, R1 mostra GIOCA
+in basso a destra, mentre DECISIONI.md (5 nov) lo colloca sopra CAMPAGNA.
+
 ## Resoconto di Claude
