@@ -1,6 +1,6 @@
 # WB-041 · Il Vuoto addosso all'apprendista nuovo: cappuccio, corazza, stivali
 
-- **Stato:** APPROVATA (Sergio, 13 nov: «Vai»)
+- **Stato:** IMPLEMENTATA (Sergio, 13 nov: «Vai»)
 - **Data:** 2026-11-13
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-041`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-041` senza chiedere conferma (il repository è privato).
@@ -147,3 +147,28 @@ contorno. Il requisito di identità pixel per pixel resta
 insoddisfatto e il ritaglio per differenza resta da verificare.
 
 ## Resoconto di Claude
+
+14 nov. Le tavole combaciano coi riferimenti allo stesso pixel (spostamento 0; le sagome
+differiscono dell'1-4%, solo dove ci sono i pezzi nuovi). Usate `corpo_base_1` +
+`cappuccio_base_2` (le più fedeli, come dice Codex) e le due forgiate; `cappuccio_base_1` e
+`corpo_base_2` restano scartate.
+
+- Ricalcate in vettoriale (`vettoriale.py`) con la tavolozza nuova `apprendista_vuoto`
+  (quella dell'apprendista più #2B2147, #1A1430 e #00FFFF); i fogli del corpo senza i colori
+  del muso (`--senza lingua,bocca,corna,corna_ombra,occhi`), se no la pelle delle gambe
+  forgiate diventava rosa.
+- Ogni pezzo è messo sui pezzi di `apprendista_nuovo` trovando la stessa scala e lo stesso
+  spostamento con cui il gioco ha ritagliato il foglio di riferimento (sagome sovrapposte al
+  99% per gambe e testa): niente a occhio, e le immagini sono sempre rimpicciolite, mai
+  ingrandite.
+- **Cappuccio** (elmo, sopra tutte e nove le facce): solo il viola del cappuccio, il ciano e
+  il suo contorno, preso dal foglio per colore; le aperture restano vuote, le corna escono.
+- **Corazza** e **stivali**: prendono il posto del busto e delle gambe (busto e gambe interi
+  dal foglio di Codex), così sotto la corazza non spunta il fazzoletto e dagli stivali non
+  escono gli artigli.
+- Pelli `cappuccio_vuoto`, `corazza_vuoto`, `stivali_vuoto` e le `_forgiato`; scenari
+  `vuoto_addosso.txt` e `vuoto_addosso_forgiato.txt` (col mantello del Vuoto).
+
+Da fare: il colletto WB-038 col colore della squadra (adesso il Vuoto non ha colore di
+squadra), le corna come pezzo a parte sopra il cappuccio.
+

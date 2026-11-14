@@ -160,3 +160,5 @@ basta); staccare i capelli di Favilla in un pezzo a parte (servirebbero 9 teste
 rifatte).
 
 9 nov, dopo #233: sul telefono di Sergio su Favilla si muoveva il viso e non i capelli. Causa probabile: l'immagine caricata a parte arriva con le coordinate verticali al contrario rispetto al PC, e il basso diventa l'alto. Lo shader ora lo chiede all'immagine (un punto pieno vicino al fondo e vuoto alla stessa altezza dall'alto) e funziona nei due versi. Sul PC non cambia niente.
+
+14 nov, WB-041 (Claude): i pezzi d'equipaggiamento disegnati da Codex sul foglio dell'apprendista si mettono nel gioco con la stessa scala e lo stesso spostamento con cui è stato ritagliato il foglio di riferimento (cercati confrontando le sagome), mai a occhio. Elmo sopra la testa; corazza e stivali prendono il posto del busto e delle gambe interi, perché sopra non si può cancellare quello che sporge sotto (il fazzoletto, gli artigli).

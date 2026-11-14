@@ -1,0 +1,38 @@
+{
+ "nome": "stivali_vuoto_forgiato",
+ "categoria": "stivali",
+ "pezzi": {
+  "gamba": {
+   "img": "stivali_vuoto_forgiato_gamba",
+   "x": 5.4,
+   "y": -29.9,
+   "w": 60.7,
+   "h": 80.3,
+   "modo": "sostituisce"
+  },
+  "gamba_1": {
+   "img": "stivali_vuoto_forgiato_gamba",
+   "x": 5.4,
+   "y": -29.9,
+   "w": 61.4,
+   "h": 81.0,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro": {
+   "img": "stivali_vuoto_forgiato_gamba_dietro",
+   "x": 2.3,
+   "y": -29.4,
+   "w": 60.2,
+   "h": 79.9,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro_1": {
+   "img": "stivali_vuoto_forgiato_gamba_dietro",
+   "x": 2.3,
+   "y": -29.4,
+   "w": 60.9,
+   "h": 80.7,
+   "modo": "sostituisce"
+  }
+ }
+}

@@ -1,0 +1,150 @@
+{
+ "nome": "cappuccio_vuoto_forgiato",
+ "categoria": "elmo",
+ "pezzi": {
+  "testa_1": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 14.6,
+   "y": 34.8,
+   "w": 126.5,
+   "h": 121.1,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 13.2,
+   "y": 37.2,
+   "w": 102.5,
+   "h": 98.0,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 14.6,
+   "y": 34.8,
+   "w": 126.5,
+   "h": 121.1,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 13.2,
+   "y": 37.2,
+   "w": 102.5,
+   "h": 98.0,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 14.5,
+   "y": 34.8,
+   "w": 125.7,
+   "h": 121.1,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 13.1,
+   "y": 37.2,
+   "w": 101.8,
+   "h": 98.0,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 14.6,
+   "y": 34.8,
+   "w": 127.0,
+   "h": 121.1,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 13.2,
+   "y": 37.2,
+   "w": 102.8,
+   "h": 98.0,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 14.6,
+   "y": 34.8,
+   "w": 127.0,
+   "h": 121.1,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 13.2,
+   "y": 37.2,
+   "w": 102.8,
+   "h": 98.0,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 14.6,
+   "y": 34.8,
+   "w": 126.2,
+   "h": 121.1,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 13.2,
+   "y": 37.2,
+   "w": 102.2,
+   "h": 98.0,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 14.4,
+   "y": 34.8,
+   "w": 125.2,
+   "h": 121.1,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 13.0,
+   "y": 37.2,
+   "w": 101.4,
+   "h": 98.0,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 14.6,
+   "y": 34.8,
+   "w": 126.2,
+   "h": 121.1,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 13.2,
+   "y": 37.2,
+   "w": 102.2,
+   "h": 98.0,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 14.6,
+   "y": 34.8,
+   "w": 126.5,
+   "h": 121.1,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "cappuccio_vuoto_forgiato_testa",
+   "x": 13.2,
+   "y": 37.2,
+   "w": 102.5,
+   "h": 98.0,
+   "modo": "sopra"
+  }
+ }
+}

@@ -266,6 +266,18 @@ images {
   image: "/assets/skins/apprendista_testa_sconfitta_1.png"
 }
 images {
+  image: "/assets/skins/cappuccio_vuoto_forgiato_testa.png"
+}
+images {
+  image: "/assets/skins/cappuccio_vuoto_testa.png"
+}
+images {
+  image: "/assets/skins/corazza_vuoto_busto.png"
+}
+images {
+  image: "/assets/skins/corazza_vuoto_forgiato_busto.png"
+}
+images {
   image: "/assets/skins/favilla_ala.png"
 }
 images {
@@ -351,6 +363,18 @@ images {
 }
 images {
   image: "/assets/skins/favilla_testa_sconfitta_1.png"
+}
+images {
+  image: "/assets/skins/stivali_vuoto_forgiato_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_vuoto_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/skins/stivali_vuoto_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_vuoto_gamba_dietro.png"
 }
 margin: 0
 extrude_borders: 2
