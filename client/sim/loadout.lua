@@ -43,21 +43,26 @@ local function apply(st, mods)
 end
 
 -- Final stats. base: the sim's game.base_stats(). levels: levels of the worn
--- pieces ({ mask = 1..30, ... }, missing: 1). First the Sigilli, then the
--- pieces with their caps (sim/gear.lua). Integer values (hp, ticks) stay integers.
-function M.stats(base, a, levels)
+-- pieces ({ mask = 1..30, ... }, missing: 1). level: the player's level (nil:
+-- 1). First the Sigilli, then the pieces with their caps (sim/gear.lua), then
+-- what the level gives by itself (sim/skills.lua). Integer values (hp,
+-- ticks) stay integers.
+function M.stats(base, a, levels, level)
 	local st = {}
 	for k, v in pairs(base) do st[k] = v end
 	local mods = {}
 	skills.mods(a.tree or {}, mods)
 	apply(st, mods)
 	equip.apply(st, base, a.gear or {}, levels)
+	for stat, v in pairs(skills.level_bonus(level)) do st[stat] = st[stat] + v end
 	for k, v in pairs(M.MIN) do
 		if type(st[k]) == "number" and st[k] < v then st[k] = v end
 	end
 	for _, k in ipairs({ "max_hp", "teleport_ticks" }) do
 		if type(st[k]) == "number" then st[k] = math.floor(st[k] + 0.5) end
 	end
+	-- Attack and Defense to a tenth of a point
+	for _, k in ipairs({ "attack", "defense" }) do st[k] = math.floor(st[k] * 10 + 0.5) / 10 end
 	return st
 end
 

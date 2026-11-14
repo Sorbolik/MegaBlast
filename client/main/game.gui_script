@@ -2512,7 +2512,7 @@ start_local_match = function(self, picked)
 		players[i] = {}
 		for k, v in pairs(p) do players[i][k] = v end
 	end
-	players[1].stats = loadout.stats(game.base_stats(), my_own, profile.levels(self.profilo, my_own))
+	players[1].stats = loadout.stats(game.base_stats(), my_own, profile.levels(self.profilo, my_own), self.profilo.livello)
 	opts.players = players
 	-- random start points (sim/game.lua start_points); the simulator keeps the fixed
 	-- ones unless asked (imposta prova_spawn_casuali 1), so the old scenarios stay put

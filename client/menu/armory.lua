@@ -31,7 +31,7 @@ local KC = kit.C
 
 -- stats shown on the right, in this order: name and how the value is written
 M.STATISTICS = {
-	{ "max_hp" }, { "walk_speed" }, { "jump_height" }, { "air_speed" },
+	{ "attack" }, { "defense" }, { "max_hp" }, { "walk_speed" }, { "jump_height" }, { "air_speed" },
 	{ "teleport_ticks", "seconds" }, { "teleports" },
 	{ "parachutes" }, { "air_jumps" },
 	{ "fall_damage_mul", "percent" }, { "knockback_mul", "percent" }, { "blast_push", "percent" },
@@ -61,7 +61,7 @@ local function to_active(a) return profile.active_loadout(a.prof) end
 local function statistics(a)
 	local g = a.kg
 	local b = base()
-	local st = loadout.stats(b, to_active(a), profile.levels(a.prof, to_active(a)))
+	local st = loadout.stats(b, to_active(a), profile.levels(a.prof, to_active(a)), a.prof.livello)
 	local x0 = 1040 + kit.air()
 	kit.heading(g, common.stats, x0, 124)
 	-- what the pieces change comes first; ten rows at most, big enough to read
