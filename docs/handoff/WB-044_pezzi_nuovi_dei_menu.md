@@ -8,7 +8,7 @@
 ## Obiettivo
 
 Sergio ha scelto la proposta consigliata per ogni schermata dei menu riorganizzati (home,
-CORREDO con inventario e sigilli, ARMERIA con potenzia e bottega, GIOCA ONLINE, EVENTI con la
+ZAINO (nelle bozze ancora CORREDO) con inventario e sigilli, ARMERIA con potenzia e bottega, GIOCA ONLINE, EVENTI con la
 classifica mondiale, PROFILO con statistiche e cronologia partite: R4, e nel Figma la sezione
 «RIORGANIZZAZIONE MENU · 14 nov»). Nelle bozze ogni pezzo nuovo è disegnato a mano da Claude
 con rettangoli piatti: caselle dell'inventario, tondi del livello, spunta, cartellino dello
