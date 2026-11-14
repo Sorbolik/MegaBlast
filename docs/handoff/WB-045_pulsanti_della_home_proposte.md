@@ -1,6 +1,6 @@
 # WB-045 · Proposte nuove per i pulsanti grandi della home
 
-- **Stato:** APPROVATA (Sergio, 14 nov: «possiamo fare generare a codex altre proposte per i pulsanti principali?»)
+- **Stato:** GENERATA, superata da WB-046 (Sergio, 14 nov: «possiamo fare generare a codex altre proposte per i pulsanti principali?»)
 - **Data:** 2026-11-14
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-045`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-045` senza chiedere conferma (il repository è privato).
