@@ -568,6 +568,11 @@ end
 
 -- ---------------------------------------------------------------- categories
 
+-- A round dot d wide centered at the Figma point (cx, cy)
+function M.dot(g, cx, cy, d, color)
+	return shape("disco", cx - g.ox, g.oy - cy, d, d, color, g.node)
+end
+
 function M.rect(g, x, y, w, h, color)
 	return shape(nil, x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, color, g.node)
 end
@@ -582,16 +587,19 @@ end
 
 -- TABS: small plates in a row; the active one is light.
 -- tabs: { { label, ui_action }, ... }
-function M.tabs(g, list_of, x, y, tabs, active, accent)
-	local h, cx = 58, x
+-- tag: the tabs of the menus of 14 Nov (Figma, RIORGANIZZAZIONE MENU): the
+-- little tabs (linguetta) 50 tall next to the title, instead of the plates
+function M.tabs(g, list_of, x, y, tabs, active, accent, tag)
+	local h, cx = tag and 50 or 58, x
 	for i, tab in ipairs(tabs) do
-		local w = #tab[1] * 16 + 64
+		local w = tag and (#tab[1] * 18 + 56) or (#tab[1] * 16 + 64)
 		local on = i == active
 		local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
-		local name = on and "piastrina_chiara" or "piastrina"
+		local name = tag and (on and "linguetta_chiara" or "linguetta") or (on and "piastrina_chiara" or "piastrina")
 		three(n, name, w, h)
 		local box = room(name, cx + w / 2, y + h / 2, w, h)
-		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 9, 24,
+		local size = tag and 21 or 24
+		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + size * 0.37, size,
 			on and C.INK or M.with_alpha(C.SAND, 0.85), "middle", 0.5)
 		list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
 		cx = cx + w + 8 + (g.air and M.air(0.1) or 0)

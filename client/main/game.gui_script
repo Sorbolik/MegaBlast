@@ -27,7 +27,7 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	training = require "menu.training", level_end = require "menu.level_end", campaign = require "menu.campaign",
 	settings = require "menu.settings", board = require "menu.board", queue = require "menu.queue",
 	lineup = require "menu.lineup", profile_tabs = require "menu.profile_tabs", lobby = require "menu.lobby",
-	story = require "menu.story", private = require "menu.private",
+	story = require "menu.story", private = require "menu.private", backpack = require "menu.backpack",
 	-- not screens, here so as not to add local variables (limit of 200): the
 	-- server's events and their rules (start online)
 	eventi = require "main.events", regole = require "sim.rules",
@@ -5603,8 +5603,8 @@ function PAD.on_input(self, action_id, action)
 				impostazioni = function() open_screen(self, menu.settings, self.profilo, self.ctrl) end,
 				campagna = function() open_campaign(self) end,
 				profilo = function() CP.open_profile(self, "scheda") end,
-				-- the ZAINO (from the apprentice): for now its pieces are in the profile's sheet
-				zaino = function() CP.open_profile(self, "scheda") end,
+				-- the ZAINO, from the apprentice (menu/backpack.lua)
+				zaino = function() open_screen(self, menu.backpack, self.profilo, "inventario", TEAM_COLORS[1]) end,
 			}
 			if open_view[choice] then CP.slide(self, 1, open_view[choice]) end
 		end

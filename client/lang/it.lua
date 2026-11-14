@@ -510,6 +510,35 @@ return {
 		armory_sub = "IL FABBRO",
 	},
 
+	-- menu/gear_ui.lua: what the ZAINO and the ARMERIA share
+	gear_ui = {
+		-- slot and family: "ELMO · CORVO"
+		piece = "%s · %s",
+		stats = "STATISTICHE",
+		-- a loadout still closed: from which level
+		loadout_locked = "DAL LIV %d",
+	},
+
+	-- menu/backpack.lua: the ZAINO (from the apprentice), INVENTARIO and SIGILLI
+	backpack = {
+		title = "ZAINO",
+		tab_inventory = "INVENTARIO",
+		tab_seals = "SIGILLI",
+		loadout = "ASSETTO",
+		seal_loadout = "ASSETTO SIGILLI",
+		all = "TUTTI",
+		count = "%d pezzi",
+		nothing = "nessun pezzo qui: li trovi in armeria",
+		-- under the piece chosen: level, grade and what it does
+		piece_line = "liv %d · grado %s %s · %s",
+		wear = "INDOSSA",
+		worn = "ce l'hai addosso",
+		points = "PUNTI  %d / %d",
+		of = "%d / %d",
+		save = "SALVA",
+		saved = "salvato",
+	},
+
 	-- menu/queue.lua: GIOCA ONLINE, the queues online
 	queue = {
 		title = "GIOCA ONLINE",

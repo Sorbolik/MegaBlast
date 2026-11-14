@@ -49,7 +49,7 @@ function M.set(p, lookup_key, value)
 end
 
 function M.new()
-	local p = { versione = M.VERSION, xp = 0, livello = 1, braci = 0, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {}, point_records = {},
+	local p = { versione = M.VERSION, xp = 0, livello = 1, braci = 0, loadouts = {}, is_active = 1, seal_active = 1, stelle = {}, failed_ones = {}, point_records = {},
 		armi = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0,
 		-- the story's chapters already seen (ui/story.lua)
 		storia = {} }
@@ -77,8 +77,15 @@ function M.levels(p, a)
 	return wallet.levels(p, a)
 end
 
+-- The loadout that goes into a match: the pieces of the active loadout
+-- (is_active) and the Sigilli of the active Sigilli's loadout (seal_active):
+-- the ZAINO keeps them apart (Sergio, 14 Nov). Same tables, so changing its
+-- gear or its tree changes the saved loadouts
 function M.active_loadout(p)
-	return p.loadouts[p.is_active]
+	local g = p.loadouts[p.is_active]
+	local s = p.loadouts[p.seal_active or p.is_active] or g
+	if s == g then return g end
+	return { gear = g.gear, tree = s.tree, variant = g.variant }
 end
 
 -- Adds the experience lines { { key, xp, ... } } to the profile and returns
