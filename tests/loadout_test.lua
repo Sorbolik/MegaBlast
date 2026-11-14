@@ -37,16 +37,34 @@ for _, p in ipairs(skills.PATHS) do
 		end
 	end
 end
--- Families (page "I Pezzi della Forgia"): every plus from its slot's job, every stat known
+-- Families (14 Nov): main from the slot, two other secondaries, a minus
+-- elsewhere, a signature only that piece has; two pieces of a slot never alike
+local signs_seen = {}
 for _, f in ipairs(equip.SETS) do
 	for _, sl in ipairs(equip.SLOTS) do
 		local pc = f.pieces[sl.id]
-		local job = false
-		for _, j in ipairs(equip.JOBS[sl.id]) do job = job or j == pc[1] end
-		check(job and equip.STATS[pc[1]] and equip.STATS[pc[2]] and BASE[pc[1]] ~= nil and BASE[pc[2]] ~= nil and pc[1] ~= pc[2],
-			"family " .. f.id .. "." .. sl.id .. ": plus from the slot's job, minus elsewhere")
+		local main = false
+		for _, j in ipairs(equip.MAINS[sl.id]) do main = main or j == pc[1] end
+		local all = { pc[1], pc[2][1], pc[2][2], pc[3] }
+		local known, distinct = true, true
+		for i, st in ipairs(all) do
+			known = known and equip.STATS[st] ~= nil and BASE[st] ~= nil
+			for j = i + 1, #all do distinct = distinct and all[j] ~= st end
+		end
+		check(main and known and distinct and #pc[2] == 2, "piece " .. f.id .. "." .. sl.id .. ": main from the slot, four different stats")
+		check(equip.SIGNS[pc[4]] and BASE[pc[4]] == 0 and not signs_seen[pc[4]], "piece " .. f.id .. "." .. sl.id .. ": its own signature " .. pc[4])
+		signs_seen[pc[4]] = true
 	end
 	check(BASE[f.pair.stat] ~= nil and equip.STATS[f.pair.stat] ~= nil, "family " .. f.id .. ": pair bonus on a known stat")
+end
+for _, sl in ipairs(equip.SLOTS) do
+	local seen = {}
+	for _, f in ipairs(equip.SETS) do
+		local pc = f.pieces[sl.id]
+		local k = pc[1] .. "|" .. pc[2][1] .. "|" .. pc[2][2] .. "|" .. pc[3]
+		check(not seen[k], sl.id .. " of " .. f.id .. ": rows unlike every other " .. sl.id)
+		seen[k] = true
+	end
 end
 -- Points: they go in and out of a path, never over the path or the level
 local t = {}
@@ -86,50 +104,88 @@ for _, p in ipairs(skills.PATHS) do
 	end
 end
 
--- Pieces: the plus grows with the level, the minus halves at 20 and is gone at 30
-check(math.abs(equip.plus("walk_speed", 1) - 0.02) < 1e-9 and math.abs(equip.plus("walk_speed", 30) - 0.049) < 1e-9,
-	"plus from +2% to +4.9%")
-check(equip.plus("max_hp", 1) == 2 and equip.plus("max_hp", 30) == 5, "life from +2 to +5")
-check(equip.minus("walk_speed", 19) == 0.02 and equip.minus("walk_speed", 20) == 0.01 and equip.minus("walk_speed", 30) == 0,
-	"minus -2%, -1% from 20, nothing at 30")
+-- Pieces: the rows grow from 20% at level 1 to all at 30, with a jump at each step
+local function near(x, y) return math.abs(x - y) < 1e-9 end
+check(near(equip.growth(1), 0.2) and near(equip.growth(30), 1) and equip.growth(10) - equip.growth(9) > 2 * (equip.growth(9) - equip.growth(8)),
+	"growth: 20% at 1, all at 30, the step is felt")
+local rows = equip.piece("fabbro", "mask", 30)
+check(rows[1].row == "main" and near(rows[1].good, equip.MAIN) and near(rows[2].good, equip.SECOND)
+	and near(rows[4].good, -equip.MINUS) and rows[5].row == "sign" and near(rows[5].good, equip.SIGNS.sig_sword.max),
+	"Fabbro helmet at 30: main, secondaries, minus, signature full")
+check(equip.piece("fabbro", "mask", 9)[5].good == 0 and near(equip.piece("fabbro", "mask", 10)[5].good, equip.SIGNS.sig_sword.max / 2),
+	"the signature lights up at the step 10, at half")
+check(near(equip.piece("fabbro", "mask", 1)[4].good, -equip.MINUS), "the minus is there from level 1 and stays")
 a = loadout.new()
-a.gear = { legs = "fabbro" }
+a.gear = { mask = "fabbro" }
+st = loadout.stats(BASE, a, { mask = 30 })
+check(st.attack == 25 and st.max_hp == BASE.max_hp + 10 and near(st.walk_speed / BASE.walk_speed, 0.92) and st.sig_sword == 0.2,
+	"Fabbro helmet at 30: Attack +25, life +10, run -8%, Lama +20%")
 st = loadout.stats(BASE, a)
-check(math.abs(st.walk_speed / BASE.walk_speed - 1.02) < 1e-9 and math.abs(st.jump_height / BASE.jump_height - 0.98) < 1e-9,
-	"Fabbro boots at 1: run +2%, jump -2%")
-st = loadout.stats(BASE, a, { legs = 30 })
-check(math.abs(st.walk_speed / BASE.walk_speed - 1.049) < 1e-9 and st.jump_height == BASE.jump_height,
-	"Fabbro boots at 30: run +4.9%, no minus")
-a.gear = { mask = "corvo" }
-st = loadout.stats(BASE, a)
-check(st.teleport_ticks < BASE.teleport_ticks and st.max_hp == BASE.max_hp - 2, "Corvo helmet: faster orb, life -2")
-a.gear = { mask = "leviatano", chest = "leviatano" }
-st = loadout.stats(BASE, a, { mask = 19, chest = 19 })
-check(st.knockback_mul > 0.96 + 1e-9, "two Leviatano pieces under 20: no family bonus")
-st = loadout.stats(BASE, a, { mask = 20, chest = 20 })
-check(math.abs(st.knockback_mul - (1 - 0.039 - 0.04)) < 1e-9, "two gold Leviatano pieces: their bonus, push -4% more")
-check(#equip.pairs_on({ mask = "corvo", chest = "corvo", cloak = "vuoto", legs = "vuoto" },
-	{ mask = 20, chest = 25, cloak = 30, legs = 20 }) == 2, "two plus two: two family bonuses")
--- the caps: pieces +10% at most, pieces and Sigilli +20% at most
-a.gear = { mask = "fabbro", chest = "fabbro", cloak = "fabbro", legs = "fabbro" }
-st = loadout.stats(BASE, a, { mask = 30, chest = 30, cloak = 30, legs = 30 })
-check(st.max_hp == BASE.max_hp + 5 + 3, "Fabbro at 30: life +5 and the pair +3")
-a.gear = { mask = "fornace", chest = "fornace" }
-st = loadout.stats(BASE, a, { mask = 30, chest = 30 })
-check(st.max_hp == BASE.max_hp + 10, "life +5 +5: exactly the cap of +10")
-a.gear = { mask = "fornace", chest = "fornace", legs = "fabbro", cloak = "fabbro" }
+check(st.attack == 5 and st.sig_sword == 0, "at level 1: Attack +5, no signature")
+-- a build all on Attack: main of the helmet and three secondaries
+a.gear = { mask = "fabbro", chest = "fabbro", legs = "fornace", cloak = "fornace" }
 st = loadout.stats(BASE, a, { mask = 30, chest = 30, legs = 30, cloak = 30 })
-check(st.max_hp == BASE.max_hp + 10, "pieces never give more than +10 life")
-a.gear = { legs = "fabbro" }
-a.tree = { wings = 25 }
+check(st.attack == 55, "all on Attack: +55")
+-- the caps: movement from the pieces +25% at most
+a.gear = { legs = "corvo", cloak = "corvo", mask = "corvo", chest = "corvo" }
+st = loadout.stats(BASE, a, { mask = 30, chest = 30, legs = 30, cloak = 30 })
+check(near(st.jump_height / BASE.jump_height, 1 + equip.CAP_PIECES.move), "Corvo jump: capped at +25%")
+a.gear = { legs = "corvo" }
+a.tree = { wings = 25, pick = { wings = { 2 } } }
 local sig = loadout.stats(BASE, { tree = a.tree, gear = {} })
 st = loadout.stats(BASE, a, { legs = 30 })
-check(st.walk_speed >= sig.walk_speed and st.walk_speed <= math.max(sig.walk_speed, BASE.walk_speed * 1.2) + 1e-9,
-	"pieces and Sigilli together: +20% at most")
+check(st.jump_height >= sig.jump_height and st.jump_height <= math.max(sig.jump_height, BASE.jump_height * (1 + equip.CAP_ALL.move)) + 1e-9,
+	"pieces and Sigilli together: movement +30% at most")
 a.tree = {}
-a.gear = { mask = "fabbro", cloak = "corvo" }
-st = loadout.stats(BASE, a, { cloak = 30 })
-check(st.max_hp == BASE.max_hp + 2 and math.abs(st.knockback_mul - 1) < 1e-9, "Corvo cape at 30: no minus left")
+a.gear = { mask = "leviatano", chest = "leviatano" }
+local k19 = loadout.stats(BASE, a, { mask = 19, chest = 19 }).knockback_mul
+local k20 = loadout.stats(BASE, a, { mask = 20, chest = 20 }).knockback_mul
+check(k20 < k19 * (1 - 0.039), "two gold Leviatano pieces: their bonus too")
+check(#equip.pairs_on({ mask = "corvo", chest = "corvo", cloak = "vuoto", legs = "vuoto" },
+	{ mask = 20, chest = 25, cloak = 30, legs = 20 }) == 2, "two plus two: two family bonuses")
+-- the level by itself: nothing at 1, Attack and life +10 at 50, a jump every ten levels
+check(next(skills.level_bonus(1)) == nil or (skills.level_bonus(1).attack == 0 and skills.level_bonus(1).max_hp == 0), "level 1: nothing")
+check(skills.level_bonus(50).attack == 10 and skills.level_bonus(50).max_hp == 10, "level 50: Attack and life +10")
+check(skills.level_share(10) - skills.level_share(9) > 3 * (skills.level_share(9) - skills.level_share(8)), "level 10 is felt")
+st = loadout.stats(BASE, loadout.new(), nil, 50)
+check(st.attack == 10 and st.max_hp == BASE.max_hp + 10, "a level 50 devil with nothing: Attack 10, life 110")
+
+-- In the match: damage = weapon x (100 + Attack) / (100 + Defense), signatures on top
+local function duel(s1, s2)
+	local g = game.new(42, "pavimento", { players = { { team = 1, stats = s1 }, { team = 2, stats = s2 } } })
+	return g, g.robots[1], g.robots[2]
+end
+local g, r1, r2 = duel({ attack = 25 }, { defense = 25 })
+local hp = r2.hp
+g:hurt(r2, 40, r1)
+check(hp - r2.hp == 40, "Attack 25 against Defense 25: the same damage")
+g, r1, r2 = duel({ attack = 50 }, {})
+hp = r2.hp
+g:hurt(r2, 40, r1)
+check(hp - r2.hp == 60, "Attack 50: x1.5")
+g, r1, r2 = duel({}, { defense = 100 })
+hp = r2.hp
+g:hurt(r2, 40, r1)
+check(hp - r2.hp == 20, "Defense 100: half, like double life")
+g, r1, r2 = duel({ sig_sword = 0.2 }, {})
+hp = r2.hp
+g:hurt(r2, 40, r1, nil, "sword")
+check(hp - r2.hp == 48, "Mano del mestiere: the Lama +20%")
+hp = r2.hp
+g:hurt(r2, 40, r1, nil, "mallet")
+check(hp - r2.hp == 40, "...only the Lama")
+g, r1, r2 = duel({}, { sig_thorns = 1 })
+g:hurt(r2, 10, r1, nil, "mallet")
+check(r1.status.burn ~= nil, "Brace addosso: who hits up close burns")
+g, r1, r2 = duel({ sig_self = 0.5 }, {})
+hp = r1.hp
+g:hurt(r1, 40, r1)
+check(hp - r1.hp == 20, "Guscio di bottega: your blasts hurt you half")
+g, r1, r2 = duel({}, { sig_first_guard = 0.2 })
+hp = r2.hp
+g:hurt(r2, 40, r1)
+g:hurt(r2, 40, r1)
+check(hp - r2.hp == 32 + 40, "Pelle dura: only the first hit of the turn")
 
 a.gear = { mask = "vuoto", chest = "corvo" }
 check(loadout.valid(a, 20), "valid loadout")

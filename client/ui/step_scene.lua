@@ -82,7 +82,7 @@ function M.new(slot_name, set_name, level, on_blow, color)
 	gui.set_color(sc.label, vmath.vector4(KC.HOT_TOP.x, KC.HOT_TOP.y, KC.HOT_TOP.z, 0))
 	local rows = {
 		{ T.step_grade:format(ROMAN[tier], kit.upper(T.grades[tier])), ui.C.GRADI[tier] },
-		{ kit.upper(level >= equip.LIVELLO_MAX and T.step_top or T.step_look), KC.PURPLE },
+		{ kit.upper(level >= equip.LIVELLO_MAX and T.step_top or tier == 2 and T.step_sign_on or T.step_look), KC.PURPLE },
 	}
 	for i, r in ipairs(rows) do
 		local x, y = 880 - (i - 1) * 6, 250 + (i - 1) * 62

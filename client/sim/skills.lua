@@ -30,6 +30,22 @@ M.POINTS_MAX = 50
 M.PATH_MAX = 25
 M.STEP = 5
 M.STEPS = M.PATH_MAX / M.STEP
+-- What the player's level gives by itself, on top of the points (Sergio, 14
+-- Nov: «statistiche di base flat ad ogni livello»): at LEVEL_MAX these points
+-- of Attack and life, 70% spread evenly over the levels and 6% at every
+-- tenth level (10, 20, 30, 40, 50), so a round level is felt.
+M.LEVEL_BONUS = { attack = 10, max_hp = 10 }
+function M.level_share(level)
+	level = math.max(1, math.min(M.LEVEL_MAX, level or 1))
+	return 0.7 * (level - 1) / (M.LEVEL_MAX - 1) + 0.06 * math.floor(level / 10)
+end
+-- the points each stat gets at that level: { attack = 4.2, max_hp = 4.2 }
+function M.level_bonus(level)
+	local k, out = M.level_share(level), {}
+	for stat, v in pairs(M.LEVEL_BONUS) do out[stat] = math.floor(v * k * 10 + 0.5) / 10 end
+	return out
+end
+
 -- what one point gives, as the screen writes it (0.4% or 0.4 hp, all paths)
 M.PER_POINT_SHOWN = 0.4
 

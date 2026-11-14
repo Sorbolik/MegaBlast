@@ -348,6 +348,7 @@ return {
 	armory = {
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
+			attack = "Attacco", defense = "Difesa",
 			max_hp = "Vita", walk_speed = "Corsa", jump_height = "Salto", air_speed = "In aria",
 			teleport_ticks = "Teletrasporto", teleports = "Teletrasporti", parachutes = "Paracadute",
 			air_jumps = "Salti in aria", fall_damage_mul = "Danno da caduta", knockback_mul = "Spinta subita",
@@ -368,8 +369,8 @@ return {
 		-- slot and set: "ELMO · CORVO"
 		piece = "%s · %s",
 		of_max = "%d / %d",
-		-- grade in roman numbers, its name, the piece's effects
-		grade = "grado %s · %s · %s",
+		-- grade in roman numbers, its name
+		grade = "grado %s · %s",
 		grades = { "bronzo", "argento", "oro", "brace" },
 		at_max = "AL MASSIMO",
 		next_level = "LIVELLO %d",
@@ -387,7 +388,9 @@ return {
 		smith_hand = "costa il 30%% in meno (era %s)",
 		-- the family: its name and its bonus with two gold pieces
 		family = "%s · 2 pezzi d'oro: %s",
-		style_soon = "4 pezzi d'oro: lo stile, presto",
+		-- the piece's signature: its name, what it does (it lights up at the step 10)
+		sign = "firma · %s: %s",
+		sign_off = "firma dallo scatto 10 · %s: %s",
 		others = "INDOSSA",
 		set_level = "%s · %d",
 		none_owned = "nessun pezzo qui: prendilo in bottega o nel catalogo",
@@ -413,8 +416,10 @@ return {
 		step_new = "NUOVO",
 		-- the grade in roman numbers, its name
 		step_grade = "GRADO %s · %s",
-		step_look = "Aspetto nuovo",
-		step_top = "Al massimo: il meno sparisce",
+		step_look = "Firma più forte, aspetto nuovo",
+		-- the step 10: the piece's signature lights up
+		step_sign_on = "Firma accesa, aspetto nuovo",
+		step_top = "Al massimo: tutto al pieno",
 	},
 
 	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
