@@ -14,6 +14,9 @@ schermata** che apri attraverso lo schermo fino all'altro lato; tornando alla ho
 al contrario. La prova animata di Claude è su https://claude.ai/artifact/NUZURUfk3Gt2eaFpnN7roq
 (R2 è un fotogramma).
 
+Aggiornato (Sergio, 23:29): tutto il pulsante, coda compresa, resta attaccato al bordo della
+schermata come una linguetta che la trascina; la banda è il bordo su cui sta lo scudo.
+
 Nella prova lo scudo è montato su una banda verticale piatta (il bordo della schermata che
 arriva): è un segnaposto. Servono:
 
