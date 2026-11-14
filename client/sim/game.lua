@@ -49,7 +49,7 @@ M.DT = 1 / 60
 
 -- Measures. Jumps, weapons, crates and explosions are measured on a robot
 -- REF_H pixels tall, which is 3.612 U units: many measures below are in U. The
--- devil's body is CORPO times bigger (1.4, chosen on 26 October so the painted
+-- devil's body is CORPO times bigger (1.65 since 14 November, Sergio "18% bigger"; 1.4 from 26 October so the painted
 -- devil reads well): the walking capsule and the hit circle are in
 -- sim/body.lua (animation editor), the rest of the world stays on the REF_H
 -- scale. REF_H is 28 since 23 October (it was 20) to see the character better.
@@ -57,7 +57,7 @@ M.DT = 1 / 60
 -- 16 tall and then multiplied by 28 / 16.
 M.REF_H = 28
 M.U = M.REF_H / 3.612
-M.CORPO = 1.4
+M.CORPO = 1.65
 M.GRAVITY = 25 * M.U
 
 -- Robot (the position is the centre of the feet). The body against terrain is

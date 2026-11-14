@@ -584,7 +584,7 @@ M.girone_1 = {
 		tipo = "bersagli",
 		goal_text = "I bersagli non si feriscono: buttali giù dai loro scogli",
 		-- your platform and three narrow rocks over the void
-		arena = { { 760, 300, 400, 40 }, { 420, 420, 70, 24 }, { 1430, 420, 70, 24 }, { 925, 620, 70, 24 } },
+		arena = { { 800, 300, 320, 40 }, { 420, 420, 70, 24 }, { 1430, 420, 70, 24 }, { 925, 620, 70, 24 } },
 		spawns = { { x = 960, from = 600 }, { x = 455, from = 600 }, { x = 1465, from = 600 }, { x = 960, from = 1000 } },
 		-- everything that pushes (Sergio, 29 October 2026): the Cecchino, the Mantice
 		-- and the Rampino, which reaches the rocks from the edge and drops them over the void

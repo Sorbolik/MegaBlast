@@ -2029,7 +2029,7 @@ check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "aiming down the blade c
 local C = game.CORPO
 check(melee_at(60, 4, 5) and melee_at(-60, 0, -5) and not melee_at(60, 0, -5 - 7.5 * (C - 1)),
 	"the hit rotates with the aim")
-check(melee_at(-90, 4, -4) and not melee_at(-90, -4, 0), "aiming down it doesn't catch whoever is behind")
+check(melee_at(-90, 4, -4) and not melee_at(-90, -4 * C / 1.4, 0), "aiming down it doesn't catch whoever is behind")
 local pt, pq2 = melee_at(0, 2, 0, "punch")
 check(pt and pq2.robots[2].vy == game.PUNCH_LAUNCH and pq2.robots[2].vx == 0,
 	"the uppercut launches straight up")

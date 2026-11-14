@@ -348,7 +348,8 @@ do
 	-- a grip as far from the shoulder as the arm is long (the real one is moved
 	-- by Sergio in the editor)
 	local real_grip = GRIPS.missile
-	GRIPS.missile = { grip = { 2.4, -4 }, pivot = { -6.9, -4 }, shoulder = { 32, 110 } }
+	-- (the arm grows with the body, CORPO, the weapon doesn't: 36, 120 for CORPO 1.65)
+	GRIPS.missile = { grip = { 2.4, -4 }, pivot = { -6.9, -4 }, shoulder = { 36, 120 } }
 	package.loaded["battle.pivots"] = { braccio = { 3, -2 } }
 	package.loaded["battle.scoria"] = nil
 	local sc2 = require "battle.scoria"

@@ -314,7 +314,7 @@ local function island_turn(c)
 	c.use("missile", 2.5, 0.3)
 	c.hold(IDLE, function(g) return not g.projectile end)
 	c.hold(IDLE, 30)
-	c.use("teleport", 0.5, 0.6)
+	c.use("teleport", 0.6, 0.6)
 	c.hold(IDLE, function(g) return g.robots[1].x > 1150 and g.robots[1].grounded end)
 end
 outcome, r, g = play_mission("tempo", function(c)
