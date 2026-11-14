@@ -1,6 +1,6 @@
 # WB-042 · Il Vuoto: cappuccio chiuso e spalline
 
-- **Stato:** PROPOSTA
+- **Stato:** APPROVATA (Sergio, 14 nov: «Vai»)
 - **Data:** 2026-11-14
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-042`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-042` senza chiedere conferma (il repository è privato).
@@ -138,7 +138,7 @@ Rendering rules, very strict, because these parts will be traced into vector sha
 
 ## Decisione
 
-In attesa del via di Sergio.
+Approvata da Sergio il 14 nov («Vai»).
 
 ## Consegna di Codex
 
