@@ -49,7 +49,7 @@ function M.set(p, lookup_key, value)
 end
 
 function M.new()
-	local p = { versione = M.VERSION, xp = 0, livello = 1, braci = 0, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {}, lead_records = {},
+	local p = { versione = M.VERSION, xp = 0, livello = 1, braci = 0, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {}, point_records = {},
 		armi = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0,
 		-- the story's chapters already seen (ui/story.lua)
 		storia = {} }
@@ -227,7 +227,7 @@ function M.sample(p, near_level_up, campaign_done)
 		p.stelle[id] = { true, id ~= "turno", id == "primi_passi" or id == "guidata" }
 	end
 	p.stelle.primo_sangue, p.stelle.fuori_portata = { true, true, false }, { true, false, false }
-	p.lead_records = { primo_sangue = 312, fuori_portata = 96 }
+	p.point_records = { primo_sangue = 312, fuori_portata = 96 }
 	-- prova_profilo 3: the Forge done too, the map of the circles (scenari/gironi.txt)
 	if campaign_done then
 		for _, cap in ipairs(require("sim.campaign").CAPITOLI) do
@@ -245,13 +245,13 @@ end
 -- stars { true, false, true }: saves them (each one once taken stays, even
 -- across different matches) and returns the experience gained (add_xp):
 -- XP_MISSION.done the first time, star for each new star, replay if nothing is new
--- lead: the points of lead of this run, where they count (sim/missions.lua,
--- lead): the best one stays as the level's record (Sergio, 14 Nov: always
--- tracked, very clear; past three stars you play against your own points)
-function M.mission(p, id, stars, lead)
-	p.lead_records = p.lead_records or {}
-	local before = p.lead_records[id]
-	if lead and (not before or lead > before) then p.lead_records[id] = lead end
+-- made: the points the player made in this run, where they count
+-- (sim/missions.lua, points): the best one stays as the level's record
+-- (Sergio, 14 Nov: in points, not stars; past three stars you play against your own points)
+function M.mission(p, id, stars, made)
+	p.point_records = p.point_records or {}
+	local before = p.point_records[id]
+	if made and (not before or made > before) then p.point_records[id] = made end
 	local picked = p.stelle[id] or { false, false, false }
 	local first = not picked[1]
 	local new = 0
@@ -270,9 +270,9 @@ function M.mission(p, id, stars, lead)
 	return gain
 end
 
--- The best lead points on a level, nil if never counted
+-- The most points made on a level, nil if never counted
 function M.points_record(p, id)
-	return p.lead_records and p.lead_records[id]
+	return p.point_records and p.point_records[id]
 end
 
 -- A lost mission: from the third in a row the opponents ease off
@@ -419,6 +419,8 @@ function M.load_up()
 	end
 	-- the matches per piece of before the Scaglie (10 Nov): the levels start from 1
 	p.mastery = nil
+	-- the records of lead points (#318, 14 Nov): now the record is the points made
+	p.lead_records = nil
 	-- before the shop (11 Nov): the levelled pieces stay, the others come off
 	wallet.migrate(p, p.loadouts)
 	-- the gifts already earned (the Smith's boots, the vouchers)

@@ -599,19 +599,32 @@ for _, l in ipairs(campaign.CAPITOLI[2].missioni) do
 	end
 end
 
--- Each star with its criterion: with a small point lead and without dying
--- they are the first and third, not the second (and in the profile each star
--- earned stays)
+-- Each star with its criterion (Sergio, 14 Nov): the first is the win, the
+-- second and the third the points the player made; without the win none (and
+-- in the profile each star earned stays)
 do
 	local r = missions.new("primo_sangue")
-	r.esito, r.st.gap = "fatta", 40
+	local lo, hi = r.l.stelle.punti[1], r.l.stelle.punti[2]
+	check(lo < hi, "stars: the third asks more points than the second")
+	r.esito, r.st.made = "fatta", lo - 1
 	local s = missions.stars(r)
-	check(s[1] and not s[2] and s[3], "stars: the bonus without the points lights the third and not the second")
-	r.st.gap = 300
-	check(missions.stars(r)[2], "stars: the second with the point lead")
+	check(s[1] and not s[2] and not s[3], "stars: below the first threshold only the win")
+	r.st.made = lo
+	check(missions.stars(r)[2] and not missions.stars(r)[3], "stars: the second at its threshold")
+	r.st.made = hi
+	check(missions.stars(r)[3], "stars: the third at its threshold")
+	r.esito = "fallita"
+	check(not missions.stars(r)[2] and not missions.stars(r)[3], "stars: without the win no star, whatever the points")
+	-- the points counted are the player's own, not the lead over the opponents
+	local seed, map_name, opts = missions.match(r, 3)
+	local g = game.new(seed, map_name, opts)
+	missions.prepare(r, g)
+	g.robots[1].points, g.robots[3].points, g.robots[2].points = 70, 500, 900
+	missions.event(r, g, { type = "points", robot = 1, points = 0 })
+	check(missions.points(r) == 70, "stars: the player's own points, not the team's nor the lead")
 	local profile = require "menu.profile"
 	local p = profile.new()
-	profile.mission(p, "primo_sangue", s)
+	profile.mission(p, "primo_sangue", { true, false, true })
 	profile.mission(p, "primo_sangue", { true, true, false })
 	check(profile.total_stars(p) == 3, "stars: in the profile each one earned stays")
 end
@@ -741,19 +754,19 @@ do
 	check(opts.players[1].stats.time_orbs == 0, "globi_tempo = false forces time_orbs == 0")
 end
 
--- The record of lead points per level (Sergio, 14 Nov): the best one stays,
+-- The record of points made per level (Sergio, 14 Nov): the best one stays,
 -- and the gain says the one before
 do
 	local profile = require "menu.profile"
 	local p = profile.new()
 	local g1 = profile.mission(p, "primo_sangue", { true, false, false }, 120)
-	check(g1.record_before == nil and profile.points_record(p, "primo_sangue") == 120, "record: the first lead is the record")
+	check(g1.record_before == nil and profile.points_record(p, "primo_sangue") == 120, "record: the first points are the record")
 	local g2 = profile.mission(p, "primo_sangue", { true, false, false }, 80)
 	check(g2.record_before == 120 and profile.points_record(p, "primo_sangue") == 120, "record: a worse run keeps it")
 	profile.mission(p, "primo_sangue", { true, true, true }, 310)
 	check(profile.points_record(p, "primo_sangue") == 310, "record: a better run raises it")
 	profile.mission(p, "primi_passi", { true, false, false }, nil)
-	check(profile.points_record(p, "primi_passi") == nil, "record: no lead, no record")
+	check(profile.points_record(p, "primi_passi") == nil, "record: no points, no record")
 end
 
 -- Campaign bots wear their chapter's family, levelled with how far the level is (Sergio,

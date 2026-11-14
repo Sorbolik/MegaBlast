@@ -1,10 +1,11 @@
 -- Collaudo delle missioni coi bot: un bot gioca al posto del giocatore ogni
 -- missione dei gironi (sim/levels.lua) con tanti semi e a ogni livello, e
--- dice quante ne vince, in quanti turni, con quanti punti di vantaggio e con
+-- dice quante ne vince, in quanti turni, con quanti punti fatti e con
 -- quante stelle. Così si vede se una missione si vince, se è troppo dura, dove
--- mettere le soglie delle stelle (la seconda alla mediana dei punti di
--- vantaggio del bot normale, Sergio 31 ott: non più i turni) e se la
--- difficoltà sale lungo il girone. Con collaudo.senza nella missione rifà la
+-- mettere le soglie delle stelle (Sergio 14 nov: la prima è la vittoria, la
+-- seconda e la terza soglie dei punti fatti dal giocatore; la seconda alla
+-- mediana dei punti del bot normale nelle vinte, la terza all'80° percentile)
+-- e se la difficoltà sale lungo il girone. Con collaudo.senza nella missione rifà la
 -- prova col bot senza la meccanica richiesta (per esempio senza teletrasporto):
 -- lì non deve vincere mai; con collaudo.piano il bot segue quel piano a ogni
 -- turno (sim/bot.lua, b.piano). Le lezioni no: sono rompicapi, li risolvono i
@@ -12,8 +13,8 @@
 --
 -- La taratura delle stelle: per ogni missione la quota di vinte del bot normale
 -- che prende la seconda e la terza stella, e cosa guardare (DA GUARDARE) quando
--- le soglie non vanno più bene: la seconda presa da troppe o troppo poche vinte, il
--- bonus quasi impossibile o regalato, la missione troppo dura. Con --vita prova
+-- le soglie non vanno più bene: la seconda o la terza prese da troppe o troppo
+-- poche vinte, la missione troppo dura. Con --vita prova
 -- la vita degli avversari moltiplicata (0.5 metà, 2 doppia) e dice come cambiano
 -- le soglie: quello che succederebbe cambiando la vita dei bot, senza cambiarla.
 -- Con --ritocchi file.lua (function(config, game), come l'arena) prova qualunque
@@ -69,13 +70,13 @@ local LIVELLI = { "facile", "normale", "difficile" }
 local TETTO = 12 * 26 * 60
 local TETTO_PARTITA = 8 * 60 * 60
 -- quando una soglia è da guardare: la seconda stella presa da meno del 35% o da
--- più del 65% delle vinte del bot normale (è alla mediana: la metà), il bonus in meno del 15% o più dell'85% delle vinte, il bot
--- normale che ne vince meno del 60%. Il bot non è un giocatore: un bonus che
--- chiede una mossa precisa (buttare nel vuoto) lui non lo cerca, uno come
--- "senza morire" gli riesce più facile che a una persona; l'avviso dice dove
--- guardare, la scelta resta a chi fa la PR
-local BONUS_DURO, BONUS_FACILE, VINTE_MINIMO = 0.15, 0.85, 0.6
+-- più del 65% delle vinte del bot normale (è alla mediana: la metà), la terza
+-- da meno del 5% o da più del 35% (è all'80° percentile: un quinto), il bot
+-- normale che ne vince meno del 60%. L'avviso dice dove guardare, la scelta
+-- resta a chi fa la PR
+local VINTE_MINIMO = 0.6
 local PUNTI_DURO, PUNTI_FACILE = 0.35, 0.65
+local TERZA_DURO, TERZA_FACILE = 0.05, 0.35
 
 local function copia(t)
 	local o = {}
@@ -85,7 +86,7 @@ end
 
 -- Una missione giocata da un bot di livello livello; senza: campi del livello
 -- tolti (la meccanica che manca); vita: la vita degli avversari moltiplicata.
--- Restituisce l'esito, i turni, i punti di vantaggio e le stelle (una per criterio)
+-- Restituisce l'esito, i turni, i punti fatti dal giocatore e le stelle (una per criterio)
 local function gioca(l, livello, seme, senza, vita)
 	local r = missioni.new(l.id)
 	-- il giocatore che la campagna si aspetta (Sergio, 14 nov): un pezzo uppato
@@ -116,7 +117,7 @@ local function gioca(l, livello, seme, senza, vita)
 			if e.type == "turn" and e.robot == missioni.GIOCATORE then bots[1].piano = c.piano end
 		end
 		local esito = missioni.tick(r, g)
-		if esito then return esito, r.st.turni, missioni.lead(r), missioni.stars(r) end
+		if esito then return esito, r.st.turni, missioni.points(r), missioni.stars(r) end
 	end
 	return "tetto", r.st.turni, nil, { false, false, false }
 end
@@ -127,7 +128,14 @@ local function mediana(t)
 	return t[math.floor((#t + 1) / 2)]
 end
 
--- Un livello per SEMI partite: vinte, turni e punti di vantaggio delle vinte,
+-- il valore sotto cui sta la quota q della lista (0.8: l'80° percentile)
+local function percentile(t, q)
+	if #t == 0 then return nil end
+	table.sort(t)
+	return t[math.max(1, math.ceil(q * #t))]
+end
+
+-- Un livello per SEMI partite: vinte, turni e punti fatti nelle vinte,
 -- quante vinte con la seconda e con la terza stella
 local function prova(l, livello, vita)
 	local p = { vinte = 0, turni = {}, punti = {}, seconda = 0, terza = 0 }
@@ -142,7 +150,8 @@ local function prova(l, livello, vita)
 		end
 	end
 	p.mediana = mediana(p.turni)
-	p.vantaggio = mediana(p.punti)
+	p.alta = percentile(p.punti, 0.8)
+	p.fatti = mediana(p.punti)
 	return p
 end
 
@@ -177,16 +186,13 @@ local function da_guardare(l, n, d)
 	if s.punti and n.vinte > 0 then
 		local q = n.seconda / n.vinte
 		if q < PUNTI_DURO or q > PUNTI_FACILE then
-			out[#out + 1] = string.format("★★ con %d punti di vantaggio la prende il %s delle vinte: %s a %d (la mediana)",
-				s.punti, pc(n.seconda, n.vinte), q < PUNTI_DURO and "abbassa" or "alza", n.vantaggio)
+			out[#out + 1] = string.format("★★ con %d punti la prende il %s delle vinte: %s a %d (la mediana)",
+				s.punti[1], pc(n.seconda, n.vinte), q < PUNTI_DURO and "abbassa" or "alza", n.fatti)
 		end
-	end
-	if n.vinte > 0 and (s.bonus or s.bonus2) then
-		local q = n.terza / n.vinte
-		if q < BONUS_DURO then
-			out[#out + 1] = "★★★ quasi impossibile (" .. pc(n.terza, n.vinte) .. " delle vinte)"
-		elseif q > BONUS_FACILE then
-			out[#out + 1] = "★★★ regalata (" .. pc(n.terza, n.vinte) .. " delle vinte)"
+		q = n.terza / n.vinte
+		if q < TERZA_DURO or q > TERZA_FACILE then
+			out[#out + 1] = string.format("★★★ con %d punti la prende il %s delle vinte: %s a %d (l'80° percentile)",
+				s.punti[2], pc(n.terza, n.vinte), q < TERZA_DURO and "abbassa" or "alza", n.alta)
 		end
 	end
 	return out
@@ -195,12 +201,12 @@ end
 local righe = {
 	"# Collaudo delle missioni coi bot",
 	"",
-	SEMI .. " partite per missione e livello: il bot gioca al posto tuo. Vinte in %, turni e punti di vantaggio "
-		.. "(mediana delle vinte), stelle in media. ★★ ora: i punti di vantaggio che chiede; ★★ dal bot: la mediana "
-		.. "del bot normale. ★★ e ★★★: quante delle vinte dal bot normale le prendono."
+	SEMI .. " partite per missione e livello: il bot gioca al posto tuo. Vinte in %, turni e punti fatti "
+		.. "(mediana delle vinte), stelle in media. Soglie ora: i punti che chiedono la ★★ e la ★★★; dal bot: la mediana "
+		.. "e l'80° percentile del bot normale. ★★ e ★★★: quante delle vinte dal bot normale le prendono."
 		.. (RITOCCHI and (" Con i ritocchi di " .. RITOCCHI .. ".") or ""),
 	"",
-	"| Missione | Facile | Normale | Difficile | ★★ ora | ★★ dal bot | ★★ / ★★★ | Senza la meccanica | Da guardare |",
+	"| Missione | Facile | Normale | Difficile | Soglie ora | Dal bot | ★★ / ★★★ | Senza la meccanica | Da guardare |",
 	"| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
 }
 local avvisi = {}
@@ -213,7 +219,7 @@ for _, l in ipairs(elenco) do
 		if livello == "difficile" then difficile = p end
 		local stelle = p.vinte + p.seconda + p.terza
 		celle[#celle + 1] = string.format("%s · %s t · %s p · %.1f★", pc(p.vinte, SEMI), tostring(p.mediana or "-"),
-			tostring(p.vantaggio or "-"), p.vinte > 0 and stelle / p.vinte or 0)
+			tostring(p.fatti or "-"), p.vinte > 0 and stelle / p.vinte or 0)
 	end
 	local senza = "-"
 	local c = l.collaudo
@@ -227,7 +233,8 @@ for _, l in ipairs(elenco) do
 	local guarda = da_guardare(l, normale, difficile)
 	for _, a in ipairs(guarda) do avvisi[#avvisi + 1] = l.titolo .. ": " .. a end
 	local riga = string.format("| %s | %s | %s | %s | %s | %s | %s / %s | %s | %s |", l.titolo, celle[1], celle[2], celle[3],
-		tostring(l.stelle.punti or "-"), tostring(normale.vantaggio or "-"), pc(normale.seconda, normale.vinte),
+		l.stelle.punti[1] .. " / " .. l.stelle.punti[2], tostring(normale.fatti or "-") .. " / " .. tostring(normale.alta or "-"),
+		pc(normale.seconda, normale.vinte),
 		pc(normale.terza, normale.vinte), senza, #guarda > 0 and table.concat(guarda, "; ") or "ok")
 	print(riga)
 	righe[#righe + 1] = riga
@@ -238,7 +245,7 @@ if VITE then
 	righe[#righe + 1] = ""
 	righe[#righe + 1] = "## Se cambia la vita degli avversari"
 	righe[#righe + 1] = ""
-	righe[#righe + 1] = "Bot normale al posto tuo. Per ogni vita: vinte, punti di vantaggio (mediana: dove andrebbe "
+	righe[#righe + 1] = "Bot normale al posto tuo. Per ogni vita: vinte, punti fatti (mediana: dove andrebbe "
 		.. "la ★★), quante delle vinte prendono la ★★★. Ogni raddoppio: di quanti punti si sposta la ★★."
 	righe[#righe + 1] = ""
 	local testa, sotto = "| Missione |", "| --- |"
@@ -251,9 +258,9 @@ if VITE then
 		local riga, punti = "| " .. l.titolo .. " |", {}
 		for _, v in ipairs(VITE) do
 			local p = prova(l, "normale", v)
-			riga = riga .. string.format(" %s · %s p · ★★★ %s |", pc(p.vinte, SEMI), tostring(p.vantaggio or "-"),
+			riga = riga .. string.format(" %s · %s p · ★★★ %s |", pc(p.vinte, SEMI), tostring(p.fatti or "-"),
 				pc(p.terza, p.vinte))
-			if p.vantaggio then punti[#punti + 1] = { math.log(v) / math.log(2), p.vantaggio } end
+			if p.fatti then punti[#punti + 1] = { math.log(v) / math.log(2), p.fatti } end
 		end
 		-- la pendenza (minimi quadrati) dei punti sul logaritmo in base 2 della vita
 		local pendenza = "-"

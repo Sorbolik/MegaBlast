@@ -216,10 +216,8 @@ return {
 	level_end = {
 		done = "MISSIONE FATTA",
 		failed = "MISSIONE NON RIUSCITA",
-		lead = "Punti di vantaggio: %s",
-		record_one = "il tuo record: %s stella",
-		record = "il tuo record: %s stelle",
-		-- the record of lead points on this level (Sergio, 14 Nov)
+		points = "Punti fatti: %s",
+		-- the record of points on this level (Sergio, 14 Nov: in points, not stars)
 		record_points = "RECORD · %s PUNTI",
 		record_new = "NUOVO RECORD · %s PUNTI",
 		record_beat = "RECORD · %s PUNTI · BATTILO",
@@ -258,7 +256,7 @@ return {
 		-- under GIOCA: the next mission, or the final again
 		play_new = "%s · NUOVA",
 		replay_final = "RIGIOCA IL FINALE",
-		-- on a mission card: its record of lead points
+		-- on a mission card: its record of points
 		record = "RECORD %s",
 		-- the map of the circles (after the kidnapping, Sergio 11 Nov): the Cortile
 		-- and the Forge on the top floor, the nine circles going down to Favilla
