@@ -97,3 +97,11 @@ Reversibile (solo proposte in un ramo): approvata su richiesta di Sergio. Il GIO
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Guardati i quattro fogli (14 nov): tutti buoni. Pulsanti: variante 1 (le due sono quasi uguali).
+GIOCA: variante 1 per la lama d'oro e l'insegna sull'incudine, variante 2 per il sigillo fuso (più
+da sigillo); nel foglio 2 i tre GIOCA si toccano, il sigillo è tagliato nel punto più stretto.
+Ritagli in `art/WB-046/ritagli/`. Sergio (14 nov 23:16) vuole lo scudo sempre verso il bordo: per
+EVENTI e ARMERIA Claude ha girato il pulsante tenendo dritto lo scudo (`porta_eventi_dx.png`,
+`porta_armeria_dx.png`). Prova animata della transizione con i tre GIOCA da confrontare:
+https://claude.ai/artifact/NUZURUfk3Gt2eaFpnN7roq . I pezzi della transizione sono in WB-049.
