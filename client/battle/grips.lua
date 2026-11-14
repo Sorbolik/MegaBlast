@@ -9,12 +9,12 @@
 -- grip and pivot in world units from the weapon's origin, x toward where it
 -- points and y up.
 return {
-	missile = { grip = { 1.2, -4.4 }, pivot = { -11.9, 0 }, shoulder = { 28.5, 133.9 }, scale = 0.6 },
-	sniper = { grip = { 3.2, -2.2 }, pivot = { -8.8, -0.8 }, shoulder = { 1.3, 118.8 }, scale = 0.81 },
-	grenade = { grip = { 4.8, 1.4 }, pivot = { -2.1, -8.4 }, shoulder = { -15.1, 108.6 }, scale = 0.81 },
-	shards = { grip = { 2, -2.5 }, pivot = { -9.5, -0.8 }, shoulder = { -16.5, 115.3 }, scale = 0.73 },
+	missile = { grip = { 0.6, -4.4 }, pivot = { -11.2, 0 }, shoulder = { 15.6, 163.8 }, scale = 0.73 },
+	sniper = { grip = { 3.6, -2.6 }, pivot = { -9.6, -1 }, shoulder = { 9.5, 133.7 }, scale = 0.81 },
+	grenade = { grip = { 4.7, 0.5 }, pivot = { 2.5, -7.3 }, shoulder = { 66.1, 121.2 } },
+	shards = { grip = { 3.1, -3 }, pivot = { -9, -1.1 }, shoulder = { 20.5, 124.8 }, scale = 0.81 },
 	punch = { grip = { 0, 0 }, pivot = { -9.3, 0 }, shoulder = { 32, 110 } },
-	sword = { grip = { 2.2, -0.2 }, pivot = { -11.2, 1.3 }, shoulder = { 47.9, 119.1 }, scale = 0.73 },
+	sword = { grip = { -0.3, 0.3 }, pivot = { -7.2, 0.5 }, shoulder = { 4, 157.1 }, scale = 0.9 },
 	teleport = { grip = { 2.8, -0.6 }, pivot = { -6.5, -0.6 }, shoulder = { 32, 110 } },
 	eagle = { grip = { 1.6, -1.2 }, pivot = { -7.7, -1.2 }, shoulder = { 32, 110 } },
 	hook = { grip = { 5.3, -2.6 }, pivot = { -4, -2.6 }, shoulder = { 32, 110 } },

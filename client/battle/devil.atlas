@@ -323,6 +323,9 @@ images {
   image: "/assets/skins/favilla_pugno_1.png"
 }
 images {
+  image: "/assets/skins/favilla_pugno_specchio.png"
+}
+images {
   image: "/assets/skins/favilla_testa_1.png"
 }
 images {
