@@ -110,3 +110,9 @@ Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Guardati i quattro fogli (14 nov): tutti buoni. Targhette, prezzo barrato, «sei qui» e stellina:
+variante 1; emblemi: variante 2. Ritagli in `art/WB-047/ritagli/` (badge_1..4, barrato, sei_qui,
+stellina, ic_torneo, ic_maglio, ic_notte, ic_evento, ic_settimanale, ic_squadra). Nelle bozze barre,
+tacche e righe sono già rifatte coi pezzi di WB-029 e WB-044; i pezzi nuovi vanno nelle nove
+schermate del Figma.
