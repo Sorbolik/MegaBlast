@@ -9,7 +9,7 @@
 -- (drawing units) and where it is attached in the devil (at).
 return {
 	replace = { "personaggio", "testa", "corpo", "ali", "coda" },
-	over = { "pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "mantello" },
+	over = { "pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "corna", "mantello" },
 	skins = {
 		apprendista = { category = "personaggio", tail = { 19.3, 23.8, 20.2, 22.3, 26.9 }, tail_rest = { 2.94, 2.844, 2.437, 1.919, 1.237 }, pieces = {
 			ala = { img = "apprendista_ala", tint = nil, x = 0.0, y = 0.0, w = 0.1, h = 0.1, mode = "replace" },
@@ -156,6 +156,26 @@ return {
 		corazza_vuoto_forgiato = { category = "corazza", pieces = {
 			busto = { img = "corazza_vuoto_forgiato_busto", tint = nil, x = 9.6, y = 12.8, w = 97.1, h = 100.2, mode = "replace" },
 			busto_1 = { img = "corazza_vuoto_forgiato_busto", tint = nil, x = 8.8, y = 12.6, w = 89.0, h = 92.0, mode = "replace" },
+		} },
+		corna_apprendista = { category = "corna", pieces = {
+			testa = { img = "corna_apprendista_testa", tint = nil, x = 14.3, y = 75.1, w = 88.5, h = 47.7, mode = "over" },
+			testa_1 = { img = "corna_apprendista_testa", tint = nil, x = 15.9, y = 81.7, w = 109.2, h = 58.9, mode = "over" },
+			testa_arrabbiata = { img = "corna_apprendista_testa", tint = nil, x = 14.3, y = 75.1, w = 88.3, h = 47.7, mode = "over" },
+			testa_arrabbiata_1 = { img = "corna_apprendista_testa", tint = nil, x = 15.9, y = 81.7, w = 109.0, h = 58.9, mode = "over" },
+			testa_colpita = { img = "corna_apprendista_testa", tint = nil, x = 14.3, y = 75.1, w = 88.5, h = 47.7, mode = "over" },
+			testa_colpita_1 = { img = "corna_apprendista_testa", tint = nil, x = 15.9, y = 81.7, w = 109.2, h = 58.9, mode = "over" },
+			testa_felice = { img = "corna_apprendista_testa", tint = nil, x = 14.2, y = 75.1, w = 87.9, h = 47.7, mode = "over" },
+			testa_felice_1 = { img = "corna_apprendista_testa", tint = nil, x = 15.9, y = 81.7, w = 108.6, h = 58.9, mode = "over" },
+			testa_ko = { img = "corna_apprendista_testa", tint = nil, x = 14.3, y = 75.1, w = 88.8, h = 47.7, mode = "over" },
+			testa_ko_1 = { img = "corna_apprendista_testa", tint = nil, x = 16.0, y = 81.7, w = 109.7, h = 58.9, mode = "over" },
+			testa_mira = { img = "corna_apprendista_testa", tint = nil, x = 14.3, y = 75.1, w = 88.8, h = 47.7, mode = "over" },
+			testa_mira_1 = { img = "corna_apprendista_testa", tint = nil, x = 16.0, y = 81.7, w = 109.7, h = 58.9, mode = "over" },
+			testa_paura = { img = "corna_apprendista_testa", tint = nil, x = 14.3, y = 75.1, w = 88.3, h = 47.7, mode = "over" },
+			testa_paura_1 = { img = "corna_apprendista_testa", tint = nil, x = 15.9, y = 81.7, w = 109.0, h = 58.9, mode = "over" },
+			testa_provocazione = { img = "corna_apprendista_testa", tint = nil, x = 14.3, y = 75.1, w = 88.5, h = 47.7, mode = "over" },
+			testa_provocazione_1 = { img = "corna_apprendista_testa", tint = nil, x = 15.9, y = 81.7, w = 109.2, h = 58.9, mode = "over" },
+			testa_sconfitta = { img = "corna_apprendista_testa", tint = nil, x = 14.1, y = 75.1, w = 87.6, h = 47.7, mode = "over" },
+			testa_sconfitta_1 = { img = "corna_apprendista_testa", tint = nil, x = 15.8, y = 81.7, w = 108.1, h = 58.9, mode = "over" },
 		} },
 		favilla = { category = "personaggio", tail = { 14.7, 24.3, 18.8, 18.0, 22.7 }, tail_rest = { 3.012, 3.245, 2.389, 1.867, 1.197 }, pieces = {
 			ala = { img = "favilla_ala", tint = nil, x = 0.0, y = 0.0, w = 0.1, h = 0.1, mode = "replace" },

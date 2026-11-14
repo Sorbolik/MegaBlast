@@ -1,6 +1,6 @@
 # L'apprendista nuovo vestito del Vuoto forgiato (WB-041): cappuccio, corazza, stivali e mantello.
 # fermo, corsa, salto, mira in su e rinculo, poi l'altro di turno. Da vicino: --scala 2.
-imposta prova_pelli apprendista_nuovo,cappuccio_vuoto_forgiato,corazza_vuoto_forgiato,stivali_vuoto_forgiato,mantello_vuoto_forgiato
+imposta prova_pelli apprendista_nuovo,corna_apprendista,cappuccio_vuoto_forgiato,corazza_vuoto_forgiato,stivali_vuoto_forgiato,mantello_vuoto_forgiato
 
 aspetta 3
 tocca 222 148                      # STESSO TELEFONO

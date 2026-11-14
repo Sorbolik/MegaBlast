@@ -278,6 +278,9 @@ images {
   image: "/assets/skins/corazza_vuoto_forgiato_busto.png"
 }
 images {
+  image: "/assets/skins/corna_apprendista_testa.png"
+}
+images {
   image: "/assets/skins/favilla_ala.png"
 }
 images {

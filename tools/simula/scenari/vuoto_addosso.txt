@@ -1,6 +1,6 @@
 # L'apprendista nuovo vestito del Vuoto (WB-041): cappuccio, corazza, stivali e mantello.
 # fermo, corsa, salto, mira in su e rinculo, poi l'altro di turno. Da vicino: --scala 2.
-imposta prova_pelli apprendista_nuovo,cappuccio_vuoto,corazza_vuoto,stivali_vuoto,mantello_vuoto
+imposta prova_pelli apprendista_nuovo,corna_apprendista,cappuccio_vuoto,corazza_vuoto,stivali_vuoto,mantello_vuoto
 
 aspetta 3
 tocca 222 148                      # STESSO TELEFONO
