@@ -18,10 +18,15 @@
 -- le soglie: quello che succederebbe cambiando la vita dei bot, senza cambiarla.
 -- Con --ritocchi file.lua (function(config, game), come l'arena) prova qualunque
 -- altro numero del gioco.
+-- Dalla Forgia i bot avversari hanno un pezzo uppato col progresso della
+-- campagna e il bot che gioca al posto tuo ha lo stesso (il giocatore atteso,
+-- Sergio 14 nov): le stelle si tarano su di lui. Con --minimo gioca coi pezzi al
+-- minimo: se passa tutto, la campagna è troppo facile.
 --
 --   luajit tools/arena/collaudo.lua [semi] [id della missione]
 --   luajit tools/arena/collaudo.lua 12 --vita 0.5,1,2
 --   luajit tools/arena/collaudo.lua 12 --ritocchi danni.lua
+--   luajit tools/arena/collaudo.lua 12 --minimo     -- il giocatore coi pezzi al minimo: non deve passare tutto
 --   luajit tools/arena/collaudo.lua 12 --avvisi     -- anche gli avvisi per GitHub (::warning::)
 --
 -- Scrive anche simulazione/arena/collaudo.md.
@@ -33,7 +38,7 @@ local replay = require "sim.replay"
 local config = require "sim.config"
 local game = require "sim.game"
 
-local SEMI, SOLO, VITE, RITOCCHI, AVVISI = 12, nil, nil, nil, false
+local SEMI, SOLO, VITE, RITOCCHI, AVVISI, MINIMO = 12, nil, nil, nil, false, false
 do
 	local k = 1
 	while arg[k] do
@@ -45,6 +50,8 @@ do
 		elseif a == "--ritocchi" then
 			RITOCCHI = arg[k + 1]
 			k = k + 1
+		elseif a == "--minimo" then
+			MINIMO = true
 		elseif a == "--avvisi" then
 			AVVISI = true
 		elseif tonumber(a) then
@@ -81,7 +88,9 @@ end
 -- Restituisce l'esito, i turni, i punti di vantaggio e le stelle (una per criterio)
 local function gioca(l, livello, seme, senza, vita)
 	local r = missioni.new(l.id)
-	local seed, mappa, opts = missioni.match(r, seme)
+	-- il giocatore che la campagna si aspetta (Sergio, 14 nov): un pezzo uppato
+	-- lungo la stessa linea dei bot; con --minimo i pezzi al minimo (base)
+	local seed, mappa, opts = missioni.match(r, seme, nil, nil, not MINIMO and missioni.expected_stats(l) or nil)
 	local c = l.collaudo or {}
 	opts.players[1].bot, opts.players[1].carattere = livello, c.carattere
 	local ric = replay.new(seed, mappa, opts)

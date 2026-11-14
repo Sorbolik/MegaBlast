@@ -49,7 +49,7 @@ function M.set(p, lookup_key, value)
 end
 
 function M.new()
-	local p = { versione = M.VERSION, xp = 0, livello = 1, braci = 0, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {},
+	local p = { versione = M.VERSION, xp = 0, livello = 1, braci = 0, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {}, lead_records = {},
 		armi = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0,
 		-- the story's chapters already seen (ui/story.lua)
 		storia = {} }
@@ -227,6 +227,7 @@ function M.sample(p, near_level_up, campaign_done)
 		p.stelle[id] = { true, id ~= "turno", id == "primi_passi" or id == "guidata" }
 	end
 	p.stelle.primo_sangue, p.stelle.fuori_portata = { true, true, false }, { true, false, false }
+	p.lead_records = { primo_sangue = 312, fuori_portata = 96 }
 	-- prova_profilo 3: the Forge done too, the map of the circles (scenari/gironi.txt)
 	if campaign_done then
 		for _, cap in ipairs(require("sim.campaign").CAPITOLI) do
@@ -244,7 +245,13 @@ end
 -- stars { true, false, true }: saves them (each one once taken stays, even
 -- across different matches) and returns the experience gained (add_xp):
 -- XP_MISSION.done the first time, star for each new star, replay if nothing is new
-function M.mission(p, id, stars)
+-- lead: the points of lead of this run, where they count (sim/missions.lua,
+-- lead): the best one stays as the level's record (Sergio, 14 Nov: always
+-- tracked, very clear; past three stars you play against your own points)
+function M.mission(p, id, stars, lead)
+	p.lead_records = p.lead_records or {}
+	local before = p.lead_records[id]
+	if lead and (not before or lead > before) then p.lead_records[id] = lead end
 	local picked = p.stelle[id] or { false, false, false }
 	local first = not picked[1]
 	local new = 0
@@ -258,7 +265,14 @@ function M.mission(p, id, stars)
 	if first then lines[#lines + 1] = { key = "done", xp = x.done } end
 	if new > 0 then lines[#lines + 1] = { key = "stars", n = new, xp = x.star * new } end
 	if #lines == 0 then lines[1] = { key = "replay", xp = x.replay } end
-	return add_xp(p, lines)
+	local gain = add_xp(p, lines)
+	gain.record_before = before
+	return gain
+end
+
+-- The best lead points on a level, nil if never counted
+function M.points_record(p, id)
+	return p.lead_records and p.lead_records[id]
 end
 
 -- A lost mission: from the third in a row the opponents ease off

@@ -741,5 +741,64 @@ do
 	check(opts.players[1].stats.time_orbs == 0, "globi_tempo = false forces time_orbs == 0")
 end
 
+-- The record of lead points per level (Sergio, 14 Nov): the best one stays,
+-- and the gain says the one before
+do
+	local profile = require "menu.profile"
+	local p = profile.new()
+	local g1 = profile.mission(p, "primo_sangue", { true, false, false }, 120)
+	check(g1.record_before == nil and profile.points_record(p, "primo_sangue") == 120, "record: the first lead is the record")
+	local g2 = profile.mission(p, "primo_sangue", { true, false, false }, 80)
+	check(g2.record_before == 120 and profile.points_record(p, "primo_sangue") == 120, "record: a worse run keeps it")
+	profile.mission(p, "primo_sangue", { true, true, true }, 310)
+	check(profile.points_record(p, "primo_sangue") == 310, "record: a better run raises it")
+	profile.mission(p, "primi_passi", { true, false, false }, nil)
+	check(profile.points_record(p, "primi_passi") == nil, "record: no lead, no record")
+end
+
+-- Campaign bots wear their chapter's family, levelled with how far the level is (Sergio,
+-- 14 Nov): the Forgia's first level the least, later ones more; the
+-- player's own stats only from the Forgia on
+do
+	local last, first
+	for _, cap in ipairs(campaign.CAPITOLI) do
+		for _, l in ipairs(cap.missioni) do
+			local gear, levels = missions.bot_gear(l)
+			if gear then
+				local slot = next(gear)
+				first = first or levels[slot]
+				check(not last or levels[slot] >= last, "bot gear: never lower going on (" .. l.id .. ")")
+				last = levels[slot]
+			end
+		end
+	end
+	check(first == 1 and last and last > first, "bot gear: from level 1, growing")
+	local function count(t) local n = 0 for _ in pairs(t) do n = n + 1 end return n end
+	local g1, l1 = missions.bot_gear({ step = 1, chapter_n = 2 }, 1)
+	local g2 = missions.bot_gear({ step = 1, chapter_n = 2 }, 2)
+	check(count(g1) == 1 and next(g1) ~= next(g2), "bot gear: one piece at the start, each bot a different one")
+	local ge, le = missions.bot_gear({ step = campaign.PLANNED_LEVELS, chapter_n = 9 }, 1)
+	local fam
+	for slot, f in pairs(ge) do
+		check(le[slot] == 30 and (fam == nil or fam == f), "bot gear: at the end every piece at the top, one family")
+		fam = f
+	end
+	check(count(ge) == 4, "bot gear: at the end the whole family")
+	local l = campaign.CAPITOLI[2].missioni[#campaign.CAPITOLI[2].missioni]
+	local r = missions.new(l.id)
+	local own = game.base_stats()
+	own.attack = 40
+	local _, _, opts = missions.match(r, 3, nil, nil, own)
+	check(opts.players[1].stats and opts.players[1].stats.attack == 40, "bot gear: the player brings own stats into the Forgia")
+	local dressed = false
+	for i = 2, #opts.players do
+		if opts.players[i].stats and opts.players[i].bot then dressed = true end
+	end
+	check(dressed, "bot gear: the Forgia's bots wear their piece")
+	local r0 = missions.new(campaign.CAPITOLI[1].missioni[1].id)
+	local _, _, o0 = missions.match(r0, 3, nil, nil, own)
+	check(not (o0.players[1].stats and o0.players[1].stats.attack == 40), "bot gear: the Cortile keeps the player's base stats")
+end
+
 print(failures == 0 and "\nall tests passed" or ("\n" .. failures .. " tests failed"))
 os.exit(failures == 0 and 0 or 1)

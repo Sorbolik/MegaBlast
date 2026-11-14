@@ -6,7 +6,7 @@
 -- (chapter.serve): closed, it says how many are missing. Style in ui/ui.lua.
 --
 --   local campagna = require "menu.campaign"
---   local c = campagna.new(scelta, stelle, storia)  -- scelta = { chapter } (the last one opened); stelle = id -> { true, false, true };
+--   local c = campagna.new(scelta, stelle, storia, records)  -- records = id -> best lead points; scelta = { chapter } (the last one opened); stelle = id -> { true, false, true };
 --     storia: some of the story was seen (ui/story.lua): LA STORIA, top right, reads it again
 --   local fine = campagna.on_input(c, action_id, action)
 --     -- "indietro", { missione = id, da } to play it (da: where its picture is), "storia", or nil
@@ -91,6 +91,12 @@ local function card(c, l, x, y, w, h, ih, kind, state)
 	end
 	local kd = types.KINDS[l.tipo]
 	if kd then kit.label(k.g, x + 16, y + 12, kd.name, locked and KC.MUTE or kd.color, true) end
+	-- the level's record of lead points, top right on the picture
+	local best = not locked and c.records and c.records[l.id]
+	if best then
+		local t = T.record:format(best)
+		kit.label(k.g, x + w - (#t * 9 + 46) - 4, y + 12, t, KC.STAR, true)
+	end
 	if locked then
 		kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", 0, -(h / 2 - 4 - ih / 2), math.min(50, ih * 0.55))
 	else
@@ -451,8 +457,8 @@ local function build(c)
 	kit.button(c.buttons, c.action, "gioca", { main = true, spento = act.off })
 end
 
-function M.new(choice, stars, story)
-	local c = { scelta = choice, stelle = stars or {}, storia = story }
+function M.new(choice, stars, story, records)
+	local c = { scelta = choice, stelle = stars or {}, storia = story, records = records or {} }
 	-- the first time, the last chapter opened
 	if not choice.chapter then
 		for _, cap in ipairs(payload.CAPITOLI) do
