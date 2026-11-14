@@ -19,8 +19,8 @@ premi 1
 mira 160 60 0.4                      # il Lanciarune sul bot
 aspetta_evento death 8
 aspetta 4
-foto 02_fine_livello                 # le stelle: ALMENO N PUNTI, sotto PUNTI FATTI
+foto 02_fine_livello                 # una stella (FATTA; ALMENO 130 e 180 PUNTI spente), PUNTI FATTI: 95
                                      # e sotto il record dei punti del livello: NUOVO RECORD
 tocca 345 82                         # CAMPAGNA
 aspetta 3
-foto 03_bacheca_record               # sulla carta del livello, in alto a destra: RECORD 115
+foto 03_bacheca_record               # sulla carta del livello, in alto a destra: RECORD 95
