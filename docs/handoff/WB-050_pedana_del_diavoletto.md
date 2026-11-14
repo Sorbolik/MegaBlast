@@ -79,4 +79,13 @@ Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio. La ped
 
 ## Consegna di Codex
 
+Due fogli ImageGen a 1536 × 1024, con quattro proposte ciascuno. I TXT omonimi riportano il prompt integrale e i riferimenti nell'ordine R1–R4.
+
+| File in art/WB-050/ | Tentativi | Controllo visivo |
+|---|---:|---|
+| pedane_1.png e pedane_1.txt | 1 | Quattro sagome distinte. Il basalto ha una fascia rivettata e crepe basse. La base a incudine mostra quattro appoggi, uno in parte nascosto. |
+| pedane_2.png e pedane_2.txt | 1 | Quattro sagome distinte. La lava ha una fascia continua e le crepe del basalto sono più marcate. Nella base a incudine si distinguono solo tre appoggi. |
+
+Ho verificato i piani ovali liberi, i ripiani a destra, la separazione delle sagome e l'assenza di scritte, personaggi e ombre a terra. Ho uniformato il verde dominante a #00FF00 e verificato le dimensioni e i margini esterni a livello di pixel. Le fasce oro e lava sono più vistose degli accenti piccoli richiesti e conservano lievi variazioni di tono. Il limite cromatico, il rapporto di scala con il diavoletto e la resa con lo zainetto sulla home restano da verificare.
+
 ## Resoconto di Claude
