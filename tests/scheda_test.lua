@@ -126,6 +126,23 @@ local l = replay.reader(r2)
 while g3.tick < g2.tick and g3.phase ~= "over" do g3:step(replay.read_step(l, g3, b3)) end
 check(g3:fingerprint() == g2:fingerprint(), "replay: replaying the keys reaches the same state")
 
+-- The end-game test profile (Sergio, 14 Nov): everything at the top
+do
+	local wallet = require "menu.wallet"
+	local p = profile.endgame(profile.new())
+	local all_max = true
+	for _, f in ipairs(equip.SETS) do
+		for _, s in ipairs(equip.SLOTS) do
+			if not wallet.owns(p, f.id, s.id) or wallet.level(p, f.id, s.id) ~= equip.LIVELLO_MAX then all_max = false end
+		end
+	end
+	check(all_max, "end game: every piece owned at the last level")
+	check(p.livello == profile.LEVEL_MAX and profile.points(p) > 0, "end game: the last level, with the Sigilli's points")
+	check(not profile.new_player(p) and p.scaglie == profile.TEST_COINS, "end game: the campaign done and the wallet full")
+	local again = profile.endgame(p)
+	check(again.buoni == profile.TEST_VOUCHERS, "end game: filling it again tops the vouchers up")
+end
+
 if failures > 0 then
 	print(failures .. " tests failed")
 	os.exit(1)
