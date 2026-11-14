@@ -114,3 +114,11 @@ menu fra le proposte del Figma; le icone servono a tutte.
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Guardati tutti i fogli (14 nov): nessun difetto visibile, pezzi uguali alle tavole di WB-019,
+finiture ciano pure, sfondo pulito. Gli elmi hanno ancora le corna (nella tavola le corna
+escono dall'elmo): nell'inventario si leggono bene, nel gioco le corna sono un pezzo a parte;
+se servono elmi senza corna si rifà solo quella riga. Buono: presa la variante 2 (la più pulita
+a 40 pixel, non sembra una moneta). Ritagliati tutti (40 icone, buono, 4 sagome) in
+`art/WB-043/ritagli/` e montati nelle 9 schermate consigliate del Figma al posto delle icone
+provvisorie; nel gioco vanno con le schermate nuove.

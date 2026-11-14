@@ -1,6 +1,6 @@
 # WB-045 · Proposte nuove per i pulsanti grandi della home
 
-- **Stato:** APPROVATA (Sergio, 14 nov: «possiamo fare generare a codex altre proposte per i pulsanti principali?»)
+- **Stato:** GENERATA, superata da WB-046 (Sergio, 14 nov: «possiamo fare generare a codex altre proposte per i pulsanti principali?»)
 - **Data:** 2026-11-14
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-045`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-045` senza chiedere conferma (il repository è privato).
@@ -132,3 +132,9 @@ la sceglie Sergio.
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Guardati i sei fogli (14 nov): tutti buoni; prese le varianti 2 (più pulite). Montate le tre
+direzioni su tre copie della home consigliata nel Figma («Pulsanti home/A · insegne appese»,
+«B · stemma sulla lama», «C · ogni porta del suo materiale»), con i nomi scritti dal gioco.
+Consiglio di Claude: B (stemma sulla lama), la forma dice di più dove porta. Sceglie Sergio;
+poi ricalco e taglio in tre parti la direzione scelta.
