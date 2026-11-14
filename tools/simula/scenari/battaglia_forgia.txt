@@ -11,7 +11,7 @@ tocca 815 410                       # primaria
 aspetta 0.3
 tocca 559 410                       # secondaria
 aspetta 0.3
-tocca_bordo 215 118 basso destra                      # GIOCA
+tocca_bordo 175 52 basso destra                      # GIOCA
 aspetta_stato modo=local fase=aim 10
 aspetta 1.5
 foto 01_inizio

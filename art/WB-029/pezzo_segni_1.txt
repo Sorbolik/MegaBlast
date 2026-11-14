@@ -1,0 +1,16 @@
+Images 1, 2 and 3 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 to #FFB703, ivory is #F4ECE1, ice is #38B6FF with highlight #CAF0F8.
+
+Draw a sheet with SIX separate small pieces, in two rows of three, all about the same size:
+1. a five-pointed star, lit: chunky, soft rounded points, slightly crooked, gold (#FFB703) with one flat lighter highlight (#FFE08A) on the upper left and one flat darker band (#F26419) at the bottom;
+2. the same star, unlit: same shape, dark iron (#2B2530) with a small flat highlight (#6B6375);
+3. a round medal: a gold disc with a simple small flame embossed in the middle and a short red ribbon (#FF3B4E) with two tails on top;
+4. a gear wheel with eight chunky rounded teeth and a round hole, ivory (#F4ECE1) with one flat grey shadow;
+5. a small crown with three soft points, dark iron with a thin gold band at the base;
+6. a chunky arrowhead pointing right (a thick chevron), ivory with one flat grey shadow.
+
+Thick black ink outline on every piece, cartoon comic style, same line weight as images 1-3. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti (in ordine)
+R1: art/WB-029/riferimenti/R1_piccoli.png
+R2: art/WB-029/riferimenti/R2_piastre.png
+R3: art/WB-029/riferimenti/R3_lingotto.png

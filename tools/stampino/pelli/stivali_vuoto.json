@@ -1,0 +1,38 @@
+{
+ "nome": "stivali_vuoto",
+ "categoria": "stivali",
+ "pezzi": {
+  "gamba": {
+   "img": "stivali_vuoto_gamba",
+   "x": 5.4,
+   "y": -30.4,
+   "w": 60.7,
+   "h": 81.3,
+   "modo": "sostituisce"
+  },
+  "gamba_1": {
+   "img": "stivali_vuoto_gamba",
+   "x": 5.4,
+   "y": -30.4,
+   "w": 61.4,
+   "h": 82.0,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro": {
+   "img": "stivali_vuoto_gamba_dietro",
+   "x": 2.1,
+   "y": -29.7,
+   "w": 60.7,
+   "h": 80.4,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro_1": {
+   "img": "stivali_vuoto_gamba_dietro",
+   "x": 2.1,
+   "y": -29.7,
+   "w": 61.4,
+   "h": 81.2,
+   "modo": "sostituisce"
+  }
+ }
+}

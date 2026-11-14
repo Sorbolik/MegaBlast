@@ -1,0 +1,13 @@
+Image 1 is a sheet of nine heads of our character on flat magenta (the same head with nine faces, no horns). Image 2 is the chosen armour set "Void" of our game: left the BASIC form, right the FORGED form.
+
+Edit image 1 and return the SAME sheet: all nine heads stay exactly where they are, same size, same shapes, same faces, same pixels. Change only the FIRST head (top left): put on it the HOOD of the BASIC form of image 2. The hood covers the top and the back of the head and frames the face, which stays fully visible and unchanged; the pointed ears come out of the hood on the sides. On top of the hood, where the horns of image 2 come out, leave two small round openings and a third small opening in the middle between them (horns and the head flame will be drawn later on top of the hood, as separate parts): draw no horns and no flame. The other eight heads do not change at all.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Cloth indigo #2B2147 with folds #1A1430, thick closed black #000000 outline like the heads.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+R2: art/WB-041/riferimenti/R2_teste_senza_corna.png
+R3: art/WB-019/scelti/vuoto.png

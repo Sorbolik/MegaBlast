@@ -7,7 +7,8 @@ pelli disegnate sullo stampino (client/battle/skins.lua), le
 animazioni di adesso (client/battle/animations.lua), l'altezza del disegno
 (client/sim/game.lua), le hitbox (client/sim/body.lua), i perni spostati
 (client/battle/pivots.lua), le armi in mano (client/battle/weapons.lua, immagini
-in client/assets/weapons) con le loro impugnature (client/battle/grips.lua)
+in client/assets/weapons) con le loro impugnature (client/battle/grips.lua),
+la taratura del mantello (client/battle/cape_tuning.lua, immagini in client/assets/capes)
 e i colori delle squadre (client/ui/ui.lua), e scrive
 simulazione/animazioni/editor.html: si apre col doppio clic (Chrome o Edge
 salvano direttamente in client/battle/animations.lua) e si pubblica com'è
@@ -28,6 +29,17 @@ def leggi(p):
     return (REPO / p).read_text(encoding="utf-8")
 
 
+def shader_web(fp):
+    """client/battle/cape.fp (GLSL 140 di Defold) in GLSL ES 1.0 per il WebGL
+    dell'editor: lo stesso shader del gioco, senza copiarlo a mano."""
+    righe = [r for r in fp.splitlines() if not r.startswith("#version") and r.strip() != "out vec4 out_fragColor;"]
+    fp = "\n".join(righe)
+    fp = re.sub(r"^in ", "varying ", fp, flags=re.M)
+    fp = re.sub(r"uniform \w+\s*\{(.*?)\};", lambda m: "".join("uniform " + x.strip() + "\n" for x in m.group(1).split("\n") if x.strip()), fp, flags=re.S)
+    fp = re.sub(r"\btexture\(", "texture2D(", fp).replace("out_fragColor", "gl_FragColor")
+    return "#extension GL_OES_standard_derivatives : enable\nprecision highp float;\n" + fp
+
+
 def main():
     diavoletto = leggi("client/battle/devil.lua")
     # le immagini che i pezzi usano (img e tinta)
@@ -40,7 +52,12 @@ def main():
     pelli = leggi("client/battle/skins.lua")
     # in SVG quelle che ce l'hanno (tools/stampino/pelli/svg, da taglia.py --tavolozza):
     # nell'editor restano nitide con lo zoom
-    for n in sorted(set(re.findall(r'(?:img|tint) = "([a-z0-9_]+)"', pelli))):
+    # i mantelli (cape = { img = ... }) sono immagini a parte, in client/assets/capes
+    mantelli = sorted(set(re.findall(r'cape = \{ img = "([a-z0-9_]+)"', pelli)))
+    for n in mantelli:
+        dati = (REPO / "client/assets/capes" / (n + ".png")).read_bytes()
+        immagini["mantelli/" + n] = "data:image/png;base64," + base64.b64encode(dati).decode()
+    for n in sorted(set(re.findall(r'(?:img|tint) = "([a-z0-9_]+)"', pelli)) - set(mantelli)):
         svg = REPO / "tools/stampino/pelli/svg" / (n + ".svg")
         if svg.exists():
             immagini[n] = "data:image/svg+xml;base64," + base64.b64encode(svg.read_bytes()).decode()
@@ -63,6 +80,10 @@ def main():
     # il disegno è alto game.DISEGNO_H = REF_H * CORPO
     assert "M.DISEGNO_H = M.REF_H * M.CORPO" in game, "l'editor misura il diavoletto come sim/game.lua"
     misura = {k: float(re.search(r"M\.%s = ([0-9.]+)" % k, game).group(1)) for k in ("REF_H", "CORPO")}
+    # la gravità, la corsa e il salto del gioco (pixel del mondo), per il mantello
+    assert "M.U = M.REF_H / 3.612" in game and "M.GRAVITY = 25 * M.U" in game, "il mantello dell'editor misura come sim/game.lua"
+    u = misura["REF_H"] / 3.612
+    passo = {k: float(re.search(r"%s = ([0-9.]+) \* M\.U" % k, game).group(1)) * u for k in ("walk_speed", "jump_height")}
     squadre = re.search(r"SQUADRA = \{(.*)\}", leggi("client/ui/ui.lua")).group(1)
     colori = [[float(x) for x in c.split(",")] for c in re.findall(r"c\(([^)]*)\)", squadre)]
     dati = {
@@ -79,6 +100,11 @@ def main():
         "disegno_h": misura["REF_H"] * misura["CORPO"],
         "corpo": leggi("client/sim/body.lua"),
         "squadre": colori,
+        "mantello": leggi("client/battle/cape_tuning.lua"),
+        "cape_fp": shader_web(leggi("client/battle/cape.fp")),
+        "gravita": 25 * u,
+        "corsa": passo["walk_speed"],
+        "salto": passo["jump_height"],
     }
     testo = json.dumps(dati, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     pagina = (QUI / "editor.html").read_text(encoding="utf-8")

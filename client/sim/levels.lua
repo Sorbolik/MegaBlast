@@ -513,8 +513,8 @@ M.girone_1 = {
 		globi_tempo = true,
 		casse = { { dopo = 0, arma = "grenade", x = 405 } },
 		turni = 7,
-		-- ★★ at the median lead of the normal bot in 2 v 2 (collaudo, 4 Nov)
-		stelle = { punti = 280, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } },
+		-- ★★ at the median of the points the normal bot makes when it wins, ★★★ at the 80th percentile (collaudo, 14 Nov)
+		stelle = { punti = { 220, 340 } },
 		obiettivo = { { down = 2, testo = "Abbatti il bot" } },
 		-- the points come in here, the first match where they count (the overview of
 		-- 6 Nov; the two attacks are known from the cortile): Favilla's turn shows
@@ -543,7 +543,8 @@ M.girone_1 = {
 		al_posto = true,
 		vita = { [2] = 55, [4] = 50 },
 		turni = 6,
-		stelle = { punti = 290, bonus = { conta = "teletrasporti", at_most = 1, testo = "CON UN SOLO GLOBO" } },
+		-- ★★ median and ★★★ 80th percentile of the normal bot's points (collaudo, 14 Nov)
+		stelle = { punti = { 240, 530 } },
 		obiettivo = {
 			{ usa = "globi", testo = "Attacca presto: guadagna un globo" },
 			{ down = 2, con = "sword", testo = "Finisci il cecchino con la Lama" },
@@ -575,7 +576,8 @@ M.girone_1 = {
 		-- the bot testing it always does both attacks
 		collaudo = { piano = { due_attacchi = true } },
 		turni = 6,
-		stelle = { punti = 110, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } },
+		-- by hand: the bot always downs it in the first turn (95 points); it regrows, so every hit of an earlier turn adds up (the easy bot, in two turns, 133)
+		stelle = { punti = { 130, 180 } },
 		obiettivo = { { down = 2, testo = "Abbatti il bot in un turno solo" } },
 	},
 	{
@@ -584,7 +586,7 @@ M.girone_1 = {
 		tipo = "bersagli",
 		goal_text = "I bersagli non si feriscono: buttali giù dai loro scogli",
 		-- your platform and three narrow rocks over the void
-		arena = { { 760, 300, 400, 40 }, { 420, 420, 70, 24 }, { 1430, 420, 70, 24 }, { 925, 620, 70, 24 } },
+		arena = { { 800, 300, 320, 40 }, { 420, 420, 70, 24 }, { 1430, 420, 70, 24 }, { 925, 620, 70, 24 } },
 		spawns = { { x = 960, from = 600 }, { x = 455, from = 600 }, { x = 1465, from = 600 }, { x = 960, from = 1000 } },
 		-- everything that pushes (Sergio, 29 October 2026): the Cecchino, the Mantice
 		-- and the Rampino, which reaches the rocks from the edge and drops them over the void
@@ -595,7 +597,8 @@ M.girone_1 = {
 		vita = { [2] = 999, [3] = 999, [4] = 999 },
 		globi_tempo = true,
 		turni = 5,
-		stelle = { punti = 400, bonus = { conta = "morti", at_most = 0, testo = "SENZA CADERE" } },
+		-- by hand: the bot can't play it; three falls are worth 300, the rest is hits
+		stelle = { punti = { 400, 450 } },
 		obiettivo = { { down = "nemico", come = "vuoto", times = 3, testo = "Butta giù tre bersagli" } },
 		-- the void, with what pushes (the points are told in the first mission)
 		righe = {
@@ -623,7 +626,8 @@ M.girone_1 = {
 				fino = { tocca = "punch" } },
 		},
 		turni = 7,
-		stelle = { punti = 120, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } },
+		-- by hand: almost every win is 150 (his life and the kill); more with the Crown or the pit
+		stelle = { punti = { 160, 200 } },
 		obiettivo = { { down = 2, testo = "Abbatti il codardo" } },
 	},
 	{
@@ -641,7 +645,8 @@ M.girone_1 = {
 		vita = { [2] = 240 },
 		globi_tempo = true,
 		turni = 10,
-		stelle = { punti = 10, bonus = { conta = "vuoto", at_least = 1, testo = "BUTTALO NELLA FOSSA" } },
+		-- ★★ median and ★★★ 80th percentile of the normal bot's points (collaudo, 14 Nov)
+		stelle = { punti = { 340, 410 } },
 		obiettivo = { { down = 2, testo = "Abbatti il Fabbro" } },
 	},
 	-- the end of the circle: a full 2 v 2 match, with a bot at your side, that
@@ -664,8 +669,8 @@ M.girone_1 = {
 			{ team = 1, bot = 5, nome = "Favilla", battute = "favilla_compagna", pelle = "favilla" },
 			{ team = 2, bot = 2, carattere = "cecchino" },
 		},
-		-- no turn limit: play until time runs out
-		stelle = { punti = 215, bonus = { conta = "abbattuti", at_least = 3, testo = "ABBATTINE 3" } },
+		-- ★★ median and ★★★ 80th percentile of the normal bot's points (collaudo, 14 Nov)
+		stelle = { punti = { 400, 480 } },
 		obiettivo = { { win = true, testo = "Vinci la partita con Favilla" } },
 	},
 }

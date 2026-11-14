@@ -1,0 +1,18 @@
+Image 1 and image 2 are mockups of a game menu: look at the small pieces (money plates at the top right, back button at the bottom left, the small ember and flame markers). Image 3 shows the drawing style to copy: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow.
+
+Draw a sheet of EIGHT separate small game pieces with no text, arranged in a grid of 4 columns and 2 rows with wide green space between them, all hand-drawn, a bit crooked and not symmetric:
+1. a small dark iron plate, twice as wide as tall (#2B2730);
+2. a dark iron plate shaped like a blunt arrow pointing left (a back button);
+3. a glowing ember: a small rounded irregular lump, gold (#FFB703) with an orange shadow;
+4. a small flame, gold with an orange core, simple teardrop shape leaning to one side;
+5. a cold ember: the same lump as 3 but dark grey (#3A3540);
+6. a small padlock carved from ice: night blue (#10283A) with cyan outline (#38B6FF);
+7. a gold coin with a small flame stamped on it;
+8. a cyan ice gem, simple diamond shape with two facets.
+
+Thick black ink outline (cyan outline only on piece 6), cartoon comic style like image 3. No texture, no realistic reflections, no glow, no shadow on the ground. No text, letters or numbers. Flat pure green background (#00FF00).
+
+Riferimenti allegati in ordine
+R1 art/WB-022/riferimenti/R1_stile_fumetto.png
+R2 art/WB-022/riferimenti/R2_armeria_fumetto.png
+R3 art/WB-012/scelti/apprendista.png

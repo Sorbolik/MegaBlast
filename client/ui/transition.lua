@@ -7,9 +7,10 @@
 --           the map loads, then Favilla's flame (the entry's paper disc) flickers,
 --           swells and bursts into sparks, and the hole opens on the map from it
 --           (about 0.55 s after the load). A tap jumps to the burst
---   tent    between menus: a slanted yellow panel with a sand edge crosses the
---           screen in front of everything (240 + 300 ms) and behind it the scene
---           changes; from the other side when going back
+--   temper  between menus (Sergio, 12 Nov: «Tempra»): a slanted dark blade crosses
+--           the screen in front of everything (240 + 300 ms), red-hot on its
+--           leading edge and frozen, jagged, on the one behind; under it the
+--           scene changes. From the other side when going back
 -- While a transition runs the game doesn't listen to taps (is_active).
 -- After the scene change the veil stays closed HOLD_FRAMES more frames: the change
 -- frame (paintings, mask, the new screen's nodes) is long, and often the one
@@ -21,7 +22,7 @@
 --   passaggio.iris(p, change)                      -- change(): the new scene
 --   passaggio.flame(p, change, done)               -- done(): the map is uncovered
 --   passaggio.skip(p)                              -- a tap during the flame
---   passaggio.tent(p, change, toward)              -- toward 1 forward, -1 back
+--   passaggio.temper(p, change, toward)            -- toward 1 forward, -1 back
 --   passaggio.is_active(p)
 
 local screen = require "ui.screen"
@@ -32,7 +33,7 @@ local M = {}
 
 local W, H = 1280, 720
 M.IRIS = 0.15           -- seconds to close, and to open again
-M.TENT_IN, M.TENT_OUT = 0.24, 0.3   -- the tent covers the screen, then leaves
+M.TENT_IN, M.TENT_OUT = 0.24, 0.3   -- the blade covers the screen, then leaves
 M.HOLD_FRAMES = 3       -- frames with the screen covered after the scene change
 -- the flame: it lights (from small, with a flicker), swells, bursts while the hole opens
 M.FLAME_IN, M.FLAME_SWELL, M.FLAME_OPEN = 0.16, 0.14, 0.24
@@ -40,9 +41,13 @@ M.FLAME_D = 140         -- the disc's diameter
 M.SPARKS = 10
 local FLAME_CARD = vmath.vector4(0.94, 0.9, 0.82, 1)
 local EMBER = vmath.vector4(1, 0.55, 0.16, 1)
-local TENT = vmath.vector4(1, 0.74, 0.1, 1)             -- #ffbd1a, the action's yellow (ui/kit.lua)
-local TENT_EDGE = vmath.vector4(0.96, 0.89, 0.75, 1)    -- sand
-local TENT_DARK = vmath.vector4(0.09, 0.043, 0.047, 0.55)
+local SOOT = vmath.vector4(0.071, 0.063, 0.075, 1)      -- the colors of ui/kit.lua
+local INK = vmath.vector4(0.039, 0.031, 0.043, 1)
+local EMBER_EDGE = vmath.vector4(0.949, 0.392, 0.098, 1)
+local GOLD = vmath.vector4(1, 0.718, 0.012, 1)
+local SPARK = vmath.vector4(1, 0.953, 0.69, 1)
+local ICE = vmath.vector4(0.22, 0.714, 1, 1)
+local FROST = vmath.vector4(0.792, 0.941, 0.973, 1)
 
 function M.new()
 	local n = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * screen.FULL, H * screen.FULL, 0))
@@ -198,8 +203,9 @@ function M.skip(p)
 end
 
 local TENT_W = 2100     -- covers the widest screen, slanted
--- the tent's nodes, made the first time it is used: a slanted panel in the
--- action's color with a sand edge on both sides and a dark line inside
+-- the blade's nodes, made the first time it is used: a slanted soot panel; on
+-- the leading side three hot stripes (ember, gold, spark) inside an ink line,
+-- on the other a frost stripe and a row of ice teeth
 local function tent_nodes(p)
 	if p.tent then return p.tent end
 	local t = {}
@@ -213,31 +219,42 @@ local function tent_nodes(p)
 		gui.set_parent(n, t.nodo)
 		return n
 	end
-	-- wide enough for every screen (the real one may be wider than 1280)
-	local wide = TENT_W
-	band(0, wide, TENT)
-	for _, side in ipairs({ -1, 1 }) do
-		band(side * (wide / 2 - 70), 14, TENT_DARK)
-		band(side * (wide / 2 + 13), 26, TENT_EDGE)
+	local half = TENT_W / 2
+	-- the ice teeth first, under everything: squares on their corner
+	for i = 0, 26 do
+		local big = i % 2 == 0
+		for _, q in ipairs({ { big and 74 or 50, INK }, { big and 58 or 34, ICE } }) do
+			local n = gui.new_box_node(vmath.vector3(-half - 4, -tall / 2 + 30 + i * 60, 0), vmath.vector3(q[1], q[1], 0))
+			gui.set_rotation(n, vmath.vector3(0, 0, 45))
+			gui.set_color(n, q[2])
+			gui.set_parent(n, t.nodo)
+		end
 	end
+	band(half + 62, 16, INK)
+	band(half + 38, 40, EMBER_EDGE)
+	band(half + 13, 26, GOLD)
+	band(half - 4, 12, SPARK)
+	band(-half + 14, 28, FROST)
+	band(0, TENT_W - 16, SOOT)
 	gui.set_rotation(t.nodo, vmath.vector3(0, 0, -14))
 	gui.set_enabled(t.nodo, false)
 	p.tent = t
 	return t
 end
 
--- Between two menus (Sergio, 11 Nov: «transizioni fighe, soprattutto questa con
--- l'overlay che passa davanti»): the tent crosses the screen, and behind it the
--- scene changes. toward 1: from left to right; -1 (going back): the other way
-function M.tent(p, change, toward)
+-- Between two menus: the blade crosses the screen, and behind it the scene
+-- changes. toward 1: from left to right; -1 (going back): the other way,
+-- mirrored, so that the fire always goes first
+function M.temper(p, change, toward)
 	toward = toward or 1
 	local t = tent_nodes(p)
 	begin(p, 0, 1, 0)
 	gui.set_enabled(t.nodo, true)
 	gui.move_above(t.nodo, nil)
 	gui.cancel_animations(t.nodo, "position.x")
+	gui.set_scale(t.nodo, vmath.vector3(toward, 1, 1))
 	local pos = gui.get_position(t.nodo)
-	local far = TENT_W / 2 + screen.width() / 2 + 240
+	local far = TENT_W / 2 + screen.width() / 2 + 300
 	pos.x = W / 2 - toward * far
 	gui.set_position(t.nodo, pos)
 	gui.animate(t.nodo, "position.x", W / 2, gui.EASING_INSINE, M.TENT_IN, 0, function()

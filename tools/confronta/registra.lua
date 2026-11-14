@@ -170,10 +170,11 @@ local function partita(k)
 		p.bot = 1 + (k + i) % #bot.GRADES
 		local s = math.floor(r0:next() * (2 * #equip.SETS + 1))
 		if k % 2 == 0 and s > 0 then
-			local set, variant = equip.SETS[1 + (s - 1) % #equip.SETS].id, s > #equip.SETS and "b" or "a"
-			local gear, tiers = {}, {}
-			for _, sl in ipairs(equip.SLOTS) do gear[sl.id], tiers[sl.id] = set, equip.TIERS end
-			p.stats = assetto.stats(game.base_stats(), { tree = {}, gear = gear, variant = variant }, tiers)
+			-- una famiglia intera al 30 (i pezzi dell'11 nov: niente varianti per ora)
+			local set = equip.SETS[1 + (s - 1) % #equip.SETS].id
+			local gear, livelli = {}, {}
+			for _, sl in ipairs(equip.SLOTS) do gear[sl.id], livelli[sl.id] = set, equip.LIVELLO_MAX end
+			p.stats = assetto.stats(game.base_stats(), { tree = {}, gear = gear, variant = "a" }, livelli)
 		end
 	end
 	local r = replay.new(seme, mappa, { players = players })

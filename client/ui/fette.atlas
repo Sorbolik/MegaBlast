@@ -1,0 +1,30 @@
+images {
+  image: "/assets/fette/fetta_limbo.png"
+}
+images {
+  image: "/assets/fette/fetta_lussuria.png"
+}
+images {
+  image: "/assets/fette/fetta_gola.png"
+}
+images {
+  image: "/assets/fette/fetta_avarizia.png"
+}
+images {
+  image: "/assets/fette/fetta_ira.png"
+}
+images {
+  image: "/assets/fette/fetta_eresia.png"
+}
+images {
+  image: "/assets/fette/fetta_violenza.png"
+}
+images {
+  image: "/assets/fette/fetta_frode.png"
+}
+images {
+  image: "/assets/fette/fetta_tradimento.png"
+}
+margin: 2
+extrude_borders: 2
+inner_padding: 0

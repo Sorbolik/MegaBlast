@@ -1,0 +1,9 @@
+Image 1 shows how to draw a thick piece with a top face and a front face, image 2 shows more pieces in the same style: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, like a cartoon.
+
+Draw ONE big thick slice of dark stone, the one the player is standing on, like a slab cut from a big round cake, seen from the front and from a bit higher above than usual, so that its top face is large: a wide open oval top face and a thick front edge below it. Wide (about three times wider than tall). Hand-drawn, a bit crooked, not a perfect oval, soft irregular edge with two small notches. Colors, flat: top face dark slate (#3A3540), a clear molten gold line (#FFB703) all along where the top face meets the edge, as if the rim was red-hot, front edge dark iron (#2B2730) with one flat shadow band at the bottom. The top face is completely clean and empty, because the game draws a path with markers on it.
+
+Thick black ink outline, cartoon comic style. No characters, no buildings, no path, no markers. No texture, no soft gradients, no realistic lighting, no glow, no shadow on the ground. No text, letters or numbers. Flat pure green background (#00FF00), the slice centered with a green margin all around.
+
+Riferimenti allegati in ordine
+R3 art/WB-024/riferimenti/R3_lingotto.png
+R2 art/WB-024/riferimenti/R2_piastre.png

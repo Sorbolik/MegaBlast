@@ -30,6 +30,7 @@ local ui = require "ui.ui"
 local kit = require "ui.kit"
 local coins = require "ui.coins"
 local profile = require "menu.profile"
+local equip = require "sim.gear"
 local T = require("lang.text").receipt
 local TM = require("lang.text").milestones
 
@@ -62,6 +63,12 @@ local function label(l)
 	if l.key == "award" then return T.award:format(l.name) end
 	if l.key == "stars" then return T.stars:format(l.n) end
 	if l.key == "badge" then return T.badge:format(TM.names[l.id] or l.id, ROMAN[l.grade]) end
+	if l.key == "piece" then
+		local slot = ""
+		for _, s in ipairs(equip.SLOTS) do if s.id == l.slot then slot = s.name end end
+		return T.gift_piece:format(slot, equip.BY_ID[l.set] and equip.BY_ID[l.set].name or l.set)
+	end
+	if l.key == "voucher" then return T.gift_voucher end
 	return T.lines[l.key]
 end
 
@@ -84,6 +91,10 @@ function M.merge(lines, c)
 	end
 	for _, row in ipairs(c and c.obsidian or {}) do
 		out[#out + 1] = { key = row.key, id = row.id, grade = row.grade, ossidiana = row.ossidiana }
+	end
+	-- the gifts (menu/wallet.lua): a piece, a Smith's voucher
+	for _, row in ipairs(c and c.gifts or {}) do
+		out[#out + 1] = { key = row.key, set = row.set, slot = row.slot }
 	end
 	return out
 end

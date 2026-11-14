@@ -12,4 +12,8 @@ M.CAPITOLI = {
 	{ id = "girone_1", titolo = "La Forgia", serve = 9, missioni = levels.girone_1 },
 }
 
+-- the levels the campaign will have from the Forgia to Lucifero
+-- (docs/campagna_gironi.md): the bots' piece goes up along them (sim/missions.lua)
+M.PLANNED_LEVELS = 56
+
 return M

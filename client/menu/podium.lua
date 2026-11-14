@@ -146,8 +146,8 @@ local function title(p, results, first)
 		label = T.wins:format(kit.upper(results.mode == "2v2" and g.nome:gsub(" %d$", "") or g.nome))
 	end
 	local gg = { node = p.radice, ox = 0, oy = 720 }
-	kit.sand(gg, 30, 36, 420, 104, KC.HOT, { sk = 34, d = 14 })
-	local t = kit.text(gg, label, 64, 116, 74, KC.INK)
+	local on_plate = kit.sand(gg, 30, 36, 420, 104, KC.HOT, { sk = 34, d = 14 })
+	local t = kit.text(on_plate.g, label, 64, 116, 74, KC.INK)
 	local wide = kit.width(t)
 	if wide > 372 then
 		local sc = gui.get_scale(t)
@@ -159,7 +159,7 @@ end
 
 function M.new(results, giocatori, me, my_gain, prof, number)
 	local p = { giocatori = giocatori, me = me, figure = {}, buttons = {}, t = 0, numero = number }
-	-- a dark sheet and the rays, the rest in a group that adapts (FIT)
+	-- a dark sheet and the backdrop, the rest in a group that adapts (FIT)
 	p.scene = kit.scene(330, 330, { dim = 0.72 })
 	p.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(p.radice, false)
@@ -196,8 +196,8 @@ function M.new(results, giocatori, me, my_gain, prof, number)
 	p.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	if number then
 		-- RIVEDI: straight to this match's replay (then back to the profile)
-		local again = kit.plate(p.right, 740, 584, 160, 56, KC.ROSE, { sk = 14, d = 6 })
-		kit.text(again.g, common.replay, 740 + 87, 584 + 36, 18, KC.SAND, "middle", 0.5)
+		local again = kit.plate(p.right, 724, 628, 190, 64, KC.ROSE, { sk = 0, d = 6, piece = "piastrina" })
+		kit.text(again.g, common.replay, 724 + 95, 628 + 41, 22, KC.SAND, "middle", 0.5)
 		kit.button(p.buttons, again, "rivedi")
 	end
 	local go = kit.action(p.right, T.go_on, 930, 560, 270, 84, { size = 44 })

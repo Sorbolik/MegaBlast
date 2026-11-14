@@ -1,0 +1,13 @@
+Image 1 is an approved background of a mobile game about little devils in Dante's hell (the campaign map screen). Image 2 shows it in use, with the game's comic-style interface on top. Paint a NEW background of the same family for another screen of the same game, wide 16:9, by the same hand as image 1: same painting style, same softness, same dark tonal range, same two lights, same amount of detail.
+
+The place: a dressing niche. On the left, a big heavy curtain in soft rounded folds comes in from the left edge and from the top, lit warm from below. On the right, tall flat facets of ice like the edge of a frozen mirror come in from the right edge. In the centre there is only a very soft, very dim tall halo of light on the back wall, like a quiet niche, with no shape inside it: a character will stand there. Along the bottom fifth, a flat dark floor band.
+
+Rules taken from image 1, to follow exactly: the picture is made ONLY of a few very big simple masses coming in from the left and right edges; there are NO objects, no props, no tools, no furniture, nothing standing alone in the middle. The whole centre of the picture is empty, dark and calm, with nothing that attracts the eye. The masses work as a FRAME around the interface, exactly as in image 2 where the terraces frame the map: they hug the edges of the picture and their inner contours open around the area where the character and the buttons will sit, leading the eye toward them and never competing with them. Warm light glows dull orange from the bottom-left corner and the masses on the left are soft and rounded; cold pale-blue light comes from the top-right corner and the masses on the right are ice, sharp and angular. Two depth planes on each side (the far one lighter and hazier, the nearer one darker, with a thin rim of light on its edge) plus an almost black, out-of-focus shape in the bottom-left corner (round rock) and one in the bottom-right corner (ice shard). The ice near the top-right corner must stay dim: no bright white crystals, nothing brighter than in image 1.
+
+Stylized 2D game background with atmospheric perspective, big flat shapes with smooth soft gradients. NO black outlines, no ink lines, no hatching, no bricks, no cracks, no surface texture, no noise, no floating sparks or dots. Overall dark and desaturated (soot brown-black, deep navy). A soft dark vignette at the edges.
+
+No characters, no creatures, no text, no letters, no numbers, no interface, no frame, no signature. Do not draw the interface of image 2.
+
+Riferimenti (in ordine)
+R1: art/WB-028/riferimenti/R1_sfondo_campagna.jpg
+R2: art/WB-028/riferimenti/R2_campagna_con_interfaccia.jpg

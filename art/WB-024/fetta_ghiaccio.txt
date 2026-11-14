@@ -1,0 +1,9 @@
+Image 1 shows how to draw a thick piece with a top face and a front face, image 2 shows more pieces in the same style: thick slightly irregular ink outline, flat colors, one flat highlight and one flat shadow, like a cartoon.
+
+Draw ONE thick slice of ice, like a slab cut from a frozen lake, seen from the front and slightly from above: a wide flattened top face and a thick front edge below it. Very wide (about four times wider than tall). Hand-drawn and angular: the outline is made of straight segments and hard corners instead of a smooth oval, not symmetric. Colors, flat: top face night blue (#10283A), a thin pale frost line (#CAF0F8) where the top face meets the edge, front edge a slightly lighter blue (#1C4460), outline drawn thick in glacial cyan (#38B6FF) with a thin black line outside it. One crack on the front edge and three short icicles hanging under it. The top face is clean and empty, because the game writes on it.
+
+Cartoon comic style. No characters, no buildings. No texture, no soft gradients, no realistic reflections, no glow, no shadow on the ground. No text, letters or numbers. Flat pure green background (#00FF00), the slice centered with a green margin all around.
+
+Riferimenti allegati in ordine
+R3 art/WB-024/riferimenti/R3_lingotto.png
+R2 art/WB-024/riferimenti/R2_piastre.png

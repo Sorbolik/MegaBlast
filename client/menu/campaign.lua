@@ -6,7 +6,7 @@
 -- (chapter.serve): closed, it says how many are missing. Style in ui/ui.lua.
 --
 --   local campagna = require "menu.campaign"
---   local c = campagna.new(scelta, stelle, storia)  -- scelta = { chapter } (the last one opened); stelle = id -> { true, false, true };
+--   local c = campagna.new(scelta, stelle, storia, records)  -- records = id -> most points made; scelta = { chapter } (the last one opened); stelle = id -> { true, false, true };
 --     storia: some of the story was seen (ui/story.lua): LA STORIA, top right, reads it again
 --   local fine = campagna.on_input(c, action_id, action)
 --     -- "indietro", { missione = id, da } to play it (da: where its picture is), "storia", or nil
@@ -91,8 +91,14 @@ local function card(c, l, x, y, w, h, ih, kind, state)
 	end
 	local kd = types.KINDS[l.tipo]
 	if kd then kit.label(k.g, x + 16, y + 12, kd.name, locked and KC.MUTE or kd.color, true) end
+	-- the level's record of points, top right on the picture
+	local best = not locked and c.records and c.records[l.id]
+	if best then
+		local t = T.record:format(best)
+		kit.label(k.g, x + w - (#t * 9 + 46) - 4, y + 12, t, KC.STAR, true)
+	end
 	if locked then
-		ui.padlock(0, h / 2 - 4 - ih / 2, math.min(46, ih * 0.5), KC.MUTE, k.node)
+		kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", 0, -(h / 2 - 4 - ih / 2), math.min(50, ih * 0.55))
 	else
 		kit.zone(g, c.buttons, x, y, w, h, "missione:" .. l.id)
 	end
@@ -119,13 +125,13 @@ local function card_list(c, cap)
 		local l = list[i]
 		local unlocked = is_mission_unlocked(c, list, i)
 		local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
-		local x, y = 440 + col * (w + 20) - row * 10, 166 + row * (h + 22)
+		local x, y = 440 + col * (w + 20) - row * 10, 180 + row * (h + 20)
 		local is_new = l.id == next_id
 		local k = card(c, l, x, y, w, h, h - 46, "carta", not unlocked and "locked" or is_new and "new" or "open")
 		local count = #missions.criteria(l)
 		local d = cols == 3 and 16 or 13
 		local room = w - 30 - (is_new and 62 or unlocked and count * d * 1.2 + 6 or 0)
-		fit(kit.text(k.g, kit.upper(l.titolo), x + 18, y + h - 22, cols == 3 and 17 or 13, unlocked and KC.SAND or KC.MUTE), room)
+		fit(kit.text(k.g, kit.upper(l.titolo), x + 18, y + h - 22, cols == 3 and 19 or 15, unlocked and KC.SAND or KC.MUTE), room)
 		if is_new and unlocked then
 			kit.text(k.g, T.new, x + w - 10, y + h - 22, 13, KC.HOT_TOP, "end", 1)
 		elseif unlocked then
@@ -135,12 +141,12 @@ local function card_list(c, cap)
 	if final then
 		local unlocked = is_mission_unlocked(c, list, #list)
 		local rows = math.ceil(pinned / cols)
-		local fy, fw = 166 + rows * (h + 22), cols == 3 and 520 or 480
+		local fy, fw = 180 + rows * (h + 20), cols == 3 and 520 or 480
 		local is_new = final.id == next_id
 		local k = kit.card(g, 420, fy, fw, 56, is_new and unlocked and KC.HOT or unlocked and KC.STAR or KC.LINE, { sel = is_new and unlocked })
 		fit(kit.text(k.g, T.final:format(kit.upper(final.titolo)), 446, fy + 35, 17, unlocked and KC.SAND or KC.MUTE), fw - 130)
 		if not unlocked then
-			ui.padlock(fw / 2 - 40, 0, 30, KC.MUTE, k.node)
+			kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", fw / 2 - 40, 0, 34)
 		elseif is_new then
 			kit.text(k.g, T.new, 420 + fw - 24, fy + 34, 13, KC.HOT_TOP, "end", 1)
 		else
@@ -157,66 +163,71 @@ end
 local function guide(c, cap)
 	local g = c.kg
 	local who = cap == payload.CAPITOLI[1] and "favilla" or "fabbro"
-	local p = kit.sand(g, 60, 170, 330, 400, KC.HOT, { sk = 20 })
+	local p = kit.sand(g, 60, 180, 330, 400, KC.HOT, { sk = 20 })
 	local pic = gui.new_box_node(vmath.vector3(4, 35, 0), vmath.vector3(306, 306, 0))
 	gui.set_texture(pic, "ritratti")
 	gui.play_flipbook(pic, who .. (who == "favilla" and "_spiega" or "_calma"))
 	gui.set_parent(pic, p.face_node)
-	kit.text(g, TV[who], 90, 548, 26, KC.INK)
+	kit.text(g, TV[who], 90, 558, 28, KC.INK)
 	local done, got = 0, 0
 	for _, l in ipairs(cap.missioni) do
 		local st = c.stelle[l.id] or {}
 		if st[1] then done = done + 1 end
 		got = got + missions.count(st)
 	end
-	kit.sand(c.low, 80, 630, 340, 62, KC.STAR, { sk = 22 })
-	kit.text(c.low, T.progress:format(done, #cap.missioni, got), 250, 668, 18, KC.INK, "middle", 0.5)
+	local on_plate = kit.sand(c.low, kit.PLATE_X, kit.PLATE_Y, 340, 62, KC.STAR, { sk = 22 })
+	kit.text(on_plate.g, T.progress:format(done, #cap.missioni, got), kit.PLATE_X + 170, kit.PLATE_Y + 38, 19, KC.INK, "middle", 0.5)
 end
 
 -- ---------------------------------------------------------------- the map
 
--- After the kidnapping (the last chapter done) the campaign is the funnel of
--- hell (Sergio, 10-11 Nov): the Cortile and the Forge on the top floor, the
--- nine circles under it, smaller and smaller, down to Favilla. The circles
--- are placeholders for now: names and keepers (lang, campaign.rings), five
--- levels and the keeper each, all still to come.
--- { top, side }: the colors of each floor
-local FLOOR = { kit.hex("3d2c20"), kit.hex("8b4f2b") }
-local RING_COLORS = {
-	{ kit.hex("27352f"), kit.hex("3f5f55") }, { kit.hex("3a1f4a"), kit.hex("7d3c9c") }, { kit.hex("302a1a"), kit.hex("5a4c22") },
-	{ kit.hex("3d3212"), kit.hex("8a6c1e") }, { kit.hex("401818"), kit.hex("8c2c26") }, { kit.hex("3a2414"), kit.hex("a85c1e") },
-	{ kit.hex("3c1220"), kit.hex("8e2038") }, { kit.hex("1a2636"), kit.hex("2f5078") }, { kit.hex("26384a"), kit.hex("6aa2c4") },
-}
+-- After the kidnapping (the last chapter done) the campaign is the way down
+-- through hell (Sergio, 10-12 Nov): the nine circles as nine slices drawn by
+-- Codex (WB-026, ui/slices.lua), each with its own look, stacked from the Limbo
+-- down to Favilla in the ice. All nine are always there and whole: only the
+-- circles reached are lit (Sergio, 11 Nov), the next one has its padlock and
+-- says what opens it, the ones under it are dark but still themselves. The map
+-- looks at one circle at a time, the big one: touching another, dragging up
+-- and down or touching its mark on the rail (right) the stack slides there.
+-- The levels are placeholders for now (lang, campaign.rings): five and the keeper.
+local SLICES = require "ui.slices"
 local RING_LEVELS = 5
--- the rings on the map: width, and the Figma y of their top face
-local RING_W = { 744, 610, 490, 390, 305, 235, 180, 135, 100 }
-local RING_H, RING_THICK = 0.105, 0.045
-local MAP_X = 520
+-- the circle you are on (the levels are still to come: always the first)
+local RING_AT = 1
+local LAST = #SLICES
+-- the slice looked at is SLICE_W wide on the screen (about half its picture:
+-- sharp on a screen twice as dense), the others SMALL of it
+local SLICE_W, SMALL = 700, 0.66
+-- where the slice looked at is (Figma), how much of a slice the one above
+-- covers, how long the stack takes to slide
+local MAP_X, LOOK_Y, COVER, LOOK_TIME = 640, 310, 0.2, 0.3
+-- how dark a closed circle is: the next one, and the ones under it
+local NEXT_DIM, OFF_DIM = 0.78, 0.56
+-- a drag this long (pixels of the 720 high screen) moves the stack
+local DRAG = 60
+-- the plate of the story shown at the bottom of it all
+local PRISON = "s_ghiaccio"
+-- the accent of each circle: its name on the rail and on the slice
+local RING_ACCENT = {
+	kit.hex("d9cfa8"), kit.hex("ff5fa8"), kit.hex("a9a08c"), kit.hex("d4a94a"), kit.hex("5fb8a8"),
+	kit.hex("e0763a"), kit.hex("e04a4a"), kit.hex("b8b04a"), kit.hex("8fd0f0"),
+}
 
-local function toward_ink(col, k)
-	local i = KC.INK
-	return vmath.vector4(col.x + (i.x - col.x) * k, col.y + (i.y - col.y) * k, col.z + (i.z - col.z) * k, 1)
-end
+local function slice_h(i) return SLICE_W * SLICES[i].h / SLICES[i].w end
 
-local function ellipse(g, cx, cy, w, h, color)
-	-- a box with the disc's image, not a pie node: the polygon of a wide
-	-- ellipse would cut the image's soft edge into steps
-	local n = gui.new_box_node(vmath.vector3(cx - g.ox, g.oy - cy, 0), vmath.vector3(w, h, 0))
-	gui.set_texture(n, "ui")
-	gui.play_flipbook(n, w <= 48 and "disco_p" or "disco")
-	gui.set_color(n, color)
-	gui.set_parent(n, g.node)
-	return n
-end
-
--- a floor of the funnel: a disc w wide seen from above (h), thick, with its
--- hole. outline: a sand rim (the one you are on)
-local function floor(g, cx, cy, w, h, thick, colors, outline)
-	ellipse(g, cx, cy + thick, w, h, colors[2])
-	kit.rect(g, cx - w / 2 + w * 0.004, cy, w * 0.992, thick, colors[2])
-	if outline then ellipse(g, cx, cy, w + 8, h + 8, KC.SAND) end
-	ellipse(g, cx, cy, w, h, colors[1])
-	ellipse(g, cx, cy - h * 0.04, w * 0.56, h * 0.5, KC.INK)
+-- where every slice is when the map looks at `look`: { y (Figma, its middle), k (its scale) }
+local function layout(look)
+	local out = {}
+	out[look] = { y = LOOK_Y, k = 1 }
+	for i = look + 1, LAST do
+		local up = out[i - 1]
+		out[i] = { k = SMALL, y = up.y + (slice_h(i - 1) * up.k + slice_h(i) * SMALL) / 2 * (1 - COVER) }
+	end
+	for i = look - 1, 1, -1 do
+		local down = out[i + 1]
+		out[i] = { k = SMALL, y = down.y - (slice_h(i + 1) * down.k + slice_h(i) * SMALL) / 2 * (1 - COVER) }
+	end
+	return out
 end
 
 local function funnel_on(c)
@@ -238,135 +249,130 @@ local function chapter_stars(c, cap)
 	return got, all
 end
 
--- the points of a ring's levels along its front arc: n of them, the keeper last
-local function arc(cx, cy, w, h, n)
-	local out = {}
-	for k = 1, n do
-		local a = math.rad(160 - (k - 1) / (n - 1) * 140)
-		out[k] = { cx + w / 2 * 0.76 * math.cos(a), cy + h / 2 * 0.76 * math.sin(a) }
+-- a slice: its picture, its name on the front, the padlock if closed, the
+-- levels along the top if it is yours. Everything is its child: it slides and
+-- grows with it
+local function slice(c, i, at, from)
+	local g = c.kg
+	local h = slice_h(i)
+	local n = gui.new_box_node(vmath.vector3(MAP_X - g.ox, g.oy - at.y, 0), vmath.vector3(SLICE_W, h, 0))
+	gui.set_texture(n, "fette")
+	gui.play_flipbook(n, SLICES[i].image)
+	gui.set_parent(n, g.node)
+	local closed = i > RING_AT
+	local dim = not closed and 1 or i == RING_AT + 1 and NEXT_DIM or OFF_DIM
+	gui.set_color(n, vmath.vector4(dim, dim, dim, 1))
+	gui.set_scale(n, vmath.vector3(at.k, at.k, 1))
+	local sg = { node = n, ox = 0, oy = 0 }
+	local r = T.rings[i]
+	kit.text(sg, T.ring_name:format(r[1], r[2]), 0, h * 0.36, 22, closed and KC.MUTE or RING_ACCENT[i], "middle", 1.5)
+	if closed then
+		-- the padlock inside, on the right; the next one says what opens it
+		local lock = kit.piece(sg, "lucchetto", SLICE_W * 0.36, h * 0.12, i == RING_AT + 1 and 46 or 38)
+		if i > RING_AT + 1 then gui.set_color(lock, vmath.vector4(0.6, 0.6, 0.66, 1)) end
+		if i == RING_AT + 1 then
+			kit.text(sg, T.ring_opens:format(T.rings[RING_AT][3]), 0, -h * 0.1, 17, KC.SAND, "middle", 1)
+		end
+	else
+		-- the levels along the top face: the one to play burns, the keeper last
+		for k = 1, RING_LEVELS + 1 do
+			local t = (k - 1) / RING_LEVELS
+			local x = (t - 0.5) * SLICE_W * 0.6
+			local y = -h * 0.2 + math.sin(t * math.pi) * h * 0.08
+			local keeper = k > RING_LEVELS
+			if k == 1 then
+				kit.piece(sg, "fiamma", x, y - 14, 54)
+			else
+				kit.piece(sg, "brace_spenta", x, y, keeper and 46 or 30)
+			end
+			if keeper then
+				kit.piece(sg, "corona", x, y - 30, 20)
+				kit.text(sg, r[3], x, y + 42, 14, KC.SAND, "middle", 1)
+			end
+		end
 	end
-	return out
+	kit.zone(sg, c.buttons, -SLICE_W * 0.46, -h / 2, SLICE_W * 0.92, h, "girone:" .. i)
+	if from and (from.y ~= at.y or from.k ~= at.k) then
+		gui.set_position(n, vmath.vector3(MAP_X - g.ox, g.oy - from.y, 0))
+		gui.set_scale(n, vmath.vector3(from.k, from.k, 1))
+		gui.animate(n, "position", vmath.vector3(MAP_X - g.ox, g.oy - at.y, 0), gui.EASING_OUTCUBIC, LOOK_TIME)
+		gui.animate(n, "scale", vmath.vector3(at.k, at.k, 1), gui.EASING_OUTCUBIC, LOOK_TIME)
+	end
+	return n
+end
+
+-- a small block of the left column: a small label in its color and its lines
+local function note(g, y, color, label, lines)
+	kit.text(g, label, 34, y, 15, color, "start", 1.5)
+	for i, line in ipairs(lines) do
+		fit(kit.text(g, line, 34, y + i * 26 + 2, i == 1 and 22 or 16, i == 1 and KC.SAND or KC.MUTE, "start", 0.5), 250)
+	end
 end
 
 local function build_map(c)
 	local g = c.kg
-	c.head = kit.header(c.buttons, common.campaign, KC.HOT, "indietro", common.home)
-	-- from the bottom up: each floor covers the back of the one under it
-	local ys, y = {}, 312
-	for i, w in ipairs(RING_W) do
-		ys[i] = y
-		if RING_W[i + 1] then y = y + w * RING_THICK + RING_W[i + 1] * RING_H * 0.55 end
+	local look = math.max(1, math.min(LAST, c.scelta.look or RING_AT))
+	local from = c.look_from or look
+	c.scelta.look, c.look_from = look, nil
+	local r = T.rings[look]
+	-- the circle looked at gives the screen its name and its color
+	c.head = kit.header(c.buttons, r[2], RING_ACCENT[look], "indietro", common.home)
+	local at, was = layout(look), layout(from)
+	-- from the bottom up: each slice covers the back of the one under it; the
+	-- one looked at over its neighbours
+	-- (made last, not moved up afterwards: a child sent to the top with
+	-- gui.move_above(node, nil) is no longer deleted with its parent, and the
+	-- slice stayed on the home; Sergio, 12 Nov)
+	for i = LAST, 1, -1 do
+		if i ~= look then slice(c, i, at[i], was[i]) end
 	end
-	local last = #RING_W
-	for i = last, 1, -1 do
-		local w = RING_W[i]
-		local col = RING_COLORS[i]
-		if i > 1 then col = { toward_ink(col[1], 0.5), toward_ink(col[2], 0.55) } end
-		floor(g, MAP_X, ys[i], w, w * RING_H, w * RING_THICK, col, i == 1)
-		kit.zone(g, c.buttons, MAP_X - w / 2, ys[i] - w * RING_H / 2, w, w * (RING_H + RING_THICK), "girone:" .. i)
-	end
-	-- the first circle: where you are. Its levels as dots, its name on a plate
-	local r = T.rings[1]
-	for k, pt in ipairs(arc(MAP_X, ys[1], RING_W[1], RING_W[1] * RING_H, RING_LEVELS + 1)) do
-		ellipse(g, pt[1], pt[2] - 4, 12, 9, k == 1 and KC.HOT or kit.with_alpha(KC.SAND, 0.35))
-	end
-	local name = T.ring_name:format(r[1], r[2])
-	local p = kit.sand(g, MAP_X - 118, ys[1] + 30, 236, 34, RING_COLORS[1][2], { sk = 10, d = 5 })
-	kit.text(p.g, name, MAP_X, ys[1] + 54, 18, KC.INK, "middle", 1)
-	kit.pop(p.node, 0.25)
-	-- the next one: closed, and what opens it
-	local r2 = T.rings[2]
-	ui.padlock(MAP_X - 150 - g.ox, g.oy - (ys[2] + 22), 16, KC.MUTE, g.node)
-	kit.text(g, T.ring_locked:format(r2[1], r[3]), MAP_X - 132, ys[2] + 26, 10, KC.MUTE, "start", 1)
-	-- Favilla, at the bottom of it all
-	local fy = ys[last] + 24
-	local halo = ui.disc(MAP_X - g.ox, g.oy - fy, 150, kit.with_alpha(KC.STEEL, 0.28), g.node)
-	gui.play_flipbook(halo, "alone")
-	gui.set_blend_mode(halo, gui.BLEND_ADD)
-	gui.animate(halo, "color.w", 0.12, gui.EASING_INOUTSINE, 1.8, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
-	ellipse(g, MAP_X, fy, 9, 9, KC.STAR)
-	kit.text(g, TV.favilla, MAP_X, fy + 22, 9, kit.with_alpha(KC.STEEL, 0.8), "middle", 2)
-	-- the top floor: the two chapters done, each with the picture of its place
-	floor(g, MAP_X, 208, 860, 96, 52, FLOOR, false)
-	local places = { { payload.CAPITOLI[1], T.cortile, 390 }, { payload.CAPITOLI[2], kit.upper(payload.CAPITOLI[2].titolo), 690 } }
-	for _, pl in ipairs(places) do
-		local cap, x = pl[1], pl[3]
-		local first = cap.missioni[#cap.missioni]
-		local tex, size = ill.texture(first.id, "carta")
-		local k = kit.card(g, x - 84, 98, 168, 96, KC.SAND, {})
+	slice(c, look, at[look], was[look])
+	-- under the last one: Favilla in the ice, the plate of the kidnapping (Sergio, 11 Nov)
+	if look == LAST then
+		local tex, size = ill.story(PRISON)
+		local k = kit.card(g, MAP_X - 150, 426, 300, 176, KC.STEEL, {})
 		if tex then
-			c.textures[#c.textures + 1] = { first.id, "carta" }
-			kit.card_picture(k, tex, 88, size and size.w / size.h, 1)
+			c.prison = true
+			kit.card_picture(k, tex, 168, size.w / size.h, 1)
 		end
-		kit.text(g, pl[2], x, 222, 16, KC.SAND, "middle", 1)
-		local got, all = chapter_stars(c, cap)
-		ui.star(x - 26 - g.ox, g.oy - 237, 13, KC.STAR, g.node)
-		kit.text(g, T.ring_stars:format(got, all), x - 12, 242, 11, KC.MUTE, "start", 1)
-		kit.zone(g, c.buttons, x - 100, 90, 200, 160, "capitolo:" .. cap.id)
-		kit.arrive(k.node, 0, 30, 0.05, 0.3)
+		kit.pop(k.node, from == look and 0.15 or LOOK_TIME)
 	end
-	-- who takes you down, top right
-	local tr = c.head.top_right
-	local k = kit.card(tr, 1010, 104, 230, 84, KC.ROSE, {})
-	local pic = gui.new_box_node(vmath.vector3(-74, 0, 0), vmath.vector3(70, 70, 0))
-	gui.set_texture(pic, "ritratti")
-	gui.play_flipbook(pic, "fabbro_calma")
-	gui.set_parent(pic, k.node)
-	kit.text(k.g, TV.fabbro, 1100, 132, 11, KC.SAND, "start", 1)
-	kit.text(k.g, T.fabbro_line[1], 1100, 150, 10, KC.MUTE)
-	kit.text(k.g, T.fabbro_line[2], 1100, 164, 10, KC.MUTE)
-	kit.text(c.right, T.tap_ring, 1090, 470, 10, KC.MUTE, "middle", 1)
-	c.play = nil
-	c.action = kit.action(c.right, common.play, 930, 560, 270, 84, { size = 54, sub = T.coming_sub:format(r[2]), off = true })
-	kit.button(c.buttons, c.action, "gioca", { main = true, spento = true })
-end
-
--- a circle opened: the ring wide, its levels along the front, the keeper last
-local function build_ring(c, i)
-	local g = c.kg
-	local r = T.rings[i]
-	local col = RING_COLORS[i]
-	c.head = kit.header(c.buttons, r[2], col[2], "mappa", T.rings_back)
+	-- on the left, under the name: where it is, its hazard, its keeper
 	local tl = c.head.top_left
-	kit.text(tl, r[1], 30, 114, 20, col[2], "start", 1)
-	kit.text(tl, T.ring_sub:format(T.coming), 30 + 16 + #r[1] * 12, 114, 11, KC.MUTE, "start", 1)
-	local cx, cy, w, h = 560, 370, 1080, 300
-	floor(g, cx, cy, w, h, 60, col, true)
-	-- the circle under it, down in the hole
-	local under = T.rings[i + 1]
-	if under then
-		local uc = RING_COLORS[i + 1]
-		ellipse(g, cx, cy + 34, 420, 62, toward_ink(uc[2], 0.6))
-		ellipse(g, cx, cy + 36, 210, 30, KC.INK)
-		ui.padlock(cx - g.ox, g.oy - (cy + 22), 22, KC.MUTE, g.node)
-		kit.text(g, T.ring_name:format(under[1], under[2]), cx, cy + 60, 10, KC.MUTE, "middle", 1)
+	local state = look == RING_AT and T.ring_here or look == RING_AT + 1 and T.ring_opens:format(T.rings[RING_AT][3]) or T.ring_closed
+	kit.text(tl, T.ring_title:format(r[1], state), 34, 108, 16, KC.MUTE, "start", 1.5)
+	note(tl, 170, KC.ICE, T.hazard, { r[4], r[5] })
+	note(tl, 280, KC.HOT, T.keeper, { r[3] })
+	-- the top floor, at the bottom left on the thread: the two chapters done
+	local x = 168
+	for _, cap in ipairs({ payload.CAPITOLI[1], payload.CAPITOLI[2] }) do
+		local name = cap == payload.CAPITOLI[1] and T.cortile or kit.upper(cap.titolo)
+		local p = kit.plate(c.low, x, 632, 230, 68, KC.ROSE, { sk = 0 })
+		local b = p.box
+		local mid = (b.y0 + b.y1) / 2
+		local label = kit.text(p.g, name, b.x0, mid + 7, 19, KC.SAND, "start", 0.5)
+		local got, all = chapter_stars(c, cap)
+		local count = kit.text(p.g, T.ring_stars:format(got, all), b.x1, mid + 6, 15, KC.MUTE, "end", 0.5)
+		ui.star(b.x1 - kit.width(count) - 14 - p.g.ox, p.g.oy - mid, 18, KC.STAR, p.g.node)
+		fit(label, b.x1 - b.x0 - kit.width(count) - 34)
+		kit.button(c.buttons, p, "capitolo:" .. cap.id)
+		x = x + 240
 	end
-	local pts = arc(cx, cy, w, h, RING_LEVELS + 1)
-	for k = 1, #pts - 1 do
-		kit.line(g, pts[k][1], pts[k][2], pts[k + 1][1], pts[k + 1][2], 3, kit.with_alpha(KC.SAND, 0.18))
+	-- (over the stack: the lower slices pass behind them)
+	gui.move_above(c.low.node, c.radice)
+	-- the rail, on the right: the nine circles at a glance, each one a way there
+	local tr = c.head.top_right
+	local top, step = 128, 54
+	for i = 1, LAST do
+		local y = top + (i - 1) * step
+		local closed = i > RING_AT
+		kit.text(tr, T.rings[i][1], 1186, y + 7, i == look and 22 or 17, i == look and KC.SAND or closed and KC.MUTE or RING_ACCENT[i], "end", 1)
+		local mark = kit.piece(tr, closed and "lucchetto" or "brace", 1224, y, i == look and 46 or 34)
+		if closed and i ~= look then gui.set_color(mark, vmath.vector4(0.6, 0.6, 0.68, 1)) end
+		kit.zone(tr, c.buttons, 1120, y - step / 2, 160, step, "girone:" .. i)
 	end
-	for k, pt in ipairs(pts) do
-		local keeper = k == #pts
-		local d = keeper and 54 or 36
-		local n = gui.new_box_node(vmath.vector3(pt[1] - g.ox, g.oy - pt[2], 0), vmath.vector3(d, d, 0))
-		gui.set_visible(n, false)
-		gui.set_parent(n, g.node)
-		ui.disc(0, 0, d, keeper and KC.STEEL or KC.LINE, n)
-		ui.disc(0, 0, d - 6, KC.INK, n)
-		local ng = { node = n, ox = pt[1], oy = pt[2] }
-		if keeper then
-			ui.padlock(0, 0, 20, KC.STEEL, n)
-			kit.text(g, r[3], pt[1], pt[2] - 38, 11, KC.MUTE, "middle", 1)
-		else
-			kit.text(ng, tostring(k), pt[1], pt[2] + 5, 14, KC.MUTE, "middle")
-		end
-		kit.pop(n, 0.05 * k)
-	end
-	local k = kit.card(g, 250, 556, 560, 96, KC.LINE, {})
-	kit.text(k.g, T.coming, 280, 596, 22, KC.SAND, "start", 1)
-	kit.text(k.g, T.coming_line, 280, 624, 11, KC.MUTE, "start", 1)
 	c.play = nil
-	c.action = kit.action(c.right, common.play, 930, 560, 270, 84, { size = 54, sub = T.coming_sub:format(r[2]), off = true })
+	c.action = kit.action(c.right, common.play, 930, 572, 270, 84, { size = 54, sub = T.coming_sub:format(T.rings[RING_AT][2]), off = true })
 	kit.button(c.buttons, c.action, "gioca", { main = true, spento = true })
 end
 
@@ -374,6 +380,8 @@ end
 local function release_textures(c)
 	for _, t in ipairs(c.textures or {}) do ill.release(t[1], t[2]) end
 	c.textures = {}
+	if c.prison then ill.story_release(PRISON) end
+	c.prison = nil
 end
 
 local function build(c)
@@ -390,16 +398,14 @@ local function build(c)
 	c.radice = ui.root()
 	c.kg = { node = c.radice, ox = 0, oy = 720 }
 	local g = c.kg
-	-- after the kidnapping: the map of the circles, a circle opened, or (from
-	-- the top floor) the board of a chapter, which goes back to the map
+	-- after the kidnapping: the map of the circles, or (from the top floor) the
+	-- board of a chapter, which goes back to the map
 	local map = funnel_on(c)
 	local on_map = map and c.scelta.view ~= "board"
-	-- the rays: from the guide on a board, from the middle of the funnel on the map
+	-- the backdrop
 	kit.scene_focus(c.scene, on_map and 540 or 225, 360)
-	if on_map then
-		if type(c.scelta.view) == "number" then return build_ring(c, c.scelta.view) end
-		return build_map(c)
-	end
+	c.on_map = on_map
+	if on_map then return build_map(c) end
 	-- the frame (ui/kit.lua): CAMPAGNA written as the logo, the way back at the
 	-- bottom left, the chapters as tabs on their rail
 	c.head = kit.header(c.buttons, common.campaign, KC.HOT, map and "mappa" or "indietro", map and T.rings_back or common.home)
@@ -415,8 +421,8 @@ local function build(c)
 	local tabs_end = kit.tabs(g, c.buttons, 440, 104, tabs, active, KC.HOT)
 	-- the story seen so far, to read again: a small plate after the tabs
 	if c.storia then
-		local p = kit.plate(g, tabs_end + 40, 104, 150, 36, KC.ROSE, { sk = 10, d = 4 })
-		kit.text(p.g, TS.read_again, tabs_end + 40 + 80, 128, 14, KC.SAND, "middle", 0.5)
+		local p = kit.plate(g, tabs_end + 30, 104, 190, 58, KC.ROSE, { sk = 0, d = 4, piece = "piastrina" })
+		kit.text(p.g, TS.read_again, tabs_end + 30 + 95, 140, 19, KC.SAND, "middle", 0.5)
 		kit.button(c.buttons, p, "storia")
 	end
 	guide(c, chosen)
@@ -441,9 +447,9 @@ local function build(c)
 				if (c.stelle[l.id] or {})[1] then done = done + 1 end
 			end
 		end
-		ui.padlock(820, 720 - 300, 64, KC.MUTE, c.radice)
-		kit.text(g, kit.upper(T.locked:format(prev and prev.titolo or payload.CAPITOLI[1].titolo)), 820, 380, 16, KC.SAND, "middle", 0.5)
-		kit.text(g, kit.upper(T.done_count:format(done, tot)), 820, 408, 12, KC.MUTE, "middle", 1)
+		kit.piece(g, "lucchetto", 820, 310, 96)
+		kit.text(g, kit.upper(T.locked:format(prev and prev.titolo or payload.CAPITOLI[1].titolo)), 820, 404, 22, KC.SAND, "middle", 0.5)
+		kit.text(g, kit.upper(T.done_count:format(done, tot)), 820, 436, 16, KC.MUTE, "middle", 1)
 		act.sub = kit.upper(T.done_count:format(done, tot))
 	end
 	c.play = act.id
@@ -451,21 +457,36 @@ local function build(c)
 	kit.button(c.buttons, c.action, "gioca", { main = true, spento = act.off })
 end
 
-function M.new(choice, stars, story)
-	local c = { scelta = choice, stelle = stars or {}, storia = story }
+function M.new(choice, stars, story, records)
+	local c = { scelta = choice, stelle = stars or {}, storia = story, records = records or {} }
 	-- the first time, the last chapter opened
 	if not choice.chapter then
 		for _, cap in ipairs(payload.CAPITOLI) do
 			if is_opened(c, cap) then choice.chapter = cap.id end
 		end
 	end
-	-- the game world darkened behind, the rays from the chapter's guide
-	c.scene = kit.scene(funnel_on(c) and choice.view ~= "board" and 540 or 225, 360, {})
+	-- the backdrop (ui/kit.lua)
+	c.scene = kit.scene(funnel_on(c) and choice.view ~= "board" and 540 or 225, 360, { bg = true })
 	build(c)
 	return c
 end
 
 function M.on_input(c, action_id, action)
+	-- on the map a drag up or down moves the camera one ring
+	if action_id == ui.TOUCH and c.on_map then
+		if action.pressed then
+			c.drag_y = action.y
+		elseif action.released and c.drag_y then
+			local dy = action.y - c.drag_y
+			c.drag_y = nil
+			local look = c.scelta.look + (dy > DRAG and 1 or dy < -DRAG and -1 or 0)
+			if look ~= c.scelta.look and look >= 1 and look <= LAST then
+				c.look_from, c.scelta.look = c.scelta.look, look
+				build(c)
+				return nil
+			end
+		end
+	end
 	local ui_action = ui.touch(c.buttons, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" or ui_action == "storia" then return ui_action end
@@ -475,7 +496,10 @@ function M.on_input(c, action_id, action)
 	if ui_action == "mappa" then
 		c.scelta.view = nil
 	elseif kind == "girone" then
-		c.scelta.view = tonumber(value)
+		-- another circle calls the stack there (its levels are still to come)
+		local i = tonumber(value)
+		if i == c.scelta.look then return nil end
+		c.look_from, c.scelta.look = c.scelta.look, i
 	else
 		c.scelta.chapter = value
 		if funnel_on(c) then c.scelta.view = "board" end

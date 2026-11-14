@@ -160,4 +160,24 @@ for n, coda in ((256, ""), (64, "_p")):
     salva((r <= R).astype(float), n, "disco" + coda + ".png")
     for k in ANELLI:
         salva(((r <= R) & (r > R - k * 2 * R)).astype(float), n, "anello_%03d%s.png" % (round(k * 1000), coda))
+
+# Ellissi piene per i piani della mappa dei gironi (client/menu/campaign.lua): un
+# disco tondo tirato in largo otto volte fa gli scalini sulle curve (Sergio, 11
+# nov), quindi l'ellisse si disegna gia' schiacciata, a piu' misure perche'
+# l'atlas non ha mipmap: il gioco prende quella piu' vicina a come si vede sul
+# telefono (fino a 2,2 pixel veri per pixel del gioco). Il bordo sta a un pixel
+# dal margine.
+def ellisse(w, h, nome):
+    yy, xx = np.mgrid[0:h * SS, 0:w * SS]
+    x = (xx - (w * SS - 1) / 2) / SS / (w / 2 - 1)
+    y = (yy - (h * SS - 1) / 2) / SS / (h / 2 - 1)
+    a = (x * x + y * y <= 1).astype(float).reshape(h, SS, w, SS).mean(axis=(1, 3))
+    im = np.zeros((h, w, 4), np.uint8)
+    im[..., :3] = 255
+    im[..., 3] = np.round(a * 255)
+    Image.fromarray(im).save(os.path.join(OUT, nome), optimize=True)
+
+
+for w, h, coda in ((1536, 162, "g"), (768, 82, "m"), (320, 34, "p"), (1536, 428, "a")):
+    ellisse(w, h, "ellisse_%s.png" % coda)
 print("ok", OUT)

@@ -1,0 +1,13 @@
+Image 1 is a mockup of a game menu: look at the three dark menu buttons on it (forged iron plates) for shapes and colors. Image 2 shows the drawing style to copy: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow.
+
+Draw THREE separate game buttons with no text, stacked one above the other with green space between them. Each is a dark wrought-iron plate hammered by hand, wide (about four times wider than tall), a bit crooked, with soft corners, and each has a different silhouette:
+1. the right end is cut like a blunt arrow tip pointing right;
+2. a slanted plate, the left end cut at an angle, slightly thicker on one side;
+3. a pennant: the right end is cut like a swallow tail (a V-shaped notch).
+Color: dark iron (#2B2730) with one lighter flat highlight line along the top edge (#5D5664) and one small rivet at the left end. One or two hammer dents each. The middle of each plate is clean and empty, because the game writes on it.
+
+Thick black ink outline, cartoon comic style like image 2. No texture, no rust, no realistic reflections, no glow, no shadow on the ground. No text, letters or numbers. Flat pure green background (#00FF00).
+
+Riferimenti allegati in ordine
+R1 art/WB-022/riferimenti/R1_stile_fumetto.png
+R3 art/WB-012/scelti/apprendista.png

@@ -1,0 +1,9 @@
+Image 1 is a mockup of a game screen: look at the blue button shaped like a shard of ice for shape and colors. Image 2 shows the drawing style to copy: thick slightly irregular ink outline, flat colors, one flat highlight and one flat shadow.
+
+Draw ONE game button with no text: a wide flat shard of ice (about four times wider than tall), angular and irregular like a broken piece of a frozen lake, not symmetric. Color: deep night blue inside (#10283A) with a lighter flat facet along the top (#1C4460), outline in bright glacial cyan (#38B6FF) drawn thick like ink, one thin pale crack line (#CAF0F8) near the right end. The middle is clean and empty, because the game writes on it.
+
+Cartoon comic style like image 2. No texture, no realistic reflections, no glow, no snow, no shadow on the ground. No text, letters or numbers. Flat pure green background (#00FF00), the shard centered with a green margin all around.
+
+Riferimenti allegati in ordine
+R2 art/WB-022/riferimenti/R2_armeria_fumetto.png
+R3 art/WB-012/scelti/apprendista.png

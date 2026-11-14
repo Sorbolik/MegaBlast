@@ -5,7 +5,7 @@
 imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione guidata
 aspetta 2.5
-tocca_bordo 240 420 mezzo destra                         # AVANTI sulla cartolina
+tocca_bordo 175 52 basso destra                         # AVANTI sulla cartolina
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 2
 foto 01_terrazza                      # la partenza sulla terrazza, il ballatoio di legno

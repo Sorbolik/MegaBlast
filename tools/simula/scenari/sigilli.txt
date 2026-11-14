@@ -8,14 +8,14 @@
 imposta prova_profilo 1
 
 aspetta 1.5
-tocca 640 330                       # il diavoletto: il profilo
+tocca 330 300                       # il diavoletto: il profilo
 aspetta 0.5
 tocca 635 596                       # SIGILLI
 aspetta 0.3
 foto 01_sigilli
 tocca 710 272                       # FUCINA, soglia 5
 aspetta 0.2
-tocca 1065 118                      # PORTA QUI
+tocca 1105 52                      # PORTA QUI
 aspetta 0.2
 tocca 1150 344                      # il secondo potere
 aspetta 0.2

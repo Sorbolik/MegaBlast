@@ -28,7 +28,7 @@ in `controlla.lua`, in questa pagina e nel Copione.
 | `guida`, `scintilla` | Favilla comparsa nel cortile: da quale passo parte e il suo percorso `{ x, y, t, salto }` (corre mentre giochi); la scintilla della medaglia |
 | `dimostra` | Favilla vera che ti mostra le mosse facendole (sotto) |
 | `globi`, `globi_tempo`, `globi_lenti`, `vita`, `punti`, `regrow`, `al_posto`, `secondi`, `al_tempo`, `turni`, `plans` | regole della partita (vedi l'intestazione di `missions.lua`; `globi_tempo`: i secondi risparmiati diventano globi; `globi_lenti`: nei primi tre turni i globi volano piano, per guardarli) |
-| `stelle`, `medaglia`, `collaudo` | stelle dei gironi, medaglia delle lezioni, come lo prova il bot |
+| `stelle`, `medaglia`, `collaudo` | stelle dei gironi (`stelle = { punti = { 120, 200 } }`: la prima è la vittoria, la seconda e la terza i punti fatti dal giocatore), medaglia delle lezioni, come lo prova il bot |
 | `bravo`, `bravo_faccia` | il «bravo» di Favilla quando l'ultimo passo è fatto (faccia: senza, `ride`) |
 
 ## I passi dell'obiettivo

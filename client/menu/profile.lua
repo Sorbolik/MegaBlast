@@ -49,7 +49,7 @@ function M.set(p, lookup_key, value)
 end
 
 function M.new()
-	local p = { versione = M.VERSION, xp = 0, livello = 1, braci = 0, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {},
+	local p = { versione = M.VERSION, xp = 0, livello = 1, braci = 0, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {}, point_records = {},
 		armi = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0,
 		-- the story's chapters already seen (ui/story.lua)
 		storia = {} }
@@ -70,6 +70,11 @@ end
 -- tier of the pieces worn by a loadout: { mask = 1..4, ... }, from their levels
 function M.tier(p, a)
 	return wallet.tiers(p, a)
+end
+
+-- levels of the pieces worn by a loadout: { mask = 1..30, ... } (sim/loadout.lua's stats)
+function M.levels(p, a)
+	return wallet.levels(p, a)
 end
 
 function M.active_loadout(p)
@@ -196,6 +201,17 @@ function M.record(p, r)
 	return play_match
 end
 
+-- Only in the scenarios (imposta prova_vuoto 1 base, 2 forged at gold,
+-- scenari/vuoto_indossato.txt): the active loadout wears the four pieces of the Void
+function M.sample_void(p, form)
+	if (form or 0) <= 0 then return end
+	local a = p.loadouts[p.is_active]
+	a.gear = { mask = "vuoto", chest = "vuoto", cloak = "vuoto", legs = "vuoto" }
+	for _, slot in ipairs({ "mask", "chest", "cloak", "legs" }) do
+		p.pezzi["vuoto_" .. slot] = form == 2 and 20 or 1
+	end
+end
+
 -- Only in the scenarios (imposta prova_profilo 1, scenari/scheda.txt): a
 -- profile that has already played, to see pieces, powers, badges, stats and
 -- the campaign's stars
@@ -205,6 +221,10 @@ function M.sample(p, near_level_up, campaign_done)
 	a.gear = { mask = "corvo", chest = "fornace", cloak = "corvo", legs = "leviatano" }
 	a.tree = { wings = 12, armor = 6, forge = 3, pick = { wings = { 2, 1 }, armor = { 1 } } }
 	p.pezzi.corvo_mask, p.pezzi.fornace_chest, p.pezzi.corvo_cloak, p.pezzi.leviatano_legs = 24, 19, 9, 30
+	for _, k in ipairs({ "corvo_mask", "fornace_chest", "corvo_cloak", "leviatano_legs", "fabbro_legs", "vuoto_mask" }) do
+		p.posseduti[k] = true
+	end
+	p.buoni = 2
 	p.prova.corvo_cloak, p.prova.fornace_chest = 2, 5
 	p.scaglie, p.ossidiana = 1240, 35
 	p.statistiche["2v2"] = { partite = 48, vinte = 27, colpi = 310, a_segno = 190, danno = 14500, abbattuti = 60,
@@ -218,6 +238,7 @@ function M.sample(p, near_level_up, campaign_done)
 		p.stelle[id] = { true, id ~= "turno", id == "primi_passi" or id == "guidata" }
 	end
 	p.stelle.primo_sangue, p.stelle.fuori_portata = { true, true, false }, { true, false, false }
+	p.point_records = { primo_sangue = 312, fuori_portata = 96 }
 	-- prova_profilo 3: the Forge done too, the map of the circles (scenari/gironi.txt)
 	if campaign_done then
 		for _, cap in ipairs(require("sim.campaign").CAPITOLI) do
@@ -235,7 +256,13 @@ end
 -- stars { true, false, true }: saves them (each one once taken stays, even
 -- across different matches) and returns the experience gained (add_xp):
 -- XP_MISSION.done the first time, star for each new star, replay if nothing is new
-function M.mission(p, id, stars)
+-- made: the points the player made in this run, where they count
+-- (sim/missions.lua, points): the best one stays as the level's record
+-- (Sergio, 14 Nov: in points, not stars; past three stars you play against your own points)
+function M.mission(p, id, stars, made)
+	p.point_records = p.point_records or {}
+	local before = p.point_records[id]
+	if made and (not before or made > before) then p.point_records[id] = made end
 	local picked = p.stelle[id] or { false, false, false }
 	local first = not picked[1]
 	local new = 0
@@ -249,7 +276,14 @@ function M.mission(p, id, stars)
 	if first then lines[#lines + 1] = { key = "done", xp = x.done } end
 	if new > 0 then lines[#lines + 1] = { key = "stars", n = new, xp = x.star * new } end
 	if #lines == 0 then lines[1] = { key = "replay", xp = x.replay } end
-	return add_xp(p, lines)
+	local gain = add_xp(p, lines)
+	gain.record_before = before
+	return gain
+end
+
+-- The most points made on a level, nil if never counted
+function M.points_record(p, id)
+	return p.point_records and p.point_records[id]
 end
 
 -- A lost mission: from the third in a row the opponents ease off
@@ -318,13 +352,77 @@ end
 
 -- Saving -------------------------------------------------------------------------
 
+-- The end-game test profile (Sergio, 14 Nov: "voglio provare l'end game",
+-- to tune the top of the progression and then go back down): a second save,
+-- picked in the settings, that never touches the real one. Online it changes
+-- nothing: the server plays everyone with the base stats.
+M.test = false
+-- the balance it always has (topped up at every load)
+M.TEST_COINS = 999999
+M.TEST_VOUCHERS = 99
+
+-- Fills p as the end game: the devil at the last level (the Sigilli's points
+-- all to spend), every piece owned at the last level, the whole campaign done
+-- with the three stars, every weapon seen, the story already read, the wallet
+-- full. The caps come from sim/skills.lua and sim/gear.lua, so they follow them.
+function M.endgame(p)
+	local equip = require "sim.gear"
+	p.livello, p.xp = M.LEVEL_MAX, 0
+	for _, f in ipairs(equip.SETS) do
+		for _, s in ipairs(equip.SLOTS) do
+			local k = wallet.key(f.id, s.id)
+			p.posseduti[k], p.pezzi[k], p.prova[k] = true, equip.LIVELLO_MAX, nil
+		end
+	end
+	for _, cap in ipairs(require("sim.campaign").CAPITOLI) do
+		for _, l in ipairs(cap.missioni) do p.stelle[l.id] = { true, true, true } end
+	end
+	for _, ch in ipairs(require("ui.story").CHAPTERS) do p.storia[ch.id] = true end
+	for w in pairs(require("sim.game").WEAPONS) do p.armi[w] = true end
+	-- the gifts count as given, so they don't pop up
+	wallet.gifts(p, M.statistics(p, "tutte"), p.livello)
+	p.scaglie, p.ossidiana, p.buoni = M.TEST_COINS, M.TEST_COINS, M.TEST_VOUCHERS
+	return p
+end
+
 local function file()
-	return sys.get_save_file("megablast", "profilo")
+	return sys.get_save_file("megablast", M.test and "profilo_prova" or "profilo")
+end
+
+-- which profile the phone uses: its own small file, outside both profiles
+local function choice_file()
+	return sys.get_save_file("megablast", "profilo_scelto")
+end
+
+function M.test_chosen()
+	local ok, t = pcall(sys.load, choice_file())
+	return ok and type(t) == "table" and t.prova == true
+end
+
+-- Switches to the test profile (on = true) or back to the real one. p (the
+-- profile in use) is refilled in place, so whoever holds it sees the other
+-- one; the settings (aim, controller buttons...) belong to the phone and
+-- come along.
+function M.choose_test(p, on)
+	if (on and true or false) == M.test then return p end
+	M.save(p)
+	local settings = p.impostazioni
+	sys.save(choice_file(), { prova = on and true or false })
+	local other = M.load_up()
+	for k in pairs(p) do p[k] = nil end
+	for k, v in pairs(other) do p[k] = v end
+	p.impostazioni = settings
+	M.save(p)
+	return p
 end
 
 function M.load_up()
+	M.test = M.test_chosen()
 	local ok, p = pcall(sys.load, file())
-	if not ok or type(p) ~= "table" or p.versione ~= M.VERSION then return M.new() end
+	if not ok or type(p) ~= "table" or p.versione ~= M.VERSION then
+		p = M.new()
+		return M.test and M.endgame(p) or p
+	end
 	-- a field added to nuovo() later is missing from older saves of the same
 	-- version: it starts empty, without resetting the profile
 	for k, v in pairs(M.new()) do
@@ -332,12 +430,20 @@ function M.load_up()
 	end
 	-- the matches per piece of before the Scaglie (10 Nov): the levels start from 1
 	p.mastery = nil
+	-- the records of lead points (#318, 14 Nov): now the record is the points made
+	p.lead_records = nil
+	-- before the shop (11 Nov): the levelled pieces stay, the others come off
+	wallet.migrate(p, p.loadouts)
+	-- the gifts already earned (the Smith's boots, the vouchers)
+	wallet.gifts(p, M.statistics(p, "tutte"), p.livello)
 	-- the old skill tree (nodes, before the Sigilli of 10 Nov): it starts empty,
 	-- the level stays (at most the new maximum)
 	for _, a in ipairs(p.loadouts) do
 		if not skills.valid(a.tree or {}, math.huge) then a.tree = {} end
 	end
 	p.livello = math.min(p.livello, M.LEVEL_MAX)
+	-- the test profile: everything at the top again (new pieces, new missions, coins spent)
+	if M.test then M.endgame(p) end
 	return p
 end
 

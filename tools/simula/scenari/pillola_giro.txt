@@ -14,9 +14,9 @@ aspetta 1
 server 2v2 1 bot_dopo=300s
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca_bordo 244 400 mezzo destra                     # GIOCA
+tocca_bordo 175 52 basso destra                     # GIOCA
 aspetta 0.5
-tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 1
 foto 01_sala
@@ -24,7 +24,7 @@ tocca_centro 832 79                       # TORNA AI MENU · RESTI IN CODA
 aspetta_stato modo=menu coda=si 3
 aspetta 1
 foto 02_home
-tocca_centro 640 330                # il diavoletto: il suo posto
+tocca_centro 640 300                # il diavoletto: il suo posto
 aspetta 0.6
 foto 03_profilo_scheda
 tocca_bordo 802 124 alto centro     # STATISTICHE
@@ -35,7 +35,7 @@ aspetta 0.3
 foto 05_profilo_partite
 tocca_bordo 501 124 alto centro     # SCHEDA
 aspetta 0.3
-tocca_bordo 215 118 basso destra    # ARMERIA
+tocca_bordo 175 52 basso destra    # ARMERIA
 aspetta 0.8
 foto 06_armeria_set
 tocca_bordo 36 60 basso sinistra    # indietro: il diavoletto
@@ -43,7 +43,7 @@ aspetta 1.5
 tocca_bordo 36 60 basso sinistra    # indietro: la home
 aspetta_stato modo=menu 3
 aspetta 0.5
-tocca_bordo 274 242 mezzo sinistra                       # EVENTI
+tocca_bordo 246 470 mezzo destra                       # EVENTI
 aspetta 0.8
 foto 08_eventi
 tocca_bordo 36 60 basso sinistra    # indietro: la home
@@ -55,12 +55,12 @@ foto 09_impostazioni
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.5
-tocca_bordo 254 346 mezzo sinistra    # ALLENAMENTO
+tocca_bordo 250 334 mezzo sinistra    # ALLENAMENTO
 aspetta 1
 foto 10_allenamento
 aspetta 0.5
 foto 11_allenamento_mappa
-tocca_bordo 215 118 basso destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.8
 foto 12_schieramento

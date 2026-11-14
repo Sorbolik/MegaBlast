@@ -12,9 +12,9 @@ aspetta 1
 server 2v2 0 bot_dopo=60s
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca_bordo 244 400 mezzo destra          # GIOCA
+tocca_bordo 175 52 basso destra          # GIOCA
 aspetta 0.5
-tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 1
 tocca_centro 832 79                       # TORNA AI MENU · RESTI IN CODA
@@ -39,9 +39,9 @@ aspetta 1
 foto 04_home_senza_coda                   # niente pillola: la coda non c'è più
 server 2v2 0 bot_dopo=4s
 aspetta 1
-tocca_bordo 244 400 mezzo destra          # GIOCA: DOVE GIOCHI?, non la sala vecchia
+tocca_bordo 175 52 basso destra          # GIOCA: DOVE GIOCHI?, non la sala vecchia
 aspetta 0.5
-tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting coda=si 5
 aspetta 1
 foto 05_sala_vera                         # BOT TRA 3 s

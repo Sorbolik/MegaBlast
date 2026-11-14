@@ -267,14 +267,30 @@ end
 -- Star of the lessons and of the campaign: d is the side
 -- (small ones from the 48 px image: the ui atlas has no mipmaps, and the big
 -- one shrunk a lot shows steps)
+-- (the pieces drawn by Codex, WB-029: lit in gold whatever the bright color
+-- asked, unlit in dark iron for a dark one)
+local PIECES = require "ui.pieces"
+local function drawn(name, x, y, h, color, parent)
+	local m = PIECES[name]
+	local n = gui.new_box_node(vec(x, y), vec(m.w * h / m.h, h))
+	gui.set_texture(n, "fucina")
+	gui.play_flipbook(n, name)
+	gui.set_color(n, vmath.vector4(1, 1, 1, color.w))
+	if parent then gui.set_parent(n, parent) end
+	return n
+end
+local function bright(color) return math.max(color.x, color.y, color.z) >= 0.75 end
+
 function M.star(x, y, d, color, parent)
-	return gui_node(d <= 40 and "stella_p" or "stella", x, y, d, d, color, parent)
+	return drawn(bright(color) and "stella" or "stella_spenta", x, y, d * 1.08, color, parent)
 end
 
 -- Favilla's medal of the cortile (sim/missions.lua, medaglia): her head, the
 -- logo of Sergio's drawing; lit in her light blue (M.MEDAL)
 function M.medal(x, y, d, color, parent)
-	return gui_node(d <= 64 and "favilla_p" or "favilla", x, y, d, d, color, parent)
+	local n = drawn("medaglia", x, y, d * 1.15, color, parent)
+	if not bright(color) then gui.set_color(n, vmath.vector4(0.34, 0.32, 0.38, color.w)) end
+	return n
 end
 
 -- Padlock of locked missions and chapters

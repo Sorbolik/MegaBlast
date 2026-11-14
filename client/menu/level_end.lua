@@ -7,11 +7,11 @@
 --
 --   local level_end = require "menu.level_end"
 --   local f = level_end.new({ titolo = "Il Rampino", stelle = { true, true, false },
---     criteria = { "FATTA", "CON 100 PUNTI DI VANTAGGIO", "SENZA MORIRE" }, vantaggio = 85, record = 3, avanti = true }, sound)
+--     criteria = { "FATTA", "ALMENO 120 PUNTI", "ALMENO 200 PUNTI" }, punti = 85, record_punti = 140, avanti = true }, sound)
 --     stelle: which ones it took (each with its criterion); criteria: what each
---     one takes (missions.criteria); vantaggio: the lead points made (nil where
---     points don't count: the lessons); record: how many stars the mission
---     already had; medaglia: the second is Favilla's medal (the cortile);
+--     one takes (missions.criteria); punti: the points made (nil where they
+--     don't count: the lessons); record_punti: the level's record of points
+--     (record_prima: before this run); medaglia: the second is Favilla's medal (the cortile);
 --     avanti: there is a next level; sound(v): the tick, v = speed (pitch);
 --     gain: profile.missione's experience and coins (the receipt on the right, ui/receipt.lua), prof: the profile;
 --     coin(kind, i): the sound of a coin landing in the wallet pill; xp(i, n, level_up): a spark landing in the bar
@@ -46,7 +46,7 @@ function M.new(o, sound)
 	local pose = gui.new_box_node(vec(640, 720 - 636), vec(0, 0))
 	gui.set_visible(pose, false)
 	gui.set_parent(pose, f.radice)
-	f.figure = scoria.new(ui.C.SQUADRA[1], scoria.PERSONAGGIO)
+	f.figure = scoria.new(ui.C.SQUADRA[1], scoria.player)
 	f.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true, vittoria = not o.fallita, fermo = o.fallita }
 	scoria.update(f.figure, 0, f.st)
 	local k = 300 / game.DISEGNO_H
@@ -54,8 +54,8 @@ function M.new(o, sound)
 	gui.set_parent(f.figure.root, pose)
 	scoria.set_enabled(f.figure, true)
 	-- how it went on a light plate, under it the level's name
-	kit.sand(g, 30, 36, 560, 110, KC.HOT, { sk = 34, d = 14 })
-	local head = kit.text(g, o.fallita and T.failed or T.done, 66, 116, 70, KC.INK)
+	local on_plate = kit.sand(g, 30, 36, 560, 110, KC.HOT, { sk = 34, d = 14 })
+	local head = kit.text(on_plate.g, o.fallita and T.failed or T.done, 66, 116, 70, KC.INK)
 	local wide = kit.width(head)
 	if wide > 506 then
 		local sc = gui.get_scale(head)
@@ -96,12 +96,16 @@ function M.new(o, sound)
 			gui.set_scale(what, vec(sc.x * 124 / wide, sc.y * 124 / wide))
 		end
 	end
-	local under = o.vantaggio and T.lead:format(o.vantaggio) or ""
-	if o.record and o.record > n then
-		local record = (o.record == 1 and T.record_one or T.record):format(o.record)
-		under = under == "" and record or under .. "  -  " .. record
+	if o.punti then kit.text(g, kit.upper(T.points:format(o.punti)), 86, 400, 13, KC.MUTE, "start", 1.5) end
+	-- the level's record of points, always and well in sight (Sergio, 14
+	-- Nov): new in fire, otherwise in gold; with all three stars, beat it
+	local best, before = o.record_punti, o.record_prima
+	if best then
+		local new = o.punti and o.punti == best and (not before or o.punti > before)
+		local all = n == count and count == 3
+		local t = new and T.record_new or all and T.record_beat or T.record_points
+		kit.text(g, t:format(best), 86, 440, 24, new and KC.HOT_TOP or KC.STAR, "start", 2)
 	end
-	kit.text(g, kit.upper(under), 86, 400, 13, KC.MUTE, "start", 1.5)
 	-- at the bottom left what else you can do, at the right the way on
 	f.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	f.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)

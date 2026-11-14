@@ -1,0 +1,150 @@
+{
+ "nome": "corna_apprendista",
+ "categoria": "corna",
+ "pezzi": {
+  "testa_1": {
+   "img": "corna_apprendista_testa",
+   "x": 15.9,
+   "y": 81.7,
+   "w": 109.2,
+   "h": 58.9,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "corna_apprendista_testa",
+   "x": 14.3,
+   "y": 75.1,
+   "w": 88.5,
+   "h": 47.7,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "corna_apprendista_testa",
+   "x": 15.9,
+   "y": 81.7,
+   "w": 109.2,
+   "h": 58.9,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "corna_apprendista_testa",
+   "x": 14.3,
+   "y": 75.1,
+   "w": 88.5,
+   "h": 47.7,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "corna_apprendista_testa",
+   "x": 15.9,
+   "y": 81.7,
+   "w": 108.6,
+   "h": 58.9,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "corna_apprendista_testa",
+   "x": 14.2,
+   "y": 75.1,
+   "w": 87.9,
+   "h": 47.7,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "corna_apprendista_testa",
+   "x": 16.0,
+   "y": 81.7,
+   "w": 109.7,
+   "h": 58.9,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "corna_apprendista_testa",
+   "x": 14.3,
+   "y": 75.1,
+   "w": 88.8,
+   "h": 47.7,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "corna_apprendista_testa",
+   "x": 16.0,
+   "y": 81.7,
+   "w": 109.7,
+   "h": 58.9,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "corna_apprendista_testa",
+   "x": 14.3,
+   "y": 75.1,
+   "w": 88.8,
+   "h": 47.7,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "corna_apprendista_testa",
+   "x": 15.9,
+   "y": 81.7,
+   "w": 109.0,
+   "h": 58.9,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "corna_apprendista_testa",
+   "x": 14.3,
+   "y": 75.1,
+   "w": 88.3,
+   "h": 47.7,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "corna_apprendista_testa",
+   "x": 15.8,
+   "y": 81.7,
+   "w": 108.1,
+   "h": 58.9,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "corna_apprendista_testa",
+   "x": 14.1,
+   "y": 75.1,
+   "w": 87.6,
+   "h": 47.7,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "corna_apprendista_testa",
+   "x": 15.9,
+   "y": 81.7,
+   "w": 109.0,
+   "h": 58.9,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "corna_apprendista_testa",
+   "x": 14.3,
+   "y": 75.1,
+   "w": 88.3,
+   "h": 47.7,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "corna_apprendista_testa",
+   "x": 15.9,
+   "y": 81.7,
+   "w": 109.2,
+   "h": 58.9,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "corna_apprendista_testa",
+   "x": 14.3,
+   "y": 75.1,
+   "w": 88.5,
+   "h": 47.7,
+   "modo": "sopra"
+  }
+ }
+}

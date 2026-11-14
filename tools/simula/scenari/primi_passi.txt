@@ -7,7 +7,7 @@
 imposta prova_missione primi_passi
 aspetta 2.5
 foto 00_tavola                       # prima la cartolina della missione (WB-015), la mappa non c'è ancora
-tocca_bordo 240 420 mezzo destra                        # AVANTI sulla cartolina: la fiammella, poi la mappa
+tocca_bordo 175 52 basso destra                        # AVANTI sulla cartolina: la fiammella, poi la mappa
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
 foto 01_vignetta                     # la vignetta grande: cammina

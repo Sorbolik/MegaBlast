@@ -314,7 +314,7 @@ local function island_turn(c)
 	c.use("missile", 2.5, 0.3)
 	c.hold(IDLE, function(g) return not g.projectile end)
 	c.hold(IDLE, 30)
-	c.use("teleport", 0.5, 0.6)
+	c.use("teleport", 0.6, 0.6)
 	c.hold(IDLE, function(g) return g.robots[1].x > 1150 and g.robots[1].grounded end)
 end
 outcome, r, g = play_mission("tempo", function(c)
@@ -599,19 +599,32 @@ for _, l in ipairs(campaign.CAPITOLI[2].missioni) do
 	end
 end
 
--- Each star with its criterion: with a small point lead and without dying
--- they are the first and third, not the second (and in the profile each star
--- earned stays)
+-- Each star with its criterion (Sergio, 14 Nov): the first is the win, the
+-- second and the third the points the player made; without the win none (and
+-- in the profile each star earned stays)
 do
 	local r = missions.new("primo_sangue")
-	r.esito, r.st.gap = "fatta", 40
+	local lo, hi = r.l.stelle.punti[1], r.l.stelle.punti[2]
+	check(lo < hi, "stars: the third asks more points than the second")
+	r.esito, r.st.made = "fatta", lo - 1
 	local s = missions.stars(r)
-	check(s[1] and not s[2] and s[3], "stars: the bonus without the points lights the third and not the second")
-	r.st.gap = 300
-	check(missions.stars(r)[2], "stars: the second with the point lead")
+	check(s[1] and not s[2] and not s[3], "stars: below the first threshold only the win")
+	r.st.made = lo
+	check(missions.stars(r)[2] and not missions.stars(r)[3], "stars: the second at its threshold")
+	r.st.made = hi
+	check(missions.stars(r)[3], "stars: the third at its threshold")
+	r.esito = "fallita"
+	check(not missions.stars(r)[2] and not missions.stars(r)[3], "stars: without the win no star, whatever the points")
+	-- the points counted are the player's own, not the lead over the opponents
+	local seed, map_name, opts = missions.match(r, 3)
+	local g = game.new(seed, map_name, opts)
+	missions.prepare(r, g)
+	g.robots[1].points, g.robots[3].points, g.robots[2].points = 70, 500, 900
+	missions.event(r, g, { type = "points", robot = 1, points = 0 })
+	check(missions.points(r) == 70, "stars: the player's own points, not the team's nor the lead")
 	local profile = require "menu.profile"
 	local p = profile.new()
-	profile.mission(p, "primo_sangue", s)
+	profile.mission(p, "primo_sangue", { true, false, true })
 	profile.mission(p, "primo_sangue", { true, true, false })
 	check(profile.total_stars(p) == 3, "stars: in the profile each one earned stays")
 end
@@ -739,6 +752,65 @@ do
 	local r = missions.new(missions.custom(l, "addestramento"))
 	local _, _, opts = missions.match(r, 1)
 	check(opts.players[1].stats.time_orbs == 0, "globi_tempo = false forces time_orbs == 0")
+end
+
+-- The record of points made per level (Sergio, 14 Nov): the best one stays,
+-- and the gain says the one before
+do
+	local profile = require "menu.profile"
+	local p = profile.new()
+	local g1 = profile.mission(p, "primo_sangue", { true, false, false }, 120)
+	check(g1.record_before == nil and profile.points_record(p, "primo_sangue") == 120, "record: the first points are the record")
+	local g2 = profile.mission(p, "primo_sangue", { true, false, false }, 80)
+	check(g2.record_before == 120 and profile.points_record(p, "primo_sangue") == 120, "record: a worse run keeps it")
+	profile.mission(p, "primo_sangue", { true, true, true }, 310)
+	check(profile.points_record(p, "primo_sangue") == 310, "record: a better run raises it")
+	profile.mission(p, "primi_passi", { true, false, false }, nil)
+	check(profile.points_record(p, "primi_passi") == nil, "record: no points, no record")
+end
+
+-- Campaign bots wear their chapter's family, levelled with how far the level is (Sergio,
+-- 14 Nov): the Forgia's first level the least, later ones more; the
+-- player's own stats only from the Forgia on
+do
+	local last, first
+	for _, cap in ipairs(campaign.CAPITOLI) do
+		for _, l in ipairs(cap.missioni) do
+			local gear, levels = missions.bot_gear(l)
+			if gear then
+				local slot = next(gear)
+				first = first or levels[slot]
+				check(not last or levels[slot] >= last, "bot gear: never lower going on (" .. l.id .. ")")
+				last = levels[slot]
+			end
+		end
+	end
+	check(first == 1 and last and last > first, "bot gear: from level 1, growing")
+	local function count(t) local n = 0 for _ in pairs(t) do n = n + 1 end return n end
+	local g1, l1 = missions.bot_gear({ step = 1, chapter_n = 2 }, 1)
+	local g2 = missions.bot_gear({ step = 1, chapter_n = 2 }, 2)
+	check(count(g1) == 1 and next(g1) ~= next(g2), "bot gear: one piece at the start, each bot a different one")
+	local ge, le = missions.bot_gear({ step = campaign.PLANNED_LEVELS, chapter_n = 9 }, 1)
+	local fam
+	for slot, f in pairs(ge) do
+		check(le[slot] == 30 and (fam == nil or fam == f), "bot gear: at the end every piece at the top, one family")
+		fam = f
+	end
+	check(count(ge) == 4, "bot gear: at the end the whole family")
+	local l = campaign.CAPITOLI[2].missioni[#campaign.CAPITOLI[2].missioni]
+	local r = missions.new(l.id)
+	local own = game.base_stats()
+	own.attack = 40
+	local _, _, opts = missions.match(r, 3, nil, nil, own)
+	check(opts.players[1].stats and opts.players[1].stats.attack == 40, "bot gear: the player brings own stats into the Forgia")
+	local dressed = false
+	for i = 2, #opts.players do
+		if opts.players[i].stats and opts.players[i].bot then dressed = true end
+	end
+	check(dressed, "bot gear: the Forgia's bots wear their piece")
+	local r0 = missions.new(campaign.CAPITOLI[1].missioni[1].id)
+	local _, _, o0 = missions.match(r0, 3, nil, nil, own)
+	check(not (o0.players[1].stats and o0.players[1].stats.attack == 40), "bot gear: the Cortile keeps the player's base stats")
 end
 
 print(failures == 0 and "\nall tests passed" or ("\n" .. failures .. " tests failed"))

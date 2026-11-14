@@ -1,0 +1,12 @@
+Image 1 is the piece to copy for SHAPE, POINT OF VIEW and STYLE: one big thick slice, like a slab cut from a big round cake, seen from the front and from a bit above, with a large clean oval top face and a thick front edge. Images 2 and 3 show more pieces in the same style: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, like a cartoon.
+
+Draw ONE slice exactly like image 1 (same view, same proportions, about three times wider than tall, hand-drawn, a bit crooked, soft irregular edge), but made of muddy olive ground, with its own identity. Colors, flat: top face #4A4931, front edge #1A1D1A with one darker flat shadow band at the bottom, a thin line of #9AA36A where the top face meets the edge. Thick mud drips down the front edge in three or four soft rounded drops, and three big pale hailstones (#D8DDE0) sit half sunk along the left and right rim.
+
+Keep it simple and almost abstract: only the few signs described, small, placed on the rim and on the front edge. The middle of the top face stays completely clean and empty, because the game draws a path with markers on it.
+
+Thick black ink outline, cartoon comic style. No characters, no people, no faces, no big buildings. No texture, no soft gradients, no realistic lighting, no glow, no shadow on the ground. No text, letters, numbers or symbols. Flat pure green background (#00FF00), the slice centered with a green margin all around, nothing cut by the border of the picture.
+
+Riferimenti allegati in ordine
+R1 art/WB-026/riferimenti/R1_fetta_aperta.png
+R2 art/WB-026/riferimenti/R2_piastre.png
+R3 art/WB-026/riferimenti/R3_lingotto.png

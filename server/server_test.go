@@ -58,8 +58,11 @@ func TestAimInSnapshot(t *testing.T) {
 		t.Fatalf("aim without aiming: %s", s)
 	}
 	luaEval(t, `
-local g = N.new(5, "pavimento", { { team = 1, bot = 5 }, { team = 2, bot = 5 } })
-local aimed, turn, from, turns, lazy, flagged = false, nil, 0, 0, 0, false
+-- several matches: one lazy turn in a short match is chance, not a bot that stalls
+local aimed, turns, lazy = false, 0, 0
+for seed = 5, 8 do
+local g = N.new(seed, "pavimento", { { team = 1, bot = 5 }, { team = 2, bot = 5 } })
+local turn, from, flagged = nil, 0, false
 while g.tick < 3000 do
 	N.step(g, false, false, false, false)
 	aimed = aimed or N.snapshot(g).aim ~= nil
@@ -68,6 +71,7 @@ while g.tick < 3000 do
 	-- a bot that stands against the enemy can't always aim at it (random start
 	-- points, 9 Nov): a few such turns are fine, most must end in an attack
 	if not flagged and not acted and g.phase == "aim" and g.tick - from >= 600 then flagged, lazy = true, lazy + 1 end
+end
 end
 assert(lazy * 4 <= turns, "the bots didn't attack in " .. lazy .. " turns of " .. turns)
 assert(aimed, "the bots never showed their aim")

@@ -7,7 +7,7 @@
 --          [--punteggio variante.lua]   -- una tabella come config.SCORE (opts.score), per provare varianti
 --          [--ritocchi armi.lua]       -- function(config, game) che cambia i numeri delle armi (solo arena:
 --                                         la ricetta non li contiene, si rigioca con lo stesso file)
---          [--set misto]               -- ogni robot un set completo a caso (o nessuno), variante a o b
+--          [--set misto]               -- ogni robot una famiglia intera al 30 a caso (o nessuna)
 --          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI, anche con la rete): ogni robot ne prende uno a caso
 --          [--impara 1]                -- scrive anche gli esempi per impara.py: a ogni fine turno le
 --                                         caratteristiche della posizione (bot.caratteristiche) e quanto
@@ -152,13 +152,14 @@ local function partita(k)
 		local r2 = rng.new((seme * 69621 + 777) % 2147483647)
 		for _ = 1, 4 do r2:next() end
 		for _, p in ipairs(players) do
-			local k = math.floor(r2:next() * (2 * #equip.SETS + 1))
+			-- una famiglia intera al 30 (o niente); lo stile a 4 pezzi arriva dopo
+			local k = math.floor(r2:next() * (#equip.SETS + 1))
 			if k > 0 then
-				local set, variant = equip.SETS[1 + (k - 1) % #equip.SETS].id, k > #equip.SETS and "b" or "a"
-				local gear, tiers = {}, {}
-				for _, sl in ipairs(equip.SLOTS) do gear[sl.id], tiers[sl.id] = set, equip.TIERS end
-				p.set = set .. "_" .. variant
-				p.stats = assetto.stats(game.base_stats(), { tree = {}, gear = gear, variant = variant }, tiers)
+				local set = equip.SETS[k].id
+				local gear, livelli = {}, {}
+				for _, sl in ipairs(equip.SLOTS) do gear[sl.id], livelli[sl.id] = set, equip.LIVELLO_MAX end
+				p.set = set
+				p.stats = assetto.stats(game.base_stats(), { tree = {}, gear = gear, variant = "a" }, livelli)
 			end
 		end
 	end

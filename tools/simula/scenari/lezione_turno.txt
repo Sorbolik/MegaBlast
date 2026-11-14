@@ -6,7 +6,7 @@
 # lancia il globo oltre il muro e tu dopo di lei. Il fantoccio è a sinistra.
 imposta prova_missione turno
 aspetta 2.5
-tocca_bordo 240 420 mezzo destra                        # AVANTI sulla cartolina
+tocca_bordo 175 52 basso destra                        # AVANTI sulla cartolina
 aspetta_stato modo=local fase=aim 8
 aspetta 1.2
 foto 01_vignetta                     # spiega: il turno, due attacchi

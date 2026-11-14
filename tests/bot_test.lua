@@ -74,7 +74,7 @@ do
 		return r5, g5:fingerprint()
 	end
 	local _, h0 = prints(nil)
-	local r5, h1 = prints({ globo_riparo = 1000, strada = 0.1 })
+	local r5, h1 = prints({ globo_riparo = 1000, strada = 1, vita_mia = 0 })
 	check(h0 ~= h1, "weights: a bot with other weights plays another match")
 	check(replay.verify(r5), "weights: the recipe with the weights replays the same match")
 

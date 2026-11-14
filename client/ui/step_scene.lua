@@ -47,7 +47,7 @@ function M.new(slot_name, set_name, level, on_blow, color)
 	sc.piece = gui.new_box_node(vec(FEET_X, FEET_Y - 60), vec(0, 0))
 	gui.set_visible(sc.piece, false)
 	gui.set_parent(sc.piece, sc.root)
-	sc.figure = scoria.new(color or ui.C.SQUADRA[1], scoria.PERSONAGGIO)
+	sc.figure = scoria.new(color or ui.C.SQUADRA[1], scoria.player)
 	sc.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	scoria.update(sc.figure, 0, sc.st)
 	local k = 300 / game.DISEGNO_H
@@ -58,8 +58,8 @@ function M.new(slot_name, set_name, level, on_blow, color)
 	gui.animate(sc.piece, "position.y", FEET_Y, gui.EASING_OUTBACK, M.RISE, M.DARK)
 	gui.animate(sc.piece, "scale", vmath.vector3(k, k, 1), gui.EASING_OUTBACK, M.RISE, M.DARK)
 	-- what happened on a light plate, the piece under it and its notches (still in the old grade's color)
-	kit.sand(g, 30, 36, 330, 104, KC.PURPLE, { sk = 34, d = 14 })
-	local head = kit.text(g, T.step_title, 64, 116, 74, KC.INK)
+	local on_plate = kit.sand(g, 30, 36, 330, 104, KC.PURPLE, { sk = 34, d = 14 })
+	local head = kit.text(on_plate.g, T.step_title, 64, 116, 74, KC.INK)
 	local wide = kit.width(head)
 	if wide > 280 then
 		local s = gui.get_scale(head)
@@ -82,7 +82,7 @@ function M.new(slot_name, set_name, level, on_blow, color)
 	gui.set_color(sc.label, vmath.vector4(KC.HOT_TOP.x, KC.HOT_TOP.y, KC.HOT_TOP.z, 0))
 	local rows = {
 		{ T.step_grade:format(ROMAN[tier], kit.upper(T.grades[tier])), ui.C.GRADI[tier] },
-		{ kit.upper(level >= equip.LIVELLO_MAX and T.step_top or T.step_look), KC.PURPLE },
+		{ kit.upper(level >= equip.LIVELLO_MAX and T.step_top or tier == 2 and T.step_sign_on or T.step_look), KC.PURPLE },
 	}
 	for i, r in ipairs(rows) do
 		local x, y = 880 - (i - 1) * 6, 250 + (i - 1) * 62

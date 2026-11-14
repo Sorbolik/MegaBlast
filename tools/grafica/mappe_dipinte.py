@@ -18,7 +18,8 @@
 # Gli sfondi: la Forgia (tavole.py) e il cortile (cortile.py), con la stessa tinta.
 #
 #   python3 tools/grafica/mappe_dipinte.py      (dalla cartella del repository; serve node
-#                                                    con playwright, che disegna gli SVG)
+#                                                    con playwright, che disegna gli SVG,
+#                                                    e il pacchetto python imagequant)
 import json, os, random, subprocess, sys, tempfile
 from PIL import Image, ImageDraw
 
@@ -498,6 +499,9 @@ def main():
     righe += ["\t},", "}", ""]
     open(LUA, "w").write("\n".join(righe))
     print("fatto:", len(lavori), "immagini")
+    # a tavolozza, tre volte più leggeri: l'APK deve stare sotto i 50 MB di Telegram (alleggerisci.py)
+    import alleggerisci
+    alleggerisci.tutti([os.path.join(OUT, "maps"), os.path.join(OUT, "backgrounds")])
     # le miniature delle missioni della CAMPAGNA si rifanno dai dipinti nuovi
     import miniature_missioni
     miniature_missioni.main()

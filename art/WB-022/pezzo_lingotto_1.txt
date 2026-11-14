@@ -1,0 +1,9 @@
+Image 1 is a mockup of a game menu: look at the big orange button (a red-hot ingot) for shape and colors. Image 2 shows the drawing style to copy: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow.
+
+Draw ONE game button with no text: a red-hot iron ingot seen from the front and slightly from above, very wide (about three times wider than tall), hand-drawn, a bit crooked and not symmetric, with soft rounded corners. The front face is a flat warm gradient from molten gold (#FFB703) at the top to ember orange (#F26419) at the bottom; the thin top face is pale yellow (#FFE590). One small dent on an edge. The front face is clean and empty in the middle, because the game writes a word on it.
+
+Thick black ink outline all around, cartoon comic style like image 2. No texture, no realistic reflections, no glow, no flames, no sparks, no shadow on the ground. No text, letters or numbers. Flat pure green background (#00FF00), the ingot centered with a green margin all around.
+
+Riferimenti allegati in ordine
+R1 art/WB-022/riferimenti/R1_stile_fumetto.png
+R3 art/WB-012/scelti/apprendista.png

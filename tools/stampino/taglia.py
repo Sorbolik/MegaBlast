@@ -42,7 +42,18 @@ LUA = os.path.join(RADICE, "client", "battle", "skins.lua")
 # Le categorie: una pelle per categoria addosso. Le prime sostituiscono i pezzi
 # del diavoletto, le altre si disegnano sopra, in quest'ordine.
 SOSTITUISCE = ["personaggio", "testa", "corpo", "ali", "coda"]
-SOPRA = ["pantaloni", "maglia", "corazza", "guanti", "elmo"]
+SOPRA = ["pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "corna", "mantello"]
+# Il mantello (WB-019): si disegna intero nella sua casella e resta intero: il
+# gioco lo piega lungo una catena simulata (battle/cloth.lua, battle/cape.fp).
+# Non va nell'atlante: un'immagine a parte in client/assets/capes, più fitta
+# dei pezzi (pixel per unità), perché lo shader la stira.
+CAPES = os.path.join(RADICE, "client", "assets", "capes")
+PX_MANTELLO = 4.5
+# quanto il mantello è più grande della casella: con la casella dello stampino
+# sull'apprendista restava quasi tutto dietro il corpo (WB-019 Vuoto, 13 nov)
+GRANDE_MANTELLO = 1.35
+# il mantello disegnato da solo (--mantello-px): l'attacco, quante unità sotto il bordo in alto
+ATTACCO_GIU = 4
 CATEGORIE = SOSTITUISCE + SOPRA
 # i pezzi di dietro, fatti da quelli davanti un po' più scuri se mancano
 DIETRO = {"braccio_dietro": "braccio", "gamba_dietro": "gamba"}
@@ -80,10 +91,9 @@ def fondo_via(im):
 
 
 def manichino(posto):
-    """Il pezzo di base in grigio nella sua casella (come nello stampino)."""
-    gruppi, (x0, y0, x1, y1) = ST.pezzo(posto)
-    box = (x0 - ST.MARGINE, y0 - ST.MARGINE, x1 + ST.MARGINE, y1 + ST.MARGINE)
-    return np.asarray(ST.grigio(ST.disegna(gruppi, box, ST.S))).astype(np.float32)
+    """Il manichino in grigio nella sua casella, come nello stampino (i pezzi del
+    personaggio del gioco)."""
+    return np.asarray(ST.immagine(posto)).astype(np.float32)
 
 
 def allinea(pezzo, base):
@@ -192,12 +202,14 @@ def trova(a, F):
     al = a[..., 3] > 128
     minimo = 0.0004 * al.size
     posti = {}
+    # il mantello no: è una pelle a parte, non un pezzo del personaggio
+    candidati = [p for p in F["posti"] if p != "mantello"]
     for m in macchie(al):
         if m.sum() < minimo:
             continue
         ys, xs = np.nonzero(m)
         cx, cy = xs.mean(), ys.mean()
-        posto = min(F["posti"], key=lambda p: (cx - sum(F["posti"][p]["casella"][0::2]) / 2) ** 2 +
+        posto = min(candidati, key=lambda p: (cx - sum(F["posti"][p]["casella"][0::2]) / 2) ** 2 +
                     (cy - sum(F["posti"][p]["casella"][1::2]) / 2) ** 2)
         posti[posto] = posti[posto] | m if posto in posti else m
     out = {}
@@ -445,10 +457,12 @@ def file_della_pelle(nome):
     altre = [os.path.basename(f)[:-5] for f in glob.glob(os.path.join(JSON, nome + "_*.json"))]
     fuori = tuple(n + "_" for n in altre)
     return [f for f in glob.glob(os.path.join(ASSETS, nome + "_*.png")) + glob.glob(os.path.join(SVG, nome + "_*.svg"))
+            + glob.glob(os.path.join(CAPES, nome + "_*.png"))
             if not os.path.basename(f).startswith(fuori)]
 
 
-def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste=None, foglio_pugni=None, aggiungi=False):
+def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste=None, foglio_pugni=None, aggiungi=False,
+           mantello_px=None):
     with open(ST.FOGLIO) as f:
         F = json.load(f)
     D = leggi_diavoletto()
@@ -460,7 +474,7 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste
         with open(os.path.join(JSON, nome + ".json")) as f:
             vecchia = json.load(f)
         pezzi = vecchia["pezzi"]
-        forma = {k: vecchia[k] for k in ("coda", "coda_riposo", "coda_radice") if k in vecchia}
+        forma = {k: vecchia[k] for k in ("coda", "coda_riposo", "coda_radice", "mantello") if k in vecchia}
     else:
         for f in file_della_pelle(nome):
             os.remove(f)
@@ -500,11 +514,24 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste
             metti(pezzi, pz, nome, v, perno, F["scala"], px, sopra)
             if not pugno:
                 pezzi[posto] = dict(pezzi[v])
+    elif mantello_px:
+        # un mantello solo, grande sul foglio (WB-032): la misura la dà mantello_px,
+        # uguale per i fogli della stessa scheda; l'attacco è in mezzo al bordo in alto
+        if categoria != "mantello":
+            sys.exit("--mantello-px solo con --categoria mantello")
+        pz = fondo_via(Image.open(foglio))
+        ys, xs = np.nonzero(pz[..., 3] > 128)
+        y0 = ys.min()
+        alto = xs[ys < y0 + 3 * mantello_px]
+        perno = ((alto.min() + alto.max() + 1) / 2, y0 + ATTACCO_GIU * mantello_px)
+        forma = metti_mantello(pezzi, pz, nome, mantello_px * GRANDE_MANTELLO, px, perno)
     elif foglio_teste or foglio_pugni or aggiungi:
         sys.exit("--teste, --pugni e --aggiungi solo con --allinea, per i personaggi")
     else:
         a = alla_misura(foglio, F)
         for posto, c in F["posti"].items():
+            if (posto == "mantello") != (categoria == "mantello"):
+                continue
             x0, y0, x1, y1 = c["casella"]
             pz = a[y0:y1, x0:x1].copy()
             base = manichino(posto)
@@ -518,9 +545,11 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste
                 pz = allinea(pz, base)
             if posto == "coda":
                 forma = metti_coda(pezzi, pz, nome, F["scala"], px, sopra)
+            elif posto == "mantello":
+                forma = metti_mantello(pezzi, pz, nome, F["scala"], px, (c["perno"][0] - x0, c["perno"][1] - y0))
             else:
                 metti(pezzi, pz, nome, posto, (c["perno"][0] - x0, c["perno"][1] - y0), F["scala"], px, sopra)
-    if not pezzi:
+    if not pezzi and "mantello" not in forma:
         sys.exit("nessun pezzo disegnato nello stampino")
     if senza:
         if sopra:
@@ -624,6 +653,32 @@ def salva(pz, nome, posto, px0, py0, scala, px, scatola=None):
     return {"img": nome_img, "x": round(cx, 1), "y": round(cy, 1), "w": round(w, 1), "h": round(h, 1)}
 
 
+def metti_mantello(pezzi, pz, nome, scala, px, perno):
+    """Il mantello intero: un'immagine a parte (CAPES), con un bordo vuoto di un
+    pixel e nell'angolo in alto a sinistra un pixel quasi trasparente, che dice
+    allo shader dov'è l'alto. Torna dov'è rispetto all'attacco (unità) e dove
+    è attaccato nel diavoletto."""
+    os.makedirs(CAPES, exist_ok=True)
+    al = pz[..., 3]
+    ys, xs = np.nonzero(al > 8)
+    x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    g = GRANDE_MANTELLO
+    w, h = (x1 - x0) / scala * g, (y1 - y0) / scala * g
+    img = Image.fromarray(np.clip(pz[y0:y1, x0:x1], 0, 255).astype(np.uint8), "RGBA")
+    pw, ph = max(1, round(w * PX_MANTELLO)), max(1, round(h * PX_MANTELLO))
+    img = img.resize((pw, ph), Image.LANCZOS)
+    tela = Image.new("RGBA", (pw + 2, ph + 2), (0, 0, 0, 0))
+    tela.paste(img, (1, 1))
+    tela.putpixel((0, 0), (0, 0, 0, 6))
+    nome_img = f"{nome}_mantello"
+    tela.save(os.path.join(CAPES, nome_img + ".png"), optimize=True)
+    # il bordo vuoto conta nella misura
+    w, h = (pw + 2) / PX_MANTELLO, (ph + 2) / PX_MANTELLO
+    cx, cy = ((x0 + x1) / 2 - perno[0]) / scala * g, (perno[1] - (y0 + y1) / 2) / scala * g
+    return {"mantello": {"img": nome_img, "x": round(cx, 1), "y": round(cy, 1), "w": round(w, 1), "h": round(h, 1),
+                         "attacco": list(ST.ATTACCO)}}
+
+
 def leggi_diavoletto():
     """px dal diavoletto di base (battle/devil.lua): i pezzi nuovi hanno la
     stessa densità."""
@@ -635,8 +690,28 @@ def leggi_diavoletto():
     raise SystemExit("px non trovato in devil.lua")
 
 
+PX_ALTO = 4.0   # pixel per unità dei pezzi con l'SVG: più di ogni schermo (home sul telefono grande: ~3,5)
+
+
+def da_svg():
+    """I PNG dei pezzi che hanno l'SVG si rifanno dal vettoriale a PX_ALTO pixel per
+    unità (Sergio, 13 nov: il diavoletto sempre alla massima qualità, mai
+    ingrandito). Le misure in unità (skins.lua) non cambiano."""
+    import cairosvg
+    px_base = leggi_diavoletto()["px"]
+    k = PX_ALTO / px_base
+    for f in sorted(glob.glob(os.path.join(SVG, "*.svg"))):
+        nome = os.path.basename(f)[:-4]
+        t = open(f).read()
+        m = re.search(r'<svg[^>]* width="(\d+)" height="(\d+)"', t)
+        w, h = round(int(m.group(1)) * k), round(int(m.group(2)) * k)
+        percorso = os.path.join(ASSETS, nome + ".png")
+        cairosvg.svg2png(bytestring=t.encode(), write_to=percorso, output_width=w, output_height=h)
+
+
 def rifai():
     """client/battle/skins.lua e l'atlante del diavoletto da tutte le pelli."""
+    da_svg()
     pelli = []
     for f in sorted(glob.glob(os.path.join(JSON, "*.json"))):
         with open(f) as fh:
@@ -647,7 +722,9 @@ def rifai():
            "-- center relative to the pivot, size) and replaces the base piece or is",
            "-- drawn over it. One skin per category; the \"over\" ones in order. A new",
            "-- tail has its own lengths, its rest angles (radians) and, if the editor",
-           "-- moved it, how far its root is moved (tail_root).",
+           "-- moved it, how far its root is moved (tail_root). A cape: its drawing",
+           "-- (client/assets/capes), its center and size from where it is attached",
+           "-- (drawing units) and where it is attached in the devil (at).",
            "return {",
            "\treplace = { " + ", ".join(f'"{c}"' for c in SOSTITUISCE) + " },",
            "\tover = { " + ", ".join(f'"{c}"' for c in SOPRA) + " },",
@@ -657,6 +734,10 @@ def rifai():
     modi = {"sostituisce": "replace", "sopra": "over"}
     for p in pelli:
         forma = "".join(f'{forme[k]} = {{ {", ".join(str(v) for v in p[k])} }}, ' for k in forme if k in p)
+        if "mantello" in p:
+            m = p["mantello"]
+            forma += (f'cape = {{ img = "{m["img"]}", x = {m["x"]}, y = {m["y"]}, w = {m["w"]}, h = {m["h"]}, '
+                      f'at = {{ {m["attacco"][0]}, {m["attacco"][1]} }} }}, ')
         lua.append(f'\t\t{p["nome"]} = {{ category = "{p["categoria"]}", {forma}pieces = {{')
         for posto in sorted(p["pezzi"]):
             z = p["pezzi"][posto]
@@ -742,6 +823,7 @@ def main():
     ap.add_argument("--pugni", help="foglio con le due braccia col pugno chiuso (davanti, dietro): versioni in più delle braccia, per le impugnature")
     ap.add_argument("--aggiungi", action="store_true", help="aggiunge i pezzi alla pelle che c'è già, come versioni in più (busto_2...)")
     ap.add_argument("--tavolozza", help="la tavolozza del personaggio (tools/stampino/tavolozze): fa anche gli SVG dei pezzi")
+    ap.add_argument("--mantello-px", type=float, help="il foglio ha solo il mantello, grande: quanti pixel del foglio per unità del gioco")
     ap.add_argument("--rifai", action="store_true")
     ap.add_argument("--togli")
     ap.add_argument("--ritocchi", help="i ritocchi dell'editor delle animazioni (ritocchi.json)")
@@ -766,7 +848,7 @@ def main():
         if a.tavolozza:
             import vettoriale as VT
             TAVOLOZZA = VT.leggi_tavolozza(a.tavolozza)
-        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza, a.teste, a.pugni, a.aggiungi)
+        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza, a.teste, a.pugni, a.aggiungi, a.mantello_px)
     rifai()
 
 

@@ -15,6 +15,7 @@ const FILE = {
 	perni: "client/battle/pivots.lua",
 	impugnature: "client/battle/grips.lua",
 	ritocchi: "tools/stampino/ritocchi.json",
+	mantello: "client/battle/cape_tuning.lua",
 };
 
 

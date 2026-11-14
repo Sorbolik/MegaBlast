@@ -20,6 +20,14 @@ textures {
   texture: "/ui/ui.atlas"
 }
 textures {
+  name: "fucina"
+  texture: "/ui/fucina.atlas"
+}
+textures {
+  name: "fette"
+  texture: "/ui/fette.atlas"
+}
+textures {
   name: "mappe"
   texture: "/ui/maps.atlas"
 }
@@ -43,6 +51,14 @@ materials {
   material: "/battle/pieces.material"
 }
 materials {
+  name: "lampo_luce"
+  material: "/battle/flash_lit.material"
+}
+materials {
+  name: "pezzi_luce"
+  material: "/battle/pieces_lit.material"
+}
+materials {
   name: "forgia"
   material: "/circles/forgia.material"
 }
@@ -53,6 +69,10 @@ materials {
 materials {
   name: "fiamma"
   material: "/battle/flame.material"
+}
+materials {
+  name: "mantello"
+  material: "/battle/cape.material"
 }
 adjust_reference: ADJUST_REFERENCE_PARENT
 max_nodes: 4096

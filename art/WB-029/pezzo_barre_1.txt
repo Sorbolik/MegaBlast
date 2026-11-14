@@ -1,0 +1,15 @@
+Images 1, 2 and 3 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 to #FFB703, ivory is #F4ECE1, ice is #38B6FF with highlight #CAF0F8.
+
+Draw a sheet with FIVE separate pieces, stacked one under the other with green between them:
+1. a long empty bar housing, about ten times wider than tall: a hollow trough of dark iron (#2B2530), rounded slightly crooked ends, the inside darker (#141116) and completely empty, a thin flat highlight (#6B6375) on the top lip, one rivet at each end;
+2. a long plain strip of the same length, a bit thinner, ember: flat #FFB703 with a thin lighter band (#FFE08A) on top and a darker band (#F26419) at the bottom, rounded ends, no rivets;
+3. the same strip in ice: flat #38B6FF with a thin lighter band (#CAF0F8) on top and a darker band (#1D6FA8) at the bottom, the right end cut sharp like a shard;
+4. a small slanted notch, like a short leaning tile about twice as tall as wide, ivory (#F4ECE1) with one flat shadow;
+5. the same notch in dark iron (#2B2530) with a small highlight.
+
+Thick black ink outline on every piece, cartoon comic style, same line weight as images 1-3. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti (in ordine)
+R1: art/WB-029/riferimenti/R1_piccoli.png
+R2: art/WB-029/riferimenti/R2_piastre.png
+R3: art/WB-029/riferimenti/R3_lingotto.png

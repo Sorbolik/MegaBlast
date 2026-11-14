@@ -14,11 +14,11 @@ imposta prova_scelta 1
 imposta giocatori 2v2
 
 aspetta 2
-tocca 254 346                      # ALLENAMENTO
+tocca 250 334                      # ALLENAMENTO
 aspetta 1
 tocca 761 470                       # 2 CONTRO 2
 aspetta 0.3
-tocca_bordo 215 118 basso destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.5
 foto 01_schieramento_2v2_bot
@@ -36,7 +36,7 @@ tocca 408 658                       # ESCI: all'allenamento
 aspetta 1
 tocca 975 470                       # TUTTI CONTRO TUTTI
 aspetta 0.3
-tocca_bordo 215 118 basso destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.5
 foto 04_schieramento_ffa
@@ -53,7 +53,7 @@ tocca 408 658
 aspetta 1
 tocca 547 470                       # 1 CONTRO 1
 aspetta 0.3
-tocca_bordo 215 118 basso destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.5
 foto 06_schieramento_1v1

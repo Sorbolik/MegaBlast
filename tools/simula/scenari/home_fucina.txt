@@ -1,0 +1,18 @@
+# La home "Fucina contro Abisso" (Home C): diavoletto a sinistra sul filo, porte in
+# colonna a destra, GIOCA (il lingotto) sotto. Poi la Tempra verso la campagna e ritorno.
+imposta prova_profilo 1
+aspetta 0.25
+foto 01_entrata
+aspetta 4
+foto 02_home
+tocca_bordo 236 470 mezzo sinistra    # CAMPAGNA
+aspetta 0.12
+foto 03_tempra
+aspetta 1.2
+foto 04_campagna
+tocca_bordo 36 60 basso sinistra     # indietro
+aspetta_stato modo=menu 3
+aspetta 0.6
+tocca_bordo 250 334 mezzo sinistra    # ALLENAMENTO
+aspetta 1.2
+foto 05_allenamento

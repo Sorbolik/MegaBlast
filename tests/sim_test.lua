@@ -2029,7 +2029,7 @@ check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "aiming down the blade c
 local C = game.CORPO
 check(melee_at(60, 4, 5) and melee_at(-60, 0, -5) and not melee_at(60, 0, -5 - 7.5 * (C - 1)),
 	"the hit rotates with the aim")
-check(melee_at(-90, 4, -4) and not melee_at(-90, -4, 0), "aiming down it doesn't catch whoever is behind")
+check(melee_at(-90, 4, -4) and not melee_at(-90, -4 * C / 1.4, 0), "aiming down it doesn't catch whoever is behind")
 local pt, pq2 = melee_at(0, 2, 0, "punch")
 check(pt and pq2.robots[2].vy == game.PUNCH_LAUNCH and pq2.robots[2].vx == 0,
 	"the uppercut launches straight up")
@@ -2126,7 +2126,9 @@ local function slope_gap()
 	return r.y - slope(r.x), r.grounded
 end
 local gap_round, gr = slope_gap()
-check(gr and gap_round < game.ROBOT_HALF_W * 0.6, string.format("capsule: at the centre it's as far above the slope as the edge of the circle (%.1f px)", gap_round))
+-- a circle on 45 degrees stays (sqrt 2 - 1) of its radius above, plus at most a
+-- terrain cell; a rectangle would stay a whole half width above
+check(gr and gap_round < math.min(game.ROBOT_HALF_W * 0.42 + game.CELL, game.ROBOT_HALF_W), string.format("capsule: at the centre it's as far above the slope as the edge of the circle (%.1f px)", gap_round))
 
 -- Short jump: releasing the button at once rises much less
 local function jump_top(hold_ticks)
