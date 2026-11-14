@@ -93,4 +93,4 @@ Ho verificato i piani ovali liberi, i ripiani a destra, la separazione delle sag
 Fogli buoni, ritagliati dal verde in `art/WB-050/ritagli/` (`pedana_pietra|lava|incudine|griglia_1|2`).
 Montate le quattro pedane del foglio 1 sotto l'apprendista nella home del Figma (sezione «Pedana»,
 sotto le proposte dello zaino), larghe 340 su 1280, il diavoletto sul piano e lo zainetto piccolo di
-WB-048 sul ripiano a destra. Stanno fra le porte senza toccarle. Da scegliere con Sergio.
+WB-048 sul ripiano a destra. Stanno fra le porte senza toccarle. Da scegliere con Sergio. Sergio (14 nov 23:47) sceglie la 4, la griglia della forgia (`pedana_griglia_1`).
