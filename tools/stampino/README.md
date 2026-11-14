@@ -30,7 +30,10 @@ disegno; il diavoletto è alto 200 unità): `foglio.json`.
 
 - **Una pelle, una categoria.** Le categorie che *sostituiscono* i pezzi di base:
   `personaggio`, `testa`, `corpo`, `ali`, `coda`. Quelle che vanno *sopra*, in
-  quest'ordine: `pantaloni`, `stivali`, `maglia`, `corazza`, `guanti`, `elmo`, `mantello`.
+  quest'ordine: `pantaloni`, `stivali`, `maglia`, `corazza`, `guanti`, `elmo`, `corna`, `mantello`.
+  Le `corna` sono un pezzo a parte sopra l'elmo (la testa del personaggio non le ha):
+  così ogni elmo si disegna chiuso e le corna escono sempre sopra; si spostano
+  dall'editor delle animazioni come ogni pezzo (WB-041, 14 nov).
   Il diavoletto porta al massimo una pelle per categoria.
 - **Il mantello si disegna intero** nella casella `mantello`, appeso dritto dietro le
   spalle col bordo in alto sulla croce rossa. `taglia.py` lo salva intero in

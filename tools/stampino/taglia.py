@@ -42,7 +42,7 @@ LUA = os.path.join(RADICE, "client", "battle", "skins.lua")
 # Le categorie: una pelle per categoria addosso. Le prime sostituiscono i pezzi
 # del diavoletto, le altre si disegnano sopra, in quest'ordine.
 SOSTITUISCE = ["personaggio", "testa", "corpo", "ali", "coda"]
-SOPRA = ["pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "mantello"]
+SOPRA = ["pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "corna", "mantello"]
 # Il mantello (WB-019): si disegna intero nella sua casella e resta intero: il
 # gioco lo piega lungo una catena simulata (battle/cloth.lua, battle/cape.fp).
 # Non va nell'atlante: un'immagine a parte in client/assets/capes, più fitta

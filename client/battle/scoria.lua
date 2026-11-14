@@ -78,7 +78,7 @@ local made_capes = {}
 local M = {}
 
 -- everyone's character (the skins worn), until the armory picks it
-M.PERSONAGGIO = { "apprendista_nuovo" }
+M.PERSONAGGIO = { "apprendista_nuovo", "corna_apprendista" }
 
 local P, PT = D.pieces, D.points
 

@@ -1,6 +1,6 @@
 # WB-041 · Il Vuoto addosso all'apprendista nuovo: cappuccio, corazza, stivali
 
-- **Stato:** APPROVATA (Sergio, 13 nov: «Vai»)
+- **Stato:** IMPLEMENTATA (Sergio, 13 nov: «Vai»)
 - **Data:** 2026-11-13
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-041`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-041` senza chiedere conferma (il repository è privato).
@@ -113,4 +113,62 @@ Approvata da Sergio il 13 nov («Vai»).
 
 ## Consegna di Codex
 
+### 2026-11-14
+
+Nuova generazione con imagegen da `main` (`3b596194`). In
+`art/WB-041/` ogni PNG ha un TXT con prompt integrale e riferimenti.
+
+| Foglio | Tentativi | Tentativo consegnato | Misura |
+|---|---:|---:|---|
+| `cappuccio_base_1` | 3 | 3 | 1254 × 1254 |
+| `cappuccio_base_2` | 3 | 3 | 1254 × 1254 |
+| `cappuccio_forgiata` | 3 | 1 | 1254 × 1254 |
+| `corpo_base_1` | 3 | 3 | 1536 × 1024 |
+| `corpo_base_2` | 3 | 3 | 1536 × 1024 |
+| `corpo_forgiata` | 3 | 2 | 1536 × 1024 |
+
+Ho scelto `cappuccio_base_2` e `corpo_base_1` come riferimenti
+per le forgiate. Fra le basi consegnate sono quelle con la minore
+differenza RGB media nelle aree campionate da preservare, confrontate
+alla scala dei riferimenti. Il primo tentativo di `cappuccio_base_1`
+aveva un errore medio inferiore ma le aperture apparivano nere.
+
+Ho verificato cappuccio solo sulla prima testa, faccia e orecchie
+visibili, assenza di corna, fiamme e scritte, corazza sul busto con
+collo libero e stivali su entrambe le gambe. Le forgiate aggiungono
+le finiture ciano previste. Sul cappuccio forgiato l'emblema rende
+poco leggibile una delle aperture. Le spalline forgiate allargano
+il contorno del busto.
+
+I fogli delle teste sono da 1254 × 1254, rispetto ai 1024 × 1024
+richiesti. Il magenta e il ciano variano rispetto ai valori RGB
+esatti. Le parti da preservare presentano differenze di colore e
+contorno. Il requisito di identità pixel per pixel resta
+insoddisfatto e il ritaglio per differenza resta da verificare.
+
 ## Resoconto di Claude
+
+14 nov. Le tavole combaciano coi riferimenti allo stesso pixel (spostamento 0; le sagome
+differiscono dell'1-4%, solo dove ci sono i pezzi nuovi). Usate `corpo_base_1` +
+`cappuccio_base_2` (le più fedeli, come dice Codex) e le due forgiate; `cappuccio_base_1` e
+`corpo_base_2` restano scartate.
+
+- Ricalcate in vettoriale (`vettoriale.py`) con la tavolozza nuova `apprendista_vuoto`
+  (quella dell'apprendista più #2B2147, #1A1430 e #00FFFF); i fogli del corpo senza i colori
+  del muso (`--senza lingua,bocca,corna,corna_ombra,occhi`), se no la pelle delle gambe
+  forgiate diventava rosa.
+- Ogni pezzo è messo sui pezzi di `apprendista_nuovo` trovando la stessa scala e lo stesso
+  spostamento con cui il gioco ha ritagliato il foglio di riferimento (sagome sovrapposte al
+  99% per gambe e testa): niente a occhio, e le immagini sono sempre rimpicciolite, mai
+  ingrandite.
+- **Cappuccio** (elmo, sopra tutte e nove le facce): solo il viola del cappuccio, il ciano e
+  il suo contorno, preso dal foglio per colore; le aperture restano vuote, le corna escono.
+- **Corazza** e **stivali**: prendono il posto del busto e delle gambe (busto e gambe interi
+  dal foglio di Codex), così sotto la corazza non spunta il fazzoletto e dagli stivali non
+  escono gli artigli.
+- Pelli `cappuccio_vuoto`, `corazza_vuoto`, `stivali_vuoto` e le `_forgiato`; scenari
+  `vuoto_addosso.txt` e `vuoto_addosso_forgiato.txt` (col mantello del Vuoto).
+
+Da fare: il colletto WB-038 col colore della squadra (adesso il Vuoto non ha colore di
+squadra), le corna come pezzo a parte sopra il cappuccio.
+

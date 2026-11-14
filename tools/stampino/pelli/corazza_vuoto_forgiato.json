@@ -1,0 +1,22 @@
+{
+ "nome": "corazza_vuoto_forgiato",
+ "categoria": "corazza",
+ "pezzi": {
+  "busto": {
+   "img": "corazza_vuoto_forgiato_busto",
+   "x": 9.6,
+   "y": 12.8,
+   "w": 97.1,
+   "h": 100.2,
+   "modo": "sostituisce"
+  },
+  "busto_1": {
+   "img": "corazza_vuoto_forgiato_busto",
+   "x": 8.8,
+   "y": 12.6,
+   "w": 89.0,
+   "h": 92.0,
+   "modo": "sostituisce"
+  }
+ }
+}

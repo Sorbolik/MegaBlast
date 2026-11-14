@@ -1,6 +1,6 @@
 # L'apprendista nuovo (WB-037) montato sullo scheletro (tools/stampino/taglia.py):
 # fermo, corsa, salto, mira in su e rinculo, poi l'altro di turno. Da vicino: --scala 2.
-imposta prova_pelli apprendista_nuovo
+imposta prova_pelli apprendista_nuovo,corna_apprendista
 
 aspetta 3
 tocca 222 148                      # STESSO TELEFONO

@@ -1,0 +1,150 @@
+{
+ "nome": "cappuccio_vuoto",
+ "categoria": "elmo",
+ "pezzi": {
+  "testa_1": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 14.7,
+   "y": 34.7,
+   "w": 126.2,
+   "h": 120.8,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 13.3,
+   "y": 37.1,
+   "w": 102.3,
+   "h": 97.8,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 14.7,
+   "y": 34.7,
+   "w": 126.2,
+   "h": 120.8,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 13.3,
+   "y": 37.1,
+   "w": 102.3,
+   "h": 97.8,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 14.7,
+   "y": 34.7,
+   "w": 125.5,
+   "h": 120.8,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 13.2,
+   "y": 37.1,
+   "w": 101.6,
+   "h": 97.8,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 14.7,
+   "y": 34.7,
+   "w": 126.7,
+   "h": 120.8,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 13.3,
+   "y": 37.1,
+   "w": 102.6,
+   "h": 97.8,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 14.7,
+   "y": 34.7,
+   "w": 126.7,
+   "h": 120.8,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 13.3,
+   "y": 37.1,
+   "w": 102.6,
+   "h": 97.8,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 14.7,
+   "y": 34.7,
+   "w": 125.9,
+   "h": 120.8,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 13.3,
+   "y": 37.1,
+   "w": 102.0,
+   "h": 97.8,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 14.5,
+   "y": 34.7,
+   "w": 124.9,
+   "h": 120.8,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 13.1,
+   "y": 37.1,
+   "w": 101.2,
+   "h": 97.8,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 14.7,
+   "y": 34.7,
+   "w": 125.9,
+   "h": 120.8,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 13.3,
+   "y": 37.1,
+   "w": 102.0,
+   "h": 97.8,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 14.7,
+   "y": 34.7,
+   "w": 126.2,
+   "h": 120.8,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "cappuccio_vuoto_testa",
+   "x": 13.3,
+   "y": 37.1,
+   "w": 102.3,
+   "h": 97.8,
+   "modo": "sopra"
+  }
+ }
+}
