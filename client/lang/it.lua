@@ -197,12 +197,19 @@ return {
 		months = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" },
 		-- "lun 16 nov": day of the week, day, month
 		date = "%s %s %s",
-		now = "ORA",
-		plate = "OGNI SETTIMANA",
 		no_event = "Nessun evento in corso",
+		-- the next event: its name, when it starts
+		next_one = "Il prossimo: %s · %s",
 		counts_in = "conta nelle partite %s",
 		own_queue = "coda sua · %s",
-		next = "PROSSIMI · DUE SETTIMANE",
+		-- the world ranking (the server doesn't keep it yet: one line per row)
+		ranking = "CLASSIFICA MONDIALE",
+		ranking_soon = { "la classifica mondiale arriva", "quando il server la terrà:", "qui i primi 100 e i tuoi vicini" },
+		-- your event
+		ends_in = "FINISCE TRA",
+		top = "SEI NEI PRIMI",
+		prize = "PREMIO A FINE EVENTO",
+		calendar = "CALENDARIO",
 		nothing_planned = "Niente in programma",
 		what_changes = "COSA CAMBIA",
 		from_to = "%s fino a %s",
@@ -211,6 +218,7 @@ return {
 		just_for_fun = "Solo per divertirsi",
 		offline = "Il server non risponde: gli eventi tornano appena c'è la rete",
 	},
+
 
 	-- menu/level_end.lua: the end of a campaign mission
 	level_end = {

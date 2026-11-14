@@ -1,0 +1,26 @@
+# EVENTI del 14 novembre (Figma Consigliata/7) contro un server vero col calendario
+# scenari/eventi_prova.json: una scheda per evento in corso (il Maglio e il Torneo),
+# podio e classifica mondiale come segnaposto, il tuo evento, CALENDARIO col dettaglio.
+# Gira anche con --schermo 1600x720 e 960x720.
+imposta server_url ws://127.0.0.1:8090/ws
+
+aspetta 1
+server evento:maglio 3 eventi_prova.json
+aspetta 1
+tocca_bordo 220 289 mezzo destra    # EVENTI
+aspetta 1.5
+foto 01_eventi
+tocca_bordo 634 53 alto sinistra    # la scheda del Torneo
+aspetta 0.6
+foto 02_torneo
+tocca_bordo 132 265 mezzo destra    # CALENDARIO
+aspetta 0.6
+foto 03_calendario
+tocca_centro 640 542                # il primo evento: il dettaglio
+aspetta 0.6
+foto 04_dettaglio
+tocca_bordo 36 60 basso sinistra    # indietro: il calendario
+aspetta 0.5
+tocca_bordo 36 60 basso sinistra    # indietro: gli eventi
+aspetta 0.5
+foto 05_di_nuovo
