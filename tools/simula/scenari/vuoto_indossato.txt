@@ -1,0 +1,13 @@
+# I quattro pezzi del Vuoto indossati nell'Armeria, base (livello 1): l'apprendista li ha
+# addosso nella home, nella scheda e in battaglia (Sergio, 14 nov). Da vicino: --scala 2.
+imposta prova_vuoto 1
+
+aspetta 3
+aspetta 3
+foto 01_home
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+zoom 02_fermo 4
+tieni destra 0.5 03_corsa 4
+aspetta 2
