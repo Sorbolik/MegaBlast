@@ -5,6 +5,7 @@ custom_resources = /paintings,/assets/capes,/assets/skins/favilla_testa_1.png,/a
 
 [bootstrap]
 main_collection = /main/main.collectionc
+render = /render/lit.renderc
 
 [input]
 game_binding = /input/game.input_bindingc

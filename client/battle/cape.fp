@@ -18,6 +18,7 @@
 //   chain_a, chain_b, chain_c   the chain's six points (x, y, x, y)
 //   frame   x, y: where it is attached in the drawing (0-1 from the left and the top);
 //           z, w: the drawing's width and height over the node's side
+//   ambient the battle's light with no lamp near (render/lit.render_script)
 // The node's color: b 1 normal, 0 all white (the hit flash), a how visible.
 // The image is not in an atlas (scoria.lua loads it apart): its top left
 // corner has a nearly transparent pixel that says which way is up (on the
@@ -36,6 +37,7 @@ uniform fs_uniforms
     highp vec4 chain_b;
     highp vec4 chain_c;
     highp vec4 frame;
+    mediump vec4 ambient;  // the battle's ambient light (battle/lights.lua), like the other pieces; 0 in the editor: as drawn
 };
 
 float cross2(vec2 a, vec2 b) { return a.x * b.y - a.y * b.x; }
@@ -154,6 +156,7 @@ void main()
         run += len[i];
     }
 
+    if (ambient.a > 0.0) col.rgb *= ambient.rgb;
     mediump float white = 1.0 - var_color.b / a;
     out_fragColor = vec4(mix(col.rgb, vec3(col.a), white), col.a) * a;
 }
