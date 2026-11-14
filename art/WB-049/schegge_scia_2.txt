@@ -1,0 +1,15 @@
+Images 1 and 2 are two menu buttons of our game and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 3 shows other small pieces of the same game. When a menu button is tapped, a tall band carrying its shield runs across the screen, and a few small bits fly off its edge: draw those bits.
+
+Draw a sheet with SIXTEEN small separate pieces, in four rows of four, each one filling its cell:
+row 1, EMBER (for CAMPAIGN): a round spark, a four-pointed spark, a small flame tongue, a curved ember streak shaped like a short comma, all in #F26419 and #FFB703;
+row 2, STEEL AND WOOD (for TRAINING): a small steel chip (#8C929C, #C9CED6), a bent wood splinter (#8A6A4A, #B48A60), a small straw tuft (#E0B64A), a short curved steel streak;
+row 3, GOLD (for EVENTS): a four-pointed gold glint (#FFB703, #FFE08A), a small gold coin seen from the side, a tiny ribbon scrap (#FFB703), a short curved gold streak;
+row 4, ICE (for ARMOURY): a sharp ice shard (#38B6FF, #CAF0F8), a small snowflake made of six chunky arms, a tiny ice crystal cluster, a short curved ice streak.
+Every bit is simple and chunky so it still reads when very small.
+
+Thick black ink outline on every piece, cartoon comic style like images 1 and 2. Flat colors only, at most three per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no glow, no motion blur, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+1. art/WB-049/riferimenti/R1_porta_campagna.png
+2. art/WB-049/riferimenti/R1b_porta_armeria.png
+3. art/WB-022/pezzo_piccoli.png

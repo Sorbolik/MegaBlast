@@ -108,4 +108,25 @@ Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
 
 ## Consegna di Codex
 
+Quattro fogli generati con `image_gen` da `main` (`dbce15cc`), in `art/WB-049/`.
+Ogni PNG è affiancato dal TXT con il prompt integrale e i riferimenti nell'ordine della tabella.
+
+| Nome (PNG e TXT) | Tentativi | Selezione | Dimensioni PNG |
+|---|---:|---:|---:|
+| `bande_bordo_1` | 1 | 1 | 1536×1024 |
+| `bande_bordo_2` | 3 | 1 | 1536×1024 |
+| `schegge_scia_1` | 1 | 1 | 1254×1254 |
+| `schegge_scia_2` | 1 | 1 | 1254×1254 |
+
+Verificati a vista quattro bande e un attacco per foglio, sedici schegge in griglia
+4×4 per foglio, colori delle quattro famiglie, contorni neri e pezzi interi e
+separati. Nessuna scritta o scudo. In `bande_bordo_2` ci sono puntini vicino alla
+fiamma. I due tentativi successivi avevano l'attacco diviso in due, quindi ho
+tenuto il primo. Le bande hanno altezze simili e larghezze diverse. Fiamme,
+tacche e spigoli arrivano anche nella parte centrale.
+
+I fogli delle schegge sono quadrati. Lo sfondo è verde opaco e nei punti campionati
+differisce da `#00FF00`. Non verificati il conteggio delle tinte, il ricalco, la resa
+delle schegge in piccolo o l'allungamento delle bande durante la transizione.
+
 ## Resoconto di Claude
