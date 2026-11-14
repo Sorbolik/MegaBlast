@@ -592,7 +592,7 @@ end
 function M.tabs(g, list_of, x, y, tabs, active, accent, tag)
 	local h, cx = tag and 50 or 58, x
 	for i, tab in ipairs(tabs) do
-		local w = tag and (#tab[1] * 18 + 56) or (#tab[1] * 16 + 64)
+		local w = tag and (#tab[1] * 13 + 64) or (#tab[1] * 16 + 64)
 		local on = i == active
 		local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
 		local name = tag and (on and "linguetta_chiara" or "linguetta") or (on and "piastrina_chiara" or "piastrina")

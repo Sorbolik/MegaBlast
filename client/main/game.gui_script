@@ -2367,9 +2367,9 @@ function CP.replay_ok(self, number)
 end
 
 -- The profile (menu/profile_tabs.lua), on a tab
-function CP.open_profile(self, card, number)
+function CP.open_profile(self, card)
 	open_screen(self, menu.profile_tabs, self.profilo, card, TEAM_COLORS[1],
-		function(n) return CP.replay_ok(self, n) end, number)
+		function(n) return CP.replay_ok(self, n) end)
 end
 
 -- Rewatches match numero from tick da: it is replayed from the saved recipe
@@ -2434,7 +2434,7 @@ function CP.replay_end(self)
 		if self.replay_scritta then gui.delete_node(self.replay_scritta) end
 		self.replay_scritta = nil
 		show_menu(self, true)
-		CP.open_profile(self, "partite", number)
+		CP.open_profile(self, "partite")
 		if self.replay_rotto then show_message(self, TM.replay_broken) end
 		self.replay_rotto = nil
 	end)
@@ -5481,10 +5481,10 @@ function PAD.on_input(self, action_id, action)
 	if self.mode == "schermata" then
 		local end_of = self.schermata.mod.on_input(self.schermata.obj, action_id, action)
 		if end_of == "sigilli" then
-			-- METTI I PUNTI on the receipt (podium or end of level): the profile's SIGILLI
+			-- METTI I PUNTI on the receipt (podium or end of level): the ZAINO's SIGILLI
 			CP.iris(self, function()
 				close_screen(self)
-				CP.open_profile(self, "sigilli")
+				open_screen(self, menu.backpack, self.profilo, "sigilli", TEAM_COLORS[1])
 			end)
 		elseif end_of and self.schermata.mod == menu.level_end then
 			after_level_end(self, end_of)
@@ -5589,7 +5589,7 @@ function PAD.on_input(self, action_id, action)
 				allenamento = function() open_screen(self, menu.training, self.against_bot, profile.total_stars(self.profilo)) end,
 				impostazioni = function() open_screen(self, menu.settings, self.profilo, self.ctrl) end,
 				campagna = function() open_campaign(self) end,
-				profilo = function() CP.open_profile(self, "scheda") end,
+				profilo = function() CP.open_profile(self, "statistiche") end,
 				-- the ZAINO, from the apprentice (menu/backpack.lua)
 				zaino = function() open_screen(self, menu.backpack, self.profilo, "inventario", TEAM_COLORS[1]) end,
 			}

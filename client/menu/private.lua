@@ -20,7 +20,7 @@
 local ui = require "ui.ui"
 local kit = require "ui.kit"
 local scoria = require "battle.scoria"
-local profile_tabs = require "menu.profile_tabs"
+local devil_side = require "menu.devil_side"
 local T = require("lang.text").private
 local common = require("lang.text").common
 local TQ = require("lang.text").queue
@@ -37,7 +37,7 @@ local KC = kit.C
 -- CREA UNA STANZA on the left, the keypad for a code on the right (Figma 19)
 local function build_choice(c)
 	local g = c.kg
-	profile_tabs.devil(c, T.title_short)
+	devil_side.devil(c, T.title_short)
 	kit.text(g, T.new_room_over, 448, 150, 16, KC.HOT_TOP, "start", 1.5)
 	kit.text(g, T.new_room, 446, 200, 40, KC.SAND)
 	for i, line in ipairs(T.new_room_lines) do
@@ -166,7 +166,7 @@ end
 function M.new()
 	local c = { code = "", colore = ui.C.SQUADRA[1], accent = KC.HOT }
 	-- the backdrop (ui/kit.lua)
-	c.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { bg = true })
+	c.scene = kit.scene(devil_side.x(), devil_side.Y, { bg = true })
 	build(c)
 	return c
 end

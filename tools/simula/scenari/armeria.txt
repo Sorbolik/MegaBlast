@@ -7,7 +7,7 @@ aspetta 4
 tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
 aspetta 1.5
 foto 01_potenzia
-tocca_bordo 593 53 alto sinistra    # BOTTEGA
+tocca_bordo 543 53 alto sinistra    # BOTTEGA
 aspetta 0.8
 foto 02_bottega
 tocca_centro 485 311               # il primo pezzo del giorno

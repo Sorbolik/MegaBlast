@@ -240,6 +240,15 @@ function M.sample(p, near_level_up, campaign_done)
 	p.statistiche["1v1"] = { partite = 9, vinte = 4, colpi = 60, a_segno = 31, danno = 2100, abbattuti = 8, globi = 20,
 		colpo_lungo = 700, casse = 6, serie = 2, armi = { missile = 1200, sniper = 900 } }
 	p.serie, p.badge = 1, { "colpo_lungo" }
+	-- the history (CRONOLOGIA PARTITE, scenari/profilo.txt): no replays on the phone
+	local now = os.time()
+	for i, m in ipairs({ { "V", "2v2", "forgia", 612, 0 }, { "S", "2v2", "limbo", 288, 1 }, { "V", "1v1", "gola", 540, 2 },
+		{ "V", "2v2", "ira", 701, 26 }, { "S", "torneo", "eresia", 199, 30 }, { "V", "2v2", "avarizia", 466, 60 } }) do
+		p.numero = p.numero + 1
+		p.partite[i] = { numero = p.numero, esito = m[1], gruppo = m[2], mappa = m[3], punti = { m[4], 400 }, quando = now - m[5] * 3600,
+			me = 1, giocatori = { { nome = "TU", squadra = 1 }, { nome = "FAVILLA", squadra = 1 }, { nome = "BRACE", squadra = 2 },
+				{ nome = "ZOLFO", squadra = 2 } } }
+	end
 	-- the campaign: the Training done, the Forge up to the Due mani (the board, scenari/bacheca.txt)
 	for _, id in ipairs({ "primi_passi", "lanciarune", "turno", "prima_sfida", "attrezzi", "spostano", "sfida_burrone", "tempo", "guidata" }) do
 		p.stelle[id] = { true, id ~= "turno", id == "primi_passi" or id == "guidata" }

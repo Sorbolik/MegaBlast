@@ -415,37 +415,19 @@ return {
 		step_top = "Al massimo: tutto al pieno",
 	},
 
-	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
+	-- menu/profile_tabs.lua: the PROFILO's STATISTICHE and CRONOLOGIA PARTITE tabs
 	profile_tabs = {
-		title = "IL TUO DIAVOLETTO",
-		your_devil = "DIAVOLETTO",
-		no_piece_short = "VUOTO",
-		loadout_locked = "%s: LIV %s",
-		tab_sheet = "SCHEDA",
-		tab_seals = "SIGILLI",
-		tab_matches = "PARTITE",
-		level = "LIV %s",
-		level_braci = "LIV %s · %s BRACI",
-		-- SCHEDA
-		loadout = "ASSETTO",
-		loadout_n = "ASSETTO %s",
-		how_others_see = "COSÌ TI VEDONO",
-		-- "Maschera del Corvo": the piece, then the set
-		piece_of = { default = "%s del %s", fornace = "%s della %s" },
-		next_look = "al %s: aspetto %s",
-		next_look_b = "al %s: aspetto %s e variante B",
-		all_steps = "tutti gli scatti presi",
-		pick_in_armory = "sceglilo nell'ARMERIA",
-		-- STATISTICHE
-		matches = "PARTITE",
-		won = "VINTE",
-		accuracy = "PRECISIONE",
-		best_streak = "SERIE MIGLIORE",
-		badge_hint = "tocca un badge per metterlo accanto al tuo nome (al massimo %s)",
-		next_to_name = "ACCANTO AL NOME",
-		next_at = "prossimo a %s",
-		badge_grade = "%s %s",
-		no_badge = "senza badge",
+		tab_matches = "CRONOLOGIA PARTITE",
+		level = "LIVELLO %s",
+		-- STATISTICHE: the four big numbers
+		won = "VITTORIE",
+		best_streak = "DI FILA",
+		stars = "STELLE",
+		lost = "SCONFITTE",
+		-- the badge of a stat, with its grade in roman numbers
+		badge_pill = "BADGE %s",
+		badge_hint = "tocca una riga col badge per metterlo accanto al tuo nome (al massimo %s)",
+		next_at = "badge a %s",
 		damage_by_weapon = "DANNO PER ARMA",
 		nothing_yet = "ancora niente: gioca una partita",
 		weapons = {
@@ -453,40 +435,18 @@ return {
 			sword = "Lama", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice",
 			boomerang = "Falcetto", tar = "Pece", drill = "Trapano", magnet = "Calamita", cannon = "Cannonata", petard = "Petardo",
 		},
-		-- PARTITE (os.date formats)
+		-- CRONOLOGIA PARTITE (os.date formats)
 		today = "oggi %H:%M",
 		yesterday = "ieri %H:%M",
-		outcome_won = "VINTA",
-		outcome_lost = "PERSA",
-		outcome_tie = "PARI",
+		outcome_won = "VITTORIA",
+		outcome_lost = "SCONFITTA",
+		outcome_tie = "PAREGGIO",
+		points = "PUNTI",
+		ranking = "CLASSIFICA",
 		no_matches = "Nessuna partita ancora: gioca, e la ritrovi qui.",
-		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
-		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
-		no_moments = "nessun momento da ricordare",
-		replay_local_only = "replay solo delle partite su questo telefono",
-		replay_missing = "replay non disponibile",
 	},
 
 
-	-- menu/seals.lua: the profile's SIGILLI tab (the paths of sim/skills.lua)
-	seals = {
-		points_of = "/ %s PUNTI",
-		free = "%s LIBERI",
-		reset = "AZZERA",
-		-- a closed loadout: its number and the level that opens it
-		of = "%s / %s",
-		threshold = "%s · SOGLIA %s",
-		taken = "potere preso",
-		choose_now = "scegli il potere",
-		missing_one = "manca %s punto",
-		missing = "mancano %s punti",
-		-- points the threshold needs, free points: not enough
-		missing_free = "servono %s punti, liberi %s",
-		bring_here = "PORTA QUI",
-		in_match = "IN PARTITA",
-		nothing = "ancora niente: metti un punto con +",
-		no_power = "nessun potere ancora",
-	},
 
 	-- menu/home.lua: the home
 	home = {

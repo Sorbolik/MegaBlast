@@ -14,7 +14,7 @@
 local ui = require "ui.ui"
 local kit = require "ui.kit"
 local scoria = require "battle.scoria"
-local profile_tabs = require "menu.profile_tabs"
+local devil_side = require "menu.devil_side"
 local events = require "main.events"
 local T = require("lang.text").board
 local common = require("lang.text").common
@@ -149,7 +149,7 @@ local function build(b)
 	b.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	b.radice = ui.root()
 	b.kg = { node = b.radice, ox = 0, oy = 720 }
-	profile_tabs.devil(b, T.plate)
+	devil_side.devil(b, T.plate)
 	local play
 	if o then
 		play = detail(b, o, now)
@@ -169,7 +169,7 @@ end
 function M.new(name_list)
 	local b = { nomi = name_list, t = 0, colore = ui.C.SQUADRA[1], accent = KC.HOT }
 	-- the backdrop (ui/kit.lua)
-	b.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { bg = true })
+	b.scene = kit.scene(devil_side.x(), devil_side.Y, { bg = true })
 	build(b)
 	return b
 end

@@ -14,7 +14,7 @@
 local ui = require "ui.ui"
 local kit = require "ui.kit"
 local scoria = require "battle.scoria"
-local profile_tabs = require "menu.profile_tabs"
+local devil_side = require "menu.devil_side"
 local events = require "main.events"
 local T = require("lang.text").queue
 local common = require("lang.text").common
@@ -53,7 +53,7 @@ local function build(c)
 	c.radice = ui.root()
 	c.kg = { node = c.radice, ox = 0, oy = 720 }
 	local g = c.kg
-	profile_tabs.devil(c, T.online)
+	devil_side.devil(c, T.online)
 
 	-- the queues with their names, to say which one CERCA starts
 	local names = { ["2v2"] = common.modes["2v2"], ["1v1"] = common.modes["1v1"] }
@@ -110,7 +110,7 @@ end
 function M.new()
 	local c = { sel = "2v2", colore = ui.C.SQUADRA[1], accent = KC.HOT }
 	-- the backdrop (ui/kit.lua)
-	c.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { bg = true })
+	c.scene = kit.scene(devil_side.x(), devil_side.Y, { bg = true })
 	build(c)
 	return c
 end
