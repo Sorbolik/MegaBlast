@@ -1,0 +1,13 @@
+Image 1 is a sheet of body parts of our character on flat magenta: the torso wears the BASIC "Void" armour (dark indigo bandages crossing over the chest, round cyan eye clasp), the legs wear indigo boots, and below there are two bare arms, the tail and a fist. Image 2 is the chosen armour set "Void" (left: BASIC form).
+
+Edit image 1 and return the SAME sheet: every part exactly where it is, same size, same shapes, same pixels. Change only the TWO ARMS: on the top of each arm, over the shoulder, draw a SHOULDER PAD that belongs to this armour: a rounded cap of the same dark indigo bandages, wrapped around the top of the upper arm in two or three overlapping bands, with a thin cyan edge at the bottom of the pad. The pad covers the rounded top of the arm and the upper part of the upper arm, follows the arm's outline and is a little wider than the arm; the rest of the arm, the hand and the fingers stay bare and unchanged. Both arms get the same pad. The torso, the boots, the neckerchief, the tail and the fist do not change at all.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Cloth indigo #2B2147 with folds #1A1430, thick closed black #000000 outline like the other parts, cyan #00FFFF trims.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+R5: art/WB-042/riferimenti/R5_corpo_base.png
+R2: art/WB-042/riferimenti/R2_vuoto.png

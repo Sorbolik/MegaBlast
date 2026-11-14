@@ -142,4 +142,37 @@ Approvata da Sergio il 14 nov («Vai»).
 
 ## Consegna di Codex
 
+### 2026-11-14
+
+Sette PNG originali e sette TXT con prompt integrali e riferimenti, generati
+con imagegen dalla scheda su `main` (`24d8bf40`). Ogni riga indica una
+coppia PNG/TXT in `art/WB-042/`.
+
+| Nome | Tentativi confrontati | Tentativo scelto | Misura |
+|---|---:|---:|---|
+| `cappuccio_base` | 3 | 1 | 1254 × 1254 |
+| `cappuccio_forgiata` | 3 | 1 | 1254 × 1254 |
+| `spalline_base_1` | 3 | 2 | 1536 × 1024 |
+| `spalline_base_2` | 3 | 2 | 1536 × 1024 |
+| `spalline_forgiata` | 3 | 3 | 1536 × 1024 |
+| `pugni_spalline_base` | 3 | 2 | 1536 × 1024 |
+| `pugni_spalline_forgiata` | 3 | 1 | 1536 × 1024 |
+
+Ho verificato che i cappucci siano chiusi, senza corna o fiamme, e che
+il forgiato conservi emblema e bordo ciano. Ho verificato due spalline
+per foglio, con mani e dita nude e finiture ciano sulle forgiate.
+Nessuna scritta. I fogli hanno le stesse dimensioni dei riferimenti.
+
+Ho scelto `spalline_base_2` per la minore differenza RGB media nelle
+aree campionate da preservare rispetto a R5. L'ho allegata a
+`spalline_forgiata` e `pugni_spalline_base`. Per
+`pugni_spalline_forgiata` ho allegato il foglio di spalline forgiate.
+
+Le aree da preservare presentano variazioni di colore e contorno.
+Il magenta e il ciano si discostano dai valori RGB esatti. Le punte
+forgiate allargano la sagoma delle spalline e la forma cambia
+leggermente fra le braccia e i pugni. L'identità pixel per pixel
+non è raggiunta. Restano da verificare il ritaglio per differenza
+e la resa dei pezzi sovrapposti nel gioco.
+
 ## Resoconto di Claude

@@ -1,0 +1,13 @@
+Image 1 is a sheet with two arms of our character with a closed fist, on flat magenta. Image 2 is a sheet of the same character where both bare arms wear a dark indigo shoulder pad.
+
+Edit image 1 and return the SAME sheet: both arms exactly where they are, same size, same shapes, same pixels. Change only the top of each arm: put on it the SAME shoulder pad as on the arms of image 2, same shape, same bands, same colours, same size relative to the arm, over the shoulder. The rest of each arm and the fist stay bare and unchanged.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Cloth indigo #2B2147 with folds #1A1430, thick closed black #000000 outline like the arms, cyan #00FFFF trims.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+R7: art/WB-042/riferimenti/R7_pugni.png
+Foglio scelto: art/WB-042/spalline_base_2.png

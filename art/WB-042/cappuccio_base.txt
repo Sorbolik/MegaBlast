@@ -1,0 +1,13 @@
+Image 1 is a sheet of nine heads of our character on flat magenta; the first head (top left) wears a dark indigo hood with three small round openings on top. Image 2 is the chosen armour set "Void" of our game (left: BASIC form).
+
+Return image 1 again, the SAME sheet: every head exactly where it is, same size, same faces, same pixels, and the hood with exactly the same outline. Change only one thing: CLOSE the three small openings on top of the hood, filling them with the same indigo cloth, so the hood is one closed piece of cloth with a clean rounded top. Horns and the head flame will be drawn later on top of the hood as separate parts: draw no horns, no flame and no holes. The other eight heads do not change at all.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Cloth indigo #2B2147 with folds #1A1430, thick closed black #000000 outline like the heads.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+R3: art/WB-042/riferimenti/R3_cappuccio_base.png
+R2: art/WB-042/riferimenti/R2_vuoto.png
