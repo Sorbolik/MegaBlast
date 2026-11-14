@@ -166,3 +166,5 @@ rifatte).
 14 nov, corna (Sergio): le corna non fanno più parte della testa ma sono un pezzo sopra l'elmo (categoria `corna`, pelle `corna_apprendista`, nel personaggio di tutti `scoria.PERSONAGGIO`). Gli elmi si disegnano chiusi, senza buchi; un elmo resta un solo disegno messo sopra tutte le espressioni. Scartato: elmi bucati per far passare le corna della testa (si vedono i buchi), rifare le teste per ogni elmo.
 
 14 nov, spalline (Sergio): le corazze avranno le spalline, sopra la spalla di ogni braccio (pezzi sopra `braccio` e `braccio_dietro`, anche nelle braccia col pugno). Si parte da quelle del Vuoto (WB-042, sulle bende di WB-041); poi si ripensano le altre famiglie perché le spalline abbiano senso in tutte le armature.
+
+14 nov, WB-042 (Claude): le spalline stanno nella pelle della corazza, non in una categoria nuova: indossi la corazza e hai le spalline. Sono pezzi `sopra` alle braccia, ritagliati come il resto (stessa scala del braccio di riferimento).
