@@ -78,4 +78,23 @@ resta la proposta 3 (medaglioni al tocco), la più minimale.
 
 ## Consegna di Codex
 
+Generati con `image_gen` da `main` (`63dbbed9`) e salvati in `art/WB-048/`.
+
+| File | Tentativi | Dimensioni PNG |
+|---|---:|---:|
+| `zaino_a_terra_1.png` e `zaino_a_terra_1.txt` | 1 | 1774×887 |
+| `zaino_a_terra_2.png` e `zaino_a_terra_2.txt` | 1 | 1774×887 |
+
+I TXT contengono il prompt integrale e i riferimenti R1, R2, R3 nell'ordine allegato.
+Controllati a vista gli stati chiuso e aperto con scintilla, la patta, la fibbia,
+i due rivetti, il manico, la cinghia e la bruciatura. Gli oggetti sono separati,
+interi, con contorno nero e senza scritte o personaggi. La variante 2 è più
+diritta. In entrambi i fogli le sagome dei due stati sono simili a vista,
+con piccole differenze. L'allineamento al pixel e la resa in home restano da verificare.
+
+I PNG originali misurano 1774×887. La misura richiesta è 1536×1024.
+Lo sfondo è verde opaco come richiesto, con valori campionati diversi da `#00FF00`.
+Si vedono lievi variazioni di tono nelle campiture. Il limite di sei colori e il
+ricalco in SVG restano da verificare.
+
 ## Resoconto di Claude
