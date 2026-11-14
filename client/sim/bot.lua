@@ -23,6 +23,7 @@ local game = require "sim.game"
 local C = require "sim.config"
 local rng = require "sim.rng"
 local net = require "sim.rete"
+local hazards = require "sim.hazards"
 
 local M = {}
 
@@ -35,15 +36,17 @@ local M = {}
 -- here, the server sets it, server/net.lua): game ticks of thinking after
 -- which it plays the best move found so far instead of standing still.
 -- tutorial: the guided match's "teacher" bot, which must be beaten.
+-- pericolo: how much it minds the map's hazard (hazards.risk): 0 not at all, 1 fully; the lower
+-- levels fall into the water and under the rocks now and then, like a beginner.
 M.LEVELS = {
 	tutorial = { reaction = 90, mira = 0.02, potenza = 0.02, sbaglia = 0, walk_ticks = 200, powers = 2,
-		teletrasporto = false, rampino = false, oggetti = false, lavoro = 400, manca = true },
+		teletrasporto = false, rampino = false, oggetti = false, lavoro = 400, manca = true, pericolo = 0 },
 	facile = { reaction = 80, mira = 0.09, potenza = 0.08, sbaglia = 0.4, walk_ticks = 150, powers = 2,
-		teletrasporto = false, rampino = false, oggetti = false, lavoro = 400 },
+		teletrasporto = false, rampino = false, oggetti = false, lavoro = 400, pericolo = 0.5 },
 	normale = { reaction = 45, mira = 0.035, potenza = 0.03, sbaglia = 0.15, walk_ticks = 300, powers = 3,
-		teletrasporto = true, rampino = true, oggetti = false, lavoro = 400 },
+		teletrasporto = true, rampino = true, oggetti = false, lavoro = 400, pericolo = 0.8 },
 	difficile = { reaction = 20, mira = 0.008, potenza = 0.008, sbaglia = 0, walk_ticks = 420, powers = 5,
-		teletrasporto = true, rampino = true, oggetti = true, lavoro = 400 },
+		teletrasporto = true, rampino = true, oggetti = true, lavoro = 400, pericolo = 1 },
 }
 M.ORDER = { "facile", "normale", "difficile" }
 
@@ -421,9 +424,39 @@ local function casse(b, g, w)
 	return s
 end
 
+-- The map's hazard (sim/hazards.lua risk): the hit points each robot would lose where copy w
+-- leaves it, until the next round end. For the bot's team it is a loss, like a hit (death too);
+-- for the opponents a quarter of it counts as a gain: they will move, but a shot that leaves
+-- one in the water's way or on a falling bridge is worth more. share: how much of it counts now
+-- (an attack's spot can still be left, the cover's cannot); the level's pericolo scales all.
+local PERIL_ENEMY, PERIL_ATTACK = 0.25, 0.4
+local function peril(b, g, w, share)
+	local risk = b.peril
+	if not risk then return 0 end
+	local me = g.robots[b.id]
+	local s = 0
+	for i, c in ipairs(w.robots) do
+		if not c.dead and not g.robots[i].dead then
+			local hp = risk(c)
+			if hp > 0 then
+				local lost = math.min(hp, c.hp)
+				if c.team == me.team then
+					s = s - lost * (i == b.id and b.pesi.vita_mia or b.pesi.vita_compagno)
+					if hp >= c.hp then s = s - b.pesi.morte - 30 end
+				else
+					s = s + lost * PERIL_ENEMY
+				end
+			end
+		end
+	end
+	return s * share * (b.liv.pericolo or 1)
+end
+
 -- What copy w is worth against the real match g, for the bot's robot
 local function value(b, g, w)
-	if b.pesi.rete then return net.evaluate(b.pesi.rete, caratteristiche(b, g, w, FEAT_BUF)) * 100 end
+	if b.pesi.rete then
+		return net.evaluate(b.pesi.rete, caratteristiche(b, g, w, FEAT_BUF)) * 100 + peril(b, g, w, PERIL_ATTACK)
+	end
 	local me = g.robots[b.id]
 	local s = 0
 	for i, c in ipairs(w.robots) do
@@ -439,7 +472,7 @@ local function value(b, g, w)
 			end
 		end
 	end
-	return s + casse(b, g, w)
+	return s + casse(b, g, w) + peril(b, g, w, PERIL_ATTACK)
 end
 
 -- Distance from the enemy nearest to (x, y): for the same damage, a shot
@@ -861,6 +894,7 @@ end
 -- b.scelta, so if time runs short that one is used.
 local function think(b, g)
 	local me = g.robots[b.id]
+	b.peril = hazards.risk(g)
 	local overrides = b.liv
 	-- how much time is left to walk: the turn, or the seconds after the first attack
 	local remaining = g.window > 0 and g.window or g.timer
@@ -984,10 +1018,10 @@ local function covered(t, x, y)
 end
 
 local function shelter(b, g, w)
-	if b.pesi.rete then return value(b, g, w) end
+	if b.pesi.rete then return value(b, g, w) + peril(b, g, w, 1 - PERIL_ATTACK) end
 	local x = caratteristiche(b, g, w, FEAT_BUF)
 	if x[7] == 1 then return -1000 end
-	local s = x[11] * 10 - x[16] * 4 - x[14] * 8 - x[15] * 3 - x[4] * 50 + casse(b, g, w)
+	local s = x[11] * 10 - x[16] * 4 - x[14] * 8 - x[15] * 3 - x[4] * 50 + casse(b, g, w) + peril(b, g, w, 1)
 	-- the coward's den: covered and seen by nobody
 	local den = b.pesi.den
 	if den then
@@ -1002,6 +1036,7 @@ local THROWS, DEN_THROWS = { 0.45, 0.7, 0.95 }, { 0.3, 0.45, 0.6, 0.75, 0.9, 1 }
 
 local function take_cover(b, g)
 	local me = g.robots[b.id]
+	b.peril = hazards.risk(g)
 	local remaining = g.window > 0 and g.window or g.timer
 	-- plan poi = "teletrasporto": to cover with the orb instead of on foot;
 	-- otherwise the orb is compared with the spots on foot and with the
