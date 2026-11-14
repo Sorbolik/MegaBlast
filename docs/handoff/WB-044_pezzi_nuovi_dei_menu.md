@@ -193,3 +193,12 @@ Reversibile (solo immagini nuove in un ramo): approvata da Claude su richiesta d
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Guardati i dieci fogli (14 nov): tutti buoni, prese le varianti 1. Ritagliati 38 pezzi dal verde
+in `art/WB-044/ritagli/` (caselle, dischi del livello, spunta, sconto, gemma, righe scura e oro,
+bordini brace e gelo, pillola, targhetta con punta, chiodo, podi, cornici argento e bronzo,
+finestra, nastro, chiudi, fumetto, avviso e le dodici icone delle sezioni). Righe, pillola,
+targhetta e nastro sono tagliati in tre parti (il mezzo si allunga). Rifatte le nove schermate
+«Consigliata» del Figma con i pezzi nuovi al posto dei disegni provvisori. La gemma del foglio è
+diversa da quella di ossidiana del gioco: resta come `gemma_famiglia`, la valuta non cambia.
+Prossimo passo: ricalcarli in SVG quando le schermate vanno nel gioco.
