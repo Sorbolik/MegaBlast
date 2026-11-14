@@ -514,7 +514,7 @@ M.girone_1 = {
 		casse = { { dopo = 0, arma = "grenade", x = 405 } },
 		turni = 7,
 		-- ★★ at the median lead of the normal bot in 2 v 2 (collaudo, 4 Nov)
-		stelle = { punti = 280, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } },
+		stelle = { punti = 150, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { down = 2, testo = "Abbatti il bot" } },
 		-- the points come in here, the first match where they count (the overview of
 		-- 6 Nov; the two attacks are known from the cortile): Favilla's turn shows
@@ -623,7 +623,7 @@ M.girone_1 = {
 				fino = { tocca = "punch" } },
 		},
 		turni = 7,
-		stelle = { punti = 120, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } },
+		stelle = { punti = 145, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { down = 2, testo = "Abbatti il codardo" } },
 	},
 	{

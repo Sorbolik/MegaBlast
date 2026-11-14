@@ -2512,7 +2512,7 @@ start_local_match = function(self, picked)
 		players[i] = {}
 		for k, v in pairs(p) do players[i][k] = v end
 	end
-	players[1].stats = loadout.stats(game.base_stats(), my_own, profile.levels(self.profilo, my_own))
+	players[1].stats = loadout.stats(game.base_stats(), my_own, profile.levels(self.profilo, my_own), self.profilo.livello)
 	opts.players = players
 	-- random start points (sim/game.lua start_points); the simulator keeps the fixed
 	-- ones unless asked (imposta prova_spawn_casuali 1), so the old scenarios stay put
@@ -2630,7 +2630,10 @@ local function start_mission(self, id, picks)
 	-- the opening shot only when coming from the flame (not on RIPROVA, not in the scenarios with the vignettes off)
 	local want_intro = self.want_intro
 	self.want_intro = nil
-	new_match(self, missions.match(r, os.time(), picks, profile.help(self.profilo, id)))
+	-- your pieces, Sigilli and level count in the campaign (from the Forgia on)
+	local my_own = profile.active_loadout(self.profilo)
+	local own = loadout.stats(game.base_stats(), my_own, profile.levels(self.profilo, my_own), self.profilo.livello)
+	new_match(self, missions.match(r, os.time(), picks, profile.help(self.profilo, id), own))
 	-- prova_durata N also in the missions' battles (scenari/podio_forgia.txt)
 	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0
 	if duration > 0 then
@@ -2706,7 +2709,7 @@ local function open_campaign(self)
 	-- a chapter of the story not seen yet comes first (ui/story.lua)
 	if CP.story(self, nil, function() open_campaign(self) end) then return end
 	open_screen(self, menu.campaign, self.chosen_campaign, self.profilo.stelle,
-		#CP.tale.read_again(self.profilo) > 0)
+		#CP.tale.read_again(self.profilo) > 0, self.profilo.lead_records)
 end
 
 -- The campaign's story (ui/story.lua, menu/story.lua): the chapter due now
@@ -2814,7 +2817,7 @@ local function mission_update(self, dt)
 		r.was_saved = true
 		local record = missions.count(self.profilo.stelle[r.l.id] or {})
 		local chapters = CP.wallet.chapters_done(self.profilo, CP.chapters)
-		self.mission_gain = profile.mission(self.profilo, r.l.id, missions.stars(r))
+		self.mission_gain = profile.mission(self.profilo, r.l.id, missions.stars(r), missions.lead(r))
 		self.mission_gain.coins = CP.mission_coins(self, self.mission_gain, chapters)
 		profile.save(self.profilo)
 		if not r.l.guidata then
@@ -2857,7 +2860,9 @@ local function open_level_end(self)
 		medaglia = r.l.medaglia ~= nil,
 		-- the lead points, where they count
 		vantaggio = won and missions.lead(r) or nil,
-		record = self.record_end, avanti = won and (missions.after(r.l.id) ~= nil),
+		record = self.record_end, record_punti = profile.points_record(self.profilo, r.l.id),
+		record_prima = (won and self.mission_gain or {}).record_before,
+		avanti = won and (missions.after(r.l.id) ~= nil),
 		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo, coin = CP.coin_sound, xp = CP.xp_sound,
 	}, function(v) sound.play("#punto", { speed = v }) end)
 	self.mission_gain = nil

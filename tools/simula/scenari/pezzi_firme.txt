@@ -1,0 +1,39 @@
+# I pezzi a quattro righe (Sergio, 14 nov): principale del posto, due secondari,
+# un meno che resta e una firma che ha solo quel pezzo (accesa allo scatto 10).
+# Col profilo di prova della fine del gioco: tutti i pezzi al 30, livello 50.
+aspetta 9
+tocca_bordo 74 54 basso sinistra       # la rotellina delle impostazioni
+aspetta 1
+tocca 372 133                          # PROVA FINE GIOCO
+aspetta 0.5
+tocca 72 60                            # indietro: la home del profilo di prova
+aspetta_stato modo=menu 3
+aspetta 2
+tocca 1020 330                         # il diavoletto
+aspetta 1
+tocca_bordo 175 52 basso destra        # ARMERIA
+aspetta 0.8
+foto 01_armadio_vuoto
+tocca 800 247                          # ELMO: quello del Fabbro
+aspetta 0.3
+tocca 575 390                          # CORAZZA
+aspetta 0.3
+tocca 800 247                          # quella del Fabbro
+aspetta 0.3
+tocca 580 285                          # MANTELLO
+aspetta 0.3
+tocca 800 197                          # quello della Fornace
+aspetta 0.3
+tocca 590 180                          # STIVALI
+aspetta 0.3
+tocca 800 197                          # quelli della Fornace: tutto sull'attacco
+aspetta 0.3
+foto 02_tutto_attacco
+tocca 575 495                          # ELMO: la sua firma
+aspetta 0.3
+foto 03_elmo_fabbro
+tocca 905 590                          # CATALOGO
+aspetta 0.4
+tocca 938 292                          # stivali del Vuoto
+aspetta 0.3
+foto 04_catalogo

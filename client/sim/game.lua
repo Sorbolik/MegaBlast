@@ -511,7 +511,8 @@ end
 
 -- Moves the robot by dx horizontally, climbing small steps. true if it succeeds.
 local function step_x(g, rb, dx)
-	for climb = 0, M.MAX_CLIMB do
+	-- Passo di montagna (sim/gear.lua): higher steps
+	for climb = 0, M.MAX_CLIMB * (1 + rb.stats.sig_climb) do
 		if not g:robot_collides(rb.x + dx, rb.y + climb, rb) then
 			rb.x = rb.x + dx
 			rb.y = rb.y + climb
@@ -585,11 +586,51 @@ function M:credit(rb, by)
 	if by and enemies(by, rb) then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
 end
 
+-- Attack, Defense and the signatures of the pieces (sim/gear.lua) on a hit
+-- of by on rb with weapon (nil: not known): the damage that is left. With the
+-- base stats nothing changes.
+function M:power(rb, amount, by, weapon)
+	if not by then return amount end
+	local a, d = by.stats, rb.stats
+	local m = 1
+	if by == rb then
+		if d.sig_self > 0 then m = 1 - d.sig_self end
+	else
+		-- damage = weapon x (100 + Attack) / (100 + Defense) (Sergio, 14 Nov)
+		m = (100 + a.attack) / (100 + d.defense)
+		local up, down = 0, 0
+		if a.sig_sword > 0 and weapon == "sword" then up = up + a.sig_sword end
+		if a.sig_high > 0 and by.y - rb.y >= C.SIG.high then up = up + a.sig_high end
+		if a.sig_first > 0 and by.id == self.current and by.first_hit ~= self.turn_no then
+			by.first_hit = self.turn_no
+			up = up + a.sig_first
+		end
+		if a.sig_fury > 0 and by.hp < C.SIG.fury_hp then up = up + a.sig_fury end
+		if a.sig_air_fire > 0 and not by.grounded then up = up + a.sig_air_fire end
+		if a.sig_ambush > 0 and by.blink == self.turn_no and by.id == self.current then up = up + a.sig_ambush end
+		-- in the air when hit (an explosion has already lifted it: air_hit says how it was)
+		local air = rb.air_hit
+		if air == nil then air = not rb.grounded end
+		if d.sig_air_guard > 0 and air then down = down + d.sig_air_guard end
+		if d.sig_first_guard > 0 and enemies(by, rb) and rb.guarded ~= self.turn_no then
+			rb.guarded = self.turn_no
+			down = down + d.sig_first_guard
+		end
+		if d.sig_blink_guard > 0 and rb.blink then down = down + d.sig_blink_guard end
+		m = m * (1 + up) * math.max(0, 1 - down)
+	end
+	if m == 1 then return amount end
+	return math.floor(amount * m + 0.5)
+end
+
 -- Takes amount hit points from rb. by is the robot that hit (nil: nobody, for
--- example a fall), reason goes in the "damage" event. Returns the damage that
--- reached life (0 if the shield took it all).
-function M:hurt(rb, amount, by, reason)
+-- example a fall), reason goes in the "damage" event, weapon (optional) is
+-- what hit, for the signatures. Returns the damage that reached life (0 if
+-- the shield took it all).
+function M:hurt(rb, amount, by, reason, weapon)
 	if rb.dead or amount <= 0 then return 0 end
+	amount = self:power(rb, amount, by, weapon)
+	if amount <= 0 then return 0 end
 	local foe = by and enemies(by, rb)
 	if by and by ~= rb then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
 	if rb.status.cracked then amount = math.floor(amount * C.STATUS.cracked.damage + 0.5) end
@@ -628,6 +669,8 @@ function M:hurt(rb, amount, by, reason)
 			by.damage = by.damage + real
 			rb.life_damage[by.id] = (rb.life_damage[by.id] or 0) + real
 			self:add_points(by, real * 100 / rb.stats.max_hp * score.damage * mult, "damage", rb)
+			-- Brace addosso: whoever hits you up close catches fire
+			if weapon and C.MELEE[weapon] and rb.stats.sig_thorns > 0 then self:add_status(by, "burn", rb) end
 		end
 	end
 	-- if they were first before the hit, the Crown stays even if the hit makes the killer first
@@ -932,6 +975,18 @@ function M:surface_spot(ok)
 	end
 end
 
+-- Pestone (sim/gear.lua): landing from a long fall pushes the enemies around
+function M:stomp(rb)
+	local b = C.SIG.stomp
+	local blast = { r = b.r, damage_r = b.damage_r, damage = 0, impulse = b.impulse * rb.stats.sig_stomp }
+	for _, o in ipairs(self.robots) do
+		if o ~= rb and not o.dead and enemies(rb, o) then
+			local dmg, vx, vy = self:blast_on(o, rb.x, rb.y, blast, rb.id)
+			if dmg then o.vx, o.vy, o.grounded, o.knocked, o.fall_top = vx, vy, false, true, nil end
+		end
+	end
+end
+
 -- Fall damage (only if FALL_SAFE): counts from the highest point where the
 -- descent started, even if you got there through an explosion
 function M:land(rb)
@@ -944,8 +999,10 @@ function M:land(rb)
 		return
 	end
 	if not (M.FALL_SAFE and top) then return end
-	local drop = top - rb.y - M.FALL_SAFE
+	-- Atterraggio morbido (sim/gear.lua): a longer fall without damage
+	local drop = top - rb.y - M.FALL_SAFE * (1 + rb.stats.sig_soft)
 	if drop <= 0 then return end
+	if rb.stats.sig_stomp > 0 then self:stomp(rb) end
 	local dmg = math.floor(math.min(drop * M.FALL_DAMAGE, M.FALL_DAMAGE_MAX) * rb.stats.fall_damage_mul + 0.5)
 	if dmg <= 0 then return end
 	self:hurt(rb, dmg, nil, "fall")
@@ -974,6 +1031,9 @@ function M:update_robot(rb, input, active)
 	end
 
 	local st = rb.stats
+	-- Scia breve (sim/gear.lua): after a teleport, faster until the end of the turn
+	local run = st.walk_speed
+	if st.sig_blink_run > 0 and rb.blink == self.turn_no and rb.id == self.current then run = run * (1 + st.sig_blink_run) end
 	-- slowed: run, air speed and jump reduced
 	local slow = rb.status.slow and C.STATUS.slow
 	local move, jump = slow and slow.move or 1, slow and slow.jump or 1
@@ -996,7 +1056,7 @@ function M:update_robot(rb, input, active)
 		elseif pressed and active and (rb.air_left or 0) > 0 then
 			-- air jump (stats.air_jumps per flight)
 			rb.air_left = rb.air_left - 1
-			rb.vx, rb.vy = dir * st.walk_speed * move, st.jump_vy * jump
+			rb.vx, rb.vy = dir * run * move, st.jump_vy * jump
 			rb.knocked, rb.rising, rb.fall_top = false, true, nil
 			self:emit({ type = "air_jump", robot = rb.id })
 		else
@@ -1008,11 +1068,11 @@ function M:update_robot(rb, input, active)
 
 	if rb.grounded then
 		if dir ~= 0 then
-			walk(self, rb, dir * st.walk_speed * move * M.DT)
+			walk(self, rb, dir * run * move * M.DT)
 		end
 		if want_jump then
 			-- free jump: upwards, or in the direction you're moving
-			rb.vx = dir * st.walk_speed * move
+			rb.vx = dir * run * move
 			rb.vy = st.jump_vy * jump
 			rb.grounded = false
 			rb.rising = true
@@ -1058,7 +1118,10 @@ function M:update_robot(rb, input, active)
 		if active and not rb.sprung then
 			rb.vx = math.max(-air, math.min(air, rb.vx))
 		end
-		rb.vy = rb.vy - self.gravity * M.DT
+		-- Planata (sim/gear.lua): coming down it falls slower
+		local grav = self.gravity
+		if st.sig_glide > 0 and rb.vy < 0 and not rb.parachute then grav = grav * (1 - st.sig_glide) end
+		rb.vy = rb.vy - grav * M.DT
 		if rb.parachute then rb.vy = math.max(rb.vy, -C.PARACHUTE.fall_speed) end
 		if rb.vy < 0 and not rb.fall_top then rb.fall_top = rb.y end
 		local landed = false
@@ -1342,7 +1405,8 @@ end
 function M:throw_orb(angle, power)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
-	local vx, vy = launch_velocity(angle, power, M.ORB_SPEED)
+	-- Lancio lungo (sim/gear.lua): a faster orb goes farther
+	local vx, vy = launch_velocity(angle, power, M.ORB_SPEED * (1 + rb.stats.sig_far_orb))
 	self.orb_seq = self.orb_seq + 1
 	self.orbs[#self.orbs + 1] = { id = self.orb_seq, x = x, y = y, vx = vx, vy = vy, owner = rb.id,
 		timer = rb.stats.teleport_ticks, age = 0 }
@@ -1390,6 +1454,9 @@ function M:teleport(rb, x, y)
 	-- It no longer rests on anything, physics puts it back on the ground if needed.
 	rb.grounded = false
 	rb.fall_top = nil
+	-- Agguato, Velo, Scia breve (sim/gear.lua) remember the teleport's turn
+	local st = rb.stats
+	if st.sig_ambush > 0 or st.sig_blink_guard > 0 or st.sig_blink_run > 0 then rb.blink = self.turn_no end
 	self:emit({ type = "teleport", robot = rb.id, from_x = fx, from_y = fy, x = tx, y = ty })
 	-- Scia d'ombra (sim/skills.lua): before attacking, a teleport gives turn time
 	if rb.stats.orb_time > 0 and rb.id == self.current and self.phase == "aim" and self.window == 0 then
@@ -2285,7 +2352,7 @@ end
 function M:mallet_hit(rb, other)
 	local bounce = self:mallet_bounce(rb)
 	self:emit({ type = "mallet_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.HURT_Y, bounce = bounce })
-	self:hurt(other, C.MALLET.damage, rb)
+	self:hurt(other, C.MALLET.damage, rb, nil, "mallet")
 end
 
 function M:update_mallet(rb)
@@ -2425,7 +2492,7 @@ function M:sword_hit(rb, other)
 	self:emit({ type = "sword_hit", robot = rb.id, target = other.id })
 	-- the sword only does damage and stops the target
 	other.vx, other.vy = 0, 0
-	self:hurt(other, M.SWORD_DAMAGE, rb)
+	self:hurt(other, M.SWORD_DAMAGE, rb, nil, "sword")
 	-- hitting an enemy with the Lama gives back one shot of the drafted secondary
 	local sec = rb.secondary
 	if sec and other.team ~= rb.team and rb.ammo[sec] < C.SECONDARY_SHOTS.max then
@@ -2487,7 +2554,7 @@ function M:update_lunge(rb)
 					or seg_hits_robot(other, cx, cy, cx + ux * C.LUNGE.reach, cy + uy * C.LUNGE.reach, 2)) then
 				rb.lunge_hit[other.id] = true
 				self:emit({ type = "lunge_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.HURT_Y })
-				self:hurt(other, C.LUNGE.damage, rb)
+				self:hurt(other, C.LUNGE.damage, rb, nil, "lunge")
 			end
 		end
 	end
@@ -2572,7 +2639,7 @@ function M:punch_hit(rb, other, dir)
 	other.vx, other.vy = 0, M.PUNCH_LAUNCH * k
 	other.fall_top = nil
 	other.grounded, other.knocked = false, true
-	if self:hurt(other, M.PUNCH_DAMAGE, rb) > 0 then self:hit_status(other, "punch", rb) end
+	if self:hurt(other, M.PUNCH_DAMAGE, rb, nil, "punch") > 0 then self:hit_status(other, "punch", rb) end
 end
 
 function M:update_punch(rb)
@@ -2742,8 +2809,16 @@ end
 
 -- How far rb gets pushed: less with the shield
 function M:knock_mul(rb)
-	local k = rb.stats.knockback_mul
+	local st = rb.stats
+	local k = st.knockback_mul
 	if rb.shield then k = k * C.SHIELD.knockback end
+	-- the signatures of the pieces (sim/gear.lua): Cappa da forgia, Piedi piantati, Zavorra
+	if st.sig_chute > 0 and rb.parachute then k = k * math.max(0, 1 - st.sig_chute) end
+	if rb.grounded then
+		if st.sig_rooted > 0 then k = k * (1 - st.sig_rooted) end
+	elseif st.sig_ballast > 0 then
+		k = k * (1 - st.sig_ballast)
+	end
 	return k
 end
 
@@ -3063,11 +3138,15 @@ function M:blast(x, y, owner, blast, weapon)
 		if not rb.dead then
 			local dmg, vx, vy = self:blast_on(rb, x, y, blast, owner)
 			if dmg then
+				local air = not rb.grounded
 				rb.vx, rb.vy = vx, vy
 				rb.grounded = false
 				rb.knocked = true
 				local by = owner and self.robots[owner]
-				if self:hurt(rb, dmg, by) > 0 and weapon and by ~= rb then self:hit_status(rb, weapon, by) end
+				-- how it was before the blast lifted it (Piume, sim/gear.lua)
+				rb.air_hit = air
+				if self:hurt(rb, dmg, by, nil, weapon) > 0 and weapon and by ~= rb then self:hit_status(rb, weapon, by) end
+				rb.air_hit = nil
 			end
 		end
 	end
@@ -3152,6 +3231,8 @@ function M:start_turn(player)
 	local rb = self.robots[player]
 	rb.turns = rb.turns + 1
 	rb.hooks_spare = rb.stats.extra_hooks
+	-- the Velo of the pieces lasts until your next turn
+	if rb.blink then rb.blink = nil end
 	self:pair_start(rb)
 	-- the shield lasts until the start of the owner's next turn
 	if rb.shield then

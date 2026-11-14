@@ -3,6 +3,7 @@
 # stella dei punti di vantaggio (non più dei turni) e sotto i punti fatti.
 # Barra: Lanciarune 1, Lama 2.
 imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+imposta prova_profilo 1              # la Forgia aperta, due record già fatti
 imposta prova_missione due_mani
 aspetta_stato modo=local turno=1 fase=aim 30
 aspetta 1
@@ -18,3 +19,7 @@ mira 160 60 0.4                      # il Lanciarune sul bot
 aspetta_evento death 8
 aspetta 4
 foto 02_fine_livello                 # la seconda stella: CON 110 PUNTI DI VANTAGGIO
+                                     # e sotto il record dei punti del livello: NUOVO RECORD
+tocca 345 82                         # CAMPAGNA
+aspetta 3
+foto 03_bacheca_record               # sulla carta del livello, in alto a destra: RECORD 115

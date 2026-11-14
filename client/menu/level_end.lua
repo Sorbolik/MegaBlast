@@ -102,6 +102,15 @@ function M.new(o, sound)
 		under = under == "" and record or under .. "  -  " .. record
 	end
 	kit.text(g, kit.upper(under), 86, 400, 13, KC.MUTE, "start", 1.5)
+	-- the level's record of lead points, always and well in sight (Sergio, 14
+	-- Nov): new in fire, otherwise in gold; with all three stars, beat it
+	local best, before = o.record_punti, o.record_prima
+	if best then
+		local new = o.vantaggio and o.vantaggio == best and (not before or o.vantaggio > before)
+		local all = n == count and count == 3
+		local t = new and T.record_new or all and T.record_beat or T.record_points
+		kit.text(g, t:format(best), 86, 440, 24, new and KC.HOT_TOP or KC.STAR, "start", 2)
+	end
 	-- at the bottom left what else you can do, at the right the way on
 	f.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	f.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
