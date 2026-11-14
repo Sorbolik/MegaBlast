@@ -1,0 +1,17 @@
+Image 1 shows twelve icons of the same game interface and is the STYLE to copy exactly: ivory icons (#F4ECE1) with one flat darker shadow (#C9BFB2), thick slightly irregular black ink outline, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 2 shows other pieces of the same interface (stars, medal, crown). Image 3 is a mock-up of the game's menus: in the PLAY ONLINE and EVENTS screens the modes and events have placeholder icons, these emblems replace them.
+
+Draw a sheet with SIX separate emblems, in two rows of three, each one large, roughly square and filling its cell, all ivory with one flat shadow like image 1:
+1. GRAND TOURNAMENT: a crown resting on two crossed pitchforks;
+2. MALLET CHALLENGE: a big blacksmith's mallet with a small flame curling from its head;
+3. NIGHT OF THE CIRCLES: a crescent moon over a spiral pit going down in rings;
+4. GENERIC EVENT: a short banner on a pole with a swallow-tail end;
+5. WEEKLY CHALLENGE: a round shield with three small notches on its rim, like a counter;
+6. TEAM UP: two small devil heads with horns side by side, one slightly in front of the other.
+All six have the same line weight and the same visual size.
+
+Thick black ink outline, cartoon comic style like image 1. Ivory and its one shadow only, no other color, no detail thinner than the outline, so the emblems can be traced into vectors and tinted by the game. No texture, no soft gradients, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The emblems are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+art/WB-047/riferimenti/R3_icone_sezioni.png
+art/WB-029/pezzo_segni_1.png
+art/WB-044/riferimenti/R4_bozze_menu.jpg

@@ -109,4 +109,15 @@ Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
 
 ## Consegna di Codex
 
+Quattro PNG a 1536 × 1024 generati con ImageGen dai prompt integrali. I TXT omonimi riportano prompt e riferimenti nell'ordine allegato.
+
+| File PNG e TXT in art/WB-047/ | Tentativi | Esito |
+|---|---:|---|
+| pezzo_badge_1 | 1 | Sette pezzi, quattro targhette in colonna con centro libero. |
+| pezzo_badge_2 | 1 | Sette pezzi, quattro targhette su due righe con centro libero. |
+| emblemi_eventi_1 | 3 | Selezionato il terzo tentativo. Sei emblemi e tre tacche sullo scudo. |
+| emblemi_eventi_2 | 3 | Selezionato il secondo tentativo. Sei emblemi, tre tacche sullo scudo e meno riflessi sulle teste. |
+
+Ho uniformato il verde di fondo a #00FF00 e controllato a vista separazione, margini e assenza di scritte. Le targhette hanno piccole differenze di sagoma oltre alla fiamma del grado IV. Il segno «sei qui» ha un corpo corto oltre alla punta. Negli emblemi restano riflessi chiari oltre all'avorio e all'ombra. La corrispondenza esatta della tavolozza, il ricalco e la resa nei menu restano da verificare.
+
 ## Resoconto di Claude

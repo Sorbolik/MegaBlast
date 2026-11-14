@@ -1,0 +1,18 @@
+Images 1 and 2 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 to #FFB703, ivory is #F4ECE1, ice is #38B6FF with highlight #CAF0F8. Image 3 is a mock-up of the game's menus: the yellow "BADGE" capsules next to the player's statistics, the crossed old prices in the shop and the highlighted own row of the world ranking are drawn there as plain placeholders, these pieces replace them.
+
+Draw a sheet with SEVEN separate pieces, each one large and filling its cell:
+1. a small badge plaque for grade I: a short plate about three times wider than tall in dull iron (#5A5560, highlight #8A8590), its left end shaped like a small notched ribbon tail, its right end rounded, the middle plain, even and empty;
+2. the same badge plaque for grade II in bronze (#B5673A, highlight #E0975F);
+3. the same badge plaque for grade III in silver (#B9C2CC, highlight #E8EEF3);
+4. the same badge plaque for grade IV in gold (#FFB703, lighter band #FFE08A, darker band #F26419), with a tiny flame tongue rising from its top right corner;
+5. a strike-through mark for an old price: a single short thick ember (#F26419) slash, slightly crooked, tilted upward to the right, with a thick black ink outline;
+6. a "you are here" marker: a chunky ember (#F26419, lighter band #FFB703) arrow head pointing right, short and wide, like a small forged arrow point;
+7. a small round notice star: a five-pointed gold star (#FFB703) with soft rounded points, for something new.
+The four badge plaques have exactly the same shape and size, only the metal changes.
+
+Thick black ink outline on every piece, cartoon comic style, same line weight as images 1-2. Flat colors only, at most five per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+art/WB-022/pezzo_piccoli.png
+art/WB-029/pezzo_segni_1.png
+art/WB-044/riferimenti/R4_bozze_menu.jpg
