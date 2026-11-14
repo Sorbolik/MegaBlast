@@ -118,7 +118,7 @@ M.SIGN_TIERS = { 0, 0.5, 0.75, 1 }
 
 -- Families: for each slot { main, { two secondaries }, minus, signature }; art:
 -- the piece's picture once it is drawn (nil: the placeholder of
--- menu/pieces.lua); color: the family's color on the placeholders. pair: the
+-- menu/armory.lua); color: the family's color on the placeholders. pair: the
 -- bonus of two gold pieces ({ stat, share }); style: the four gold pieces
 -- (new rules, next PR: text only for now).
 M.SETS = {

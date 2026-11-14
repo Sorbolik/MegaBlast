@@ -185,6 +185,7 @@ local function build(s)
 	local p = s.prof
 	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", common.home)
 	s.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(s.head.top_right, 1110, 44).node, 0, 0)
+	coins.vouchers(s.wallet, p.buoni or 0)
 	kit.tabs(s.head.top_left, s.buttons, 300, 28, { { T.tab_inventory, "scheda:inventario" }, { T.tab_seals, "scheda:sigilli" } },
 		s.tab == "sigilli" and 2 or 1, KC.PURPLE, true)
 	-- the left column sticks to the left edge, the stats to the right one, the rest in the middle

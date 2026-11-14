@@ -97,6 +97,21 @@ function M.set(w, scaglie, ossidiana)
 	draw(w)
 end
 
+-- The Smith's vouchers (Figma, 14 Nov: in the wallet from the first one): a
+-- third small plate at the right of the two balances, the voucher sticking out
+-- of its left end; hidden while there are none
+function M.vouchers(w, n)
+	if not w.vouchers then
+		local g = { node = w.root, ox = 1110, oy = 44 }
+		local p = kit.plate(g, 1182, 25, 78, 38, kit.C.ROSE, { sk = 0 })
+		w.vouchers = p
+		kit.piece(p.g, "buono", 1192, 44, 44)
+		w.vouchers_text = kit.text(p.g, "", p.box.x1 - 4, 51, 17, kit.C.HOT, "end")
+	end
+	gui.set_enabled(w.vouchers.node, n > 0)
+	gui.set_text(w.vouchers_text, tostring(n))
+end
+
 -- the pill swells and its border lights up in the coin's color
 local function bump(w, kind)
 	gui.cancel_animations(w.root, "scale")

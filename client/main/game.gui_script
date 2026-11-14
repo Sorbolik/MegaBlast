@@ -586,7 +586,7 @@ local function show_menu(self, without_veil)
 	home.show(self.home, without_veil)
 	home.queued(self.home, self.queue ~= nil)
 	home.wear(self.home, self.profilo)
-	home.wallet(self.home, self.profilo.scaglie, self.profilo.ossidiana)
+	home.wallet(self.home, self.profilo.scaglie, self.profilo.ossidiana, self.profilo.buoni)
 	home.profile(self.home, self.profilo)
 	-- the server's events: the line under EVENTI (and the board, the queue)
 	self.events_t = 0
@@ -603,7 +603,7 @@ local function show_menu(self, without_veil)
 	set_controls_visible(self, false)
 	show_message(self, "", true)
 	self.missione, self.missione_attesa, self.end_t = nil, nil, nil
-	self.vetrine, self.conta, self.from_the_profile = nil, nil, nil
+	self.vetrine, self.conta = nil, nil
 	if self.flag then self.flag:display(nil) end
 	if self.favilla then require("battle.favilla").update(self.favilla, 0, 0, nil, nil) end
 	self.favilla_at = nil
@@ -5534,19 +5534,6 @@ function PAD.on_input(self, action_id, action)
 		elseif type(end_of) == "table" and end_of.rivedi then
 			-- RIVEDI on the podium or in the profile
 			CP.rewatch(self, end_of.rivedi, end_of.da)
-		elseif end_of == "armeria" and self.schermata.mod == menu.profile_tabs then
-			-- the armory from the profile: closing it goes back there
-			CP.slide(self, 1, function()
-				close_screen(self)
-				self.from_the_profile = true
-				open_screen(self, menu.armory, self.profilo, require("lang.text").profile_tabs.your_devil)
-			end)
-		elseif end_of and self.from_the_profile and self.schermata.mod == menu.armory then
-			CP.slide(self, -1, function()
-				close_screen(self)
-				self.from_the_profile = nil
-				CP.open_profile(self, "scheda")
-			end)
 		elseif type(end_of) == "table" and end_of.missione then
 			self.ritorno = "campagna"
 			CP.enter_mission(self, end_of.missione, end_of.da)

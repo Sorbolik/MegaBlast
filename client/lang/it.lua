@@ -362,60 +362,49 @@ return {
 		yes = "sì",
 		no = "no",
 		seconds = "%.1f s",
+		-- the tabs: POTENZIA and BOTTEGA
+		tab_upgrade = "POTENZIA",
+		tab_shop = "BOTTEGA",
+		-- POTENZIA: no piece in the chosen slot
+		nothing_here = "niente qui: prendilo in bottega",
+		-- grade in roman numbers, its name
+		grade = "GRADO %s · %s",
+		level_to = "LIVELLO %d › %d",
+		level_top = "LIVELLO %d · AL MASSIMO",
+		-- the next step: its level, the grade it opens
+		next_step = "PROSSIMO SCATTO: %d · GRADO %s, %s",
+		all_steps = "TUTTI GLI SCATTI FATTI",
+		-- the signature (it lights up at the step 10)
+		sign = "firma: %s",
+		sign_off = "firma dallo scatto 10: %s",
+		-- the other pieces of the slot (the slot in uppercase)
+		others = "GLI ALTRI %s CHE HAI",
+		tap_one = "tocca per sceglierlo",
+		-- BOTTEGA
+		yours = "tuo",
+		offers = "OFFERTE DEL FABBRO",
+		-- the time until midnight
+		change_in = "cambiano tra %s",
+		day = "PEZZI DEL GIORNO",
+		day_line = "%d pezzi · cambiano domani",
+		use_voucher = "USA UN BUONO",
+		you_have = "ne hai %d",
 	},
 
 
-	-- menu/pieces.lua and ui/step_scene.lua: the pieces' levels in Scaglie
+	-- menu/armory.lua and ui/step_scene.lua: the pieces' levels in Scaglie
 	pieces = {
-		empty = "nessuno",
-		-- no piece in the chosen slot (the slot in lowercase)
-		choose = "scegli qui sotto cosa indossare: %s",
-		-- slot and set: "ELMO · CORVO"
-		piece = "%s · %s",
-		of_max = "%d / %d",
-		-- grade in roman numbers, its name
-		grade = "grado %s · %s",
 		grades = { "bronzo", "argento", "oro", "brace" },
 		at_max = "AL MASSIMO",
-		next_level = "LIVELLO %d",
-		next_step = "SCATTO %d · GRADO %s, %s",
-		-- the Proof of a step: matches played wearing the piece
-		proof_name = "PROVA",
 		proof = "%d / %d partite col pezzo addosso",
 		proof_first = "prima la prova",
-		-- on the action: the price and the level it buys
-		price = "%s SCAGLIE · LIVELLO %d",
 		upgrade = "POTENZIA",
 		missing = "mancano %s",
-		-- the Smith's hand, with the full price
-		smith_name = "MANO DEL FABBRO",
-		smith_hand = "costa il 30%% in meno (era %s)",
-		-- the family: its name and its bonus with two gold pieces
-		family = "%s · 2 pezzi d'oro: %s",
-		-- the piece's signature: its name, what it does (it lights up at the step 10)
-		sign = "firma · %s: %s",
-		sign_off = "firma dallo scatto 10 · %s: %s",
-		others = "INDOSSA",
-		set_level = "%s · %d",
-		none_owned = "nessun pezzo qui: prendilo in bottega o nel catalogo",
-		-- the tabs of the armory
-		tab_wardrobe = "ARMADIO",
-		tab_shop = "BOTTEGA",
-		tab_catalog = "CATALOGO",
-		shop_today = "i pezzi di oggi, uno per posto: domani cambiano",
-		all_owned = "li hai tutti",
-		-- a piece of the catalog you own: the slot and its level
-		owned = "%s · TUO, %d",
 		pick_ware = "tocca un pezzo",
-		-- the chosen ware's effects at level 1
-		at_level_1 = "al livello 1: %s",
-		in_wardrobe = "è già nell'armadio",
+		in_wardrobe = "ce l'hai già",
 		buy = "COMPRA",
 		price_only = "%s SCAGLIE",
-		-- the Smith's vouchers: a piece of your choice for free
-		vouchers = "buoni del Fabbro: %d",
-		voucher_hint = " · un pezzo a scelta dal catalogo",
-		use_voucher = "USA UN BUONO",
+		price_unit = "SCAGLIE",
 		step_title = "SCATTO!",
 		step_new = "NUOVO",
 		-- the grade in roman numbers, its name

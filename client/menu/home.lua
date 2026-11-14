@@ -20,7 +20,7 @@
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "eventi",
 --                                                        -- "armeria", "zaino" (the apprentice), "profilo" (the
 --                                                        -- round), "impostazioni", ("local": scenarios only) or nil
---   home.wallet(h, scaglie, ossidiana)          -- the balance at the top right
+--   home.wallet(h, scaglie, ossidiana, buoni)   -- the balance at the top right
 --   home.events(h, riga)                        -- the line under EVENTI
 --   home.profile(h, profilo)                    -- level, experience, the chapter on CAMPAGNA
 --   home.queued(h, on)                          -- in the online queue (ui/pill.lua): GIOCA stays GIOCA and
@@ -302,8 +302,9 @@ function M.hide(h)
 end
 
 -- The balance in the wallet (menu/wallet.lua)
-function M.wallet(h, scaglie, ossidiana)
+function M.wallet(h, scaglie, ossidiana, buoni)
 	coins.set(h.wallet, scaglie, ossidiana)
+	coins.vouchers(h.wallet, buoni or 0)
 end
 
 -- The line under EVENTI (main/events.lua, home_line)
