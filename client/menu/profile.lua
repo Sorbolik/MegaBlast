@@ -201,6 +201,17 @@ function M.record(p, r)
 	return play_match
 end
 
+-- Only in the scenarios (imposta prova_vuoto 1 base, 2 forged at gold,
+-- scenari/vuoto_indossato.txt): the active loadout wears the four pieces of the Void
+function M.sample_void(p, form)
+	if (form or 0) <= 0 then return end
+	local a = p.loadouts[p.is_active]
+	a.gear = { mask = "vuoto", chest = "vuoto", cloak = "vuoto", legs = "vuoto" }
+	for _, slot in ipairs({ "mask", "chest", "cloak", "legs" }) do
+		p.pezzi["vuoto_" .. slot] = form == 2 and 20 or 1
+	end
+end
+
 -- Only in the scenarios (imposta prova_profilo 1, scenari/scheda.txt): a
 -- profile that has already played, to see pieces, powers, badges, stats and
 -- the campaign's stars

@@ -47,7 +47,7 @@ function M.new(slot_name, set_name, level, on_blow, color)
 	sc.piece = gui.new_box_node(vec(FEET_X, FEET_Y - 60), vec(0, 0))
 	gui.set_visible(sc.piece, false)
 	gui.set_parent(sc.piece, sc.root)
-	sc.figure = scoria.new(color or ui.C.SQUADRA[1], scoria.PERSONAGGIO)
+	sc.figure = scoria.new(color or ui.C.SQUADRA[1], scoria.player)
 	sc.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	scoria.update(sc.figure, 0, sc.st)
 	local k = 300 / game.DISEGNO_H

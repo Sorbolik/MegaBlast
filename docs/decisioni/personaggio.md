@@ -168,3 +168,5 @@ rifatte).
 14 nov, spalline (Sergio): le corazze avranno le spalline, sopra la spalla di ogni braccio (pezzi sopra `braccio` e `braccio_dietro`, anche nelle braccia col pugno). Si parte da quelle del Vuoto (WB-042, sulle bende di WB-041); poi si ripensano le altre famiglie perché le spalline abbiano senso in tutte le armature.
 
 14 nov, WB-042 (Claude): le spalline stanno nella pelle della corazza, non in una categoria nuova: indossi la corazza e hai le spalline. Sono pezzi `sopra` alle braccia, ritagliati come il resto (stessa scala del braccio di riferimento).
+
+14 nov, pezzi indossati (Sergio: «se indosso il set del vuoto non mi vedo i pezzi addosso»): i pezzi dell'equipaggiamento attivo si vedono sul diavoletto di chi gioca, nei menu (home, scheda, scelta, fine livello) e nelle battaglie senza rete; i bot e l'online restano il personaggio di tutti. Solo le famiglie già disegnate (per ora il Vuoto: elmo, corazza con le spalline, stivali, mantello); le altre lasciano l'apprendista com'è. Un pezzo si vede forgiato dall'oro, livello 20 (Sergio).
