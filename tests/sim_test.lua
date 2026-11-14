@@ -2126,7 +2126,9 @@ local function slope_gap()
 	return r.y - slope(r.x), r.grounded
 end
 local gap_round, gr = slope_gap()
-check(gr and gap_round < game.ROBOT_HALF_W * 0.6, string.format("capsule: at the centre it's as far above the slope as the edge of the circle (%.1f px)", gap_round))
+-- a circle on 45 degrees stays (sqrt 2 - 1) of its radius above, plus at most a
+-- terrain cell; a rectangle would stay a whole half width above
+check(gr and gap_round < math.min(game.ROBOT_HALF_W * 0.42 + game.CELL, game.ROBOT_HALF_W), string.format("capsule: at the centre it's as far above the slope as the edge of the circle (%.1f px)", gap_round))
 
 -- Short jump: releasing the button at once rises much less
 local function jump_top(hold_ticks)

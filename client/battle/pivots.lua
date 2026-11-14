@@ -3,11 +3,12 @@
 -- the skeleton (battle/devil.lua). The slot's pieces, base and skins, move the
 -- opposite way: still, they stay where they are.
 return {
-	busto = { 11, -22.5 },
-	testa = { 19, -2.6 },
-	braccio = { 12.1, 2.8 },
-	braccio_dietro = { 10, 0.2 },
-	gamba = { 10.3, -1.5 },
-	gamba_dietro = { -5.6, -2.1 },
-	coda = { -5.4, 3.2 },
+	busto = { 8.6, -36.9 },
+	testa = { 18.9, -7.6 },
+	braccio = { 10, 1.1 },
+	braccio_dietro = { 6.8, 0.4 },
+	gamba = { 8, -5 },
+	gamba_dietro = { -4.2, -2.6 },
+	ala = { -0.9, -7.7 },
+	coda = { -3.9, 3.9 },
 }

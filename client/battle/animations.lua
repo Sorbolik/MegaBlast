@@ -43,7 +43,7 @@ return {
 			mostra_gamba_a = { 0, 1, 2 },
 			mostra_manina_d = { 0, 0, 2 },
 		},
-		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "testa", "gamba_a", "arma", "braccio_a", "manina_a" },
+		layers = { "ala", "coda", "braccio_d", "manina_d", "gamba_d", "busto", "testa", "gamba_a", "arma", "braccio_a", "manina_a", "fiamma" },
 	},
 	corsa = { duration = 0.6, loop = true,
 		tracks = {
