@@ -1,0 +1,14 @@
+Image 1 is a sheet of nine heads of our character. Image 2 is the chosen armour set "Void" (right: FORGED form). Image 3 is image 1 with the basic hood already drawn on the first head.
+
+Return image 3 again, the SAME sheet with every head exactly where it is and the same pixels, and change only the hood on the first head: make it the FORGED hood of image 2, with the same outline and the same openings as in image 3, plus the cyan eye emblem on the front of the hood and a thin pure cyan #00FFFF trim along its edge around the face. Nothing else on the sheet changes. No horns, no flame.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Cloth indigo #2B2147 with folds #1A1430, thick closed black #000000 outline, cyan #00FFFF trims, white #FFFFFF and black only inside the eye emblem.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+R2: art/WB-041/riferimenti/R2_teste_senza_corna.png
+R3: art/WB-019/scelti/vuoto.png
+Base: art/WB-041/cappuccio_base_2.png
