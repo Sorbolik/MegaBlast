@@ -1,0 +1,20 @@
+Images 1 and 2 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 to #FFB703, ivory is #F4ECE1, ice is #38B6FF with highlight #CAF0F8. Image 3 is a mock-up of the game's menus: in the EVENTI screen (bottom left) the podium of the world ranking is drawn as plain placeholder boxes, these pieces replace it.
+
+Draw a sheet with FIVE separate pieces, each one large:
+1. the FIRST place pedestal: a tall forged block, a bit taller than wide, gold (#FFB703) top cap with a lighter band (#FFE08A), the front face dark iron (#2B2530) with a thin gold edge, the front face plain, even and empty (a number goes there), a few rivets only along the top cap;
+2. the SECOND place pedestal: the same block a bit shorter, silver steel cap (#C9CED6, lighter band #F1F3F6, darker band #8C929C), dark iron front face with a thin silver edge, empty;
+3. the THIRD place pedestal: the same block shorter still, bronze cap (#C67A3A, lighter band #E5A266, darker band #8A4E22), dark iron front face with a thin bronze edge, empty;
+4. a round portrait frame: a thick slightly crooked ring of silver steel (#C9CED6, highlight #F1F3F6, shadow #8C929C) with four small rivets, the inside a flat dark disc (#141116), completely empty;
+5. the same portrait frame in bronze (#C67A3A, highlight #E5A266, shadow #8A4E22), the inside empty.
+
+The three pedestals have the same width and the same front-face design: only the height and the cap color change, and the front face is plain in the middle so it can be stretched upward.
+
+Thick black ink outline on every piece, cartoon comic style, same line weight as images 1-2. Flat colors only, at most five per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti (in ordine)
+R1: art/WB-022/pezzo_piccoli.png
+R3: art/WB-022/pezzo_pannello.png
+R4: art/WB-044/riferimenti/R4_bozze_menu.jpg
+
+Verifica
+Tre gradini e due cornici. Le larghezze dei gradini variano leggermente. PNG 1672 × 941 px. Sfondo visivamente uniforme, con variazioni rispetto al valore RGB esatto richiesto.

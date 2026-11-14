@@ -192,4 +192,33 @@ Reversibile (solo immagini nuove in un ramo): approvata da Claude su richiesta d
 
 ## Consegna di Codex
 
+### 2026-11-14
+
+Dieci fogli originali generati con imagegen da `main` (`e1fcc2bb`).
+Ogni nome indica una coppia PNG/TXT in `art/WB-044/`, con prompt
+integrale, riferimenti nell'ordine prescritto e note di verifica.
+
+| Foglio | Tentativi | Scelto | Dimensioni |
+|---|---:|---:|---|
+| `pezzo_caselle_1` | 3 | 1 | 1774 × 887 |
+| `pezzo_caselle_2` | 3 | 3 | 1774 × 887 |
+| `pezzo_righe_1` | 3 | 2 | 1672 × 941 |
+| `pezzo_righe_2` | 2 | 2 | 1536 × 1024 |
+| `pezzo_podio_1` | 3 | 3 | 1672 × 941 |
+| `pezzo_podio_2` | 3 | 2 | 1672 × 941 |
+| `pezzo_finestra_1` | 2 | 2 | 1536 × 1024 |
+| `pezzo_finestra_2` | 2 | 1 | 1536 × 1024 |
+| `icone_sezioni_1` | 3 | 2 | 1448 × 1086 |
+| `icone_sezioni_2` | 3 | 1 | 1448 × 1086 |
+
+Ho verificato il numero di elementi, la separazione e i margini, i
+contorni scuri, gli interni vuoti dove richiesto e l'assenza di scritte
+e numeri. Le dodici icone per foglio si distinguono in una prova a
+32 px. Alcune hanno un riflesso chiaro oltre all'ombra. Le sagome
+abbinate, le proporzioni e i bordi da allungare presentano piccole
+variazioni. I fondi appaiono uniformi, con valori RGB diversi dal
+verde e dal magenta puri. Sette fogli hanno formato diverso dal
+1536 × 1024 richiesto. Ho conservato i PNG originali del generatore.
+Ricalco, allungamento e resa nei menu restano da verificare.
+
 ## Resoconto di Claude

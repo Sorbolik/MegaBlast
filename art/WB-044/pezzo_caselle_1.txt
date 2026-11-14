@@ -1,0 +1,21 @@
+Images 1 and 2 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 to #FFB703, ivory is #F4ECE1, ice is #38B6FF with highlight #CAF0F8. Image 3 is a mock-up of the game's menus: the squares of the inventory, the small level discs on their corner, the check mark on worn pieces and the discount tags are drawn there as plain placeholders, these pieces replace them.
+
+Draw a sheet with EIGHT separate pieces, in two rows of four, each one large and filling its cell:
+1. a square inventory slot frame: a thick square ring of dark iron (#2B2530) with soft slightly crooked corners, a thin flat highlight (#6B6375) on the top edge, a small rivet in each corner; the inside is a flat darker square (#141116), completely empty. The four sides are plain and even, so the frame can be stretched.
+2. the same slot frame, SELECTED: same shape, the ring in ember (#F26419 with a lighter band #FFB703 on top), the inside the same flat dark square, empty.
+3. the same slot frame, EMPTY SLOT: same shape, the ring in a duller iron (#3A3540) without rivets, the inside a flat #1C181F, empty; it must look quiet.
+4. a small round level disc: a chunky dark iron coin (#2B2530, highlight #6B6375), the middle flat and empty for a number.
+5. the same level disc in gold (#FFB703, lighter band #FFE08A, darker band #F26419), the middle flat and empty.
+6. a round check badge: a gold disc (#FFB703) with a chunky dark (#141116) check mark shape in the middle.
+7. a discount tag: a short ember ribbon (#F26419, lighter band #FFB703) about three times wider than tall, the right end cut like a swallow tail, a small hole with a rivet at the left end, the middle plain and empty for a number.
+8. a small faceted gem, ivory (#F4ECE1) with two flat facet shadows (#C9BFB2), shaped like a short rounded diamond.
+
+Thick black ink outline on every piece, cartoon comic style, same line weight as images 1-2. Flat colors only, at most five per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti (in ordine)
+R1: art/WB-022/pezzo_piccoli.png
+R3: art/WB-022/pezzo_pannello.png
+R4: art/WB-044/riferimenti/R4_bozze_menu.jpg
+
+Verifica
+Otto pezzi. I dischi sono più grandi delle dimensioni relative suggerite. PNG 1774 × 887 px. Sfondo visivamente uniforme, con variazioni rispetto al valore RGB esatto richiesto.

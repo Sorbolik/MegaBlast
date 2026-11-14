@@ -1,0 +1,18 @@
+Images 1 and 2 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 to #FFB703, ivory is #F4ECE1, ice is #38B6FF with highlight #CAF0F8. Image 3 is a mock-up of the game's menus; the game also needs a pop-up window (to confirm a purchase, to show a piece, to show a reward), drawn in the same style.
+
+Draw a sheet with FIVE separate pieces, each one large:
+1. a pop-up window frame, about one and a half times wider than tall: a thick dark iron border (#2B2530, highlight #6B6375 on the top edge) with soft slightly crooked corners, a forged corner bracket with one rivet in each of the four corners, the inside a flat dark area (#1C181F), completely empty. The four sides between the corner brackets are plain and even, so the window can be stretched in both directions.
+2. a title ribbon that sits on the top edge of the window: an ember banner (#F26419, lighter band #FFB703) about five times wider than tall, both ends folded back with a darker fold (#B8440F) and cut like a swallow tail, the middle plain, even and empty.
+3. a round close button: a dark iron disc (#2B2530, highlight #6B6375) with a chunky ivory (#F4ECE1) X shape in the middle.
+4. a speech bubble for hints: an ivory plate (#F4ECE1, shadow band #C9BFB2) about three times wider than tall, soft crooked corners, with a short chunky pointer at the bottom left; the middle plain and empty.
+5. a small round notice dot: a red disc (#FF3B4E) with a flat lighter spot (#FF8A96) on the upper left, the middle empty for a number.
+
+Thick black ink outline on every piece, cartoon comic style, same line weight as images 1-2. Flat colors only, at most five per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti (in ordine)
+R1: art/WB-022/pezzo_piccoli.png
+R3: art/WB-022/pezzo_pannello.png
+R4: art/WB-044/riferimenti/R4_bozze_menu.jpg
+
+Verifica
+Cinque pezzi. Il nastro è più corto rispetto alla finestra di quanto suggerisce la composizione. PNG 1536 × 1024 px. Sfondo visivamente uniforme, con variazioni rispetto al valore RGB esatto richiesto.

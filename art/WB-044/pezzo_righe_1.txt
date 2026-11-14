@@ -1,0 +1,21 @@
+Images 1 and 2 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 to #FFB703, ivory is #F4ECE1, ice is #38B6FF with highlight #CAF0F8. Image 3 is a mock-up of the game's menus: the rows of the world ranking and of the match history, the queue pill at the bottom of the home, the name tag above the little devil's head and the lines that point to his body are drawn there as plain placeholders, these pieces replace them.
+
+Draw a sheet with EIGHT separate pieces, each one large:
+1. a long table row strip, about eight times wider than tall: a flat dark iron plate (#2B2530) with soft slightly crooked rounded ends, a thin flat highlight (#6B6375) along the top edge, the middle plain, even and empty so it can be stretched;
+2. the same row strip in gold, for the player's own row: #FFB703 with a lighter band (#FFE08A) on top and a darker band (#F26419) at the bottom, plain and empty;
+3. a short vertical edge tab in ember (#F26419, lighter band #FFB703), as tall as the row strip and about a fifth as wide, rounded on the left side and straight on the right side (it is glued to the left end of a row to mark a victory);
+4. the same edge tab in ice (#38B6FF, highlight #CAF0F8), its left side slightly angular like chipped ice (it marks a defeat);
+5. a capsule pill, about five times wider than tall: dark iron (#2B2530) with fully rounded ends, a thin highlight on top, a small round ember dot (#F26419) near the left end, the rest plain and empty;
+6. a name plate: an ivory (#F4ECE1) plate about four times wider than tall, soft slightly crooked corners, one flat shadow band (#C9BFB2) at the bottom, the middle plain and empty;
+7. the small pointer that hangs under that name plate: a short chunky ivory triangle pointing down, with the same shadow, its top edge flat so it can sit under the plate;
+8. a round iron rivet head, dark iron (#2B2530) with a small flat highlight (#6B6375), the end of a pointing line.
+
+Thick black ink outline on every piece, cartoon comic style, same line weight as images 1-2. Flat colors only, at most five per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti (in ordine)
+R1: art/WB-022/pezzo_piccoli.png
+R3: art/WB-022/pezzo_pannello.png
+R4: art/WB-044/riferimenti/R4_bozze_menu.jpg
+
+Verifica
+Otto pezzi. Le righe e la pillola sono più allungate delle proporzioni indicate. PNG 1672 × 941 px. Sfondo visivamente uniforme, con variazioni rispetto al valore RGB esatto richiesto.

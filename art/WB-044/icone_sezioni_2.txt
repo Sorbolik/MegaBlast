@@ -1,0 +1,25 @@
+Image 1 shows small icons of our game interface (star, medal, crown, gear) and is the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 2 shows more pieces of the same interface. Image 3 is a mock-up of the game's menus: the tabs, the play modes and the buttons need these icons.
+
+Draw an ICON SHEET of TWELVE separate icons, in a grid of 4 columns and 3 rows, each one large and centered in its cell. Every icon is a single bold silhouette in ivory (#F4ECE1) with ONE flat darker shadow shape (#C9BFB2) and a thick black outline, so the game can tint it; no other colors. Left to right, top to bottom:
+1. INVENTORY: a small treasure chest with the lid open;
+2. SEALS: a round wax seal stamp with a flame embossed on it;
+3. UPGRADE: a smith's hammer with a chunky upward arrow behind it;
+4. SHOP: a small market stall with a striped awning;
+5. STATISTICS: three chunky bars of growing height on a short base;
+6. MATCH HISTORY: an hourglass;
+7. CALENDAR: a calendar page with two rings on top and a grid of four blank squares;
+8. RANKING: a trophy cup with two handles;
+9. TWO VERSUS TWO: two little horned devil heads side by side, seen from the front, simple silhouettes;
+10. PRIVATE ROOM: a big old key;
+11. REPLAY: a round button with a chunky play triangle inside;
+12. CLOCK: a round clock face with two hands.
+
+All twelve icons with the same line weight, the same size feeling and the same simple level of detail: they will be shown as small as 32 pixels and as big as 256 pixels, so no detail thinner than the outline. Flat colors only, no texture, no soft gradients, no glow, no drop shadow. No text, letters or numbers. Flat pure magenta background (#FF00FF), with wide magenta gaps between the icons, none touching, none cut by the border of the picture.
+
+Riferimenti (in ordine)
+R2: art/WB-029/pezzo_segni_1.png
+R1: art/WB-022/pezzo_piccoli.png
+R4: art/WB-044/riferimenti/R4_bozze_menu.jpg
+
+Verifica
+Dodici icone. Alcune hanno un riflesso chiaro oltre all’ombra piatta. PNG 1448 × 1086 px. Sfondo visivamente uniforme, con variazioni rispetto al valore RGB esatto richiesto.
