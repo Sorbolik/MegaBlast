@@ -278,6 +278,30 @@ images {
   image: "/assets/skins/corazza_vuoto_forgiato_busto.png"
 }
 images {
+  image: "/assets/skins/corazza_vuoto_forgiato_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/corazza_vuoto_forgiato_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/corazza_vuoto_forgiato_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/corazza_vuoto_forgiato_spallina_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/corazza_vuoto_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/corazza_vuoto_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/corazza_vuoto_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/corazza_vuoto_spallina_braccio_dietro_2.png"
+}
+images {
   image: "/assets/skins/corna_apprendista_testa.png"
 }
 images {

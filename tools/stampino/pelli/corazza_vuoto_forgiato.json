@@ -17,6 +17,54 @@
    "w": 89.0,
    "h": 92.0,
    "modo": "sostituisce"
+  },
+  "braccio": {
+   "img": "corazza_vuoto_forgiato_spallina_braccio_1",
+   "x": 7.1,
+   "y": 4.6,
+   "w": 45.5,
+   "h": 38.9,
+   "modo": "sopra"
+  },
+  "braccio_1": {
+   "img": "corazza_vuoto_forgiato_spallina_braccio_1",
+   "x": 6.6,
+   "y": 1.9,
+   "w": 41.0,
+   "h": 35.1,
+   "modo": "sopra"
+  },
+  "braccio_dietro": {
+   "img": "corazza_vuoto_forgiato_spallina_braccio_dietro_1",
+   "x": 3.8,
+   "y": 2.3,
+   "w": 42.8,
+   "h": 37.5,
+   "modo": "sopra"
+  },
+  "braccio_dietro_1": {
+   "img": "corazza_vuoto_forgiato_spallina_braccio_dietro_1",
+   "x": 3.8,
+   "y": 2.5,
+   "w": 43.2,
+   "h": 37.9,
+   "modo": "sopra"
+  },
+  "braccio_2": {
+   "img": "corazza_vuoto_forgiato_spallina_braccio_2",
+   "x": 2.2,
+   "y": 0.1,
+   "w": 29.1,
+   "h": 24.1,
+   "modo": "sopra"
+  },
+  "braccio_dietro_2": {
+   "img": "corazza_vuoto_forgiato_spallina_braccio_dietro_2",
+   "x": 1.1,
+   "y": 0.9,
+   "w": 30.4,
+   "h": 26.1,
+   "modo": "sopra"
   }
  }
 }
