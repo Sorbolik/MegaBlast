@@ -3,6 +3,7 @@
 - **Stato:** PROPOSTA (poi APPROVATA, GENERATA, IMPLEMENTATA, VERIFICATA, oppure SCARTATA)
 - **Data:** AAAA-MM-GG
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-xxx`
+- **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-xxx` senza chiedere conferma (il repository è privato).
 
 ## Obiettivo
 

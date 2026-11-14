@@ -2362,7 +2362,7 @@ $("file").onchange = async () => {
 	} catch (e) { messaggio("Non riesco a leggere " + f.name + ": " + e.message); }
 	$("file").value = "";
 };
-// "Manda a Claude": su claude.ai nel database della pagina (documenti
+// "Manda a Claude" (quello in alto manda tutto quello che è cambiato): su claude.ai nel database della pagina (documenti
 // animazioni/ultima, animazioni_favilla/ultima, corpo/ultima, perni/ultima, impugnature/ultima,
 // ritocchi/ultima, mantello/ultima; le richieste
 // degli strumenti in richieste/<nome>); su Cloudflare
@@ -2398,8 +2398,16 @@ $("claude").onclick = async () => {
 		if (pl !== PERNI_DEL_GIOCO) { await manda("perni", pl, quando); perniSalvati = pl; }
 		const prl = preseInLua(pr);
 		if (prl !== PRESE_DEL_GIOCO) { await manda("impugnature", prl, quando); preseSalvate = prl; }
+		// un solo pulsante manda tutto: anche i ritocchi dei pezzi e il mantello,
+		// se ci sono, così il gioco diventa uguale a quello che si vede qui
+		const conRitocchi = Object.keys(ritocchi).length > 0;
+		if (conRitocchi) await manda("ritocchi", ritocchiInJson(), quando);
+		const ml = mantelloInLua(mt);
+		const conMantello = ml !== MT_DEL_GIOCO;
+		if (conMantello) { await manda("mantello", ml, quando); mtSalvato = ml; mtCambiato(); }
 		aggiorna();
-		const anche = [cl !== CORPO_DEL_GIOCO && "hitbox", pl !== PERNI_DEL_GIOCO && "perni", prl !== PRESE_DEL_GIOCO && "impugnature"].filter(Boolean);
+		const anche = [cl !== CORPO_DEL_GIOCO && "hitbox", pl !== PERNI_DEL_GIOCO && "perni", prl !== PRESE_DEL_GIOCO && "impugnature",
+			conRitocchi && "ritocchi dei pezzi", conMantello && "mantello"].filter(Boolean);
 		messaggio("Mandate le animazioni (" + fNome + ")" + (anche.length ? " con " + anche.join(", ").replace(/, ([^,]*)$/, " e $1") : "") + ": di' a Claude di prenderle dall'editor.");
 	} catch (e) { messaggio("Non sono riuscito a mandarle: " + ((e && e.message) || "errore") + ". Usa Copia il testo."); }
 };

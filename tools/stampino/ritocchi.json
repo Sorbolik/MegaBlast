@@ -1,0 +1,296 @@
+[
+ {
+  "pelle": "apprendista",
+  "posto": "braccio",
+  "x": 1.8,
+  "y": -23.9,
+  "w": 36.2,
+  "h": 74.8
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "braccio_dietro",
+  "x": 1.7,
+  "y": -25.9,
+  "w": 29.7,
+  "h": 72.4
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "busto",
+  "x": 0,
+  "y": 10.7,
+  "w": 83.3,
+  "h": 91.8
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "coda",
+  "coda": [
+   19.3,
+   23.8,
+   20.2,
+   22.3,
+   26.9
+  ],
+  "radice": [
+   0,
+   0
+  ]
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "fiamma",
+  "x": 0,
+  "y": 27,
+  "w": 23,
+  "h": 32.4
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "gamba",
+  "x": 4.7,
+  "y": -30.7,
+  "w": 64.2,
+  "h": 89.4
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "gamba_dietro",
+  "x": 4.8,
+  "y": -30,
+  "w": 65.7,
+  "h": 87.2
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "testa",
+  "x": 7.4,
+  "y": 46.5,
+  "w": 131.5,
+  "h": 116.3
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "testa_arrabbiata",
+  "x": 7.2,
+  "y": 46.5,
+  "w": 128.9,
+  "h": 116.3
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "testa_colpita",
+  "x": 7.2,
+  "y": 46.5,
+  "w": 129.6,
+  "h": 116.3
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "testa_felice",
+  "x": 7.3,
+  "y": 46.5,
+  "w": 131,
+  "h": 116.3
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "testa_ko",
+  "x": 7.2,
+  "y": 46.5,
+  "w": 128.9,
+  "h": 116.3
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "testa_mira",
+  "x": 7.2,
+  "y": 46.5,
+  "w": 129.6,
+  "h": 116.3
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "testa_paura",
+  "x": 7.2,
+  "y": 46.5,
+  "w": 128.9,
+  "h": 116.3
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "testa_provocazione",
+  "x": 7.4,
+  "y": 46.5,
+  "w": 131.8,
+  "h": 116.3
+ },
+ {
+  "pelle": "apprendista",
+  "posto": "testa_sconfitta",
+  "x": 7.3,
+  "y": 46.5,
+  "w": 130.2,
+  "h": 116.3
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "braccio",
+  "x": 1.8,
+  "y": -23.4,
+  "w": 37.1,
+  "h": 72.9
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "braccio_dietro",
+  "x": 1.6,
+  "y": -25.7,
+  "w": 30,
+  "h": 71.6
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "busto",
+  "x": 0.1,
+  "y": 10.2,
+  "w": 91.6,
+  "h": 93.4
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "coda",
+  "coda": [
+   12.6,
+   16.7,
+   13.9,
+   14.9,
+   18.6
+  ],
+  "radice": [
+   0,
+   0
+  ]
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "fiamma",
+  "x": 0,
+  "y": 27,
+  "w": 20.7,
+  "h": 29.2
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "gamba",
+  "x": 4.5,
+  "y": -30.8,
+  "w": 58,
+  "h": 81.5
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "gamba_dietro",
+  "x": 4.7,
+  "y": -29.9,
+  "w": 60,
+  "h": 78.9
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "testa",
+  "x": 7.2,
+  "y": 47.1,
+  "w": 113.2,
+  "h": 102.5
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "testa_arrabbiata",
+  "x": 7.2,
+  "y": 47.1,
+  "w": 112.9,
+  "h": 102.5
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "testa_colpita",
+  "x": 7.2,
+  "y": 47.1,
+  "w": 113.2,
+  "h": 102.5
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "testa_felice",
+  "x": 7.2,
+  "y": 47.1,
+  "w": 112.5,
+  "h": 102.5
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "testa_ko",
+  "x": 7.2,
+  "y": 47.1,
+  "w": 113.6,
+  "h": 102.5
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "testa_mira",
+  "x": 7.2,
+  "y": 47.1,
+  "w": 113.6,
+  "h": 102.5
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "testa_paura",
+  "x": 7.2,
+  "y": 47.1,
+  "w": 112.9,
+  "h": 102.5
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "testa_provocazione",
+  "x": 7.2,
+  "y": 47.1,
+  "w": 113.2,
+  "h": 102.5
+ },
+ {
+  "pelle": "apprendista_nuovo",
+  "posto": "testa_sconfitta",
+  "x": 7.1,
+  "y": 47.1,
+  "w": 112,
+  "h": 102.5
+ },
+ {
+  "pelle": "favilla",
+  "posto": "coda",
+  "coda": [
+   14.7,
+   24.3,
+   18.8,
+   18,
+   22.7
+  ],
+  "radice": [
+   0,
+   0
+  ]
+ },
+ {
+  "pelle": "favilla",
+  "posto": "pugno",
+  "x": 0,
+  "y": 0,
+  "w": 28.3,
+  "h": 25.2,
+  "specchio": true
+ }
+]
