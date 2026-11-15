@@ -413,7 +413,8 @@ end
 
 -- How wide a text node is, in pixels
 function M.width(n)
-	local m = resource.get_text_metrics(gui.get_font_resource(gui.get_font(n)), gui.get_text(n))
+	-- with its letter spacing, or a spaced text would go past its room
+	local m = resource.get_text_metrics(gui.get_font_resource(gui.get_font(n)), gui.get_text(n), { tracking = gui.get_tracking(n) })
 	return m.width * gui.get_scale(n).x
 end
 

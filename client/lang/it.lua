@@ -499,14 +499,19 @@ return {
 	-- menu/queue.lua: GIOCA ONLINE, the queues online
 	queue = {
 		title = "GIOCA ONLINE",
-		online = "IN RETE",
-		search = "CERCA",
-		usual_match = "LA PARTITA DI SEMPRE",
-		also_counts = "CONTA ANCHE PER: %s",
-		event = "EVENTO · %s",
-		private = "PARTITA PRIVATA",
-		private_line = "Una stanza con un codice: amici e bot dove vuoi tu",
+		usual_match = "La modalità di sempre",
+		also_counts = "conta anche per: %s",
+		-- a running event: when it ends
+		event = "evento · %s",
+		own_queue = "coda sua",
+		counts_in = "conta nel %s",
+		no_event = "Nessun evento in corso",
+		-- the next event: when it starts, its name
+		coming = "%s · %s",
+		private = "STANZA PRIVATA",
+		private_line = "Gioca con gli amici, con un codice",
 	},
+
 
 	-- menu/private.lua: the private match (from GIOCA ONLINE)
 	private = {

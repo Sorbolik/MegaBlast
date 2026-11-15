@@ -1,40 +1,22 @@
-# Gli eventi (server/events.go, menu/board.lua, menu/queue.lua) contro un
-# server vero col calendario scenari/eventi_prova.json: in corso un
-# modificatore con la coda sua (2v2 solo Maglio) e un Torneo sulla coda 2v2,
-# in arrivo una Sfida e gli XP doppi. EVENTI (sinistra, sopra ARMERIA): la
-# bacheca con ORA e PROSSIMI, il dettaglio del Maglio e del Torneo (tetto ai
-# livelli), poi GIOCA nella home:
-# DOVE GIOCHI? con il 2v2 (conta anche per il Torneo) e la carta del Maglio.
-# Nella coda del Maglio la scelta offre solo Pugno e Maglio. Tocchi attaccati ai
-# bordi e al centro: si prova anche con --schermo 1600x720 e 960x720.
+# Gli eventi online (server/events.go, menu/queue.lua) contro un server vero col
+# calendario scenari/eventi_prova.json: in corso un modificatore con la coda sua
+# (2v2 solo Maglio) e un Torneo sulla coda 2v2. GIOCA nella home apre GIOCA ONLINE
+# col 2 contro 2 (conta anche per il Torneo) e la carta del Maglio; nella coda del
+# Maglio la scelta offre solo Pugno e Maglio. La schermata EVENTI ha il suo scenario
+# (eventi_nuovi.txt). Tocchi attaccati ai bordi: si prova anche con --schermo
+# 1600x720 e 960x720.
 imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server evento:maglio 3 eventi_prova.json
-aspetta 1
-tocca_bordo 246 470 mezzo destra  # EVENTI
-aspetta 1.5
-foto 01_bacheca
-tocca_bordo 630 222 alto centro     # la prima carta in corso: il Maglio
-aspetta 0.5
-foto 02_dettaglio
-tocca_bordo 36 60 basso sinistra    # indietro: la bacheca
-aspetta 0.5
-tocca_bordo 644 346 alto centro     # la seconda carta: il Torneo, col tetto ai livelli
-aspetta 0.5
-foto 02_torneo
-tocca_bordo 36 60 basso sinistra    # indietro: la bacheca
-aspetta 0.5
-tocca_bordo 36 60 basso sinistra    # indietro: la home (rilegge gli eventi)
-aspetta_stato modo=menu 3
-aspetta 1
+aspetta 2
 foto 03_home
-tocca_bordo 175 52 basso destra    # GIOCA
+tocca_bordo 230 56 basso destra    # GIOCA online
 aspetta 1
 foto 04_dove_giochi
-tocca_bordo 660 323 alto centro     # la carta del Maglio
+tocca_bordo 274 523 mezzo destra    # la carta del Maglio
 aspetta 0.3
-tocca_bordo 175 52 basso destra    # CERCA
+tocca_bordo 178 52 basso destra    # GIOCA
 aspetta_stato modo=scelta_online 20
 aspetta 1
 foto 05_scelta_maglio
