@@ -1,6 +1,6 @@
 # WB-059 · Il Fabbro: spalline forgiate sulle braccia col pugno (rifacimento)
 
-- **Stato:** APPROVATA (Claude, 15 nov: un foglio solo, rifà `pugni_forgiata` di WB-055 che Sergio ha approvato; reversibile)
+- **Stato:** IMPLEMENTATA (15 nov) · era APPROVATA (Claude, 15 nov: un foglio solo, rifà `pugni_forgiata` di WB-055 che Sergio ha approvato; reversibile)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `claude/project-thread-e8poye` (eseguila da questo ramo: `git fetch origin claude/project-thread-e8poye`) · **Ramo delle immagini:** `design/WB-059`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-059` senza chiedere conferma (il repository è privato).
@@ -52,4 +52,20 @@ Rendering rules, very strict, because these parts will be traced into vector sha
 
 ## Consegna di Codex
 
+| File in `art/WB-059/` | Tentativi | Controllo visivo |
+|---|---:|---|
+| `pugni_forgiata_1.png` e `pugni_forgiata_1.txt` | 1 | Due spalline in cuoio con fascia in ottone e due borchie ciano ciascuna. |
+| `pugni_forgiata_2.png` e `pugni_forgiata_2.txt` | 1 | Stessa struttura, con borchie leggermente più ravvicinate e una fascia meno larga sul lato destro. |
+
+Entrambi i PNG sono nativi a 1536 × 1024. Ho verificato a vista la disposizione delle braccia, i pugni scoperti, le spalline senza grembiule o croce, i contorni neri, il fondo magenta e l'assenza di scritte. Il bordo tra spallina e braccio è leggermente diverso da R1. Restano da verificare l'identità dei pixel fuori dalle spalline, i colori esatti e il ritaglio per differenza.
+
 ## Resoconto di Claude
+
+15 nov. Guardati i due fogli: tutti e due giusti (fascia d'ottone con due borchie azzurre sulla
+spallina, niente grembiule), stessa inquadratura di R1.
+
+- **Tenuto:** `pugni_forgiata_1` (messo nella ricetta `tools/stampino/addosso/fabbro.json`, forma
+  `_forgiato`, chiave `pugni`). **Riserva:** `pugni_forgiata_2`, equivalente.
+- **Integrato:** con `addosso.py` (combacia al 0.988 e 0.986) cambiano solo le due spalline delle
+  braccia col pugno del grembiule forgiato; il resto del Fabbro è identico byte per byte.
+- **Provato:** scenario `fabbro_indossato_forgiato.txt`, OK.
