@@ -153,7 +153,7 @@ local function seals_tab(s)
 		-- a tap on the bar puts the points there (as many as are free)
 		kit.zone(g, s.buttons, x - 10, y + 14, w + 20, 40, "barra:" .. path.id)
 		-- every step is a fork: its two powers always in sight under the disc, the
-		-- chosen one light, the other dark; a tap on the other takes it (Sergio, 15 Nov)
+		-- chosen one with the ember rim, the other plain; a tap on the other takes it (Sergio, 15 Nov)
 		for k = 1, skills.STEPS do
 			local cx = x + w * k * skills.STEP / skills.PATH_MAX - 18
 			local got = v >= k * skills.STEP
@@ -168,11 +168,11 @@ local function seals_tab(s)
 			end
 			for which = 1, 2 do
 				local on = pick == which
-				local cy = y + 62 + (which - 1) * 28
+				local cy = y + 62 + (which - 1) * 30
 				local cw = 92
-				local chip = kit.plate(g, cx + 18 - cw / 2, cy, cw, 24, on and KC.HOT or KC.LINE, { sk = 0, d = 3, fill = on and KC.SAND or nil })
-				local ink = on and KC.INK or (got and not pick and KC.HOT_TOP) or (got and KC.MUTE) or kit.with_alpha(KC.MUTE, 0.55)
-				local n = kit.text(chip.g, kit.upper(path.steps[k][which].name), cx + 18, cy + 17, 11, ink, "middle", 0.4)
+				local chip = kit.card(g, cx + 18 - cw / 2, cy, cw, 22, KC.ROSE, { sel = on })
+				local ink = on and KC.SAND or (got and not pick and KC.HOT_TOP) or (got and KC.MUTE) or kit.with_alpha(KC.MUTE, 0.55)
+				local n = kit.text(chip.g, kit.upper(path.steps[k][which].name), cx + 18, cy + 16, 11, ink, "middle", 0.4)
 				local wide = kit.width(n)
 				if wide > cw - 12 then gui.set_scale(n, gui.get_scale(n) * ((cw - 12) / wide)) end
 				kit.button(s.buttons, chip, "potere:" .. path.id .. ":" .. k .. ":" .. which)

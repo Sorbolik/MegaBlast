@@ -33,26 +33,23 @@ local function fit(n, w)
 	return n
 end
 
--- a button to play: a plate of beaten iron (the warm one for the usual mode),
--- its icon ih tall on the left, the name, a line and an information under it;
--- it goes down when pressed and starts its queue (Sergio, 15 Nov: they must
--- look like buttons, not cards)
+-- a queue to play: a card with its icon ih tall on the left, the name, a line
+-- and an information under it, the arrow of what goes somewhere; a tap starts its
+-- queue (Sergio, 15 Nov: the cards of before, not the iron plates, which are going)
 local function card(c, g, x, y, w, h, o)
-	local p = kit.plate(g, x, y, w, h, o.hot and KC.HOT or KC.LINE, { sk = 0 })
-	local f = { node = p.face_node, ox = p.g.ox, oy = p.g.oy }
+	local k = kit.card(g, x, y, w, h, KC.ROSE, { sel = o.hot })
+	local f = k.g
 	-- (no icon yet: the text starts where the icon would)
 	local ih = o.ih
 	if o.icon then kit.piece(f, o.icon, x + 34 + ih / 2, y + h / 2, ih) end
-	local tx = o.icon and x + 62 + ih or x + 56
+	local tx = o.icon and x + 62 + ih or x + 36
 	local size = o.size
 	local top = y + h / 2 - (size * 0.9 + (o.info and 44 or 22)) / 2 + size * 0.8
-	local ink = KC.SAND
-	fit(kit.text(f, o.name, tx, top, size, ink), x + w - 70 - tx)
+	fit(kit.text(f, o.name, tx, top, size, KC.SAND), x + w - 70 - tx)
 	if o.sub then fit(kit.text(f, kit.upper(o.sub), tx + 2, top + 26, 15, KC.MUTE, "start", 0.5), x + w - 70 - tx) end
 	if o.info then fit(kit.text(f, kit.upper(o.info), tx + 2, top + 50, 15, KC.HOT_TOP, "start", 0.5), x + w - 70 - tx) end
-	-- the arrow of a button that goes somewhere
-	kit.text(f, "›", x + w - 30, y + h / 2 + size * 0.45, size * 1.3, ink, "middle")
-	kit.button(c.buttons, p, o.action)
+	kit.text(f, "›", x + w - 30, y + h / 2 + size * 0.45, size * 1.3, o.hot and KC.HOT or KC.SAND, "middle")
+	kit.button(c.buttons, k, o.action)
 end
 
 local function build(c)
@@ -126,14 +123,7 @@ function M.rebuild(x)
 	build(x)
 end
 
--- a pressed button goes down
 function M.update(c, dt)
-	local held = c.buttons.held_down
-	if held ~= c.held then
-		if c.held and c.held.piastra then kit.press(c.held.piastra, false) end
-		if held and held.piastra then kit.press(held.piastra, true) end
-		c.held = held
-	end
 end
 
 function M.on_input(c, action_id, action)

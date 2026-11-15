@@ -195,7 +195,7 @@ local function detail(s, g, pa, x, y, w)
 	for i, m in ipairs(moments) do
 		if i > 3 then break end
 		local px = mx + (i - 1) * (mw + 16)
-		local pl = kit.plate(g, px, y + 40, mw, 52, ok and KC.ROSE or KC.LINE, { sk = 0, d = 4, piece = "piastrina" })
+		local pl = kit.card(g, px, y + 40, mw, 52, KC.ROSE, { off = not ok })
 		fit(kit.text(pl.g, kit.upper(m.giro .. " · " .. m.testo), px + 20, y + 72, 15, ok and KC.SAND or KC.MUTE), mw - 36)
 		kit.button(s.buttons, pl, "momento:" .. i, { spento = not ok })
 	end
