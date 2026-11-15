@@ -1,0 +1,18 @@
+Image 1 is a sheet of body parts of our character. Image 2 is the chosen armour set "Smith" (right: FORGED form). Image 3 is image 1 with the basic leather apron on the torso, a leather shoulder pad on the top of both arms and the basic boots on both legs.
+
+Return image 3 again, the SAME sheet with every part exactly where it is and the same pixels, and change only the apron, the two shoulder pads and the boots: make them the FORGED versions of image 2, with exactly the same outlines as in image 3:
+- apron: round cyan rivets at the ends of the crossing straps and at the corners of the apron, like in image 2;
+- shoulder pads: a brass rim plate along the lower edge of each pad and two round cyan rivets on it, the same on both arms;
+- boots: a second strap with a second square cyan buckle, like in image 2.
+Nothing else on the sheet changes.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Leather dark brown #6B4A2B with folds #4A3019, lighter straps #C89255, brass #D9A441, cyan #00FFFF rivets and buckles, thick closed black #000000 outline.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-055/riferimenti/R2_corpo_collo_nudo.png
+art/WB-055/riferimenti/R4_fabbro.png
+art/WB-055/corpo_base_1.png

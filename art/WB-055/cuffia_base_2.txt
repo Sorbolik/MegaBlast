@@ -1,0 +1,13 @@
+Image 1 is a sheet of nine heads of our character on flat magenta (the same head with nine faces, no horns). Image 2 is the chosen armour set "Smith" of our game: left the BASIC form, right the FORGED form.
+
+Edit image 1 and return the SAME sheet: all nine heads stay exactly where they are, same size, same shapes, same faces, same pixels. Change only the FIRST head (top left): put on it the leather CAP of the BASIC form of image 2: a snug blacksmith's skullcap of thick brown leather that covers the top and the back of the head down to the brow, with a leather band around it and the round brass work goggles with amber lenses pushed up on the forehead, held by their strap. The face stays fully visible and unchanged; the pointed ears come out below the cap on the sides. The cap is ONE CLOSED piece with a clean rounded top: no holes, no openings. Horns and the head flame will be drawn later on top of the cap as separate parts: draw no horns and no flame. The other eight heads do not change at all.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Leather dark brown #6B4A2B with folds #4A3019, lighter straps #C89255, brass #D9A441, amber lenses #F2B92C, thick closed black #000000 outline like the heads. The leather must be clearly browner and darker than the red skin.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-055/riferimenti/R1_teste_senza_corna.png
+art/WB-055/riferimenti/R4_fabbro.png

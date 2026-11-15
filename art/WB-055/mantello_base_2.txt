@@ -1,0 +1,10 @@
+Image 1 is the chosen armour set "Smith" of our game (left: BASIC form, right: FORGED form). Image 2 is our "stampino": a sheet with grey body parts on magenta; the grey trapezoid between the torso and the wing is the box "mantello". Image 3 is a cape of another set of our game: keep its SIZE on the sheet, its wide flare and its long folds, but NOT its style, its colours or its torn hem.
+
+Draw ONE cape of the BASIC form of image 1, alone, as large on the sheet as the cape of image 3: a blacksmith's cape of heavy brown leather. Seen from the side, hanging straight down behind the shoulders as if the wearer stood still: the top edge is short, straight and horizontal, at the top right (where it is tied to the shoulders), no hood, no collar roll, no clasp hanging over the edge. The cape gets much wider toward the bottom: at the hem it is about twice as wide as at the top, flaring out to the left (the back). The hem is one clean, slightly wavy line with a stitched leather border, not torn. Long folds run from the top edge all the way down to the hem, so the leather can bend anywhere. Length: down to the knee of the wearer. No body, no arms, no shoulders, nothing else on the sheet.
+
+Same rendering rules as image 1: flat colors, leather dark brown #6B4A2B with darker #4A3019 folds, lighter border #C89255, thick closed black outline. Background: flat pure magenta #FF00FF everywhere outside the cape. Do not draw the box, crosses or labels. No text. Landscape 3:2.
+
+Riferimenti allegati in ordine
+art/WB-055/riferimenti/R4_fabbro.png
+art/WB-055/riferimenti/R5_stampino.png
+art/WB-055/riferimenti/R6_mantello_vuoto.png

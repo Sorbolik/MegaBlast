@@ -189,4 +189,23 @@ d'ottone e borchie ciano. Cuoio più bruno della tavola di stile, per distinguer
 
 ## Consegna di Codex
 
+Undici fogli ImageGen con prompt integrali e riferimenti nei TXT omonimi.
+
+| File PNG e TXT in art/WB-055/ | Tentativi | Controllo visivo |
+|---|---:|---|
+| cuffia_base_1 | 1 | Scelta per la forgiata. Cuffia chiusa sulla prima testa, senza corna o fiamma. |
+| cuffia_base_2 | 1 | Cuffia più bassa sul sopracciglio. |
+| cuffia_forgiata | 1 | Martello ottone e bordi ciano. Gli occhialoni differiscono leggermente dalla base. |
+| corpo_base_1 | 1 | Scelto per la somiglianza visiva a R2 nelle zone lasciate scoperte. Una striscia del ventre resta visibile. |
+| corpo_base_2 | 1 | Grembiule più largo. Il contorno a lato del collo cambia. |
+| corpo_forgiata | 1 | Rivetti ciano, bordi delle spalline color ottone e due fibbie per stivale. |
+| pugni_base | 1 | Entrambe le spalline presenti. Il braccio destro è leggermente spostato rispetto a R3. |
+| pugni_forgiata | 3 | Primo tentativo conservato come prova da scartare. In tutti e tre i tentativi il generatore ha messo il grembiule sulle braccia al posto delle spalline. |
+| mantello_base_1 | 1 | Scelto per orlo ampio e piega centrale continua fino in fondo. |
+| mantello_base_2 | 1 | Orlo ampio e più pieghe interrotte. |
+| mantello_forgiata | 1 | Orlo ottone e sette rivetti ciano. La fascia è più alta della base. |
+
+Ho controllato a vista disposizione, parti presenti, fondo magenta e assenza di scritte. I fogli della cuffia sono stati ridimensionati da 1254 × 1254 a 1024 × 1024. Gli altri sono nativi a 1536 × 1024. Alcune parti fuori dalle modifiche risultano spostate o ridisegnate. Identità dei pixel, valori esatti dei colori, ritaglio per differenza e vestibilità nel gioco restano da verificare.
+
+
 ## Resoconto di Claude
