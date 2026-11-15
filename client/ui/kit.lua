@@ -420,6 +420,46 @@ function M.keep_in(n, box, g, x, y, size, anchor)
 	gui.set_scale(n, V)
 end
 
+-- The queue's pill under the thread in the menus (ui/pill.lua, "foot") starts
+-- here; game.gui_script says when you are in the queue (M.in_queue)
+M.PILL_X0 = 534
+M.in_queue = false
+
+-- A line of the footer, left of the action, starting at x of g (stuck to the
+-- left edge): as wide as `wide` at most; in the queue it stops before the pill
+-- and goes on a second line under it (Sergio, 15 Nov). Returns the lines
+function M.foot_text(g, t, x, y, size, color, wide, spacing)
+	local room = wide
+	if M.in_queue then room = math.min(wide, M.PILL_X0 - 16 - (x + screen.x0)) end
+	local function one(txt, ly)
+		local n = M.text(g, txt, x, ly, size, color, "start", spacing)
+		local w = M.width(n)
+		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)) end
+		return n
+	end
+	local n = M.text(g, t, x, y, size, color, "start", spacing)
+	if M.width(n) <= room or not M.in_queue then
+		local w = M.width(n)
+		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)) end
+		return { n }
+	end
+	gui.delete_node(n)
+	-- the cut nearest the middle: after a " · ", or else a space
+	local best, mid = nil, #t / 2
+	for _, sep in ipairs({ " · ", " " }) do
+		local i = 1
+		while true do
+			local a, b = t:find(sep, i, true)
+			if not a then break end
+			if not best or math.abs(a - mid) < math.abs(best[1] - mid) then best = { a, b } end
+			i = b + 1
+		end
+		if best then break end
+	end
+	if not best then return { one(t, y) } end
+	return { one(t:sub(1, best[1] - 1), y), one(t:sub(best[2] + 1), y + size + 2) }
+end
+
 -- Capitals, the accented letters too (string.upper leaves them small)
 local ACCENTS = { ["à"] = "À", ["è"] = "È", ["é"] = "É", ["ì"] = "Ì", ["ò"] = "Ò", ["ù"] = "Ù" }
 function M.upper(t)

@@ -2,7 +2,7 @@
 
 - **Stato:** PROPOSTA (poi APPROVATA, GENERATA, IMPLEMENTATA, VERIFICATA, oppure SCARTATA)
 - **Data:** AAAA-MM-GG
-- **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-xxx`
+- **Ramo della scheda:** `claude/...` (il ramo dove Claude l'ha scritta: Codex la esegue da lì, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-xxx`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-xxx` senza chiedere conferma (il repository è privato).
 
 ## Obiettivo

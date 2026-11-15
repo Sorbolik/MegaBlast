@@ -24,6 +24,9 @@ aspetta 1.5
 tocca_centro 640 300                # ZAINO
 aspetta 1.5
 foto 03_zaino
+tocca_bordo 580 52 alto sinistra    # SIGILLI
+aspetta 1
+foto 03b_sigilli
 tocca_bordo 36 60 basso sinistra
 aspetta 1.5
 tocca_bordo 220 170 mezzo sinistra  # ALLENAMENTO

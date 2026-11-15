@@ -2040,6 +2040,8 @@ end
 
 function CP.queue_update(self, dt)
 	local q, p = self.queue, self.pill
+	-- the menus' footer lines leave the pill its place (ui/kit.lua, foot_text)
+	menu.kit.in_queue = q ~= nil
 	if not q then
 		if p and p.on then
 			p.on = false

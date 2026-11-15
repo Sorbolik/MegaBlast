@@ -1,6 +1,6 @@
 # WB-054 · Altre tre direzioni per il pulsante primario dei menu
 
-- **Stato:** APPROVATA (Sergio, 15 nov 11:10: «Per i pulsanti primari, va bene quello che ho scelto, integralo, però voglio delle altre proposte con codex»)
+- **Stato:** CONSEGNATA E INTEGRATA (Sergio, 15 nov 12:34: sceglie E · gemma)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-054`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-054` senza chiedere conferma (il repository è privato).
@@ -114,3 +114,10 @@ Thick black ink outline on every piece, cartoon comic style like images 2 and 3.
 ## Decisione
 
 Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
+
+## Resoconto di Claude
+
+- Arrivati i sei fogli (due varianti per direzione), tutti puliti: acceso, premuto e spento ben staccati, sfondo verde pieno, niente scritte.
+- Ritagliati `primario_tizzone_2`, `primario_gemma_2` e `primario_crosta_1` (le varianti con le proporzioni più vicine a tre e mezzo per uno) in `art/WB-054/ritagli/`.
+- Montati nel gioco vero accanto alla C di WB-052 su armeria, zaino e gioca online (`/mnt/project-files/menu_14nov/WB-054_confronto_primari.png`).
+- Sergio sceglie la **E · gemma**: ora è il pulsante primario di tutti i menu (`tools/grafica/fucina.py`; `PRIMARIO=tizzone`, `crosta` o `brace` per rivedere le altre).

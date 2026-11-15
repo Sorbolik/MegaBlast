@@ -398,18 +398,19 @@ def fai_menu():
         im = im.resize((w, round(im.size[1] * w / im.size[0])), Image.LANCZOS)
         salva(im, nome)
         MISURE[nome] = im.size
-    # il pulsante primario dei menu (WB-052, C · brace e gelo, Sergio 15 nov): acceso,
-    # premuto e spento, in tre parti (si allunga solo il mezzo). Alti come nel disegno
-    # rispetto all'acceso: il premuto e' piu' basso apposta
-    prova = os.environ.get("PRIMARIO_PROVA")   # (per confrontare le direzioni di WB-054)
-    if prova:
-        acceso_h = ritaglio("WB-054", "primario_%s_acceso" % prova).shape[0]
-        for stato in ("acceso", "premuto", "spento"):
-            r = ritaglio("WB-054", "primario_%s_%s" % (prova, stato))
-            tre("primario_" + stato, r, round(200 * r.shape[0] / acceso_h), 0.3)
-    else:
+    # il pulsante primario dei menu: la gemma di brace di WB-054 (E, Sergio 15 nov),
+    # acceso, premuto e spento, in tre parti (si allunga solo il mezzo). Alti come nel
+    # disegno rispetto all'acceso: il premuto e' piu' basso apposta. PRIMARIO=tizzone,
+    # crosta (le altre di WB-054) o brace (la C di WB-052) per rivederne un'altra
+    scelta = os.environ.get("PRIMARIO", "gemma")
+    if scelta == "brace":
         for stato, h in (("acceso", 200), ("premuto", 130), ("spento", 165)):
             tre("primario_" + stato, ritaglio("WB-052", "primario_%s_1" % stato), h, 0.3)
+    else:
+        acceso_h = ritaglio("WB-054", "primario_%s_acceso" % scelta).shape[0]
+        for stato in ("acceso", "premuto", "spento"):
+            r = ritaglio("WB-054", "primario_%s_%s" % (scelta, stato))
+            tre("primario_" + stato, r, round(200 * r.shape[0] / acceso_h), 0.3)
     # le icone dei pezzi (WB-043): base e forgiata per famiglia e posto; il posto vuoto
     for f in FAMIGLIE:
         for p in POSTI:

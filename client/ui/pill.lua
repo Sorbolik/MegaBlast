@@ -85,7 +85,7 @@ end
 -- BOT 13), a little left of the middle: on the right the action's line, on the
 -- left what the screen writes there
 local LOW_H, LOW_Y = 52, 640
-local FORMS = { low = { w = 330, cx = W / 2 }, foot = { w = 150, cx = 600 } }
+local FORMS = { low = { w = 330, cx = W / 2 }, foot = { w = 150, cx = kit.PILL_X0 + 75 } }
 local function low_nodes(p, kind)
 	kind = kind or (p.low and p.low.kind) or "low"
 	if p.low and p.low.kind == kind then return p.low end
