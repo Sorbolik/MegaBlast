@@ -4,7 +4,7 @@
 
 aspetta 2
 foto 01_home
-tocca 250 334                      # ALLENAMENTO
+tocca 220 172                      # ALLENAMENTO
 aspetta 1
 foto 02_allenamento
 tocca 547 470                       # 1 CONTRO 1

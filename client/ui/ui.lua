@@ -295,11 +295,6 @@ function M.medal(x, y, d, color, parent)
 	return n
 end
 
--- Padlock of locked missions and chapters
-function M.padlock(x, y, d, color, parent)
-	return gui_node(d <= 48 and "lucchetto_p" or "lucchetto", x, y, d, d, color, parent)
-end
-
 -- Disc and ring (pie nodes): sticks, round buttons, stopwatch. d is the
 -- diameter, thickness the ring's toward the inside. A pie polygon has no
 -- antialiasing and shows steps (Sergio, 4 Nov: "piene di scalini"), so the
@@ -406,12 +401,6 @@ function M.light(list_of, b)
 		gui.set_scale(b.nodo, LIGHT_SCALE)
 		gui.set_color(b.bordo, b.colore)
 	end
-end
-
--- The light again where it was, after the screen recolored the borders
-function M.relight(list_of)
-	local b = list_of.luce
-	if b and usable(b) then M.light(list_of, b) elseif b then M.light(list_of, nil) end
 end
 
 -- Where the light starts: the last confirmed, the main one, or the first

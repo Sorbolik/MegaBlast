@@ -34,20 +34,15 @@ local function fit(n, w)
 end
 
 -- a card to choose: its panel, its icon ih tall on the left, the name, a line and
--- an information under it; the chosen one has a lit rim
+-- an information under it
 local function card(c, g, x, y, w, h, o)
-	if o.sel then
-		for _, r in ipairs({ { -6, -6, w + 12, 4 }, { -6, h + 2, w + 12, 4 }, { -6, -2, 4, h + 4 }, { w + 2, -2, 4, h + 4 } }) do
-			kit.rect(g, x + r[1], y + r[2], r[3], r[4], KC.HOT_TOP)
-		end
-	end
-	kit.panel(kit.group(g, x + w / 2, y + h / 2).node, w, h, o.hot and "pannello_caldo" or "pannello")
+	kit.panel(kit.group(g, x + w / 2, y + h / 2).node, w, h, o.sel and "pannello_caldo" or "pannello")
 	local ih = o.ih
 	kit.piece(g, o.icon, x + 28 + ih / 2, y + h / 2, ih)
 	local tx = x + 56 + ih
 	local size = o.size
 	local top = y + h / 2 - (size * 0.9 + (o.info and 44 or 22)) / 2 + size * 0.8
-	fit(kit.text(g, o.name, tx, top, size, o.hot and KC.HOT or KC.SAND), x + w - 24 - tx)
+	fit(kit.text(g, o.name, tx, top, size, o.sel and KC.HOT or KC.SAND), x + w - 24 - tx)
 	if o.sub then fit(kit.text(g, kit.upper(o.sub), tx + 2, top + 26, 15, KC.MUTE, "start", 0.5), x + w - 26 - tx) end
 	if o.info then fit(kit.text(g, kit.upper(o.info), tx + 2, top + 50, 15, KC.HOT_TOP, "start", 0.5), x + w - 26 - tx) end
 	kit.zone(g, c.buttons, x, y, w, h, o.action)
@@ -81,7 +76,7 @@ local function build(c)
 		if i > 2 then break end
 		also[i] = kit.upper(o.nome)
 	end
-	card(c, c.left, 36, 110, 700, 220, { sel = c.sel == "2v2", hot = true, icon = "ic_2contro2", ih = 130, size = 52,
+	card(c, c.left, 36, 110, 700, 220, { sel = c.sel == "2v2", icon = "ic_2contro2", ih = 130, size = 52,
 		name = common.modes["2v2"], sub = T.usual_match, info = #also > 0 and T.also_counts:format(table.concat(also, ", ")) or nil,
 		action = "scegli:2v2" })
 	card(c, c.left, 36, 350, 700, 120, { icon = "ic_stanza", ih = 60, size = 30, name = T.private, sub = T.private_line,

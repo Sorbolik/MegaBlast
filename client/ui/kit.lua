@@ -720,21 +720,6 @@ function M.heading(g, t, x, y, color)
 	return M.text(g, t, x, y, 17, color or C.HOT_TOP, "start", 1.5)
 end
 
--- MEASURES: round seals on the thresholds of a bar. state: "got" (full, in
--- color), "cur" (the one you are looking at: bigger, sand ring, a glow),
--- "todo" (dark, a ring in color)
-function M.seal(g, cx, cy, t, state, color)
-	local r = state == "cur" and 30 or 24
-	local x, y = cx - g.ox, g.oy - cy
-	if state == "cur" then
-		local glow = shape("alone", x, y, r * 4.4, r * 4.4, with_alpha(color, 0.7), g.node)
-		gui.set_blend_mode(glow, gui.BLEND_ADD)
-	end
-	-- the round frames of the fucina atlas: gold the ones taken, iron the others
-	whole(state == "got" and "tondo_oro" or "tondo_ferro", x, y, r * 2 + 4, g.node)
-	return M.text(g, t, cx, cy + 5, state == "cur" and 19 or 16, state == "todo" and C.MUTE or C.SAND, "middle")
-end
-
 -- REGULATORS: the small controls inside a screen are round irons: "−" and
 -- "+" (Sergio, 10 Nov), big enough for a thumb. off_minus, off_plus: that
 -- side can't be used
@@ -762,20 +747,6 @@ function M.round(g, list_of, cx, cy, label, ui_action)
 	local b = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = ui_action }
 	list_of[#list_of + 1] = b
 	return b
-end
-
--- The player's plate: name (or what it is), a line on the right, the bar
-function M.nameplate(g, x, y, name, right, f, accent)
-	local p = M.sand(g, x, y, 340, 62, accent or C.HOT, { sk = 22 })
-	-- in the plate's room: the name on the left, the level over its bar on the right
-	local b = p.box
-	local mid = (b.y0 + b.y1) / 2
-	p.name = M.text(p.g, name, b.x0, mid + 7, 20, C.INK)
-	local from = math.max(b.x0 + M.width(p.name) + 10, b.x1 - 150)
-	p.right = M.text({ node = p.g.node, ox = p.g.ox, oy = p.g.oy, box = { x0 = from, x1 = b.x1, y0 = b.y0, y1 = b.y1 } },
-		right, b.x1, b.y0 + 12, 13, with_alpha(C.INK, 0.75), "end", 1)
-	p.bar = M.bar(p.g, from, b.y1 - 9, b.x1 - from, 6, f, C.HOT_BOTTOM, C.SAND_SHADOW)
-	return p
 end
 
 -- ---------------------------------------------------------------- scene

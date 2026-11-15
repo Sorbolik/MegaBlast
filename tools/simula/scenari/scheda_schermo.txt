@@ -1,4 +1,4 @@
-# La scheda personaggio su altri schermi: da girare con --schermo 1600x720
+# Il profilo e i cartellini su altri schermi: da girare con --schermo 1600x720
 # (telefono 20:9) e --schermo 960x720 (tablet 4:3). Profilo, schieramento e
 # striscia restano al centro senza deformarsi (il contenuto dei menu con la
 # testata sta sotto di lei, attaccato al bordo alto: tocca_bordo ... alto
@@ -10,16 +10,16 @@ imposta prova_scelta 1
 imposta prova_profilo 1
 
 aspetta 1.5
-tocca_centro 640 300                # il diavoletto: il profilo
-aspetta 0.5
-foto 01_profilo_scheda
-tocca_bordo 802 124 alto centro   # STATISTICHE (le schede stanno sotto la testata)
-aspetta 0.3
-foto 02_profilo_statistiche
+tocca_bordo 120 56 alto sinistra    # il tondo del profilo
+aspetta 1.5
+foto 01_profilo_statistiche
+tocca_bordo 684 53 alto sinistra    # CRONOLOGIA PARTITE
+aspetta 0.6
+foto 02_profilo_cronologia
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.3                         # lo scivolo finisce
-tocca_bordo 250 334 mezzo sinistra    # ALLENAMENTO
+tocca_bordo 220 172 mezzo sinistra    # ALLENAMENTO
 aspetta 1
 tocca_bordo 761 250 alto centro    # 2 CONTRO 2 (la striscia va da un bordo all'altro)
 aspetta 0.3

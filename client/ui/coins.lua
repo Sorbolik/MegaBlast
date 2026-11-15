@@ -20,8 +20,6 @@ local kit = require "ui.kit"
 
 local M = {}
 
-local function c(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
-
 M.COLOR = { scaglia = ui.C.GOLD, ossidiana = ui.C.OBSIDIAN }
 
 -- the wallet pill: as tall as the queue's, the two balances side by side

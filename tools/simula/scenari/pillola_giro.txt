@@ -24,38 +24,46 @@ tocca_centro 832 79                       # TORNA AI MENU · RESTI IN CODA
 aspetta_stato modo=menu coda=si 3
 aspetta 1
 foto 02_home
-tocca_centro 640 300                # il diavoletto: il suo posto
-aspetta 0.6
-foto 03_profilo_scheda
-tocca_bordo 802 124 alto centro     # STATISTICHE
-aspetta 0.3
-foto 04_profilo_statistiche
-tocca_bordo 969 124 alto centro     # PARTITE
-aspetta 0.3
-foto 05_profilo_partite
-tocca_bordo 501 124 alto centro     # SCHEDA
-aspetta 0.3
-tocca_bordo 175 52 basso destra    # ARMERIA
-aspetta 0.8
-foto 06_armeria_set
-tocca_bordo 36 60 basso sinistra    # indietro: il diavoletto
+tocca_bordo 120 56 alto sinistra    # il tondo del profilo
 aspetta 1.5
-tocca_bordo 36 60 basso sinistra    # indietro: la home
-aspetta_stato modo=menu 3
-aspetta 0.5
-tocca_bordo 246 470 mezzo destra                       # EVENTI
-aspetta 0.8
-foto 08_eventi
-tocca_bordo 36 60 basso sinistra    # indietro: la home
-aspetta_stato modo=menu 3
-aspetta 0.5
-tocca_bordo 62 62 alto destra       # IMPOSTAZIONI
-aspetta 0.8
-foto 09_impostazioni
+foto P1_profilo_statistiche
+tocca_bordo 684 53 alto sinistra    # CRONOLOGIA PARTITE
+aspetta 0.6
+foto P2_profilo_cronologia
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
-aspetta 0.5
-tocca_bordo 250 334 mezzo sinistra    # ALLENAMENTO
+aspetta 0.8
+tocca_centro 640 300                # l'apprendista: lo ZAINO
+aspetta 1.5
+foto P3_zaino
+tocca_bordo 580 53 alto sinistra    # SIGILLI
+aspetta 0.6
+foto P4_sigilli
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta_stato modo=menu 3
+aspetta 0.8
+tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
+aspetta 1.5
+foto P5_armeria
+tocca_bordo 543 53 alto sinistra    # BOTTEGA
+aspetta 0.6
+foto P6_bottega
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta_stato modo=menu 3
+aspetta 1
+tocca_bordo 220 294 mezzo destra    # la porta EVENTI
+aspetta 1.5
+foto P7_eventi
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta_stato modo=menu 3
+aspetta 1
+tocca_bordo 74 54 basso sinistra    # la rotellina
+aspetta 1
+foto P8_impostazioni
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta_stato modo=menu 3
+aspetta 1
+tocca_bordo 220 172 mezzo sinistra    # ALLENAMENTO
 aspetta 1
 foto 10_allenamento
 aspetta 0.5

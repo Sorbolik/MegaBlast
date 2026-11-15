@@ -21,6 +21,6 @@ foto 05_sigilli
 tocca 72 60                           # indietro
 aspetta_stato modo=menu 3
 aspetta 2
-tocca 230 460                         # CAMPAGNA: tutta fatta, i gironi aperti
+tocca 220 294                         # CAMPAGNA: tutta fatta, i gironi aperti
 aspetta 2
 foto 06_campagna

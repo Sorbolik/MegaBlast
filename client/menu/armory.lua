@@ -161,12 +161,7 @@ end
 -- a ware w x h at (x, y): its picture, the family's line, slot and family, the price
 local function ware(a, x, y, w, h, set, slot, price, o)
 	local g = a.mid
-	-- the chosen one: the warm panel, and a lit rim around it
-	if o.sel then
-		for _, r in ipairs({ { -5, -5, w + 10, 3 }, { -5, h + 2, w + 10, 3 }, { -5, -2, 3, h + 4 }, { w + 2, -2, 3, h + 4 } }) do
-			kit.rect(g, x + r[1], y + r[2], r[3], r[4], KC.HOT_TOP)
-		end
-	end
+	-- the chosen one: the warm panel
 	kit.panel(kit.group(g, x + w / 2, y + h / 2).node, w, h, (o.hot or o.sel) and "pannello_caldo" or "pannello")
 	local isz = h * 0.46
 	kit.pic(g, gear_ui.icon(set, slot, 1), x + w / 2 - isz / 2, y + h * 0.05, isz, isz)
