@@ -2,18 +2,6 @@ images {
   image: "/assets/fucina/attacco_scudo.png"
 }
 images {
-  image: "/assets/fucina/badge_1.png"
-}
-images {
-  image: "/assets/fucina/badge_2.png"
-}
-images {
-  image: "/assets/fucina/badge_3.png"
-}
-images {
-  image: "/assets/fucina/badge_4.png"
-}
-images {
   image: "/assets/fucina/banda_allenamento.png"
 }
 images {
@@ -65,15 +53,6 @@ images {
   image: "/assets/fucina/bivio_binario_acceso_sx.png"
 }
 images {
-  image: "/assets/fucina/bivio_binario_chiuso_cx.png"
-}
-images {
-  image: "/assets/fucina/bivio_binario_chiuso_dx.png"
-}
-images {
-  image: "/assets/fucina/bivio_binario_chiuso_sx.png"
-}
-images {
   image: "/assets/fucina/bivio_binario_spento_cx.png"
 }
 images {
@@ -83,19 +62,7 @@ images {
   image: "/assets/fucina/bivio_binario_spento_sx.png"
 }
 images {
-  image: "/assets/fucina/bivio_giu_acceso.png"
-}
-images {
-  image: "/assets/fucina/bivio_giu_chiuso.png"
-}
-images {
-  image: "/assets/fucina/bivio_giu_spento.png"
-}
-images {
   image: "/assets/fucina/bivio_nodo_acceso.png"
-}
-images {
-  image: "/assets/fucina/bivio_nodo_chiuso.png"
 }
 images {
   image: "/assets/fucina/bivio_nodo_spento.png"
@@ -180,21 +147,6 @@ images {
 }
 images {
   image: "/assets/fucina/bivio_piastra_spento_9.png"
-}
-images {
-  image: "/assets/fucina/bivio_su_acceso.png"
-}
-images {
-  image: "/assets/fucina/bivio_su_chiuso.png"
-}
-images {
-  image: "/assets/fucina/bivio_su_spento.png"
-}
-images {
-  image: "/assets/fucina/bordino_brace.png"
-}
-images {
-  image: "/assets/fucina/bordino_gelo.png"
 }
 images {
   image: "/assets/fucina/brace.png"
@@ -681,15 +633,6 @@ images {
 }
 images {
   image: "/assets/fucina/punto_speso.png"
-}
-images {
-  image: "/assets/fucina/riga_oro_cx.png"
-}
-images {
-  image: "/assets/fucina/riga_oro_dx.png"
-}
-images {
-  image: "/assets/fucina/riga_oro_sx.png"
 }
 images {
   image: "/assets/fucina/riga_scura_cx.png"

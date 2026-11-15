@@ -331,8 +331,6 @@ MENU_INTERI = [
     ("sconto", "sconto", 64, "WB-044"),
     ("cornice_argento", "cornice_argento", 208, "WB-044"),
     ("cornice_bronzo", "cornice_bronzo", 208, "WB-044"),
-    ("bordino_brace", "bordino_brace", 140, "WB-044"),
-    ("bordino_gelo", "bordino_gelo", 140, "WB-044"),
     ("podio_1", "podio_1", 420, "WB-044"),
     ("podio_2", "podio_2", 352, "WB-044"),
     ("podio_3", "podio_3", 304, "WB-044"),
@@ -360,10 +358,8 @@ SPAZI_MISURATI = {
 # i pezzi lunghi in tre parti (nome, file, altezza, capo, cartella): si allunga solo il mezzo
 MENU_TRE = [
     ("riga_scura", "riga_scura", 140, 0.08, "WB-044"),
-    ("riga_oro", "riga_oro", 140, 0.08, "WB-044"),
     ("pillola", "pillola", 104, 0.2, "WB-044"),
 ]
-BADGE = 4
 SCIE = ["brace", "scintilla", "fiamma", "ricciolo", "ferro", "cuoio", "paglia", "acciaio",
         "stella", "moneta", "nastro", "oro", "ghiaccio", "fiocco", "cristallo", "gelo"]
 PORTE = ["campagna", "allenamento", "eventi", "armeria"]
@@ -459,8 +455,6 @@ def fai_menu():
             SPAZI[nome] = SPAZI_MISURATI[nome]
     for nome, f, h, c, d in MENU_TRE:
         tre(nome, ritaglio(d, f), h, c)
-    for i in range(1, BADGE + 1):
-        intero("badge_%d" % i, ritaglio("WB-047", "badge_%d" % i), 68 if i < 4 else 90)
     for k in SCIE:
         intero("scia_" + k, ritaglio("WB-049", "scia_%s_1" % k), 84)
     # la banda del bordo: larga il doppio di come si vede (48), si ripete in alto
@@ -508,11 +502,6 @@ def trasparente(percorso):
     return a.astype(np.uint8)
 
 
-def stretto(a):
-    ys, xs = np.where(a[..., 3] > 0)
-    return a[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
-
-
 def griglia_trasparente(percorso, per_riga, minimo=1500):
     cs = sorted(pezzi(trasparente(percorso), minimo), key=lambda t: t[0])
     out = []
@@ -552,12 +541,11 @@ def fai_bivio():
         rami = sorted(riga[2:4], key=lambda t: t[0])
         su, giu = rami[0][2], rami[1][2]
         piastra = riga[4][2]
-        # (i pezzi tagliati si stringono attorno al disegno)
-        su, giu = stretto(su), stretto(giu)
-        tre("bivio_binario_" + stato, binario, 40, 0.3)
-        intero("bivio_nodo_" + stato, nodo, 96)
-        intero("bivio_su_" + stato, su, 120)
-        intero("bivio_giu_" + stato, giu, 120)
+        # i rami su e giu' li disegna il codice (quelli del foglio sono troppo larghi
+        # per cinque gradini in una riga); binario e nodo chiusi non servono
+        if stato != "chiuso":
+            tre("bivio_binario_" + stato, binario, 40, 0.3)
+            intero("bivio_nodo_" + stato, nodo, 96)
         scheda("bivio_piastra_" + stato, piastra)
     t = griglia_trasparente(os.path.join(p, "tacche_1.png"), [2, 2, 2, 4], 1500)
     nomi = ["tacca_vuota", "tacca_ali", "tacca_fucina", "tacca_corazza", "punto_libero", "punto_speso",
