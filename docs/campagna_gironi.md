@@ -110,7 +110,7 @@ personaggi; attenzione al rosso della squadra sui gironi rossi).
   3. **Fuori portata** (squadra): con Favilla (grado 3) contro il cecchino sull'isola (grado 3)
      e uno di grado 2
   4. **Giù dal bordo** (duello): sulla fossa contro lo spingitore (grado 3, il dente della sega)
-  5. **Il codardo** (duello): grado 4
+  5. **Il codardo** (duello): grado 4, il bot evoluto per morire poco (lo specialista «sopravvissuto»)
   6. **Il Fabbro** (custode): grado 5
   7. **Battaglia della Forgia** (squadra): con Favilla (grado 5) contro il Fabbro (grado 5) e il
      cecchino (grado 3); alla fine l'artiglio prende Favilla

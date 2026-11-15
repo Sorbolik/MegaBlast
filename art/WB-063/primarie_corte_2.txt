@@ -1,0 +1,18 @@
+Image 1 is a rough layout sketch made by our designer for a 2D comic game set in a cartoon hell, where a small red devil apprentice fights with weapons forged by his master, the Smith, in the Forge of the Titans. Image 2 shows the drawing style of the game (character parts). 
+Redraw the four short weapons of image 1 in a 2 by 2 grid, same order and positions, each about 400 px tall:
+1. Fire Egg (top left): a black cast-iron dragon egg, upright, wider at the bottom, with zig-zag cracks glowing orange and a small flame coming out of the top crack; a team-green band around its belly.
+2. Titan Fist (top right): a huge closed fist of pale cracked stone, knuckles to the right, thumb visible, one glowing orange crack on the knuckles, worn like a glove over a short dark-iron cuff with a team-green band.
+3. Sickle (bottom left): a crescent-moon sickle of black iron with a glowing orange cutting edge on the inside of the curve, a short wooden handle, a brass ring at the end of the handle, a team-green band on the handle.
+4. Pitch Amphora (bottom right): a round-bellied terracotta amphora with two small handles, a narrow neck closed by a pale wax plug, black pitch dripping down from the neck over the belly, a team-green band around the belly.
+Rendering rules, very strict, because every shape will be traced into vector layers:
+- Same drawing style as image 2: thick closed pure black #000000 outline around every shape and between colour areas, chunky soft slightly asymmetric comic shapes.
+- FLAT COLORS ONLY: every area is one solid colour, plus at most one hard-edged shadow shape in the darker tone of the same material. No gradients, no textures, no soft shading, no glow halos, no blur, no sparkles, no motion lines.
+- Use ONLY these colours: dark iron #3B404B, iron #59606E, light iron #8F98A8; dark brass #A8761F, brass #D9A441; dark leather #4A3019, leather #6B4A2B, light leather #C89255, wood #8A5A33; horn shadow #C9B48E, bone/horn #EFE3C8; pitch #2E2433, pitch sheen #5E4870; dark terracotta #9C4A26, terracotta #C8693A; dark ember #C2410C, ember orange #FF7A1A, hot yellow #FFD15A; team band pure green #00FF00 with shadow #00B400; white #FFFFFF; black #000000.
+- Background: flat pure magenta #FF00FF everywhere, no halo around the objects, no ground shadow. Objects never touch each other.
+- No text, numbers, letters, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-063/riferimenti/R1_bozze_primarie_corte.png
+art/WB-063/riferimenti/R2_stile_colori_piatti.png
+
+Strumento: image_gen. Tentativi: 1. Selezionato: 1.

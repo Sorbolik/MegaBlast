@@ -198,26 +198,6 @@ def segmento_coda(i, d, bordo):
     return (-12, -28, L + 32, 28)
 
 
-def paracadute(d):
-    # la calotta a spicchi (quelli chiari sono del colore della squadra), le
-    # funi che convergono sopra la testa (il perno) e le due cinghie che
-    # scendono alle spalle, dietro la testa
-    sx, sy = PUNTI["spalle"][0], PUNTI["spalle"][1] - PARACADUTE_Y
-    d.riga(f"M{sx},{sy} L0,0 L{-sx},{sy}", INK, 3.2)
-    for x in (-82, -44, 0, 44, 82):
-        d.riga(f"M0,0 L{x},92", INK, 2.6)
-    # la calotta: un arco con l'orlo a festoni
-    d.path("M-88,92 Q-90,150 0,152 Q90,150 88,92 Q78,84 66,92 Q55,84 44,92 Q33,84 22,92 Q11,84 0,92 "
-           "Q-11,84 -22,92 Q-33,84 -44,92 Q-55,84 -66,92 Q-78,84 -88,92 Z", "osso")
-    # gli spicchi tinti
-    d.path("M-66,92 Q-70,128 -44,146 Q-30,120 -44,92 Q-55,84 -66,92 Z", "fiamma", tinta=True, contorno=False)
-    d.path("M-22,92 Q-28,128 0,150 Q28,128 22,92 Q11,84 0,92 Q-11,84 -22,92 Z", "fiamma", tinta=True, contorno=False)
-    d.path("M44,92 Q30,120 44,146 Q70,128 66,92 Q55,84 44,92 Z", "fiamma", tinta=True, contorno=False)
-    d.riga("M-66,92 Q-70,128 -44,146 M-44,92 Q-30,120 -44,146 M-22,92 Q-28,128 0,150 "
-           "M22,92 Q28,128 0,150 M44,92 Q30,120 44,146 M66,92 Q70,128 44,146", INK, RIGA_D)
-    return (-100, sy - 8, 100, 164)
-
-
 PEZZI = {
     "testa": lambda d: testa(d),
     "testa_colpita": lambda d: testa(d, "colpito"),
@@ -230,14 +210,54 @@ PEZZI = {
     "braccio_dietro": lambda d: braccio(d, True),
     "pugno": pugno,
     "ala": ala,
-    "paracadute": paracadute,
+    "paracadute": None,  # di Codex: paracadute_ricalcato
 }
 for i in range(len(CODA)):
     PEZZI[f"coda_{i + 1}"] = (lambda i: lambda d: segmento_coda(i, d, False))(i)
     PEZZI[f"coda_{i + 1}_bordo"] = (lambda i: lambda d: segmento_coda(i, d, True))(i)
 
 
+# il paracadute ad ali di pipistrello disegnato da Codex (WB-065, art/armi/parachute.png,
+# tools/grafica/armi_ricalcate.py): il manico a uncino sta sul perno, sopra la testa, e
+# le cinghie a vettori scendono alle spalle
+PARACADUTE_RICALCO = os.path.join(RADICE, "art", "armi", "parachute.png")
+PARACADUTE_LARGO = 200
+
+
+def paracadute_ricalcato(nome, immagini):
+    import numpy as np
+    from PIL import Image
+    im = Image.open(PARACADUTE_RICALCO).convert("RGBA")
+    alto = round(PARACADUTE_LARGO * im.height / im.width, 1)
+    d = D()
+    sx, sy = PUNTI["spalle"][0], PUNTI["spalle"][1] - PARACADUTE_Y
+    d.riga(f"M{sx},{sy} L0,4 L{-sx},{sy}", INK, 3.2)
+    x0, y0, x1, y1 = -PARACADUTE_LARGO / 2, sy - 8, PARACADUTE_LARGO / 2, alto
+    w, h = round((x1 - x0) * PX), round((y1 - y0) * PX)
+    base = rendi(d.svg((x0, y0, x1, y1), PX), w, h).convert("RGBA")
+    a = np.array(im)
+    r, g, b = a[..., 0].astype(int), a[..., 1].astype(int), a[..., 2].astype(int)
+    pieno = (g > 200) & (r < 110) & (b < 110)
+    ombra = (g > 140) & (g <= 200) & (r < 70) & (b < 70)
+    grigio = np.where(pieno, 255, np.where(ombra, 180, 0)).astype(np.uint8)
+    t = np.dstack([grigio, grigio, grigio, np.where(pieno | ombra, a[..., 3], 0)]).astype(np.uint8)
+    a = a.copy()
+    a[pieno | ombra, :3] = 128
+    cw, ch = w, round(alto * PX)
+    tela = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    tela.alpha_composite(Image.fromarray(a, "RGBA").resize((cw, ch), Image.LANCZOS), (0, 0))
+    base.alpha_composite(tela)
+    base.save(os.path.join(OUT, nome + ".png"), optimize=True)
+    tinta = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    tinta.alpha_composite(Image.fromarray(t, "RGBA").resize((cw, ch), Image.LANCZOS), (0, 0))
+    tinta.save(os.path.join(OUT, nome + "_tinta.png"), optimize=True)
+    immagini += [nome, nome + "_tinta"]
+    return dict(d=d, tinta=True, x=(x0 + x1) / 2, y=(y0 + y1) / 2, w=x1 - x0, h=y1 - y0)
+
+
 def esporta(nome, fn, immagini):
+    if nome == "paracadute":
+        return paracadute_ricalcato(nome, immagini)
     d = D()
     x0, y0, x1, y1 = fn(d)
     w, h = round((x1 - x0) * PX), round((y1 - y0) * PX)

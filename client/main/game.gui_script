@@ -931,6 +931,26 @@ end
 local RM = { fune = require "battle.rope", hazards = require "battle.hazards", GUSTS = 5,
 	-- the images of the new shots in flight (battle/weapons.lua, shots), by projectile kind
 	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano", vortex = "voragine_volo" } }
+-- The weapons' signatures (WB-066): one drawing on the impact, tinted
+-- (battle/impact.lua, impact.sign). The explosion's comes from the last shot fired.
+RM.SIGN = {
+	brace = { 1, 0.48, 0.1 }, white = { 1, 0.97, 0.92 }, steel = { 0.72, 0.84, 0.95 },
+	shell = { 0.3, 0.25, 0.3 }, clay = { 0.78, 0.41, 0.23 }, pitch = { 0.36, 0.28, 0.4 },
+	paper = { 0.95, 0.79, 0.3 }, void = { 0.55, 0.4, 0.9 },
+}
+function RM.blast_signature(self, e)
+	-- only a shot fired a moment ago (a missile lost in the water leaves no blast)
+	local w = self.last_shot_t and self.clock - self.last_shot_t < 8 and self.last_shot
+	self.last_shot = nil
+	if w == "fire" then
+		impact.sign(self.fx, "fx_runa", e.x, e.y, e.r * 1.6, RM.SIGN.brace, "pop")
+	elseif w == "grenade" then
+		for _ = 1, 3 do impact.sign(self.fx, "fx_guscio", e.x, e.y, e.r * 0.4, RM.SIGN.shell, "fall") end
+	elseif w == "vortex" then
+		impact.sign(self.fx, "fx_risucchio", e.x, e.y, e.r * 2, RM.SIGN.void, "shrink")
+	end
+end
+
 -- The character sheet (Sergio, 31 Oct) in a single table: tags, lineup,
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
@@ -1263,6 +1283,7 @@ local function handle_event(self, e)
 		-- the Trapano's tunnel ("carve") digs without the blast
 		if e.type == "explosion" then
 			explosion(self, e.x, e.y, e.r)
+			RM.blast_signature(self, e)
 			self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.x, e.y
 		end
 	elseif e.type == "phoenix" then
@@ -1275,6 +1296,7 @@ local function handle_event(self, e)
 	elseif e.type == "orb_time" then
 		show_message(self, TM.orb_time:format(who_name(self, e.robot), math.floor(e.ticks / 60 + 0.5)))
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
+		self.last_shot, self.last_shot_t = e.type, self.clock
 		-- recoil of the Rune launcher (and of the sniper), throw momentum, shard burst
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
 		scoria.fire(self.robots[e.robot].rig, kind)
@@ -1379,34 +1401,52 @@ local function handle_event(self, e)
 		-- the gust: the bellows squash and a fan of air leaves the nozzle
 		scoria.fire(self.robots[e.robot].rig, "missile")
 		RM.gust(self, e.x, e.y, e.angle)
+		impact.sign(self.fx, "fx_vento", e.x + math.cos(e.angle) * 30, e.y + math.sin(e.angle) * 30, 34, RM.SIGN.white, "pop",
+			math.deg(e.angle))
 	elseif e.type == "bellows_hit" then
 		self.shot_x, self.shot_y, self.shot_t = self.g.robots[e.robot].x, self.g.robots[e.robot].y + game.DISEGNO_H / 2, self.clock
 		plate.announcement(self.robots[e.target].plate, TM.blown)
 	elseif e.type == "lunge" or e.type == "cannon" then
 		scoria.lunge(self.robots[e.robot].rig)
 	elseif e.type == "boomerang" or e.type == "vortex" then
+		self.last_shot, self.last_shot_t = e.type, self.clock
 		scoria.fire(self.robots[e.robot].rig, "throw")
 	elseif e.type == "petard_blast" or e.type == "cannon_land" or e.type == "tar_break" or e.type == "boomerang_turn" then
 		shock(self, e.x, e.y)
+		if e.type == "petard_blast" then
+			impact.sign(self.fx, "fx_anello_fumo", e.x, e.y, (e.r or 30) * 1.8, RM.SIGN.white, "pop")
+			for _ = 1, 3 do impact.sign(self.fx, "fx_coriandolo", e.x, e.y, 9, RM.SIGN.paper, "fall") end
+		elseif e.type == "tar_break" then
+			for _ = 1, 3 do impact.sign(self.fx, "fx_coccio", e.x, e.y, 10, RM.SIGN.clay, "fall") end
+			impact.sign(self.fx, "fx_bolla", e.x, e.y + 6, 14, RM.SIGN.pitch, "drift")
+		end
 	elseif e.type == "boomerang_hit" or e.type == "cannon_hit" then
 		self.shot_x, self.shot_y, self.shot_t = self.g.robots[e.robot].x, self.g.robots[e.robot].y + game.DISEGNO_H / 2, self.clock
 		shock(self, e.x, e.y)
+		if e.type == "boomerang_hit" then
+			impact.sign(self.fx, "fx_fendente", e.x, e.y, 26, RM.SIGN.white, "pop", math.random(-30, 30))
+		else
+			impact.sign(self.fx, "fx_stella", e.x, e.y, 30, RM.SIGN.white, "pop")
+		end
 	elseif e.type == "mallet" then
 		scoria.fire(self.robots[e.robot].rig, "throw")
 	elseif e.type == "mallet_hit" then
 		-- the wave where the hammer struck; if the hitter bounces, its plate says so
 		shock(self, e.x, e.y)
+		if e.target then impact.sign(self.fx, "fx_stella", e.x, e.y, 32, RM.SIGN.white, "pop") end
 		local by = self.g.robots[e.robot]
 		if e.target then self.shot_x, self.shot_y, self.shot_t = by.x, by.y + game.SWORD_PIVOT_Y, self.clock end
 		if e.bounce then plate.announcement(self.robots[e.robot].plate, TM.bounce) end
 	elseif e.type == "lunge_hit" then
 		shock(self, e.x, e.y)
+		impact.sign(self.fx, "fx_stella", e.x, e.y, 26, RM.SIGN.steel, "pop")
 		self.shot_x, self.shot_y, self.shot_t = e.x, e.y, self.clock
 	elseif e.type == "sniper_bounce" then
 		-- the sniper's shot bounces clumsily: it squashes and shakes
 		self.boing = self.clock
 	elseif e.type == "sniper_hit" then
 		shock(self, e.x, e.y)
+		impact.sign(self.fx, "fx_gocce", e.x, e.y, 22, RM.SIGN.brace, "pop")
 		plate.announcement(self.robots[e.target].plate, TM.knocked)
 		self.shot_x, self.shot_y, self.shot_t = e.x, e.y, self.clock
 	elseif e.type == "gust" then
@@ -1450,8 +1490,12 @@ local function handle_event(self, e)
 		-- the new weapon goes in hand
 		if profile.new_weapon(self.profilo, e.weapon) then profile.save(self.profilo) end
 		CP.give(self, e.robot, e.weapon, self.mode == "local" and e.robot == 1 and self.missione)
+	elseif e.type == "sword_hit" then
+		local o = self.g.robots[e.target]
+		if o then impact.sign(self.fx, "fx_fendente", o.x, o.y + game.HURT_Y, 26, RM.SIGN.steel, "pop", math.random(-30, 30)) end
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
+		impact.sign(self.fx, "fx_stella", e.x, e.y, 34, RM.SIGN.white, "pop")
 		self.shot_x, self.shot_y, self.shot_t = e.x, e.y, self.clock
 		self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD * 0.5, e.x, e.y
 	elseif e.type == "points" then
