@@ -1,9 +1,9 @@
-# WB-065 · Effetti delle armi: sprite bianchi
+# WB-066 · Effetti delle armi: sprite bianchi
 
 - **Stato:** APPROVATA (Claude, 15 nov: Sergio ha chiesto di rifare la grafica di tutte le armi e ha detto «procedi»; reversibile)
 - **Data:** 2026-11-15
-- **Ramo della scheda:** `claude/project-thread-wfha2a` (eseguila da questo ramo: `git fetch origin claude/project-thread-wfha2a` e leggi la scheda e i riferimenti da lì; non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-065`
-- **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-065` senza chiedere conferma (il repository è privato).
+- **Ramo della scheda:** `claude/project-thread-wfha2a` (eseguila da questo ramo: `git fetch origin claude/project-thread-wfha2a` e leggi la scheda e i riferimenti da lì; non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-066`
+- **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-066` senza chiedere conferma (il repository è privato).
 - **Pagina della proposta:** https://claude.ai/artifact/Eb3oSF1ydmrdgXRV1mnBHX (Armeria del Fabbro: idea, storia, sagoma e bozze di ogni arma)
 
 ## Obiettivo
@@ -14,12 +14,12 @@ Gli sprite delle «firme» delle armi e dei segni degli stati, **bianchi con il 
 
 | Codice | File | Cos'è |
 |---|---|---|
-| R1 | `art/WB-065/riferimenti/R1_bozze_effetti.png` | bozze degli effetti di alcune armi (solo per l'idea: qui servono le forme singole) |
-| R2 | `art/WB-065/riferimenti/R2_stile_colori_piatti.png` | lo stile: colori piatti, contorno nero spesso (pezzi del Fornace, WB-057) |
+| R1 | `art/WB-066/riferimenti/R1_bozze_effetti.png` | bozze degli effetti di alcune armi (solo per l'idea: qui servono le forme singole) |
+| R2 | `art/WB-066/riferimenti/R2_stile_colori_piatti.png` | lo stile: colori piatti, contorno nero spesso (pezzi del Fornace, WB-057) |
 
 ## Regole comuni a tutti i fogli
 
-- Ogni foglio è 1536×1024, con le varianti della tabella (`nome_1`, `nome_2`); ognuna col suo `.txt` del prompt in `art/WB-065/`.
+- Ogni foglio è 1536×1024, con le varianti della tabella (`nome_1`, `nome_2`); ognuna col suo `.txt` del prompt in `art/WB-066/`.
 - Allegare sempre **R1** (le bozze di Claude per quel foglio: dicono forma, idea, posizione e proporzioni; lo stile no) e **R2** (lo stile: colori piatti e contorno nero come i pezzi dei personaggi), in quest'ordine.
 - Le armi in mano puntano **verso destra**, dritte in orizzontale, viste di lato, con l'impugnatura in basso come nella bozza. Niente mani né braccia: solo l'oggetto.
 - Una sola fascia **verde #00FF00** per oggetto (è il colore della squadra, il gioco la ricolora): dove sta nella bozza.
