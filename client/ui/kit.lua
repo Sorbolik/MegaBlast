@@ -842,6 +842,10 @@ local function backdrop_fit()
 	gui.set_position(S.bg, at)
 end
 
+-- a light dark veil over every painting, so it never steals the scene
+-- (Sergio, 15 Nov: «solo una lieve opacizzazione»)
+local VEIL = vmath.vector4(0.8, 0.8, 0.8, 1)
+
 local function scene_nodes()
 	if S then return S end
 	S = { tops = {}, loaded = {} }
@@ -851,6 +855,7 @@ local function scene_nodes()
 	local back = M.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
 	S.tops[#S.tops + 1] = back.node
 	S.bg = gui.new_box_node(vec(0, 360), vec(1280, 720))
+	gui.set_color(S.bg, VEIL)
 	gui.set_parent(S.bg, back.node)
 	gui.set_enabled(S.bg, false)
 	-- the two lights, each stuck to its corner
@@ -990,6 +995,7 @@ function M.scene_copy(s)
 		gui.set_yanchor(back, gui.ANCHOR_BOTTOM)
 		local size, at = painting_box(name)
 		local bg = gui.new_box_node(at, size)
+		gui.set_color(bg, VEIL)
 		gui.set_texture(bg, id)
 		gui.set_parent(bg, back)
 		out[#out + 1] = back
