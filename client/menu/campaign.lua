@@ -14,6 +14,7 @@
 
 local ui = require "ui.ui"
 local kit = require "ui.kit"
+local screen = require "ui.screen"
 local payload = require "sim.campaign"
 local missions = require "sim.missions"
 local ill = require "ui.illustrations"
@@ -253,7 +254,7 @@ end
 -- levels along the top if it is yours. Everything is its child: it slides and
 -- grows with it
 local function slice(c, i, at, from)
-	local g = c.kg
+	local g = c.stack or c.kg
 	local h = slice_h(i)
 	local n = gui.new_box_node(vmath.vector3(MAP_X - g.ox, g.oy - at.y, 0), vmath.vector3(SLICE_W, h, 0))
 	gui.set_texture(n, "fette")
@@ -323,6 +324,14 @@ local function build_map(c)
 	-- (made last, not moved up afterwards: a child sent to the top with
 	-- gui.move_above(node, nil) is no longer deleted with its parent, and the
 	-- slice stayed on the home; Sergio, 12 Nov)
+	-- the stack never goes under the thread (Sergio, 15 Nov): its slices are
+	-- cut there, the lower ones go on out of sight
+	local top = -720
+	local clip = gui.new_box_node(vmath.vector3(640, 720 - (kit.THREAD + top) / 2, 0), vmath.vector3(1280 * screen.FULL, kit.THREAD - top, 0))
+	gui.set_clipping_mode(clip, gui.CLIPPING_MODE_STENCIL)
+	gui.set_clipping_visible(clip, false)
+	gui.set_parent(clip, g.node)
+	c.stack = { node = clip, ox = 640, oy = (kit.THREAD + top) / 2 }
 	for i = LAST, 1, -1 do
 		if i ~= look then slice(c, i, at[i], was[i]) end
 	end
@@ -397,6 +406,7 @@ local function build(c)
 	c.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	c.radice = ui.root()
 	c.kg = { node = c.radice, ox = 0, oy = 720 }
+	c.stack = nil
 	local g = c.kg
 	-- after the kidnapping: the map of the circles, or (from the top floor) the
 	-- board of a chapter, which goes back to the map

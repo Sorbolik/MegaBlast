@@ -274,3 +274,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 15 nov | Sergio: un velo scuro leggero sopra ogni sfondo dei menu, perché non rubi la scena. | questa PR |
 | 15 nov | Sergio: pulsante primario E · gemma (WB-054) in tutti i menu; la pillola della coda nuova sotto la linea in ogni menu; le schede Codex si eseguono dal loro ramo, non serve main. | questa PR |
 | 15 nov | Correzione: nei passaggi delle porte della home l'apprendista sotto la pagina era scomposto (l'arma ai piedi): ora resta in posa. | questa PR |
+| 15 nov | Sergio: la pila dei gironi della campagna non scende più sotto la linea del piè di pagina: le fette si tagliano lì. | questa PR |
