@@ -52,4 +52,12 @@ Rendering rules, very strict, because these parts will be traced into vector sha
 
 ## Consegna di Codex
 
+| File in `art/WB-059/` | Tentativi | Controllo visivo |
+|---|---:|---|
+| `pugni_forgiata_1.png` e `pugni_forgiata_1.txt` | 1 | Due spalline in cuoio con fascia in ottone e due borchie ciano ciascuna. |
+| `pugni_forgiata_2.png` e `pugni_forgiata_2.txt` | 1 | Stessa struttura, con borchie leggermente più ravvicinate e una fascia meno larga sul lato destro. |
+
+Entrambi i PNG sono nativi a 1536 × 1024. Ho verificato a vista la disposizione delle braccia, i pugni scoperti, le spalline senza grembiule o croce, i contorni neri, il fondo magenta e l'assenza di scritte. Il bordo tra spallina e braccio è leggermente diverso da R1. Restano da verificare l'identità dei pixel fuori dalle spalline, i colori esatti e il ritaglio per differenza.
+
+
 ## Resoconto di Claude
