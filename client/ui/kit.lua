@@ -481,55 +481,59 @@ end
 -- Makes a plate a button of list_of (ui.touch, the controller's light)
 function M.button(list_of, p, ui_action, opt)
 	local b = { nodo = p.node, bordo = p.node, colore = CLEAR, riposo = CLEAR, ui_action = ui_action, piastra = p,
-		spento = opt and opt.spento, luce = opt and opt.main and p.node or nil }
+		spento = opt and opt.spento, luce = opt and opt.main and p.node or nil, on_press = p.on_press }
 	list_of[#list_of + 1] = b
 	return b
 end
 
--- The main action: the red-hot ingot and, under it, a line saying what it
--- starts. opt: size (of the label), sub, off (it can't be done now: a dark
--- plate, and the line says why)
+-- The main action: the gold plate between fire and ice (WB-052, C · brace e
+-- gelo; Sergio, 15 Nov: one primary button, the same on every screen) and,
+-- at its left, a line saying what it starts. Three drawings: lit, pressed
+-- (while the finger is on it) and off (it can't be done now: grey and frozen,
+-- and the line says why). opt: size (of the label), sub, off
 local function sub_y(y, h)
-	-- under the ingot, or over it when the thread is there
+	-- under it, or over it when the thread is there
 	return y + h + 30 > 640 and y - 10 or y + h + 30
 end
+local LIT_H = 104   -- the lit drawing on the screen; the others as tall as drawn next to it
 
 function M.action(g, label, x, y, w, h, opt)
 	opt = opt or {}
-	local sk = 46
 	local size = opt.size or math.min(92, (w - 60) / (#label * 0.56))
 	-- an action at the bottom right goes under the thread, in the band, the
 	-- way back on the other side (Sergio, 12 Nov); its line at its left
 	local foot = y >= 540 and not opt.free
 	if foot then
-		x, y, w, h = 934, M.THREAD + 12, 280, 88
-		size = math.min(size, (w - 30) / (#label * 0.6), 54)
+		x, y, w, h = 926, M.THREAD + 10, 300, 88
+		size = math.min(size, (w - 120) / (#label * 0.6), 44)
 	end
-	if opt.off then
-		local p = M.plate(g, x, y, w, h, C.LINE, { sk = sk })
-		p.label = M.text(p.g, label, x + w / 2 + 23, y + h / 2 + size * 0.36, size, with_alpha(C.MUTE, 0.7), "middle")
-		gui.set_parent(p.label, p.face_node, true)
-		if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, y + h / 2 + 6, 16, C.FROST, "end", 1)
-		elseif opt.sub then p.sub = M.text(g, opt.sub, x + w / 2 + 23, sub_y(y, h), 15, C.FROST, "middle", 1.2) end
-		return p
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local p = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+	local k = (foot and LIT_H or h * 1.18) / P.primario_acceso.h
+	local looks = {}
+	for _, state in ipairs({ "acceso", "premuto", "spento" }) do
+		local name = "primario_" .. state
+		local s = empty(0, 0, 0, 0, n)
+		three(s, name, w, P[name].h * k)
+		gui.set_enabled(s, state == (opt.off and "spento" or "acceso"))
+		looks[state] = s
 	end
-	local p = M.plate(g, x, y, w, h, C.HOT, { sk = sk, piece = "lingotto" })
-	-- (the ingot's face is under its lighter top: the label sits a little lower)
-	p.label = M.text(p.g, label, x + w / 2 + 23, y + h * 0.58 + size * 0.36, size, C.INK, "middle")
-	gui.set_parent(p.label, p.face_node, true)
-	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, y + h / 2 + 6, 16, C.MUTE, "end", 1)
-	elseif opt.sub then p.sub = M.text(g, opt.sub, x + w / 2 + 23, sub_y(y, h), 15, C.MUTE, "middle", 1.2) end
-	-- now and then a small flame lights on it
-	p.flame = whole("fiamma", (w + sk) * 0.24, h * 0.5 + h * 0.08, h * 0.3, p.face_node)
-	gui.set_pivot(p.flame, gui.PIVOT_S)
-	gui.set_scale(p.flame, vmath.vector3(0.01, 0.01, 1))
-	local function flick()
-		gui.animate(p.flame, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, 4.5, function()
-			gui.animate(p.flame, "scale", vmath.vector3(0.01, 0.01, 1), gui.EASING_INQUAD, 0.4, 1.3, flick)
-		end)
+	local ink = opt.off and with_alpha(C.INK, 0.55) or C.INK
+	p.label = M.text(p.g, label, cx, cy + size * 0.36, size, ink, "middle")
+	local muted = opt.off and C.FROST or C.MUTE
+	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, cy + 6, 16, muted, "end", 1)
+	elseif opt.sub then p.sub = M.text(g, opt.sub, cx, sub_y(y, h), 15, muted, "middle", 1.2) end
+	-- the finger on it: the pressed drawing (ui.ui, premi)
+	if not opt.off then
+		local at = gui.get_position(p.label)
+		p.on_press = function(down)
+			gui.set_enabled(looks.acceso, not down)
+			gui.set_enabled(looks.premuto, down)
+			gui.set_position(p.label, vec(at.x, at.y - (down and 4 or 0)))
+		end
 	end
-	flick()
-	piece_in(p.node, "action")
+	piece_in(n, "action")
 	return p
 end
 

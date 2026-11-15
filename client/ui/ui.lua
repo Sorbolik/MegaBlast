@@ -372,6 +372,8 @@ end
 local function premi(b, fell)
 	gui.set_scale(b.nodo, fell and PRESSED or NORMAL)
 	gui.set_color(b.bordo, fell and b.colore or b.riposo)
+	-- a button with its own pressed drawing (ui/kit.lua, action)
+	if b.on_press then b.on_press(fell) end
 end
 
 -- Controller: one button at a time has the light (lit border, a bit bigger).

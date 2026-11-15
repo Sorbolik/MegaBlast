@@ -1,6 +1,6 @@
 # WB-052 · Tre direzioni per il pulsante primario dei menu
 
-- **Stato:** APPROVATA (Sergio, 15 nov 9:59: «Dobbiamo inventarci un altro pulsante primario, adesso è diverso in base alle pagine, ed in ogni caso non è coerente con i cambi di ui che abbiamo fatto»; 10:17: «voglio un altro pulsante primario, quello [il sigillo fuso] è solo per entrare nel gioca online dalla schermata principale»)
+- **Stato:** CONSEGNATA E INTEGRATA (era APPROVATA) (Sergio, 15 nov 9:59: «Dobbiamo inventarci un altro pulsante primario, adesso è diverso in base alle pagine, ed in ogni caso non è coerente con i cambi di ui che abbiamo fatto»; 10:17: «voglio un altro pulsante primario, quello [il sigillo fuso] è solo per entrare nel gioca online dalla schermata principale»)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-052`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-052` senza chiedere conferma (il repository è privato).
@@ -113,3 +113,11 @@ Thick black ink outline on every piece, cartoon comic style like images 2 and 3.
 ## Decisione
 
 Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
+
+## Resoconto di Claude (15 nov)
+
+- Arrivati tutti e sei i fogli, ognuno coi tre stati. Montati su allenamento, armeria e zaino: `/mnt/project-files/menu_14nov/WB-052_tre_pulsanti_primari.png`.
+- Sergio sceglie la **C · brace e gelo** (variante 1). Ritagliati acceso, premuto e spento in `ritagli/primario_*_1.png`, nell'atlante fucina come `primario_acceso`, `primario_premuto` e `primario_spento`, in tre parti (`tools/grafica/fucina.py`).
+- Ora sono in `kit.action`, cioè in tutti i menu: il premuto si vede mentre il dito è sopra (`on_press` in `ui.ui`).
+- Il lingotto di WB-022 è tolto.
+- Sergio vuole comunque altre tre proposte: WB-054.

@@ -3,7 +3,7 @@
 #   python3 tools/grafica/fucina.py
 # Scrive:
 #   client/assets/fucina/*.png          i pezzi senza il verde, per l'atlante fucina.
-#       Un pezzo lungo (lingotto, piastre, scheggia, piastrina) e' in tre parti:
+#       Un pezzo lungo (primario, piastre, scheggia, piastrina) e' in tre parti:
 #       _sx e _dx interi, _cx il mezzo, che il gioco allunga solo in largo. Cosi' i
 #       bordi non si deformano mai e restano al doppio della misura sullo schermo.
 #       Il pannello e' in nove parti (angoli interi, lati allungati in un verso).
@@ -86,7 +86,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome not in ("lingotto", "guscio", "barra_brace", "barra_gelo", "barra_chiara"):    # (sfumato: la sua scritta la mette kit.action)
+    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara") and not nome.startswith("primario"):    # (sfumati, e il primario: la scritta la mette kit.action)
         SPAZI[nome] = spazio(im)
 
 
@@ -134,7 +134,7 @@ def nove(nome, arr, lato, angolo=0.2):
 
 def fai_pezzi():
     p = os.path.join(ART, "WB-022")
-    tre("lingotto", pezzi(senza_verde(os.path.join(p, "pezzo_lingotto_1.png")))[0][2], 320, 0.2)
+    # (il lingotto di WB-022 non c'e' piu': il pulsante primario e' quello di WB-052)
     tre("scheggia", pezzi(senza_verde(os.path.join(p, "pezzo_ghiaccio.png")))[0][2], 200, 0.2)
     pan = pezzi(senza_verde(os.path.join(p, "pezzo_pannello.png")))[0][2]
     nove("pannello", pan, 480)
@@ -385,6 +385,11 @@ def fai_menu():
         im = im.resize((w, round(im.size[1] * w / im.size[0])), Image.LANCZOS)
         salva(im, nome)
         MISURE[nome] = im.size
+    # il pulsante primario dei menu (WB-052, C · brace e gelo, Sergio 15 nov): acceso,
+    # premuto e spento, in tre parti (si allunga solo il mezzo). Alti come nel disegno
+    # rispetto all'acceso: il premuto e' piu' basso apposta
+    for stato, h in (("acceso", 200), ("premuto", 130), ("spento", 165)):
+        tre("primario_" + stato, ritaglio("WB-052", "primario_%s_1" % stato), h, 0.3)
     # le icone dei pezzi (WB-043): base e forgiata per famiglia e posto; il posto vuoto
     for f in FAMIGLIE:
         for p in POSTI:

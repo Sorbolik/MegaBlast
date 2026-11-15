@@ -97,12 +97,12 @@ local function join(...)
 end
 
 -- The page's edge: a thin orange line down the whole screen (x: its middle).
--- With M.EDGE "tempra" (Sergio, 15 Nov: to try it against the line alone) while
--- it drags it is a narrow blade of the temper (WB-051, ui/transition.lua): the
+-- With M.EDGE "tempra" (tried on 15 Nov; Sergio, 11:16: the doors keep the line
+-- alone, the temper everywhere else) while it drags it is a narrow blade of the temper (WB-051, ui/transition.lua): the
 -- red-hot edge in front (dir: the side it faces, 1 right), the iron, the frost
 -- behind; arrived, the blade fades and the line stays
 -- (not kit.anchor: it would count as one of the screen's nodes)
-M.EDGE = "tempra"
+M.EDGE = "linea"
 local TALL = 720 * 2
 local blade = {}   -- line -> its blade
 local function column(parent, name, x, w)

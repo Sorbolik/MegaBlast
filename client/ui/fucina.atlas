@@ -269,15 +269,6 @@ images {
   image: "/assets/fucina/lama_gelo.png"
 }
 images {
-  image: "/assets/fucina/lingotto_cx.png"
-}
-images {
-  image: "/assets/fucina/lingotto_dx.png"
-}
-images {
-  image: "/assets/fucina/lingotto_sx.png"
-}
-images {
   image: "/assets/fucina/linguetta_chiara_cx.png"
 }
 images {
@@ -492,6 +483,33 @@ images {
 }
 images {
   image: "/assets/fucina/porta_eventi.png"
+}
+images {
+  image: "/assets/fucina/primario_acceso_cx.png"
+}
+images {
+  image: "/assets/fucina/primario_acceso_dx.png"
+}
+images {
+  image: "/assets/fucina/primario_acceso_sx.png"
+}
+images {
+  image: "/assets/fucina/primario_premuto_cx.png"
+}
+images {
+  image: "/assets/fucina/primario_premuto_dx.png"
+}
+images {
+  image: "/assets/fucina/primario_premuto_sx.png"
+}
+images {
+  image: "/assets/fucina/primario_spento_cx.png"
+}
+images {
+  image: "/assets/fucina/primario_spento_dx.png"
+}
+images {
+  image: "/assets/fucina/primario_spento_sx.png"
 }
 images {
   image: "/assets/fucina/riga_oro_cx.png"
