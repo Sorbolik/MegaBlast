@@ -777,21 +777,48 @@ local THREAD_Y = M.BAND
 local PLACES = { addestramento = "cortile", girone_1 = "forgia" }
 local PLACE = "cortile"
 
--- on: the screen has the painting (false: only the soot, over a battle)
+-- The painting a screen asks for: opt.bg true is the place reached, a name is
+-- the screen's own painting (Sergio, 15 Nov: one for each screen, WB-053:
+-- /paintings/backdrops/menu_<name>.jpg); false or nil: none
+local function painting_of(on)
+	if type(on) == "string" and BACKDROPS["menu_" .. on] then return "menu_" .. on end
+	return on and PLACE or nil
+end
+
+-- its texture, loaded if it isn't (each painting has its own: a copy of the
+-- backdrop may keep the one of the screen under it, M.scene_copy)
+local function load_painting(name)
+	local id = "sfondo_" .. name
+	if S.loaded[name] then return id end
+	local data = sys.load_resource("/paintings/backdrops/" .. name .. ".jpg")
+	local img = data and image.load(data)
+	if img and gui.new_texture(id, img.width, img.height, img.type, img.buffer) then
+		S.loaded[name] = true
+		return id
+	end
+end
+
+local function unload_painting(name)
+	if name and S.loaded[name] and name ~= S.bg_name and name ~= S.kept then
+		gui.delete_texture("sfondo_" .. name)
+		S.loaded[name] = nil
+	end
+end
+
+-- on: the screen's painting (false: only the soot, over a battle)
 local function backdrop(on)
-	local name = on and PLACE or nil
+	local name = painting_of(on)
 	if S.bg_name ~= name then
-		if S.bg_name then
-			gui.set_texture(S.bg, "ui")
-			gui.delete_texture("sfondo")
-		end
+		local old = S.bg_name
 		S.bg_name = nil
-		local data = name and sys.load_resource("/paintings/backdrops/" .. name .. ".jpg")
-		local img = data and image.load(data)
-		if img and gui.new_texture("sfondo", img.width, img.height, img.type, img.buffer) then
+		local id = name and load_painting(name)
+		if id then
 			S.bg_name = name
-			gui.set_texture(S.bg, "sfondo")
+			gui.set_texture(S.bg, id)
+		else
+			gui.set_texture(S.bg, "ui")
 		end
+		unload_painting(old)
 	end
 	local shown = S.bg_name ~= nil
 	gui.set_enabled(S.bg, shown)
@@ -800,19 +827,24 @@ local function backdrop(on)
 	gui.set_enabled(S.cold, not shown)
 end
 
--- the painting covers the real screen, whatever its shape: wide enough, tall
--- enough above its floor, and a little more
+-- where the painting goes: it covers the real screen, whatever its shape: wide
+-- enough, tall enough above its floor, and a little more
+local function painting_box(name)
+	local f = BACKDROPS[name]
+	local h = math.max(720 * 1.14, screen.width() * 1.02 * 9 / 16, (screen.height() - THREAD_Y) / (1 - f) * 1.01)
+	return vec(h * 16 / 9, h), vec(0, THREAD_Y - f * h + h / 2)
+end
+
 local function backdrop_fit()
 	if not S.bg_name then return end
-	local f = BACKDROPS[S.bg_name]
-	local h = math.max(720 * 1.14, screen.width() * 1.02 * 9 / 16, (screen.height() - THREAD_Y) / (1 - f) * 1.01)
-	gui.set_size(S.bg, vec(h * 16 / 9, h))
-	gui.set_position(S.bg, vec(0, THREAD_Y - f * h + h / 2))
+	local size, at = painting_box(S.bg_name)
+	gui.set_size(S.bg, size)
+	gui.set_position(S.bg, at)
 end
 
 local function scene_nodes()
 	if S then return S end
-	S = { tops = {} }
+	S = { tops = {}, loaded = {} }
 	S.base = shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, C.SOOT)
 	S.tops[#S.tops + 1] = S.base
 	-- the painting, stuck to the real bottom like the thread
@@ -943,21 +975,26 @@ function M.scene_cut(on)
 	end
 end
 
--- A still copy of the backdrop as it is now, under everything (ui/door_pass.lua:
--- the home keeps it while a screen with the real one is dragged over it).
--- Returns its top nodes, to delete
-function M.scene_copy()
+-- A still copy of the backdrop of the screen s (its hold, M.scene), under
+-- everything (ui/door_pass.lua: the home keeps it while a screen with the
+-- real one is dragged over it). Returns it, for M.scene_copy_drop
+function M.scene_copy(s)
 	if not S then return {} end
-	local out = { shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, gui.get_color(S.base)) }
-	if gui.is_enabled(S.bg) and S.bg_name then
+	local opt = s.opt
+	local out = { shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, with_alpha(C.SOOT, opt.dim or 1)) }
+	local name = not opt.dim and painting_of(opt.bg)
+	local id = name and load_painting(name)
+	if id then
+		S.kept = name
 		local back = empty(640, 0)
 		gui.set_yanchor(back, gui.ANCHOR_BOTTOM)
-		local bg = gui.new_box_node(gui.get_position(S.bg), gui.get_size(S.bg))
-		gui.set_texture(bg, "sfondo")
+		local size, at = painting_box(name)
+		local bg = gui.new_box_node(at, size)
+		gui.set_texture(bg, id)
 		gui.set_parent(bg, back)
 		out[#out + 1] = back
 	end
-	if gui.is_enabled(S.low) then
+	if opt.seam ~= false then
 		local low = empty(640, 0)
 		gui.set_yanchor(low, gui.ANCHOR_BOTTOM)
 		shape(nil, 0, THREAD_Y, screen.width(), 11, C.INK, low)
@@ -969,6 +1006,15 @@ function M.scene_copy()
 	end
 	for i = #out, 1, -1 do gui.move_below(out[i], nil) end
 	return out
+end
+
+function M.scene_copy_drop(out)
+	for _, n in ipairs(out or {}) do gui.delete_node(n) end
+	local kept = S and S.kept
+	if kept then
+		S.kept = nil
+		unload_painting(kept)
+	end
 end
 
 -- The screen's subject moves (nothing follows it, for now)

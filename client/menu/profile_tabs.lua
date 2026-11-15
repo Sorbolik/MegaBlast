@@ -296,7 +296,7 @@ function M.new(prof, tab, color, replay_ok)
 	for _, g in ipairs(MODES) do
 		if g == last then s.gruppo = g end
 	end
-	s.scene = kit.scene(250, 420, { accent = KC.PURPLE, bg = true })
+	s.scene = kit.scene(250, 420, { accent = KC.PURPLE, bg = "profilo" })
 	build(s)
 	return s
 end

@@ -84,10 +84,6 @@ local function shift(nodes, by)
 	end
 end
 
-local function delete(nodes)
-	for _, n in ipairs(nodes or {}) do gui.delete_node(n) end
-end
-
 local function join(...)
 	local out = {}
 	for _, l in ipairs({ ... }) do
@@ -204,7 +200,7 @@ function M.open(dp, h, id, change)
 	gui.animate(d.node, "position.x", d.rest.x + d.dx, gui.EASING_OUTCUBIC, M.OUT, 0, function()
 		-- 2. the new screen, made out of sight with its backdrop, its edge on the shield;
 		-- the home stays under it, with a copy of the backdrop
-		local still = kit.scene_copy()
+		local still = kit.scene_copy(h.scene)
 		kit.track_begin()
 		change()
 		dp.kind, dp.door = "door", id
@@ -220,7 +216,7 @@ function M.open(dp, h, id, change)
 			slide(join(page, { d.rider }), -d.p0, gui.EASING_INOUTCUBIC, M.ACROSS, function()
 				home_on(h, false)
 				kit.scene_cut(false)
-				delete(still)
+				kit.scene_copy_drop(still)
 				blade_to(dp.line, 0, 0.3)
 				-- 4. the button lets go and slips out; the line stays
 				-- (the rider went across with it)
@@ -241,7 +237,7 @@ function M.close(dp, h, change)
 	kit.track_end()
 	local tops = kit.scene_tops()
 	-- 1. the home comes back under the screen, the button back on the line
-	local still = kit.scene_copy()
+	local still = kit.scene_copy(h.scene)
 	home_on(h, true)
 	kit.scene_cut(true)
 	if not dp.line then dp.line = line(d.line_x, -d.side) end
@@ -257,7 +253,7 @@ function M.close(dp, h, change)
 			shift(tops, -d.p0)
 			kit.scene_cut(false)
 			change()
-			delete(still)
+			kit.scene_copy_drop(still)
 			drop_line(dp)
 			-- 3. the button comes home from its edge
 			unride(d)
