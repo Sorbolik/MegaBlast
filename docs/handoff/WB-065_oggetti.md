@@ -85,4 +85,20 @@ Rendering rules, very strict, because every shape will be traced into vector lay
 
 ## Consegna di Codex
 
+Generati con `image_gen` dal ramo della scheda (`1a1e172d`). Ogni PNG è
+affiancato dal TXT con prompt integrale e riferimenti in ordine.
+
+| PNG e TXT in `art/WB-065/` | Tentativi | Selezione | Dimensioni |
+|---|---:|---:|---:|
+| `oggetti_icone_1` | 3 | 2 | 1536×1024 |
+| `oggetti_icone_2` | 3 | 3 | 1536×1024 |
+| `oggetti_pezzi_1` | 3 | 1 | 1536×1024 |
+| `oggetti_pezzi_2` | 3 | 2 | 1536×1024 |
+
+Controllati otto pezzi per foglio (sette oggetti e il rampino sciolto), sette\nicone, ordine, contorni, fasce verdi dove previste e separazione. Dopo tre\ntentativi per variante il rampino mostra ancora tre punte visibili. Scelti\ni tentativi con i pezzi più leggibili: nella seconda variante dei pezzi si\nvedono entrambe le ganasce dentate. Leggibilità a 40 px non provata.
+
+Magenta opaco, diverso da #FF00FF negli angoli campionati. Conservati i PNG
+originali. Corrispondenza esatta della palette, ricalco e resa in gioco
+restano da verificare.
+
 ## Resoconto di Claude
