@@ -190,46 +190,72 @@ local function parts_of(p, base, a, now)
 	return out
 end
 
--- vertical stripes from value lo to hi (the piece chosen: mint better, red worse)
-local function stripes(g, y, h, from, to, color)
-	local px = from
-	while px < to do
-		kit.rect(g, px, y, math.min(4, to - px), h, color)
+-- vertical stripes from x1 to x2 (the piece chosen: mint better, red worse)
+local function stripes(g, y, h, x1, x2, color)
+	local px = x1
+	while px < x2 do
+		kit.rect(g, px, y, math.min(4, x2 - px), h, color)
 		px = px + 7
 	end
 end
 
--- A bar w wide at (x, y): the parts of the value in their colors, then the
--- change of the piece chosen (after) striped
--- the smallest full bar of a stat: Defense starts at 0, a few points must not fill it
-M.BAR_MIN = { defense = 20 }
--- the stats that are counts (how many, how far, yes or no): no bar, the number says it all
-M.NO_BAR = { teleports = true, parachutes = true, air_jumps = true, trap_radius = true,
-	status_turns = true, burning_blasts = true }
-function M.bar(g, x, y, w, h, parts, now, after, less, k)
-	if not parts or type(now) ~= "number" or M.NO_BAR[k] then return end
-	local pos = 0
-	for _, v in ipairs(parts) do if v > 0 then pos = pos + v end end
-	local scale = math.max(pos * 1.1, now * 1.1, (type(after) == "number" and after or 0) * 1.1, M.BAR_MIN[k] or 0)
-	if scale <= 0 then return end
+-- The bars run from the base to the highest value in the game (Sergio, 15 Nov
+-- 23:14): menu/stat_max.lua, written by tools/statistiche/massimi.lua (tutti.sh
+-- fails when it is behind the pieces and the Sigilli). The base is a fixed
+-- stub on the left, the rest of the bar is what you can still gain; a change
+-- is never thinner than DELTA_MIN, its size is written next to the bar.
+-- Only the stats where more is better have a bar (not the counts, not the
+-- ones where less is better).
+M.MAX = require "menu.stat_max"
+M.BASE_STUB, M.DELTA_MIN = 0.2, 8
+function M.bar(g, x, y, w, h, parts, now, after, k)
+	local mx = M.MAX[k]
+	if not parts or not mx or type(now) ~= "number" then return end
+	local b = parts[1]
+	local stub = w * M.BASE_STUB
+	local function at(v)
+		if v <= b then
+			if b <= 0 then return v >= b and stub or 0 end
+			return stub * math.max(v, 0) / b
+		end
+		return stub + (w - stub) * math.min(1, (v - b) / math.max(mx - b, 1e-9))
+	end
 	kit.rect(g, x - 2, y - 2, w + 4, h + 4, KC.INK)
 	kit.rect(g, x, y, w, h, KC.TRACK)
-	local solid = math.max(0, math.min(now, type(after) == "number" and after or now))
-	local at = 0
-	for i, v in ipairs(parts) do
-		if v > 0 and at < solid then
-			local to = math.min(at + v, solid)
-			local x1, x2 = x + w * at / scale, x + w * to / scale
-			kit.rect(g, x1, y, x2 - x1, h, M.PART_COLORS[i])
-			kit.rect(g, x2 - 1, y, 2, h, KC.INK)
-			at = to
+	local solid = math.min(now, type(after) == "number" and after or now)
+	-- the base, then level, pieces and Sigilli above it, up to the value
+	local v, edge = b, 0
+	local function seg(x1, x2, color)
+		if x2 > x1 then
+			kit.rect(g, x + x1, y, x2 - x1, h, color)
+			kit.rect(g, x + x2 - 1, y, 2, h, KC.INK)
+		end
+	end
+	seg(0, at(math.min(b, solid)), M.PART_COLORS[1])
+	for i = 2, 4 do
+		if parts[i] > 0 then
+			seg(at(math.min(v, solid)), at(math.min(v + parts[i], solid)), M.PART_COLORS[i])
+			v = v + parts[i]
 		end
 	end
 	if type(after) == "number" and after ~= now then
-		local lo, hi = math.max(0, math.min(now, after)), math.max(0, math.max(now, after))
-		local better = (after > now) ~= (less == true)
-		stripes(g, y, h, x + w * lo / scale, x + w * hi / scale, better and KC.MINT or KC.RED)
+		local x1, x2 = at(math.min(now, after)), at(math.max(now, after))
+		x2 = math.max(x2, x1 + M.DELTA_MIN)
+		if x2 > w then x2, x1 = w, w - M.DELTA_MIN end
+		stripes(g, y, h, x + x1, x + x2, after > now and KC.MINT or KC.RED)
 	end
+end
+
+-- how much a stat changes, written like its value: "+2", "+10%", "−0.4 S"
+function M.delta(v, v2, how)
+	if type(v) ~= "number" or type(v2) ~= "number" or how == "yes_no" then return nil end
+	local d = v2 - v
+	local t
+	if how == "percent" then t = string.format("%+d%%", math.floor(d * 100 + (d > 0 and 0.5 or -0.5)))
+	elseif how == "seconds" then t = string.format("%+.1f S", d / 60)
+	elseif math.abs(d - math.floor(d + 0.5)) < 1e-6 then t = string.format("%+d", math.floor(d + 0.5))
+	else t = string.format("%+.1f", d) end
+	return (t:gsub("^%-", "−"))
 end
 
 -- the four colors of the bars and their names, two by two, w wide from (x, y)
@@ -322,7 +348,14 @@ function M.stats(s, g, x, y, w, a, a2, o)
 		local wide, room = kit.width(name), w - vw - 10
 		-- never under 16 (the smallest text of the menus)
 		if wide > room then gui.set_scale(name, gui.get_scale(name) * math.max(room / wide, 16 / name_size)) end
-		M.bar(g, x, line + (big and 10 or 7), w, big and 12 or 10, parts[k], v, changes and after[k] or nil, LESS[k], k)
+		-- under the name the bar, and at its right how much the piece chosen changes
+		local dt = changes and M.delta(v, after[k], how)
+		local bw = w
+		if dt then
+			kit.text(g, dt, x + w, line + (big and 23 or 19), 16, col, "end")
+			bw = w - (big and 70 or 56)
+		end
+		M.bar(g, x, line + (big and 10 or 7), bw, big and 12 or 10, parts[k], v, changes and after[k] or nil, k)
 	end
 	return tall
 end
@@ -355,9 +388,10 @@ end
 function M.sheet(s, g, a, a2, back)
 	M.stats(s, g, 460, 110, 370, a, a2, { from = 1, to = M.STAT_ROWS, legend = true })
 	M.stats(s, g, 878, 110, 370, a, a2, { from = M.STAT_ROWS + 1, to = #M.STATS, title = false })
-	-- (drawn after the panels: it sits in the head of the second one)
-	local b = kit.card(g, 1248 - 236, 102, 236, 44, KC.ROSE, { sel = true })
-	kit.text(b.g, back, 1248 - 118, 131, 19, KC.SAND, "middle")
+	-- (drawn after the panels: it sits inside the head of the second one, the
+	-- same plate as VEDI TUTTE; Sergio, 15 Nov: not the lit frame over the edge)
+	local b = kit.card(g, 1248 - 206, 106, 206, 44, KC.ROSE)
+	kit.text(b.g, back, 1248 - 103, 135, 18, KC.SAND, "middle", 0.5)
 	kit.button(s.buttons, b, "foglio")
 end
 
