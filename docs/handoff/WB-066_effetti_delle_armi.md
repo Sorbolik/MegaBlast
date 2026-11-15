@@ -68,4 +68,18 @@ Rendering rules, very strict, because every shape will be traced into vector lay
 
 ## Consegna di Codex
 
+Generati con `image_gen` dal ramo della scheda (`1a1e172d`). Ogni PNG è
+affiancato dal TXT con prompt integrale e riferimenti in ordine.
+
+| PNG e TXT in `art/WB-066/` | Tentativi | Selezione | Dimensioni |
+|---|---:|---:|---:|
+| `effetti_1` | 1 | 1 | 1536×1024 |
+| `effetti_2` | 1 | 1 | 1536×1024 |
+
+Controllati sedici effetti per foglio, ordine in griglia 4×4, contorni neri,\nforme bianche, separazione tra celle, margini e assenza di scritte. Nel\ncerchio dell'esplosione inversa i pallini sono aderenti all'anello. Nella\nseconda variante la runa è più appuntita e si avvicina alla forma di una A.\nCompatibilità con la tinta in gioco e dimensioni dei singoli effetti non provate.
+
+Magenta opaco, diverso da #FF00FF negli angoli campionati. Conservati i PNG
+originali. Corrispondenza esatta della palette, ricalco e resa in gioco
+restano da verificare.
+
 ## Resoconto di Claude
