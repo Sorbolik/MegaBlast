@@ -104,4 +104,22 @@ Rendering rules, very strict, because every shape will be traced into vector lay
 
 ## Consegna di Codex
 
+Generati con `image_gen` dal ramo della scheda (`1a1e172d`). Ogni PNG è
+affiancato dal TXT con prompt integrale e riferimenti in ordine.
+
+| PNG e TXT in `art/WB-064/` | Tentativi | Selezione | Dimensioni |
+|---|---:|---:|---:|
+| `secondarie_corte_1` | 1 | 1 | 1536×1024 |
+| `secondarie_corte_2` | 1 | 1 | 1536×1024 |
+| `secondarie_icone_1` | 2 | 2 | 1536×1024 |
+| `secondarie_icone_2` | 1 | 1 | 1536×1024 |
+| `secondarie_lunghe_1` | 1 | 1 | 1536×1024 |
+| `secondarie_lunghe_2` | 1 | 1 | 1536×1024 |
+
+Controllati numero e ordine (4, 4, 8), pezzi separati, orientamento delle\narmi lunghe, fasce verdi in mano, icone senza fascia verde. Le tacche della\nLama sono rese come sporgenze. Nelle icone la crepa della Voragine è resa\ncome un segno chiaro. Nel primo foglio di icone c'era una macchia sul magenta\nvicino al Maglio, rimossa con la rigenerazione. Nel secondo tentativo resta\nil manico del Mantice molto corto. Leggibilità a 40 px non provata.
+
+Magenta opaco, diverso da #FF00FF negli angoli campionati. Conservati i PNG
+originali. Corrispondenza esatta della palette, ricalco e resa in gioco
+restano da verificare.
+
 ## Resoconto di Claude

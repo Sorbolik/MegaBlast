@@ -1,0 +1,19 @@
+Image 1 is a rough layout sketch made by our designer for a 2D comic game set in a cartoon hell, where a small red devil apprentice fights with weapons forged by his master, the Smith, in the Forge of the Titans. Image 2 shows the drawing style of the game (character parts). 
+Redraw the four short weapons of image 1 in a 2 by 2 grid, same order and positions, each about 400 px:
+1. Forge Bellows (top left): real blacksmith bellows lying horizontal, nozzle to the right: two teardrop-shaped wooden boards, a pleated dark leather bag between them with clear folds, two wooden handles on the left, a brass nozzle, a team-green band on the top board.
+2. Chasm Sphere (top right): a perfect black cast-iron ball held together by two crossing blued-steel bands; in one crack at the lower right you see the void inside: very dark violet with three tiny white dots like far stars. One of the two bands is team green instead of steel.
+3. Mortar (bottom left): a short stubby bronze mortar, wide mouth to the right, two brass rings, a small wooden wheel under it, a team-green band.
+4. Firecracker (bottom right): an upright cylinder of yellow paper with black spiral stripes, a wooden cap on top, a short fuse with a small white-yellow spark at its end, a team-green band in the middle.
+No orange glow except the tiny fuse spark.
+Rendering rules, very strict, because every shape will be traced into vector layers:
+- Same drawing style as image 2: thick closed pure black #000000 outline around every shape and between colour areas, chunky soft slightly asymmetric comic shapes.
+- FLAT COLORS ONLY: every area is one solid colour, plus at most one hard-edged shadow shape in the darker tone of the same material. No gradients, no textures, no soft shading, no glow halos, no blur, no sparkles, no motion lines.
+- Use ONLY these colours: dark blued steel #35536B, blued steel #5F86A4, light steel #B9D4E6; dark brass #A8761F, brass #D9A441; dark leather #4A3019, leather #6B4A2B, light leather #C89255, wood #8A5A33; pitch #2E2433, pitch sheen #5E4870; paper shadow #C99A1E, yellow paper #F2C94C; team band pure green #00FF00 with shadow #00B400; white #FFFFFF; black #000000. The chasm sphere ball uses pitch #2E2433 as its black body, so it stays separate from the outline.
+- Background: flat pure magenta #FF00FF everywhere, no halo around the objects, no ground shadow. Objects never touch each other.
+- No text, numbers, letters, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-064/riferimenti/R1_bozze_secondarie_corte.png
+art/WB-064/riferimenti/R2_stile_colori_piatti.png
+
+Strumento: image_gen. Tentativi: 1. Selezionato: 1.
