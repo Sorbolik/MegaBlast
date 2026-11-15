@@ -284,7 +284,7 @@ local function build(a)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
 	local act = profile.active_loadout(p)
 	gear_ui.devil(a, a.left, 250, 600, 360)
-	local try, focus
+	local try, focus, up
 	if a.tab == "bottega" then
 		local w = shop(a)
 		-- the ware chosen: tried on the devil
@@ -292,12 +292,20 @@ local function build(a)
 	else
 		local sel = upgrade(a)
 		focus = sel and sel[2]
+		-- the piece one level up: the column says what +1 LIVELLO changes
+		-- (Sergio, 15 Nov 22:48: the stats wherever the gear changes)
+		local nxt = sel and wallet.next(p, sel[1], sel[2])
+		if nxt then up = { sel[1], sel[2], nxt.level } end
 	end
 	gear_ui.worn(a, a.left, act, 250, 600, 360, 36, { 130, 248, 366, 484 }, 72, focus, try)
 	local a2
 	if try and act.gear[try[2]] ~= try[1] then
 		a2 = copy(act)
 		a2.gear[try[2]] = try[1]
+	elseif up and act.gear[up[2]] == up[1] then
+		a2 = copy(act)
+		a2.levels = wallet.levels(p, act)
+		a2.levels[up[2]] = up[3]
 	end
 	if a.sheet then
 		-- all the stats over the middle: the bench and the column are hidden (and their taps)

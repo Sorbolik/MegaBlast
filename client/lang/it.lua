@@ -479,6 +479,8 @@ return {
 		stats = "STATISTICHE",
 		-- the column of the stats shows only what changes; this opens all of them
 		see_all = "VEDI TUTTE ›",
+		-- the colors of the bars: where the points come from
+		parts = { "BASE", "LIVELLO", "PEZZI", "SIGILLI" },
 		-- the piece chosen changes nothing / your pieces leave everything as at the start
 		no_change = "non cambia niente",
 		all_base = "tutte come all'inizio",
