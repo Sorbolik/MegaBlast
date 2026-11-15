@@ -33,20 +33,26 @@ local function fit(n, w)
 	return n
 end
 
--- a card to choose: its panel, its icon ih tall on the left, the name, a line and
--- an information under it
+-- a button to play: a plate of beaten iron (the warm one for the usual mode),
+-- its icon ih tall on the left, the name, a line and an information under it;
+-- it goes down when pressed and starts its queue (Sergio, 15 Nov: they must
+-- look like buttons, not cards)
 local function card(c, g, x, y, w, h, o)
-	kit.panel(kit.group(g, x + w / 2, y + h / 2).node, w, h, o.sel and "pannello_caldo" or "pannello")
+	local p = kit.plate(g, x, y, w, h, o.hot and KC.HOT or KC.LINE, { sk = 0 })
+	local f = { node = p.face_node, ox = p.g.ox, oy = p.g.oy }
 	-- (no icon yet: the text starts where the icon would)
 	local ih = o.ih
-	if o.icon then kit.piece(g, o.icon, x + 28 + ih / 2, y + h / 2, ih) end
-	local tx = o.icon and x + 56 + ih or x + 28
+	if o.icon then kit.piece(f, o.icon, x + 34 + ih / 2, y + h / 2, ih) end
+	local tx = o.icon and x + 62 + ih or x + 56
 	local size = o.size
 	local top = y + h / 2 - (size * 0.9 + (o.info and 44 or 22)) / 2 + size * 0.8
-	fit(kit.text(g, o.name, tx, top, size, o.sel and KC.HOT or KC.SAND), x + w - 24 - tx)
-	if o.sub then fit(kit.text(g, kit.upper(o.sub), tx + 2, top + 26, 15, KC.MUTE, "start", 0.5), x + w - 26 - tx) end
-	if o.info then fit(kit.text(g, kit.upper(o.info), tx + 2, top + 50, 15, KC.HOT_TOP, "start", 0.5), x + w - 26 - tx) end
-	kit.zone(g, c.buttons, x, y, w, h, o.action)
+	local ink = KC.SAND
+	fit(kit.text(f, o.name, tx, top, size, ink), x + w - 70 - tx)
+	if o.sub then fit(kit.text(f, kit.upper(o.sub), tx + 2, top + 26, 15, KC.MUTE, "start", 0.5), x + w - 70 - tx) end
+	if o.info then fit(kit.text(f, kit.upper(o.info), tx + 2, top + 50, 15, KC.HOT_TOP, "start", 0.5), x + w - 70 - tx) end
+	-- the arrow of a button that goes somewhere
+	kit.text(f, "›", x + w - 30, y + h / 2 + size * 0.45, size * 1.3, ink, "middle")
+	kit.button(c.buttons, p, o.action)
 end
 
 local function build(c)
@@ -77,12 +83,12 @@ local function build(c)
 		if i > 2 then break end
 		also[i] = kit.upper(o.nome)
 	end
-	card(c, c.left, 36, 110, 700, 220, { sel = c.sel == "2v2", icon = "ic_2contro2", ih = 130, size = 52,
+	card(c, c.left, 36, 110, 700, 220, { hot = true, icon = "ic_2contro2", ih = 130, size = 52,
 		name = common.modes["2v2"], sub = T.usual_match, info = #also > 0 and T.also_counts:format(table.concat(also, ", ")) or nil,
-		action = "scegli:2v2" })
+		action = "coda:2v2" })
 	-- every online queue is here (Sergio): the 1 vs 1 too, still without its icon
-	card(c, c.left, 36, 350, 340, 120, { sel = c.sel == "1v1", size = 30, name = common.modes["1v1"], sub = T.duel_line,
-		action = "scegli:1v1" })
+	card(c, c.left, 36, 350, 340, 120, { size = 30, name = common.modes["1v1"], sub = T.duel_line,
+		action = "coda:1v1" })
 	card(c, c.left, 396, 350, 340, 120, { icon = "ic_stanza", ih = 52, size = 26, name = T.private, sub = T.private_short,
 		action = "privata" })
 
@@ -92,9 +98,9 @@ local function build(c)
 	end
 	for i, o in ipairs(running) do
 		local own = o.coda ~= o.modo
-		card(c, c.rt, 756, 110 + (i - 1) * 190, 500, 175, { sel = own and c.sel == o.coda, icon = ICON[o.tipo] or "ic_notte",
+		card(c, c.rt, 756, 110 + (i - 1) * 190, 500, 175, { icon = ICON[o.tipo] or "ic_notte",
 			ih = 64, size = 30, name = kit.upper(o.nome), sub = T.event:format(events.when(o, now)),
-			info = own and T.own_queue or T.counts_in:format(common.modes["2v2"]), action = "scegli:" .. (own and o.coda or "2v2") })
+			info = own and T.own_queue or T.counts_in:format(common.modes["2v2"]), action = "coda:" .. (own and o.coda or "2v2") })
 	end
 	local after = events.upcoming(now)[1]
 	if after then
@@ -120,7 +126,14 @@ function M.rebuild(x)
 	build(x)
 end
 
+-- a pressed button goes down
 function M.update(c, dt)
+	local held = c.buttons.held_down
+	if held ~= c.held then
+		if c.held and c.held.piastra then kit.press(c.held.piastra, false) end
+		if held and held.piastra then kit.press(held.piastra, true) end
+		c.held = held
+	end
 end
 
 function M.on_input(c, action_id, action)
@@ -128,8 +141,8 @@ function M.on_input(c, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" or ui_action == "privata" then return ui_action end
 	if ui_action == "cerca" then return { coda = c.sel } end
-	c.sel = ui_action:match("^scegli:(.*)$") or c.sel
-	build(c)
+	local queue = ui_action:match("^coda:(.*)$")
+	if queue then return { coda = queue } end
 	return nil
 end
 

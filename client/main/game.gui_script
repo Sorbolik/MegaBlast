@@ -2978,7 +2978,7 @@ end
 function CP.startup(self)
 	self.attesa = menu.attesa.new()
 	self.passaggio = menu.passaggio.new()
-	self.door_pass = menu.door_pass.new()
+	self.door_pass = menu.door_pass.new(self.passaggio)
 	self.intro = menu.intro.new()
 	self.ingresso = menu.ingresso.new()
 	if SIMULATE then
@@ -4664,7 +4664,6 @@ function update(self, dt)
 	light_up(self, dt_world)
 	impact.update(self.fx, dt_world)
 	frames.scope_end()
-	menu.door_pass.update(self.door_pass, dt)
 	if self.mode == "menu" then
 		home.update(self.home, dt)
 		-- every minute the events again (one starts, one ends); without network

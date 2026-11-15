@@ -570,8 +570,11 @@ function M.new(color, look, weapon_only, lit)
 	s.alpha = vmath.vector4(1, 1, 1, 1)
 	s.flash_col = vmath.vector4(1, 1, 1, 1)
 
-	s.ombra = circle_shape(s.root, 0, 0, Wd * 1.3, SHADOW)
-	scale(s.ombra, 1, 0.22)
+	-- the round shadow at the feet only in battle, never in the menus (Sergio, 15 Nov)
+	if lit then
+		s.ombra = circle_shape(s.root, 0, 0, Wd * 1.3, SHADOW)
+		scale(s.ombra, 1, 0.22)
+	end
 	-- the parachute, behind everything: swings around the point where the lines meet
 	s.para = joint(s.root, 0, D.chute_y * k)
 	piece(s, s.para, P.paracadute, k)
@@ -1001,7 +1004,7 @@ function M.update(s, dt, st)
 	scale(s.forma, lx, q)
 	rot(s.corpo, s.x[LEAN] + po.corpo)
 	pos(s.corpo, -s.x[SHOVE] * s.w + po.corpo_x * s.k, po.salto * s.k)
-	scale(s.ombra, 1 + (1 - q) * 0.5, 0.22)
+	if s.ombra then scale(s.ombra, 1 + (1 - q) * 0.5, 0.22) end
 
 	-- arms and legs chase the pose (so states blend gently); the legs lift in the steps
 	local follow = min(1, dt * 16)

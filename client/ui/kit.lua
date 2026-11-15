@@ -912,13 +912,6 @@ function M.scene_focus(s, fx, fy)
 	s.fx, s.fy = fx, fy
 end
 
--- The backdrop under everything (ui/door_pass.lua: the home and the new screen
--- pass over it together)
-function M.scene_bottom()
-	if not S then return end
-	for i = #S.tops, 1, -1 do gui.move_below(S.tops[i], nil) end
-end
-
 function M.scene_drop(s)
 	if not S or S.owner ~= s then return end
 	S.owner = nil

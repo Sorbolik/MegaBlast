@@ -102,11 +102,6 @@ function M.door_info(h, id)
 		name = gui.get_text(d.name), sub = gui.get_text(d.sub) }
 end
 
--- The same door drawn elsewhere, with what it says now (the tab of ui/door_pass.lua)
-function M.door_copy(g, id, x, y, name, sub)
-	return draw_door(g, id, x, y, name, sub)
-end
-
 -- the small line of a door: never past its room (a long one shrinks)
 local function set_sub(d, txt)
 	gui.set_text(d.sub, txt)
@@ -289,13 +284,6 @@ end
 -- home: under it nothing would be seen
 function M.arrive(h)
 	if h.is_visible then enter(h, 0, true) end
-end
-
--- The home seen but not listening, while a door's passage takes it out or brings
--- it back (ui/door_pass.lua)
-function M.peek(h, on)
-	for _, n in ipairs(h.tops) do gui.set_enabled(n, on) end
-	gui.set_enabled(h.slit, false)
 end
 
 -- Where the ZAINO comes out of the apprentice: the middle of his body, on the screen
