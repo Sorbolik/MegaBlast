@@ -219,6 +219,8 @@ end
 function M.root()
 	local n = gui.new_box_node(vec(0, screen.y1 - 720), vec(0, 0))
 	gui.set_visible(n, false)
+	-- a screen being moved whole (ui/kit.lua, track_begin)
+	if M.tracking then M.tracking[#M.tracking + 1] = n end
 	return n
 end
 
@@ -291,11 +293,6 @@ function M.medal(x, y, d, color, parent)
 	local n = drawn("medaglia", x, y, d * 1.15, color, parent)
 	if not bright(color) then gui.set_color(n, vmath.vector4(0.34, 0.32, 0.38, color.w)) end
 	return n
-end
-
--- Padlock of locked missions and chapters
-function M.padlock(x, y, d, color, parent)
-	return gui_node(d <= 48 and "lucchetto_p" or "lucchetto", x, y, d, d, color, parent)
 end
 
 -- Disc and ring (pie nodes): sticks, round buttons, stopwatch. d is the
@@ -404,12 +401,6 @@ function M.light(list_of, b)
 		gui.set_scale(b.nodo, LIGHT_SCALE)
 		gui.set_color(b.bordo, b.colore)
 	end
-end
-
--- The light again where it was, after the screen recolored the borders
-function M.relight(list_of)
-	local b = list_of.luce
-	if b and usable(b) then M.light(list_of, b) elseif b then M.light(list_of, nil) end
 end
 
 -- Where the light starts: the last confirmed, the main one, or the first

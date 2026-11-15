@@ -319,8 +319,6 @@ function M.small(g, v, x, y, w, h, opt)
 	scoria.update(c.figure, 0, c.st)
 	local sc = 102 / game.DISEGNO_H
 	gui.set_scale(pose, vmath.vector3(sc, sc, 1))
-	local ground = ui.alone(0, 0, 96 / sc, with_alpha(KC.INK, 0.6), pose)
-	gui.set_scale(ground, vmath.vector3(1, 0.14, 1))
 	gui.set_parent(c.figure.root, pose)
 	scoria.set_enabled(c.figure, true)
 	-- the stats: a bar each, the base in the middle

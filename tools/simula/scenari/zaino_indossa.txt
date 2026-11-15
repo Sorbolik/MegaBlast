@@ -1,0 +1,14 @@
+# Nello ZAINO, INDOSSA mette subito il pezzo addosso all'apprendista (Sergio, 15 nov),
+# senza tornare nella home.
+imposta prova_profilo 1
+
+aspetta 4
+tocca_centro 640 300               # l'apprendista: lo zaino
+aspetta 1.5
+foto 01_zaino
+tocca_centro 976 515                      # il cappuccio del Vuoto
+aspetta 0.5
+foto 02_scelto
+tocca_bordo 176 52 basso destra    # INDOSSA
+aspetta 1
+foto 03_indossato

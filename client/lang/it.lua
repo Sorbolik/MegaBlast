@@ -197,12 +197,19 @@ return {
 		months = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" },
 		-- "lun 16 nov": day of the week, day, month
 		date = "%s %s %s",
-		now = "ORA",
-		plate = "OGNI SETTIMANA",
 		no_event = "Nessun evento in corso",
+		-- the next event: its name, when it starts
+		next_one = "Il prossimo: %s · %s",
 		counts_in = "conta nelle partite %s",
 		own_queue = "coda sua · %s",
-		next = "PROSSIMI · DUE SETTIMANE",
+		-- the world ranking (the server doesn't keep it yet: one line per row)
+		ranking = "CLASSIFICA MONDIALE",
+		ranking_soon = { "la classifica mondiale arriva", "quando il server la terrà:", "qui i primi 100 e i tuoi vicini" },
+		-- your event
+		ends_in = "FINISCE TRA",
+		top = "SEI NEI PRIMI",
+		prize = "PREMIO A FINE EVENTO",
+		calendar = "CALENDARIO",
 		nothing_planned = "Niente in programma",
 		what_changes = "COSA CAMBIA",
 		from_to = "%s fino a %s",
@@ -211,6 +218,7 @@ return {
 		just_for_fun = "Solo per divertirsi",
 		offline = "Il server non risponde: gli eventi tornano appena c'è la rete",
 	},
+
 
 	-- menu/level_end.lua: the end of a campaign mission
 	level_end = {
@@ -362,60 +370,49 @@ return {
 		yes = "sì",
 		no = "no",
 		seconds = "%.1f s",
+		-- the tabs: POTENZIA and BOTTEGA
+		tab_upgrade = "POTENZIA",
+		tab_shop = "BOTTEGA",
+		-- POTENZIA: no piece in the chosen slot
+		nothing_here = "niente qui: prendilo in bottega",
+		-- grade in roman numbers, its name
+		grade = "GRADO %s · %s",
+		level_to = "LIVELLO %d › %d",
+		level_top = "LIVELLO %d · AL MASSIMO",
+		-- the next step: its level, the grade it opens
+		next_step = "PROSSIMO SCATTO: %d · GRADO %s, %s",
+		all_steps = "TUTTI GLI SCATTI FATTI",
+		-- the signature (it lights up at the step 10)
+		sign = "firma: %s",
+		sign_off = "firma dallo scatto 10: %s",
+		-- the other pieces of the slot (the slot in uppercase)
+		others = "GLI ALTRI %s CHE HAI",
+		tap_one = "tocca per sceglierlo",
+		-- BOTTEGA
+		yours = "tuo",
+		offers = "OFFERTE DEL FABBRO",
+		-- the time until midnight
+		change_in = "cambiano tra %s",
+		day = "PEZZI DEL GIORNO",
+		day_line = "%d pezzi · cambiano domani",
+		use_voucher = "USA UN BUONO",
+		you_have = "ne hai %d",
 	},
 
 
-	-- menu/pieces.lua and ui/step_scene.lua: the pieces' levels in Scaglie
+	-- menu/armory.lua and ui/step_scene.lua: the pieces' levels in Scaglie
 	pieces = {
-		empty = "nessuno",
-		-- no piece in the chosen slot (the slot in lowercase)
-		choose = "scegli qui sotto cosa indossare: %s",
-		-- slot and set: "ELMO · CORVO"
-		piece = "%s · %s",
-		of_max = "%d / %d",
-		-- grade in roman numbers, its name
-		grade = "grado %s · %s",
 		grades = { "bronzo", "argento", "oro", "brace" },
 		at_max = "AL MASSIMO",
-		next_level = "LIVELLO %d",
-		next_step = "SCATTO %d · GRADO %s, %s",
-		-- the Proof of a step: matches played wearing the piece
-		proof_name = "PROVA",
 		proof = "%d / %d partite col pezzo addosso",
 		proof_first = "prima la prova",
-		-- on the action: the price and the level it buys
-		price = "%s SCAGLIE · LIVELLO %d",
 		upgrade = "POTENZIA",
 		missing = "mancano %s",
-		-- the Smith's hand, with the full price
-		smith_name = "MANO DEL FABBRO",
-		smith_hand = "costa il 30%% in meno (era %s)",
-		-- the family: its name and its bonus with two gold pieces
-		family = "%s · 2 pezzi d'oro: %s",
-		-- the piece's signature: its name, what it does (it lights up at the step 10)
-		sign = "firma · %s: %s",
-		sign_off = "firma dallo scatto 10 · %s: %s",
-		others = "INDOSSA",
-		set_level = "%s · %d",
-		none_owned = "nessun pezzo qui: prendilo in bottega o nel catalogo",
-		-- the tabs of the armory
-		tab_wardrobe = "ARMADIO",
-		tab_shop = "BOTTEGA",
-		tab_catalog = "CATALOGO",
-		shop_today = "i pezzi di oggi, uno per posto: domani cambiano",
-		all_owned = "li hai tutti",
-		-- a piece of the catalog you own: the slot and its level
-		owned = "%s · TUO, %d",
 		pick_ware = "tocca un pezzo",
-		-- the chosen ware's effects at level 1
-		at_level_1 = "al livello 1: %s",
-		in_wardrobe = "è già nell'armadio",
+		in_wardrobe = "ce l'hai già",
 		buy = "COMPRA",
 		price_only = "%s SCAGLIE",
-		-- the Smith's vouchers: a piece of your choice for free
-		vouchers = "buoni del Fabbro: %d",
-		voucher_hint = " · un pezzo a scelta dal catalogo",
-		use_voucher = "USA UN BUONO",
+		price_unit = "SCAGLIE",
 		step_title = "SCATTO!",
 		step_new = "NUOVO",
 		-- the grade in roman numbers, its name
@@ -426,37 +423,22 @@ return {
 		step_top = "Al massimo: tutto al pieno",
 	},
 
-	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
+	-- menu/profile_tabs.lua: the PROFILO's STATISTICHE and CRONOLOGIA PARTITE tabs
 	profile_tabs = {
-		title = "IL TUO DIAVOLETTO",
-		your_devil = "DIAVOLETTO",
-		no_piece_short = "VUOTO",
-		loadout_locked = "%s: LIV %s",
-		tab_sheet = "SCHEDA",
-		tab_seals = "SIGILLI",
-		tab_matches = "PARTITE",
-		level = "LIV %s",
-		level_braci = "LIV %s · %s BRACI",
-		-- SCHEDA
-		loadout = "ASSETTO",
-		loadout_n = "ASSETTO %s",
-		how_others_see = "COSÌ TI VEDONO",
-		-- "Maschera del Corvo": the piece, then the set
-		piece_of = { default = "%s del %s", fornace = "%s della %s" },
-		next_look = "al %s: aspetto %s",
-		next_look_b = "al %s: aspetto %s e variante B",
-		all_steps = "tutti gli scatti presi",
-		pick_in_armory = "sceglilo nell'ARMERIA",
-		-- STATISTICHE
-		matches = "PARTITE",
-		won = "VINTE",
-		accuracy = "PRECISIONE",
-		best_streak = "SERIE MIGLIORE",
-		badge_hint = "tocca un badge per metterlo accanto al tuo nome (al massimo %s)",
-		next_to_name = "ACCANTO AL NOME",
-		next_at = "prossimo a %s",
-		badge_grade = "%s %s",
-		no_badge = "senza badge",
+		tab_matches = "CRONOLOGIA PARTITE",
+		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
+		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
+		no_moments = "nessun momento da ricordare",
+		level = "LIVELLO %s",
+		-- STATISTICHE: the four big numbers
+		won = "VITTORIE",
+		best_streak = "DI FILA",
+		stars = "STELLE",
+		lost = "SCONFITTE",
+		-- the badge of a stat, with its grade in roman numbers
+		badge_pill = "BADGE %s",
+		badge_hint = "tocca una riga col badge per metterlo accanto al tuo nome (al massimo %s)",
+		next_at = "badge a %s",
 		damage_by_weapon = "DANNO PER ARMA",
 		nothing_yet = "ancora niente: gioca una partita",
 		weapons = {
@@ -464,61 +446,81 @@ return {
 			sword = "Lama", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice",
 			boomerang = "Falcetto", tar = "Pece", drill = "Trapano", magnet = "Calamita", cannon = "Cannonata", petard = "Petardo",
 		},
-		-- PARTITE (os.date formats)
+		-- CRONOLOGIA PARTITE (os.date formats)
 		today = "oggi %H:%M",
 		yesterday = "ieri %H:%M",
-		outcome_won = "VINTA",
-		outcome_lost = "PERSA",
-		outcome_tie = "PARI",
+		outcome_won = "VITTORIA",
+		outcome_lost = "SCONFITTA",
+		outcome_tie = "PAREGGIO",
+		points = "PUNTI",
+		ranking = "CLASSIFICA",
 		no_matches = "Nessuna partita ancora: gioca, e la ritrovi qui.",
-		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
-		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
-		no_moments = "nessun momento da ricordare",
-		replay_local_only = "replay solo delle partite su questo telefono",
-		replay_missing = "replay non disponibile",
 	},
 
 
-	-- menu/seals.lua: the profile's SIGILLI tab (the paths of sim/skills.lua)
-	seals = {
-		points_of = "/ %s PUNTI",
-		free = "%s LIBERI",
-		reset = "AZZERA",
-		-- a closed loadout: its number and the level that opens it
-		of = "%s / %s",
-		threshold = "%s · SOGLIA %s",
-		taken = "potere preso",
-		choose_now = "scegli il potere",
-		missing_one = "manca %s punto",
-		missing = "mancano %s punti",
-		-- points the threshold needs, free points: not enough
-		missing_free = "servono %s punti, liberi %s",
-		bring_here = "PORTA QUI",
-		in_match = "IN PARTITA",
-		nothing = "ancora niente: metti un punto con +",
-		no_power = "nessun potere ancora",
-	},
 
 	-- menu/home.lua: the home
 	home = {
 		leave_queue_first = "esci dalla coda per giocarla",
-		your_devil = "DIAVOLETTO",
+		-- in the profile's round: the name, until the online accounts give one (placeholder)
+		player = "APPRENDISTA",
 		level = "LIV %d",
-		play_sub = "2 CONTRO 2",
+		play_sub = "ONLINE",
 		training_sub = "CONTRO I BOT",
+		armory_sub = "IL FABBRO",
+	},
+
+	-- menu/gear_ui.lua: what the ZAINO and the ARMERIA share
+	gear_ui = {
+		-- slot and family: "ELMO · CORVO"
+		piece = "%s · %s",
+		stats = "STATISTICHE",
+		-- a loadout still closed: from which level
+		loadout_locked = "DAL LIV %d",
+	},
+
+	-- menu/backpack.lua: the ZAINO (from the apprentice), INVENTARIO and SIGILLI
+	backpack = {
+		title = "ZAINO",
+		tab_inventory = "INVENTARIO",
+		tab_seals = "SIGILLI",
+		loadout = "ASSETTO",
+		seal_loadout = "ASSETTO SIGILLI",
+		all = "TUTTI",
+		count = "%d pezzi",
+		nothing = "nessun pezzo qui: li trovi in armeria",
+		-- under the piece chosen: level, grade and what it does
+		piece_line = "liv %d · grado %s %s · %s",
+		wear = "INDOSSA",
+		worn = "ce l'hai addosso",
+		points = "PUNTI  %d / %d",
+		of = "%d / %d",
+		save = "SALVA",
+		saved = "salvato",
+		-- the Sigilli: a step and its two powers (the chosen one and the other)
+		step = "%s · gradino %d",
+		other = "l'altra scelta: %s · %s",
+		to_choose = "scegli uno dei due",
+		pick_hint = "tocca un potere sotto un gradino per sceglierlo",
 	},
 
 	-- menu/queue.lua: GIOCA ONLINE, the queues online
 	queue = {
 		title = "GIOCA ONLINE",
-		online = "IN RETE",
-		search = "CERCA",
-		usual_match = "LA PARTITA DI SEMPRE",
-		also_counts = "CONTA ANCHE PER: %s",
-		event = "EVENTO · %s",
-		private = "PARTITA PRIVATA",
-		private_line = "Una stanza con un codice: amici e bot dove vuoi tu",
+		usual_match = "La modalità di sempre",
+		also_counts = "conta anche per: %s",
+		-- a running event: when it ends
+		event = "evento · %s",
+		own_queue = "coda sua",
+		counts_in = "conta nel %s",
+		no_event = "Nessun evento in corso",
+		-- the next event: when it starts, its name
+		coming = "%s · %s",
+		private = "STANZA PRIVATA",
+		private_short = "Con un codice",
+		duel_line = "Tu contro uno",
 	},
+
 
 	-- menu/private.lua: the private match (from GIOCA ONLINE)
 	private = {

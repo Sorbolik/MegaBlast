@@ -1,0 +1,17 @@
+Images 1 and 2 are two menu buttons of our game and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 3 is a frame of a screen transition: when a button is tapped, its round shield reaches the edge of the screen and drags the new screen across, and the shield rides on a tall vertical band at the leading edge of that screen. The flat vertical band in image 3 is a placeholder: draw the real ones. Image 4 shows other small pieces of the same game.
+
+Draw a sheet with FIVE separate pieces side by side, with green space between them:
+1. CAMPAIGN band: a tall narrow vertical band, about seven times taller than wide, of ember (#F26419) with a lighter stripe (#FFB703) along its left side and small flame tongues licking out of its right side; its top and bottom ends are rounded and slightly crooked; between the ends it is plain and even so it can be stretched in height;
+2. TRAINING band: the same shape, of worn steel (#8C929C, highlight #C9CED6) with a strip of wood (#8A6A4A) along its right side held by two iron bands near the ends;
+3. EVENTS band: the same shape, of gold (#FFB703, lighter stripe #FFE08A, darker stripe #F26419), its left side cut in small swallow-tail notches like the end of a banner;
+4. ARMOURY band: the same shape, of dark iron (#2B2530, highlight #6B6375) with an ice-blue edge (#38B6FF, highlight #CAF0F8) along its left side, cut like chipped ice;
+5. the shield MOUNT: a short chunky dark iron bracket (#2B2530, highlight #6B6375) shaped like a clamp with two rivets, as wide as a band and a bit taller than wide, that holds a round shield on the band.
+The four bands have exactly the same width and height.
+
+Thick black ink outline on every piece, cartoon comic style like images 1 and 2. Flat colors only, at most five per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no glow, no motion blur, no drop shadow. No text, letters or numbers. Do not draw the shields. Flat pure green background (#00FF00). The pieces are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+1. art/WB-049/riferimenti/R1_porta_campagna.png
+2. art/WB-049/riferimenti/R1b_porta_armeria.png
+3. art/WB-049/riferimenti/R2_prova_transizione.png
+4. art/WB-022/pezzo_piccoli.png

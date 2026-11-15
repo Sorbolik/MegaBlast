@@ -199,4 +199,4 @@ colore scuro della prima e della seconda squadra, la riga in mezzo dove sta «VS
 
 Nella #218: `C.OFF` a `#ACA4A0`, i temi in `backdrop.lua`, una riga in
 ogni schermata (`backdrop.new("tema")` al posto di `ui.background()`), lo scenario
-`menu_schermi.txt` esteso a tutte le schermate, foto a 4:3, 16:9 e 20:9.
+`telefono.txt` (il giro dei menu), foto a 4:3, 16:9 e 20:9.

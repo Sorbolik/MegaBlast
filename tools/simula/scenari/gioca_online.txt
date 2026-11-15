@@ -1,0 +1,15 @@
+# GIOCA ONLINE del 14 novembre (Figma Consigliata/6) contro un server vero col calendario
+# scenari/eventi_prova.json: 2 CONTRO 2 grande (conta anche per il Torneo), STANZA PRIVATA,
+# gli eventi in corso (il Maglio con la coda sua) e il prossimo. Gira anche con
+# --schermo 1600x720 e 960x720.
+imposta server_url ws://127.0.0.1:8090/ws
+
+aspetta 1
+server evento:maglio 0 eventi_prova.json
+aspetta 1
+tocca_bordo 230 56 basso destra     # GIOCA online
+aspetta 1.5
+foto 01_gioca_online
+tocca_bordo 274 523 mezzo destra    # il Maglio, con la coda sua
+aspetta 0.6
+foto 02_maglio

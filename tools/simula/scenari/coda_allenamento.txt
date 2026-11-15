@@ -17,7 +17,7 @@ aspetta 0.5
 tocca_centro 832 79                       # TORNA AI MENU
 aspetta_stato modo=menu coda=si 3
 aspetta 1
-tocca 250 334                      # ALLENAMENTO
+tocca 220 172                      # ALLENAMENTO
 aspetta 1
 aspetta 0.5
 tocca_bordo 175 52 basso destra    # GIOCA

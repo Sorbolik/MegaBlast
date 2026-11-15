@@ -1,0 +1,17 @@
+# Lo ZAINO del 14 novembre (Figma Consigliata/2 e /3): dall'apprendista della home,
+# INVENTARIO coi pezzi del profilo di prova e SIGILLI. Gira anche con --schermo 1600x720 e 960x720.
+imposta prova_profilo 1
+
+aspetta 4
+tocca_centro 640 300               # l'apprendista
+aspetta 1.5
+foto 01_inventario
+tocca_centro 572 515               # il secondo pezzo della griglia
+aspetta 0.6
+foto 02_pezzo
+tocca_bordo 580 53 alto sinistra    # SIGILLI
+aspetta 0.8
+foto 03_sigilli
+tocca_centro 860 515               # la barra di una via: i punti fin lì
+aspetta 0.6
+foto 04_sigilli_barra

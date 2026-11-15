@@ -197,8 +197,6 @@ local function refresh(s)
 	scoria.update(s.figure, 0, s.st)
 	local k = 265 / game.DISEGNO_H
 	gui.set_scale(pose, vmath.vector3(k, k, 1))
-	local ground = ui.alone(0, 0, 230 / k, with_alpha(KC.INK, 0.6), pose)
-	gui.set_scale(ground, vmath.vector3(1, 0.14, 1))
 	gui.set_parent(s.figure.root, pose)
 	scoria.set_enabled(s.figure, true)
 

@@ -29,6 +29,20 @@ local P = require "ui.pieces"
 
 local M = {}
 
+-- the measures of the fucina atlas's pieces (ui/pieces.lua)
+M.PIECES = P
+
+-- The top nodes a screen makes (kit.anchor, ui.root) while it is tracked:
+-- the passages that move a whole screen (ui/door_pass.lua)
+function M.track_begin()
+	M.tracking = {}
+	ui.tracking = M.tracking
+end
+function M.tracked() return M.tracking or {} end
+function M.track_end()
+	M.tracking, ui.tracking = nil, nil
+end
+
 local function hex(s, a)
 	return vmath.vector4(tonumber(s:sub(1, 2), 16) / 255, tonumber(s:sub(3, 4), 16) / 255, tonumber(s:sub(5, 6), 16) / 255, a or 1)
 end
@@ -176,12 +190,59 @@ function M.piece(g, name, cx, cy, h)
 	return whole(name, cx - g.ox, g.oy - cy, h, g.node)
 end
 
+-- A long piece in three parts filling the Figma box x..x+w, y..y+h (a row, a
+-- bar): the ends whole, the middle stretched. Returns { node, parts, g }
+function M.strip(g, name, x, y, w, h)
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, 0, 0, g.node)
+	local parts = three(n, name, w, h)
+	local b = room(name, cx, cy, w, h)
+	return { node = n, parts = parts, g = { node = n, ox = cx, oy = cy, box = b }, box = b, name = name, w = w, h = h }
+end
+
+-- Changes the width of a strip, keeping its left end where it is
+function M.strip_width(s, w)
+	three_fit(s.parts, s.name, w, s.h)
+	local p = gui.get_position(s.node)
+	gui.set_position(s.node, vec(p.x + (w - s.w) / 2, p.y))
+	s.w = w
+end
+
+-- A whole piece filling the Figma box x..x+w, y..y+h (its drawing's shape:
+-- give w and h in its proportions)
+function M.pic(g, name, x, y, w, h)
+	return pic(name, x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
+end
+
+-- A whole drawn button (the home's doors and GIOCA, WB-046) w wide, its top
+-- left at the Figma point (x, y), as tall as its drawing: nothing is
+-- stretched. Like a plate it goes down when pressed (M.press, M.button), and
+-- what is written on p.g stays in the room measured on the drawing
+-- (pieces.lua, box)
+function M.sign(g, name, x, y, w)
+	local m = P[name]
+	local h = w * m.h / m.w
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local p = { node = n, x = x, y = y, w = w, h = h, d = 4 }
+	p.face_node = empty(0, 0, 0, 0, n)
+	p.pic = pic(name, 0, 0, w, h, p.face_node)
+	p.g = { node = p.face_node, ox = cx, oy = cy }
+	local b, k = m.box, w / m.w
+	if b then
+		p.box = { x0 = x + b[1] * k, x1 = x + w - b[3] * k, y0 = y + b[2] * k, y1 = y + h - b[4] * k }
+		p.g.box = p.box
+	end
+	return p
+end
+
 -- ---------------------------------------------------------------- groups
 
 -- A top-level group at the Figma point (x, y), optionally stuck to a real
 -- edge of the screen (ui/screen.lua): only nodes without a parent do that
 function M.anchor(x, y, xa, ya)
 	local n = empty(x or 0, 720 - (y or 0))
+	if M.tracking then M.tracking[#M.tracking + 1] = n end
 	if xa then gui.set_xanchor(n, xa) end
 	if ya then gui.set_yanchor(n, ya) end
 	return { node = n, ox = x or 0, oy = y or 0 }
@@ -367,7 +428,8 @@ end
 
 -- How wide a text node is, in pixels
 function M.width(n)
-	local m = resource.get_text_metrics(gui.get_font_resource(gui.get_font(n)), gui.get_text(n))
+	-- with its letter spacing, or a spaced text would go past its room
+	local m = resource.get_text_metrics(gui.get_font_resource(gui.get_font(n)), gui.get_text(n), { tracking = gui.get_tracking(n) })
 	return m.width * gui.get_scale(n).x
 end
 
@@ -522,6 +584,11 @@ end
 
 -- ---------------------------------------------------------------- categories
 
+-- A round dot d wide centered at the Figma point (cx, cy)
+function M.dot(g, cx, cy, d, color)
+	return shape("disco", cx - g.ox, g.oy - cy, d, d, color, g.node)
+end
+
 function M.rect(g, x, y, w, h, color)
 	return shape(nil, x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, color, g.node)
 end
@@ -536,16 +603,19 @@ end
 
 -- TABS: small plates in a row; the active one is light.
 -- tabs: { { label, ui_action }, ... }
-function M.tabs(g, list_of, x, y, tabs, active, accent)
-	local h, cx = 58, x
+-- tag: the tabs of the menus of 14 Nov (Figma, RIORGANIZZAZIONE MENU): the
+-- little tabs (linguetta) 50 tall next to the title, instead of the plates
+function M.tabs(g, list_of, x, y, tabs, active, accent, tag)
+	local h, cx = tag and 50 or 58, x
 	for i, tab in ipairs(tabs) do
-		local w = #tab[1] * 16 + 64
+		local w = tag and (#tab[1] * 13 + 64) or (#tab[1] * 16 + 64)
 		local on = i == active
 		local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
-		local name = on and "piastrina_chiara" or "piastrina"
+		local name = tag and (on and "linguetta_chiara" or "linguetta") or (on and "piastrina_chiara" or "piastrina")
 		three(n, name, w, h)
 		local box = room(name, cx + w / 2, y + h / 2, w, h)
-		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 9, 24,
+		local size = tag and 21 or 24
+		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + size * 0.37, size,
 			on and C.INK or M.with_alpha(C.SAND, 0.85), "middle", 0.5)
 		list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
 		cx = cx + w + 8 + (g.air and M.air(0.1) or 0)
@@ -650,21 +720,6 @@ function M.heading(g, t, x, y, color)
 	return M.text(g, t, x, y, 17, color or C.HOT_TOP, "start", 1.5)
 end
 
--- MEASURES: round seals on the thresholds of a bar. state: "got" (full, in
--- color), "cur" (the one you are looking at: bigger, sand ring, a glow),
--- "todo" (dark, a ring in color)
-function M.seal(g, cx, cy, t, state, color)
-	local r = state == "cur" and 30 or 24
-	local x, y = cx - g.ox, g.oy - cy
-	if state == "cur" then
-		local glow = shape("alone", x, y, r * 4.4, r * 4.4, with_alpha(color, 0.7), g.node)
-		gui.set_blend_mode(glow, gui.BLEND_ADD)
-	end
-	-- the round frames of the fucina atlas: gold the ones taken, iron the others
-	whole(state == "got" and "tondo_oro" or "tondo_ferro", x, y, r * 2 + 4, g.node)
-	return M.text(g, t, cx, cy + 5, state == "cur" and 19 or 16, state == "todo" and C.MUTE or C.SAND, "middle")
-end
-
 -- REGULATORS: the small controls inside a screen are round irons: "−" and
 -- "+" (Sergio, 10 Nov), big enough for a thumb. off_minus, off_plus: that
 -- side can't be used
@@ -692,20 +747,6 @@ function M.round(g, list_of, cx, cy, label, ui_action)
 	local b = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = ui_action }
 	list_of[#list_of + 1] = b
 	return b
-end
-
--- The player's plate: name (or what it is), a line on the right, the bar
-function M.nameplate(g, x, y, name, right, f, accent)
-	local p = M.sand(g, x, y, 340, 62, accent or C.HOT, { sk = 22 })
-	-- in the plate's room: the name on the left, the level over its bar on the right
-	local b = p.box
-	local mid = (b.y0 + b.y1) / 2
-	p.name = M.text(p.g, name, b.x0, mid + 7, 20, C.INK)
-	local from = math.max(b.x0 + M.width(p.name) + 10, b.x1 - 150)
-	p.right = M.text({ node = p.g.node, ox = p.g.ox, oy = p.g.oy, box = { x0 = from, x1 = b.x1, y0 = b.y0, y1 = b.y1 } },
-		right, b.x1, b.y0 + 12, 13, with_alpha(C.INK, 0.75), "end", 1)
-	p.bar = M.bar(p.g, from, b.y1 - 9, b.x1 - from, 6, f, C.HOT_BOTTOM, C.SAND_SHADOW)
-	return p
 end
 
 -- ---------------------------------------------------------------- scene

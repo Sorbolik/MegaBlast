@@ -3,7 +3,7 @@
 # un altro colpo a testa e la partita finisce; dopo un attimo sale il podio con
 # i premi sotto i gradini, l'MVP e a destra lo scontrino dell'esperienza (le
 # righe una alla volta con XP e Scaglie, i totali, il livello, poi le monete
-# volano nel portafoglio). Poi il diavoletto e l'armeria dalla home.
+# volano nel portafoglio). Poi l'armeria e lo zaino dalla home.
 imposta prova_durata 3
 
 aspetta 2
@@ -29,18 +29,15 @@ tocca_bordo 175 52 basso destra                      # CONTINUA
 aspetta_stato modo=menu 3
 aspetta 0.5
 
-tocca_centro 640 300                # il diavoletto: il suo posto
-aspetta 1.2
-tocca_bordo 175 52 basso destra    # ARMERIA
-aspetta 0.5
+tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
+aspetta 1.5
 foto 03_armeria
-tocca_bordo 36 60 basso sinistra    # indietro: il diavoletto
-aspetta 0.5
 tocca_bordo 36 60 basso sinistra    # indietro: la home
 aspetta_stato modo=menu 3
+aspetta 0.6
 
 # di nuovo armeria e una seconda partita: i nodi delle schermate chiuse si liberano
-tocca_centro 640 300                # il diavoletto: il suo posto
+tocca_centro 640 300                # l'apprendista: lo ZAINO
 aspetta 1.2
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3

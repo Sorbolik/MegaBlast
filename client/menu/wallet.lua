@@ -100,6 +100,34 @@ function M.shop(p, today)
 	return out
 end
 
+-- The PEZZI DEL GIORNO of the BOTTEGA on a day (Figma, 14 Nov): DAY pieces
+-- among all of them, owned or not (the same all day, on every phone), in the
+-- families' order. Returns { { set, slot }, ... }
+M.DAY = 10
+function M.day(today)
+	local h = 7
+	for i = 1, #today do h = (h * 131 + today:byte(i)) % 1000003 end
+	local all = {}
+	for _, f in ipairs(equip.SETS) do
+		for _, s in ipairs(equip.SLOTS) do all[#all + 1] = { f.id, s.id } end
+	end
+	-- a shuffle fixed by the day, then the first DAY back in order
+	for i = #all, 2, -1 do
+		h = (h * 16807 + 1) % 2147483647
+		local j = h % i + 1
+		all[i], all[j] = all[j], all[i]
+	end
+	local pick = {}
+	for i = 1, math.min(M.DAY, #all) do pick[all[i][1] .. "_" .. all[i][2]] = true end
+	local out = {}
+	for _, f in ipairs(equip.SETS) do
+		for _, s in ipairs(equip.SLOTS) do
+			if pick[f.id .. "_" .. s.id] then out[#out + 1] = { f.id, s.id } end
+		end
+	end
+	return out
+end
+
 -- price of a piece: in the BOTTEGA (shop = true) or in the CATALOGO, with
 -- the Smith's hand when a piece of that slot is at 30
 function M.price(p, slot, shop)

@@ -1,0 +1,18 @@
+# La home nuova del 14 novembre (Figma «RIORGANIZZAZIONE MENU · 14 nov», Consigliata/1):
+# il tondo del profilo, le porte di Codex, l'apprendista sulla pedana con lo zainetto,
+# la luce che passa sulla pedana e la brace che scende sull'apprendista, GIOCA sigillo.
+# Gira anche con --schermo 1600x720 e 960x720.
+
+aspetta 4
+foto 01_home
+aspetta 1.6
+foto 02_luce_pedana
+aspetta 0.5
+foto 03_brace
+aspetta 0.4
+foto 04_brace_giu
+tocca_centro 640 300               # l'apprendista: apre lo ZAINO
+aspetta 0.12
+foto 05_respiro
+aspetta 1.5
+foto 06_zaino

@@ -20,7 +20,7 @@
 local ui = require "ui.ui"
 local kit = require "ui.kit"
 local scoria = require "battle.scoria"
-local profile_tabs = require "menu.profile_tabs"
+local devil_side = require "menu.devil_side"
 local campaign = require "sim.campaign"
 local maps = require "sim.maps"
 local T = require("lang.text").training
@@ -123,7 +123,7 @@ local function build(a)
 	a.radice = ui.root()
 	a.kg = { node = a.radice, ox = 0, oy = 720 }
 	local g = a.kg
-	profile_tabs.devil(a, T.offline)
+	devil_side.devil(a, T.offline)
 	-- three choices, one under the other: who is there, the mode, the bots
 	local same = sc.chi == "stesso"
 	kit.choice(g, a.buttons, 440, 140, T.who, { { T.vs_bots, "chi:bot" }, { T.same_phone, "chi:stesso" } }, same and 2 or 1, 220)
@@ -167,7 +167,7 @@ function M.new(choice, stars)
 		if m.id == choice.mappa then a.da = math.max(1, i + 2 - VISIBLE) end
 	end
 	-- the backdrop (ui/kit.lua)
-	a.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.MINT, bg = true })
+	a.scene = kit.scene(devil_side.x(), devil_side.Y, { accent = KC.MINT, bg = true })
 	build(a)
 	return a
 end

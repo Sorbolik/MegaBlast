@@ -290,6 +290,103 @@ def fai_sfondi():
         f.write("}\n")
 
 
+# I pezzi dei menu nuovi (Sergio, 14 nov: Figma «RIORGANIZZAZIONE MENU · 14 nov»), gia'
+# ritagliati senza verde in art/WB-0xx/ritagli. Ognuno alto il doppio della misura piu'
+# grande a cui lo mostra il Figma (1280 x 720), cosi' resta nitido fino a 2560 x 1440.
+# (nome nell'atlante, file, altezza in pixel, cartella)
+MENU_INTERI = [
+    # la home: le porte (WB-046, a destra lo scudo verso il bordo), GIOCA, pedana e zainetto
+    ("porta_campagna", "porta_campagna", 236, "WB-046"),
+    ("porta_allenamento", "porta_allenamento", 226, "WB-046"),
+    ("porta_eventi", "porta_eventi_dx", 236, "WB-046"),
+    ("porta_armeria", "porta_armeria_dx", 226, "WB-046"),
+    ("gioca_sigillo", "gioca_sigillo", 166, "WB-046"),
+    ("pedana", "pedana_griglia_1", 266, "WB-050"),
+    ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
+    # la transizione (WB-049): l'attacco dello scudo sul bordo e le schegge della scia
+    ("attacco_scudo", "attacco_scudo_1", 170, "WB-049"),
+    # caselle, livelli, segni (WB-044)
+    ("casella", "casella", 324, "WB-044"),
+    ("casella_scelta", "casella_scelta", 324, "WB-044"),
+    ("casella_vuota", "casella_vuota", 324, "WB-044"),
+    ("chiodo", "chiodo", 40, "WB-044"),
+    ("livello_ferro", "livello_ferro", 80, "WB-044"),
+    ("livello_oro", "livello_oro", 80, "WB-044"),
+    ("spunta", "spunta", 56, "WB-044"),
+    ("sconto", "sconto", 64, "WB-044"),
+    ("cornice_argento", "cornice_argento", 208, "WB-044"),
+    ("cornice_bronzo", "cornice_bronzo", 208, "WB-044"),
+    ("bordino_brace", "bordino_brace", 140, "WB-044"),
+    ("bordino_gelo", "bordino_gelo", 140, "WB-044"),
+    ("podio_1", "podio_1", 420, "WB-044"),
+    ("podio_2", "podio_2", 352, "WB-044"),
+    ("podio_3", "podio_3", 304, "WB-044"),
+    ("ic_2contro2", "ic_2contro2", 260, "WB-044"),
+    ("ic_stanza", "ic_stanza", 120, "WB-044"),
+    ("ic_calendario", "ic_calendario", 88, "WB-044"),
+    # segni dei modi e dei badge (WB-047)
+    ("ic_torneo", "ic_torneo", 128, "WB-047"),
+    ("ic_maglio", "ic_maglio", 140, "WB-047"),
+    ("ic_notte", "ic_notte", 108, "WB-047"),
+    ("barrato", "barrato", 34, "WB-047"),
+    ("sei_qui", "sei_qui", 48, "WB-047"),
+    ("buono", "buono", 128, "WB-043"),
+]
+# dove si scrive sulle porte e su GIOCA: la striscia piena fra lo scudo (o il sigillo) e la
+# punta, misurata sul disegno a quell'altezza (margini sinistra, alto, destra, basso). Le
+# porte hanno sfumature e graffi apposta, e la misura automatica (spazio) non le trova.
+SPAZI_MISURATI = {
+    "porta_campagna": (240, 50, 189, 51),
+    "porta_allenamento": (225, 44, 166, 37),
+    "porta_eventi": (110, 36, 236, 50),
+    "porta_armeria": (120, 50, 225, 56),
+    "gioca_sigillo": (180, 28, 149, 48),
+}
+# i pezzi lunghi in tre parti (nome, file, altezza, capo, cartella): si allunga solo il mezzo
+MENU_TRE = [
+    ("riga_scura", "riga_scura", 140, 0.08, "WB-044"),
+    ("riga_oro", "riga_oro", 140, 0.08, "WB-044"),
+    ("pillola", "pillola", 104, 0.2, "WB-044"),
+]
+BADGE = 4
+SCIE = ["brace", "scintilla", "fiamma", "ricciolo", "ferro", "cuoio", "paglia", "acciaio",
+        "stella", "moneta", "nastro", "oro", "ghiaccio", "fiocco", "cristallo", "gelo"]
+PORTE = ["campagna", "allenamento", "eventi", "armeria"]
+FAMIGLIE = ["fabbro", "corvo", "fornace", "leviatano", "vuoto"]
+POSTI = ["elmo", "corazza", "mantello", "stivali"]
+
+
+def ritaglio(cartella, nome):
+    return np.array(Image.open(os.path.join(ART, cartella, "ritagli", nome + ".png")).convert("RGBA"))
+
+
+def fai_menu():
+    for nome, f, h, d in MENU_INTERI:
+        intero(nome, ritaglio(d, f), h)
+        if nome in SPAZI_MISURATI:
+            SPAZI[nome] = SPAZI_MISURATI[nome]
+    for nome, f, h, c, d in MENU_TRE:
+        tre(nome, ritaglio(d, f), h, c)
+    for i in range(1, BADGE + 1):
+        intero("badge_%d" % i, ritaglio("WB-047", "badge_%d" % i), 68 if i < 4 else 90)
+    for k in SCIE:
+        intero("scia_" + k, ritaglio("WB-049", "scia_%s_1" % k), 84)
+    # la banda del bordo: larga il doppio di come si vede (48), si ripete in alto
+    for k in PORTE:
+        a = ritaglio("WB-049", "banda_%s_1" % k)
+        im = Image.fromarray(a, "RGBA")
+        im = im.resize((96, round(im.size[1] * 96 / im.size[0])), Image.LANCZOS)
+        salva(im, "banda_" + k)
+        MISURE["banda_" + k] = im.size
+    # le icone dei pezzi (WB-043): base e forgiata per famiglia e posto; il posto vuoto
+    for f in FAMIGLIE:
+        for p in POSTI:
+            for g in ("base", "forgiato"):
+                intero("ic_%s_%s_%s" % (f, p, g), ritaglio("WB-043", "ic_%s_%s_%s" % (f, p, g)), 240)
+    for p in POSTI:
+        intero("vuoto_" + p, ritaglio("WB-043", "vuoto_" + p), 240)
+
+
 def fai_atlante():
     nomi = sorted(f for f in os.listdir(OUT) if f.endswith(".png"))
     with open(os.path.join(RADICE, "client", "ui", "fucina.atlas"), "w") as f:
@@ -313,6 +410,7 @@ if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     fai_pezzi()
     fai_piccoli()
+    fai_menu()
     fai_fette()
     fai_sfondi()
     fai_filo()
