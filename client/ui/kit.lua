@@ -385,9 +385,14 @@ local FONT_SIZE = 40
 local BASELINE = 0.36
 local PIVOTS = { start = gui.PIVOT_W, middle = gui.PIVOT_CENTER, ["end"] = gui.PIVOT_E }
 
+-- The smallest text of the menus (Sergio, 15 Nov: everything at the size of a
+-- phone): the one place to change it; M.text never writes smaller
+M.MIN_TEXT = 16
+
 -- Text of `size` pixels on the baseline (x, y). anchor: "start" (default),
 -- "middle", "end". spacing: extra pixels between letters
 function M.text(g, t, x, y, size, color, anchor, spacing)
+	size = math.max(size, M.MIN_TEXT)
 	local n = gui.new_text_node(vec(x - g.ox, g.oy - y + size * BASELINE), t)
 	gui.set_font(n, "titolo")
 	gui.set_pivot(n, PIVOTS[anchor or "start"])

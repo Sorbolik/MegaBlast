@@ -89,7 +89,7 @@ function M.new(o, sound)
 			s.nodo = draw(x, y, r * 2, medal and ui.MEDAL or KC.STAR, f.radice)
 			gui.set_scale(s.nodo, vec(0, 0))
 		end
-		local what = kit.text(g, criteria[i], x, 720 - y + r + 26, 12, o.stelle[i] and KC.SAND or KC.MUTE, "middle", 1)
+		local what = kit.text(g, criteria[i], x, 720 - y + r + 26, 16, o.stelle[i] and KC.SAND or KC.MUTE, "middle", 1)
 		wide = kit.width(what)
 		if wide > 124 then
 			local sc = gui.get_scale(what)

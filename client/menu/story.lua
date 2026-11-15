@@ -94,7 +94,7 @@ local function show_line(s)
 			kit.plate(b, x, y, wide, bh, KC.INK, { sk = 18, fill = KC.HOT })
 		else
 			kit.sand(b, x, y, wide, bh, KC.HOT, { sk = 18 })
-			kit.text(b, kit.upper(who[1]), x + 36, y + BALLOON_PAD + 12, 14, who[2], "start", 1.5)
+			kit.text(b, kit.upper(who[1]), x + 36, y + BALLOON_PAD + 12, 16, who[2], "start", 1.5)
 		end
 		local text = kit.text(b, line.testo, x + 32, y + BALLOON_PAD + name_h, TEXT_SIZE, KC.INK)
 		gui.set_pivot(text, gui.PIVOT_NW)
