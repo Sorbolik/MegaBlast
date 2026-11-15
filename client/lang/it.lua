@@ -426,6 +426,9 @@ return {
 	-- menu/profile_tabs.lua: the PROFILO's STATISTICHE and CRONOLOGIA PARTITE tabs
 	profile_tabs = {
 		tab_matches = "CRONOLOGIA PARTITE",
+		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
+		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
+		no_moments = "nessun momento da ricordare",
 		level = "LIVELLO %s",
 		-- STATISTICHE: the four big numbers
 		won = "VITTORIE",

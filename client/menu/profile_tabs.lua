@@ -8,7 +8,9 @@
 --   CRONOLOGIA PARTITE  the last matches as rows: outcome, mode and map, who was
 --                       there (tapping a face shows their tag from that time),
 --                       points, ranking (the server doesn't keep it yet: a
---                       placeholder), when, RIVEDI
+--                       placeholder), when, RIVEDI; tapping a row opens under
+--                       it how it went lap by lap and its moments (a tap: the
+--                       replay from there)
 -- The pieces and the Sigilli are in the ZAINO (menu/backpack.lua). Rebuilt at
 -- every tap, like the armory.
 --
@@ -148,6 +150,56 @@ end
 local OUTCOME = { V = { T.outcome_won, KC.HOT }, S = { T.outcome_lost, KC.STEEL }, P = { T.outcome_tie, KC.SAND } }
 -- the rows the Figma shows (the profile keeps more, for the replays)
 local ROWS = 6
+-- the open match shows under its row how it went and its moments, without a box
+-- of their own (Sergio, 15 Nov: the features stay, even where Figma has no room)
+local DETAIL = 132
+local BOTTOM = 598
+
+-- the rope: your team's lead at every lap, in the box x..x+w, y..y+h
+local function rope(g, values, x, y, w, h, my_own, another)
+	local cy = y + h / 2
+	local max = 50
+	for _, v in ipairs(values) do max = math.max(max, math.abs(v)) end
+	local n = #values
+	local function point(i)
+		return x + (n > 1 and (i - 1) * w / (n - 1) or w / 2), cy - values[i] / max * (h / 2 - 8)
+	end
+	for i = 2, n do
+		local x1, y1 = point(i - 1)
+		local x2, y2 = point(i)
+		kit.line(g, x1, y1, x2, y2, 5, values[i] >= 0 and my_own or another)
+	end
+	for i = 1, n do
+		local px, py = point(i)
+		local d = ui.disc(px - g.ox, g.oy - py, i == n and 16 or 10, values[i] >= 0 and my_own or another, g.node)
+		gui.set_blend_mode(d, gui.BLEND_ALPHA)
+	end
+end
+
+-- under the open row: the rope on the left, the moments beside it
+local function detail(s, g, pa, x, y, w)
+	local me = (pa.giocatori or {})[pa.me or 1] or {}
+	local my_own = C.SQUADRA[me.squadra or 1] or C.SQUADRA[1]
+	local another = C.SQUADRA[2]
+	for _, pl in ipairs(pa.giocatori or {}) do
+		if pl.squadra ~= me.squadra then another = C.SQUADRA[pl.squadra] or another end
+	end
+	kit.text(g, kit.upper(T.round_by_round), x + 40, y + 22, 13, KC.MUTE, "start", 1)
+	rope(g, pa.fune or { 0 }, x + 46, y + 32, 360, 86, my_own, another)
+	local mx = x + 470
+	local ok = s.replay_ok and s.replay_ok(pa.numero)
+	local moments = pa.moments or {}
+	kit.text(g, kit.upper(T.moments), mx, y + 22, 13, KC.MUTE, "start", 1)
+	if #moments == 0 then kit.text(g, kit.upper(T.no_moments), mx, y + 62, 14, KC.MUTE, "start", 1) end
+	local mw = math.min(300, (w - 470 - 40 - 2 * 16) / 3)
+	for i, m in ipairs(moments) do
+		if i > 3 then break end
+		local px = mx + (i - 1) * (mw + 16)
+		local pl = kit.plate(g, px, y + 40, mw, 52, ok and KC.ROSE or KC.LINE, { sk = 0, d = 4, piece = "piastrina" })
+		fit(kit.text(pl.g, kit.upper(m.giro .. " · " .. m.testo), px + 20, y + 72, 15, ok and KC.SAND or KC.MUTE), mw - 36)
+		kit.button(s.buttons, pl, "momento:" .. i, { spento = not ok })
+	end
+end
 
 local function sheet_matches(s)
 	local p = s.prof
@@ -159,11 +211,15 @@ local function sheet_matches(s)
 	-- the row goes across the whole screen; the middle columns follow its room
 	local w = screen.width() - 72
 	local mid = (w - 1220) / 2
+	local y = 112
 	for i, pa in ipairs(p.partite) do
-		if i > ROWS then break end
-		local x, y = 36, 112 + (i - 1) * 80
+		if i > ROWS or y + 70 > BOTTOM then break end
+		local x = 36
+		local open = i == s.open
 		local e = OUTCOME[pa.esito] or OUTCOME.P
-		kit.panel(kit.group(g, x + w / 2, y + 35).node, w, 70, i == 1 and "pannello_caldo" or "pannello")
+		kit.panel(kit.group(g, x + w / 2, y + 35).node, w, 70, open and "pannello_caldo" or "pannello")
+		-- the whole row opens and closes (under the faces and RIVEDI, which are their own)
+		kit.zone(g, s.buttons, x, y, w, 70, "partita:" .. i)
 		-- the cap on the left: ember if won, ice if not
 		kit.pic(g, pa.esito == "V" and "bordino_brace" or "bordino_gelo", x - 10, y + 6, 58 * 88 / 140, 58)
 		kit.text(g, e[1], x + 40, y + 34, 26, e[2])
@@ -189,6 +245,11 @@ local function sheet_matches(s)
 		local b = kit.plate(g, x + w - 168, y + 14, 140, 42, KC.HOT, { sk = 0, fill = KC.SAND })
 		kit.text(b.g, common.replay, x + w - 98, y + 43, 20, ok and KC.INK or kit.with_alpha(KC.INK, 0.4), "middle")
 		kit.button(s.buttons, b, "rivedi:" .. i, { spento = not ok })
+		y = y + 80
+		if open then
+			detail(s, g, pa, x, y - 6, w)
+			y = y + DETAIL
+		end
 	end
 end
 
@@ -228,7 +289,7 @@ end
 
 function M.new(prof, tab, color, replay_ok)
 	local s = { prof = prof, scheda = tab == "partite" and "partite" or "statistiche", colore = color or C.SQUADRA[1],
-		replay_ok = replay_ok }
+		replay_ok = replay_ok, open = 1 }
 	-- the stats start from the last match's mode (all of them if there is none)
 	local last = prof.partite[1] and prof.partite[1].gruppo
 	s.gruppo = "tutte"
@@ -258,6 +319,14 @@ local function run_cmd(s, ui_action)
 		local i, k = x:match("(%d+):(%d+)")
 		local pa = p.partite[tonumber(i)]
 		s.aperto = pa and pa.giocatori[tonumber(k)]
+	elseif kind == "partita" then
+		local i = tonumber(x)
+		s.open = s.open ~= i and i or nil
+	elseif kind == "momento" then
+		local pa = p.partite[s.open or 1]
+		local m = pa and (pa.moments or {})[tonumber(x)]
+		-- a moment earlier, to see how it got there
+		if m then return { rivedi = pa.numero, da = math.max(0, m.t - 180) } end
 	elseif kind == "rivedi" then
 		local pa = p.partite[tonumber(x)]
 		if pa then return { rivedi = pa.numero, da = 0 } end

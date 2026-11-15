@@ -249,6 +249,10 @@ function M.sample(p, near_level_up, campaign_done)
 			me = 1, giocatori = { { nome = "TU", squadra = 1 }, { nome = "FAVILLA", squadra = 1 }, { nome = "BRACE", squadra = 2 },
 				{ nome = "ZOLFO", squadra = 2 } } }
 	end
+	-- how the last one went, lap by lap, and its moments (the open row of the history)
+	p.partite[1].fune = { 0, 40, 25, -30, -10, 60, 110, 90, 140, 212 }
+	p.partite[1].moments = { { giro = 3, testo = "colpo lungo su BRACE", t = 2400 },
+		{ giro = 6, testo = "ZOLFO nel vuoto", t = 5200 }, { giro = 10, testo = "il colpo finale", t = 9100 } }
 	-- the campaign: the Training done, the Forge up to the Due mani (the board, scenari/bacheca.txt)
 	for _, id in ipairs({ "primi_passi", "lanciarune", "turno", "prima_sfida", "attrezzi", "spostano", "sfida_burrone", "tempo", "guidata" }) do
 		p.stelle[id] = { true, id ~= "turno", id == "primi_passi" or id == "guidata" }
