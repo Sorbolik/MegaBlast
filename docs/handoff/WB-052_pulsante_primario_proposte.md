@@ -113,3 +113,29 @@ Thick black ink outline on every piece, cartoon comic style like images 2 and 3.
 ## Decisione
 
 Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
+
+## Consegna di Codex
+
+Sei fogli generati con `image_gen` nel worktree di `design/WB-052` dal commit
+`b9634a02` di `origin/main`. Il pull nel checkout principale era impedito
+dai file locali di WB-050.
+
+| Nome in `art/WB-052/` (PNG e TXT) | Tentativi | Dimensioni PNG |
+|---|---:|---:|
+| `primario_colata_1` | 1 | 1536×1024 |
+| `primario_colata_2` | 1 | 1199×1312 |
+| `primario_punzone_1` | 1 | 1536×1024 |
+| `primario_punzone_2` | 1 | 1536×1024 |
+| `primario_brace_gelo_1` | 1 | 1199×1312 |
+| `primario_brace_gelo_2` | 1 | 1199×1312 |
+
+I TXT riportano il prompt integrale e i riferimenti R1–R4 nell'ordine allegato.
+Controllati i tre stati per foglio, i contorni neri, la separazione, i margini
+e l'assenza di scritte e sigilli. Gli stati spenti sono freddi e senza fiamme.
+Il premuto è appiattito come da prompt. L'ingombro varia tra gli stati e nel
+Brace e gelo spento il ghiaccio si estende verso il centro.
+
+Tre fogli misurano 1199×1312. Lo sfondo verde opaco differisce da `#00FF00`
+nei punti campionati. Conservati i PNG originali. Ricalco, limite di sei colori,
+allineamento degli stati, allungamento e leggibilità delle etichette nel menu
+restano da verificare.

@@ -1,0 +1,16 @@
+Image 1 is a menu screen of our game: the orange button at the bottom right is the main action button of every menu, and it must be redesigned. Images 2 and 3 are two new menu buttons of the same game and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 4 is another button that must NOT be copied: no wax seal, no round emblem.
+
+Draw the new MAIN ACTION BUTTON as a slab of freshly POURED MOLTEN METAL: a wide rounded slab about three and a half times wider than tall, bright molten gold (#FFB703) with a lighter top band (#FFE08A) and a darker ember bottom edge (#F26419), a thin dark crust (#2B2530) along its outline, one fat drip hanging from its bottom-left corner and two tiny sparks above it; at its top-right corner a small patch of pale frost (#CAF0F8) where it is cooling. The middle of the slab is plain and even, with nothing on it, so text can be written there and the slab can be stretched in width.
+
+Draw it THREE times on the sheet, one above the other, with green space between them:
+1. LIT: as described;
+2. PRESSED: the same slab pushed down: a bit flatter, the top band darker (#FFD15C), the drip shorter;
+3. OFF: the same slab cooled down and dead: dark grey iron (#4A4550, highlight #6B6375), the crust cracked, frost (#CAF0F8) spread over the top-right half, no sparks, no glow colors at all.
+
+Thick black ink outline on every piece, cartoon comic style like images 2 and 3. Flat colors only, at most six per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no glow halo, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+1. art/WB-052/riferimenti/R1_lingotto_oggi.png
+2. art/WB-052/riferimenti/R2_porta_campagna.png
+3. art/WB-052/riferimenti/R3_porta_armeria.png
+4. art/WB-052/riferimenti/R4_gioca_sigillo.png
