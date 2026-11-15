@@ -114,3 +114,18 @@ Thick black ink outline on every piece, cartoon comic style like images 2 and 3.
 ## Decisione
 
 Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
+
+## Consegna di Codex
+
+Sei fogli ImageGen da 1536 × 1024, un tentativo per foglio. Ogni PNG è accompagnato dal TXT con il prompt integrale e i cinque riferimenti nell'ordine R1–R5.
+
+| File PNG e TXT in art/WB-054/ | Esito del controllo visivo |
+|---|---|
+| primario_tizzone_1 | Tre stati separati, venature ai lati e centro libero. Fiamme alte nello stato acceso. |
+| primario_tizzone_2 | Tre stati separati, profilo più irregolare e fuliggine più estesa a sinistra. |
+| primario_gemma_1 | Tre stati separati, faccette ampie e ghiaccio più esteso nello spento. Riflesso sottile vicino al bordo superiore. |
+| primario_gemma_2 | Tre stati separati, fiamma più ampia in basso a sinistra e faccia centrale libera. |
+| primario_crosta_1 | Tre stati separati, finestra larga. Due crepe visibili nella finestra spenta. |
+| primario_crosta_2 | Tre stati separati, crosta più irregolare e due fiamme sul bordo inferiore sinistro. |
+
+Controllati a vista separazione, ordine acceso/premuto/spento, assenza di fiamme nello spento e assenza di scritte e ombre a terra. Ho ridimensionato proporzionalmente e centrato i fogli su tela verde da 1536 × 1024 e uniformato il fondo a #00FF00. Alcuni dettagli sono più sottili della china e si vedono lievi variazioni di tono. Il limite di sei colori per pezzo, l'allungamento del centro e la resa nei menu restano da verificare.
