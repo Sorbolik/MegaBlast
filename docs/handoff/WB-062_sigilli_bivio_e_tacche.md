@@ -1,6 +1,6 @@
 # WB-062 · Sigilli: «o l'uno o l'altro» e le tacche dei punti
 
-- **Stato:** APPROVATA (Claude, 15 nov: Sergio ha chiesto «altre proposte anche usando codex per fare capire che quei pulsanti ti fanno scegliere o l'una o l'altra»; sono solo immagini di prova, reversibili)
+- **Stato:** APPROVATA (Sergio, 15 nov 22:48: «per i sigilli A e bivio»)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `claude/project-thread-bpo2v6` (Codex la esegue da qui: `git fetch origin claude/project-thread-bpo2v6`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-062`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-062` senza chiedere conferma (il repository è privato).
@@ -9,9 +9,10 @@
 
 Nella pagina dei Sigilli (R3) ogni gradino ha due poteri ma non si capisce che se ne tiene
 **uno solo**; e i punti non si vedono uno per uno. Claude ha disegnato tre forme possibili
-per il gradino (R1: sigillo spezzato, bivio, leva) e la bozza della pagina (R2: tacche a
-fiamma, pulsanti − e +). Qui servono i fogli disegnati bene, per far scegliere a Sergio la
-forma, e i pezzi piccoli delle tacche.
+per il gradino (R1) e Sergio ha scelto la **2, il bivio**, dentro la pagina A (R2: il sentiero
+dei punti corre in orizzontale, a ogni gradino si divide in un ramo verso l'alto e uno verso
+il basso, il fuoco scorre solo nel ramo scelto; tacche e pulsanti − e +). Qui servono i pezzi
+del bivio disegnati bene e i pezzi piccoli delle tacche.
 
 ## Come devono essere fatti
 
@@ -20,15 +21,16 @@ forma, e i pezzi piccoli delle tacche.
 - **Ricalcabili in vettori:** colori pieni (al massimo cinque per pezzo), china nera chiusa e
   spessa, nessun dettaglio più sottile della china.
 - **Stessa famiglia di WB-022** (R4, R5): stessa china, stesso ferro scuro, stessa brace.
-- **Tre stati per ogni forma:** scelto a sinistra, scelto a destra, chiuso (punti non
-  ancora arrivati: tutto spento, con un piccolo lucchetto).
+- **Pezzi separati, da montare nel gioco:** il gioco li mette in fila e li allunga, quindi
+  ogni pezzo sta da solo: tratto di sentiero, nodo del gradino, ramo su, ramo giù, piastra del
+  potere. Ogni pezzo in tre stati: acceso (fuoco), spento (ferro), chiuso (ferro scuro).
 
 ## Riferimenti da allegare
 
 | Codice | File | Cos'è |
 |---|---|---|
-| R1 | `art/WB-062/riferimenti/R1_tre_forme_bivio.png` | le tre forme del gradino (segnaposto di Claude, da ridisegnare bene) |
-| R2 | `art/WB-062/riferimenti/R2_bozza_sigilli.png` | la bozza della pagina: tacche a fiamma, pulsanti − e + |
+| R1 | `art/WB-062/riferimenti/R1_tre_forme_bivio.png` | le tre forme provate: va disegnata la 2, il bivio |
+| R2 | `art/WB-062/riferimenti/R2_bozza_sigilli.png` | la pagina scelta (A col bivio) montata sul gioco vero: dove va ogni pezzo |
 | R3 | `art/WB-062/riferimenti/R3_sigilli_oggi.png` | la pagina di oggi nel gioco |
 | R4 | `art/WB-022/pezzo_pannello.png` | il pannello di WB-022: stile della china e del ferro |
 | R5 | `art/WB-022/pezzo_piccoli.png` | pezzi piccoli di WB-022: grandezza della china |
@@ -40,17 +42,17 @@ primo è "image 1", il secondo "image 2" e così via.
 
 | Nome file | Cosa c'è | Riferimenti | Misura | Varianti |
 |---|---|---|---|---|
-| `forme_gradino` | le tre forme, ognuna nei tre stati (griglia 3×3) | R1, R3, R4, R5 | 1536×1024 | 3 |
+| `pezzi_bivio` | sentiero, nodo, ramo su, ramo giù, piastra, ognuno acceso, spento e chiuso | R2, R1, R4, R5 | 1536×1024 | 3 |
 | `tacche` | tacca vuota e piena nei tre colori, fiamma dei punti liberi, pulsanti − e + | R2, R4, R5 | 1024×1024 | 2 |
 
-Le varianti si chiamano `forme_gradino_1.png` e così via, in `art/WB-062/`. Per ogni foglio
+Le varianti si chiamano `pezzi_bivio_1.png` e così via, in `art/WB-062/`. Per ogni foglio
 Codex scrive un `.txt` con lo stesso nome: cosa ha fatto e cosa non è riuscito a rispettare.
 
-### `forme_gradino`
+### `pezzi_bivio`
 
 ```
-Image 1 is a rough mock-up made by hand of three ways to draw ONE step of a skill tree where the player can keep only one of two powers: (1) a round seal broken in two halves with a zig-zag crack, the chosen half lit and the other half dull and slightly detached; (2) a Y-shaped path that splits in two branches, fire flows only in the chosen branch, a small gold disc sits at the fork; (3) a forge lever between two plates, the lever points at the chosen plate. Image 2 is the game screen where these steps go today. Images 3 and 4 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 with a lighter band #FFB703 and a darker band #B8440F, gold is #FFC83D, dull grey is #3A3340.
-Draw a clean sheet on a fully transparent background with a 3 by 3 grid of separate pieces, well spaced, nothing touching. Row 1: the broken seal. Row 2: the Y path. Row 3: the lever. Column 1: the LEFT power chosen (left part glowing ember, right part dull iron). Column 2: the RIGHT power chosen (mirror). Column 3: LOCKED (both parts dull dark iron, a small round gold padlock in the middle). The parts where a power name goes must be large, flat and EMPTY, no letters, no icons, no numbers anywhere. Same ink thickness on every piece. No background, no shadows on the ground, no glow outside the ink, no text.
+Image 1 is a mock-up of a skill tree screen of our game: a horizontal path of points runs from left to right, at each step there is a round numbered node, and from the node the path splits into a branch going UP to one power plate and a branch going DOWN to another power plate; the player keeps only one of the two powers, so fire flows only in the chosen branch. Image 2 shows the fork idea alone (number 2, the Y-shaped path). Images 3 and 4 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Ember is #F26419 with a lighter band #FFB703 and a darker band #B8440F, dark iron is #2B2530 with highlight #6B6375, darker iron for locked is #1E1A20, gold is #FFC83D, ice blue for the points already earned is #8FDCFF with highlight #CAF0F8.
+Draw a clean sheet on a fully transparent background with separate pieces, well spaced, nothing touching, in three rows. Row 1 LIT: a straight horizontal path segment (a thick rounded rail, ice blue, like a channel where points flow), a round node disc in gold with an empty flat center for a number, a branch that leaves the node going up and then curves to the right (glowing ember, fire flowing inside), the same branch going down and curving to the right, and a rounded power plate in ember (wide, flat empty center for two lines of text). Row 2 OFF: the same five pieces in dull dark iron (the branch not chosen, the plate not chosen), the plate keeps a clear ink border and a flat dark center. Row 3 LOCKED: the same five pieces in darker iron, the node with a tiny gold padlock instead of the empty center. All pieces must join edge to edge when placed side by side (same rail thickness everywhere). No letters, no numbers, no background, no shadows on the ground, no glow outside the ink.
 ```
 
 ### `tacche`
@@ -68,7 +70,7 @@ No letters, no numbers, no background, no glow outside the ink.
 ## Criteri di accettazione
 
 - [ ] sfondo trasparente pulito, contorno nero puro e spesso, nessuna scritta
-- [ ] nei fogli delle forme si capisce a colpo d'occhio che si tiene una parte sola
+- [ ] nel foglio del bivio si capisce a colpo d'occhio che il fuoco va in un ramo solo
 - [ ] le zone per i nomi dei poteri sono piatte e vuote
 - [ ] le tacche si leggono a 24 px: vuota e piena ben diverse
 - [ ] i pezzi non si toccano (si ritagliano uno per uno)
@@ -77,8 +79,7 @@ No letters, no numbers, no background, no glow outside the ink.
 
 ## Decisione
 
-Approvata da Claude il 15 nov (immagini di prova). La forma da usare la sceglie Sergio
-dai fogli.
+Sergio, 15 nov 22:48: pagina A col bivio (forma 2).
 
 ## Consegna di Codex
 
