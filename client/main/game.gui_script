@@ -2052,7 +2052,10 @@ function CP.queue_update(self, dt)
 	-- the pill in the menus (and over the lineup, laid out like a header);
 	-- in a match the chip, right of the gear, hidden while the gear is open
 	local m, beside, on = self.mode, nil, self.mode ~= "connecting"
-	if m == "local" then
+	if m == "menu" then
+		-- the home: under the thread, in the middle
+		beside = "low"
+	elseif m == "local" then
 		beside, on = self.btn_menu, not self.menu_open
 	elseif (m == "scelta") and not self.schier then
 		beside, on = self.scelta.rotellina, not gui.is_enabled(self.scelta.esci)

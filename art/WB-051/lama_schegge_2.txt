@@ -1,0 +1,13 @@
+Image 1 is a menu button of our game and is the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 2 shows small bits of the same game. When the screen changes, a dark blade with a red-hot edge and a frozen edge sweeps across the screen, and a few small bits fly off its two edges: draw those bits.
+
+Draw a sheet with TWELVE small separate pieces, in three rows of four, each one filling its cell:
+row 1, FIRE: a round spark, a four-pointed spark, a small flame tongue, a curved ember streak shaped like a short comma, in #F26419, #FFB703 and #FFE08A;
+row 2, ICE: a sharp ice shard, a small snowflake made of six chunky arms, a tiny ice crystal cluster, a curved frost streak, in #38B6FF and #CAF0F8;
+row 3, METAL: a small iron chip (#2B2530, #6B6375), a glowing hot iron flake (#F26419 with a #2B2530 rim), a half-frozen iron flake (#2B2530 with #CAF0F8 frost), a tiny cinder (#4A3D47).
+Every bit is simple and chunky so it still reads when very small.
+
+Thick black ink outline on every piece, cartoon comic style like image 1. Flat colors only, at most three per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no glow, no motion blur, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati, in ordine
+1. art/WB-051/riferimenti/R2_gioca_sigillo.png
+2. art/WB-051/riferimenti/R3_schegge_WB-049.png

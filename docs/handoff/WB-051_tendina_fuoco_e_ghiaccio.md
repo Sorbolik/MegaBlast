@@ -1,6 +1,6 @@
 # WB-051 · La tendina di fuoco e ghiaccio fra le schermate
 
-- **Stato:** APPROVATA (Sergio, 15 nov 9:58: «per la tendina di fuoco e ghiaccio che ricopre lo schermo nell'animazione mi ricordo che prima era fatta da te, facciamola fare a codex»)
+- **Stato:** CONSEGNATA E INTEGRATA (era APPROVATA) (Sergio, 15 nov 9:58: «per la tendina di fuoco e ghiaccio che ricopre lo schermo nell'animazione mi ricordo che prima era fatta da te, facciamola fare a codex»)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-051`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-051` senza chiedere conferma (il repository è privato).
@@ -91,3 +91,9 @@ Thick black ink outline on every piece, cartoon comic style like image 1. Flat c
 ## Decisione
 
 Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
+
+## Resoconto di Claude (15 nov)
+
+- `lama_pezzi_1`: tre strisce pulite (corpo, bordo rovente, bordo gelato), si ripetono in alto senza giunte. Ritagliate in `ritagli/lama_corpo_1`, `lama_fuoco_1`, `lama_gelo_1` e messe nell'atlante fucina (`lama_corpo`, `lama_fuoco`, `lama_gelo`, `tools/grafica/fucina.py`).
+- Usate nella tempra fra i menu (`client/ui/transition.lua`) e, da provare, sul bordo della pagina trascinata dalle porte (`client/ui/door_pass.lua`, `EDGE = "tempra"`).
+- `lama_pezzi_2` e le schegge (`lama_schegge_1/2`) per ora non servono: restano qui.

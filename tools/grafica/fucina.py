@@ -378,6 +378,13 @@ def fai_menu():
         im = im.resize((96, round(im.size[1] * 96 / im.size[0])), Image.LANCZOS)
         salva(im, "banda_" + k)
         MISURE["banda_" + k] = im.size
+    # la lama della tempra (WB-051): corpo, bordo rovente e bordo gelato, che si
+    # ripetono in alto (e il corpo anche in largo); larghi il doppio di come si vedono
+    for nome, w in (("lama_corpo", 180), ("lama_fuoco", 80), ("lama_gelo", 72)):
+        im = Image.fromarray(ritaglio("WB-051", nome + "_1"), "RGBA")
+        im = im.resize((w, round(im.size[1] * w / im.size[0])), Image.LANCZOS)
+        salva(im, nome)
+        MISURE[nome] = im.size
     # le icone dei pezzi (WB-043): base e forgiata per famiglia e posto; il posto vuoto
     for f in FAMIGLIE:
         for p in POSTI:

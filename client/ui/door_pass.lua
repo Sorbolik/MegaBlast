@@ -96,19 +96,61 @@ local function join(...)
 	return out
 end
 
--- The page's edge: a thin orange line down the whole screen (x: its middle)
+-- The page's edge: a thin orange line down the whole screen (x: its middle).
+-- With M.EDGE "tempra" (Sergio, 15 Nov: to try it against the line alone) while
+-- it drags it is a narrow blade of the temper (WB-051, ui/transition.lua): the
+-- red-hot edge in front (dir: the side it faces, 1 right), the iron, the frost
+-- behind; arrived, the blade fades and the line stays
 -- (not kit.anchor: it would count as one of the screen's nodes)
-local function line(x)
+M.EDGE = "tempra"
+local TALL = 720 * 2
+local blade = {}   -- line -> its blade
+local function column(parent, name, x, w)
+	local m = kit.PIECES[name]
+	local h = w * m.h / m.w
+	local y = -TALL / 2
+	while y < TALL / 2 do
+		local n = gui.new_box_node(vec(x, y + h / 2), vec(w, h + 1))
+		gui.set_texture(n, "fucina")
+		gui.play_flipbook(n, name)
+		gui.set_parent(n, parent)
+		gui.set_inherit_alpha(n, true)
+		y = y + h
+	end
+end
+
+local function line(x, dir)
 	local n = gui.new_box_node(vec(x, 360), vec(LINE, 720 * screen.FULL))
 	gui.set_color(n, kit.C.INK)
 	local core = gui.new_box_node(vec(0, 0), vec(CORE, 720 * screen.FULL))
 	gui.set_color(core, kit.C.HOT)
 	gui.set_parent(core, n)
+	if M.EDGE == "tempra" then
+		local b = gui.new_box_node(vec(0, 0), vec(0, 0))
+		gui.set_visible(b, false)
+		gui.set_parent(b, n)
+		gui.set_scale(b, vmath.vector3(dir, 1, 1))
+		column(b, "lama_gelo", -66, 36)
+		column(b, "lama_corpo", -30, 60)
+		column(b, "lama_fuoco", 14, 40)
+		blade[n] = b
+	end
 	return n
 end
 
+-- the blade of a line: shown (alpha 1) or faded (0), over t seconds
+local function blade_to(n, a, t)
+	local b = n and blade[n]
+	if not b then return end
+	gui.cancel_animations(b, "color.w")
+	gui.animate(b, "color.w", a, gui.EASING_OUTQUAD, t)
+end
+
 local function drop_line(dp)
-	if dp.line then gui.delete_node(dp.line) end
+	if dp.line then
+		blade[dp.line] = nil
+		gui.delete_node(dp.line)
+	end
 	dp.line = nil
 end
 
@@ -168,7 +210,7 @@ function M.open(dp, h, id, change)
 		dp.kind, dp.door = "door", id
 		home_on(h, true)
 		kit.scene_cut(true)
-		dp.line = line(d.line_x)
+		dp.line = line(d.line_x, -d.side)
 		local page = join(alive(kit.tracked()), kit.scene_tops(), { dp.line })
 		shift(page, d.p0)
 		ride(d)
@@ -179,6 +221,7 @@ function M.open(dp, h, id, change)
 				home_on(h, false)
 				kit.scene_cut(false)
 				delete(still)
+				blade_to(dp.line, 0, 0.3)
 				-- 4. the button lets go and slips out; the line stays
 				-- (the rider went across with it)
 				gui.animate(d.node, "position.x", d.rest.x + d.dx + d.off, gui.EASING_INQUAD, M.SLIP, 0, function()
@@ -201,7 +244,8 @@ function M.close(dp, h, change)
 	local still = kit.scene_copy()
 	home_on(h, true)
 	kit.scene_cut(true)
-	if not dp.line then dp.line = line(d.line_x) end
+	if not dp.line then dp.line = line(d.line_x, -d.side) end
+	blade_to(dp.line, 1, M.SLIP)
 	ride(d)
 	gui.set_position(d.node, vec(d.rest.x + d.dx - d.p0 + d.off, d.rest.y))
 	-- (out of an animation's callback: started there, some animations of the

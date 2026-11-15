@@ -260,6 +260,15 @@ images {
   image: "/assets/fucina/ingranaggio.png"
 }
 images {
+  image: "/assets/fucina/lama_corpo.png"
+}
+images {
+  image: "/assets/fucina/lama_fuoco.png"
+}
+images {
+  image: "/assets/fucina/lama_gelo.png"
+}
+images {
   image: "/assets/fucina/lingotto_cx.png"
 }
 images {
