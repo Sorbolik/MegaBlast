@@ -297,7 +297,7 @@ end
 
 function M.new(prof, tab, from)
 	local a = { prof = prof, tab = tab or "potenzia", colore = ui.C.SQUADRA[1], from = from }
-	a.back = kit.scene(250, 420, { accent = KC.PURPLE, bg = true })
+	a.back = kit.scene(250, 420, { accent = KC.PURPLE, bg = "armeria" })
 	build(a)
 	return a
 end

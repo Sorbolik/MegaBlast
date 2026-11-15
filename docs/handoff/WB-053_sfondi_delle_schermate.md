@@ -1,6 +1,6 @@
 # WB-053 · Uno sfondo per ogni schermata dei menu
 
-- **Stato:** APPROVATA (Sergio, 15 nov: «dobbiamo trovare degli sfondi adatti ad ogni schermata, facciamoli fare a codex»; 10:17: «ok le suggerite», le proposte su https://claude.ai/artifact/3XLwcgQ67H9jBacc16g2JD)
+- **Stato:** CONSEGNATA E INTEGRATA (era APPROVATA) (Sergio, 15 nov: «dobbiamo trovare degli sfondi adatti ad ogni schermata, facciamoli fare a codex»; 10:17: «ok le suggerite», le proposte su https://claude.ai/artifact/3XLwcgQ67H9jBacc16g2JD)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-053`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-053` senza chiedere conferma (il repository è privato).
@@ -135,3 +135,10 @@ Composition rules, follow exactly: this is a MENU background, the interface cove
 ## Decisione
 
 Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
+
+## Resoconto di Claude (15 nov)
+
+- Arrivati tutti e otto gli sfondi: zaino, armeria, profilo, eventi, gioca online, campagna, allenamento e impostazioni. Sono senza difetti visibili, con il centro libero e il pavimento sul filo.
+- Copiati in JPEG come `client/paintings/backdrops/menu_<schermata>.jpg`, insieme all'altezza del pavimento (`client/ui/backdrops.lua`, `tools/grafica/fucina.py`).
+- Ogni schermata lo chiede con `kit.scene(..., { bg = "<schermata>" })`. La stanza privata e la sala d'attesa usano quello di gioca online. La home e le altre schermate tengono il posto della campagna raggiunto.
+- Ogni sfondo ha la sua texture. Quando una porta trascina dentro una schermata, sotto resta la copia dello sfondo della home (`kit.scene_copy`).

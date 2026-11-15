@@ -9,8 +9,8 @@
 --           (about 0.55 s after the load). A tap jumps to the burst
 --   temper  between menus (Sergio, 12 Nov: «Tempra»): a slanted dark blade crosses
 --           the screen in front of everything (240 + 300 ms), red-hot on its
---           leading edge and frozen, jagged, on the one behind; under it the
---           scene changes. From the other side when going back
+--           leading edge and frozen, jagged, on the one behind (the pieces of
+--           Codex, WB-051); under it the scene changes. From the other side when going back
 -- While a transition runs the game doesn't listen to taps (is_active).
 -- After the scene change the veil stays closed HOLD_FRAMES more frames: the change
 -- frame (paintings, mask, the new screen's nodes) is long, and often the one
@@ -42,12 +42,6 @@ M.SPARKS = 10
 local FLAME_CARD = vmath.vector4(0.94, 0.9, 0.82, 1)
 local EMBER = vmath.vector4(1, 0.55, 0.16, 1)
 local SOOT = vmath.vector4(0.071, 0.063, 0.075, 1)      -- the colors of ui/kit.lua
-local INK = vmath.vector4(0.039, 0.031, 0.043, 1)
-local EMBER_EDGE = vmath.vector4(0.949, 0.392, 0.098, 1)
-local GOLD = vmath.vector4(1, 0.718, 0.012, 1)
-local SPARK = vmath.vector4(1, 0.953, 0.69, 1)
-local ICE = vmath.vector4(0.22, 0.714, 1, 1)
-local FROST = vmath.vector4(0.792, 0.941, 0.973, 1)
 
 function M.new()
 	local n = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * screen.FULL, H * screen.FULL, 0))
@@ -203,9 +197,10 @@ function M.skip(p)
 end
 
 local TENT_W = 2100     -- covers the widest screen, slanted
--- the blade's nodes, made the first time it is used: a slanted soot panel; on
--- the leading side three hot stripes (ember, gold, spark) inside an ink line,
--- on the other a frost stripe and a row of ice teeth
+local P = require "ui.pieces"
+-- the blade's nodes, made the first time it is used: the pieces drawn by Codex
+-- (WB-051, atlas fucina) repeated down its whole height: the iron body, the
+-- red-hot edge in front, the frozen one behind
 local function tent_nodes(p)
 	if p.tent then return p.tent end
 	local t = {}
@@ -213,29 +208,32 @@ local function tent_nodes(p)
 	gui.set_visible(t.nodo, false)
 	gui.set_adjust_mode(t.nodo, gui.ADJUST_FIT)
 	local tall = H * 2.2
-	local function band(x, w, color)
-		local n = gui.new_box_node(vmath.vector3(x, 0, 0), vmath.vector3(w, tall, 0))
-		gui.set_color(n, color)
-		gui.set_parent(n, t.nodo)
-		return n
-	end
-	local half = TENT_W / 2
-	-- the ice teeth first, under everything: squares on their corner
-	for i = 0, 26 do
-		local big = i % 2 == 0
-		for _, q in ipairs({ { big and 74 or 50, INK }, { big and 58 or 34, ICE } }) do
-			local n = gui.new_box_node(vmath.vector3(-half - 4, -tall / 2 + 30 + i * 60, 0), vmath.vector3(q[1], q[1], 0))
-			gui.set_rotation(n, vmath.vector3(0, 0, 45))
-			gui.set_color(n, q[2])
+	-- a column of a piece, w wide (its drawing's shape kept), its middle at x
+	local function column(name, x, w)
+		local m = P[name]
+		local h = w * m.h / m.w
+		local y = -tall / 2
+		while y < tall / 2 do
+			local n = gui.new_box_node(vmath.vector3(x, y + h / 2, 0), vmath.vector3(w, h + 1, 0))
+			gui.set_texture(n, "fucina")
+			gui.play_flipbook(n, name)
 			gui.set_parent(n, t.nodo)
+			y = y + h
 		end
 	end
-	band(half + 62, 16, INK)
-	band(half + 38, 40, EMBER_EDGE)
-	band(half + 13, 26, GOLD)
-	band(half - 4, 12, SPARK)
-	band(-half + 14, 28, FROST)
-	band(0, TENT_W - 16, SOOT)
+	local half = TENT_W / 2
+	-- the body: soot under it (no seam can show), its pieces side by side
+	local soot = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(TENT_W, tall, 0))
+	gui.set_color(soot, SOOT)
+	gui.set_parent(soot, t.nodo)
+	local bw = 90
+	local x = -half + bw / 2
+	while x - bw / 2 < half do
+		column("lama_corpo", math.min(x, half - bw / 2), bw)
+		x = x + bw
+	end
+	column("lama_fuoco", half + 16, 40)
+	column("lama_gelo", -half - 14, 36)
 	gui.set_rotation(t.nodo, vmath.vector3(0, 0, -14))
 	gui.set_enabled(t.nodo, false)
 	p.tent = t

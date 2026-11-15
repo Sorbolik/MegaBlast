@@ -7,6 +7,9 @@
 --   - in the menus the whole pill, with the text (IN CODA, the mode, BOT TRA),
 --     in the middle of the header (ui.header: the place nobody else uses).
 --     Tapping it goes back to the room;
+--   - in the home under the thread, in the middle (Sergio, 15 Nov, as in the
+--     proposal of 14 Nov): the shell strip with a hot dot that breathes and the
+--     text. Tapping it goes back to the room too;
 --   - in a match (the draft, the battle, the podium) the chip: head, dots and
 --     time, right of the gear (or at the edge where there is no gear). It
 --     can't be tapped there (the finger is playing).
@@ -16,7 +19,8 @@
 --
 --   local pill = require "ui.pill"
 --   local p = pill.new()
---   pill.show(p, on, beside)           -- beside: nil (menus) or the gear node the chip sits next to,
+--   pill.show(p, on, beside)           -- beside: nil (menus), "low" (the home: under the thread),
+--                                      -- the gear node the chip sits next to,
 --                                      -- or true (a match screen without a gear: at the edge)
 --   pill.set(p, text, short, places, of, hot) -- text for the pill, short for the chip; places: dots lit
 --   pill.flash(p)                      -- someone arrived: a small jump
@@ -26,6 +30,7 @@
 --   pill.update(p, dt)
 
 local ui = require "ui.ui"
+local kit = require "ui.kit"
 local screen = require "ui.screen"
 local T = require("lang.text").pill
 
@@ -70,6 +75,47 @@ function M.new()
 	return p
 end
 
+-- The home's form, under the thread (made the first time): the shell strip,
+-- the hot dot, the text
+local LOW_W, LOW_H, LOW_Y = 330, 52, 640
+local function low_nodes(p)
+	if p.low then return p.low end
+	local l = {}
+	l.root = gui.new_box_node(vmath.vector3(W / 2, H - (LOW_Y + LOW_H / 2), 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(l.root, false)
+	-- stuck to the real bottom, like the thread
+	gui.set_yanchor(l.root, gui.ANCHOR_BOTTOM)
+	local g = { node = l.root, ox = W / 2, oy = LOW_Y + LOW_H / 2 }
+	l.strip = kit.strip(g, "guscio", W / 2 - LOW_W / 2, LOW_Y, LOW_W, LOW_H)
+	l.ring = gui.new_box_node(vmath.vector3(-LOW_W / 2 + 30, 0, 0), vmath.vector3(20, 20, 0))
+	gui.set_texture(l.ring, "ui")
+	gui.play_flipbook(l.ring, "disco_p")
+	gui.set_color(l.ring, kit.C.INK)
+	gui.set_parent(l.ring, l.root)
+	l.dot = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(14, 14, 0))
+	gui.set_texture(l.dot, "ui")
+	gui.play_flipbook(l.dot, "disco_p")
+	gui.set_color(l.dot, kit.C.HOT)
+	gui.set_parent(l.dot, l.ring)
+	l.text = kit.text(g, "", W / 2 - LOW_W / 2 + 50, LOW_Y + LOW_H / 2 + 7, 19, kit.C.SAND, "start", 1)
+	gui.set_enabled(l.root, false)
+	p.low = l
+	return l
+end
+
+local function fit_low(p)
+	local l = p.low
+	if not l then return end
+	gui.set_scale(l.text, vmath.vector3(1, 1, 1))
+	local wide = kit.width(l.text)
+	local room = LOW_W - 50 - 22
+	if wide > room then
+		local k = room / wide
+		local sc = gui.get_scale(l.text)
+		gui.set_scale(l.text, vmath.vector3(sc.x * k, sc.y * k, 1))
+	end
+end
+
 -- The dots, one per place: on the right of the pill, after the head on the chip
 local function place_dots(p)
 	for _, d in ipairs(p.dots) do gui.delete_node(d) end
@@ -106,10 +152,16 @@ local function shape(p, chip)
 end
 
 function M.show(p, on, beside)
-	gui.set_enabled(p.root, on)
+	local low = on and beside == "low"
+	if low or p.low then gui.set_enabled(low_nodes(p).root, low) end
+	gui.set_enabled(p.root, on and not low)
 	p.beside = beside
 	if not on then
 		gui.set_enabled(p.veil, false)
+		return
+	end
+	if low then
+		M.raise(p)
 		return
 	end
 	local chip = beside ~= nil
@@ -133,6 +185,10 @@ end
 
 function M.set(p, text, short, places, of, hot)
 	gui.set_text(p.text, text)
+	if p.low and gui.get_text(p.low.text) ~= text then
+		gui.set_text(p.low.text, text)
+		fit_low(p)
+	end
 	gui.set_text(p.short, short)
 	if of ~= p.of then
 		p.of = of
@@ -147,11 +203,13 @@ function M.set(p, text, short, places, of, hot)
 end
 
 function M.flash(p)
-	gui.cancel_animations(p.root, "scale")
-	V.x, V.y, V.z = 1.12, 1.12, 1
-	gui.set_scale(p.root, V)
-	V.x, V.y = 1, 1
-	gui.animate(p.root, "scale", V, gui.EASING_OUTBACK, 0.3)
+	for _, n in ipairs({ p.root, p.low and p.low.root }) do
+		gui.cancel_animations(n, "scale")
+		V.x, V.y, V.z = 1.12, 1.12, 1
+		gui.set_scale(n, V)
+		V.x, V.y = 1, 1
+		gui.animate(n, "scale", V, gui.EASING_OUTBACK, 0.3)
+	end
 end
 
 function M.found(p, n)
@@ -160,15 +218,29 @@ function M.found(p, n)
 end
 
 function M.hit(p, x, y)
+	if p.low and gui.is_enabled(p.low.root) then
+		for _, n in ipairs(p.low.strip.parts) do
+			if gui.pick_node(n, x, y) then return true end
+		end
+		return false
+	end
 	return gui.is_enabled(p.root) and not p.chip and gui.pick_node(p.panel, x, y)
 end
 
 function M.raise(p)
 	gui.move_above(p.veil, nil)
 	gui.move_above(p.root, nil)
+	if p.low then gui.move_above(p.low.root, nil) end
 end
 
 function M.update(p, dt)
+	if p.low and gui.is_enabled(p.low.root) then
+		p.t = p.t + dt
+		-- the hot dot breathes; the full queue faster
+		local a = 0.55 + 0.45 * math.sin(p.t * (p.hot and 8 or 3))
+		gui.set_color(p.low.dot, vmath.vector4(kit.C.HOT.x, kit.C.HOT.y, kit.C.HOT.z, a))
+		return
+	end
 	if not gui.is_enabled(p.root) then return end
 	p.t = p.t + dt
 	if p.chip and p.beside ~= true then M.place(p) end

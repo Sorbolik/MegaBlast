@@ -481,55 +481,59 @@ end
 -- Makes a plate a button of list_of (ui.touch, the controller's light)
 function M.button(list_of, p, ui_action, opt)
 	local b = { nodo = p.node, bordo = p.node, colore = CLEAR, riposo = CLEAR, ui_action = ui_action, piastra = p,
-		spento = opt and opt.spento, luce = opt and opt.main and p.node or nil }
+		spento = opt and opt.spento, luce = opt and opt.main and p.node or nil, on_press = p.on_press }
 	list_of[#list_of + 1] = b
 	return b
 end
 
--- The main action: the red-hot ingot and, under it, a line saying what it
--- starts. opt: size (of the label), sub, off (it can't be done now: a dark
--- plate, and the line says why)
+-- The main action: the gold plate between fire and ice (WB-052, C · brace e
+-- gelo; Sergio, 15 Nov: one primary button, the same on every screen) and,
+-- at its left, a line saying what it starts. Three drawings: lit, pressed
+-- (while the finger is on it) and off (it can't be done now: grey and frozen,
+-- and the line says why). opt: size (of the label), sub, off
 local function sub_y(y, h)
-	-- under the ingot, or over it when the thread is there
+	-- under it, or over it when the thread is there
 	return y + h + 30 > 640 and y - 10 or y + h + 30
 end
+local LIT_H = 104   -- the lit drawing on the screen; the others as tall as drawn next to it
 
 function M.action(g, label, x, y, w, h, opt)
 	opt = opt or {}
-	local sk = 46
 	local size = opt.size or math.min(92, (w - 60) / (#label * 0.56))
 	-- an action at the bottom right goes under the thread, in the band, the
 	-- way back on the other side (Sergio, 12 Nov); its line at its left
 	local foot = y >= 540 and not opt.free
 	if foot then
-		x, y, w, h = 934, M.THREAD + 12, 280, 88
-		size = math.min(size, (w - 30) / (#label * 0.6), 54)
+		x, y, w, h = 926, M.THREAD + 10, 300, 88
+		size = math.min(size, (w - 120) / (#label * 0.6), 44)
 	end
-	if opt.off then
-		local p = M.plate(g, x, y, w, h, C.LINE, { sk = sk })
-		p.label = M.text(p.g, label, x + w / 2 + 23, y + h / 2 + size * 0.36, size, with_alpha(C.MUTE, 0.7), "middle")
-		gui.set_parent(p.label, p.face_node, true)
-		if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, y + h / 2 + 6, 16, C.FROST, "end", 1)
-		elseif opt.sub then p.sub = M.text(g, opt.sub, x + w / 2 + 23, sub_y(y, h), 15, C.FROST, "middle", 1.2) end
-		return p
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local p = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+	local k = (foot and LIT_H or h * 1.18) / P.primario_acceso.h
+	local looks = {}
+	for _, state in ipairs({ "acceso", "premuto", "spento" }) do
+		local name = "primario_" .. state
+		local s = empty(0, 0, 0, 0, n)
+		three(s, name, w, P[name].h * k)
+		gui.set_enabled(s, state == (opt.off and "spento" or "acceso"))
+		looks[state] = s
 	end
-	local p = M.plate(g, x, y, w, h, C.HOT, { sk = sk, piece = "lingotto" })
-	-- (the ingot's face is under its lighter top: the label sits a little lower)
-	p.label = M.text(p.g, label, x + w / 2 + 23, y + h * 0.58 + size * 0.36, size, C.INK, "middle")
-	gui.set_parent(p.label, p.face_node, true)
-	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, y + h / 2 + 6, 16, C.MUTE, "end", 1)
-	elseif opt.sub then p.sub = M.text(g, opt.sub, x + w / 2 + 23, sub_y(y, h), 15, C.MUTE, "middle", 1.2) end
-	-- now and then a small flame lights on it
-	p.flame = whole("fiamma", (w + sk) * 0.24, h * 0.5 + h * 0.08, h * 0.3, p.face_node)
-	gui.set_pivot(p.flame, gui.PIVOT_S)
-	gui.set_scale(p.flame, vmath.vector3(0.01, 0.01, 1))
-	local function flick()
-		gui.animate(p.flame, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, 4.5, function()
-			gui.animate(p.flame, "scale", vmath.vector3(0.01, 0.01, 1), gui.EASING_INQUAD, 0.4, 1.3, flick)
-		end)
+	local ink = opt.off and with_alpha(C.INK, 0.55) or C.INK
+	p.label = M.text(p.g, label, cx, cy + size * 0.36, size, ink, "middle")
+	local muted = opt.off and C.FROST or C.MUTE
+	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, cy + 6, 16, muted, "end", 1)
+	elseif opt.sub then p.sub = M.text(g, opt.sub, cx, sub_y(y, h), 15, muted, "middle", 1.2) end
+	-- the finger on it: the pressed drawing (ui.ui, premi)
+	if not opt.off then
+		local at = gui.get_position(p.label)
+		p.on_press = function(down)
+			gui.set_enabled(looks.acceso, not down)
+			gui.set_enabled(looks.premuto, down)
+			gui.set_position(p.label, vec(at.x, at.y - (down and 4 or 0)))
+		end
 	end
-	flick()
-	piece_in(p.node, "action")
+	piece_in(n, "action")
 	return p
 end
 
@@ -773,21 +777,48 @@ local THREAD_Y = M.BAND
 local PLACES = { addestramento = "cortile", girone_1 = "forgia" }
 local PLACE = "cortile"
 
--- on: the screen has the painting (false: only the soot, over a battle)
+-- The painting a screen asks for: opt.bg true is the place reached, a name is
+-- the screen's own painting (Sergio, 15 Nov: one for each screen, WB-053:
+-- /paintings/backdrops/menu_<name>.jpg); false or nil: none
+local function painting_of(on)
+	if type(on) == "string" and BACKDROPS["menu_" .. on] then return "menu_" .. on end
+	return on and PLACE or nil
+end
+
+-- its texture, loaded if it isn't (each painting has its own: a copy of the
+-- backdrop may keep the one of the screen under it, M.scene_copy)
+local function load_painting(name)
+	local id = "sfondo_" .. name
+	if S.loaded[name] then return id end
+	local data = sys.load_resource("/paintings/backdrops/" .. name .. ".jpg")
+	local img = data and image.load(data)
+	if img and gui.new_texture(id, img.width, img.height, img.type, img.buffer) then
+		S.loaded[name] = true
+		return id
+	end
+end
+
+local function unload_painting(name)
+	if name and S.loaded[name] and name ~= S.bg_name and name ~= S.kept then
+		gui.delete_texture("sfondo_" .. name)
+		S.loaded[name] = nil
+	end
+end
+
+-- on: the screen's painting (false: only the soot, over a battle)
 local function backdrop(on)
-	local name = on and PLACE or nil
+	local name = painting_of(on)
 	if S.bg_name ~= name then
-		if S.bg_name then
-			gui.set_texture(S.bg, "ui")
-			gui.delete_texture("sfondo")
-		end
+		local old = S.bg_name
 		S.bg_name = nil
-		local data = name and sys.load_resource("/paintings/backdrops/" .. name .. ".jpg")
-		local img = data and image.load(data)
-		if img and gui.new_texture("sfondo", img.width, img.height, img.type, img.buffer) then
+		local id = name and load_painting(name)
+		if id then
 			S.bg_name = name
-			gui.set_texture(S.bg, "sfondo")
+			gui.set_texture(S.bg, id)
+		else
+			gui.set_texture(S.bg, "ui")
 		end
+		unload_painting(old)
 	end
 	local shown = S.bg_name ~= nil
 	gui.set_enabled(S.bg, shown)
@@ -796,25 +827,35 @@ local function backdrop(on)
 	gui.set_enabled(S.cold, not shown)
 end
 
--- the painting covers the real screen, whatever its shape: wide enough, tall
--- enough above its floor, and a little more
+-- where the painting goes: it covers the real screen, whatever its shape: wide
+-- enough, tall enough above its floor, and a little more
+local function painting_box(name)
+	local f = BACKDROPS[name]
+	local h = math.max(720 * 1.14, screen.width() * 1.02 * 9 / 16, (screen.height() - THREAD_Y) / (1 - f) * 1.01)
+	return vec(h * 16 / 9, h), vec(0, THREAD_Y - f * h + h / 2)
+end
+
 local function backdrop_fit()
 	if not S.bg_name then return end
-	local f = BACKDROPS[S.bg_name]
-	local h = math.max(720 * 1.14, screen.width() * 1.02 * 9 / 16, (screen.height() - THREAD_Y) / (1 - f) * 1.01)
-	gui.set_size(S.bg, vec(h * 16 / 9, h))
-	gui.set_position(S.bg, vec(0, THREAD_Y - f * h + h / 2))
+	local size, at = painting_box(S.bg_name)
+	gui.set_size(S.bg, size)
+	gui.set_position(S.bg, at)
 end
+
+-- a light dark veil over every painting, so it never steals the scene
+-- (Sergio, 15 Nov: «solo una lieve opacizzazione»)
+local VEIL = vmath.vector4(0.8, 0.8, 0.8, 1)
 
 local function scene_nodes()
 	if S then return S end
-	S = { tops = {} }
+	S = { tops = {}, loaded = {} }
 	S.base = shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, C.SOOT)
 	S.tops[#S.tops + 1] = S.base
 	-- the painting, stuck to the real bottom like the thread
 	local back = M.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
 	S.tops[#S.tops + 1] = back.node
 	S.bg = gui.new_box_node(vec(0, 360), vec(1280, 720))
+	gui.set_color(S.bg, VEIL)
 	gui.set_parent(S.bg, back.node)
 	gui.set_enabled(S.bg, false)
 	-- the two lights, each stuck to its corner
@@ -904,6 +945,81 @@ function M.scene_place(s, where, ref)
 		for i = 1, #S.tops do gui.move_below(S.tops[i], ref) end
 	else
 		for i = #S.tops, 1, -1 do gui.move_above(S.tops[i], ref) end
+	end
+end
+
+-- The backdrop's top nodes: ui/door_pass.lua drags them in with a screen
+function M.scene_tops()
+	return S and S.tops or {}
+end
+
+-- While its screen is dragged in (ui/door_pass.lua) the backdrop is cut to
+-- the real screen: nothing of it goes past the page's edge. on false: as before
+function M.scene_cut(on)
+	if not S then return end
+	local w = screen.width()
+	if on and not S.clip then
+		gui.set_size(S.base, vec(w, 720 * screen.FULL))
+		local parent = gui.get_parent(S.bg)
+		S.clip = gui.new_box_node(vec(0, 360), vec(w, 720 * 4))
+		gui.set_clipping_mode(S.clip, gui.CLIPPING_MODE_STENCIL)
+		gui.set_clipping_visible(S.clip, false)
+		gui.set_parent(S.clip, parent)
+		local p = gui.get_position(S.bg)
+		gui.set_parent(S.bg, S.clip)
+		gui.set_position(S.bg, vec(p.x, p.y - 360))
+		for _, q in ipairs(S.glints) do gui.set_enabled(q, false) end
+	elseif not on and S.clip then
+		gui.set_size(S.base, vec(1280 * screen.FULL, 720 * screen.FULL))
+		local p = gui.get_position(S.bg)
+		gui.set_parent(S.bg, gui.get_parent(S.clip))
+		gui.set_position(S.bg, vec(p.x, p.y + 360))
+		gui.delete_node(S.clip)
+		S.clip = nil
+		for _, q in ipairs(S.glints) do gui.set_enabled(q, true) end
+	end
+end
+
+-- A still copy of the backdrop of the screen s (its hold, M.scene), under
+-- everything (ui/door_pass.lua: the home keeps it while a screen with the
+-- real one is dragged over it). Returns it, for M.scene_copy_drop
+function M.scene_copy(s)
+	if not S then return {} end
+	local opt = s.opt
+	local out = { shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, with_alpha(C.SOOT, opt.dim or 1)) }
+	local name = not opt.dim and painting_of(opt.bg)
+	local id = name and load_painting(name)
+	if id then
+		S.kept = name
+		local back = empty(640, 0)
+		gui.set_yanchor(back, gui.ANCHOR_BOTTOM)
+		local size, at = painting_box(name)
+		local bg = gui.new_box_node(at, size)
+		gui.set_color(bg, VEIL)
+		gui.set_texture(bg, id)
+		gui.set_parent(bg, back)
+		out[#out + 1] = back
+	end
+	if opt.seam ~= false then
+		local low = empty(640, 0)
+		gui.set_yanchor(low, gui.ANCHOR_BOTTOM)
+		shape(nil, 0, THREAD_Y, screen.width(), 11, C.INK, low)
+		local seam = gui.new_box_node(vec(0, THREAD_Y), vec(screen.width(), 6))
+		gui.set_texture(seam, "fucina")
+		gui.play_flipbook(seam, "filo")
+		gui.set_parent(seam, low)
+		out[#out + 1] = low
+	end
+	for i = #out, 1, -1 do gui.move_below(out[i], nil) end
+	return out
+end
+
+function M.scene_copy_drop(out)
+	for _, n in ipairs(out or {}) do gui.delete_node(n) end
+	local kept = S and S.kept
+	if kept then
+		S.kept = nil
+		unload_painting(kept)
 	end
 end
 
