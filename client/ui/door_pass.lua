@@ -69,16 +69,17 @@ local function alive(list)
 	return out
 end
 
--- every node moved by `by` along x, over t seconds
+-- every node moved by `by` along x, over t seconds; done on a timer, not on the
+-- nodes' callbacks: a screen that animates one of its own nodes' position under
+-- the slide (the story opened by the CAMPAGNA) cancels that callback, and the
+-- passage would stay busy for ever, with every touch swallowed
 local function slide(nodes, by, easing, t, done)
-	local left = #nodes
-	if left == 0 then if done then done() end return end
 	for _, n in ipairs(nodes) do
 		local p = gui.get_position(n)
-		gui.animate(n, "position.x", p.x + by, easing, t, 0, function()
-			left = left - 1
-			if left == 0 and done then done() end
-		end)
+		gui.animate(n, "position.x", p.x + by, easing, t)
+	end
+	if done then
+		if #nodes == 0 then done() else timer.delay(t, false, done) end
 	end
 end
 

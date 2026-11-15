@@ -164,7 +164,8 @@ local function missioni_girone()
 	for _, cap in ipairs(campagna.CAPITOLI) do
 		if cap.id ~= "addestramento" then
 			for _, l in ipairs(cap.missioni) do
-				if not SOLO or SOLO == l.id then out[#out + 1] = l end
+				-- the lessons (lezione) are puzzles: tests/campaign_test.lua solves them
+				if not l.lezione and (not SOLO or SOLO == l.id) then out[#out + 1] = l end
 			end
 		end
 	end

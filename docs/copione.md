@@ -21,13 +21,14 @@ in `controlla.lua`, in questa pagina e nel Copione.
 | `nascosti` | robot che non ci sono (il gioco ne vuole almeno due) |
 | `vedi` | cosa mostra l'HUD nelle lezioni (`missile`, `primarie`, `secondarie`, `teleport`, `parachute`, `tempo`, `punti`, `baratto`...) |
 | `no_weapons`, `without_time` | parti senza armi; niente cronometro né turni |
+| `lezione` | una lezione fuori dall'Addestramento (quella del Fabbro nella Forgia): il tempo aspetta, niente casse, vignette grandi |
 | `goal_text`, `highlight` | la prima riga, nella vignetta grande d'apertura, e il comando che accende |
 | `obiettivo` | i passi, in ordine, ognuno col suo `testo` (la scritta d'oro) |
 | `righe` | quello che si dice durante il livello (sotto) |
 | `casse`, `cards` | `{ dopo = passo, arma, x }`: dopo quel passo (0: subito) cade la cassa lì, o si apre la carta dell'arma (`give`: e te la dà) |
 | `guida`, `scintilla` | Favilla comparsa nel cortile: da quale passo parte e il suo percorso `{ x, y, t, salto }` (corre mentre giochi); la scintilla della medaglia |
 | `dimostra` | Favilla vera che ti mostra le mosse facendole (sotto) |
-| `globi`, `globi_tempo`, `globi_lenti`, `vita`, `punti`, `regrow`, `al_posto`, `secondi`, `al_tempo`, `turni`, `plans` | regole della partita (vedi l'intestazione di `missions.lua`; `globi_tempo`: i secondi risparmiati diventano globi; `globi_lenti`: nei primi tre turni i globi volano piano, per guardarli) |
+| `globi`, `globi_tempo`, `globi_lenti`, `vita`, `punti`, `al_posto`, `secondi`, `al_tempo`, `plans` | regole della partita (vedi l'intestazione di `missions.lua`; `globi_tempo`: i secondi risparmiati diventano globi; `globi_lenti`: nei primi tre turni i globi volano piano, per guardarli) |
 | `stelle`, `medaglia`, `collaudo` | stelle dei gironi (`stelle = { punti = { 120, 200 } }`: la prima è la vittoria, la seconda e la terza i punti fatti dal giocatore), medaglia delle lezioni, come lo prova il bot |
 | `bravo`, `bravo_faccia` | il «bravo» di Favilla quando l'ultimo passo è fatto (faccia: senza, `ride`) |
 
