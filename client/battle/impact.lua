@@ -103,9 +103,8 @@ end
 
 -- the size of each signature's drawing (w / h), to keep it undeformed
 local ASPECT = {
-	fx_runa = 1.0, fx_stella = 1.04, fx_fendente = 1.27, fx_vento = 1.23, fx_fumo = 1.07,
-	fx_anello_fumo = 1.05, fx_risucchio = 1.01, fx_bolla = 1.36, fx_guscio = 1.34, fx_coccio = 1.17,
-	fx_gocce = 1.1, fx_coriandolo = 1.38, fx_crepa = 0.97, fx_cenere = 1.48, fx_fiamma = 0.8, fx_scintilla = 1.0,
+	fx_runa = 1.0, fx_stella = 1.04, fx_fendente = 1.27, fx_vento = 1.23, fx_anello_fumo = 1.05,
+	fx_risucchio = 1.01, fx_bolla = 1.36, fx_guscio = 1.34, fx_coccio = 1.17, fx_gocce = 1.1, fx_coriandolo = 1.38,
 }
 local LIFE = { pop = 0.35, fall = 0.8, shrink = 0.45, drift = 0.9 }
 

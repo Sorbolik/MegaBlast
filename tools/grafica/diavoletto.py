@@ -198,26 +198,6 @@ def segmento_coda(i, d, bordo):
     return (-12, -28, L + 32, 28)
 
 
-def paracadute(d):
-    # la calotta a spicchi (quelli chiari sono del colore della squadra), le
-    # funi che convergono sopra la testa (il perno) e le due cinghie che
-    # scendono alle spalle, dietro la testa
-    sx, sy = PUNTI["spalle"][0], PUNTI["spalle"][1] - PARACADUTE_Y
-    d.riga(f"M{sx},{sy} L0,0 L{-sx},{sy}", INK, 3.2)
-    for x in (-82, -44, 0, 44, 82):
-        d.riga(f"M0,0 L{x},92", INK, 2.6)
-    # la calotta: un arco con l'orlo a festoni
-    d.path("M-88,92 Q-90,150 0,152 Q90,150 88,92 Q78,84 66,92 Q55,84 44,92 Q33,84 22,92 Q11,84 0,92 "
-           "Q-11,84 -22,92 Q-33,84 -44,92 Q-55,84 -66,92 Q-78,84 -88,92 Z", "osso")
-    # gli spicchi tinti
-    d.path("M-66,92 Q-70,128 -44,146 Q-30,120 -44,92 Q-55,84 -66,92 Z", "fiamma", tinta=True, contorno=False)
-    d.path("M-22,92 Q-28,128 0,150 Q28,128 22,92 Q11,84 0,92 Q-11,84 -22,92 Z", "fiamma", tinta=True, contorno=False)
-    d.path("M44,92 Q30,120 44,146 Q70,128 66,92 Q55,84 44,92 Z", "fiamma", tinta=True, contorno=False)
-    d.riga("M-66,92 Q-70,128 -44,146 M-44,92 Q-30,120 -44,146 M-22,92 Q-28,128 0,150 "
-           "M22,92 Q28,128 0,150 M44,92 Q30,120 44,146 M66,92 Q70,128 44,146", INK, RIGA_D)
-    return (-100, sy - 8, 100, 164)
-
-
 PEZZI = {
     "testa": lambda d: testa(d),
     "testa_colpita": lambda d: testa(d, "colpito"),
@@ -230,7 +210,7 @@ PEZZI = {
     "braccio_dietro": lambda d: braccio(d, True),
     "pugno": pugno,
     "ala": ala,
-    "paracadute": paracadute,
+    "paracadute": None,  # di Codex: paracadute_ricalcato
 }
 for i in range(len(CODA)):
     PEZZI[f"coda_{i + 1}"] = (lambda i: lambda d: segmento_coda(i, d, False))(i)
@@ -276,7 +256,7 @@ def paracadute_ricalcato(nome, immagini):
 
 
 def esporta(nome, fn, immagini):
-    if nome == "paracadute" and os.path.exists(PARACADUTE_RICALCO):
+    if nome == "paracadute":
         return paracadute_ricalcato(nome, immagini)
     d = D()
     x0, y0, x1, y1 = fn(d)

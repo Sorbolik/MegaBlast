@@ -24,7 +24,7 @@ return {
 		petard = { img = "petard", tint = "petard_tinta", x = 4.25, y = 3.25, w = 10.34, h = 19.38 },
 	},
 	pieces = {
-		uncino = { img = "uncino", tint = "uncino_tinta", x = 5.25, y = 0.00, w = 14.50, h = 7.27 },
+		uncino = { img = "uncino", tint = nil, x = 5.25, y = 0.00, w = 14.50, h = 7.27 },
 	},
 	shots = {
 		razzo = { img = "razzo", tint = "razzo_tinta", x = 0.00, y = 0.00, w = 15.14, h = 18.00 },

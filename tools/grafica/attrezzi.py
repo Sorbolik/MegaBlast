@@ -1,7 +1,8 @@
 # Gli attrezzi in battaglia, disegnati a vettori come le armi (vettori.py):
 # il cubo di ferro in cui cadono trappola, scudo e trampolino (sopra il gioco
-# mette l'icona dell'attrezzo), la tagliola posata (aperta) e scattata
-# (chiusa), il trampolino (la Molla) e la bolla dello scudo addosso.
+# mette l'icona dell'attrezzo), la tagliola scattata (chiusa), il trampolino (la
+# Molla) e la bolla dello scudo addosso. La tagliola posata (aperta) e le firme
+# delle armi sono di Codex (WB-065, WB-066), ricalcate in art/armi/.
 # Le parti "luce" sono bianche: il gioco le tinge col colore della squadra.
 # Scrive client/assets/fx/attrezzo_*.png e le firme fx_*.png (vanno in client/battle/battle.atlas).
 #
@@ -37,21 +38,6 @@ def cubo(d):
             d.cerchio(x, y, 0.8, "ottone", contorno=False)
     d.riga(f"M{-s + 2.4},{2 * s - 2.4} L{s - 2.4},{2 * s - 2.4}", COL["acciaio"][2], 0.5)
     return (-s - 1.6, -1.6, s + 1.6, 2 * s + 1.6)
-
-
-def tagliola_aperta(d):
-    # la tagliola posata, vista di lato: la piastra a terra e le due ganasce
-    # aperte e distese coi denti in su; la placca al centro si accende
-    d.rect(-12, 0, 24, 2.2, "ferro", r=1.0)
-    for lato in (-1, 1):
-        x0 = lato * 2.2
-        d.path(f"M{x0},1.2 L{lato * 12.6},1.2 L{lato * 12.0},3.4 L{x0},3.0 Z", "acciaio")
-        for i in range(4):
-            x = lato * (4.2 + i * 2.2)
-            d.poli([(x - 0.8, 3.0), (x, 5.4), (x + 0.8, 3.0)], "osso")
-    d.rect(-2.6, 1.6, 5.2, 1.8, "bianco", r=0.6, tinta=True)
-    d.cerchio(0, 1.2, 1.0, "ottone")
-    return (-14, -1.6, 14, 7)
 
 
 def tagliola_chiusa(d):
@@ -118,8 +104,7 @@ def tagliola_ricalcata():
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for nome, fn, tinta in (("attrezzo_cubo", cubo, False), ("attrezzo_tagliola", tagliola_aperta, False),
-                            ("attrezzo_tagliola_luce", tagliola_aperta, True),
+    for nome, fn, tinta in (("attrezzo_cubo", cubo, False),
                             ("attrezzo_tagliola_chiusa", tagliola_chiusa, False), ("attrezzo_molla", molla, False),
                             ("attrezzo_bolla", bolla, False)):
         d = Disegno(col=COL)
@@ -127,8 +112,7 @@ def main():
         w, h = round((box[2] - box[0]) * PX), round((box[3] - box[1]) * PX)
         rendi(d.svg(box, PX, tinta=tinta), w, h).save(os.path.join(OUT, nome + ".png"), optimize=True)
         print(nome, w, h, "misura nel mondo", round(box[2] - box[0], 1), round(box[3] - box[1], 1))
-    if os.path.exists(TAGLIOLA_RICALCO):
-        tagliola_ricalcata()
+    tagliola_ricalcata()
     firme()
 
 
@@ -136,17 +120,21 @@ def main():
 # le tinge e le anima (client/battle/impact.lua, impact.sign); al massimo FIRMA_PX
 # di lato, che è più di quanto si vedono anche con lo zoom più vicino
 FIRMA_PX = 192
+# quelle che il gioco usa (client/main/game.gui_script): fumo, crepa, cenere, fiamma e
+# scintilla restano in art/armi/ per i segni degli stati
+FIRME = ["fx_runa", "fx_stella", "fx_fendente", "fx_vento", "fx_anello_fumo", "fx_risucchio", "fx_bolla",
+         "fx_guscio", "fx_coccio", "fx_gocce", "fx_coriandolo"]
 
 
 def firme():
     from PIL import Image
     cartella = os.path.join(RADICE, "art", "armi")
-    for f in sorted(os.listdir(cartella)):
-        if f.startswith("fx_") and f.endswith(".png"):
-            im = Image.open(os.path.join(cartella, f)).convert("RGBA")
-            k = FIRMA_PX / max(im.size)
-            im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(os.path.join(OUT, f), optimize=True)
-            print(f[:-4], "firma")
+    for nome in FIRME:
+        im = Image.open(os.path.join(cartella, nome + ".png")).convert("RGBA")
+        k = FIRMA_PX / max(im.size)
+        im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(os.path.join(OUT, nome + ".png"),
+                                                                                 optimize=True)
+        print(nome, "firma")
 
 
 if __name__ == "__main__":

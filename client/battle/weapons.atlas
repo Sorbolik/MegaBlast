@@ -161,9 +161,6 @@ images {
   image: "/assets/weapons/petard_icona.png"
 }
 images {
-  image: "/assets/weapons/scambio_icona.png"
-}
-images {
   image: "/assets/weapons/janus_icona.png"
 }
 images {
@@ -179,10 +176,10 @@ images {
   image: "/assets/weapons/parachute_icona.png"
 }
 images {
-  image: "/assets/weapons/uncino.png"
+  image: "/assets/weapons/scambio_icona.png"
 }
 images {
-  image: "/assets/weapons/uncino_tinta.png"
+  image: "/assets/weapons/uncino.png"
 }
 images {
   image: "/assets/weapons/razzo.png"

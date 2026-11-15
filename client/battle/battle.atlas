@@ -47,25 +47,13 @@ images {
   image: "/assets/fx/fx_bolla.png"
 }
 images {
-  image: "/assets/fx/fx_cenere.png"
-}
-images {
   image: "/assets/fx/fx_coccio.png"
 }
 images {
   image: "/assets/fx/fx_coriandolo.png"
 }
 images {
-  image: "/assets/fx/fx_crepa.png"
-}
-images {
   image: "/assets/fx/fx_fendente.png"
-}
-images {
-  image: "/assets/fx/fx_fiamma.png"
-}
-images {
-  image: "/assets/fx/fx_fumo.png"
 }
 images {
   image: "/assets/fx/fx_gocce.png"
@@ -78,9 +66,6 @@ images {
 }
 images {
   image: "/assets/fx/fx_runa.png"
-}
-images {
-  image: "/assets/fx/fx_scintilla.png"
 }
 images {
   image: "/assets/fx/fx_stella.png"
