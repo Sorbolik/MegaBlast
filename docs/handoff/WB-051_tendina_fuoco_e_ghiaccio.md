@@ -91,3 +91,19 @@ Thick black ink outline on every piece, cartoon comic style like image 1. Flat c
 ## Decisione
 
 Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
+
+
+## Consegna di Codex
+
+Tavole generate con ImageGen, usando i prompt integrali e i riferimenti nell'ordine della scheda. I relativi TXT riportano entrambi.
+
+| PNG | Prompt e riferimenti | Tentativi | Esito |
+|---|---|---:|---|
+| `art/WB-051/lama_pezzi_1.png` | `art/WB-051/lama_pezzi_1.txt` | 3 | Bozza con giunte visibili |
+| `art/WB-051/lama_pezzi_2.png` | `art/WB-051/lama_pezzi_2.txt` | 3 | Bozza con giunte visibili |
+| `art/WB-051/lama_schegge_1.png` | `art/WB-051/lama_schegge_1.txt` | 1 | 12 pezzi in tre righe |
+| `art/WB-051/lama_schegge_2.png` | `art/WB-051/lama_schegge_2.txt` | 1 | 12 pezzi in tre righe |
+
+Verificati i quattro PNG a 1536×1024. ImageGen ha restituito tavole verticali per la lama e quadrate per le schegge. Le ho ridotte in proporzione e centrate su una tavola verde, uniformando il fondo a #00FF00. Ho controllato a vista che i pezzi fossero separati, integri e senza scritte, che il fuoco fosse a destra del filo rovente e che il ghiaccio fosse frastagliato a sinistra. Le tre strisce di ogni tavola hanno altezze simili e le schegge hanno contorni neri ben visibili.
+
+Nelle due bozze della lama i bordi superiore e inferiore delle strisce e i bordi laterali del corpo presentano discontinuità. Dopo i tre tentativi ho conservato le due bozze per la revisione. Il criterio di ripetizione resta da soddisfare, come richiesto dalla scheda e dalla decisione del 26 ottobre sulle giunte visibili. La corrispondenza esatta alla palette e al limite di colori, il ricalco e la resa in gioco restano da verificare.
