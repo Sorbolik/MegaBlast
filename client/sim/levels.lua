@@ -559,7 +559,7 @@ M.girone_1 = {
 		mappa = "pavimento",
 		giocatori = { { team = 1 }, { team = 2, bot = 2 } },
 		globi_tempo = true,
-		stelle = { punti = { 220, 340 } },
+		stelle = { punti = { 540, 630 } },
 		obiettivo = { { win = true, testo = "Vinci la partita" } },
 		-- in the circles the game never stops: strip only, the Fabbro's face
 		righe = {
@@ -583,7 +583,9 @@ M.girone_1 = {
 		globi_tempo = true,
 		-- whoever falls comes back on their bank: the sniper on its island
 		al_posto = true,
-		stelle = { punti = { 240, 530 } },
+		-- the second enemy is half-done: with two full bots the normal bot won 43% (collaudo)
+		vita = { [4] = 50 },
+		stelle = { punti = { 730, 900 } },
 		obiettivo = { { win = true, testo = "Vinci la partita con Favilla" } },
 	},
 	-- Giù dal bordo: a duel on the Fabbro's pit against the bot that evolved to
@@ -596,7 +598,7 @@ M.girone_1 = {
 		mappa = "fossa",
 		giocatori = { { team = 1 }, { team = 2, bot = 3, carattere = "spingitore", nome = "Lo spingitore" } },
 		globi_tempo = true,
-		stelle = { punti = { 400, 450 } },
+		stelle = { punti = { 590, 720 } },
 		obiettivo = { { win = true, testo = "Vinci la partita" } },
 		righe = {
 			{ testo = "Chi cade nella lava è abbattuto subito: altri 50 punti a chi ce l'ha buttato",
@@ -612,7 +614,7 @@ M.girone_1 = {
 		mappa = "pavimento",
 		globi_tempo = true,
 		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "codardo", nome = "Il codardo" } },
-		stelle = { punti = { 160, 200 } },
+		stelle = { punti = { 600, 750 } },
 		obiettivo = { { win = true, testo = "Vinci la partita" } },
 	},
 	{
@@ -627,9 +629,10 @@ M.girone_1 = {
 			{ team = 2, bot = 5, carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
 				battute = "fabbro" },
 		},
-		vita = { [2] = 240 },
+		-- 180 (docs/campagna_gironi.md): with 240 the normal bot won 30% (collaudo)
+		vita = { [2] = 180 },
 		globi_tempo = true,
-		stelle = { punti = { 340, 410 } },
+		stelle = { punti = { 720, 870 } },
 		obiettivo = { { win = true, testo = "Batti il Fabbro" } },
 	},
 	-- the end of the circle: a full 2 v 2 match, with Favilla at your side
@@ -649,7 +652,7 @@ M.girone_1 = {
 			{ team = 1, bot = 5, nome = "Favilla", battute = "favilla_compagna", pelle = "favilla" },
 			{ team = 2, bot = 3, carattere = "cecchino" },
 		},
-		stelle = { punti = { 400, 480 } },
+		stelle = { punti = { 390, 560 } },
 		obiettivo = { { win = true, testo = "Vinci la partita con Favilla" } },
 	},
 }

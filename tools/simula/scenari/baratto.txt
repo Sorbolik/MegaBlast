@@ -2,12 +2,12 @@
 # grande, poi mostra il primo attacco, il baratto e il globo sull'isola; poi tocca a
 # te: la cassa che cade dal cielo con l'Uovo, l'Uovo sul fantoccio, le due frecce.
 imposta prova_missione baratto
-imposta zoom 3
 
 aspetta 2.5
+foto 00_cartolina
 tocca_bordo 175 52 basso destra      # AVANTI sulla cartolina
 aspetta_stato modo=local fase=aim 8
-aspetta 1.2
+aspetta 4
 foto 01_vignetta_grande              # il Fabbro spiega: baratto e casse
 tocca 912 289
 aspetta 0.3

@@ -462,7 +462,7 @@ do
 			-- the lines of those steps have been read already (the big one too: she
 			-- shows only after explaining), as when you get there
 			missions.tick(r, g)
-			r.coda, r.riga, r.line_ticks = {}, nil, nil
+			r.coda, r.riga, r.line_ticks, r.big_unread = {}, nil, nil, nil
 			for _ = 1, 60 * 30 do
 				missions.touch(r)
 				local keys = bots[g.current] and bot.input(bots[g.current], g) or {}

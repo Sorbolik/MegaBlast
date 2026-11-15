@@ -671,8 +671,9 @@ end
 -- (if you haven't already touched it this turn).
 local function show_line(r, line)
 	r.riga, r.line_until, r.line_yields, r.line = line.testo, line.fino, line.yields, line
-	-- a big vignette: Favilla shows the move only once it has been read (M.line_read)
-	r.big_unread = line.mostra == "grande" or nil
+	-- a big vignette: Favilla shows the move only once it has been read (M.line_read);
+	-- the opening of a lesson she shows moves in too (it's a big vignette there)
+	r.big_unread = (line.mostra == "grande" or line.apertura and r.l.aspetta and r.l.dimostra ~= nil) or nil
 	r.line_ticks = line.secondi and line.secondi * 60 or (line.fino and 2 or 1) * LINE_SECONDS * 60
 	r.luce = line.highlight
 	r.awaiting = nil
