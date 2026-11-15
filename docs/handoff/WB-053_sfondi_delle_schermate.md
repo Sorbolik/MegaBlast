@@ -135,3 +135,20 @@ Composition rules, follow exactly: this is a MENU background, the interface cove
 ## Decisione
 
 Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio.
+
+## Consegna di Codex
+
+Otto sfondi opachi generati con ImageGen. Ogni PNG a 1672 × 941 ha un TXT omonimo con il prompt integrale e i riferimenti R1, R2, R3 nell'ordine allegato.
+
+| File PNG e TXT in art/WB-053/ | Tentativi | Controllo visivo |
+|---|---:|---|
+| sfondo_menu_zaino | 1 | Tana con centro libero. Baule e fenditura fredda vicini al bordo destro. |
+| sfondo_menu_armeria | 1 | Incudine e utensili ai lati. Forgia e braciere luminosi. |
+| sfondo_menu_profilo | 1 | Trofei e stendardi ai lati. Alcune aste raggiungono il bordo superiore. |
+| sfondo_menu_eventi | 3 | Scelto il secondo tentativo con palco più piccolo. Il palco resta nel terzo centrale. |
+| sfondo_menu_gioca_online | 1 | Quattro porte colorate ai lati e piazza al centro. Portali luminosi. |
+| sfondo_menu_campagna | 1 | Scala e cartello ai lati, luci dell'abisso in basso al centro. |
+| sfondo_menu_allenamento | 1 | Bersagli e manichini di paglia a destra, lanterna e armi da pratica a sinistra. |
+| sfondo_menu_impostazioni | 1 | Banco e attrezzi a sinistra, ingranaggi e leve a destra. Alcuni tubi raggiungono il bordo. |
+
+Ho controllato a vista lo stile a china, il contrasto caldo-freddo, la fascia inferiore e l'assenza di personaggi vivi, scritte, interfaccia e firme. La linea del pavimento è attorno all'86% anziché al 83% richiesto e alcune forme laterali entrano nel margine di ritaglio. Per Eventi e Gioca online ho duplicato l'ultima colonna di pixel per passare da 1671 a 1672 pixel senza scalare. La leggibilità e il ritaglio nei tre formati restano da verificare nel simulatore.
