@@ -197,6 +197,7 @@ d'ottone e borchie ciano. Cuoio più bruno della tavola di stile, per distinguer
   `mantello_base_1`, `mantello_forgiata`. Riserve: `cuffia_base_2`, `corpo_base_2`, `mantello_base_2`.
 - **Scartato:** `pugni_forgiata`: sulle braccia col pugno c'è il grembiule con la croce, non la
   spallina. Per ora le braccia col pugno forgiate portano la spallina base; il foglio si rifà con WB-059.
+  **Fatto (15 nov):** WB-059 consegnata e integrata, ora portano la spallina forgiata.
 - **Difetti lasciati:** la spallina sul braccio aperto ha tre strati, quella sul pugno due (si vede
   quando impugna un'arma); il grembiule lascia scoperto il fianco e una striscia di pancia.
 - **Colori:** Codex ha fatto il cuoio più caldo di quello chiesto (#8A4A1E il grembiule, #783818 la

@@ -53,17 +53,17 @@
   "braccio_2": {
    "img": "grembiule_fabbro_forgiato_spallina_braccio_2",
    "x": 2.0,
-   "y": 0.6,
+   "y": 0.9,
    "w": 27.9,
-   "h": 25.1,
+   "h": 24.6,
    "modo": "sopra"
   },
   "braccio_dietro_2": {
    "img": "grembiule_fabbro_forgiato_spallina_braccio_dietro_2",
-   "x": -0.1,
-   "y": 2.3,
-   "w": 29.4,
-   "h": 27.4,
+   "x": 0.5,
+   "y": 2.7,
+   "w": 29.2,
+   "h": 27.1,
    "modo": "sopra"
   }
  }
