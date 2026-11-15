@@ -201,7 +201,7 @@ local CRATE_ABOVE = 280
 -- the spark is a glow this wide around its point (battle/favilla.lua draws it
 -- the same size): it is taken when your hit circle touches it
 local SPARK_R = 13
-local RETRY_TEXT = "Ritenta! Prendi confidenza con i comandi, prenditi il tuo tempo: {mira}"
+local RETRY_TEXT = "Ritenta! Con calma, prendi confidenza con i comandi: {mira}"
 
 -- Which weapon someone just used: the attack event -> weapon name
 local ATTACKS = {

@@ -54,7 +54,7 @@ return {
 				},
 				["4_arrivo_a"] = { { "favilla", "Ehi, nuovo! Sei tu quello che vuole fare il fabbro?" } },
 				["4_arrivo_b"] = { { "apprendista", "Sì! E diventerò il più forte di tutti." } },
-				["4_arrivo_c"] = { { "favilla", "Ah sì? Io sono Favilla, l'apprendista più vecchia. Il più forte, qui, è chi mi sta dietro." } },
+				["4_arrivo_c"] = { { "favilla", "Ah sì? Io sono Favilla, l'apprendista più grande. Il più forte, qui, è chi mi sta dietro." } },
 				["5_fabbro_a"] = {
 					{ "fabbro", "Un altro. Favilla, insegnagli tu. Se impara, lo voglio nella Forgia." },
 					{ "apprendista", "(...è enorme.)" },
@@ -70,7 +70,7 @@ return {
 			regalo = {
 				s_regalo = {
 					{ "fabbro", "Te li sei guadagnati. Mettili, laggiù il pavimento brucia." },
-					{ "didascalia", "Gli stivali sono nell'ARMERIA." },
+					{ "didascalia", "Gli stivali sono nel tuo ZAINO. E ora si apre l'ARMERIA." },
 				},
 			},
 			insieme = {
@@ -84,9 +84,9 @@ return {
 				["6_rapimento_b"] = { { "didascalia", "Giù, sempre più giù, fino in fondo all'inferno." } },
 				["6_rapimento_c"] = {
 					{ "apprendista", "Chi era?!" },
-					{ "fabbro", "Lucifero. È finita giù, in fondo all'inferno. Ti ci porto io, un girone alla volta." },
+					{ "fabbro", "Lucifero. L'ha portata in fondo all'inferno. Ti accompagno io, un girone alla volta, finché il fuoco regge." },
 				},
-				s_ghiaccio = { { "didascalia", "In fondo all'ultimo girone, nel ghiaccio, Favilla aspetta." } },
+				s_ghiaccio = { { "didascalia", "In fondo all'ultimo girone, nel ghiaccio, Lucifero le ruba il calore per liberarsi. Favilla aspetta te." } },
 			},
 		},
 	},
@@ -312,7 +312,7 @@ return {
 		orda_line = "Tu da solo contro tre.",
 		resistenza_line = "Resisti fino all'ultimo giro.",
 		bottino_line = "Prendi più del tuo avversario.",
-		custode_line = "Il guardiano del girone. Battilo e si scende.",
+		custode_line = "Il guardiano del capitolo: battilo e si va avanti.",
 	},
 
 	-- menu/lineup.lua: the line-up before the match
@@ -719,7 +719,7 @@ return {
 		},
 		-- Favilla at your side in the Forgia
 		favilla_compagna = {
-			turno = { "Tocca a me: copritemi!", "Guarda come si fa!" },
+			turno = { "Tocca a me: coprimi!", "Guarda come si fa!" },
 			colpisce = { "Preso!", "Uno a zero per noi!" },
 			colpito = { "Ahi! Occhio a dove miri!", "Mi hanno presa!" },
 			scappa = { "Di qua!", "Arrivo!" },
