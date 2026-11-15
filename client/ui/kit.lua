@@ -562,7 +562,7 @@ function M.action(g, label, x, y, w, h, opt)
 	local ink = opt.off and with_alpha(C.INK, 0.55) or C.INK
 	p.label = M.text(p.g, label, cx, cy + size * 0.36, size, ink, "middle")
 	local muted = opt.off and C.FROST or C.MUTE
-	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, cy + 6, 16, muted, "end", 1)
+	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, cy + 7, 19, muted, "end", 0.6)
 	elseif opt.sub then p.sub = M.text(g, opt.sub, cx, sub_y(y, h), 15, muted, "middle", 1.2) end
 	-- the finger on it: the pressed drawing (ui.ui, premi)
 	if not opt.off then
