@@ -270,8 +270,8 @@ lanciato prima, se no in una PR subito dopo).
 Le immagini le genera Codex (ChatGPT) sul PC di Sergio, dai prompt che scrive Claude: niente
 copia e incolla. Claude scrive una scheda in [docs/handoff/](docs/handoff/README.md) dal
 [modello](docs/handoff/MODELLO.md), con ogni prompt completo, i riferimenti e i nomi dei file;
-la approva se è reversibile (altrimenti chiede a Sergio) e la porta su `main` (solo
-documenti e riferimenti, così Codex la trova). Codex la esegue
+la approva se è reversibile (altrimenti chiede a Sergio), fa il push sul suo ramo e dice
+a Sergio il nome del ramo: Codex la esegue da lì, non serve portarla su `main` (Sergio, 15 nov). Codex la esegue
 seguendo [AGENTS.md](AGENTS.md) e fa il push sul ramo `design/WB-xxx`. Poi Claude fa
 `git fetch origin`, guarda ogni immagine in `art/WB-xxx/`, scarta quelle con difetti visibili,
 integra le buone, gira la simulazione e scrive il "Resoconto di Claude". Le decisioni prese da

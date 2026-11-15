@@ -11,7 +11,8 @@ copiata da [MODELLO.md](MODELLO.md). Le regole di Codex sono in [AGENTS.md](../.
    Stato PROPOSTA.
 2. **Si decide**: Claude approva da solo le schede ragionevoli e reversibili (e lo scrive),
    le altre le decide Sergio. Stato APPROVATA. Claude fa il commit e il push della scheda.
-3. **Codex genera**: Sergio gli dice "esegui WB-xxx". Codex genera tutto in `art/WB-xxx/`,
+3. **Codex genera**: Sergio gli dice "esegui WB-xxx" (e il ramo della scheda: Codex la
+   prende da lì, non serve che sia su `main`, Sergio 15 nov). Codex genera tutto in `art/WB-xxx/`,
    scrive la consegna, fa il commit sul ramo `design/WB-xxx` e il push. Stato GENERATA.
 4. **Claude rivede e integra**: guarda le immagini, scarta quelle con difetti (e se serve
    aggiunge una scheda nuova coi prompt corretti), taglia e integra quelle buone, gira la

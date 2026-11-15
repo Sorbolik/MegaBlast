@@ -1,0 +1,44 @@
+# La pillola della coda nuova, sotto la linea in mezzo, in ogni menu (Sergio, 15 nov:
+# «sempre quella nuova e sempre nella posizione nuova sotto la linea»).
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_profilo 1
+
+aspetta 1
+server 2v2 1 bot_dopo=60s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 175 52 basso destra                     # GIOCA
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
+aspetta_stato modo=connecting 5
+aspetta 1
+tocca_centro 832 79                       # TORNA AI MENU · RESTI IN CODA
+aspetta_stato modo=menu coda=si 3
+aspetta 1
+foto 01_home
+tocca_bordo 210 170 mezzo destra    # ARMERIA
+aspetta 1.5
+foto 02_armeria
+tocca_bordo 36 60 basso sinistra
+aspetta 1.5
+tocca_centro 640 300                # ZAINO
+aspetta 1.5
+foto 03_zaino
+tocca_bordo 580 52 alto sinistra    # SIGILLI
+aspetta 1
+foto 03b_sigilli
+tocca_bordo 36 60 basso sinistra
+aspetta 1.5
+tocca_bordo 220 170 mezzo sinistra  # ALLENAMENTO
+aspetta 1.5
+foto 04_allenamento
+tocca_bordo 36 60 basso sinistra
+aspetta 1.5
+tocca_bordo 220 289 mezzo destra    # EVENTI
+aspetta 2
+foto 05_eventi
+tocca_bordo 36 60 basso sinistra
+aspetta 1.5
+tocca_centro 64 40                  # il profilo
+aspetta 1.5
+foto 06_profilo

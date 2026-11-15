@@ -14,8 +14,11 @@ Sergio ti dice solo quale scheda eseguire (es. "esegui WB-001").
 
 ## Come esegui una scheda
 
-1. Aggiorna `main` (`git checkout main` e `git pull`) e prendi lì la scheda; se Sergio
-   ti indica un altro ramo, usa quello. Eseguila solo se lo stato è APPROVATA.
+1. Esegui la scheda dal ramo da cui arriva, che non è per forza `main` (Sergio, 15 nov:
+   di solito è ancora una prova). Il ramo è scritto in testa alla scheda («Ramo della
+   scheda») o te lo dice Sergio: `git fetch origin <ramo>` e `git checkout <ramo>`. Se non
+   lo sai, cercalo: `git fetch origin` e `git log --all --oneline -- "docs/handoff/WB-xxx*"`.
+   Eseguila solo se lo stato è APPROVATA.
    **Se la scheda non ha la fase o le immagini che ti chiedono** (per esempio "fase 3" e nella
    tabella non ci sono righe di fase 3), fermati: non improvvisare e non fare il lavoro di
    Claude (ricalchi, script, editor). Scrivi nella consegna cosa mancava e fai solo il push.

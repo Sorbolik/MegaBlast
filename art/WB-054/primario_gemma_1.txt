@@ -1,0 +1,17 @@
+Image 1 is a menu screen of our game: the button at the bottom right is the main action button of every menu. Images 2 and 3 are two menu buttons of the same game and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 4 is the main button we use today and image 5 is another button: both must NOT be copied, we want a different idea.
+
+Draw a new MAIN ACTION BUTTON as a long cut EMBER GEM: a wide flat faceted gem about three and a half times wider than tall, its ends cut in a few big soft facets, its large front face flat and even, of glowing orange (#F26419) with a broad lighter top facet (#FFB703), a thin bright spark highlight (#FFE08A) and a darker bottom facet (#C2410C); a small flame flickers out of its bottom-left facet; a few sharp ice crystals (#38B6FF, #CAF0F8) grow on its top-right facet. The large front face in the middle is plain and even, with nothing on it, so text can be written there and the gem can be stretched in width.
+
+Draw it THREE times on the sheet, one above the other, with green space between them:
+1. LIT: as described;
+2. PRESSED: the same gem pushed down: a bit flatter, the face darker (#D9520F), the flame smaller;
+3. OFF: the same gem dead and frozen: dull grey-blue stone (#4A4550, top facet #6B6375), no flame, no glow colors at all, a crust of ice and frost (#CAF0F8, #38B6FF) grown over its whole top-right half.
+
+Thick black ink outline on every piece, cartoon comic style like images 2 and 3. Flat colors only, at most six per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no glow halo, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+art/WB-054/riferimenti/R1_primario_oggi.png
+art/WB-054/riferimenti/R2_porta_campagna.png
+art/WB-054/riferimenti/R3_porta_armeria.png
+art/WB-054/riferimenti/R4_brace_gelo_scelto.png
+art/WB-054/riferimenti/R5_gioca_sigillo.png

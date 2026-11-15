@@ -115,10 +115,8 @@ local function inventory(s)
 		gear_ui.slot(s.low, 140, 630, 64, { set = set, slot = slot })
 		kit.text(s.low, gear_ui.name(set, slot), 220, 657, 26, KC.SAND)
 		local tier = equip.tier(level)
-		local line = kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier], gear_ui.effects(set, slot, level))),
-			220, 684, 14, KC.MUTE, "start", 0.5)
-		local wide = kit.width(line)
-		if wide > 520 then gui.set_scale(line, gui.get_scale(line) * (520 / wide)) end
+		kit.foot_text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier], gear_ui.effects(set, slot, level))),
+			220, 684, 14, KC.MUTE, 520, 0.5)
 		local worn = a.gear[slot] == set
 		s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { size = 44, off = worn, sub = worn and kit.upper(T.worn) or nil })
 		kit.button(s.buttons, s.action, "indossa", { main = true, spento = worn })
@@ -188,19 +186,17 @@ local function seals_tab(s)
 		local two = fpath.steps[fk]
 		if pick then
 			local other = two[3 - pick]
-			kit.text(s.low, kit.upper(two[pick].name), 140, 650, 24, KC.SAND)
-			local line = kit.text(s.low, kit.upper(T.step:format(fpath.name, fk * skills.STEP)) .. " · " .. kit.upper(two[pick].desc), 140, 674, 14, KC.HOT_TOP, "start", 0.5)
-			local wide = kit.width(line)
-			if wide > 640 then gui.set_scale(line, gui.get_scale(line) * (640 / wide)) end
-			line = kit.text(s.low, kit.upper(T.other:format(other.name, other.desc)), 140, 694, 13, KC.MUTE, "start", 0.5)
-			wide = kit.width(line)
-			if wide > 640 then gui.set_scale(line, gui.get_scale(line) * (640 / wide)) end
+			-- (in the queue the lines go on two, left of the pill: all a little higher)
+			local q = kit.in_queue and -10 or 0
+			kit.text(s.low, kit.upper(two[pick].name), 140, 650 + q, 24, KC.SAND)
+			local lines = kit.foot_text(s.low, kit.upper(T.step:format(fpath.name, fk * skills.STEP)) .. " · " .. kit.upper(two[pick].desc), 140, 674 + q, 14, KC.HOT_TOP, 640, 0.5)
+			kit.foot_text(s.low, kit.upper(T.other:format(other.name, other.desc)), 140, (#lines > 1 and 704 or 694) + q, 13, KC.MUTE, 640, 0.5)
 		else
-			kit.text(s.low, kit.upper(T.step:format(fpath.name, fk * skills.STEP)) .. " · " .. kit.upper(T.to_choose), 140, 660, 20, KC.HOT_TOP)
-			kit.text(s.low, kit.upper(two[1].name .. " · " .. two[1].desc .. "   /   " .. two[2].name .. " · " .. two[2].desc), 140, 686, 13, KC.MUTE, "start", 0.5)
+			kit.foot_text(s.low, kit.upper(T.step:format(fpath.name, fk * skills.STEP)) .. " · " .. kit.upper(T.to_choose), 140, 660, 20, KC.HOT_TOP, 640)
+			kit.foot_text(s.low, kit.upper(two[1].name .. " · " .. two[1].desc .. "   /   " .. two[2].name .. " · " .. two[2].desc), 140, 686, 13, KC.MUTE, 640, 0.5)
 		end
 	else
-		kit.text(s.low, kit.upper(T.pick_hint), 140, 672, 14, KC.MUTE, "start", 0.5)
+		kit.foot_text(s.low, kit.upper(T.pick_hint), 140, 672, 14, KC.MUTE, 640, 0.5)
 	end
 	local a = profile.active_loadout(p)
 	local a2 = { gear = a.gear, tree = t, variant = a.variant }
