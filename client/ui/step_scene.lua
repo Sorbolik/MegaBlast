@@ -78,7 +78,7 @@ function M.new(slot_name, set_name, level, on_blow, color)
 		sc.notches[i] = kit.para(g, 70 + (i - 1) * 10, big and 222 or 226, 7, big and 26 or 18, 3, i <= level and before or KC.LINE)
 	end
 	-- what is new, on the right: it comes in after the third blow
-	sc.label = kit.text(g, T.step_new, 890, 236, 14, KC.HOT_TOP, "start", 1.5)
+	sc.label = kit.text(g, T.step_new, 890, 236, 16, KC.HOT_TOP, "start", 1.5)
 	gui.set_color(sc.label, vmath.vector4(KC.HOT_TOP.x, KC.HOT_TOP.y, KC.HOT_TOP.z, 0))
 	local rows = {
 		{ T.step_grade:format(ROMAN[tier], kit.upper(T.grades[tier])), ui.C.GRADI[tier] },

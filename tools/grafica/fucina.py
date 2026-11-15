@@ -311,7 +311,9 @@ MENU_INTERI = [
     # la home: le porte (WB-046, a destra lo scudo verso il bordo), GIOCA, pedana e zainetto
     ("porta_campagna", "porta_campagna", 236, "WB-046"),
     ("porta_allenamento", "porta_allenamento", 226, "WB-046"),
-    ("porta_eventi", "porta_eventi_dx", 236, "WB-046"),
+    # lo striscione EVENTI: il nastro con la piega di WB-061 (Sergio, 15 nov; fra tre
+    # idee), accorciato nel mezzo liscio per avere l'ingombro di quello di WB-046
+    ("porta_eventi", "porta_eventi_piega", 236, "WB-061"),
     ("porta_armeria", "porta_armeria_dx", 226, "WB-046"),
     ("gioca_sigillo", "gioca_sigillo", 166, "WB-046"),
     ("pedana", "pedana_griglia_1", 266, "WB-050"),
@@ -351,7 +353,7 @@ MENU_INTERI = [
 SPAZI_MISURATI = {
     "porta_campagna": (240, 50, 189, 51),
     "porta_allenamento": (225, 44, 166, 37),
-    "porta_eventi": (110, 36, 236, 50),
+    "porta_eventi": (185, 52, 236, 58),
     "porta_armeria": (120, 50, 225, 56),
     "gioca_sigillo": (180, 28, 149, 48),
 }
@@ -367,6 +369,83 @@ SCIE = ["brace", "scintilla", "fiamma", "ricciolo", "ferro", "cuoio", "paglia", 
 PORTE = ["campagna", "allenamento", "eventi", "armeria"]
 FAMIGLIE = ["fabbro", "corvo", "fornace", "leviatano", "vuoto"]
 POSTI = ["elmo", "corazza", "mantello", "stivali"]
+
+
+def corpo(arr):
+    """Il rettangolo del corpo di una scheda (senza la fiamma o i cristalli che escono):
+    le righe e le colonne piene almeno a meta'. Torna x0, y0, x1, y1."""
+    m = arr[..., 3] > 128
+    righe, colonne = m.sum(axis=1), m.sum(axis=0)
+    ys = np.where(righe > 0.5 * righe.max())[0]
+    xs = np.where(colonne > 0.5 * colonne.max())[0]
+    return xs[0], ys[0], xs[-1] + 1, ys[-1] + 1
+
+
+def scheda(nome, arr, fregio=None):
+    """Una scheda di WB-060 in nove parti (angoli interi, lati allungati in un verso,
+    il mezzo piatto) piu' il suo fregio: l'angolo grande con la fiamma (in basso a
+    sinistra) o coi cristalli (in alto a destra), che esce dal corpo e si disegna
+    intero sopra. fregio = (dove, dentro in largo, dentro in alto) in pixel del disegno.
+    Nelle misure del fregio, box dice di quanto esce dal corpo (sinistra, alto, destra, basso)."""
+    x0, y0, x1, y1 = corpo(arr)
+    im = Image.fromarray(arr, "RGBA")
+    c = round((y1 - y0) * 0.24)
+    xs = [(x0, x0 + c), (x0 + c, x1 - c), (x1 - c, x1)]
+    ys = [(y0, y0 + c), (y0 + c, y1 - c), (y1 - c, y1)]
+    # i lati accanto al fregio si prendono dove il fregio e' finito: il gioco li
+    # allunga da li', cosi' la fiamma o i cristalli non finiscono stirati nel lato
+    dove, dx, dy = fregio or (None, 0, 0)
+    k = 1
+    for r, (ya, yb) in enumerate(ys):
+        for q, (xa, xb) in enumerate(xs):
+            if dove == "fiamma" and (r, q) == (2, 1):
+                xa = x0 + dx
+            elif dove == "fiamma" and (r, q) == (1, 0):
+                yb = y1 - dy
+            elif dove == "cristalli" and (r, q) == (0, 1):
+                xb = x1 - dx
+            elif dove == "cristalli" and (r, q) == (1, 2):
+                ya = y0 + dy
+            p = im.crop((xa, ya, xb, yb))
+            # il mezzo e' piatto: basta un quadratino
+            if r == 1 and q == 1:
+                p = p.crop((p.size[0] // 2 - 8, p.size[1] // 2 - 8, p.size[0] // 2 + 8, p.size[1] // 2 + 8))
+            salva(p, "%s_%d" % (nome, k))
+            k += 1
+    MISURE[nome] = (x1 - x0, y1 - y0, c)
+    if fregio:
+        h, w = arr.shape[:2]
+        if dove == "fiamma":
+            taglio = (0, y1 - dy, x0 + dx, h)
+            fuori = (x0, 0, 0, h - y1)
+        else:
+            taglio = (x1 - dx, 0, w, y0 + dy)
+            fuori = (0, y0, w - x1, 0)
+        p = im.crop(taglio)
+        salva(p, nome + "_fregio")
+        MISURE[nome + "_fregio"] = p.size
+        SPAZI[nome + "_fregio"] = fuori
+
+
+def fai_schede():
+    """Le schede di GIOCA ONLINE (WB-060): brace, ferro, gelo e ferro spento, normali
+    e scelte (col bordo acceso). Tenuti i fogli 1: china piu' pulita e lati piu' dritti."""
+    p = os.path.join(ART, "WB-060")
+    fregi = {"brace": ("fiamma", 235, 170), "gelo": ("cristalli", 200, 95), "gelo_scelta": ("cristalli", 250, 95)}
+    for foglio, coda in (("schede_modalita_1", ""), ("schede_scelte_1", "_scelta")):
+        cs = griglia(os.path.join(p, foglio + ".png"), [2, 2], 20000)
+        # in ordine di lettura: brace e ferro sopra, gelo e spenta sotto
+        for tipo, a in zip(["brace", "ferro", "gelo", "spenta"], cs):
+            n = tipo + coda
+            scheda("scheda_" + n, a, fregi.get(n) or fregi.get(tipo))
+
+
+def fai_segni():
+    """I segni di chi sale e chi scende (WB-061, foglio 1: piatto, senza il riflesso
+    bianco): avorio, il gioco li tinge."""
+    segni = griglia(os.path.join(ART, "WB-061", "segni_sale_scende_1.png"), [3], 20000)
+    for nome, a in zip(["segno_sale", "segno_scende", "segno_uguale"], segni):
+        intero(nome, a, 96)
 
 
 def ritaglio(cartella, nome):
@@ -444,6 +523,8 @@ if __name__ == "__main__":
     fai_pezzi()
     fai_piccoli()
     fai_menu()
+    fai_schede()
+    fai_segni()
     fai_fette()
     fai_sfondi()
     fai_filo()

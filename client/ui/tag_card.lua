@@ -302,17 +302,17 @@ function M.small(g, v, x, y, w, h, opt)
 	ui.disc(x + 48 - cx, cy - (y + 36), 38, KC.INK, k.node)
 	ui.ring_node(x + 48 - cx, cy - (y + 36), 38, 3, col, k.node)
 	local level = v.livello and tostring(v.livello) or v.bot and common.bot or "–"
-	kit.text(k.g, level, x + 48, y + 43 - (#level > 2 and 2 or 0), #level > 2 and 11 or 18, KC.SAND, "middle")
+	kit.text(k.g, level, x + 48, y + 43 - (#level > 2 and 2 or 0), #level > 2 and 16 or 18, KC.SAND, "middle")
 	local name = kit.text(k.g, kit.upper(v.nome or "?"), x + 76, y + 36, 22, KC.SAND)
 	local wide_name = kit.width(name)
 	if wide_name > w - 106 then
 		local sc = gui.get_scale(name)
 		gui.set_scale(name, vec(sc.x * (w - 106) / wide_name, sc.y * (w - 106) / wide_name))
 	end
-	kit.text(k.g, kit.upper(opt.role or v.sotto or ""), x + 76, y + 54, 11, KC.MUTE, "start", 1.5)
+	kit.text(k.g, kit.upper(opt.role or v.sotto or ""), x + 76, y + 54, 16, KC.MUTE, "start", 1.5)
 	-- the devil, his feet above the bars
 	local scoria = require "battle.scoria"
-	local pose = box(4, cy - (y + 212), 0, 0, C.LIGHT, k.node)
+	local pose = box(4, cy - (y + h - 48 - #showcase.rows(v) * 20), 0, 0, C.LIGHT, k.node)
 	gui.set_visible(pose, false)
 	c.figure = scoria.new(C.SQUADRA[v.squadra] or col, scoria.PERSONAGGIO)
 	c.st = { x = 0, y = 0, facing = opt.facing or v.verso or 1, grounded = true, moving = 0, fermo = true }
@@ -322,16 +322,18 @@ function M.small(g, v, x, y, w, h, opt)
 	gui.set_parent(c.figure.root, pose)
 	scoria.set_enabled(c.figure, true)
 	-- the stats: a bar each, the base in the middle
-	local y0 = y + 226
-	for i, r in ipairs(showcase.rows(v)) do
-		local d = (i - 1) * 1.5
-		kit.text(k.g, r.nome, x + 22 - d, y0 + (i - 1) * 17 + 9, 10, KC.MUTE, "start", 1)
-		kit.bar(k.g, x + 74 - d, y0 + (i - 1) * 17, w - 118, 8, math.max(0.15, math.min(1, 0.6 + 0.4 * r.offset)),
+	-- (text at 16, the smallest of the menus: a row every 20, the bars after the
+	-- longest name, the same margin left and right)
+	local rows = showcase.rows(v)
+	local y0 = y + h - 38 - #rows * 20
+	for i, r in ipairs(rows) do
+		kit.text(k.g, r.nome, x + 16, y0 + (i - 1) * 20 + 12, 16, KC.MUTE, "start", 0.5)
+		kit.bar(k.g, x + 78, y0 + (i - 1) * 20 + 2, w - 94, 8, math.max(0.15, math.min(1, 0.6 + 0.4 * r.offset)),
 			r.offset < 0 and KC.ROSE or KC.MINT)
 	end
 	local rs = showcase.resources(v)
 	kit.text(k.g, kit.upper((rs.globi == 1 and T.orb or T.orbs):format(rs.globi) .. " · " .. T.parachutes:format(rs.paracadute)),
-		x + 14, y + h - 14, 10, KC.SAND, "start", 1)
+		x + 16, y + h - 14, 16, KC.SAND, "start", 0.5)
 	return c
 end
 

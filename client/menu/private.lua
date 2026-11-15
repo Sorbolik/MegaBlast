@@ -92,7 +92,7 @@ local function seat(c, i, s, x, y)
 		local v = type(s.vetrina) == "table" and s.vetrina or {}
 		kit.text(k.g, i == room.you and common.you:upper() or T.player, x + 28, y + 46, 30, KC.SAND)
 		if tonumber(v.liv) then kit.text(k.g, T.level:format(v.liv), x + 26, y + 76, 16, KC.MUTE, "start", 1) end
-		if i == room.host then kit.text(k.g, T.host, x + 200, y + 46, 15, KC.HOT_TOP, "start", 1) end
+		if i == room.host then kit.text(k.g, T.host, x + 200, y + 46, 16, KC.HOT_TOP, "start", 1) end
 	end
 end
 

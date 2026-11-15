@@ -55,7 +55,7 @@ local PED_X = 640 - 0.37 * PED_W
 local FEET = PED_TOP + 0.30 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
-local BAG = 62
+local BAG = 46
 
 -- the doors: x, y, width, piece, side, color of the writing, size of the name
 local DOORS = {
@@ -79,7 +79,7 @@ local function draw_door(g, id, x, y, name, sub)
 	local tx = side < 0 and b.x0 + 4 or b.x1 - 4
 	local anchor = side < 0 and "start" or "end"
 	local name_n = kit.text(p.g, name, tx, cy + o[7] * 0.28, o[7], color, anchor)
-	local sub_n = kit.text(p.g, sub or "", tx, cy + o[7] * 0.28 + 20, 13, kit.with_alpha(color, 0.85), anchor, 1)
+	local sub_n = kit.text(p.g, sub or "", tx, cy + o[7] * 0.28 + 20, 16, kit.with_alpha(color, 0.85), anchor, 1)
 	return p, name_n, sub_n, tx, anchor
 end
 
@@ -154,7 +154,7 @@ function M.new(color)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	h.glow = 0
-	h.bag = kit.piece(mid, "zainetto", PED_X + 0.86 * PED_W, PED_TOP + 0.52 * PED_H - 56 + BAG / 2, BAG)
+	h.bag = kit.piece(mid, "zainetto", PED_X + 0.88 * PED_W, PED_TOP + 0.52 * PED_H - BAG / 2, BAG)
 	local hy = FEET - 380 - 10
 	h.hero = kit.zone(mid, h.buttons, PED_X - 10, hy, PED_W + 20, PED_BOTTOM + 6 - hy, "zaino")
 
@@ -163,14 +163,14 @@ function M.new(color)
 	h.tops[#h.tops + 1] = tl.node
 	h.top_left = tl
 	local x, y = 22, 20
-	kit.strip(tl, "guscio", x + 30, y + 8, 250, 56)
+	kit.strip(tl, "guscio", x + 30, y + 8, 286, 56)
 	kit.piece(tl, "tondo_oro", x + 36, y + 36, 72)
 	h.face_at = { x + 36, y + 36 }
 	h.who = kit.text(tl, T.player, x + 82, y + 34, 22, C.SAND)
-	h.level = kit.text(tl, "", x + 266, y + 33, 14, C.HOT, "end", 1)
-	kit.strip(tl, "riga_scura", x + 82, y + 42, 186, 14)
+	h.level = kit.text(tl, "", x + 296, y + 33, 16, C.HOT, "end", 1)
+	kit.strip(tl, "riga_scura", x + 82, y + 42, 216, 14)
 	h.xp = kit.strip(tl, "barra_brace", x + 84, y + 44, 124, 10)
-	kit.zone(tl, h.buttons, x, y, 280, 72, "profilo")
+	kit.zone(tl, h.buttons, x, y, 316, 72, "profilo")
 
 	-- the doors at the sides of the apprentice, each with its shape
 	local left = kit.anchor(0, 360, gui.ANCHOR_LEFT)

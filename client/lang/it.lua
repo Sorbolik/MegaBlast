@@ -335,7 +335,7 @@ return {
 		values = {
 			lancetta = "LANCETTA", mirino = "MIRINO", pressione = "PREMENDO", rilascio = "LASCIANDO",
 			levetta = "LEVETTA", grilletto = "GRILLETTO", destra = "DESTRA", sinistra = "SINISTRA",
-			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "PROVA FINE GIOCO",
+			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "FINE GIOCO",
 		},
 		-- the controller's commands (controller.COMMANDS)
 		commands = {
@@ -502,6 +502,9 @@ return {
 		other = "l'altra scelta: %s · %s",
 		to_choose = "scegli uno dei due",
 		pick_hint = "tocca un potere sotto un gradino per sceglierlo",
+		-- the stats' sheet of the Sigilli: open it, close it
+		see_stats = "STATISTICHE ›",
+		back_to_seals = "TORNA AI SIGILLI",
 	},
 
 	-- menu/queue.lua: GIOCA ONLINE, the queues online
@@ -514,8 +517,6 @@ return {
 		own_queue = "coda sua",
 		counts_in = "conta nel %s",
 		no_event = "Nessun evento in corso",
-		-- the next event: when it starts, its name
-		coming = "%s · %s",
 		private = "STANZA PRIVATA",
 		private_short = "Con un codice",
 		duel_line = "Tu contro uno",

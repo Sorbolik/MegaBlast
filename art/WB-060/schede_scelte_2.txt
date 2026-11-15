@@ -1,0 +1,19 @@
+Image 1 is a rough mock-up of the PLAY ONLINE screen of our game with hand-made placeholder cards: a big orange card, dark iron cards, dark cards with an icy corner. Images 2 and 3 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 4 is the main button of the game: copy the way its flame and its ice crystals are drawn. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 with a lighter band #FFB703 and a darker band #B8440F, gold is #FFB703 with a lighter band #FFE08A, ivory is #F4ECE1, ice is #38B6FF with highlight #CAF0F8.
+
+Draw a sheet with FOUR separate empty card frames in their SELECTED state, in two rows of two, each one large and filling its cell. Every card is about twice as wide as tall, with soft slightly crooked corners and slightly wavy hand-drawn sides. Selected means: a second, thick, bright rim runs all around the card just inside the black outline.
+1. the EMBER card, selected: ember body (#F26419) with a narrow lighter band (#FFB703) on top and a narrow darker band (#B8440F) at the bottom, one chunky tongue of flame curling out of the BOTTOM LEFT corner like the flame of image 4; the selected rim is ivory (#F4ECE1). Inside flat, plain, empty.
+2. the IRON card, selected: dark iron (#2B2530) with a narrow highlight (#6B6375) on top, a rivet in each corner; the selected rim is gold (#FFB703). Inside flat, plain, empty.
+3. the ICE card, selected: dark iron with a thin ice-blue edge (#38B6FF) on top and a cluster of two or three chunky angular ice crystals (#38B6FF, facets #CAF0F8) sticking out of the TOP RIGHT corner like the crystals of image 4; the selected rim is ice blue (#38B6FF). Inside flat, plain, empty.
+4. the DULL card, selected: about four times wider than tall, duller iron (#221D26), no rivets; the selected rim is a quiet steel (#6B6375). Inside flat, plain, empty.
+
+On every card the four sides between the corners are plain and even and the rim has the same thickness all around, so the card can be stretched wider or taller and text can be written anywhere inside with a comfortable margin.
+
+Thick black ink outline on every piece, cartoon comic style, same line weight as images 2-3. Flat colors only, at most five per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters, numbers or icons inside the cards. Flat pure green background (#00FF00). The pieces are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+1. art/WB-060/riferimenti/R1_bozza_gioca_online.jpg
+2. art/WB-022/pezzo_pannello.png
+3. art/WB-022/pezzo_piccoli.png
+4. art/WB-054/ritagli/primario_gemma_acceso.png
+
+Generato con image_gen, un tentativo. Quattro schede separate, interni vuoti. Formato 1774×887 e verde campionato diverso da #00FF00. Sagome non identiche alle normali.

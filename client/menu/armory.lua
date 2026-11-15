@@ -61,14 +61,14 @@ local function fit(n, max)
 end
 
 -- the effects on the left of the panel, the next step and the signature on the right
-local RIGHT_COL = 300
+local RIGHT_COL = 312
 
 local function upgrade(a)
 	local p = a.prof
 	local g = a.mid
 	local sel = chosen(a)
 	local x, w = 430, 580
-	kit.panel(kit.group(g, x + w / 2, 250).node, w, 300)
+	kit.panel(kit.group(g, x + w / 2, 272).node, w, 344)
 	if not sel then
 		kit.text(g, kit.upper(T.nothing_here), x + w / 2, 260, 18, KC.MUTE, "middle", 1)
 		return
@@ -78,29 +78,29 @@ local function upgrade(a)
 	local tier = equip.tier(level)
 	gear_ui.slot(g, x + 28, 128, 150, { set = set, slot = slot })
 	kit.text(g, gear_ui.name(set, slot), x + 200, 156, 32, KC.SAND)
-	kit.text(g, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), x + 202, 184, 16, KC.HOT, "start", 1)
+	kit.text(g, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), x + 202, 187, 20, KC.HOT, "start", 1)
 	local nxt = wallet.next(p, set, slot)
-	kit.text(g, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), x + 202, 218, 20, KC.SAND)
+	kit.text(g, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), x + 202, 222, 23, KC.SAND)
 	-- the level's bar with its steps
-	kit.strip(g, "riga_scura", x + 202, 230, 340, 24)
-	kit.strip(g, "barra_brace", x + 205, 233, math.max(24, 334 * level / equip.LIVELLO_MAX), 18)
+	kit.strip(g, "riga_scura", x + 202, 234, 340, 24)
+	kit.strip(g, "barra_brace", x + 205, 237, math.max(24, 334 * level / equip.LIVELLO_MAX), 18)
 	for _, t in ipairs(equip.TIER_LEVELS) do
 		local tx = x + 202 + 340 * t / equip.LIVELLO_MAX
-		kit.pic(g, "tacca", tx - 12, 224, 24, 22)
-		kit.text(g, tostring(t), tx, 274, 12, KC.MUTE, "middle")
+		kit.pic(g, "tacca", tx - 12, 228, 24, 22)
+		kit.text(g, tostring(t), tx, 284, 17, KC.MUTE, "middle")
 	end
 	-- what it does now, and at the next level
 	local now = equip.piece(set, slot, level)
 	local after = nxt and equip.piece(set, slot, nxt.level)
-	local y = 300
+	local y = 308
 	for i, e in ipairs(now) do
 		if e.row ~= "sign" then
-			local col = e.good >= 0 and KC.MINT or KC.ICE
-			fit(kit.text(g, gear_ui.effect(e), x + 28, y + 14, 17, col), 186)
+			local col = e.good >= 0 and KC.MINT or KC.RED
+			fit(kit.text(g, gear_ui.effect(e), x + 28, y + 17, 21, col), 200)
 			if after and after[i] and after[i].good ~= e.good then
-				kit.text(g, "› " .. gear_ui.effect(after[i]):match("^(%S+)"), x + RIGHT_COL - 18, y + 14, 15, KC.HOT, "end")
+				kit.text(g, "› " .. gear_ui.effect(after[i]):match("^(%S+)"), x + RIGHT_COL - 8, y + 17, 18, KC.HOT, "end")
 			end
-			y = y + 24
+			y = y + 30
 		end
 	end
 	-- the next step and the Proof
@@ -112,30 +112,37 @@ local function upgrade(a)
 		line = T.all_steps
 	end
 	local rw = w - 28 - RIGHT_COL
-	fit(kit.text(g, kit.upper(line), x + RIGHT_COL, 316, 13, KC.MUTE, "start", 0.5), rw)
+	-- (on two lines at the " · ", to stay big enough for a phone)
+	local cut = line:find(" · ", 1, true)
+	local ry = 326
+	for _, part in ipairs(cut and { line:sub(1, cut - 1), line:sub(cut + 4) } or { line }) do
+		fit(kit.text(g, kit.upper(part), x + RIGHT_COL, ry, 18, KC.MUTE, "start", 0.5), rw)
+		ry = ry + 26
+	end
+	ry = ry + 6
 	for _, e in ipairs(now) do
 		if e.row == "sign" then
 			local sg = equip.SIGNS[e.stat]
 			local on = e.good > 0
-			fit(kit.text(g, kit.upper((on and T.sign or T.sign_off):format(sg.name)), x + RIGHT_COL, 338, 13,
+			fit(kit.text(g, kit.upper((on and T.sign or T.sign_off):format(sg.name)), x + RIGHT_COL, ry, 18,
 				on and KC.HOT_TOP or KC.MUTE, "start", 0.5), rw)
 		end
 	end
 	if nxt and nxt.proof > 0 then
-		fit(kit.text(g, kit.upper(TP.proof:format(nxt.proof_done, nxt.proof)), x + RIGHT_COL, 362, 13, KC.STEEL, "start", 0.5), rw)
+		fit(kit.text(g, kit.upper(TP.proof:format(nxt.proof_done, nxt.proof)), x + RIGHT_COL, ry + 30, 18, KC.STEEL, "start", 0.5), rw)
 	end
 
 	-- the other pieces of that slot you have
 	local slot_name = gear_ui.slot_of(slot).name
-	kit.text(g, T.others:format(slot_name), x, 436, 16, KC.SAND, "start", 1)
-	kit.text(g, kit.upper(T.tap_one), x + w, 436, 13, KC.MUTE, "end", 1)
+	kit.text(g, T.others:format(slot_name), x, 474, 20, KC.SAND, "start", 1)
+	kit.text(g, kit.upper(T.tap_one), x + w, 474, 17, KC.MUTE, "end", 0.5)
 	local n = 0
 	for _, f in ipairs(equip.SETS) do
 		if wallet.owns(p, f.id, slot) and n < 6 then
 			local cx = x + n * 100
-			gear_ui.slot(g, cx, 462, 86, { set = f.id, slot = slot, level = wallet.level(p, f.id, slot),
+			gear_ui.slot(g, cx, 494, 86, { set = f.id, slot = slot, level = wallet.level(p, f.id, slot),
 				worn = profile.active_loadout(p).gear[slot] == f.id, sel = f.id == set })
-			kit.zone(g, a.buttons, cx - 6, 452, 98, 104, "pezzo:" .. f.id .. ":" .. slot)
+			kit.zone(g, a.buttons, cx - 6, 484, 98, 104, "pezzo:" .. f.id .. ":" .. slot)
 			n = n + 1
 		end
 	end
@@ -145,7 +152,7 @@ local function upgrade(a)
 		local ok = nxt.proof_done >= nxt.proof and p.scaglie >= nxt.cost
 		kit.piece(a.low2, "scaglia", 717, 657, 34)
 		kit.text(a.low2, coins.format(nxt.cost), 740, 666, 28, nxt.cost < (nxt.full_cost or nxt.cost) and KC.MINT or KC.SAND)
-		kit.text(a.low2, TP.price_unit, 741, 688, 12, KC.MUTE, "start", 1)
+		kit.text(a.low2, TP.price_unit, 741, 690, 16, KC.MUTE, "start", 1)
 		local why = nxt.proof_done < nxt.proof and TP.proof_first or p.scaglie < nxt.cost
 			and TP.missing:format(coins.format(nxt.cost - p.scaglie)) or nil
 		a.action = kit.action(a.right, TP.upgrade, 948, 628, 308, 80, { size = 44, off = not ok, sub = why and kit.upper(why) or nil })
@@ -167,14 +174,14 @@ local function ware(a, x, y, w, h, set, slot, price, o)
 	kit.pic(g, gear_ui.icon(set, slot, 1), x + w / 2 - isz / 2, y + h * 0.05, isz, isz)
 	kit.rect(g, x + 14, y + h * 0.53, w - 28, 4, gear_ui.color(set))
 	if h >= 130 then
-		kit.text(g, gear_ui.slot_of(slot).name, x + w / 2, y + h * 0.57 + 13, 14, KC.SAND, "middle")
-		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + h * 0.57 + 28, 11, gear_ui.color(set), "middle")
+		kit.text(g, gear_ui.slot_of(slot).name, x + w / 2, y + h * 0.57 + 16, 18, KC.SAND, "middle")
+		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + h * 0.57 + 34, 16, gear_ui.color(set), "middle")
 	else
-		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + h * 0.58 + 12, 13, gear_ui.color(set), "middle")
+		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + h * 0.58 + 15, 17, gear_ui.color(set), "middle")
 	end
 	local py = y + h - 28
 	if o.owned then
-		kit.text(g, kit.upper(T.yours), x + w / 2, py + 16, 14, KC.MUTE, "middle")
+		kit.text(g, kit.upper(T.yours), x + w / 2, py + 18, 18, KC.MUTE, "middle")
 	elseif o.old then
 		local ow = kit.width(kit.text(g, coins.format(o.old), x + 14, py + 17, 16, KC.SAND))
 		-- the stroke across it, as wide as the number (never deformed)
@@ -213,8 +220,8 @@ local function shop(a)
 	gui.set_texture(img, "ritratti")
 	gui.play_flipbook(img, "fabbro_calma")
 	gui.set_parent(img, face)
-	kit.text(g, T.offers, x + 60, 120, 22, KC.HOT, "start", 1)
-	kit.text(g, kit.upper(T.change_in:format(until_midnight())), x + 62, 140, 13, KC.MUTE, "start", 1)
+	kit.text(g, T.offers, x + 60, 120, 26, KC.HOT, "start", 1)
+	kit.text(g, kit.upper(T.change_in:format(until_midnight())), x + 62, 143, 18, KC.MUTE, "start", 0.5)
 	local offers = wallet.shop(p, today)
 	local full = wallet.PRICE_CATALOG
 	local i = 0
@@ -223,17 +230,17 @@ local function shop(a)
 		if set then
 			local price = wallet.price(p, sl.id, true)
 			local off = math.floor((1 - price / full) * 100 + 0.5)
-			ware(a, x + i * 148, 162, 136, 146, set, sl.id, price, { hot = true, old = full, badge = "−" .. off .. "%",
+			ware(a, x + i * 148, 160, 136, 166, set, sl.id, price, { hot = true, old = full, badge = "−" .. off .. "%",
 				sel = a.ware and a.ware[1] == set and a.ware[2] == sl.id and a.ware[3] })
 			i = i + 1
 		end
 	end
 	-- the pieces of the day
-	kit.text(g, T.day, x, 338, 18, KC.SAND, "start", 1)
-	kit.text(g, kit.upper(T.day_line:format(wallet.DAY)), x + 186, 338, 13, KC.MUTE, "start", 1)
+	kit.text(g, T.day, x, 358, 22, KC.SAND, "start", 1)
+	kit.text(g, kit.upper(T.day_line:format(wallet.DAY)), x + 226, 358, 17, KC.MUTE, "start", 0.5)
 	for k, it in ipairs(wallet.day(today)) do
 		local set, slot = it[1], it[2]
-		ware(a, x + ((k - 1) % 5) * 117, 352 + math.floor((k - 1) / 5) * 122, 109, 114, set, slot, wallet.price(p, slot, false),
+		ware(a, x + ((k - 1) % 5) * 117, 372 + math.floor((k - 1) / 5) * 118, 109, 110, set, slot, wallet.price(p, slot, false),
 			{ owned = wallet.owns(p, set, slot), sel = a.ware and a.ware[1] == set and a.ware[2] == slot and not a.ware[3] })
 	end
 	-- pay with a voucher, or with Scaglie
@@ -241,8 +248,8 @@ local function shop(a)
 	local usable = w and not wallet.owns(p, w[1], w[2]) and p.buoni > 0
 	local vb = kit.plate(a.low2, 430, 638, 260, 64, KC.HOT, { sk = 0, fill = KC.SAND })
 	kit.piece(a.low2, "buono", 473, 669, 46)
-	kit.text(vb.g, T.use_voucher, 502, 674, 22, usable and KC.INK or kit.with_alpha(KC.INK, 0.45))
-	kit.text(vb.g, kit.upper(T.you_have:format(p.buoni)), 504, 692, 12, kit.with_alpha(KC.INK, 0.7), "start", 0.5)
+	kit.text(vb.g, T.use_voucher, 502, 668, 22, usable and KC.INK or kit.with_alpha(KC.INK, 0.45))
+	kit.text(vb.g, kit.upper(T.you_have:format(p.buoni)), 504, 690, 17, kit.with_alpha(KC.INK, 0.75), "start", 0.5)
 	kit.button(a.buttons, vb, "buono", { spento = not usable })
 	local price = w and wallet.price(p, w[2], w[3])
 	local ok = w and not wallet.owns(p, w[1], w[2]) and p.scaglie >= price
@@ -292,7 +299,7 @@ local function build(a)
 		a2 = copy(act)
 		a2.gear[try[2]] = try[1]
 	end
-	gear_ui.stats(a, a.rt, 1046, 104, 210, act, a2)
+	gear_ui.stats(a, a.rt, 1040, 106, 210, act, a2)
 end
 
 function M.new(prof, tab, from)

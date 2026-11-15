@@ -91,12 +91,18 @@ local function card(c, l, x, y, w, h, ih, kind, state)
 		kit.card_picture(k, tex, ih, size and size.w / size.h, locked and 0.45 or 1)
 	end
 	local kd = types.KINDS[l.tipo]
-	if kd then kit.label(k.g, x + 16, y + 12, kd.name, locked and KC.MUTE or kd.color, true) end
+	local kind_w = 0
+	if kd then
+		kit.label(k.g, x + 16, y + 12, kd.name, locked and KC.MUTE or kd.color, true)
+		kind_w = kit.label_width(kd.name)
+	end
 	-- the level's record of points, top right on the picture
 	local best = not locked and c.records and c.records[l.id]
 	if best then
+		-- beside the kind's label: "RECORD 312" where both fit, the points alone on a narrow card
 		local t = T.record:format(best)
-		kit.label(k.g, x + w - (#t * 9 + 46) - 4, y + 12, t, KC.STAR, true)
+		if kind_w + kit.label_width(t) > w - 24 then t = tostring(best) end
+		kit.label(k.g, x + w - kit.label_width(t) - 4, y + 12, t, KC.STAR, true)
 	end
 	if locked then
 		kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", 0, -(h / 2 - 4 - ih / 2), math.min(50, ih * 0.55))
@@ -132,9 +138,9 @@ local function card_list(c, cap)
 		local count = #missions.criteria(l)
 		local d = cols == 3 and 16 or 13
 		local room = w - 30 - (is_new and 62 or unlocked and count * d * 1.2 + 6 or 0)
-		fit(kit.text(k.g, kit.upper(l.titolo), x + 18, y + h - 22, cols == 3 and 19 or 15, unlocked and KC.SAND or KC.MUTE), room)
+		fit(kit.text(k.g, kit.upper(l.titolo), x + 18, y + h - 22, cols == 3 and 19 or 16, unlocked and KC.SAND or KC.MUTE), room)
 		if is_new and unlocked then
-			kit.text(k.g, T.new, x + w - 10, y + h - 22, 13, KC.HOT_TOP, "end", 1)
+			kit.text(k.g, T.new, x + w - 10, y + h - 22, 16, KC.HOT_TOP, "end", 1)
 		elseif unlocked then
 			little_stars(k.g, c.stelle[l.id] or {}, count, l.medaglia ~= nil, x + w - 4 - count * d * 1.2, y + h - 27, d)
 		end
@@ -149,7 +155,7 @@ local function card_list(c, cap)
 		if not unlocked then
 			kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", fw / 2 - 40, 0, 34)
 		elseif is_new then
-			kit.text(k.g, T.new, 420 + fw - 24, fy + 34, 13, KC.HOT_TOP, "end", 1)
+			kit.text(k.g, T.new, 420 + fw - 24, fy + 34, 16, KC.HOT_TOP, "end", 1)
 		else
 			local count = #missions.criteria(final)
 			little_stars(k.g, c.stelle[final.id] or {}, count, final.medaglia ~= nil, 420 + fw - 30 - count * 20, fy + 28, 17)
@@ -288,7 +294,7 @@ local function slice(c, i, at, from)
 			end
 			if keeper then
 				kit.piece(sg, "corona", x, y - 30, 20)
-				kit.text(sg, r[3], x, y + 42, 14, KC.SAND, "middle", 1)
+				kit.text(sg, r[3], x, y + 42, 16, KC.SAND, "middle", 1)
 			end
 		end
 	end
@@ -304,7 +310,7 @@ end
 
 -- a small block of the left column: a small label in its color and its lines
 local function note(g, y, color, label, lines)
-	kit.text(g, label, 34, y, 15, color, "start", 1.5)
+	kit.text(g, label, 34, y, 16, color, "start", 1.5)
 	for i, line in ipairs(lines) do
 		fit(kit.text(g, line, 34, y + i * 26 + 2, i == 1 and 22 or 16, i == 1 and KC.SAND or KC.MUTE, "start", 0.5), 250)
 	end
@@ -361,7 +367,7 @@ local function build_map(c)
 		local mid = (b.y0 + b.y1) / 2
 		local label = kit.text(p.g, name, b.x0, mid + 7, 19, KC.SAND, "start", 0.5)
 		local got, all = chapter_stars(c, cap)
-		local count = kit.text(p.g, T.ring_stars:format(got, all), b.x1, mid + 6, 15, KC.MUTE, "end", 0.5)
+		local count = kit.text(p.g, T.ring_stars:format(got, all), b.x1, mid + 6, 16, KC.MUTE, "end", 0.5)
 		ui.star(b.x1 - kit.width(count) - 14 - p.g.ox, p.g.oy - mid, 18, KC.STAR, p.g.node)
 		fit(label, b.x1 - b.x0 - kit.width(count) - 34)
 		kit.button(c.buttons, p, "capitolo:" .. cap.id)

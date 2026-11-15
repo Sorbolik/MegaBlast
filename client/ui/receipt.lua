@@ -125,20 +125,20 @@ function M.new(gain, prof, top, buttons, parent)
 		local icon = coins.icon(kind, x + 342, 720 - y + size * 0.36, 16, p)
 		return t, icon
 	end
-	kit.text(g, T.title, 820, top, 14, KC.HOT_TOP, "start", 1.5)
+	kit.text(g, T.title, 820, top, 16, KC.HOT_TOP, "start", 1.5)
 	local y = first
 	for i, l in ipairs(lines) do
 		local x = lean(y)
 		kit.info(g, x, y, 430, tall, KC.ROSE)
 		local base = y + tall / 2 + 5
-		local name = kit.text(g, kit.upper(label(l)), x + 24, base, 14, KC.SAND)
+		local name = kit.text(g, kit.upper(label(l)), x + 24, base, 16, KC.SAND)
 		local wide = kit.width(name)
 		if wide > 220 then
 			local sca = gui.get_scale(name)
 			gui.set_scale(name, vec(sca.x * 220 / wide, sca.y * 220 / wide))
 		end
 		local row = { name }
-		if l.xp then row[2] = kit.text(g, xp_text(l.xp), x + 314, base, 15, KC.MINT, "end") end
+		if l.xp then row[2] = kit.text(g, xp_text(l.xp), x + 314, base, 16, KC.MINT, "end") end
 		if l.scaglie or l.ossidiana then
 			local a, b = coin_cell(l.ossidiana and "ossidiana" or "scaglia", l.scaglie or l.ossidiana, x, base, 15)
 			row[#row + 1], row.icon = a, b
@@ -173,7 +173,7 @@ function M.new(gain, prof, top, buttons, parent)
 	r.bar = ui.bar(960, 720 - (y + 42), 300, 8, BAR, p)
 	gui.set_color(r.bar.nodo, KC.TRACK)
 	r.level_up, r.bar_x, r.bar_y = level_up, 960, 720 - (y + 42)
-	kit.text(g, math.floor(prof.xp) .. " / " .. profile.xp_level(prof.livello), 1206, y + 46, 11, KC.MUTE, "end", 1)
+	kit.text(g, math.floor(prof.xp) .. " / " .. profile.xp_level(prof.livello), 1206, y + 46, 16, KC.MUTE, "end", 1)
 	local before = (prof.xp - gain.xp) / profile.xp_level(gain.level_before)
 	if level_up or braci > 0 then before = 0 end
 	r.bar_from, r.bar_to = math.max(0, before), prof.xp / profile.xp_level(prof.livello)
@@ -193,14 +193,14 @@ function M.new(gain, prof, top, buttons, parent)
 		local n = math.min(profile.LEVEL_MAX, gain.livello) - gain.level_before
 		local h = holder()
 		kit.info(h, 776, y, 440, 52, KC.PURPLE)
-		kit.text(h, kit.upper((n == 1 and T.seal_point or T.seal_points):format(n)), 800, y + 32, 13, KC.SAND)
+		kit.text(h, kit.upper((n == 1 and T.seal_point or T.seal_points):format(n)), 800, y + 32, 16, KC.SAND)
 		local go = kit.sand(h, 1050, y + 8, 150, 36, KC.HOT, { sk = 9, d = 4 })
-		kit.text(go.g, T.place_points, 1130, y + 32, 13, KC.INK, "middle")
+		kit.text(go.g, T.place_points, 1130, y + 32, 16, KC.INK, "middle")
 		kit.button(buttons, go, "sigilli")
 	elseif braci > 0 then
 		local h = holder()
 		kit.info(h, 776, y, 440, 52, KC.PURPLE)
-		kit.text(h, kit.upper((braci == 1 and T.brace or T.braci):format(braci)), 800, y + 32, 13, KC.SAND)
+		kit.text(h, kit.upper((braci == 1 and T.brace or T.braci):format(braci)), 800, y + 32, 16, KC.SAND)
 	end
 	-- the wallet pill at the top right, with the balance before these coins
 	r.wallet = coins.wallet(prof.scaglie - sc, prof.ossidiana - ob, parent, 1110, 720 - 44)
