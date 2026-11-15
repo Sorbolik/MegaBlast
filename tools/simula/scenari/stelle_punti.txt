@@ -1,26 +1,18 @@
-# Due mani (imposta prova_missione due_mani): la Lama e il Lanciarune nello
-# stesso turno sul bot che si rimette in sesto, poi la fine del livello con la
-# seconda stella a soglia dei punti fatti (Sergio, 14 nov: non più i punti di
-# vantaggio) e sotto i punti fatti e il record del livello, in punti.
-# Barra: Lanciarune 1, Lama 2.
+# Primo sangue (imposta prova_missione primo_sangue), una partita intera accorciata:
+# la fine del livello con le stelle (la prima la vittoria, la seconda e la terza a
+# soglia dei punti fatti, Sergio 14 nov) e sotto i punti fatti e il record del livello.
 imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_profilo 1              # la Forgia aperta, due record già fatti
-imposta prova_missione due_mani
+imposta prova_missione primo_sangue
+imposta prova_durata 40
+imposta prova_vince 1
 aspetta_stato modo=local turno=1 fase=aim 30
 aspetta 1
 foto 01_scopo                        # i punti in alto: qui contano
-cammina destra 1090
-premi 2
-mira 80 0 0.3                        # la Lama sul bot accanto
-aspetta_evento sword_hit 4
-aspetta 1
-cammina sinistra 900
-premi 1
-mira 160 60 0.4                      # il Lanciarune sul bot
-aspetta_evento death 8
+mira 160 60 0.5                      # il Lanciarune verso il bot
+aspetta_evento over 120
 aspetta 4
-foto 02_fine_livello                 # una stella (FATTA; ALMENO 130 e 180 PUNTI spente), PUNTI FATTI: 95
-                                     # e sotto il record dei punti del livello: NUOVO RECORD
+foto 02_fine_livello                 # la stella della vittoria, PUNTI FATTI e il record
 tocca 345 82                         # CAMPAGNA
 aspetta 3
-foto 03_bacheca_record               # sulla carta del livello, in alto a destra: RECORD 95
+foto 03_bacheca_record               # sulla carta del livello, in alto a destra: il RECORD

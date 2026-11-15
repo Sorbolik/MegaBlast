@@ -1,0 +1,28 @@
+# Il baratto del Fabbro (la lezione della Forgia): il Fabbro spiega nella vignetta
+# grande, poi mostra il primo attacco, il baratto e il globo sull'isola; poi tocca a
+# te: la cassa che cade dal cielo con l'Uovo, l'Uovo sul fantoccio, le due frecce.
+imposta prova_missione baratto
+
+aspetta 2.5
+foto 00_cartolina
+tocca_bordo 175 52 basso destra      # AVANTI sulla cartolina
+aspetta_stato modo=local fase=aim 8
+aspetta 4
+foto 01_vignetta_grande              # il Fabbro spiega: baratto e casse
+tocca 912 289
+aspetta 0.3
+tocca 293 214                        # VAI
+aspetta_evento swap 30
+aspetta 0.3
+foto 02_fabbro_baratta
+aspetta_evento teleport 20
+aspetta 1
+foto 03_fabbro_sull_isola
+aspetta_evento demo_end 20
+aspetta_stato fase=aim 10
+aspetta 1
+foto 04_cassa_dal_cielo              # la riga sulle casse
+cammina sinistra 440
+aspetta_evento crate_pick 10
+aspetta 1
+foto 05_uovo_preso

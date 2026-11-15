@@ -520,7 +520,7 @@ function problemi(l, c) {
 		const d = "frase " + (i + 1);
 		testo(r.testo, d); cond(r.quando, d + ", quando");
 		if (r.fino) cond(r.fino, d + ", fino");
-		if (r.mostra === "grande" && !c.aspetta) out.push(d + ": la vignetta grande è delle lezioni");
+		if (r.mostra === "grande" && !(c.aspetta || l.lezione)) out.push(d + ": la vignetta grande è delle lezioni");
 		if (r.mostra === "grande" && r.highlight && !CAT.disegni.includes(r.highlight)) out.push(d + ": manca il disegno di " + nomeDi(NOMI_COMANDI, r.highlight));
 	});
 	for (const k of ["casse", "cards"]) (Array.isArray(l[k]) ? l[k] : []).forEach((x, i) => { if (!okPasso(x.dopo)) out.push((k === "casse" ? "cassa " : "carta ") + (i + 1) + ": il passo " + x.dopo + " non c'è"); });
@@ -1371,7 +1371,7 @@ function disegnaPannello() {
 			campo("Con", sceltaIn(o, "con", coppie(["primaria", "secondaria", ...ARMI], NOMI_COMANDI), { vuoto: "qualsiasi arma" })),
 			verbo === "down" ? el("div", { class: "due" }, campo("Come", sceltaIn(o, "come", [["vuoto", "buttandolo nel vuoto"]], { vuoto: "in qualsiasi modo" })), campo("Quante volte", testoIn(o, "times", { num: true }), "Vuoto: una.")) : null);
 		if (verbo === "usa") metti(p, campo("Mossa", sceltaIn(o, "usa", coppie(USA, NOMI_MOSSE))));
-		if (c.aspetta) metti(p, el("div", { class: "gruppo" }, el("b", { text: "Finché il passo non è fatto si può usare solo" }), spiega("Nelle lezioni il resto è spento, così il giocatore fa proprio questo. Niente spuntato: tutto acceso."), multi(o, "only", ["primaria", "secondaria", "baratto", "teleport", ...ARMI.filter(w => w !== "teleport")], false, { ...NOMI_COMANDI, teleport: "teletrasporto" }),
+		if (c.aspetta || l.lezione) metti(p, el("div", { class: "gruppo" }, el("b", { text: "Finché il passo non è fatto si può usare solo" }), spiega("Nelle lezioni il resto è spento, così il giocatore fa proprio questo. Niente spuntato: tutto acceso."), multi(o, "only", ["primaria", "secondaria", "baratto", "teleport", ...ARMI.filter(w => w !== "teleport")], false, { ...NOMI_COMANDI, teleport: "teletrasporto" }),
 			campo("Zoom della camera", sceltaIn(o, "zoom", [[1, "vicino"], [2, "medio"], [3, "tutta la mappa"]], { vuoto: "come prima", num: true }), "Quanto si vede della mappa quando parte questo passo.")));
 		metti(p, el("button", { class: "caldo", style: "align-self:flex-start", title: "I passi prima sono dati per fatti", onclick: () => gioca(s.i) }, "▶ GIOCA da questo passo"));
 		const ds = dipendenze(l)[s.i];
@@ -1506,13 +1506,13 @@ function disegnaPannello() {
 			campo("Prima frase", testoIn(l, "goal_text", { area: true }), "La vignetta grande che apre il livello."),
 			campo("Comando che lampeggia con la prima frase", sceltaIn(l, "highlight", coppie(COMANDI, NOMI_COMANDI), { vuoto: "nessuno" })),
 			l.goal_text ? anteprima(l.goal_text, chiParla(c), "spiega", true, l.highlight) : null,
-			c.aspetta ? el("div", { class: "due" }, campo("Bravo finale", testoIn(l, "bravo"), "Quello che dice Favilla quando l'ultimo passo è fatto."),
+			c.aspetta || l.lezione ? el("div", { class: "due" }, campo("Bravo finale", testoIn(l, "bravo"), "Quello che dice Favilla quando l'ultimo passo è fatto."),
 				campo("Faccia del bravo", sceltaIn(l, "bravo_faccia", CAT.facce, { vuoto: "ride" }))) : null,
 			el("div", { class: "gruppo" }, el("b", { text: "La mappa" }), spiega("Un'arena di piattaforme d'acciaio che disegni tu, oppure una mappa vera del gioco (lì il terreno non si cambia)."), mappaIn(l)),
-			c.aspetta ? el("div", { class: "gruppo" }, el("b", { text: "Cosa si vede sullo schermo" }), spiega("Nelle lezioni lo schermo mostra solo quello che spunti qui: il resto non c'è proprio. Un'arma presa da una cassa si vede da lì in poi."), multi(l, "vedi", VEDI, true, NOMI_VEDI)) : null,
+			c.aspetta || l.lezione ? el("div", { class: "gruppo" }, el("b", { text: "Cosa si vede sullo schermo" }), spiega("Nelle lezioni lo schermo mostra solo quello che spunti qui: il resto non c'è proprio. Un'arma presa da una cassa si vede da lì in poi."), multi(l, "vedi", VEDI, true, NOMI_VEDI)) : null,
 			el("div", { class: "gruppo" }, el("b", { text: "Regole" }),
-				el("div", { class: "bottoni" }, spunta(l, "no_weapons", "Il giocatore parte senza armi"), spunta(l, "without_time", "Niente cronometro né turni: il turno è suo finché non finisce"), spunta(l, "globi_tempo", "I secondi che avanzano diventano globi teletrasporto"), spunta(l, "al_posto", "Chi cade rinasce dove era partito")),
-				el("div", { class: "due" }, campo("Globi all'inizio", testoIn(l, "globi", { num: true }), "Per teletrasportarsi."), campo("Turni massimi", testoIn(l, "turni", { num: true }), "Oltre, il livello ricomincia. Vuoto: senza limite."))),
+				el("div", { class: "bottoni" }, spunta(l, "no_weapons", "Il giocatore parte senza armi"), spunta(l, "without_time", "Niente cronometro né turni: il turno è suo finché non finisce"), spunta(l, "globi_tempo", "I secondi che avanzano diventano globi teletrasporto"), spunta(l, "al_posto", "Chi cade rinasce dove era partito"), spunta(l, "lezione", "È una lezione: il tempo ti aspetta, niente casse, vignette grandi")),
+				el("div", { class: "due" }, campo("Globi all'inizio", testoIn(l, "globi", { num: true }), "Per teletrasportarsi."))),
 			el("div", { class: "gruppo" }, avanzato(l, "Tutti i campi, per esperti (stelle, medaglia, prova dei bot...)", v => { cap().livelli[stato.l] = v; })));
 	}
 	if (s.k) p.prepend(el("button", { class: "piccolo", style: "align-self:flex-start", onclick: () => scegli(null) }, "← Il livello"));

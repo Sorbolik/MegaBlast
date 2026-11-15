@@ -18,8 +18,8 @@
 -- point lead of the normal bot playing in your place (Sergio, 31 Oct: in the
 -- circles points count, turns don't).
 -- Circle opponents are grades (sim/bot.lua M.GRADES, 1 to 10): the Forgia goes
--- from 2 up to 5 (Sergio, 30 Oct); Favilla, your ally, is a 3 in the first
--- two missions (level plan, 3 Nov) and a 5 in the Battaglia.
+-- from 2 up to 5 (Sergio, 30 Oct); Favilla, your ally, is a 3 in Fuori portata
+-- and a 5 in the Battaglia.
 
 local M = {}
 
@@ -494,141 +494,128 @@ M.addestramento = {
 	},
 }
 
--- Circle I: the Forgia. Two attacks, orbs from saved time, pushing into the
--- void; the keeper is the Fabbro. Opponents are real bots.
+-- Circle I: the Forgia (Sergio, 15 Nov: redone). After the Addestramento only
+-- two things are left to learn, the baratto and the crates: the Fabbro teaches
+-- them in a lesson (no points, no stars), then every mission is a full match,
+-- with crates and points, to win. The bots go up the sawtooth of
+-- docs/campagna_gironi.md, grades 2 -> 5. Stars: the win, then the points the
+-- player made (collaudo: the normal bot's median and 80th percentile in its wins).
 M.girone_1 = {
+	-- Il baratto del Fabbro: the lesson of the circle, the Fabbro's four beats.
+	-- A crate falls from the sky: inside, the Uovo, your first attack; the second
+	-- one swapped for an orb carries you onto the island (time gives none here)
+	{
+		id = "baratto",
+		titolo = "Il baratto del Fabbro",
+		tipo = "bersagli",
+		lezione = true,
+		goal_text = "Il secondo attacco si può barattare con un globo: tocca le due frecce sopra il cronometro. E dal cielo cadono casse con le armi. Guarda me!",
+		highlight = "baratto",
+		arena = { { 200, 0, 720, 150 }, { 1240, 120, 460, 50 } },
+		spawns = { { x = 560, from = 600 }, { x = 300, from = 600 }, { x = 760, from = 600 } },
+		giocatori = {
+			{ team = 1 },
+			{ team = 2, dummy = true },
+			{ team = 1, nome = "Il Fabbro", insegna = true },
+		},
+		vedi = { "missile", "teleport", "tempo", "baratto" },
+		globi = 0,
+		globi_tempo = false,
+		casse = { { dopo = 0, arma = "grenade", x = 440 } },
+		dimostra = {
+			{ mosse = {
+				{ dice = "Primo attacco..." },
+				{ arma = "missile", angolo = 140, potenza = 0.5 },
+				{ dice = "...e il secondo lo baratto: globo!" },
+				{ arma = "swap" },
+				{ cammina = 880 },
+				{ arma = "teleport", angolo = 40, potenza = 0.5 },
+				{ dice = "Ora tu!" },
+			} },
+		},
+		obiettivo = {
+			{ prendi = "grenade", testo = "Prendi la cassa caduta dal cielo" },
+			{ hit = 2, con = "grenade", only = { "grenade" }, testo = "Primo attacco: colpisci il fantoccio con l'Uovo" },
+			{ usa = "baratto", only = { "baratto" }, nuova = true, testo = "Baratta il secondo attacco con un globo" },
+			{ reach = { x = 1240, y = 170 }, flag = true, only = { "teleport" }, zoom = 2, testo = "Lancia il globo sull'isola" },
+		},
+		righe = {
+			{ testo = "Le casse cadono dal cielo anche in partita: dentro c'è un'arma. Prendila!",
+				quando = { evento = "demo_end" }, fino = { passo = 1 } },
+			{ highlight = "baratto", testo = "Ora tocca le due frecce sopra il cronometro: il secondo attacco diventa un globo",
+				quando = { passo = 2 }, fino = { passo = 3 } },
+			{ testo = "Ecco il globo! Lancialo sull'isola", faccia = "ride", secondi = 3, quando = { passo = 3 } },
+		},
+		bravo = "Hai imparato tutto. Da qui si fa sul serio!",
+		bravo_faccia = "fiera",
+	},
+	-- Primo sangue: the first full match, a duel against a grade 2. The points
+	-- show for the first time (the Duello con Favilla has none)
 	{
 		id = "primo_sangue",
 		titolo = "Primo sangue",
-		tipo = "squadra",
-		goal_text = "Abbatti il bot: un'arma a sinistra e una a destra del cronometro",
+		tipo = "duello",
+		goal_text = "La prima partita vera: vince chi fa più punti",
 		mappa = "pavimento",
-		-- 2 v 2 with Favilla from the first mission (level plan): two apprentices,
-		-- grades 2 and 1
-		giocatori = { { team = 1 }, { team = 2, bot = 2 }, { team = 1, bot = 3, nome = "Favilla", battute = "favilla_compagna", pelle = "favilla" }, { team = 2, bot = 1 } },
-		-- the weapons the Addestramento doesn't introduce are found in the circle (Claude)
-		-- the second apprentice is half-done: Favilla is a 3, two full bots would
-		-- be too much for the first mission (collaudo)
-		vita = { [4] = 50 },
+		giocatori = { { team = 1 }, { team = 2, bot = 2 } },
 		globi_tempo = true,
-		casse = { { dopo = 0, arma = "grenade", x = 405 } },
-		turni = 7,
-		-- ★★ at the median of the points the normal bot makes when it wins, ★★★ at the 80th percentile (collaudo, 14 Nov)
-		stelle = { punti = { 220, 340 } },
-		obiettivo = { { down = 2, testo = "Abbatti il bot" } },
-		-- the points come in here, the first match where they count (the overview of
-		-- 6 Nov; the two attacks are known from the cortile): Favilla's turn shows
-		-- them, then yours. In the circles the game never stops: strip only
+		stelle = { punti = { 540, 630 } },
+		obiettivo = { { win = true, testo = "Vinci la partita" } },
+		-- in the circles the game never stops: strip only, the Fabbro's face
 		righe = {
-			{ testo = "Da qui contano i punti: danno = punti, abbattere vale 50, buttare nel vuoto altri 50. Guarda i miei!",
+			{ testo = "Da qui contano i punti: danno = punti, abbattere vale 50, buttare nel vuoto altri 50",
 				quando = { turno = 1, di_turno = "tu" } },
 			{ testo = "Eccoli, i tuoi primi punti!", faccia = "ride", secondi = 2, quando = { evento = "points", di = "tu" } },
 			{ testo = "Hai la Corona: sei primo. I colpi su chi è primo valgono 1,5 e abbatterlo 25 in più",
 				quando = { corona = "tu" } },
 		},
 	},
+	-- Fuori portata: 2 v 2 with Favilla, the sniper on the island. Without orbs
+	-- you can't get there: the baratto is needed, nobody says it again
 	{
 		id = "fuori_portata",
 		titolo = "Fuori portata",
 		tipo = "squadra",
-		goal_text = "Il cecchino sta sull'isola. Attacca presto per avere i globi, poi raggiungilo",
+		goal_text = "Il cecchino sta sull'isola: per arrivarci servono i globi",
 		arena = { { 200, 0, 720, 150 }, { 1240, 120, 460, 50 } },
 		spawns = { { x = 500, from = 600 }, { x = 1520, from = 600 }, { x = 320, from = 600 }, { x = 1330, from = 600 } },
-		-- 2 v 2 with Favilla: the sniper and an apprentice on the island (an enemy
-		-- on the ground would draw all the shots, collaudo)
-		giocatori = { { team = 1 }, { team = 2, bot = 2, carattere = "cecchino" }, { team = 1, bot = 3, nome = "Favilla", battute = "favilla_compagna", pelle = "favilla" }, { team = 2, bot = 1 } },
-		globi = 0,
+		giocatori = { { team = 1 }, { team = 2, bot = 3, carattere = "cecchino" }, { team = 1, bot = 3, nome = "Favilla", battute = "favilla_compagna", pelle = "favilla" }, { team = 2, bot = 2 } },
 		globi_tempo = true,
-		-- Favilla can knock the sniper into the void: it comes back on its island
+		-- whoever falls comes back on their bank: the sniper on its island
 		al_posto = true,
-		vita = { [2] = 55, [4] = 50 },
-		turni = 6,
-		-- ★★ median and ★★★ 80th percentile of the normal bot's points (collaudo, 14 Nov)
-		stelle = { punti = { 240, 530 } },
-		obiettivo = {
-			{ usa = "globi", testo = "Attacca presto: guadagna un globo" },
-			{ down = 2, con = "sword", testo = "Finisci il cecchino con la Lama" },
-		},
-		-- the baratto comes in here (from the cortile, 6 Nov), where it's needed:
-		-- one orb isn't enough to reach the sniper
-		righe = {
-			{ testo = "Un globo non basta? Tocca le due frecce sopra il cronometro: il secondo attacco diventa un globo",
-				highlight = "baratto", quando = { evento = "teleports", di = "tu" },
-				fino = { uno = { { evento = "swap" }, { usato = "secondaria" } } } },
-			{ testo = "Ecco un globo in più!", faccia = "ride", secondi = 2, quando = { evento = "swap", di = "tu" } },
-		},
-		-- you can't get there without teleport
-		collaudo = { senza = { teletrasporto = false } },
+		-- the second enemy is half-done: with two full bots the normal bot won 43% (collaudo)
+		vita = { [4] = 50 },
+		stelle = { punti = { 730, 900 } },
+		obiettivo = { { win = true, testo = "Vinci la partita con Favilla" } },
 	},
-	{
-		id = "due_mani",
-		titolo = "Due mani",
-		tipo = "duello",
-		goal_text = "Il bot si rimette in sesto a ogni turno: serve la primaria e la Lama nello stesso turno",
-		arena = { { 240, 0, 1440, 150 } },
-		spawns = { { x = 760, from = 600 }, { x = 1160, from = 600 } },
-		giocatori = { { team = 1 }, { team = 2, bot = 3 } },
-		vita = { [2] = 46 },
-		globi_tempo = true,
-		regrow = { 2 },
-		-- the Affondo comes here, with its card (it left the cortile, 6 Nov)
-		casse = { { dopo = 0, arma = "shards", x = 560 }, { dopo = 0, arma = "lunge", x = 1360 } },
-		-- the bot testing it always does both attacks
-		collaudo = { piano = { due_attacchi = true } },
-		turni = 6,
-		-- by hand: the bot always downs it in the first turn (95 points); it regrows, so every hit of an earlier turn adds up (the easy bot, in two turns, 133)
-		stelle = { punti = { 130, 180 } },
-		obiettivo = { { down = 2, testo = "Abbatti il bot in un turno solo" } },
-	},
+	-- Giù dal bordo: a duel on the Fabbro's pit against the bot that evolved to
+	-- throw into the void (the spingitore). The sawtooth goes back to 3
 	{
 		id = "giu_dal_bordo",
 		titolo = "Giù dal bordo",
-		tipo = "bersagli",
-		goal_text = "I bersagli non si feriscono: buttali giù dai loro scogli",
-		-- your platform and three narrow rocks over the void
-		arena = { { 800, 300, 320, 40 }, { 420, 420, 70, 24 }, { 1430, 420, 70, 24 }, { 925, 620, 70, 24 } },
-		spawns = { { x = 960, from = 600 }, { x = 455, from = 600 }, { x = 1465, from = 600 }, { x = 960, from = 1000 } },
-		-- everything that pushes (Sergio, 29 October 2026): the Cecchino, the Mantice
-		-- and the Rampino, which reaches the rocks from the edge and drops them over the void
-		giocatori = {
-			{ team = 1, pick = "sniper", secondary = "bellows" },
-			{ team = 2, dummy = true }, { team = 2, dummy = true }, { team = 2, dummy = true },
-		},
-		vita = { [2] = 999, [3] = 999, [4] = 999 },
+		tipo = "duello",
+		goal_text = "Questo ti vuole buttare nella lava: stai lontano dal bordo, e buttaci lui",
+		mappa = "fossa",
+		giocatori = { { team = 1 }, { team = 2, bot = 3, carattere = "spingitore", nome = "Lo spingitore" } },
 		globi_tempo = true,
-		turni = 5,
-		-- by hand: the bot can't play it; three falls are worth 300, the rest is hits
-		stelle = { punti = { 400, 450 } },
-		obiettivo = { { down = "nemico", come = "vuoto", times = 3, testo = "Butta giù tre bersagli" } },
-		-- the void, with what pushes (the points are told in the first mission)
+		stelle = { punti = { 590, 720 } },
+		obiettivo = { { win = true, testo = "Vinci la partita" } },
 		righe = {
-			{ testo = "Chi cade nel vuoto è abbattuto subito. Il Mantice spinge via, il Rampino tira verso di te: buttali giù!",
+			{ testo = "Chi cade nella lava è abbattuto subito: altri 50 punti a chi ce l'ha buttato",
 				quando = { turno = 1, di_turno = "tu" } },
-			{ testo = "Giù! Ne restano meno", faccia = "ride", secondi = 2, quando = { evento = "death", di = "altri" } },
 		},
-		-- the bot testing it looks for the void
-		collaudo = { carattere = "spingitore" },
 	},
+	-- Il codardo: hits once each turn and flees with the orb to the dens
 	{
 		id = "il_codardo",
 		titolo = "Il codardo",
 		tipo = "duello",
-		goal_text = "Colpisce a ogni turno e scappa col globo nelle tane: stanalo col tuo",
+		goal_text = "Colpisce a ogni turno e scappa col globo nelle tane: stanalo",
 		mappa = "pavimento",
 		globi_tempo = true,
 		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "codardo", nome = "Il codardo" } },
-		-- the Pugno, which cracks the armour, comes in the crate (it was taught in
-		-- the cortile's Punti e Corona lesson, now gone)
-		casse = { { dopo = 0, arma = "punch", x = 405 } },
-		righe = {
-			{ testo = "Il Pugno incrina l'armatura: il colpo dopo toglie di più", highlight = "punch",
-				quando = { evento = "crate_pick", di = "tu", arma = "punch" },
-				fino = { tocca = "punch" } },
-		},
-		turni = 7,
-		-- by hand: almost every win is 150 (his life and the kill); more with the Crown or the pit
-		stelle = { punti = { 160, 200 } },
-		obiettivo = { { down = 2, testo = "Abbatti il codardo" } },
+		stelle = { punti = { 600, 750 } },
+		obiettivo = { { win = true, testo = "Vinci la partita" } },
 	},
 	{
 		id = "il_fabbro",
@@ -642,15 +629,13 @@ M.girone_1 = {
 			{ team = 2, bot = 5, carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
 				battute = "fabbro" },
 		},
-		vita = { [2] = 240 },
+		-- 180 (docs/campagna_gironi.md): with 240 the normal bot won 30% (collaudo)
+		vita = { [2] = 180 },
 		globi_tempo = true,
-		turni = 10,
-		-- ★★ median and ★★★ 80th percentile of the normal bot's points (collaudo, 14 Nov)
-		stelle = { punti = { 340, 410 } },
-		obiettivo = { { down = 2, testo = "Abbatti il Fabbro" } },
+		stelle = { punti = { 720, 870 } },
+		obiettivo = { { win = true, testo = "Batti il Fabbro" } },
 	},
-	-- the end of the circle: a full 2 v 2 match, with a bot at your side, that
-	-- puts together everything in the circle
+	-- the end of the circle: a full 2 v 2 match, with Favilla at your side
 	{
 		id = "battaglia_forgia",
 		titolo = "Battaglia della Forgia",
@@ -664,13 +649,10 @@ M.girone_1 = {
 			{ team = 1 },
 			{ team = 2, bot = 5, carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
 				battute = "fabbro" },
-			-- Favilla at your side (level plan: no more the nameless «Compagno»);
-			-- here she has grown to a 5, like the Fabbro (collaudo: a 3 loses half)
 			{ team = 1, bot = 5, nome = "Favilla", battute = "favilla_compagna", pelle = "favilla" },
-			{ team = 2, bot = 2, carattere = "cecchino" },
+			{ team = 2, bot = 3, carattere = "cecchino" },
 		},
-		-- ★★ median and ★★★ 80th percentile of the normal bot's points (collaudo, 14 Nov)
-		stelle = { punti = { 400, 480 } },
+		stelle = { punti = { 390, 560 } },
 		obiettivo = { { win = true, testo = "Vinci la partita con Favilla" } },
 	},
 }

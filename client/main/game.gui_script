@@ -2577,7 +2577,8 @@ function CP.mission_line(self, r)
 		return
 	end
 	local l = r.l
-	local chi = l.aspetta and "favilla" or "fabbro"
+	-- Favilla in the cortile, the Fabbro from the Forgia on
+	local chi = l.chapter == "addestramento" and "favilla" or "fabbro"
 	local txt = line.testo:gsub("{(%a+)}", PAD.texts(self))
 	if line.apertura or line.mostra == "grande" then
 		-- (the mission's illustration came before, on its postcard: CP.enter_mission)
@@ -2596,7 +2597,7 @@ function CP.mission_line(self, r)
 		end
 	end
 	-- the big vignette read (VAI, or vignettes off): now Favilla can show the move
-	if line.mostra == "grande" and (not self.vign_on or (self.vign_line == line and not self.carta)) then
+	if (line.mostra == "grande" or line.apertura) and (not self.vign_on or (self.vign_line == line and not self.carta)) then
 		missions.line_read(r)
 	end
 	-- a big vignette still waiting to open (a weapon found is flying to its
@@ -4004,10 +4005,10 @@ local function render(self, dt)
 		local notch = aim_name.VIBRATE_TICKS and aim_name.notch(self.aim_power)
 		if notch and self.notch and notch ~= self.notch then vibrate_touch() end
 		self.notch = notch
-		-- in the Training lessons, as help, the whole trajectory down to the terrain:
+		-- in the lessons (the Training, the Fabbro's), as help, the whole trajectory down to the terrain:
 		-- the one of the shot that would fire now, so with the aim from a moment
 		-- earlier like the release of the sticks (sticks.shot), not the live finger
-		if self.missione and self.missione.l.chapter == "addestramento" then
+		if self.missione and self.missione.l.aspetta then
 			local n, a, p = HELP_POINTS, self.aim_angle, self.aim_power
 			if self.aim_pad.id then
 				a, p = sticks.shot(self.aim_st, self.clock, a, p)
