@@ -181,4 +181,23 @@ Approvata da Sergio il 15 nov («Smazziamocele tutte»). (Claude) Spalline del L
 
 ## Consegna di Codex
 
+Undici fogli PNG in `art/WB-058/`, ciascuno con il prompt integrale e i riferimenti nel TXT omonimo.
+
+| File | Tentativi | Controllo visivo |
+|---|---:|---|
+| elmo_base_1 | 1 | Scelto per la calotta chiusa, la pinna bassa sul retro e il volto libero. |
+| elmo_base_2 | 1 | Pinna posteriore più alta. |
+| elmo_forgiata | 1 | Pinna posteriore ampliata e bordata di ciano. Volto e orecchie visibili. |
+| corpo_base_1 | 1 | Scelto per il collo libero, entrambe le spalline e le pinne su entrambi gli stivali. |
+| corpo_base_2 | 1 | Collare più alto e scaglie del ventre più fitte. |
+| corpo_forgiata | 1 | Tre inserti ciano sul ventre e pinne più grandi su spalline e talloni. |
+| pugni_base | 1 | Due spalline a scaglie con fascia ciano, mani nude. |
+| pugni_forgiata | 1 | Pinne su entrambe le spalline, mani nude. Il braccio destro è leggermente spostato. |
+| mantello_base_1 | 1 | Scelto per le nervature continue e l’orlo ampio. |
+| mantello_base_2 | 1 | Orlo più largo e nervature meno fitte. |
+| mantello_forgiata | 1 | Punte ciano allungate, con lieve variazione della sagoma all’orlo. |
+
+Controllati a vista parti presenti, disposizione, contorni, sfondo magenta e assenza di scritte. I tre fogli dell’elmo sono stati ridimensionati da 1254 × 1254 a 1024 × 1024. Gli altri sono nativi a 1536 × 1024. Restano da verificare corrispondenza dei pixel, valori esatti dei colori, ritaglio per differenza e vestibilità nel gioco.
+
+
 ## Resoconto di Claude
