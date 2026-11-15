@@ -367,6 +367,11 @@ function M.profile(h, p)
 	if not h.in_queue then set_sub(h.campaign, h.chapter) end
 end
 
+-- The apprentice at rest in his pose now, not after the springs' first frames
+local function pose_now(h)
+	for _ = 1, 30 do scoria.update(h.corpo, 1 / 30, h.st) end
+end
+
 -- The devil puts on the pieces of the active loadout of the profile p: they
 -- become the look of whoever plays here (scoria.player), for every menu and
 -- the offline battles
@@ -382,6 +387,9 @@ function M.wear(h, p)
 	h.corpo = scoria.new(h.color, scoria.player)
 	gui.set_parent(h.corpo.root, parent)
 	scoria.set_enabled(h.corpo, enabled)
+	-- posed at once: made while the home is hidden, it would show up raw (the
+	-- weapon at its feet, the arms anyhow) under a door's passage
+	pose_now(h)
 	if h.face then
 		gui.delete_node(h.face)
 		h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 60, h.color, scoria.player)
@@ -396,7 +404,9 @@ function M.queued(h, on)
 end
 
 function M.update(h, dt)
-	if not h.is_visible then return end
+	-- (under a door's passage the home shows while it is not yet visible: the
+	-- apprentice keeps breathing there too)
+	if not h.is_visible and not h.under then return end
 	h.t = h.t + dt
 	if h.glow_t then
 		h.glow_t = h.glow_t + dt
