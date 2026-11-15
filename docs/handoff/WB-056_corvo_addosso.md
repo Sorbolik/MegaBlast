@@ -181,4 +181,23 @@ Approvata da Sergio il 15 nov («Smazziamocele tutte»). (Claude) Spalline del C
 
 ## Consegna di Codex
 
+Undici fogli PNG in `art/WB-056/`, ciascuno con il prompt integrale e i riferimenti nel TXT omonimo.
+
+| File | Tentativi | Controllo visivo |
+|---|---:|---|
+| maschera_base_1 | 1 | Base scelta, maschera chiusa solo sulla prima testa. |
+| maschera_base_2 | 1 | Bordo ciano più esteso sulla fronte. |
+| maschera_forgiata | 1 | Cresta dietro con punte viola, becco e volto visibili. |
+| corpo_base_1 | 1 | Base scelta, collo libero, coda intera, due spalline e due stivali. |
+| corpo_base_2 | 1 | Orlo della corazza più basso. |
+| corpo_forgiata | 1 | Punte viola, anelli ciano e finiture su entrambi gli stivali. |
+| pugni_base | 3 | Prova da scartare. Conservato il secondo tentativo. Tutti e tre hanno messo la corazza sulle braccia. |
+| pugni_forgiata | 3 | Prova da scartare. Conservato il primo tentativo. Tutti e tre hanno messo la corazza sulle braccia. |
+| mantello_base_1 | 1 | Base scelta per l'orlo ampio e le pieghe lunghe. |
+| mantello_base_2 | 1 | Orlo ampio con più sovrapposizioni tra le piume. |
+| mantello_forgiata | 1 | Orlo con punte viola e bordo superiore ciano. Sagoma e pieghe leggermente diverse dalla base. |
+
+Controllati a vista contorni, disposizione, parti presenti, fondo magenta e assenza di scritte. Fogli maschera ridimensionati da 1254 × 1254 a 1024 × 1024. Gli altri sono nativi a 1536 × 1024. Restano da verificare la corrispondenza dei pixel, i valori esatti dei colori, il ritaglio per differenza e la vestibilità nel gioco.
+
+
 ## Resoconto di Claude
