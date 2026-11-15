@@ -100,16 +100,20 @@ personaggi; attenzione al rosso della squadra sui gironi rossi).
 - Storia: Esiste già. Cambia il nome del capitolo e la Battaglia della Forgia finisce col rapimento di Favilla (prima tavola).
 - Mappa: Forgia dei Titani (c'è).
 - Pericolo: Nessuno: si imparano le basi.
-- Conviene: Le basi; Uovo e Schegge dalle casse.. Gradi del bot: 2 → 5.
+- Conviene: Le basi; dalle casse le armi che l'Addestramento non presenta. Gradi del bot: 2 → 5.
 - Colori: #2a1410 #5a2a1a #ff7a1a #ffd27a
-- Livelli:
-  1. **Primo sangue** (duello): c'è già
-  2. **Fuori portata** (fuga): c'è già
-  3. **Due mani** (duello): c'è già
-  4. **Giù dal bordo** (rompicapo): c'è già
-  5. **Il codardo** (duello): c'è già
-  6. **Il Fabbro** (custode): c'è già
-  7. **Battaglia della Forgia** (squadra): c'è già, con Favilla come compagna al posto del bot anonimo; alla fine l'artiglio prende Favilla
+- Livelli (rifatti il 15 nov, Sergio: dopo l'Addestramento restano da insegnare solo il baratto e
+  le casse; poi solo partite vere, con le casse e i punti, da vincere):
+  1. **Il baratto del Fabbro** (lezione, senza punti né stelle): il Fabbro spiega e mostra il
+     baratto (il secondo attacco scambiato con un globo) e la cassa che cade dal cielo
+  2. **Primo sangue** (duello): contro il grado 2
+  3. **Fuori portata** (squadra): con Favilla (grado 3) contro il cecchino sull'isola (grado 3)
+     e uno di grado 2
+  4. **Giù dal bordo** (duello): sulla fossa contro lo spingitore (grado 3, il dente della sega)
+  5. **Il codardo** (duello): grado 4
+  6. **Il Fabbro** (custode): grado 5
+  7. **Battaglia della Forgia** (squadra): con Favilla (grado 5) contro il Fabbro (grado 5) e il
+     cecchino (grado 3); alla fine l'artiglio prende Favilla
 - Custode **Il Fabbro** (vita 180): Com'è oggi: tanta vita e il Maglio. È l'esame del maestro. Dopo il rapimento diventa la tua guida fino al pozzo dei giganti (il ruolo di Virgilio) e tuo compagno nei 2 contro 2 dell'inferno.
 
 ### I · Limbo — Il castello dei sette muri

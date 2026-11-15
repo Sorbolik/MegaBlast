@@ -120,8 +120,7 @@ return {
 		missione_attrezzi = "cortile",
 		missione_spostano = "cortile",
 		missione_sfida_burrone = "cortile",
+		missione_baratto = "forgia",
 		missione_fuori_portata = "forgia",
-		missione_due_mani = "forgia",
-		missione_giu_dal_bordo = "forgia",
 	},
 }
