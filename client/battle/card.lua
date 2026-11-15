@@ -44,7 +44,7 @@ M.DATI = {
 	boomerang = { tipo = "primaria", bars = { 3, 3, 3 } },
 	tar = { tipo = "primaria", bars = { 2, 3, 5 } },
 	drill = { tipo = "primaria", bars = { 3, 3, 2 } },
-	magnet = { tipo = "secondaria", bars = { 1, 2, 4 } },
+	vortex = { tipo = "secondaria", bars = { 2, 4, 4 } },
 	cannon = { tipo = "secondaria", bars = { 3, 5, 5 } },
 	petard = { tipo = "secondaria", bars = { 1, 3, 5 } },
 	hook = { tipo = "movimento" },

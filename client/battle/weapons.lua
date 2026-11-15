@@ -19,7 +19,7 @@ return {
 		boomerang = { img = "boomerang", tint = "boomerang_tinta", x = 5.50, y = 3.50, w = 28.00, h = 16.00 },
 		tar = { img = "tar", tint = "tar_tinta", x = 4.25, y = 3.25, w = 11.50, h = 15.50 },
 		drill = { img = "drill", tint = "drill_tinta", x = 5.50, y = -0.75, w = 34.00, h = 14.50 },
-		magnet = { img = "magnet", tint = "magnet_tinta", x = 0.00, y = 1.25, w = 22.00, h = 13.50 },
+		vortex = { img = "vortex", tint = "vortex_tinta", x = 4.50, y = 2.25, w = 11.00, h = 13.50 },
 		cannon = { img = "cannon", tint = "cannon_tinta", x = 2.25, y = -1.00, w = 27.50, h = 15.00 },
 		petard = { img = "petard", tint = "petard_tinta", x = 4.25, y = 3.25, w = 11.50, h = 15.50 },
 	},
@@ -37,5 +37,6 @@ return {
 		fiasco = { img = "fiasco", tint = "fiasco_tinta", x = 0.00, y = 0.00, w = 17.60, h = 24.00 },
 		punta = { img = "punta", tint = "punta_tinta", x = 2.00, y = 0.00, w = 23.20, h = 14.40 },
 		petardo_volo = { img = "petardo_volo", tint = "petardo_volo_tinta", x = 0.00, y = 0.80, w = 16.00, h = 19.20 },
+		voragine_volo = { img = "voragine_volo", tint = "voragine_volo_tinta", x = 0.00, y = 0.00, w = 16.00, h = 16.00 },
 	},
 }

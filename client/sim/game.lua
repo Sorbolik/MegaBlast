@@ -177,8 +177,8 @@ M.PUNCH_HOP = 15 * M.U      -- the attacker rises a little with the uppercut
 -- come back by hitting an enemy with the Lama (config.SECONDARY_SHOTS; Sergio,
 -- 31 October 2026).
 M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true, bellows = true,
-	magnet = true, cannon = true, petard = true }
-M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows", "magnet", "cannon", "petard" }
+	vortex = true, cannon = true, petard = true }
+M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows", "vortex", "cannon", "petard" }
 -- weapons that don't use up shots
 M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill" }
@@ -1976,67 +1976,16 @@ function M:fire_bellows(angle)
 	end
 end
 
--- Calamita (config.MAGNET) --------------------------------------------------------
--- An instant pulse: its centre is distance pixels along the aim (stopping at
--- terrain). Every robot within radius slides to the centre in ticks ticks
--- (rb.pull, update_pull); the user too, with no damage. If the centre has no
--- ground within drop pixels below it nothing is pulled: no throwing people into
--- a pit with a teleport and the Calamita.
+-- Voragine (config.VORTEX) ----------------------------------------------------
+-- Flies like the Lanciarune and bursts on the first terrain or robot it
+-- touches (update_projectile); the explosion pulls inwards (negative impulse).
 
-function M:fire_magnet(angle)
+function M:fire_vortex(angle, power)
 	local rb = self.robots[self.current]
-	local s = C.MAGNET
-	rb.facing = math.cos(angle) < 0 and -1 or 1
-	local cx, cy = rb.x, rb.y + M.DISEGNO_H / 2
-	local px, py = cx, cy
-	local ux, uy = math.cos(angle), math.sin(angle)
-	for _ = 1, math.ceil(s.distance / M.CELL) do
-		local nx, ny = px + ux * M.CELL, py + uy * M.CELL
-		if self.terrain:solid(nx, ny) then break end
-		px, py = nx, ny
-	end
-	local gb = self.terrain:ground_below(px, py)
-	local ok = gb ~= nil and py - gb <= s.drop
-	self:emit({ type = "magnet", robot = rb.id, x = px, y = py, r = s.radius, ok = ok })
-	if not ok then return end
-	for _, o in ipairs(self.robots) do
-		if not o.dead then
-			local ox, oy = o.x, o.y + M.HURT_Y
-			local dx, dy = ox - px, oy - py
-			if dx * dx + dy * dy <= s.radius * s.radius and not self:terrain_between(px, py, ox, oy) then
-				o.pull = { x = px, ticks = s.ticks }
-				o.hooked = nil
-				if o ~= rb then
-					self:credit(o, rb)
-					self:hurt(o, s.damage, rb)
-				end
-			end
-		end
-	end
-end
-
--- One tick of the slide: the horizontal part, climbing small steps; against a
--- wall it stops. Gravity goes on as usual.
-function M:update_pull(rb)
-	local pl = rb.pull
-	local nx = rb.x + (pl.x - rb.x) / pl.ticks
-	pl.ticks = pl.ticks - 1
-	if pl.ticks <= 0 then
-		rb.x, rb.pull = pl.x, nil
-		return
-	end
-	if not self:terrain_collides(nx, rb.y) then
-		rb.x = nx
-	else
-		local up
-		for d = 1, M.MAX_CLIMB do
-			if not self:terrain_collides(nx, rb.y + d) then
-				up = d
-				break
-			end
-		end
-		if up then rb.x, rb.y = nx, rb.y + up else rb.pull = nil end
-	end
+	local x, y = muzzle(rb, angle)
+	local vx, vy = launch_velocity(angle, power, M.MISSILE_SPEED)
+	self.projectile = { kind = "vortex", x = x, y = y, vx = vx, vy = vy, owner = rb.id, age = 0 }
+	self:emit({ type = "vortex", robot = rb.id })
 end
 
 -- Cannonata (config.CANNON) -----------------------------------------------------
@@ -2051,7 +2000,7 @@ function M:start_cannon(angle, power)
 	rb.cannon = { vx = math.cos(angle) * speed, vy = math.sin(angle) * speed, hit = {} }
 	rb.vx, rb.vy = 0, 0
 	rb.y = rb.y + 1
-	rb.grounded, rb.knocked, rb.fall_top, rb.pull = false, false, nil, nil
+	rb.grounded, rb.knocked, rb.fall_top = false, false, nil
 	self:emit({ type = "cannon", robot = rb.id, angle = angle })
 end
 
@@ -2117,7 +2066,7 @@ function M:petard_blast(p)
 				local ux, uy = 0, 1
 				if d > 0.5 then ux, uy = dx / d, dy / d end
 				rb.vx, rb.vy = ux * s.push * f, (uy * s.push + s.lift) * f
-				rb.hooked, rb.pull = nil, nil
+				rb.hooked = nil
 				rb.grounded, rb.knocked, rb.fall_top = false, true, nil
 				if rb ~= owner then
 					self:credit(rb, owner)
@@ -3076,9 +3025,6 @@ function M:preview(angle, power, count, every, pts, weapon)
 		local range = (weapon == "eagle" and C.EAGLE or weapon == "hook" and C.HOOK or weapon == "boomerang" and C.BOOMERANG
 			or C.BELLOWS).range
 		return self:ray_preview(x, y, angle, range, count, pts)
-	elseif weapon == "magnet" then
-		-- the centre of the pulse, not a shot: the line goes up to it
-		return self:ray_preview(rb.x, rb.y + M.DISEGNO_H / 2, angle, C.MAGNET.distance, count, pts)
 	elseif weapon == "cannon" then
 		-- the flight of the Cannonata: from the robot's centre, like the real thing
 		x, y = rb.x, rb.y + M.DISEGNO_H / 2
@@ -3205,6 +3151,8 @@ function M:update_projectile()
 			end
 			if p.kind == "drill" then
 				self:explode(p.x, p.y, p.owner, C.DRILL.blast, "drill")
+			elseif p.kind == "vortex" then
+				self:explode(p.x, p.y, p.owner, C.VORTEX.blast, "vortex")
 			else
 				self:explode(p.x, p.y, p.owner, nil, "missile")
 			end
@@ -3335,8 +3283,8 @@ function M:attack(weapon, fire)
 		self:start_lunge(fire.angle)
 	elseif weapon == "bellows" then
 		self:fire_bellows(fire.angle)
-	elseif weapon == "magnet" then
-		self:fire_magnet(fire.angle)
+	elseif weapon == "vortex" then
+		self:fire_vortex(fire.angle, fire.power)
 	elseif weapon == "cannon" then
 		self:start_cannon(fire.angle, fire.power)
 	elseif weapon == "petard" then
@@ -3523,8 +3471,7 @@ function M:advance(input, can_move)
 			if rb.dead then rb.mallet, rb.mallet_dir, rb.mallet_stop = nil, nil, nil else self:update_mallet(rb) end
 		end
 		if rb.dead then rb.lunge, rb.lunge_hit, rb.hooked, rb.recoil, rb.hook_shot = nil, nil, nil, nil, nil end
-		if rb.dead then rb.cannon, rb.pull = nil, nil end
-		if rb.pull then self:update_pull(rb) end
+		if rb.dead then rb.cannon = nil end
 		if rb.hook_shot then self:update_hook_shot(rb) end
 	end
 	if self.projectile then self:update_projectile() end
@@ -3600,7 +3547,7 @@ function M:step(input)
 		end
 		for _, rb in ipairs(self.robots) do
 			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.hook_shot or rb.mallet
-				or rb.cannon or rb.pull) then still = false end
+				or rb.cannon) then still = false end
 		end
 		self.settle = still and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then
