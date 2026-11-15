@@ -40,6 +40,7 @@ local C = ui.C
 local KC = kit.C
 local TOUCH = hash("touch")
 local ROMAN = { "I", "II", "III", "IV" }
+local MEDALS = { "medaglia_bronzo", "medaglia_argento", "medaglia_oro", "medaglia_oro" }
 -- the modes of the stats, as the Figma's chips (all of them first)
 local MODES = { "tutte", "2v2", "1v1", "torneo", "campagna" }
 
@@ -100,13 +101,14 @@ local function sheet_stats(s)
 		kit.text(g, kit.upper(thousands(st[t.id] or 0) .. (t.unit and (" " .. t.unit) or "")), 628, y + 26, 22,
 			chosen and KC.INK or KC.HOT, "end")
 		if grade > 0 then
-			-- the badge's plate (iron, bronze, silver, gold) with its grade
-			kit.pic(g, "badge_" .. grade, 646, y + 1, 136, 136 * (grade == 4 and 90 or 68) / (grade == 4 and 273 or 268))
-			kit.text(g, T.badge_pill:format(ROMAN[grade]), 714, y + 25, 17, grade >= 3 and KC.INK or KC.SAND, "middle", 0.5)
+			-- the badge's medal (WB-067: bronze, silver, gold; the fourth is gold with IV)
+			kit.piece(g, MEDALS[grade], 668, y + 18, 34)
+			kit.text(g, T.badge_pill:format(ROMAN[grade]), 690, y + 25, 17, ink, "start", 0.5)
 			kit.zone(g, s.buttons, 36, y - 2, 760, step, "badge:" .. t.id)
 		elseif t.thresholds then
 			local next_at = milestones.next(t, tot)
-			kit.text(g, kit.upper(T.next_at:format(thousands(next_at))), 714, y + 25, 16, KC.MUTE, "middle", 0.4)
+			kit.piece(g, "medaglia_vuota", 668, y + 18, 34)
+			fit(kit.text(g, kit.upper(T.next_at:format(thousands(next_at))), 690, y + 25, 16, KC.MUTE, "start", 0.4), 100)
 		end
 	end
 	-- how the badges work: at the foot, where there is room to read it
@@ -223,12 +225,12 @@ local function sheet_matches(s)
 		kit.panel(kit.group(g, x + w / 2, y + rh / 2).node, w, rh, open and "pannello_caldo" or "pannello")
 		-- the whole row opens and closes (under the faces and RIVEDI, which are their own)
 		kit.zone(g, s.buttons, x, y, w, rh, "partita:" .. i)
-		-- the cap on the left: ember if won, ice if not
-		kit.pic(g, pa.esito == "V" and "bordino_brace" or "bordino_gelo", x - 10, y + 7, 70 * 88 / 140, 70)
-		kit.text(g, e[1], x + 46, y + 40, 30, e[2])
+		-- the ribbon on the left (WB-067): ember if won, ice if not, the word on it
+		kit.strip(g, pa.esito == "V" and "nastro_vittoria" or "nastro_sconfitta", x + 12, y + 8, 236, 44)
+		fit(kit.text(g, e[1], x + 30, y + 39, 24, KC.INK), 170)
 		local map = maps.get(pa.mappa or "")
 		fit(kit.text(g, kit.upper((profile.GROUP_NAMES[pa.gruppo] or pa.gruppo or "") .. (map and (" · " .. map.name) or "")),
-			x + 47, y + 66, 17, KC.MUTE, "start", 0.5), 290)
+			x + 22, y + 72, 17, KC.MUTE, "start", 0.5), 300)
 		-- who was there
 		for k, pl in ipairs(pa.giocatori or {}) do
 			if k > 4 then break end
@@ -245,9 +247,11 @@ local function sheet_matches(s)
 		kit.text(g, kit.upper(when(pa.quando)), x + 862 + mid * 1.4, y + 49, 20, KC.MUTE)
 		-- RIVEDI, when the replay is on this phone
 		local ok = s.replay_ok and s.replay_ok(pa.numero)
-		local b = kit.plate(g, x + w - 178, y + 16, 150, 52, KC.HOT, { sk = 0, fill = KC.SAND })
-		kit.text(b.g, common.replay, x + w - 103, y + 51, 24, ok and KC.INK or kit.with_alpha(KC.INK, 0.4), "middle")
-		kit.button(s.buttons, b, "rivedi:" .. i, { spento = not ok })
+		-- the round play button (WB-067), its word at its left; grey when there is no replay
+		kit.text(g, common.replay, x + w - 92, y + 49, 20, ok and KC.SAND or KC.MUTE, "end")
+		local b = kit.piece(g, ok and "rivedi" or "rivedi_premuto", x + w - 52, y + rh / 2, 64)
+		if not ok then gui.set_color(b, vmath.vector4(0.5, 0.5, 0.5, 0.6)) end
+		kit.button(s.buttons, { node = b }, "rivedi:" .. i, { spento = not ok })
 		y = y + rh + 8
 		if open then
 			detail(s, g, pa, x, y - 6, w)

@@ -15,6 +15,13 @@ aspetta 0.6
 tocca_centro 500 494                # la riga CORAZZA
 aspetta 0.6
 foto S3_sigilli_corazza
+tocca_centro 1218 482               # + sulla CORAZZA (un punto alla volta)
+aspetta 0.3
+tocca_centro 1218 482               # + ancora
+aspetta 0.3
+tocca_centro 1218 482               # + ancora: 9 punti
+aspetta 0.6
+foto S3b_sigilli_piu
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.8

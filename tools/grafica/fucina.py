@@ -499,6 +499,88 @@ def fai_menu():
         intero("vuoto_" + p, ritaglio("WB-043", "vuoto_" + p), 240)
 
 
+def trasparente(percorso):
+    """Un foglio di Codex gia' trasparente (WB-062, WB-067): via l'alone di pixel
+    mezzi trasparenti attorno ai pezzi (la china esterna e' piena)."""
+    a = np.array(Image.open(percorso).convert("RGBA")).astype(float)
+    al = a[..., 3]
+    a[..., 3] = np.clip((al - 90) / 100, 0, 1) * 255
+    return a.astype(np.uint8)
+
+
+def stretto(a):
+    ys, xs = np.where(a[..., 3] > 0)
+    return a[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+
+
+def griglia_trasparente(percorso, per_riga, minimo=1500):
+    cs = sorted(pezzi(trasparente(percorso), minimo), key=lambda t: t[0])
+    out = []
+    for n in per_riga:
+        out += sorted(cs[:n], key=lambda t: t[1])
+        cs = cs[n:]
+    return [t[2] for t in out]
+
+
+def fai_bivio():
+    """I Sigilli col bivio (WB-062, foglio 1, Sergio 15 nov): per acceso, spento e
+    chiuso il binario dei punti (in tre parti, si allunga), il nodo del gradino, i
+    rami su e giu', la piastra del potere (in nove parti). E le tacche dei punti,
+    le fiammelle dei punti liberi, i pulsanti meno e piu' (foglio 1 delle tacche)."""
+    p = os.path.join(ART, "WB-062")
+    o = trasparente(os.path.join(p, "pezzi_bivio_1.png"))
+    # i rami su e giu' a volte si toccano: un pezzo troppo alto si taglia nella riga
+    # piu' vuota a meta' altezza
+    tutti = []
+    for y, x, a in pezzi(o, 3000):
+        h = a.shape[0]
+        if h > 250:
+            piene = (a[..., 3] > 0).sum(axis=1)
+            k = int(h * 0.35) + int(np.argmin(piene[int(h * 0.35):int(h * 0.65)]))
+            tutti += [(y, x, a[:k]), (y + k, x, a[k:])]
+        else:
+            tutti.append((y, x, a))
+    righe = {}
+    for y, x, a in tutti:
+        r = int((y + a.shape[0] / 2) / (o.shape[0] / 3))
+        righe.setdefault(r, []).append((y, x, a))
+    for r, stato in enumerate(("acceso", "spento", "chiuso")):
+        riga = righe[r]
+        # da sinistra: binario, nodo, i due rami (su sopra, giu' sotto), piastra
+        riga.sort(key=lambda t: t[1])
+        binario, nodo = riga[0][2], riga[1][2]
+        rami = sorted(riga[2:4], key=lambda t: t[0])
+        su, giu = rami[0][2], rami[1][2]
+        piastra = riga[4][2]
+        # (i pezzi tagliati si stringono attorno al disegno)
+        su, giu = stretto(su), stretto(giu)
+        tre("bivio_binario_" + stato, binario, 40, 0.3)
+        intero("bivio_nodo_" + stato, nodo, 96)
+        intero("bivio_su_" + stato, su, 120)
+        intero("bivio_giu_" + stato, giu, 120)
+        scheda("bivio_piastra_" + stato, piastra)
+    t = griglia_trasparente(os.path.join(p, "tacche_1.png"), [2, 2, 2, 4], 1500)
+    nomi = ["tacca_vuota", "tacca_ali", "tacca_fucina", "tacca_corazza", "punto_libero", "punto_speso",
+            "tasto_meno", "tasto_meno_spento", "tasto_piu", "tasto_piu_spento"]
+    for nome, a in zip(nomi, t):
+        intero(nome, a, 96 if nome.startswith("tasto") else 64)
+
+
+def fai_profilo():
+    """Il Profilo (WB-067, fogli 1): il nastro della vittoria (fiamma) e della
+    sconfitta (schegge), in tre parti; il pulsante per rivedere, normale e premuto;
+    le medaglie dei record, bronzo, argento, oro e il posto vuoto."""
+    p = os.path.join(ART, "WB-067")
+    n = griglia_trasparente(os.path.join(p, "nastri_e_rivedi_1.png"), [2, 2], 3000)
+    tre("nastro_vittoria", n[0], 96, 0.3)
+    intero("rivedi", n[1], 120)
+    tre("nastro_sconfitta", n[2], 96, 0.3)
+    intero("rivedi_premuto", n[3], 120)
+    m = griglia_trasparente(os.path.join(p, "medaglie_1.png"), [4], 3000)
+    for nome, a in zip(["medaglia_bronzo", "medaglia_argento", "medaglia_oro", "medaglia_vuota"], m):
+        intero(nome, a, 80)
+
+
 def fai_atlante():
     nomi = sorted(f for f in os.listdir(OUT) if f.endswith(".png"))
     with open(os.path.join(RADICE, "client", "ui", "fucina.atlas"), "w") as f:
@@ -525,6 +607,8 @@ if __name__ == "__main__":
     fai_menu()
     fai_schede()
     fai_segni()
+    fai_bivio()
+    fai_profilo()
     fai_fette()
     fai_sfondi()
     fai_filo()

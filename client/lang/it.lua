@@ -503,7 +503,11 @@ return {
 		piece_line = "liv %d · grado %s %s · %s",
 		wear = "INDOSSA",
 		worn = "ce l'hai addosso",
-		points = "PUNTI  %d / %d",
+		-- the Sigilli: the points still to spend (a flame each) and those used
+		free = "PUNTI LIBERI",
+		used = "%d / %d USATI",
+		-- under the points of a path: what one point gives, and all of them now
+		per_point = "1 PUNTO: %s · ORA %s",
 		of = "%d / %d",
 		save = "SALVA",
 		saved = "salvato",

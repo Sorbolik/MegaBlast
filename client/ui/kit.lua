@@ -178,6 +178,17 @@ function M.panel(parent, w, h, name)
 	return nine(parent, name or "pannello", w, h, math.min(26, h * 0.3, w * 0.3))
 end
 
+-- A drawn plate in nine parts (the powers of the Sigilli, WB-062: name
+-- "bivio_piastra_acceso" ...) filling the Figma box x..x+w, y..y+h; the corners
+-- at most a third of the height. Returns { node, g } like a card
+function M.drawn_plate(g, name, x, y, w, h)
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local c = math.min(P[name].c, h * 0.34)
+	nine(n, name, w, h, c)
+	return { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+end
+
 -- A whole piece h tall centered at (x, y) of parent
 local function whole(name, x, y, h, parent)
 	local m = P[name]

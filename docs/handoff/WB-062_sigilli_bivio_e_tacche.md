@@ -83,4 +83,20 @@ Sergio, 15 nov 22:48: pagina A col bivio (forma 2).
 
 ## Consegna di Codex
 
+| PNG e TXT omonimi in `art/WB-062/` | Tentativi | Esito visivo |
+|---|---:|---|
+| `pezzi_bivio_1` | 3 | Conservato il secondo tentativo. Tutti i 15 pezzi, con i nodi spento e chiuso in ferro. Rimangono aloni attorno ai pezzi. |
+| `pezzi_bivio_2` | 3 | Conservato il primo tentativo per lo sfondo più pulito. Nodo spento e nodo chiuso dorati. Foglio adattato in proporzione con margini trasparenti. |
+| `pezzi_bivio_3` | 3 | Conservato il secondo tentativo per gli attacchi orizzontali dei due rami. Nodi spento e chiuso dorati e aloni residui. |
+| `tacche_1` | 1 | Quattro tacche, due fiamme e quattro pulsanti ben separati. Foglio adattato in proporzione con margini trasparenti. |
+| `tacche_2` | 2 | Quattro tacche, due fiamme e quattro pulsanti. Secondo tentativo più pulito, adattato in proporzione con margini trasparenti. |
+
+Controllati a vista conteggio, separazione, centri vuoti delle piastre e assenza di scritte. Verificato il canale alfa agli angoli. Innesti, resa dei singoli pezzi a 24 px e colori esatti da verificare nel gioco.
+
 ## Resoconto di Claude
+
+15 nov: tenuti i fogli 1 (`pezzi_bivio_1`, `tacche_1`), gli altri scartati (aloni e pezzi
+più deformi). Tagliati da `tools/grafica/fucina.py` (`fai_bivio`, aloni ripuliti):
+binario, nodi, piastre (acceso, spento, chiuso), tacche, punti liberi e spesi, tasti − e +.
+I rami su e giù disegnati da Codex sono troppo larghi per cinque gradini in una riga:
+i rami li disegna il codice (inchiostro e colore come le piastre). Montati in Zaino > SIGILLI.
