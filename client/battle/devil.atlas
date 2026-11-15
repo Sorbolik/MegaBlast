@@ -392,6 +392,42 @@ images {
   image: "/assets/skins/favilla_testa_sconfitta_1.png"
 }
 images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_1_chiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_1_socchiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_arrabbiata_1_chiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_arrabbiata_1_socchiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_mira_1_chiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_mira_1_socchiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_paura_1_chiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_paura_1_socchiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_provocazione_1_chiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_provocazione_1_socchiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_sconfitta_1_chiusi.png"
+}
+images {
+  image: "/assets/skins/palpebre_apprendista_nuovo_testa_sconfitta_1_socchiusi.png"
+}
+images {
   image: "/assets/skins/stivali_vuoto_forgiato_gamba.png"
 }
 images {

@@ -71,4 +71,26 @@ Approvata da Sergio il 13 nov (scheda di scelta in thread: «Sì, scheda WB-040�
 
 ## Consegna di Codex
 
+Quattro varianti per revisione. Ciascuna ha richiesto tre tentativi con lo stesso prompt e con R1 come riferimento.
+
+| Variante | Immagine | Prompt e riferimento | Pixel diversi da R1 fuori dai riquadri degli occhi |
+|---|---|---|---:|
+| Socchiusi 1 | `art/WB-040/occhi_socchiusi_1.png` | `occhi_socchiusi_1.txt` | 967.048 su 977.965 |
+| Socchiusi 2 | `art/WB-040/occhi_socchiusi_2.png` | `occhi_socchiusi_2.txt` | 951.209 su 977.965 |
+| Chiusi 1 | `art/WB-040/occhi_chiusi_1.png` | `occhi_chiusi_1.txt` | 967.499 su 977.965 |
+| Chiusi 2 | `art/WB-040/occhi_chiusi_2.png` | `occhi_chiusi_2.txt` | 963.925 su 977.965 |
+
+- Verifica visiva delle nove teste, delle palpebre, dello sfondo magenta e dell'assenza di scritte. I PNG generati erano 1254×1254 e sono stati ridimensionati a 1024×1024 per la consegna.
+- Il confronto RGB usa sei riquadri che comprendono gli occhi da modificare. Anche fuori da questi riquadri cambiano molti pixel, compresi quelli delle teste 2, 3 e 4. Lo sfondo non è magenta puro e l'identità degli occhi già strizzati non è stata verificata separatamente. Il criterio di identità al pixel risulta fallito in ogni variante.
+- Integrazione e prova in Godot non eseguite.
+
 ## Resoconto di Claude
+
+Integrata il 15 nov (Sergio: «Dov'è finito lo sviluppo del Blink degli occhi?»), in Defold invece
+che in Godot. Scelte: `occhi_socchiusi_1` e `occhi_chiusi_1`; le varianti 2 scartate (chiusi 2
+lascia una macchia scura dove c'era l'occhio, socchiusi 2 è quasi uguale ma meno pulita).
+Il foglio non è identico al pixel (come dice la consegna), quindi niente testa intera: solo la
+zona degli occhi di ogni testa con gli occhi aperti (1, 5, 6, 7, 8, 9), messa sulla testa del gioco
+per registrazione e ricalcata in vettoriale alla misura del gioco (`tools/stampino/palpebre.py`).
+Le teste 2, 3 e 4 non battono gli occhi. Controllate una per una: nessun difetto visibile dopo il
+ritaglio; le pupille che arrivano al contorno sono comprese nella zona.

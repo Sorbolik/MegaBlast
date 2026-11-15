@@ -157,3 +157,13 @@ categoria che ha pelli.
 
 Se cambia lo scheletro (un perno in `diavoletto.py`) si rifà lo stampino e i
 pezzi già disegnati vanno ricontrollati.
+
+## Le palpebre (il battito degli occhi)
+
+`python3 tools/stampino/palpebre.py [--prova CARTELLA]` prende dai fogli di WB-040
+(`art/WB-040/occhi_socchiusi_1.png`, `occhi_chiusi_1.png`) solo la zona degli occhi
+di ogni testa con gli occhi aperti, la ricalca in vettoriale e la mette sulla testa
+del gioco (`client/assets/skins/palpebre_*.png`, `client/battle/eyelids.lua`, in
+frazioni dell'immagine della testa). Poi `taglia.py --rifai` (o solo l'atlante) le
+mette nell'atlante. Se cambiano le teste si rifanno anche le palpebre. Nel gioco:
+scenari `battito.txt` e `battito_socchiusi.txt` (`imposta prova_battito shut` o `half`).

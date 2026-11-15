@@ -34,7 +34,8 @@
 -- tucked going up and forward going down: the sale and scende clips weighted by
 -- speed), run (driven by the distance covered, fades into idle), victory (jumps
 -- with arms up), idle (breathes; whoever's turn it isn't plays a random skit
--- now and then: naso, sbadiglio, guarda_coda). What depends on the game stays
+-- now and then: naso, sbadiglio, guarda_coda). Every state blinks now and then
+-- (the eyelids of battle/eyelids.lua over the open eyes). What depends on the game stays
 -- in code: tilt and tail with speed, the parachute swing, the aim. Pushed or
 -- dragged without input it doesn't run: it stays idle.
 -- The skins (battle/skins.lua, drawn on the stencil: tools/stampino)
@@ -72,6 +73,7 @@ local GRIPS = require "battle.grips"
 local FLAME = require "battle.flame"
 local CLOTH = require "battle.cloth"
 local LIGHTS = require "battle.lights"
+local EYELIDS = require "battle.eyelids"
 -- the cape drawings loaded (the battle gui lives as long as the game)
 local made_capes = {}
 
@@ -633,6 +635,13 @@ function M.new(color, look, weapon_only, lit)
 		gui.set_texture(s.heads_t[i], "diavoletto")
 		gui.set_material(s.heads_t[i], s.mat_tint)
 		s.tinte[#s.tinte + 1] = s.heads_t[i]
+		if i == 1 then
+			-- the eyelids of the blink: over the head, under the helmet
+			s.palpebre = box(s.testa, 0, 0, 0, 0)
+			gui.set_texture(s.palpebre, "diavoletto")
+			gui.set_material(s.palpebre, s.mat_flash)
+			s.flashes[#s.flashes + 1] = s.palpebre
+		end
 	end
 	s.fiamma = joint(s.collo, PT.cima[1] * k, PT.cima[2] * k)
 	dresses(s, s.fiamma, "fiamma", k)
@@ -687,9 +696,58 @@ local function flash_fx(s, q)
 	for i = 1, #s.flashes do gui.set_color(s.flashes[i], c) end
 end
 
+-- The blink (WB-040): now and then the eyelids come down over the open eyes,
+-- half shut, shut, half shut, at natural random intervals (sometimes twice).
+-- Only the heads with eyelids (battle/eyelids.lua, per head image) blink;
+-- the others (hit, happy, ko faces, the base devil) don't.
+local BLINK = { { 0.035, "half" }, { 0.07, "shut" }, { 0.05, "half" } }
+local BLINK_FROM, BLINK_TO = 1.8, 4.5   -- seconds between blinks: from + to * random
+local BLINK_TWICE = 0.18                -- the chance of a second blink right after
+
+local function eyelid(s, stage)
+	local p = stage and s.facce[s.faccia][1]
+	local e = p and EYELIDS[p.img]
+	e = e and e[stage]
+	if s.blink_shown == e then return end
+	s.blink_shown = e
+	gui.set_enabled(s.palpebre, e ~= nil)
+	if not e then return end
+	local k, d = s.k, shift("testa")
+	gui.play_flipbook(s.palpebre, e.img)
+	-- the eyelid's center and size are fractions of the head image (y from the top)
+	pos(s.palpebre, (p.x - d[1] + (e.x - 0.5) * p.w) * k, (p.y - d[2] + (0.5 - e.y) * p.h) * k)
+	size(s.palpebre, e.w * p.w * k, e.h * p.h * k)
+end
+
+-- only in the simulator's scenarios (imposta prova_battito half or shut, the
+-- keys of battle/eyelids.lua): the eyelids stay in that stage, for the photos
+-- (scenarios battito.txt, battito_socchiusi.txt)
+local HOLD_BLINK = sys and sys.get_config_string("megablast.prova_battito", "") or ""
+if HOLD_BLINK == "" then HOLD_BLINK = nil end
+
+local function blink(s, dt)
+	if HOLD_BLINK then return eyelid(s, HOLD_BLINK) end
+	s.blink_t = s.blink_t - dt
+	local stage
+	if s.blink_t < 0 then
+		local t = -s.blink_t
+		for i = 1, #BLINK do
+			if t < BLINK[i][1] then stage = BLINK[i][2] break end
+			t = t - BLINK[i][1]
+		end
+		if not stage then
+			s.blink_t = math.random() < BLINK_TWICE and 0.12 or BLINK_FROM + BLINK_TO * math.random()
+		end
+	end
+	eyelid(s, stage)
+end
+
 local function face_img(s, nome)
 	if s.faccia ~= nome then
 		s.faccia = nome
+		-- a new face: the blink starts again from it
+		gui.set_enabled(s.palpebre, false)
+		s.blink_shown = nil
 		local f, k, d = s.facce[nome], s.k, shift("testa")
 		for i = 1, #s.teste do
 			local n, t, p = s.teste[i], s.heads_t[i], f[i]
@@ -732,6 +790,8 @@ function M.reset(s)
 	scale(s.forma, 1, 1)
 	flash_fx(s, 0)
 	face_img(s, "testa")
+	s.blink_t = BLINK_FROM + BLINK_TO * math.random()
+	eyelid(s, nil)
 	if s.chosen_weapon then gui.set_enabled(s.armi[s.chosen_weapon], not s.vuote) end
 	s.holding_weapon, s.weapon_t = false, WEAPON_FROM + WEAPON_TO * math.random()
 	s.weapon_a = 0
@@ -995,6 +1055,7 @@ function M.update(s, dt, st)
 		s.goal[SQ], s.goal[LEAN], s.goal[HEAD], s.goal[TAIL] = 1, 0, head, 0
 	end
 	face_img(s, po.face_name or "testa")
+	blink(s, dt)
 	springs(s, dt)
 
 	local q = max(0.4, s.x[SQ])

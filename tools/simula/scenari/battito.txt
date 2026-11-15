@@ -1,0 +1,14 @@
+# Il battito degli occhi dell'apprendista (WB-040): con prova_battito le palpebre
+# restano chiuse (shut) o socchiuse (half), per le foto: in battaglia, fermo e
+# mirando, col cappuccio del Vuoto (le palpebre stanno sotto l'elmo).
+# A metà e senza elmo: battito_socchiusi.txt. Da vicino: --scala 2.
+imposta prova_battito shut
+imposta prova_vuoto 1
+imposta prova_vignette no
+imposta prova_missione il_fabbro
+
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 3
+zoom 01_fermo_chiusi 4
+mira 200 160 0.6 02_mira_chiusi 4
+aspetta 2
