@@ -121,4 +121,24 @@ Rendering rules, very strict, because every shape will be traced into vector lay
 
 ## Consegna di Codex
 
+Generati con `image_gen` dal ramo della scheda (`1a1e172d`). Ogni PNG è
+affiancato dal TXT con prompt integrale e riferimenti in ordine.
+
+| PNG e TXT in `art/WB-063/` | Tentativi | Selezione | Dimensioni |
+|---|---:|---:|---:|
+| `primarie_colpi_1` | 1 | 1 | 1536×1024 |
+| `primarie_colpi_2` | 1 | 1 | 1536×1024 |
+| `primarie_corte_1` | 1 | 1 | 1536×1024 |
+| `primarie_corte_2` | 1 | 1 | 1536×1024 |
+| `primarie_icone_1` | 1 | 1 | 1536×1024 |
+| `primarie_icone_2` | 1 | 1 | 1536×1024 |
+| `primarie_lunghe_1` | 1 | 1 | 1536×1024 |
+| `primarie_lunghe_2` | 1 | 1 | 1536×1024 |
+
+Controllati ordine e numero dei pezzi (4, 4, 6, 8), separazione, contorni e\norientamento a destra delle armi lunghe. Le icone sono senza fascia verde.\nNei colpi la fascia compare su pietra e goccia come da prompt specifico.\nIl Lanciarune è più corto della misura indicativa e il Trapano non ha una\nmanovella ben distinta. Alcune icone superano a vista quattro tinte oltre\nal nero. Silhouette a 40 px non provate.
+
+Magenta opaco, diverso da #FF00FF negli angoli campionati. Conservati i PNG
+originali. Corrispondenza esatta della palette, ricalco e resa in gioco
+restano da verificare.
+
 ## Resoconto di Claude
