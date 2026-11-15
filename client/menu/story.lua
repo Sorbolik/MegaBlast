@@ -79,24 +79,25 @@ local function show_line(s)
 		local inner = wide - 2 * BALLOON_PAD - 30
 		local name_h = caption and 0 or 26
 		-- the text first, to know how tall the balloon is
-		local probe = kit.text(s.g, line.testo, 0, 0, TEXT_SIZE, KC.INK)
+		local ink = caption and KC.SAND or KC.INK
+		local probe = kit.text(s.g, line.testo, 0, 0, TEXT_SIZE, ink)
 		local th = height_of(probe, inner)
 		gui.delete_node(probe)
 		local bh = th + name_h + 2 * BALLOON_PAD
 		-- where: the corner of the page
 		local hw, hh = s.pic_w / 2, PIC_H / 2
 		local where = pg.where or "t"
-		local x = where == "tl" and CX - hw + BALLOON_GAP or where == "tr" and CX + hw - BALLOON_GAP - wide - 18 or CX - (wide + 18) / 2
+		local x = where == "tl" and CX - hw + BALLOON_GAP or where == "tr" and CX + hw - BALLOON_GAP - wide or CX - wide / 2
 		local y = where == "b" and CY + hh - BALLOON_GAP - bh or CY - hh + BALLOON_GAP
 		local b = kit.group(s.g, x + wide / 2, y + bh / 2)
 		s.balloon = b.node
-		if caption then
-			kit.plate(b, x, y, wide, bh, KC.INK, { sk = 18, fill = KC.HOT })
-		else
-			kit.sand(b, x, y, wide, bh, KC.HOT, { sk = 18 })
-			kit.text(b, kit.upper(who[1]), x + 36, y + BALLOON_PAD + 12, 16, who[2], "start", 1.5)
+		-- a panel in nine parts, so it is exactly the box the text was measured for
+		-- (a long plate's drawing is lower than its box: tall lines spilled out)
+		kit.panel(b.node, wide, bh, caption and "pannello" or "pannello_chiaro")
+		if not caption then
+			kit.text(b, kit.upper(who[1]), x + 32, y + BALLOON_PAD + 12, 16, who[2], "start", 1.5)
 		end
-		local text = kit.text(b, line.testo, x + 32, y + BALLOON_PAD + name_h, TEXT_SIZE, KC.INK)
+		local text = kit.text(b, line.testo, x + 32, y + BALLOON_PAD + name_h, TEXT_SIZE, ink)
 		gui.set_pivot(text, gui.PIVOT_NW)
 		gui.set_position(text, vec(x + 32 - b.ox, b.oy - (y + BALLOON_PAD + name_h)))
 		gui.set_line_break(text, true)
