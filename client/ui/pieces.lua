@@ -108,7 +108,7 @@ return {
 	porta_allenamento = { w = 756, h = 226, box = { 225, 44, 166, 37 } },
 	porta_armeria = { w = 755, h = 226, box = { 120, 50, 225, 56 } },
 	porta_campagna = { w = 799, h = 236, box = { 240, 50, 189, 51 } },
-	porta_eventi = { w = 796, h = 236, box = { 110, 36, 236, 50 } },
+	porta_eventi = { w = 796, h = 236, box = { 185, 52, 236, 58 } },
 	primario_acceso = { w = 488, h = 200, c = 146 },
 	primario_premuto = { w = 474, h = 146, c = 142 },
 	primario_spento = { w = 483, h = 171, c = 145 },

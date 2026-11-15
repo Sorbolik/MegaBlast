@@ -311,7 +311,9 @@ MENU_INTERI = [
     # la home: le porte (WB-046, a destra lo scudo verso il bordo), GIOCA, pedana e zainetto
     ("porta_campagna", "porta_campagna", 236, "WB-046"),
     ("porta_allenamento", "porta_allenamento", 226, "WB-046"),
-    ("porta_eventi", "porta_eventi_dx", 236, "WB-046"),
+    # lo striscione EVENTI: il nastro con la piega di WB-061 (Sergio, 15 nov; fra tre
+    # idee), accorciato nel mezzo liscio per avere l'ingombro di quello di WB-046
+    ("porta_eventi", "porta_eventi_piega", 236, "WB-061"),
     ("porta_armeria", "porta_armeria_dx", 226, "WB-046"),
     ("gioca_sigillo", "gioca_sigillo", 166, "WB-046"),
     ("pedana", "pedana_griglia_1", 266, "WB-050"),
@@ -351,7 +353,7 @@ MENU_INTERI = [
 SPAZI_MISURATI = {
     "porta_campagna": (240, 50, 189, 51),
     "porta_allenamento": (225, 44, 166, 37),
-    "porta_eventi": (110, 36, 236, 50),
+    "porta_eventi": (185, 52, 236, 58),
     "porta_armeria": (120, 50, 225, 56),
     "gioca_sigillo": (180, 28, 149, 48),
 }
@@ -446,26 +448,14 @@ def fai_segni():
         intero(nome, a, 96)
 
 
-# lo spazio per scrivere sulle tre idee dello striscione EVENTI (WB-061), misurato a occhio
-SPAZI_EVENTI = {"piega": (185, 52, 236, 58), "frange": (190, 50, 244, 57), "pennone": (220, 55, 236, 60)}
-
-
 def ritaglio(cartella, nome):
     return np.array(Image.open(os.path.join(ART, cartella, "ritagli", nome + ".png")).convert("RGBA"))
 
 
 def fai_menu():
-    # lo striscione EVENTI: quello di WB-046 finche' Sergio non sceglie fra le tre idee
-    # di WB-061 (PORTA_EVENTI=piega, frange o pennone per montarne una; i ritagli sono
-    # accorciati nel mezzo liscio per avere l'ingombro di quello di oggi)
-    idea = os.environ.get("PORTA_EVENTI", "")
     for nome, f, h, d in MENU_INTERI:
-        if nome == "porta_eventi" and idea:
-            f, d = "porta_eventi_" + idea, "WB-061"
         intero(nome, ritaglio(d, f), h)
-        if nome == "porta_eventi" and idea:
-            SPAZI[nome] = SPAZI_EVENTI[idea]
-        elif nome in SPAZI_MISURATI:
+        if nome in SPAZI_MISURATI:
             SPAZI[nome] = SPAZI_MISURATI[nome]
     for nome, f, h, c, d in MENU_TRE:
         tre(nome, ritaglio(d, f), h, c)
