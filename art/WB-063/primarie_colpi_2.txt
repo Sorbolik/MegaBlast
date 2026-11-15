@@ -1,0 +1,18 @@
+Image 1 is a rough layout sketch made by our designer for a 2D comic game set in a cartoon hell, where a small red devil apprentice fights with weapons forged by his master, the Smith, in the Forge of the Titans. Image 2 shows the drawing style of the game (character parts). 
+Redraw the six flying shots of image 1 in a 3 by 2 grid, same order and positions, each about 300 px wide:
+1. Rune stone: a flat six-sided dark stone with a simple carved angular rune sign (not a letter) glowing orange in the middle, a team-green band along the lower edge.
+2. Molten drop: a round blob of molten metal, ember orange with a hard-edged hot yellow highlight at the top left, a small team-green band at the bottom.
+3. Shard: a thin iron splinter three times longer than wide, pointing right, with a glowing orange tip.
+4-6. Fire egg in three stages: the same black cast-iron egg with a small flame on top; stage 1 has one short orange crack, stage 2 has a long zig-zag crack, stage 3 is covered in glowing cracks.
+Rendering rules, very strict, because every shape will be traced into vector layers:
+- Same drawing style as image 2: thick closed pure black #000000 outline around every shape and between colour areas, chunky soft slightly asymmetric comic shapes.
+- FLAT COLORS ONLY: every area is one solid colour, plus at most one hard-edged shadow shape in the darker tone of the same material. No gradients, no textures, no soft shading, no glow halos, no blur, no sparkles, no motion lines.
+- Use ONLY these colours: dark iron #3B404B, iron #59606E, light iron #8F98A8; horn shadow #C9B48E, bone/horn #EFE3C8; pitch #2E2433, pitch sheen #5E4870; dark ember #C2410C, ember orange #FF7A1A, hot yellow #FFD15A; team band pure green #00FF00 with shadow #00B400; white #FFFFFF; black #000000.
+- Background: flat pure magenta #FF00FF everywhere, no halo around the objects, no ground shadow. Objects never touch each other.
+- No text, numbers, letters, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-063/riferimenti/R1_bozze_primarie_colpi.png
+art/WB-063/riferimenti/R2_stile_colori_piatti.png
+
+Strumento: image_gen. Tentativi: 1. Selezionato: 1.

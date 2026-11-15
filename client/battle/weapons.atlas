@@ -59,6 +59,9 @@ images {
   image: "/assets/weapons/teleport_tinta.png"
 }
 images {
+  image: "/assets/weapons/teleport_icona.png"
+}
+images {
   image: "/assets/weapons/eagle.png"
 }
 images {
@@ -158,13 +161,7 @@ images {
   image: "/assets/weapons/petard_icona.png"
 }
 images {
-  image: "/assets/weapons/scambio_icona.png"
-}
-images {
   image: "/assets/weapons/janus_icona.png"
-}
-images {
-  image: "/assets/weapons/teleport_icona.png"
 }
 images {
   image: "/assets/weapons/trap_icona.png"
@@ -177,6 +174,9 @@ images {
 }
 images {
   image: "/assets/weapons/parachute_icona.png"
+}
+images {
+  image: "/assets/weapons/scambio_icona.png"
 }
 images {
   image: "/assets/weapons/uncino.png"

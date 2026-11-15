@@ -1,0 +1,16 @@
+Image 1 is a rough layout sketch made by our designer for a 2D comic game set in a cartoon hell, where a small red devil apprentice fights with weapons forged by his master, the Smith, in the Forge of the Titans. Image 2 shows the drawing style of the game (character parts). 
+Draw eight square game icons, in a 4 by 2 grid like image 1, same order: Rune Launcher, Fire Egg, Shard Thrower, Titan Fist, Long Sniper, Sickle, Pitch Amphora, Horn Drill. Each icon is one single object, big, filling about four fifths of a 300 by 300 px cell, with the outline even thicker than in the weapon drawings. Long weapons lie diagonally with the recognizable part up and to the right. Keep each icon as simple as in image 1: few big shapes, at most four colours plus black, no detail smaller than a twentieth of the icon. Each icon must stay recognizable as a pure black silhouette at 40 px.
+1. Gargoyle head with horns, mouth open, glowing rune inside, the tube going down-left. 2. Black egg with glowing cracks and a flame. 3. Round spiked drum with three glowing barrels. 4. Stone fist, knuckles up, one orange crack. 5. Long thin gun with the yellow eye scope. 6. Crescent sickle with orange edge and brass ring. 7. Terracotta amphora with black pitch dripping. 8. Spiral horn drill with brass tip.
+No team-green on the icons.
+Rendering rules, very strict, because every shape will be traced into vector layers:
+- Same drawing style as image 2: thick closed pure black #000000 outline around every shape and between colour areas, chunky soft slightly asymmetric comic shapes.
+- FLAT COLORS ONLY: every area is one solid colour, plus at most one hard-edged shadow shape in the darker tone of the same material. No gradients, no textures, no soft shading, no glow halos, no blur, no sparkles, no motion lines.
+- Use ONLY these colours: dark iron #3B404B, iron #59606E, light iron #8F98A8; dark brass #A8761F, brass #D9A441; dark leather #4A3019, leather #6B4A2B, light leather #C89255, wood #8A5A33; horn shadow #C9B48E, bone/horn #EFE3C8; pitch #2E2433, pitch sheen #5E4870; dark terracotta #9C4A26, terracotta #C8693A; dark ember #C2410C, ember orange #FF7A1A, hot yellow #FFD15A; white #FFFFFF; black #000000.
+- Background: flat pure magenta #FF00FF everywhere, no halo around the objects, no ground shadow. Objects never touch each other.
+- No text, numbers, letters, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-063/riferimenti/R1_bozze_primarie_icone.png
+art/WB-063/riferimenti/R2_stile_colori_piatti.png
+
+Strumento: image_gen. Tentativi: 1. Selezionato: 1.

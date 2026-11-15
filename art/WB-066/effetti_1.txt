@@ -1,0 +1,18 @@
+Image 1 shows rough effect sketches for a 2D comic game; image 2 shows the drawing style of the game.
+
+Draw sixteen separate effect shapes in a 4 by 4 grid, each centred in a 384 by 256 px cell and about 180 px big, ALL filled with pure white #FFFFFF with a thick closed black outline (the game tints them), flat, no shading:
+Row 1: (1) a carved angular rune sign inside a thin ring (not a letter); (2) a jagged comic impact star with eight points; (3) a crescent slash smear, thick in the middle and tapering at both ends; (4) a curly wind gust, three parallel curls.
+Row 2: (5) a round puff of smoke, three bumps; (6) a ring of smoke, open in the middle; (7) a thin ring with small debris dots pointing inward toward the centre (a reverse explosion); (8) a pitch bubble, a dome with a small highlight cut-out.
+Row 3: (9) a broken eggshell shard, curved, triangular; (10) a broken terracotta shard; (11) three small round droplets in a cluster; (12) a small rectangular paper confetti, slightly twisted.
+Row 4: status signs: (13) a zig-zag crack with two branches; (14) a flat ash ring seen in perspective (an ellipse ring) with three tiny flakes above; (15) a small flame with two tongues; (16) a four-pointed sparkle.
+
+Rendering rules, very strict, because every shape will be traced into vector layers:
+- White #FFFFFF fill and black #000000 outline only; the only allowed extra is a hard-edged light grey #B7B0B8 shadow shape inside a shape.
+- Background: flat pure magenta #FF00FF everywhere, no halo, shapes never touch each other.
+- No text, numbers, letters, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-066/riferimenti/R1_bozze_effetti.png
+art/WB-066/riferimenti/R2_stile_colori_piatti.png
+
+Strumento: image_gen. Tentativi: 1. Selezionato: 1.

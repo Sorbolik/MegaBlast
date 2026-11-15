@@ -549,7 +549,9 @@ def comando(g, riga):
         g.attendi(0.1)
         g.xdo("mouseup", 3)
         g.attendi(0.2)
-        if len(a) > 2:
+        if len(a) > 3:
+            g.zoom(a[2], num(3))
+        elif len(a) > 2:
             g.scatta(a[2])
         g.xdo("mouseup", 1)
     elif c == "niente_evento":
