@@ -1,6 +1,6 @@
 # WB-066 · Effetti delle armi: sprite bianchi
 
-- **Stato:** CONSEGNATA (integrazione in corso) · era APPROVATA (Claude, 15 nov: Sergio ha chiesto di rifare la grafica di tutte le armi e ha detto «procedi»; reversibile)
+- **Stato:** IMPLEMENTATA · era APPROVATA (Claude, 15 nov: Sergio ha chiesto di rifare la grafica di tutte le armi e ha detto «procedi»; reversibile)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `claude/project-thread-wfha2a` (eseguila da questo ramo: `git fetch origin claude/project-thread-wfha2a` e leggi la scheda e i riferimenti da lì; non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-066`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-066` senza chiedere conferma (il repository è privato).
@@ -70,5 +70,5 @@ Rendering rules, very strict, because every shape will be traced into vector lay
 
 ## Resoconto di Claude
 
-(15 nov) Scelto `effetti_1` (la runa non sembra una lettera, in `effetti_2` sì). Ricalcato e tagliato in 16 pezzi `art/armi/fx_*.png` (le parti staccate, gocce e fiocchi, restano nel loro pezzo). Le firme sugli impatti delle armi vengono nel passo dopo.
+(15 nov) Scelto `effetti_1` (la runa non sembra una lettera, in `effetti_2` sì). Ricalcato e tagliato in 16 pezzi `art/armi/fx_*.png` (le parti staccate, gocce e fiocchi, restano nel loro pezzo). Nel gioco con `impact.sign` (6 nodi in rotazione, `client/battle/impact.lua`): runa del Lanciarune sullo scoppio, gusci dell'Uovo che cadono, risucchio della Voragine che si stringe, gocce di metallo del Cecchino, stella d'urto di Pugno, Maglio, Cannonata e Affondo, fendente di Falcetto e Lama, vento del Mantice, anello e coriandoli del Petardo, cocci e bolla della Pece. Gli stati (crepa, cenere, fiammella) e la scintilla restano nell'atlante per il passo dopo.
 

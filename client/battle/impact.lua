@@ -12,6 +12,12 @@
 --   impact.update(s, dt)                    -- every frame
 --   impact.tier(damage)                     -- 1 small, 2 medium, 3 big
 --   impact.reset(s)                         -- new match
+--   impact.sign(s, "fx_runa", x, y, size, color, how)   -- a weapon's signature
+--
+-- The signatures (WB-066, drawn by Codex): white shapes with a black outline,
+-- tinted, from the battle atlas (fx_*), a pool of SIGN_N nodes. how: "pop" grows
+-- and fades where it is, "fall" is thrown up and falls spinning, "shrink" closes
+-- toward the centre (the Voragine), "drift" rises slowly (smoke, bubbles).
 local M = {}
 
 local rand, cos, sin, sqrt, exp, min, max = math.random, math.cos, math.sin, math.sqrt, math.exp, math.min, math.max
@@ -21,6 +27,8 @@ local GRAVITY = 900
 
 -- the size of the pool of each kind: smoke below, fire and sparks above
 local SMOKE_N, FX_N = 20, 90
+-- the signatures: few, they are big drawings (max 6 nodes, docs/prestazioni.md)
+local SIGN_N = 6
 
 local FIRE0 = { 1.0, 0.95, 0.7 }    -- the core of the fire: almost white
 local FIRE1 = { 1.0, 0.35, 0.05 }   -- cooling: orange, then red
@@ -71,20 +79,105 @@ local function fill(q, x, y, vx, vy, life, s0, s1, c0, c1, a, grav, drag)
 	q.c0r, q.c0g, q.c0b, q.c1r, q.c1g, q.c1b = c0[1], c0[2], c0[3], c1[1], c1[2], c1[3]
 end
 
+local function sign_node()
+	local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 0))
+	gui.set_adjust_mode(n, gui.ADJUST_FIT)
+	gui.set_texture(n, "battaglia")
+	gui.play_flipbook(n, "fx_stella")
+	gui.set_size_mode(n, gui.SIZE_MODE_MANUAL)
+	gui.set_enabled(n, false)
+	return n
+end
+
 function M.new()
-	local s = { smoke = pool(SMOKE_N, false), fx = pool(FX_N, true), ember_t = 0 }
+	local s = { smoke = pool(SMOKE_N, false), fx = pool(FX_N, true), ember_t = 0,
+		signs = { n = SIGN_N, i = 0, live = 0, list = {} } }
+	for k = 1, SIGN_N do
+		s.signs.list[k] = { node = sign_node(), on = false, x = 0, y = 0, vx = 0, vy = 0, t = 0, life = 1,
+			size = 1, w = 1, h = 1, rot = 0, vrot = 0, how = "pop", a = 1,
+			col = vmath.vector4(1, 1, 1, 1), sz = vmath.vector3(1, 1, 0), pos = vmath.vector3(0, 0, 0),
+			euler = vmath.vector3(0, 0, 0) }
+	end
 	return s
+end
+
+-- the size of each signature's drawing (w / h), to keep it undeformed
+local ASPECT = {
+	fx_runa = 1.0, fx_stella = 1.04, fx_fendente = 1.27, fx_vento = 1.23, fx_fumo = 1.07,
+	fx_anello_fumo = 1.05, fx_risucchio = 1.01, fx_bolla = 1.36, fx_guscio = 1.34, fx_coccio = 1.17,
+	fx_gocce = 1.1, fx_coriandolo = 1.38, fx_crepa = 0.97, fx_cenere = 1.48, fx_fiamma = 0.8, fx_scintilla = 1.0,
+}
+local LIFE = { pop = 0.35, fall = 0.8, shrink = 0.45, drift = 0.9 }
+
+function M.sign(s, name, x, y, size, color, how, angle)
+	local p = s.signs
+	p.i = p.i % p.n + 1
+	local q = p.list[p.i]
+	if not q.on then p.live = p.live + 1 end
+	q.on, q.t, q.how = true, 0, how or "pop"
+	q.life = LIFE[q.how]
+	q.x, q.y, q.size = x, y, size
+	q.w, q.h = size * (ASPECT[name] or 1), size
+	q.rot, q.vrot, q.vx, q.vy = angle or 0, 0, 0, 0
+	if q.how == "fall" then
+		local a = math.pi / 2 + (rand() * 2 - 1) * 0.9
+		local v = 160 + rand() * 120
+		q.vx, q.vy, q.vrot, q.rot = cos(a) * v, sin(a) * v, (rand() * 2 - 1) * 540, rand() * 360
+	elseif q.how == "drift" then
+		q.vx, q.vy = (rand() * 2 - 1) * 15, 30 + rand() * 20
+	end
+	q.col.x, q.col.y, q.col.z, q.col.w = color[1], color[2], color[3], 1
+	gui.play_flipbook(q.node, name)
+	gui.set_enabled(q.node, true)
+end
+
+local function advance_signs(p, dt)
+	if p.live == 0 then return end
+	for k = 1, p.n do
+		local q = p.list[k]
+		if q.on then
+			q.t = q.t + dt
+			if q.t >= q.life then
+				q.on = false
+				p.live = p.live - 1
+				gui.set_enabled(q.node, false)
+			else
+				local u = q.t / q.life
+				local k2
+				if q.how == "pop" then
+					k2 = 0.6 + 0.6 * (1 - (1 - u) * (1 - u))
+				elseif q.how == "shrink" then
+					k2 = 1.5 - u
+				elseif q.how == "fall" then
+					q.vy = q.vy - GRAVITY * dt
+					k2 = 1
+				else
+					k2 = 0.8 + 0.5 * u
+				end
+				q.x, q.y, q.rot = q.x + q.vx * dt, q.y + q.vy * dt, q.rot + q.vrot * dt
+				q.sz.x, q.sz.y = q.w * k2, q.h * k2
+				q.pos.x, q.pos.y = q.x, q.y
+				q.euler.z = q.rot
+				q.col.w = u < 0.5 and 1 or (1 - u) / 0.5
+				gui.set_position(q.node, q.pos)
+				gui.set_size(q.node, q.sz)
+				gui.set_euler(q.node, q.euler)
+				gui.set_color(q.node, q.col)
+			end
+		end
+	end
 end
 
 function M.nodes(s)
 	local out = {}
 	for _, q in ipairs(s.smoke.list) do out[#out + 1] = q.node end
 	for _, q in ipairs(s.fx.list) do out[#out + 1] = q.node end
+	for _, q in ipairs(s.signs.list) do out[#out + 1] = q.node end
 	return out
 end
 
 function M.reset(s)
-	for _, p in ipairs({ s.smoke, s.fx }) do
+	for _, p in ipairs({ s.smoke, s.fx, s.signs }) do
 		for _, q in ipairs(p.list) do q.on = false; gui.set_enabled(q.node, false) end
 		p.live = 0
 	end
@@ -190,6 +283,7 @@ end
 function M.update(s, dt)
 	advance(s.smoke, dt)
 	advance(s.fx, dt)
+	advance_signs(s.signs, dt)
 end
 
 return M

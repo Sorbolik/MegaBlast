@@ -3,7 +3,7 @@
 # mette l'icona dell'attrezzo), la tagliola posata (aperta) e scattata
 # (chiusa), il trampolino (la Molla) e la bolla dello scudo addosso.
 # Le parti "luce" sono bianche: il gioco le tinge col colore della squadra.
-# Scrive client/assets/fx/attrezzo_*.png (vanno in client/battle/battle.atlas).
+# Scrive client/assets/fx/attrezzo_*.png e le firme fx_*.png (vanno in client/battle/battle.atlas).
 #
 # python3 tools/grafica/attrezzi.py   (serve cairosvg: pip install cairosvg)
 import math
@@ -129,6 +129,24 @@ def main():
         print(nome, w, h, "misura nel mondo", round(box[2] - box[0], 1), round(box[3] - box[1], 1))
     if os.path.exists(TAGLIOLA_RICALCO):
         tagliola_ricalcata()
+    firme()
+
+
+# le firme delle armi (WB-066, art/armi/fx_*.png): bianche col contorno nero, il gioco
+# le tinge e le anima (client/battle/impact.lua, impact.sign); al massimo FIRMA_PX
+# di lato, che è più di quanto si vedono anche con lo zoom più vicino
+FIRMA_PX = 192
+
+
+def firme():
+    from PIL import Image
+    cartella = os.path.join(RADICE, "art", "armi")
+    for f in sorted(os.listdir(cartella)):
+        if f.startswith("fx_") and f.endswith(".png"):
+            im = Image.open(os.path.join(cartella, f)).convert("RGBA")
+            k = FIRMA_PX / max(im.size)
+            im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).save(os.path.join(OUT, f), optimize=True)
+            print(f[:-4], "firma")
 
 
 if __name__ == "__main__":
