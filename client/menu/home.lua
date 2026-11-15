@@ -55,7 +55,7 @@ local PED_X = 640 - 0.37 * PED_W
 local FEET = PED_TOP + 0.30 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
-local BAG = 62
+local BAG = 46
 
 -- the doors: x, y, width, piece, side, color of the writing, size of the name
 local DOORS = {
@@ -154,7 +154,7 @@ function M.new(color)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	h.glow = 0
-	h.bag = kit.piece(mid, "zainetto", PED_X + 0.86 * PED_W, PED_TOP + 0.52 * PED_H - 56 + BAG / 2, BAG)
+	h.bag = kit.piece(mid, "zainetto", PED_X + 0.88 * PED_W, PED_TOP + 0.52 * PED_H - BAG / 2, BAG)
 	local hy = FEET - 380 - 10
 	h.hero = kit.zone(mid, h.buttons, PED_X - 10, hy, PED_W + 20, PED_BOTTOM + 6 - hy, "zaino")
 

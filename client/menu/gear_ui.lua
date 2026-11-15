@@ -7,7 +7,7 @@
 --   local gear_ui = require "menu.gear_ui"
 --   gear_ui.slot(g, x, y, s, opt)        -- opt: set, slot, level, worn, sel, empty_slot
 --   gear_ui.worn(s, g, cx, feet, h, x, ys, size, sel)   -- the labels of the pieces worn
---   gear_ui.stats(s, g, x, y, w, now, after, o)         -- the column of the stats, a page at a time
+--   gear_ui.stats(s, g, x, y, w, now, after, o)         -- the column of the stats, all in one screen
 --   gear_ui.loadouts(s, g, x, y, active, prefix, label) -- the three loadouts
 --   gear_ui.chips(s, g, x, y, list, active)             -- a row of filters
 --   gear_ui.families(s, g, x, y, active)                -- the families' dots
@@ -158,12 +158,13 @@ function M.value(v, how)
 end
 
 -- The stats of the loadout a (and of a2, the same with a piece changed: its value and an arrow)
--- in the column at (x, y), w wide, sized for a phone (Sergio, 15 Nov): STATISTICHE
--- and eight big rows at a time, every other row on a dark strip; a tap on the
--- column turns the page ("statistiche:", s.stat_page). The rows that change with
--- a2 come first. Better than the base in mint, worse in ice.
--- o.from, o.to: only those rows, without the pages (the whole sheet of the Sigilli);
--- o.title = false: no title
+-- in the column at (x, y), w wide: STATISTICHE and all the rows in one screen
+-- (Sergio, 15 Nov: no pages), every other row on a dark strip, the texts at the
+-- smallest size of the menus. The rows that change with a2 come first. Better
+-- than the base in mint, worse in red (Sergio, 15 Nov: ice for worse is
+-- counterintuitive).
+-- o.from, o.to: only those rows, big (the sheet of the Sigilli, two columns of
+-- M.STAT_ROWS); o.title = false: no title
 M.STAT_ROWS = 8
 M.STAT_PAD = 12
 function M.stats(s, g, x, y, w, a, a2, o)
@@ -181,17 +182,12 @@ function M.stats(s, g, x, y, w, a, a2, o)
 	end
 	-- behind the column an iron panel (Sergio, 15 Nov): the rows are read on it,
 	-- not on the painting; the same margin (M.STAT_PAD) on every side of the rows
-	local rh = 54
-	local tall = 34 + M.STAT_ROWS * rh
+	local big = o.from ~= nil
+	local from, to = o.from or 1, o.to or #order
+	local rh = big and 54 or 27
+	local name_size, value_size = big and 19 or 16, big and 22 or 18
+	local tall = 34 + (big and M.STAT_ROWS or #order) * rh
 	kit.panel(kit.group(g, x + w / 2, y + tall / 2).node, w + 2 * M.STAT_PAD, tall + 2 * M.STAT_PAD)
-	local pages = math.ceil(#order / M.STAT_ROWS)
-	local from, to = o.from, o.to
-	if not from then
-		local page = math.min(s.stat_page or 1, pages)
-		from, to = (page - 1) * M.STAT_ROWS + 1, math.min(#order, page * M.STAT_ROWS)
-		kit.text(g, kit.upper(T.page:format(page, pages)), x + w, y + 18, 18, KC.SAND, "end", 0.5)
-		kit.zone(g, s.buttons, x - 8, y - 8, w + 16, 44 + M.STAT_ROWS * 54, "statistiche:")
-	end
 	if o.title ~= false then kit.text(g, T.stats, x, y + 18, 22, KC.HOT, "start", 1) end
 	for i = from, to do
 		local st = order[i]
@@ -204,10 +200,10 @@ function M.stats(s, g, x, y, w, a, a2, o)
 		local v, b = now[k], base[k]
 		local col = KC.SAND
 		if type(v) == "number" and type(b) == "number" and v ~= b then
-			col = ((v > b) ~= (LESS[k] == true)) and KC.MINT or KC.ICE
+			col = ((v > b) ~= (LESS[k] == true)) and KC.MINT or KC.RED
 		end
 		local t = kit.upper(M.value(v, how))
-		-- with the piece chosen on: the new value, in mint when it gets better and in ice
+		-- with the piece chosen on: the new value, in mint when it gets better and in red
 		-- when it gets worse (the colors of plus and minus everywhere), and a small
 		-- arrow that says where the number goes, for who does not tell the colors
 		local changes = after and after[k] ~= v
@@ -216,24 +212,24 @@ function M.stats(s, g, x, y, w, a, a2, o)
 			local v2 = after[k]
 			t = kit.upper(M.value(v2, how))
 			up = (type(v2) == "number" and v2 or v2 and 1 or 0) > (type(v) == "number" and v or v and 1 or 0)
-			col = (up ~= (LESS[k] == true)) and KC.MINT or KC.ICE
+			col = (up ~= (LESS[k] == true)) and KC.MINT or KC.RED
 		end
-		local n = kit.text(g, t, x + w, yy + 33, 22, col, "end")
+		local n = kit.text(g, t, x + w, yy + (big and 33 or 20), value_size, col, "end")
 		local vw = kit.width(n)
 		if vw > w * 0.52 then
 			gui.set_scale(n, gui.get_scale(n) * (w * 0.52 / vw))
 			vw = w * 0.52
 		end
 		if changes then
-			local arrow = kit.piece(g, "freccia", x + w - vw - 12, yy + 26, 14)
+			local arrow = kit.piece(g, "freccia", x + w - vw - 12, yy + (big and 26 or 13), 14)
 			gui.set_rotation(arrow, vmath.vector3(0, 0, up and 90 or -90))
 			gui.set_color(arrow, col)
 			vw = vw + 24
 		end
-		local name = kit.text(g, kit.upper(TA.stats[k]), x, yy + 32, 19, KC.SAND)
+		local name = kit.text(g, kit.upper(TA.stats[k]), x, yy + (big and 32 or 19), name_size, KC.SAND)
 		local wide, room = kit.width(name), w - vw - 10
 		-- never under 16 (the smallest text of the menus)
-		if wide > room then gui.set_scale(name, gui.get_scale(name) * math.max(room / wide, 16 / 19)) end
+		if wide > room then gui.set_scale(name, gui.get_scale(name) * math.max(room / wide, 16 / name_size)) end
 	end
 end
 

@@ -310,8 +310,6 @@ local function run_cmd(s, ui_action)
 			skills.choose(s.draft, a, k, which)
 			s.focus = { a, k, which }
 		end
-	elseif kind == "statistiche" then
-		s.stat_page = (s.stat_page or 1) % 2 + 1
 	elseif kind == "foglio" then
 		s.sheet = not s.sheet
 	elseif kind == "salva" then

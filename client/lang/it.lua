@@ -477,8 +477,6 @@ return {
 		stats = "STATISTICHE",
 		-- a loadout still closed: from which level
 		loadout_locked = "DAL LIV %d",
-		-- the stats come a page at a time: a tap turns it
-		page = "%d / %d ›",
 	},
 
 	-- menu/backpack.lua: the ZAINO (from the apprentice), INVENTARIO and SIGILLI

@@ -95,7 +95,7 @@ local function upgrade(a)
 	local y = 308
 	for i, e in ipairs(now) do
 		if e.row ~= "sign" then
-			local col = e.good >= 0 and KC.MINT or KC.ICE
+			local col = e.good >= 0 and KC.MINT or KC.RED
 			fit(kit.text(g, gear_ui.effect(e), x + 28, y + 17, 21, col), 200)
 			if after and after[i] and after[i].good ~= e.good then
 				kit.text(g, "› " .. gear_ui.effect(after[i]):match("^(%S+)"), x + RIGHT_COL - 8, y + 17, 18, KC.HOT, "end")
@@ -329,8 +329,6 @@ local function run_cmd(a, ui_action)
 				if equip.tier(level) > before then a.step = { gear_ui.slot_of(sel[2]).name, equip.BY_ID[sel[1]].name, level } end
 			end
 		end
-	elseif kind == "statistiche" then
-		a.stat_page = (a.stat_page or 1) % 2 + 1
 	elseif kind == "merce" then
 		-- an offer is bought at the shop's price; the day's pieces at the full one
 		local offer = wallet.shop(p, wallet.today())[s2] == s1
