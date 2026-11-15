@@ -196,12 +196,13 @@ C.TAR = { damage = 45, radius = 60, turns = 3, fuse = 4 * 60 }
 C.DRILL = { speed = 560, dig_speed = 300, dig = 220, radius = 7, after = 200, fly_speed = 560,
 	blast = { r = 14, damage_r = 24, damage = 48, impulse = 30 },
 	inner = { r = 10, damage_r = 18, damage = 24, impulse = 20 } }
--- Calamita (secondary, magnet): instant pulse centred distance pixels from the
--- user along the aim: every robot (the user too) within radius slides to the
--- centre in ticks ticks, for a little damage (not to the user). Nothing happens
--- if there is no ground within drop pixels under the centre (nobody is pulled
--- over a pit: no killing with a teleport + magnet) or the centre is in terrain.
-C.MAGNET = { distance = 120, radius = 150, ticks = 30, damage = 40, drop = 120 }
+-- Voragine (secondary, vortex; Sergio, 15 November 2026: in place of the
+-- Calamita): a black sphere thrown in an arc like the Lanciarune; where it bursts
+-- it digs a crater three times the Lanciarune's (blast.r, the Lanciarune's is
+-- 5 * U, about 39) and pulls robots towards the centre instead of pushing them
+-- out (negative impulse): it opens holes and drops people in. A secondary: some
+-- damage, never a status effect.
+C.VORTEX = { blast = { r = 110, damage_r = 130, damage = 30, damage_min = 10, impulse = -5 } }
 -- Cannonata (secondary, cannon): the user is launched as a ballistic body at
 -- speed * power (at least min_power) with gravity times the robots', no control.
 -- It passes through robots hitting each once (damage, and pushes them away at

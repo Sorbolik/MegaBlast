@@ -349,15 +349,32 @@ def punta(d):
     return dict(box=(-6, -4.5, 8.5, 4.5))
 
 
-def calamita(d):
-    # Calamita: un ferro di cavallo rosso con i poli bianchi (tinti), tenuto per la curva
-    d.path("M-3,-3 Q-8,-3 -8,2 L-8,5 L-4.8,5 L-4.8,2 Q-4.8,-0.4 -3,-0.4 L3.4,-0.4 Q5.2,-0.4 5.2,2 L5.2,5 "
-           "L8.4,5 L8.4,2 Q8.4,-3 3.4,-3 Z", "rosso")
-    d.rect(-8, 3.2, 3.2, 3.0, "bianco", r=0.3, tinta=True)
-    d.rect(5.2, 3.2, 3.2, 3.0, "bianco", r=0.3, tinta=True)
-    d.riga("M-3,-1.9 L3.4,-1.9", COL["rosso"][2], 0.5)
-    d.riga("M-6.8,4.2 L-5.2,4.2 M5.6,4.2 L7.4,4.2", INK, 0.35)
-    return dict(box=(-11, -5.5, 11, 8))
+def voragine(d, cx=0.0, cy=0.0, r=3.4):
+    # Voragine: una sfera nera di ferro con il vortice viola che gira verso il
+    # centro e il cuore tinto (il colore di chi la lancia)
+    d.cerchio(cx, cy, r, "ferro")
+    import math
+    k = r / 3.4
+    # spirale di Archimede: due giri e mezzo dal bordo al cuore
+    punti = []
+    for n in range(61):
+        t = n / 60
+        a = t * 5 * math.pi
+        rr = (2.7 - 1.9 * t) * k
+        punti.append(f"{cx + math.cos(a) * rr:.2f},{cy + math.sin(a) * rr:.2f}")
+    d.riga("M" + " L".join(punti), "#9466ea", 0.6 * k)
+    d.cerchio(cx, cy, 0.8 * k, "bianco", tinta=True, contorno=False)
+    d.cerchio(cx - 1.4 * k, cy + 1.5 * k, 0.55 * k, "osso", contorno=False)
+
+
+def voragine_in_mano(d):
+    voragine(d, 4.4, 1.6)
+    return dict(box=(-1.0, -4.5, 10, 9))
+
+
+def voragine_volo(d):
+    voragine(d, 0, 0, 3.2)
+    return dict(box=(-5, -5, 5, 5))
 
 
 def cannonata(d):
@@ -463,7 +480,7 @@ ARMI = {
     "boomerang": (falcetto, 30),
     "tar": (fiasco_in_mano, 0),
     "drill": (trapano, 35),
-    "magnet": (calamita, 20),
+    "vortex": (voragine_in_mano, 0),
     "cannon": (cannonata, 30),
     "petard": (petardo_in_mano, 0),
 }
@@ -485,6 +502,7 @@ COLPI = {
     "fiasco": fiasco_volo,
     "punta": punta,
     "petardo_volo": petardo_volo,
+    "voragine_volo": voragine_volo,
 }
 
 

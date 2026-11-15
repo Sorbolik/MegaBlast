@@ -35,7 +35,7 @@ const (
 //
 // "j" says whether jump is still held down: releasing it while rising makes the jump short.
 // "w" is the weapon: "missile" (if missing), "sword", "teleport", a secondary picked
-// at the start ("eagle", "mallet", "lunge", "bellows", "magnet", "cannon", "petard") or a crate
+// at the start ("eagle", "mallet", "lunge", "bellows", "vortex", "cannon", "petard") or a crate
 // weapon ("grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill"): the simulation only uses it if the robot has shots.
 type clientMsg struct {
 	T    string  `json:"t"`

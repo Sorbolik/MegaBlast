@@ -1,0 +1,25 @@
+# Voragine: una sfera nera lanciata ad arco; dove scoppia apre un buco grande e tira dentro chi è vicino.
+# Con prova_secondaria vortex la Voragine sta a 868 (y = 62), (si tocca nella barra).
+imposta prova_secondaria vortex
+imposta prova_vicino 200
+imposta zoom 2
+
+aspetta 2
+tocca 222 148                      # ALLENAMENTO
+aspetta 1.5
+tocca 765 549                      # STESSO TELEFONO
+aspetta 0.5
+tocca 1075 55                      # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 10
+aspetta 1
+foto 01_barra
+tocca 868 62
+annulla 120 0 02_voragine_in_mano
+mira 140 -10 0.5 03_mira_voragine
+aspetta 0.3
+foto 04_in_volo
+aspetta 0.5
+foto 05_scoppio
+aspetta 1
+foto 06_il_buco
+aspetta_stato turno=2 fase=aim 30

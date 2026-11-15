@@ -1,4 +1,4 @@
--- Tests of the six new weapons (config.BOOMERANG, TAR, DRILL, MAGNET, CANNON, PETARD).
+-- Tests of the six new weapons (config.BOOMERANG, TAR, DRILL, VORTEX, CANNON, PETARD).
 --   luajit tests/new_weapons_test.lua
 package.path = "client/?.lua;" .. package.path
 
@@ -42,7 +42,7 @@ end
 for _, w in ipairs({ "boomerang", "tar", "drill" }) do
 	check(game.WEAPONS[w] and not game.SECONDARY[w] and config.CRATE_CONTENTS and true, w .. " is a primary")
 end
-for _, w in ipairs({ "magnet", "cannon", "petard" }) do
+for _, w in ipairs({ "vortex", "cannon", "petard" }) do
 	check(game.WEAPONS[w] and game.SECONDARY[w], w .. " is a secondary")
 	local q = game.new(1, "pavimento", { secondary = w })
 	q.robots[1].ammo[w] = 1
@@ -122,19 +122,23 @@ do
 	check(far == 0, "past config.DRILL.after pixels it hits nobody")
 end
 
--- Calamita: pulls near robots to the centre, nothing over a pit
+-- Voragine: flies like the Lanciarune, digs a big crater, pulls inwards, no status
 do
-	local q, a, b = arena("magnet", 600, 600 + 120 + 90)
-	local x0 = b.x
-	fire(q, "magnet", 0)
-	run(q, config.MAGNET.ticks)
-	check(math.abs(b.x - (600 + config.MAGNET.distance)) < 30, "the Calamita slides the enemy to the centre")
+	local q, a, b = arena("vortex", 600, 800)
+	local hp = b.hp
+	fire(q, "vortex", 0, 1)
+	check(q.projectile and q.projectile.kind == "vortex", "the Voragine flies")
+	settle(q)
+	check(b.hp < hp and hp - b.hp <= config.VORTEX.blast.damage, "it hits the enemy, at most config.VORTEX.blast.damage")
 	check(q.used.secondary and next(b.status) == nil, "secondary, no effects")
-	local q2, a2, b2 = arena("magnet", 600, 800, function(q3) q3.terrain:rect(650, 0, 300, 100, 0) end)
-	local x1 = b2.x
-	fire(q2, "magnet", 0)
-	run(q2, 40)
-	check(not (q2.robots[q2.current].pull) and math.abs(b2.x - x1) < 5, "over a pit nothing is pulled")
+	-- the crater: much wider than the Lanciarune's
+	local q2 = arena("vortex", 300, 1200)
+	q2:explode(800, 90, nil, config.VORTEX.blast, "vortex")
+	check(not q2.terrain:solid(800 + 90, 90) and not q2.terrain:solid(800 - 90, 90), "the crater is 90 px wide on each side")
+	-- the pull: whoever is beside the burst moves towards it
+	local q3, a3, b3 = arena("vortex", 300, 880)
+	q3:explode(800, 90, a3.id, config.VORTEX.blast, "vortex")
+	check(b3.vx < 0, "the Voragine pulls towards the centre")
 end
 
 -- Cannonata: flies, hits what it crosses, stops on terrain

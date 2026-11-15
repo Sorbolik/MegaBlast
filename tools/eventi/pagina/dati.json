@@ -14,8 +14,8 @@
 		"eagle": "TONANTE",
 		"grenade": "UOVO DI FIAMMA",
 		"hook": "RAMPINO",
+		"janus": "GIANO",
 		"lunge": "AFFONDO",
-		"magnet": "CALAMITA",
 		"mallet": "MAGLIO",
 		"missile": "LANCIARUNE",
 		"parachute": "PARACADUTE",
@@ -26,7 +26,8 @@
 		"sword": "LAMA",
 		"tar": "POZZA DI PECE",
 		"teleport": "TELETRASPORTO",
-		"trampoline": "TRAMPOLINO"
+		"trampoline": "TRAMPOLINO",
+		"vortex": "VORAGINE"
 	},
 	"primarie": ["grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill"],
 	"punti": {
@@ -43,7 +44,7 @@
 		"self_death": -30,
 		"trap": 10
 	},
-	"secondarie": ["eagle", "mallet", "lunge", "bellows", "magnet", "cannon", "petard"],
+	"secondarie": ["eagle", "mallet", "lunge", "bellows", "vortex", "cannon", "petard"],
 	"sempre": ["missile", "sword"],
 	"tetto_max": 29
 }

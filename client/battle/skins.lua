@@ -427,10 +427,10 @@ return {
 		grembiule_fabbro_forgiato = { category = "corazza", pieces = {
 			braccio = { img = "grembiule_fabbro_forgiato_spallina_braccio_1", tint = nil, x = 0.5, y = 3.5, w = 46.4, h = 41.1, mode = "over" },
 			braccio_1 = { img = "grembiule_fabbro_forgiato_spallina_braccio_1", tint = nil, x = 0.7, y = 0.9, w = 41.7, h = 37.1, mode = "over" },
-			braccio_2 = { img = "grembiule_fabbro_forgiato_spallina_braccio_2", tint = nil, x = 2.0, y = 0.6, w = 27.9, h = 25.1, mode = "over" },
+			braccio_2 = { img = "grembiule_fabbro_forgiato_spallina_braccio_2", tint = nil, x = 2.0, y = 0.9, w = 27.9, h = 24.6, mode = "over" },
 			braccio_dietro = { img = "grembiule_fabbro_forgiato_spallina_braccio_dietro_1", tint = nil, x = -1.0, y = 1.4, w = 42.0, h = 37.3, mode = "over" },
 			braccio_dietro_1 = { img = "grembiule_fabbro_forgiato_spallina_braccio_dietro_1", tint = nil, x = -1.0, y = 1.7, w = 42.5, h = 37.7, mode = "over" },
-			braccio_dietro_2 = { img = "grembiule_fabbro_forgiato_spallina_braccio_dietro_2", tint = nil, x = -0.1, y = 2.3, w = 29.4, h = 27.4, mode = "over" },
+			braccio_dietro_2 = { img = "grembiule_fabbro_forgiato_spallina_braccio_dietro_2", tint = nil, x = 0.5, y = 2.7, w = 29.2, h = 27.1, mode = "over" },
 			busto = { img = "grembiule_fabbro_forgiato_busto", tint = nil, x = 10.1, y = 13.3, w = 71.2, h = 100.2, mode = "replace" },
 			busto_1 = { img = "grembiule_fabbro_forgiato_busto", tint = nil, x = 9.2, y = 13.1, w = 65.2, h = 92.0, mode = "replace" },
 		} },

@@ -265,7 +265,7 @@ local function quiet(w)
 	end
 	for _, rb in ipairs(w.robots) do
 		if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.hook_shot or rb.mallet
-			or rb.cannon or rb.pull) then
+			or rb.cannon) then
 			return false
 		end
 	end
@@ -631,6 +631,7 @@ local ARC_WEAPONS = {
 	tar = function(g) return game.GRENADE_SPEED, g.gravity * game.GRENADE_GRAVITY end,
 	petard = function(g) return game.GRENADE_SPEED, g.gravity * game.GRENADE_GRAVITY end,
 	drill = function(g) return game.MISSILE_SPEED, g.gravity * game.MISSILE_GRAVITY end,
+	vortex = function(g) return game.MISSILE_SPEED, g.gravity * game.MISSILE_GRAVITY end,
 	trampoline = function(g) return game.GRENADE_SPEED, g.gravity * game.GRENADE_GRAVITY end,
 }
 
@@ -740,9 +741,6 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 				end
 			elseif wpn == "boomerang" then
 				if dist < C.BOOMERANG.range + 40 then add(wpn, straight, 1, "volo") end
-			elseif wpn == "magnet" then
-				-- the centre is C.MAGNET.distance along the aim: aim so that the enemy is inside the pulse
-				if dist < C.MAGNET.distance + C.MAGNET.radius then add(wpn, straight, 1, "tutto") end
 			elseif wpn == "cannon" then
 				-- the flight at full power, towards the enemy or a bit above it
 				if dist < 600 then
