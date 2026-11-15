@@ -37,9 +37,10 @@ end
 -- an information under it
 local function card(c, g, x, y, w, h, o)
 	kit.panel(kit.group(g, x + w / 2, y + h / 2).node, w, h, o.sel and "pannello_caldo" or "pannello")
+	-- (no icon yet: the text starts where the icon would)
 	local ih = o.ih
-	kit.piece(g, o.icon, x + 28 + ih / 2, y + h / 2, ih)
-	local tx = x + 56 + ih
+	if o.icon then kit.piece(g, o.icon, x + 28 + ih / 2, y + h / 2, ih) end
+	local tx = o.icon and x + 56 + ih or x + 28
 	local size = o.size
 	local top = y + h / 2 - (size * 0.9 + (o.info and 44 or 22)) / 2 + size * 0.8
 	fit(kit.text(g, o.name, tx, top, size, o.sel and KC.HOT or KC.SAND), x + w - 24 - tx)
@@ -61,7 +62,7 @@ local function build(c)
 	c.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 
 	-- the queues with their names, to say which one GIOCA starts
-	local names = { ["2v2"] = common.modes["2v2"] }
+	local names = { ["2v2"] = common.modes["2v2"], ["1v1"] = common.modes["1v1"] }
 	local running = {}
 	for i, o in ipairs(events.in_progress(now)) do
 		if i > MAX_EVENTS then break end
@@ -79,7 +80,10 @@ local function build(c)
 	card(c, c.left, 36, 110, 700, 220, { sel = c.sel == "2v2", icon = "ic_2contro2", ih = 130, size = 52,
 		name = common.modes["2v2"], sub = T.usual_match, info = #also > 0 and T.also_counts:format(table.concat(also, ", ")) or nil,
 		action = "scegli:2v2" })
-	card(c, c.left, 36, 350, 700, 120, { icon = "ic_stanza", ih = 60, size = 30, name = T.private, sub = T.private_line,
+	-- every online queue is here (Sergio): the 1 vs 1 too, still without its icon
+	card(c, c.left, 36, 350, 340, 120, { sel = c.sel == "1v1", size = 30, name = common.modes["1v1"], sub = T.duel_line,
+		action = "scegli:1v1" })
+	card(c, c.left, 396, 350, 340, 120, { icon = "ic_stanza", ih = 52, size = 26, name = T.private, sub = T.private_short,
 		action = "privata" })
 
 	-- on the right: the running events and the next one

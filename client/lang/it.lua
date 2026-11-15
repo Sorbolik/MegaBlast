@@ -509,7 +509,8 @@ return {
 		-- the next event: when it starts, its name
 		coming = "%s · %s",
 		private = "STANZA PRIVATA",
-		private_line = "Gioca con gli amici, con un codice",
+		private_short = "Con un codice",
+		duel_line = "Tu contro uno",
 	},
 
 
