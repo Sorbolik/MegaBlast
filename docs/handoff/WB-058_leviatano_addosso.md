@@ -1,6 +1,6 @@
 # WB-058 · Il Leviatano addosso all'apprendista: elmo di scaglie, corazza con spalline, stivali, mantello
 
-- **Stato:** APPROVATA (Sergio, 15 nov: «Smazziamocele tutte»)
+- **Stato:** IMPLEMENTATA, APPROVATA (Sergio, 15 nov: «Smazziamocele tutte»)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `claude/project-thread-e8poye` · **Ramo delle immagini:** `design/WB-058`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-058` senza chiedere conferma (il repository è privato).
@@ -182,3 +182,14 @@ Approvata da Sergio il 15 nov («Smazziamocele tutte»). (Claude) Spalline del L
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+15 nov. Guardati gli undici fogli di `design/WB-058`: tutti buoni, nessuno scartato.
+
+- **Tenuti:** `elmo_base_1`, `elmo_forgiata`, `corpo_base_1`, `corpo_forgiata`, `pugni_base`,
+  `pugni_forgiata`, `mantello_base_1`, `mantello_forgiata`. Riserve: le varianti `_2`.
+- **Colori:** la tavolozza `apprendista_leviatano.json` segue quelli disegnati da Codex (squame #2E8478 con la loro ombra, verde chiaro #90DCBC, ciano).
+- **Ritocchi dello strumento:** sul braccio col pugno Codex ha fatto la spallina un filo più stretta
+  del braccio; `addosso.py` chiude col contorno quello che resterebbe scoperto sopra l'orlo.
+- **Nel gioco:** pelli `elmo_leviatano`, `corazza_leviatano`, `stivali_leviatano`, `mantello_leviatano` (e `_forgiato`), con
+  `tools/stampino/addosso.py tools/stampino/addosso/leviatano.json` e `taglia.py --mantello-px 7.2`; i
+  pezzi del Leviatano indossati le mettono addosso. Scenari `leviatano_indossato.txt` e `leviatano_indossato_forgiato.txt`.

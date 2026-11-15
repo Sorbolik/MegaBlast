@@ -1,6 +1,6 @@
 # WB-057 · La Fornace addosso all'apprendista: elmo, corazza di ferro con spalline, stivali, mantello
 
-- **Stato:** APPROVATA (Sergio, 15 nov: «Smazziamocele tutte»)
+- **Stato:** IMPLEMENTATA, APPROVATA (Sergio, 15 nov: «Smazziamocele tutte»)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `claude/project-thread-e8poye` · **Ramo delle immagini:** `design/WB-057`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-057` senza chiedere conferma (il repository è privato).
@@ -182,3 +182,15 @@ Approvata da Sergio il 15 nov («Smazziamocele tutte»). (Claude) Spalline della
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+15 nov. Guardati gli undici fogli di `design/WB-057`: tutti buoni, nessuno scartato.
+
+- **Tenuti:** `elmo_base_1`, `elmo_forgiata`, `corpo_base_1`, `corpo_forgiata`, `pugni_base`,
+  `pugni_forgiata`, `mantello_base_1`, `mantello_forgiata`. Riserve: le varianti `_2`.
+- **Colori:** la tavolozza `apprendista_fornace.json` segue quelli disegnati da Codex (ferro #686868 con la sua ombra, arancio #F88408, ciano).
+- **Ritocchi dello strumento:** sul braccio col pugno Codex ha fatto la spallina un filo più stretta
+  del braccio; `addosso.py` chiude col contorno quello che resterebbe scoperto sopra l'orlo.
+- **Difetto lasciato:** la piastra del petto è corta e sotto si vede la pancia.
+- **Nel gioco:** pelli `elmo_fornace`, `corazza_fornace`, `stivali_fornace`, `mantello_fornace` (e `_forgiato`), con
+  `tools/stampino/addosso.py tools/stampino/addosso/fornace.json` e `taglia.py --mantello-px 7.2`; i
+  pezzi del Fornace indossati le mettono addosso. Scenari `fornace_indossato.txt` e `fornace_indossato_forgiato.txt`.

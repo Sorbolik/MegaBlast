@@ -1,6 +1,6 @@
 # WB-056 · Il Corvo addosso all'apprendista: maschera, corazza di piume con spalline, stivali, mantello
 
-- **Stato:** APPROVATA (Sergio, 15 nov: «Smazziamocele tutte»)
+- **Stato:** IMPLEMENTATA, APPROVATA (Sergio, 15 nov: «Smazziamocele tutte»)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `claude/project-thread-e8poye` · **Ramo delle immagini:** `design/WB-056`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-056` senza chiedere conferma (il repository è privato).
@@ -182,3 +182,14 @@ Approvata da Sergio il 15 nov («Smazziamocele tutte»). (Claude) Spalline del C
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+15 nov. Guardati gli undici fogli di `design/WB-056`: tutti buoni, nessuno scartato.
+
+- **Tenuti:** `maschera_base_1`, `maschera_forgiata`, `corpo_base_1`, `corpo_forgiata`, `pugni_base`,
+  `pugni_forgiata`, `mantello_base_1`, `mantello_forgiata`. Riserve: le varianti `_2`.
+- **Colori:** la tavolozza `apprendista_corvo.json` segue quelli disegnati da Codex (ardesia #3E3E58 con la sua ombra, viola #9868D0, ciano).
+- **Ritocchi dello strumento:** sul braccio col pugno Codex ha fatto la spallina un filo più stretta
+  del braccio; `addosso.py` chiude col contorno quello che resterebbe scoperto sopra l'orlo.
+- **Nel gioco:** pelli `maschera_corvo`, `corazza_corvo`, `stivali_corvo`, `mantello_corvo` (e `_forgiato`), con
+  `tools/stampino/addosso.py tools/stampino/addosso/corvo.json` e `taglia.py --mantello-px 7.2`; i
+  pezzi del Corvo indossati le mettono addosso. Scenari `corvo_indossato.txt` e `corvo_indossato_forgiato.txt`.

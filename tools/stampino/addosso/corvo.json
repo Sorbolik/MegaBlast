@@ -1,0 +1,40 @@
+{
+ "_": "Il Corvo addosso all'apprendista (WB-056): maschera col becco, corazza di piume con le spalline, stivali.",
+ "tavolozza": "tools/stampino/tavolozze/apprendista_corvo.json",
+ "colori": [
+  "#3E3E58",
+  "#262638",
+  "#9868D0",
+  "#00FFFF"
+ ],
+ "senza_corpo": [
+  "lingua",
+  "bocca",
+  "corna",
+  "corna_ombra",
+  "occhi"
+ ],
+ "senza_teste": [],
+ "riferimenti": {
+  "teste": "art/WB-056/riferimenti/R1_teste_senza_corna.png",
+  "corpo": "art/WB-056/riferimenti/R2_corpo_collo_nudo.png",
+  "pugni": "art/WB-056/riferimenti/R3_pugni.png"
+ },
+ "pelli": {
+  "elmo": "maschera_corvo",
+  "corazza": "corazza_corvo",
+  "stivali": "stivali_corvo"
+ },
+ "forme": {
+  "": {
+   "teste": "art/WB-056/maschera_base_1.png",
+   "corpo": "art/WB-056/corpo_base_1.png",
+   "pugni": "art/WB-056/pugni_base.png"
+  },
+  "_forgiato": {
+   "teste": "art/WB-056/maschera_forgiata.png",
+   "corpo": "art/WB-056/corpo_forgiata.png",
+   "pugni": "art/WB-056/pugni_forgiata.png"
+  }
+ }
+}

@@ -1,0 +1,150 @@
+{
+ "nome": "maschera_corvo_forgiato",
+ "categoria": "elmo",
+ "pezzi": {
+  "testa_1": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 2.0,
+   "y": 72.2,
+   "w": 148.3,
+   "h": 83.3,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 3.0,
+   "y": 67.5,
+   "w": 120.2,
+   "h": 67.4,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 2.0,
+   "y": 72.2,
+   "w": 148.3,
+   "h": 83.3,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 3.0,
+   "y": 67.5,
+   "w": 120.2,
+   "h": 67.4,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 2.0,
+   "y": 72.2,
+   "w": 147.5,
+   "h": 83.3,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 3.0,
+   "y": 67.5,
+   "w": 119.4,
+   "h": 67.4,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 2.0,
+   "y": 72.2,
+   "w": 149.0,
+   "h": 83.3,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 3.0,
+   "y": 67.5,
+   "w": 120.6,
+   "h": 67.4,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 2.0,
+   "y": 72.2,
+   "w": 149.0,
+   "h": 83.3,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 3.0,
+   "y": 67.5,
+   "w": 120.6,
+   "h": 67.4,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 2.0,
+   "y": 72.2,
+   "w": 148.0,
+   "h": 83.3,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 3.0,
+   "y": 67.5,
+   "w": 119.9,
+   "h": 67.4,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 2.0,
+   "y": 72.2,
+   "w": 146.8,
+   "h": 83.3,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 2.9,
+   "y": 67.5,
+   "w": 118.9,
+   "h": 67.4,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 2.0,
+   "y": 72.2,
+   "w": 148.0,
+   "h": 83.3,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 3.0,
+   "y": 67.5,
+   "w": 119.9,
+   "h": 67.4,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 2.0,
+   "y": 72.2,
+   "w": 148.3,
+   "h": 83.3,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "maschera_corvo_forgiato_testa",
+   "x": 3.0,
+   "y": 67.5,
+   "w": 120.2,
+   "h": 67.4,
+   "modo": "sopra"
+  }
+ }
+}

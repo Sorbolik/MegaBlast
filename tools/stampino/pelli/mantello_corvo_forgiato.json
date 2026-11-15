@@ -1,0 +1,16 @@
+{
+ "nome": "mantello_corvo_forgiato",
+ "categoria": "mantello",
+ "mantello": {
+  "img": "mantello_corvo_forgiato_mantello",
+  "x": -23.4,
+  "y": -53.1,
+  "w": 95.1,
+  "h": 114.9,
+  "attacco": [
+   -2,
+   116
+  ]
+ },
+ "pezzi": {}
+}

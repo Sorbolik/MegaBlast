@@ -21,23 +21,23 @@
   "braccio_1": {
    "img": "grembiule_fabbro_forgiato_spallina_braccio_1",
    "x": 0.7,
-   "y": 1.4,
+   "y": 0.9,
    "w": 41.7,
-   "h": 36.6,
+   "h": 37.1,
    "modo": "sopra"
   },
   "braccio": {
    "img": "grembiule_fabbro_forgiato_spallina_braccio_1",
    "x": 0.5,
-   "y": 4.1,
+   "y": 3.5,
    "w": 46.4,
-   "h": 40.6,
+   "h": 41.1,
    "modo": "sopra"
   },
   "braccio_dietro_1": {
    "img": "grembiule_fabbro_forgiato_spallina_braccio_dietro_1",
    "x": -1.0,
-   "y": 2.2,
+   "y": 1.7,
    "w": 42.5,
    "h": 37.7,
    "modo": "sopra"
@@ -45,7 +45,7 @@
   "braccio_dietro": {
    "img": "grembiule_fabbro_forgiato_spallina_braccio_dietro_1",
    "x": -1.0,
-   "y": 1.9,
+   "y": 1.4,
    "w": 42.0,
    "h": 37.3,
    "modo": "sopra"
@@ -53,15 +53,15 @@
   "braccio_2": {
    "img": "grembiule_fabbro_forgiato_spallina_braccio_2",
    "x": 2.0,
-   "y": 0.9,
+   "y": 0.6,
    "w": 27.9,
-   "h": 24.6,
+   "h": 25.1,
    "modo": "sopra"
   },
   "braccio_dietro_2": {
    "img": "grembiule_fabbro_forgiato_spallina_braccio_dietro_2",
    "x": -0.1,
-   "y": 1.8,
+   "y": 2.3,
    "w": 29.4,
    "h": 27.4,
    "modo": "sopra"

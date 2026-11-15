@@ -1,0 +1,70 @@
+{
+ "nome": "corazza_leviatano_forgiato",
+ "categoria": "corazza",
+ "pezzi": {
+  "busto_1": {
+   "img": "corazza_leviatano_forgiato_busto",
+   "x": 9.1,
+   "y": 13.1,
+   "w": 65.5,
+   "h": 92.0,
+   "modo": "sostituisce"
+  },
+  "busto": {
+   "img": "corazza_leviatano_forgiato_busto",
+   "x": 9.9,
+   "y": 13.3,
+   "w": 71.4,
+   "h": 100.2,
+   "modo": "sostituisce"
+  },
+  "braccio_1": {
+   "img": "corazza_leviatano_forgiato_spallina_braccio_1",
+   "x": 4.6,
+   "y": 7.6,
+   "w": 33.4,
+   "h": 46.5,
+   "modo": "sopra"
+  },
+  "braccio": {
+   "img": "corazza_leviatano_forgiato_spallina_braccio_1",
+   "x": 4.9,
+   "y": 11.0,
+   "w": 37.1,
+   "h": 51.6,
+   "modo": "sopra"
+  },
+  "braccio_dietro_1": {
+   "img": "corazza_leviatano_forgiato_spallina_braccio_dietro_1",
+   "x": 3.6,
+   "y": 9.3,
+   "w": 34.3,
+   "h": 50.0,
+   "modo": "sopra"
+  },
+  "braccio_dietro": {
+   "img": "corazza_leviatano_forgiato_spallina_braccio_dietro_1",
+   "x": 3.6,
+   "y": 9.0,
+   "w": 33.9,
+   "h": 49.5,
+   "modo": "sopra"
+  },
+  "braccio_2": {
+   "img": "corazza_leviatano_forgiato_spallina_braccio_2",
+   "x": 2.4,
+   "y": 1.1,
+   "w": 24.1,
+   "h": 31.1,
+   "modo": "sopra"
+  },
+  "braccio_dietro_2": {
+   "img": "corazza_leviatano_forgiato_spallina_braccio_dietro_2",
+   "x": -0.4,
+   "y": 3.0,
+   "w": 25.5,
+   "h": 34.4,
+   "modo": "sopra"
+  }
+ }
+}

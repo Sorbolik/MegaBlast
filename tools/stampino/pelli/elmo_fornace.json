@@ -1,0 +1,150 @@
+{
+ "nome": "elmo_fornace",
+ "categoria": "elmo",
+ "pezzi": {
+  "testa_1": {
+   "img": "elmo_fornace_testa",
+   "x": 13.4,
+   "y": 63.6,
+   "w": 108.4,
+   "h": 49.2,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "elmo_fornace_testa",
+   "x": 12.2,
+   "y": 60.5,
+   "w": 87.9,
+   "h": 39.9,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "elmo_fornace_testa",
+   "x": 13.4,
+   "y": 63.6,
+   "w": 108.4,
+   "h": 49.2,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "elmo_fornace_testa",
+   "x": 12.2,
+   "y": 60.5,
+   "w": 87.9,
+   "h": 39.9,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "elmo_fornace_testa",
+   "x": 13.4,
+   "y": 63.6,
+   "w": 107.8,
+   "h": 49.2,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "elmo_fornace_testa",
+   "x": 12.2,
+   "y": 60.5,
+   "w": 87.3,
+   "h": 39.9,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "elmo_fornace_testa",
+   "x": 13.4,
+   "y": 63.6,
+   "w": 108.9,
+   "h": 49.2,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "elmo_fornace_testa",
+   "x": 12.2,
+   "y": 60.5,
+   "w": 88.2,
+   "h": 39.9,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "elmo_fornace_testa",
+   "x": 13.4,
+   "y": 63.6,
+   "w": 108.9,
+   "h": 49.2,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "elmo_fornace_testa",
+   "x": 12.2,
+   "y": 60.5,
+   "w": 88.2,
+   "h": 39.9,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "elmo_fornace_testa",
+   "x": 13.4,
+   "y": 63.6,
+   "w": 108.2,
+   "h": 49.2,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "elmo_fornace_testa",
+   "x": 12.2,
+   "y": 60.5,
+   "w": 87.6,
+   "h": 39.9,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "elmo_fornace_testa",
+   "x": 13.2,
+   "y": 63.6,
+   "w": 107.4,
+   "h": 49.2,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "elmo_fornace_testa",
+   "x": 12.1,
+   "y": 60.5,
+   "w": 86.9,
+   "h": 39.9,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "elmo_fornace_testa",
+   "x": 13.4,
+   "y": 63.6,
+   "w": 108.2,
+   "h": 49.2,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "elmo_fornace_testa",
+   "x": 12.2,
+   "y": 60.5,
+   "w": 87.6,
+   "h": 39.9,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "elmo_fornace_testa",
+   "x": 13.4,
+   "y": 63.6,
+   "w": 108.4,
+   "h": 49.2,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "elmo_fornace_testa",
+   "x": 12.2,
+   "y": 60.5,
+   "w": 87.9,
+   "h": 39.9,
+   "modo": "sopra"
+  }
+ }
+}

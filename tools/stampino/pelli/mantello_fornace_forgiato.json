@@ -1,0 +1,16 @@
+{
+ "nome": "mantello_fornace_forgiato",
+ "categoria": "mantello",
+ "mantello": {
+  "img": "mantello_fornace_forgiato_mantello",
+  "x": -24.2,
+  "y": -50.8,
+  "w": 100.4,
+  "h": 110.0,
+  "attacco": [
+   -2,
+   116
+  ]
+ },
+ "pezzi": {}
+}

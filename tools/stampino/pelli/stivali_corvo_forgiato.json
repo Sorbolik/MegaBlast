@@ -1,0 +1,38 @@
+{
+ "nome": "stivali_corvo_forgiato",
+ "categoria": "stivali",
+ "pezzi": {
+  "gamba_1": {
+   "img": "stivali_corvo_forgiato_gamba",
+   "x": 0.9,
+   "y": -30.8,
+   "w": 68.4,
+   "h": 82.8,
+   "modo": "sostituisce"
+  },
+  "gamba": {
+   "img": "stivali_corvo_forgiato_gamba",
+   "x": 0.9,
+   "y": -30.8,
+   "w": 67.7,
+   "h": 82.0,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro_1": {
+   "img": "stivali_corvo_forgiato_gamba_dietro",
+   "x": -1.3,
+   "y": -30.0,
+   "w": 74.2,
+   "h": 81.9,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro": {
+   "img": "stivali_corvo_forgiato_gamba_dietro",
+   "x": -1.3,
+   "y": -30.0,
+   "w": 73.4,
+   "h": 81.1,
+   "modo": "sostituisce"
+  }
+ }
+}

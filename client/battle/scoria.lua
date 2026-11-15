@@ -86,6 +86,9 @@ M.PERSONAGGIO = { "apprendista_nuovo", "corna_apprendista" }
 M.FAMILY_SKINS = {
 	vuoto = { mask = "cappuccio_vuoto", chest = "corazza_vuoto", legs = "stivali_vuoto", cloak = "mantello_vuoto" },
 	fabbro = { mask = "cuffia_fabbro", chest = "grembiule_fabbro", legs = "stivali_fabbro", cloak = "mantello_fabbro" },
+	corvo = { mask = "maschera_corvo", chest = "corazza_corvo", legs = "stivali_corvo", cloak = "mantello_corvo" },
+	fornace = { mask = "elmo_fornace", chest = "corazza_fornace", legs = "stivali_fornace", cloak = "mantello_fornace" },
+	leviatano = { mask = "elmo_leviatano", chest = "corazza_leviatano", legs = "stivali_leviatano", cloak = "mantello_leviatano" },
 }
 M.FORGED_TIER = 3
 local WEAR_ORDER = { "mask", "chest", "legs", "cloak" }

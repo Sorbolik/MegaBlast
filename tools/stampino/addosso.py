@@ -115,6 +115,21 @@ def sovrapponi(sagoma, alfa):
     return iou, s, ox - s * x0, oy - s * y0
 
 
+def spostato(sagoma, zona, giro=24):
+    """Di quanti pixel la parte rimasta uguale del pezzo consegnato sta spostata dalla
+    sua sagoma sul riferimento: lo spostamento che la fa stare dentro di più."""
+    ys, xs = np.nonzero(sagoma | zona)
+    y0, y1 = max(0, ys.min() - giro), ys.max() + giro + 1
+    x0, x1 = max(0, xs.min() - giro), xs.max() + giro + 1
+    a = sagoma[y0:y1, x0:x1].astype(np.float32)
+    b = zona[y0:y1, x0:x1].astype(np.float32)
+    c = fftconvolve(b, a[::-1, ::-1], mode="same")
+    cy, cx = c.shape[0] // 2, c.shape[1] // 2
+    finestra = c[cy - giro:cy + giro + 1, cx - giro:cx + giro + 1]
+    k = np.unravel_index(np.argmax(finestra), finestra.shape)
+    return int(k[1] - giro), int(k[0] - giro)
+
+
 def disegna(svg, x0, y0, x1, y1, k):
     """Il rettangolo del foglio (pixel del foglio largo LATO) dall'SVG, k volte più grande."""
     w, h = x1 - x0, y1 - y0
@@ -241,6 +256,11 @@ def taglia_pezzo(f, posto, modo, colori, prese):
     # i pezzi del disegno consegnato che toccano quella sagoma
     ids = np.unique(f.pezzi[ndimage.binary_dilation(f.sagome[i], iterations=5)])
     zona = np.isin(f.pezzi, ids[ids > 0])
+    # Codex a volte sposta di poco il pezzo che doveva lasciare fermo: si cerca lo
+    # spostamento (pochi pixel) che riporta il pezzo consegnato sopra la sua sagoma
+    fermo = zona & ~f.cambiato                 # la parte che Codex non doveva toccare
+    dx, dy = spostato(f.sagome[i], fermo) if fermo.sum() > 0.3 * f.sagome[i].sum() else (0, 0)
+    ox, oy = ox - s * dx, oy - s * dy
     ys, xs = np.nonzero(zona)
     m = 24
     x0, y0 = max(0, xs.min() - m), max(0, ys.min() - m)
@@ -254,10 +274,29 @@ def taglia_pezzo(f, posto, modo, colori, prese):
     tiene = grande(zona).copy()
     if modo == "sopra":
         tiene &= solo_pezzo(v, colori, k, grande(f.cambiato), grande(f.diverso))
+        if not posto.startswith("testa"):
+            # una spallina disegnata un filo più stretta del braccio lascerebbe fuori una
+            # lama di pelle: quel filo (sottile, attaccato alla spallina) diventa contorno
+            # (la sagoma è quella del pezzo del gioco, che in cima non è proprio quella del foglio)
+            sag = np.asarray(Image.fromarray(alfa).transform(
+                (wk, hk), Image.AFFINE, (s / k, 0, s * x0 + ox, 0, s / k, s * y0 + oy), Image.NEAREST))
+            fuori = sag & ~tiene
+            r = max(1, round(18 * k))
+            filo = fuori & ~ndimage.binary_opening(fuori, iterations=r) & ndimage.binary_dilation(tiene, iterations=r)
+            # e la spallina sta in cima: quello che del braccio resta scoperto più su del
+            # suo orlo (colonna per colonna; dove non arriva, l'orlo della colonna più vicina)
+            col = np.nonzero(tiene.any(0))[0]
+            if len(col):
+                orlo = hk - 1 - np.argmax(tiene[::-1, col], axis=0)
+                orlo = np.interp(np.arange(wk), col, orlo)
+                filo |= fuori & (np.arange(hk)[:, None] < orlo[None, :])
+            v[filo] = (0, 0, 0, 255)
+            tiene |= filo
     v[~tiene, 3] = 0
     assert (v[..., 3] > 128).sum() > 400 * k * k, f"{posto}: sul foglio non c'è nessun pezzo nuovo"
     im, dove = posa(v, s / k, s * x0 + ox, s * y0 + oy, G.shape[:2])
-    print(f"  {posto}: combacia al {iou:.3f}, scala {s:.2f} (disegnato a {k:g}), {im.width}x{im.height}")
+    print(f"  {posto}: combacia al {iou:.3f}, scala {s:.2f} (disegnato a {k:g}), {im.width}x{im.height}"
+          + (f", spostato di {dx},{dy}" if dx or dy else ""))
     return im, dove
 
 

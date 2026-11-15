@@ -1,0 +1,10 @@
+Image 1 is the chosen armour set "Leviathan" of our game (left: BASIC form, right: FORGED form). Image 2 is our "stampino": a sheet with grey body parts on magenta; the grey trapezoid between the torso and the wing is the box "mantello". Image 3 is a cape of another set of our game: keep its SIZE on the sheet, its wide flare and its long folds, but NOT its style or its colours.
+
+Draw ONE cape of the BASIC form of image 1, alone, as large on the sheet as the cape of image 3: a cape like the membrane of a great fin, light sea green with four or five thin cyan ribs running from the top edge down to the hem. Seen from the side, hanging straight down behind the shoulders as if the wearer stood still: the top edge is short, straight and horizontal, at the top right (where it is tied to the shoulders), no hood, no collar roll, no clasp hanging over the edge. The cape gets much wider toward the bottom: at the hem it is about twice as wide as at the top, flaring out to the left (the back). The hem is scalloped between the ribs, like a fin, with soft rounded points. Long folds or lines run from the top edge all the way down to the hem, so the cape can bend anywhere. Length: down to the knee of the wearer. No body, no arms, no shoulders, nothing else on the sheet.
+
+Same rendering rules as image 1: flat colors, thick closed black outline. Scales teal #2F7F74 with shadows #1F5A54, light sea green #8FD8BE for the belly scales, the fins and the cape membrane, cyan #00FFFF trims, nothing else. Background: flat pure magenta #FF00FF everywhere outside the cape. Do not draw the box, crosses or labels. No text. Landscape 3:2.
+
+Riferimenti allegati in ordine
+art/WB-058/riferimenti/R4_leviatano.png
+art/WB-058/riferimenti/R5_stampino.png
+art/WB-058/riferimenti/R6_mantello_vuoto.png

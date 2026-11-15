@@ -36,32 +36,32 @@
   },
   "braccio_dietro_1": {
    "img": "grembiule_fabbro_spallina_braccio_dietro_1",
-   "x": -0.8,
-   "y": 1.2,
+   "x": -1.0,
+   "y": 0.8,
    "w": 42.5,
-   "h": 39.7,
+   "h": 40.4,
    "modo": "sopra"
   },
   "braccio_dietro": {
    "img": "grembiule_fabbro_spallina_braccio_dietro_1",
-   "x": -0.7,
-   "y": 0.9,
+   "x": -1.0,
+   "y": 0.5,
    "w": 42.0,
-   "h": 39.3,
+   "h": 40.0,
    "modo": "sopra"
   },
   "braccio_2": {
    "img": "grembiule_fabbro_spallina_braccio_2",
    "x": 2.0,
-   "y": 0.9,
+   "y": 0.6,
    "w": 27.9,
-   "h": 24.6,
+   "h": 25.1,
    "modo": "sopra"
   },
   "braccio_dietro_2": {
    "img": "grembiule_fabbro_spallina_braccio_dietro_2",
    "x": -0.1,
-   "y": 1.8,
+   "y": 2.3,
    "w": 29.4,
    "h": 27.4,
    "modo": "sopra"

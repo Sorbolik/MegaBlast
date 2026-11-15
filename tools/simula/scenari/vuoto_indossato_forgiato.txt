@@ -6,9 +6,9 @@ aspetta 3
 aspetta 3
 foto 01_home
 tocca 220 172                      # ALLENAMENTO
-aspetta 2
+aspetta 3
 tocca 770 548                      # STESSO TELEFONO
-aspetta 0.5
+aspetta 1
 foto 01b_allenamento
 aspetta 0.5
 tocca_bordo 175 52 basso destra    # GIOCA

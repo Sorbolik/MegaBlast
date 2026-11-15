@@ -1,0 +1,150 @@
+{
+ "nome": "elmo_leviatano",
+ "categoria": "elmo",
+ "pezzi": {
+  "testa_1": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.4,
+   "y": 39.6,
+   "w": 121.2,
+   "h": 90.5,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.7,
+   "y": 41.1,
+   "w": 98.2,
+   "h": 73.3,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.4,
+   "y": 39.6,
+   "w": 121.2,
+   "h": 90.5,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.7,
+   "y": 41.1,
+   "w": 98.2,
+   "h": 73.3,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.4,
+   "y": 39.6,
+   "w": 120.5,
+   "h": 90.5,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.7,
+   "y": 41.1,
+   "w": 97.6,
+   "h": 73.3,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.4,
+   "y": 39.6,
+   "w": 121.7,
+   "h": 90.5,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.7,
+   "y": 41.1,
+   "w": 98.6,
+   "h": 73.3,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.4,
+   "y": 39.6,
+   "w": 121.7,
+   "h": 90.5,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.7,
+   "y": 41.1,
+   "w": 98.6,
+   "h": 73.3,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.4,
+   "y": 39.6,
+   "w": 120.9,
+   "h": 90.5,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.7,
+   "y": 41.1,
+   "w": 97.9,
+   "h": 73.3,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.3,
+   "y": 39.6,
+   "w": 120.0,
+   "h": 90.5,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.7,
+   "y": 41.1,
+   "w": 97.2,
+   "h": 73.3,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.4,
+   "y": 39.6,
+   "w": 120.9,
+   "h": 90.5,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.7,
+   "y": 41.1,
+   "w": 97.9,
+   "h": 73.3,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.4,
+   "y": 39.6,
+   "w": 121.2,
+   "h": 90.5,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "elmo_leviatano_testa",
+   "x": 5.7,
+   "y": 41.1,
+   "w": 98.2,
+   "h": 73.3,
+   "modo": "sopra"
+  }
+ }
+}

@@ -1,0 +1,10 @@
+Image 1 is the chosen armour set "Crow" of our game (left: BASIC form, right: FORGED form). Image 2 is our "stampino": a sheet with grey body parts on magenta; the grey trapezoid between the torso and the wing is the box "mantello". Image 3 is a cape of another set of our game: keep its SIZE on the sheet, its wide flare and its long folds, but NOT its style or its colours.
+
+Draw ONE cape of the BASIC form of image 1, alone, as large on the sheet as the cape of image 3: a cape of long dark slate feathers. Seen from the side, hanging straight down behind the shoulders as if the wearer stood still: the top edge is short, straight and horizontal, at the top right (where it is tied to the shoulders), no hood, no collar roll, no clasp hanging over the edge. The cape gets much wider toward the bottom: at the hem it is about twice as wide as at the top, flaring out to the left (the back). The lower third splits into five or six long pointed feathers of different lengths. Long folds or lines run from the top edge all the way down to the hem, so the cape can bend anywhere. Length: down to the knee of the wearer. No body, no arms, no shoulders, nothing else on the sheet.
+
+Same rendering rules as image 1: flat colors, thick closed black outline. Feathers dark slate #3A3A52 with shadows #26263A, cyan #00FFFF trims, nothing else. Background: flat pure magenta #FF00FF everywhere outside the cape. Do not draw the box, crosses or labels. No text. Landscape 3:2.
+
+Riferimenti allegati in ordine
+art/WB-056/riferimenti/R4_corvo.png
+art/WB-056/riferimenti/R5_stampino.png
+art/WB-056/riferimenti/R6_mantello_vuoto.png
