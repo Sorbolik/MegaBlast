@@ -386,15 +386,16 @@ return {
 		sign = "firma: %s",
 		sign_off = "firma dallo scatto 10: %s",
 		-- the other pieces of the slot (the slot in uppercase)
-		others = "GLI ALTRI %s CHE HAI",
-		tap_one = "tocca per sceglierlo",
+		others = "I TUOI %s",
+		-- the slots in the plural
+		plural = { mask = "ELMI", chest = "CORAZZE", cloak = "MANTELLI", legs = "STIVALI" },
 		-- BOTTEGA
 		yours = "tuo",
 		offers = "OFFERTE DEL FABBRO",
 		-- the time until midnight
 		change_in = "cambiano tra %s",
 		day = "PEZZI DEL GIORNO",
-		day_line = "%d pezzi · cambiano domani",
+		day_line = "cambiano domani",
 		use_voucher = "USA UN BUONO",
 		you_have = "ne hai %d",
 	},
@@ -406,7 +407,8 @@ return {
 		at_max = "AL MASSIMO",
 		proof = "%d / %d partite col pezzo addosso",
 		proof_first = "prima la prova",
-		upgrade = "POTENZIA",
+		-- (not POTENZIA: that is the tab already, Sergio 15 Nov)
+		upgrade = "+1 LIVELLO",
 		missing = "mancano %s",
 		pick_ware = "tocca un pezzo",
 		in_wardrobe = "ce l'hai già",
@@ -475,6 +477,13 @@ return {
 		-- slot and family: "ELMO · CORVO"
 		piece = "%s · %s",
 		stats = "STATISTICHE",
+		-- the column of the stats shows only what changes; this opens all of them
+		see_all = "VEDI TUTTE ›",
+		-- the piece chosen changes nothing / your pieces leave everything as at the start
+		no_change = "non cambia niente",
+		all_base = "tutte come all'inizio",
+		-- the sheet of all the stats: back to the pieces
+		back_to_pieces = "TORNA AI PEZZI",
 		-- a loadout still closed: from which level
 		loadout_locked = "DAL LIV %d",
 	},
@@ -487,7 +496,6 @@ return {
 		loadout = "ASSETTO",
 		seal_loadout = "ASSETTO SIGILLI",
 		all = "TUTTI",
-		count = "%d pezzi",
 		nothing = "nessun pezzo qui: li trovi in armeria",
 		-- under the piece chosen: level, grade and what it does
 		piece_line = "liv %d · grado %s %s · %s",

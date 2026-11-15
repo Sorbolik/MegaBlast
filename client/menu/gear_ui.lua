@@ -8,6 +8,8 @@
 --   gear_ui.slot(g, x, y, s, opt)        -- opt: set, slot, level, worn, sel, empty_slot
 --   gear_ui.worn(s, g, cx, feet, h, x, ys, size, sel)   -- the labels of the pieces worn
 --   gear_ui.stats(s, g, x, y, w, now, after, o)         -- the column of the stats, all in one screen
+--   gear_ui.stats_short(s, g, x, y, w, a, a2)           -- only the rows that change, and VEDI TUTTE
+--   gear_ui.sheet(s, g, a, a2, back)                    -- all the stats, big, in the middle
 --   gear_ui.loadouts(s, g, x, y, active, prefix, label) -- the three loadouts
 --   gear_ui.chips(s, g, x, y, list, active)             -- a row of filters
 --   gear_ui.families(s, g, x, y, active)                -- the families' dots
@@ -174,7 +176,9 @@ function M.stats(s, g, x, y, w, a, a2, o)
 	local now = loadout.stats(base, a, wallet.levels(p, a), p.livello)
 	local after = a2 and loadout.stats(base, a2, wallet.levels(p, a2), p.livello)
 	local order = {}
-	if after then
+	if o.rows then
+		order = o.rows
+	elseif after then
 		for _, st in ipairs(M.STATS) do if after[st[1]] ~= now[st[1]] then order[#order + 1] = st end end
 		for _, st in ipairs(M.STATS) do if after[st[1]] == now[st[1]] then order[#order + 1] = st end end
 	else
@@ -186,9 +190,12 @@ function M.stats(s, g, x, y, w, a, a2, o)
 	local from, to = o.from or 1, o.to or #order
 	local rh = big and 54 or 27
 	local name_size, value_size = big and 19 or 16, big and 22 or 18
-	local tall = 34 + (big and M.STAT_ROWS or #order) * rh
+	local tall = 34 + (big and M.STAT_ROWS or math.max(#order, o.empty and 1 or 0)) * rh
 	kit.panel(kit.group(g, x + w / 2, y + tall / 2).node, w + 2 * M.STAT_PAD, tall + 2 * M.STAT_PAD)
 	if o.title ~= false then kit.text(g, T.stats, x, y + 18, 22, KC.HOT, "start", 1) end
+	if o.empty and #order == 0 then
+		kit.text(g, kit.upper(o.empty), x, y + 38 + 19, 16, KC.MUTE, "start", 0.5)
+	end
 	for i = from, to do
 		local st = order[i]
 		local k, how = st[1], st[2]
@@ -231,6 +238,39 @@ function M.stats(s, g, x, y, w, a, a2, o)
 		-- never under 16 (the smallest text of the menus)
 		if wide > room then gui.set_scale(name, gui.get_scale(name) * math.max(room / wide, 16 / name_size)) end
 	end
+end
+
+-- The column of the stats (Impeccable and Taste skill, Sergio 15 Nov: not the
+-- same wall of 16 rows on four screens): only the rows the piece chosen
+-- changes (a2), or with nothing chosen the rows your pieces move from the base;
+-- under it VEDI TUTTE opens all of them in one screen (M.sheet, "foglio").
+-- Returns the bottom of the button
+function M.stats_short(s, g, x, y, w, a, a2)
+	local p = s.prof
+	local base = game.base_stats()
+	local now = loadout.stats(base, a, wallet.levels(p, a), p.livello)
+	local ref = a2 and loadout.stats(base, a2, wallet.levels(p, a2), p.livello) or base
+	local rows = {}
+	for _, st in ipairs(M.STATS) do
+		if ref[st[1]] ~= now[st[1]] then rows[#rows + 1] = st end
+	end
+	M.stats(s, g, x, y, w, a, a2, { rows = rows, empty = a2 and T.no_change or T.all_base })
+	local bottom = y + 34 + math.max(#rows, 1) * 27 + M.STAT_PAD + 14
+	local b = kit.card(g, x - M.STAT_PAD, bottom, w + 2 * M.STAT_PAD, 56, KC.ROSE)
+	kit.text(b.g, T.see_all, x + w / 2, bottom + 36, 20, KC.SAND, "middle", 0.5)
+	kit.button(s.buttons, b, "foglio")
+	return bottom + 56
+end
+
+-- All the stats in one screen (Sergio, 15 Nov: no pages), big, in two columns
+-- in the middle of the screen; the button at the top right closes it (back: its label)
+function M.sheet(s, g, a, a2, back)
+	M.stats(s, g, 460, 110, 370, a, a2, { from = 1, to = M.STAT_ROWS })
+	M.stats(s, g, 878, 110, 370, a, a2, { from = M.STAT_ROWS + 1, to = #M.STATS, title = false })
+	-- (drawn after the panels: it sits in the head of the second one)
+	local b = kit.card(g, 1248 - 236, 102, 236, 44, KC.ROSE, { sel = true })
+	kit.text(b.g, back, 1248 - 118, 131, 19, KC.SAND, "middle")
+	kit.button(s.buttons, b, "foglio")
 end
 
 -- The three loadouts at (x, y): the label, then 1 2 3 on small plates, the
