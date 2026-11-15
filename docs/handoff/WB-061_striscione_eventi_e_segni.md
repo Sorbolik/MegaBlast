@@ -104,4 +104,30 @@ Reversibile (solo immagini nuove in un ramo): approvata da Claude su richiesta d
 
 ## Consegna di Codex
 
+Generati con `image_gen` da `claude/project-thread-w00xhp` (`1a47caba`).
+Ogni PNG in `art/WB-061/` ha il TXT omonimo con prompt integrale,
+riferimenti in ordine ed esito.
+
+| Nome | Tentativi | Selezione | Dimensioni PNG |
+|---|---:|---:|---:|
+| `porta_eventi_1` | 2 | 2 | 1536×1024 |
+| `porta_eventi_2` | 1 | 1 | 1536×1024 |
+| `segni_sale_scende_1` | 2 | 2 | 2172×724 |
+| `segni_sale_scende_2` | 3 | 3 | 2172×724 |
+
+Controllati a vista tre striscioni per foglio, corona a destra, tre code
+diverse a sinistra e centro vuoto. Il primo tentativo di `porta_eventi_1`
+aveva medaglioni a contatto. La rigenerazione li separa. Verificati i tre
+segni per foglio, i contorni neri, i margini e l'assenza di scritte.
+
+R2 mostra la corona a sinistra. La home R1 e il prompt la richiedono a
+destra. Le immagini seguono il prompt integrale. Gli ingombri e la
+corrispondenza esatta con il medaglione di R2 restano da verificare.
+Le frecce sono simili, con differenze di sagoma. Il secondo foglio dei segni
+ha ancora riflessi oltre all'ombra. La leggibilità a 14 pixel e il ricalco
+restano da verificare.
+
+I fogli dei segni sono rettangolari anziché 1024×1024. Il verde opaco
+differisce da #00FF00 nei punti campionati. Conservati i PNG originali.
+
 ## Resoconto di Claude

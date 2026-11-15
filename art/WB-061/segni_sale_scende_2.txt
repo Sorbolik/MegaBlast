@@ -1,0 +1,13 @@
+Image 1 shows small pieces of our game interface and is the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight or shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+
+Draw a sheet with THREE separate small signs, side by side, each one large and centered in its cell. Every sign is a single bold silhouette in ivory (#F4ECE1) with ONE flat darker shadow shape (#C9BFB2) and a thick black outline, so the game can tint it; no other colors.
+1. UP: a chunky short arrow head pointing straight up, like a fat rounded triangle with a very short stem;
+2. DOWN: the same arrow pointing straight down, exactly the same shape turned upside down;
+3. SAME: two short chunky horizontal bars one above the other, like a fat equals sign.
+
+The three signs have the same size feeling and the same line weight. They will be shown as small as 14 pixels, so no detail thinner than the outline. Flat colors only, no texture, no soft gradients, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The signs are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+1. art/WB-022/pezzo_piccoli.png
+
+Terzo tentativo scelto. Permangono riflessi aggiuntivi e lievi differenze tra le frecce. Formato rettangolare, leggibilità a 14 px non verificata.
