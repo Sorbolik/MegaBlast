@@ -1,0 +1,13 @@
+Image 1 is a sheet with two arms of our character with a closed fist, on flat magenta; each arm wears a small leather shoulder pad with a round brass stud. Image 2 shows two other arms wearing the FORGED version of that pad: a leather cap with a light strap, and at its lower edge a brass band with two cyan rivets.
+
+Edit image 1 and return the SAME sheet: both arms exactly where they are, same size, same shapes. Change ONLY the shoulder pad on top of each arm: remove the round brass stud and give the pad a brass band along its lower edge with two round cyan rivets, like the pads of image 2. Keep the pad the same size and in the same place as in image 1. Do NOT add anything else: no apron, no crossed straps, no chest piece. The rest of each arm and the fist stay bare and unchanged.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Leather dark brown #6B4A2B with folds #4A3019, lighter straps #C89255, brass #D9A441, amber lenses #F2B92C, thick closed black #000000 outline like the heads. The leather must be clearly browner and darker than the red skin.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-059/riferimenti/R1_pugni_spalline_base.png
+art/WB-059/riferimenti/R2_spalline_forgiate.png
