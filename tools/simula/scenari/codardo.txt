@@ -1,6 +1,6 @@
-# Il codardo (imposta prova_missione il_codardo): a ogni turno attacca subito,
-# poi scappa col globo nella tana peggiore (coperta, dove nessuno lo vede) e
-# parla: la sua battuta nella striscia in alto quando colpisce, scappa, lo colpiscono.
+# Il codardo (imposta prova_missione il_codardo): il bot evoluto per morire poco
+# (lo specialista sopravvissuto): colpisce e, appena ha un globo, scappa al riparo;
+# parla: la sua battuta sopra la testa. Contro chi spara poco non ha bisogno di scappare.
 imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione il_codardo
 aspetta_stato modo=local turno=1 fase=aim 8
@@ -9,10 +9,11 @@ mira 120 60 0.4                      # un colpo qualsiasi: tocca a lui
 aspetta_stato turno=2 fase=aim 40
 aspetta 1
 foto 01_turno_codardo
-aspetta_evento teleport 30
-aspetta 0.4
-foto 02_scappa                       # la battuta della fuga
-aspetta 1.5
+aspetta_stato turno=1 fase=aim 60          # turno = il robot di turno: di nuovo tu
+mira 120 60 0.4                      # il tuo secondo turno: un altro colpo
+aspetta_stato turno=2 fase=aim 60
+aspetta 6
+foto 02_secondo_turno_codardo
 tocca_bordo 70 90 alto destra        # zoom: un tocco, tutto lo spazio di gioco
 aspetta 1.2
-foto 03_tana                         # dove si è nascosto
+foto 03_dove_sta                     # dove si è messo

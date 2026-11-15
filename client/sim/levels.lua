@@ -605,16 +605,17 @@ M.girone_1 = {
 				quando = { turno = 1, di_turno = "tu" } },
 		},
 	},
-	-- Il codardo: hits once each turn and flees with the orb to the dens
+	-- Il codardo: the bot evolved to die as little as possible, it flees with the orb
 	{
 		id = "il_codardo",
 		titolo = "Il codardo",
 		tipo = "duello",
-		goal_text = "Colpisce a ogni turno e scappa col globo nelle tane: stanalo",
+		goal_text = "Ha paura di farsi male: colpisce e scappa col globo. Stanalo",
 		mappa = "pavimento",
 		globi_tempo = true,
-		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "codardo", nome = "Il codardo" } },
-		stelle = { punti = { 600, 750 } },
+		-- the real bot that learned to shelter: the evolved specialist (sim/bot.lua, Sergio 15 Nov)
+		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "sopravvissuto", nome = "Il codardo", battute = "codardo" } },
+		stelle = { punti = { 630, 790 } },
 		obiettivo = { { win = true, testo = "Vinci la partita" } },
 	},
 	{
