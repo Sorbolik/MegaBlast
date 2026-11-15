@@ -213,6 +213,12 @@ function M.update(s, dt)
 	if s.figure then scoria.update(s.figure, dt, s.st) end
 end
 
+-- what you wear shows at once on the apprentice here (and in every menu after)
+local function dress(p)
+	local a = profile.active_loadout(p)
+	scoria.set_player(scoria.look_of(a.gear, profile.tier(p, a)))
+end
+
 local function run_cmd(s, ui_action)
 	local kind, x = ui_action:match("^(%a+):?(.*)$")
 	local p = s.prof
@@ -223,6 +229,7 @@ local function run_cmd(s, ui_action)
 	elseif kind == "assetto" then
 		p.is_active = tonumber(x)
 		profile.save(p)
+		dress(p)
 	elseif kind == "sigilli" then
 		p.seal_active = tonumber(x)
 		profile.save(p)
@@ -238,6 +245,7 @@ local function run_cmd(s, ui_action)
 	elseif kind == "indossa" and s.sel then
 		profile.active_loadout(p).gear[s.sel[2]] = s.sel[1]
 		profile.save(p)
+		dress(p)
 	elseif kind == "barra" then
 		-- where on the bar: that many points, as many as are free
 		local t = s.draft
