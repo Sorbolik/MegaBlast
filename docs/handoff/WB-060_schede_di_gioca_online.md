@@ -131,3 +131,13 @@ I PNG originali misurano tutti 1774×887. La scheda richiede 1536×1024.
 Il verde opaco differisce da #00FF00 nei punti campionati.
 
 ## Resoconto di Claude
+
+15 nov. Guardati i cinque fogli: nessun difetto da scartare. Tenuti `schede_modalita_1` e
+`schede_scelte_1` (china più pulita, lati più dritti); gli altri restano in `art/WB-060/` come
+riserva. Le schede sono ritagliate così come sono (niente ricalco in vettori: il resto
+dell'atlante `fucina` è fatto allo stesso modo) in nove parti, più l'angolo intero con la
+fiamma o coi cristalli (`fai_schede` in `tools/grafica/fucina.py`, `kit.mode_card`).
+Montate in GIOCA ONLINE: brace il 2 contro 2 (scritte a china), ferro 1 contro 1 e stanza
+privata, gelo gli eventi, spenta l'evento che deve cominciare. Le schede SCELTE sono
+nell'atlante (`opt.sel`) ma la schermata non le usa ancora: un tocco fa partire subito la coda.
+`gioca_online.txt` e `telefono.txt`: OK. Da chiedere a Sergio: usarle anche in EVENTI e PROFILO.

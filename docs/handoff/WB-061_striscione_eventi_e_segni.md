@@ -131,3 +131,12 @@ I fogli dei segni sono rettangolari anziché 1024×1024. Il verde opaco
 differisce da #00FF00 nei punti campionati. Conservati i PNG originali.
 
 ## Resoconto di Claude
+
+15 nov. Guardati i quattro fogli: nessun difetto da scartare. Segni: tenuto il foglio 1
+(piatto, senza il riflesso bianco), `segno_sale`, `segno_scende` e `segno_uguale` nell'atlante;
+i primi due hanno preso il posto della freccia girata nelle statistiche, tinti come il numero.
+Striscione: dal foglio 1 i tre ritagli in `art/WB-061/ritagli/` (piega, frange, pennone),
+accorciati nel mezzo liscio per avere l'ingombro dello striscione di oggi (Codex li ha fatti
+più lunghi). Nel gioco resta quello di WB-046 finché Sergio non sceglie:
+`PORTA_EVENTI=piega python3 tools/grafica/fucina.py` ne monta uno. Le tre idee montate nella
+home sono in `/mnt/project-files/estetica_15nov/striscione_eventi_tre_idee.jpg`.

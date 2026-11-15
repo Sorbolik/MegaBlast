@@ -708,6 +708,51 @@ function M.card(g, x, y, w, h, color, opt)
 	return k
 end
 
+-- MODE CARDS (WB-060): the cards of GIOCA ONLINE, shaped by what they are:
+-- kind "brace" (the usual mode: ember, the flame out of the bottom left corner),
+-- "ferro" (a plain mode), "gelo" (an event: iron with the ice edge, crystals out
+-- of the top right corner), "spenta" (not yet open). In nine parts, the corners
+-- always at the drawing's scale; the flame and the crystals are a whole piece on
+-- their corner (pieces.lua: box says how far it sticks out of the body).
+-- opt.sel: the chosen one (its bright rim). Returns { node, g } like M.card
+local MODE_SCALE = 0.44
+function M.mode_card(g, x, y, w, h, kind, opt)
+	opt = opt or {}
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local k = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+	local name = "scheda_" .. kind .. (opt.sel and "_scelta" or "")
+	local m = P[name]
+	local s = math.min(MODE_SCALE, 0.34 * h / m.c)
+	local c = m.c * s
+	-- how far the flame (bottom left) or the crystals (top right) come inside the body:
+	-- the sides next to them start where they end
+	local f = P[name .. "_fregio"]
+	local flame = f and (f.box[1] > 0 or f.box[4] > 0)
+	local fw, fh = f and f.w * s or 0, f and f.h * s or 0
+	local in_w = f and fw - (flame and f.box[1] or f.box[3]) * s or c
+	local in_h = f and fh - (flame and f.box[4] or f.box[2]) * s or c
+	-- a part filling the box from (xa, ya) to (xb, yb), measured from the top left corner
+	local function part(i, xa, ya, xb, yb)
+		return pic(name .. "_" .. i, -w / 2 + (xa + xb) / 2, h / 2 - (ya + yb) / 2, xb - xa + 1, yb - ya + 1, n)
+	end
+	k.parts = {
+		part(5, c, c, w - c, h - c),
+		part(2, c, 0, f and not flame and w - in_w or w - c, c),
+		part(8, flame and in_w or c, h - c, w - c, h),
+		part(4, 0, c, c, flame and h - in_h or h - c),
+		part(6, w - c, f and not flame and in_h or c, w, h - c),
+		part(1, 0, 0, c, c), part(3, w - c, 0, w, c), part(7, 0, h - c, c, h), part(9, w - c, h - c, w, h),
+	}
+	if flame then
+		pic(name .. "_fregio", -w / 2 - f.box[1] * s + fw / 2, -h / 2 - f.box[4] * s + fh / 2, fw, fh, n)
+	elseif f then
+		pic(name .. "_fregio", w / 2 + f.box[3] * s - fw / 2, h / 2 + f.box[2] * s - fh / 2, fw, fh, n)
+	end
+	card_in(n)
+	return k
+end
+
 -- A picture at the top of a card, `tall` pixels, cut to the card's corner
 -- (two clippers, like M.thumb). The picture covers the place keeping its
 -- shape (ratio: its width over its height). dim: how bright (a closed card)

@@ -221,8 +221,8 @@ function M.stats(s, g, x, y, w, a, a2, o)
 			vw = w * 0.52
 		end
 		if changes then
-			local arrow = kit.piece(g, "freccia", x + w - vw - 12, yy + (big and 26 or 13), 14)
-			gui.set_rotation(arrow, vmath.vector3(0, 0, up and 90 or -90))
+			-- the signs drawn by Codex (WB-061), ivory: tinted like the number
+			local arrow = kit.piece(g, up and "segno_sale" or "segno_scende", x + w - vw - 12, yy + (big and 26 or 13), big and 18 or 16)
 			gui.set_color(arrow, col)
 			vw = vw + 24
 		end
