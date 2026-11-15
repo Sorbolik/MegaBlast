@@ -3,10 +3,11 @@
 --          back, it drags the new screen in with it, backdrop and all, over
 --          the home that stays still under it (Sergio, 15 Nov: «vorrei
 --          semplicemente che si portasse l'altra pagina con sé»). The page's
---          edge is a thin orange line, the button rides on it pulling; arrived,
---          the button slips out and the line stays on that edge: where you
---          are. Back: the line pulls the page out again, the home under it,
---          and the button comes home from its edge
+--          edge is a thin orange line, the button rides on it pulling and goes
+--          out over the screen's border just as the line gets there; the line
+--          stays on that edge: where you are. Back: the button rides the line pushing the page out, the
+--          home under it; it stops on its place with a small bounce and the
+--          page goes on to the edge
 --   zaino  the ZAINO grows out of the apprentice and goes back into it
 -- The new screen's top nodes are the ones kit.anchor and ui.root make while it
 -- is open (kit.track): the doors drag them, the ZAINO scales them.
@@ -31,6 +32,10 @@ local M = {}
 -- button slipping off the line and back on it
 M.OUT, M.ACROSS, M.ACROSS_BACK, M.IN, M.SLIP = 0.30, 0.62, 0.52, 0.36, 0.14
 M.GROW, M.SHRINK = 0.42, 0.32
+-- back home, the button's bounce toward its edge as it stops on its place
+M.BOUNCE = 14
+-- forward, the part of the drag before the button starts going out with the line
+M.LEAVE = 0.5
 -- the shield's middle sits this far inside the screen's border
 local EDGE = 17
 -- the line: its ink and its orange core
@@ -212,21 +217,29 @@ function M.open(dp, h, id, change)
 		ride(d)
 		-- (a moment for the frame that made the screen, a long one)
 		timer.delay(0.03, false, function()
-			-- 3. the button drags it across
+			-- 3. the button drags it across, and in the last stretch it goes out
+			-- over the screen's border with the line (Sergio, 15 Nov: it must not
+			-- come off the edge, «lo dovrebbe accompagnare fino alla fine»)
+			gui.animate(d.node, "position.x", d.rest.x + d.dx + d.off, gui.EASING_INOUTQUAD,
+				M.ACROSS * (1 - M.LEAVE), M.ACROSS * M.LEAVE)
 			slide(join(page, { d.rider }), -d.p0, gui.EASING_INOUTCUBIC, M.ACROSS, function()
 				home_on(h, false)
 				kit.scene_cut(false)
 				kit.scene_copy_drop(still)
 				blade_to(dp.line, 0, 0.3)
-				-- 4. the button lets go and slips out; the line stays
-				-- (the rider went across with it)
-				gui.animate(d.node, "position.x", d.rest.x + d.dx + d.off, gui.EASING_INQUAD, M.SLIP, 0, function()
-					unride(d)
-					dp.busy = false
-				end)
+				-- 4. the line stays; the button, out of sight, goes back home
+				unride(d)
+				dp.busy = false
 			end)
 		end)
 	end)
+end
+
+-- when INOUTCUBIC gets to the fraction f of its way (0..1)
+local function reach(f)
+	f = math.max(0, math.min(1, f))
+	if f < 0.5 then return (f / 4) ^ (1 / 3) end
+	return 1 - (2 * (1 - f)) ^ (1 / 3) / 2
 end
 
 function M.close(dp, h, change)
@@ -247,19 +260,31 @@ function M.close(dp, h, change)
 	-- (out of an animation's callback: started there, some animations of the
 	-- same frame would start a frame late, and the backdrop would lag the page)
 	gui.animate(d.node, "position.x", d.rest.x + d.dx - d.p0, gui.EASING_OUTQUAD, M.SLIP, 0, function() timer.delay(0, false, function()
-		-- 2. it pulls the screen out toward its edge, the home under it
-		slide(join(page, tops, { dp.line, d.rider }), d.p0, gui.EASING_INOUTCUBIC, M.ACROSS_BACK, function()
+		-- 2. it pushes the screen out toward its edge, the home under it; the
+		-- button stops on its place (Sergio, 15 Nov: «quando arriva al suo
+		-- posto resta lì») with a small bounce, the page goes on to the edge
+		local left = 2
+		local function done()
+			left = left - 1
+			if left > 0 then return end
+			unride(d)
+			dp.kind, dp.busy = nil, false
+		end
+		slide(join(page, tops, { dp.line }), d.p0, gui.EASING_INOUTCUBIC, M.ACROSS_BACK, function()
 			-- (all in one frame: the backdrop back in its place under the home)
 			shift(tops, -d.p0)
 			kit.scene_cut(false)
 			change()
 			kit.scene_copy_drop(still)
 			drop_line(dp)
-			-- 3. the button comes home from its edge
-			unride(d)
-			gui.set_position(d.node, vec(d.rest.x + d.dx, d.rest.y))
-			gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTCUBIC, M.IN, 0.05, function()
-				dp.kind, dp.busy = nil, false
+			done()
+		end)
+		-- the button rides the line just as far as its place
+		gui.animate(d.node, "position.x", d.rest.x + d.dx, gui.EASING_INOUTCUBIC, M.ACROSS_BACK)
+		timer.delay(M.ACROSS_BACK * reach(1 - d.dx / d.p0), false, function()
+			gui.cancel_animations(d.node, "position.x")
+			gui.animate(d.node, "position.x", d.rest.x + d.side * M.BOUNCE, gui.EASING_OUTQUAD, 0.10, 0, function()
+				gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTQUAD, 0.20, 0, done)
 			end)
 		end)
 	end) end)

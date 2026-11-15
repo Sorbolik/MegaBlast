@@ -1,6 +1,6 @@
 # Le transizioni delle porte (Sergio, 15 nov): la porta scivola al suo bordo e torna
 # indietro trascinandosi dentro la pagina, sfondo compreso, sopra la home ferma; il
-# bordo della pagina è una linea arancione sottile, che resta lì; INDIETRO la riporta fuori. Lo ZAINO cresce dall'apprendista.
+# bordo della pagina è una linea arancione sottile, che resta lì; INDIETRO la porta la spinge fuori e si ferma al suo posto con un piccolo rimbalzo. Lo ZAINO cresce dall'apprendista.
 # Gira anche con --schermo 1600x720 e 960x720.
 imposta prova_profilo 1
 
@@ -9,14 +9,22 @@ foto 00_home
 tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
 aspetta 0.25
 foto 01_porta_al_bordo
-aspetta 0.35
+aspetta 0.2
 foto 02_trascina
-aspetta 1.2
+aspetta 0.15
+foto 02b_esce_con_la_linea
+aspetta 0.15
+foto 02c_arrivata
+aspetta 0.9
 foto 03_armeria
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta 0.35
 foto 04_torna
-aspetta 1.2
+aspetta 0.17
+foto 04b_porta_al_suo_posto   # la porta si ferma al suo posto, la pagina va avanti
+aspetta 0.15
+foto 04c_rimbalzo
+aspetta 0.9
 foto 05_home
 tocca_centro 640 300               # l'apprendista
 aspetta 0.2
