@@ -386,15 +386,16 @@ return {
 		sign = "firma: %s",
 		sign_off = "firma dallo scatto 10: %s",
 		-- the other pieces of the slot (the slot in uppercase)
-		others = "GLI ALTRI %s CHE HAI",
-		tap_one = "tocca per sceglierlo",
+		others = "I TUOI %s",
+		-- the slots in the plural
+		plural = { mask = "ELMI", chest = "CORAZZE", cloak = "MANTELLI", legs = "STIVALI" },
 		-- BOTTEGA
 		yours = "tuo",
 		offers = "OFFERTE DEL FABBRO",
 		-- the time until midnight
 		change_in = "cambiano tra %s",
 		day = "PEZZI DEL GIORNO",
-		day_line = "%d pezzi · cambiano domani",
+		day_line = "cambiano domani",
 		use_voucher = "USA UN BUONO",
 		you_have = "ne hai %d",
 	},
@@ -406,7 +407,8 @@ return {
 		at_max = "AL MASSIMO",
 		proof = "%d / %d partite col pezzo addosso",
 		proof_first = "prima la prova",
-		upgrade = "POTENZIA",
+		-- (not POTENZIA: that is the tab already, Sergio 15 Nov)
+		upgrade = "+1 LIVELLO",
 		missing = "mancano %s",
 		pick_ware = "tocca un pezzo",
 		in_wardrobe = "ce l'hai già",
@@ -427,18 +429,23 @@ return {
 	profile_tabs = {
 		tab_matches = "CRONOLOGIA PARTITE",
 		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
-		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
+		round_by_round_tap = "COM'È ANDATA, GIRO PER GIRO · TOCCA UN NUMERO PER RIVEDERE DA LÌ",
+		history_hint = "le ultime %s partite · tocca una partita per vedere com'è andata",
+		vs = "VS",
 		no_moments = "nessun momento da ricordare",
-		level = "LIVELLO %s",
 		-- STATISTICHE: the four big numbers
 		won = "VITTORIE",
 		best_streak = "DI FILA",
 		stars = "STELLE",
 		lost = "SCONFITTE",
-		-- the badge of a stat, with its grade in roman numbers
-		badge_pill = "BADGE %s",
-		badge_hint = "tocca una riga col badge per metterlo accanto al tuo nome (al massimo %s)",
-		next_at = "badge a %s",
+		badge_hint = "tocca un record con la medaglia per metterla accanto al tuo nome (al massimo %s)",
+		-- the player's card on the left
+		level_short = "LIV %s",
+		xp = "%s / %s XP",
+		next_to_name = "ACCANTO AL TUO NOME",
+		won_share = "%s%% delle partite vinte",
+		-- the modes, short, as chips
+		mode_short = { tutte = "TUTTE", ["2v2"] = "2V2", ["1v1"] = "1V1", torneo = "TORNEO", campagna = "CAMPAGNA" },
 		damage_by_weapon = "DANNO PER ARMA",
 		nothing_yet = "ancora niente: gioca una partita",
 		weapons = {
@@ -453,7 +460,6 @@ return {
 		outcome_lost = "SCONFITTA",
 		outcome_tie = "PAREGGIO",
 		points = "PUNTI",
-		ranking = "CLASSIFICA",
 		no_matches = "Nessuna partita ancora: gioca, e la ritrovi qui.",
 	},
 
@@ -475,6 +481,15 @@ return {
 		-- slot and family: "ELMO · CORVO"
 		piece = "%s · %s",
 		stats = "STATISTICHE",
+		-- the column of the stats shows only what changes; this opens all of them
+		see_all = "VEDI TUTTE ›",
+		-- the colors of the bars: where the points come from
+		parts = { "BASE", "LIVELLO", "PEZZI", "SIGILLI" },
+		-- the piece chosen changes nothing / your pieces leave everything as at the start
+		no_change = "non cambia niente",
+		all_base = "tutte come all'inizio",
+		-- the sheet of all the stats: back to the pieces
+		back_to_pieces = "TORNA AI PEZZI",
 		-- a loadout still closed: from which level
 		loadout_locked = "DAL LIV %d",
 	},
@@ -487,13 +502,16 @@ return {
 		loadout = "ASSETTO",
 		seal_loadout = "ASSETTO SIGILLI",
 		all = "TUTTI",
-		count = "%d pezzi",
 		nothing = "nessun pezzo qui: li trovi in armeria",
 		-- under the piece chosen: level, grade and what it does
 		piece_line = "liv %d · grado %s %s · %s",
 		wear = "INDOSSA",
 		worn = "ce l'hai addosso",
-		points = "PUNTI  %d / %d",
+		-- the Sigilli: the points still to spend (a flame each) and those used
+		free = "PUNTI LIBERI",
+		used = "%d / %d USATI",
+		-- under the points of a path: what one point gives, and all of them now
+		per_point = "1 PUNTO: %s · ORA %s",
 		of = "%d / %d",
 		save = "SALVA",
 		saved = "salvato",

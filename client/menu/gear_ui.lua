@@ -8,6 +8,8 @@
 --   gear_ui.slot(g, x, y, s, opt)        -- opt: set, slot, level, worn, sel, empty_slot
 --   gear_ui.worn(s, g, cx, feet, h, x, ys, size, sel)   -- the labels of the pieces worn
 --   gear_ui.stats(s, g, x, y, w, now, after, o)         -- the column of the stats, all in one screen
+--   gear_ui.stats_short(s, g, x, y, w, a, a2)           -- only the rows that change, and VEDI TUTTE
+--   gear_ui.sheet(s, g, a, a2, back)                    -- all the stats, big, in the middle
 --   gear_ui.loadouts(s, g, x, y, active, prefix, label) -- the three loadouts
 --   gear_ui.chips(s, g, x, y, list, active)             -- a row of filters
 --   gear_ui.families(s, g, x, y, active)                -- the families' dots
@@ -167,14 +169,125 @@ end
 -- M.STAT_ROWS); o.title = false: no title
 M.STAT_ROWS = 8
 M.STAT_PAD = 12
+M.SHORT_ROWS = 7
+-- where each point comes from (Statistiche A, Sergio 15 Nov 22:48): the colors of
+-- the parts of a bar, in this order
+M.PART_COLORS = { kit.hex("7d7068"), kit.hex("ffc83d"), kit.hex("ff7a1a"), kit.hex("8fdcff") }
+
+-- The parts of every stat of the loadout a: base, level, pieces, sigilli
+-- (the pieces are what is left, so the parts always add up to the value)
+local function parts_of(p, base, a, now)
+	local zero = loadout.stats(base, {}, {}, 1)
+	local lvl = loadout.stats(base, {}, {}, p.livello)
+	local sig = loadout.stats(base, { tree = a.tree }, {}, 1)
+	local out = {}
+	for k, v in pairs(now) do
+		if type(v) == "number" and type(zero[k]) == "number" then
+			local b, l, g = zero[k], lvl[k] - zero[k], sig[k] - zero[k]
+			out[k] = { b, l, v - b - l - g, g }
+		end
+	end
+	return out
+end
+
+-- vertical stripes from x1 to x2 (the piece chosen: mint better, red worse)
+local function stripes(g, y, h, x1, x2, color)
+	local px = x1
+	while px < x2 do
+		kit.rect(g, px, y, math.min(4, x2 - px), h, color)
+		px = px + 7
+	end
+end
+
+-- The bars run from the base to the highest value in the game (Sergio, 15 Nov
+-- 23:14): menu/stat_max.lua, written by tools/statistiche/massimi.lua (tutti.sh
+-- fails when it is behind the pieces and the Sigilli). The base is a fixed
+-- stub on the left, the rest of the bar is what you can still gain; a change
+-- is never thinner than DELTA_MIN, its size is written next to the bar.
+-- Only the stats where more is better have a bar (not the counts, not the
+-- ones where less is better).
+M.MAX = require "menu.stat_max"
+M.BASE_STUB, M.DELTA_MIN = 0.2, 8
+function M.bar(g, x, y, w, h, parts, now, after, k)
+	local mx = M.MAX[k]
+	if not parts or not mx or type(now) ~= "number" then return end
+	local b = parts[1]
+	local stub = w * M.BASE_STUB
+	local function at(v)
+		if v <= b then
+			if b <= 0 then return v >= b and stub or 0 end
+			return stub * math.max(v, 0) / b
+		end
+		return stub + (w - stub) * math.min(1, (v - b) / math.max(mx - b, 1e-9))
+	end
+	kit.rect(g, x - 2, y - 2, w + 4, h + 4, KC.INK)
+	kit.rect(g, x, y, w, h, KC.TRACK)
+	local solid = math.min(now, type(after) == "number" and after or now)
+	-- the base, then level, pieces and Sigilli above it, up to the value
+	local v, edge = b, 0
+	local function seg(x1, x2, color)
+		if x2 > x1 then
+			kit.rect(g, x + x1, y, x2 - x1, h, color)
+			kit.rect(g, x + x2 - 1, y, 2, h, KC.INK)
+		end
+	end
+	seg(0, at(math.min(b, solid)), M.PART_COLORS[1])
+	for i = 2, 4 do
+		if parts[i] > 0 then
+			seg(at(math.min(v, solid)), at(math.min(v + parts[i], solid)), M.PART_COLORS[i])
+			v = v + parts[i]
+		end
+	end
+	if type(after) == "number" and after ~= now then
+		local x1, x2 = at(math.min(now, after)), at(math.max(now, after))
+		x2 = math.max(x2, x1 + M.DELTA_MIN)
+		if x2 > w then x2, x1 = w, w - M.DELTA_MIN end
+		stripes(g, y, h, x + x1, x + x2, after > now and KC.MINT or KC.RED)
+	end
+end
+
+-- how much a stat changes, written like its value: "+2", "+10%", "−0.4 S"
+function M.delta(v, v2, how)
+	if type(v) ~= "number" or type(v2) ~= "number" or how == "yes_no" then return nil end
+	local d = v2 - v
+	local t
+	if how == "percent" then t = string.format("%+d%%", math.floor(d * 100 + (d > 0 and 0.5 or -0.5)))
+	elseif how == "seconds" then t = string.format("%+.1f S", d / 60)
+	elseif math.abs(d - math.floor(d + 0.5)) < 1e-6 then t = string.format("%+d", math.floor(d + 0.5))
+	else t = string.format("%+.1f", d) end
+	return (t:gsub("^%-", "−"))
+end
+
+-- the four colors of the bars and their names, two by two, w wide from (x, y)
+function M.legend(g, x, y, w)
+	for i, c in ipairs(M.PART_COLORS) do
+		local cx, cy = x + ((i - 1) % 2) * w / 2, y + math.floor((i - 1) / 2) * 22
+		kit.rect(g, cx, cy + 4, 16, 12, KC.INK)
+		kit.rect(g, cx + 2, cy + 6, 12, 8, c)
+		kit.text(g, T.parts[i], cx + 22, cy + 16, 16, KC.MUTE, "start")
+	end
+end
+
+-- The stats of the loadout a (and of a2, the same with a piece changed: its value and an arrow)
+-- in the column at (x, y), w wide: STATISTICHE and the rows, each with its bar
+-- (Statistiche A: where the points come from, and the piece chosen striped).
+-- Better than the base in mint, worse in red (Sergio, 15 Nov: ice for worse is
+-- counterintuitive). The rows that change with a2 come first.
+-- o.from, o.to: only those rows, big (the sheet, two columns of M.STAT_ROWS);
+-- o.title = false: no title; o.rows: these rows; o.empty: the text with no rows;
+-- o.legend: the colors' names under the rows (in the sheet: in the head).
+-- Returns how tall the rows are
 function M.stats(s, g, x, y, w, a, a2, o)
 	o = o or {}
 	local p = s.prof
 	local base = game.base_stats()
 	local now = loadout.stats(base, a, wallet.levels(p, a), p.livello)
-	local after = a2 and loadout.stats(base, a2, wallet.levels(p, a2), p.livello)
+	local after = a2 and loadout.stats(base, a2, (a2.levels or wallet.levels(p, a2)), p.livello)
+	local parts = parts_of(p, base, a, now)
 	local order = {}
-	if after then
+	if o.rows then
+		order = o.rows
+	elseif after then
 		for _, st in ipairs(M.STATS) do if after[st[1]] ~= now[st[1]] then order[#order + 1] = st end end
 		for _, st in ipairs(M.STATS) do if after[st[1]] == now[st[1]] then order[#order + 1] = st end end
 	else
@@ -184,19 +297,24 @@ function M.stats(s, g, x, y, w, a, a2, o)
 	-- not on the painting; the same margin (M.STAT_PAD) on every side of the rows
 	local big = o.from ~= nil
 	local from, to = o.from or 1, o.to or #order
-	local rh = big and 54 or 27
+	local rh = big and 52 or 40
+	local head = big and 50 or 34
 	local name_size, value_size = big and 19 or 16, big and 22 or 18
-	local tall = 34 + (big and M.STAT_ROWS or #order) * rh
+	local rows_h = (big and M.STAT_ROWS or math.max(#order, o.empty and 1 or 0)) * rh
+	local tall = head + rows_h + ((o.legend and not big) and 52 or 0)
 	kit.panel(kit.group(g, x + w / 2, y + tall / 2).node, w + 2 * M.STAT_PAD, tall + 2 * M.STAT_PAD)
 	if o.title ~= false then kit.text(g, T.stats, x, y + 18, 22, KC.HOT, "start", 1) end
-	for i = from, to do
+	if o.legend then
+		if big then M.legend(g, x + w - 210, y - 2, 220) else M.legend(g, x, y + head + rows_h + 8, w) end
+	end
+	if o.empty and #order == 0 then
+		kit.text(g, kit.upper(o.empty), x, y + head + 19, 16, KC.MUTE, "start", 0.5)
+	end
+	for i = from, math.min(to, #order) do
 		local st = order[i]
 		local k, how = st[1], st[2]
-		local yy = y + 38 + (i - from) * rh
-		if (i - from) % 2 == 0 then
-			local r = kit.strip(g, "riga_scura", x - 8, yy, w + 16, rh - 4)
-			kit.tint(r.parts, kit.with_alpha(KC.SAND, 0.55))
-		end
+		local yy = y + head + (i - from) * rh
+		local line = yy + (big and 22 or 17)
 		local v, b = now[k], base[k]
 		local col = KC.SAND
 		if type(v) == "number" and type(b) == "number" and v ~= b then
@@ -214,7 +332,7 @@ function M.stats(s, g, x, y, w, a, a2, o)
 			up = (type(v2) == "number" and v2 or v2 and 1 or 0) > (type(v) == "number" and v or v and 1 or 0)
 			col = (up ~= (LESS[k] == true)) and KC.MINT or KC.RED
 		end
-		local n = kit.text(g, t, x + w, yy + (big and 33 or 20), value_size, col, "end")
+		local n = kit.text(g, t, x + w, line, value_size, col, "end")
 		local vw = kit.width(n)
 		if vw > w * 0.52 then
 			gui.set_scale(n, gui.get_scale(n) * (w * 0.52 / vw))
@@ -222,15 +340,59 @@ function M.stats(s, g, x, y, w, a, a2, o)
 		end
 		if changes then
 			-- the signs drawn by Codex (WB-061), ivory: tinted like the number
-			local arrow = kit.piece(g, up and "segno_sale" or "segno_scende", x + w - vw - 12, yy + (big and 26 or 13), big and 18 or 16)
+			local arrow = kit.piece(g, up and "segno_sale" or "segno_scende", x + w - vw - 12, line - 7, big and 18 or 16)
 			gui.set_color(arrow, col)
 			vw = vw + 24
 		end
-		local name = kit.text(g, kit.upper(TA.stats[k]), x, yy + (big and 32 or 19), name_size, KC.SAND)
+		local name = kit.text(g, kit.upper(TA.stats[k]), x, line, name_size, KC.SAND)
 		local wide, room = kit.width(name), w - vw - 10
 		-- never under 16 (the smallest text of the menus)
 		if wide > room then gui.set_scale(name, gui.get_scale(name) * math.max(room / wide, 16 / name_size)) end
+		-- under the name the bar, and at its right how much the piece chosen changes
+		local dt = changes and M.delta(v, after[k], how)
+		local bw = w
+		if dt then
+			kit.text(g, dt, x + w, line + (big and 23 or 19), 16, col, "end")
+			bw = w - (big and 70 or 56)
+		end
+		M.bar(g, x, line + (big and 10 or 7), bw, big and 12 or 10, parts[k], v, changes and after[k] or nil, k)
 	end
+	return tall
+end
+
+-- The column of the stats (Impeccable and Taste skill, Sergio 15 Nov: not the
+-- same wall of 16 rows on four screens): only the rows the piece chosen
+-- changes (a2), or with nothing chosen the rows your pieces move from the base,
+-- at most M.SHORT_ROWS; under it VEDI TUTTE opens all of them in one screen
+-- (M.sheet, "foglio"). The same column on every screen where the gear changes
+-- (Sergio, 15 Nov 22:48). Returns the bottom of the button
+function M.stats_short(s, g, x, y, w, a, a2)
+	local p = s.prof
+	local base = game.base_stats()
+	local now = loadout.stats(base, a, wallet.levels(p, a), p.livello)
+	local ref = a2 and loadout.stats(base, a2, (a2.levels or wallet.levels(p, a2)), p.livello) or base
+	local rows = {}
+	for _, st in ipairs(M.STATS) do
+		if ref[st[1]] ~= now[st[1]] and #rows < M.SHORT_ROWS then rows[#rows + 1] = st end
+	end
+	local tall = M.stats(s, g, x, y, w, a, a2, { rows = rows, empty = a2 and T.no_change or T.all_base, legend = true })
+	local bottom = y + tall + M.STAT_PAD + 14
+	local b = kit.card(g, x - M.STAT_PAD, bottom, w + 2 * M.STAT_PAD, 56, KC.ROSE)
+	kit.text(b.g, T.see_all, x + w / 2, bottom + 36, 20, KC.SAND, "middle", 0.5)
+	kit.button(s.buttons, b, "foglio")
+	return bottom + 56
+end
+
+-- All the stats in one screen (Sergio, 15 Nov: no pages), big, in two columns
+-- in the middle of the screen; the button at the top right closes it (back: its label)
+function M.sheet(s, g, a, a2, back)
+	M.stats(s, g, 460, 110, 370, a, a2, { from = 1, to = M.STAT_ROWS, legend = true })
+	M.stats(s, g, 878, 110, 370, a, a2, { from = M.STAT_ROWS + 1, to = #M.STATS, title = false })
+	-- (drawn after the panels: it sits inside the head of the second one, the
+	-- same plate as VEDI TUTTE; Sergio, 15 Nov: not the lit frame over the edge)
+	local b = kit.card(g, 1248 - 206, 106, 206, 44, KC.ROSE)
+	kit.text(b.g, back, 1248 - 103, 135, 18, KC.SAND, "middle", 0.5)
+	kit.button(s.buttons, b, "foglio")
 end
 
 -- The three loadouts at (x, y): the label, then 1 2 3 on small plates, the

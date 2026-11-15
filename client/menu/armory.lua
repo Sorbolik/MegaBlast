@@ -25,6 +25,7 @@ local wallet = require "menu.wallet"
 local gear_ui = require "menu.gear_ui"
 local step_scene = require "ui.step_scene"
 local T = require("lang.text").armory
+local TG = require("lang.text").gear_ui
 local TP = require("lang.text").pieces
 local common = require("lang.text").common
 
@@ -133,9 +134,7 @@ local function upgrade(a)
 	end
 
 	-- the other pieces of that slot you have
-	local slot_name = gear_ui.slot_of(slot).name
-	kit.text(g, T.others:format(slot_name), x, 474, 20, KC.SAND, "start", 1)
-	kit.text(g, kit.upper(T.tap_one), x + w, 474, 17, KC.MUTE, "end", 0.5)
+	kit.text(g, T.others:format(T.plural[slot]), x, 474, 20, KC.SAND, "start", 1)
 	local n = 0
 	for _, f in ipairs(equip.SETS) do
 		if wallet.owns(p, f.id, slot) and n < 6 then
@@ -237,7 +236,7 @@ local function shop(a)
 	end
 	-- the pieces of the day
 	kit.text(g, T.day, x, 358, 22, KC.SAND, "start", 1)
-	kit.text(g, kit.upper(T.day_line:format(wallet.DAY)), x + 226, 358, 17, KC.MUTE, "start", 0.5)
+	kit.text(g, kit.upper(T.day_line), x + 226, 358, 17, KC.MUTE, "start", 0.5)
 	for k, it in ipairs(wallet.day(today)) do
 		local set, slot = it[1], it[2]
 		ware(a, x + ((k - 1) % 5) * 117, 372 + math.floor((k - 1) / 5) * 118, 109, 110, set, slot, wallet.price(p, slot, false),
@@ -262,12 +261,13 @@ end
 
 -- Screen ----------------------------------------------------------------------------
 
-local GROUPS = { "left", "mid", "rt", "right", "low", "low2" }
+local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over" }
 
 local function build(a)
 	if a.head then kit.header_delete(a.head) end
 	for _, k in ipairs(GROUPS) do
 		if a[k] then gui.delete_node(a[k].node) end
+		a[k] = nil
 	end
 	a.buttons, a.figure, a.action = {}, nil, nil
 	local p = a.prof
@@ -284,7 +284,7 @@ local function build(a)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
 	local act = profile.active_loadout(p)
 	gear_ui.devil(a, a.left, 250, 600, 360)
-	local try, focus
+	local try, focus, up
 	if a.tab == "bottega" then
 		local w = shop(a)
 		-- the ware chosen: tried on the devil
@@ -292,14 +292,29 @@ local function build(a)
 	else
 		local sel = upgrade(a)
 		focus = sel and sel[2]
+		-- the piece one level up: the column says what +1 LIVELLO changes
+		-- (Sergio, 15 Nov 22:48: the stats wherever the gear changes)
+		local nxt = sel and wallet.next(p, sel[1], sel[2])
+		if nxt then up = { sel[1], sel[2], nxt.level } end
 	end
 	gear_ui.worn(a, a.left, act, 250, 600, 360, 36, { 130, 248, 366, 484 }, 72, focus, try)
 	local a2
 	if try and act.gear[try[2]] ~= try[1] then
 		a2 = copy(act)
 		a2.gear[try[2]] = try[1]
+	elseif up and act.gear[up[2]] == up[1] then
+		a2 = copy(act)
+		a2.levels = wallet.levels(p, act)
+		a2.levels[up[2]] = up[3]
 	end
-	gear_ui.stats(a, a.rt, 1040, 106, 210, act, a2)
+	if a.sheet then
+		-- all the stats over the middle: the bench and the column are hidden (and their taps)
+		gui.set_enabled(a.mid.node, false)
+		a.over = kit.anchor(0, 0)
+		gear_ui.sheet(a, a.over, act, a2, TG.back_to_pieces)
+	else
+		gear_ui.stats_short(a, a.rt, 1040, 106, 210, act, a2)
+	end
 end
 
 function M.new(prof, tab, from)
@@ -314,9 +329,11 @@ local function run_cmd(a, ui_action)
 	local p = a.prof
 	local s1, s2 = x:match("^([^:]*):?(.*)$")
 	if kind == "banco" then
-		a.tab = x
+		a.tab, a.sheet = x, nil
+	elseif kind == "foglio" then
+		a.sheet = not a.sheet
 	elseif kind == "posto" then
-		a.slot, a.sel = x, nil
+		a.slot, a.sel, a.sheet = x, nil, nil
 	elseif kind == "pezzo" then
 		a.sel, a.slot = { s1, s2 }, s2
 	elseif kind == "potenzia" then

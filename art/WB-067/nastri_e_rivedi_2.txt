@@ -1,0 +1,15 @@
+Image 1 is a mock-up of the MATCH HISTORY screen of our game: every match is a dark card with a result ribbon on the left (orange with a flame-shaped tip for a WIN, light blue with an ice-shard tip for a LOSS) and a round orange play button on the right to watch the replay. These are hand-made placeholders to redraw well. Images 2 and 3 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 4 is the main button of the game: copy the way its flame and its ice crystals are drawn. Ember is #F26419 with a lighter band #FFB703 and a darker band #B8440F, ice is #38B6FF with highlight #CAF0F8 and a deeper band #1E7FC2, dark text color is #2A1208.
+Draw a clean sheet on a fully transparent background with separate pieces, well spaced, nothing touching:
+1) the WIN ribbon: a wide horizontal banner (about 2 to 1), straight left side, the right side ends in a short licking flame shape; ember colors with one lighter band along the top; large flat empty center for a word.
+2) the LOSS ribbon: same size and same left side, the right side ends in two or three sharp ice shards; ice colors; large flat empty center for a word.
+3) a round REPLAY button: ember gradient disc with a thick ink outline and a dark #2A1208 play triangle in the middle, small flat highlight on top.
+4) the same replay button pressed: slightly darker, highlight gone, a few pixels lower.
+No letters, no numbers, no background, no shadows on the ground, no glow outside the ink.
+
+Riferimenti allegati in ordine
+art/WB-067/riferimenti/R2_bozza_profilo_cronologia.png
+art/WB-022/pezzo_pannello.png
+art/WB-022/pezzo_piccoli.png
+art/WB-054/ritagli/primario_gemma_acceso.png
+
+Due nastri e due pulsanti. Nastro ghiaccio con tre schegge e fascia superiore più chiara.

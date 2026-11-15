@@ -26,6 +26,7 @@ local profile = require "menu.profile"
 local wallet = require "menu.wallet"
 local gear_ui = require "menu.gear_ui"
 local T = require("lang.text").backpack
+local TG = require("lang.text").gear_ui
 local TP = require("lang.text").pieces
 local common = require("lang.text").common
 
@@ -75,40 +76,43 @@ local function inventory(s)
 	gear_ui.devil(s, s.left, 250, 600, 360)
 	gear_ui.worn(s, s.left, a, 250, 600, 360, 36, { 206, 308, 410, 512 }, 72, s.slot)
 
-	-- the filters: the slot, then the families
-	local g = s.mid
-	local list = { { T.all, "filtro:" } }
-	for _, sl in ipairs(equip.SLOTS) do list[#list + 1] = { sl.name, "filtro:" .. sl.id } end
-	local active = 1
-	for i, sl in ipairs(equip.SLOTS) do if s.slot == sl.id then active = i + 1 end end
-	gear_ui.chips(s, g, 430, 100, list, active)
-
-	-- the pieces, six in a row
+	-- the stats: with the piece chosen on, what changes; VEDI TUTTE opens all of them
+	-- in the middle, in place of the pieces
 	local items = owned(s)
 	if not s.sel and items[1] then s.sel = items[1] end
-	for i, it in ipairs(items) do
-		if i > 24 then break end
-		local c, r = (i - 1) % 6, math.floor((i - 1) / 6)
-		local x, y = 430 + c * 100, 164 + r * 100
-		local set, slot = it[1], it[2]
-		gear_ui.slot(g, x, y, 86, { set = set, slot = slot, level = wallet.level(p, set, slot),
-			worn = a.gear[slot] == set, sel = s.sel and s.sel[1] == set and s.sel[2] == slot })
-		kit.zone(g, s.buttons, x - 6, y - 10, 98, 104, "pezzo:" .. set .. ":" .. slot)
-	end
-	if #items == 0 then
-		kit.text(g, kit.upper(T.nothing), 730, 300, 18, KC.MUTE, "middle", 1)
-	end
-	-- under the pieces: how many, and the families (big dots: a finger hits them)
-	kit.text(g, kit.upper(T.count:format(#items)), 430, 592, 18, KC.MUTE, "start", 1)
-	gear_ui.families(s, g, 1006 - 5 * 50, 558, s.family)
-
-	-- the stats: with the piece chosen on, what changes
 	local a2
 	if s.sel and a.gear[s.sel[2]] ~= s.sel[1] then
 		a2 = copy(a)
 		a2.gear[s.sel[2]] = s.sel[1]
 	end
-	gear_ui.stats(s, s.rt, 1040, 106, 210, a, a2)
+	local g = s.mid
+	if s.sheet then
+		gear_ui.sheet(s, g, a, a2, TG.back_to_pieces)
+	else
+		-- the filters: the slot, then the families
+		local list = { { T.all, "filtro:" } }
+		for _, sl in ipairs(equip.SLOTS) do list[#list + 1] = { sl.name, "filtro:" .. sl.id } end
+		local active = 1
+		for i, sl in ipairs(equip.SLOTS) do if s.slot == sl.id then active = i + 1 end end
+		gear_ui.chips(s, g, 430, 100, list, active)
+
+		-- the pieces, six in a row
+		for i, it in ipairs(items) do
+			if i > 24 then break end
+			local c, r = (i - 1) % 6, math.floor((i - 1) / 6)
+			local x, y = 430 + c * 100, 164 + r * 100
+			local set, slot = it[1], it[2]
+			gear_ui.slot(g, x, y, 86, { set = set, slot = slot, level = wallet.level(p, set, slot),
+				worn = a.gear[slot] == set, sel = s.sel and s.sel[1] == set and s.sel[2] == slot })
+			kit.zone(g, s.buttons, x - 6, y - 10, 98, 104, "pezzo:" .. set .. ":" .. slot)
+		end
+		if #items == 0 then
+			kit.text(g, kit.upper(T.nothing), 730, 300, 18, KC.MUTE, "middle", 1)
+		end
+		-- under the pieces the families (big dots: a finger hits them)
+		gear_ui.families(s, g, 1006 - 5 * 50, 558, s.family)
+		gear_ui.stats_short(s, s.rt, 1040, 106, 210, a, a2)
+	end
 
 	-- the piece chosen, at the bottom, and INDOSSA
 	if s.sel then
@@ -127,8 +131,40 @@ end
 
 -- SIGILLI ---------------------------------------------------------------------------
 
+-- the area of the paths, and the bars in their rows
+-- The Sigilli as in the proposal chosen by Sergio (15 Nov 22:48, "Sigilli A col
+-- bivio"): the three paths as rows with − and +, a pip for every point (in
+-- groups of five) and what one point gives; under them the open path runs left
+-- to right, and at every step it forks: up to one power, down to the other, the
+-- fire only in the branch chosen. Pieces of WB-062; the branches are drawn here
+-- (Codex's ones are too wide for five steps in a row).
+local SEAL_X, SEAL_W = 452, 790
+local PIP_X, PIP = 660, 18
+local BAR_X, BAR_W = PIP_X, 25 * PIP + 4 * 8
+local ROW_Y, ROW_H = 146, 68
+local STEP_W = 157
+local LINE_Y = 478
+local PIP_LOOK = { wings = "tacca_ali", armor = "tacca_corazza", forge = "tacca_fucina" }
+
 local function seal_tree(s)
 	return s.draft
+end
+
+-- a branch of the fork: from the node up (or down) and right to the power,
+-- an ink line with the color inside, round at the bends
+local function branch(g, x0, y0, y1, x1, color)
+	for _, w in ipairs({ { 14, KC.INK }, { 8, color } }) do
+		kit.line(g, x0, y0, x0, y1, w[1], w[2])
+		kit.line(g, x0, y1, x1, y1, w[1], w[2])
+		kit.dot(g, x0, y1, w[1], w[2])
+	end
+end
+
+-- "+4.8%": what the points of a path give now (the end of its description)
+local function gain(path, n)
+	local tail = path.per_point_desc:match("(%S*%%s%S*)$") or "+%s"
+	local v = string.format("%.1f", n * skills.PER_POINT_SHOWN):gsub("%.0$", "")
+	return tail:format(v)
 end
 
 local function seals_tab(s)
@@ -140,60 +176,96 @@ local function seals_tab(s)
 	local a = profile.active_loadout(p)
 	local changed = not same(t, a.tree)
 	local a2 = changed and { gear = a.gear, tree = t, variant = a.variant } or nil
-	-- the stats are a sheet of their own here (the powers take the whole width, to be
-	-- read and touched on a phone: Sergio, 15 Nov): a button opens and closes it
-	-- (drawn after the sheet's panels: it sits in the head of the second one)
-	local function sheet_button()
-		local sb = kit.card(g, 1248 - 236, 102, 236, 44, KC.ROSE, { sel = s.sheet })
-		kit.text(sb.g, s.sheet and T.back_to_seals or T.see_stats, 1248 - 118, 131, 19, KC.SAND, "middle")
+	local pts = skills.points(p.livello)
+	local free = pts - skills.spent(t)
+	if s.sheet then
+		gear_ui.sheet(s, g, a, a2, T.back_to_seals)
+	else
+		kit.panel(kit.group(g, 846, 345).node, 824, 514)
+		-- the free points, a flame each (spent: the grey flame), and how many are used
+		local title = kit.text(g, T.free, 452, 126, 24, KC.HOT, "start", 1)
+		local fx = 452 + kit.width(title) + 12
+		for i = 1, math.min(free, 8) do
+			kit.piece(g, "punto_libero", fx + (i - 1) * 26 + 11, 116, 30)
+		end
+		if free > 8 then kit.text(g, "+" .. (free - 8), fx + 8 * 26 + 4, 126, 20, KC.HOT, "start") end
+		if free == 0 then kit.piece(g, "punto_speso", fx + 11, 116, 30) end
+		kit.text(g, T.used:format(skills.spent(t), pts), fx + math.max(1, math.min(free, 8)) * 26 + (free > 8 and 40 or 10), 125, 18, KC.MUTE, "start")
+		local sb = kit.card(g, 1242 - 216, 98, 216, 40, KC.ROSE)
+		kit.text(sb.g, T.see_stats, 1242 - 108, 125, 19, KC.SAND, "middle")
 		kit.button(s.buttons, sb, "foglio")
 	end
-	if s.sheet then
-		gear_ui.stats(s, g, 460, 110, 370, a, a2, { from = 1, to = gear_ui.STAT_ROWS })
-		gear_ui.stats(s, g, 878, 110, 370, a, a2, { from = gear_ui.STAT_ROWS + 1, to = #gear_ui.STATS, title = false })
-		sheet_button()
-	else
-		local pts = skills.points(p.livello)
-		kit.text(g, T.points:format(skills.spent(t), pts), 452, 132, 24, KC.HOT, "start", 1)
-		sheet_button()
-	end
+	local open_path = s.path or skills.to_choose(t) or skills.PATHS[1].id
 	for i, path in ipairs(not s.sheet and skills.PATHS or {}) do
 		local look = PATH_LOOK[path.id] or { KC.SAND, "barra_chiara" }
-		local y, x, w = 160 + (i - 1) * 148, 452, 730
+		local y = ROW_Y + (i - 1) * ROW_H
+		local on = path.id == open_path
 		local v = skills.spent(t, path.id)
-		local title = kit.text(g, path.name, x, y + 22, 26, look[1], "start", 1)
-		kit.text(g, T.of:format(v, skills.PATH_MAX), x + kit.width(title) + 18, y + 22, 20, KC.SAND)
-		kit.strip(g, "riga_scura", x, y + 34, w, 24)
-		if v > 0 then
-			local bar = kit.strip(g, look[2], x + 3, y + 37, math.max(22, (w - 6) * v / skills.PATH_MAX), 18)
-			if look[2] == "barra_chiara" then kit.tint(bar.parts, look[1]) end
+		if on then kit.card(g, 440, y, 808, 62, KC.ROSE, { sel = true }) end
+		kit.text(g, path.name, 456, y + 26, 24, on and look[1] or kit.with_alpha(look[1], 0.75), "start", 1)
+		kit.text(g, T.of:format(v, skills.PATH_MAX), 456, y + 52, 18, KC.SAND, "start")
+		kit.zone(g, s.buttons, 440, y, 150, 62, "via:" .. path.id)
+		-- − and +: one point at a time
+		local can_less, can_more = skills.can_remove(t, path.id), skills.can_add(t, path.id, pts)
+		kit.piece(g, can_less and "tasto_meno" or "tasto_meno_spento", 622, y + 24, 44)
+		kit.zone(g, s.buttons, 596, y - 4, 54, 62, "meno:" .. path.id)
+		kit.piece(g, can_more and "tasto_piu" or "tasto_piu_spento", 1218, y + 24, 44)
+		kit.zone(g, s.buttons, 1190, y - 4, 58, 62, "piu:" .. path.id)
+		-- a pip for every point, in groups of five (a tap on them puts that many)
+		for k = 1, skills.PATH_MAX do
+			local px = PIP_X + (k - 1) * PIP + math.floor((k - 1) / skills.STEP) * 8
+			kit.piece(g, k <= v and PIP_LOOK[path.id] or "tacca_vuota", px + 8, y + 14, 20)
 		end
-		-- a tap on the bar puts the points there (as many as are free)
-		kit.zone(g, s.buttons, x - 10, y + 18, w + 20, 54, "barra:" .. path.id)
-		-- every step is a fork: its two powers always in sight under the disc, the
-		-- chosen one with the ember rim, the other plain; a tap on the other takes it (Sergio, 15 Nov)
+		kit.zone(g, s.buttons, BAR_X - 6, y - 4, BAR_W + 12, 34, "barra:" .. path.id)
+		kit.text(g, kit.upper(T.per_point:format(path.per_point_desc:format(gain(path, 1):match("[%d.]+")), gain(path, v))), PIP_X, y + 50, 16, KC.MUTE, "start", 0.5)
+	end
+	local path = not s.sheet and skills.BY_ID[open_path]
+	if path then
+		local v = skills.spent(t, path.id)
+		local node_x = function(k) return SEAL_X + (k - 1) * STEP_W + 16 end
+		-- the rail of the points: iron all along, lit as far as the points go
+		local last = node_x(skills.STEPS)
+		kit.strip(g, "bivio_binario_spento", 446, LINE_Y - 10, last - 446, 20)
+		local lit = math.min(last, 446 + (node_x(1) - 446) * math.min(v, skills.STEP) / skills.STEP
+			+ math.max(0, v - skills.STEP) / skills.STEP * STEP_W)
+		if v > 0 then kit.strip(g, "bivio_binario_acceso", 446, LINE_Y - 10, math.max(30, lit - 446), 20) end
 		for k = 1, skills.STEPS do
-			local cx = x + w * k * skills.STEP / skills.PATH_MAX
+			local cx = node_x(k)
 			local got = v >= k * skills.STEP
 			local pick = skills.pick(t, path.id, k)
-			kit.pic(g, got and "tondo_oro" or "tondo_ferro", cx - 26, y + 20, 52, 52)
-			kit.text(g, tostring(k * skills.STEP), cx, y + 53, 19, got and KC.HOT_TOP or KC.SAND, "middle")
+			local card_x = cx + 22
+			for which = 1, 2 do
+				local chosen = got and pick == which
+				local cy = which == 1 and 416 or 540
+				branch(g, cx, LINE_Y + (which == 1 and -12 or 12), cy, card_x + 8,
+					chosen and KC.HOT_BOTTOM or got and KC.LINE or kit.hex("2b2530"))
+				local look = chosen and "acceso" or got and "spento" or "chiuso"
+				local card = kit.drawn_plate(g, "bivio_piastra_" .. look, card_x, cy - 44, 118, 88)
+				local ink = chosen and KC.INK or got and (pick and kit.with_alpha(KC.SAND, 0.75) or KC.HOT_TOP)
+					or kit.with_alpha(KC.MUTE, 0.8)
+				local step = path.steps[k][which]
+				local name = kit.upper(step.name)
+				local cut = name:find(" ", math.floor(#name / 2) - 3, true) or name:find(" ", 1, true)
+				local lines = { name }
+				local probe = kit.text(card.g, name, 0, 0, 17, ink)
+				if kit.width(probe) > 104 and cut then lines = { name:sub(1, cut - 1), name:sub(cut + 1) } end
+				gui.delete_node(probe)
+				local mid = card_x + 59
+				local ty = cy + 6 - (#lines - 1) * 10
+				for li, line in ipairs(lines) do
+					local n = kit.text(g, line, mid, ty + (li - 1) * 20, 17, ink, "middle")
+					local wide = kit.width(n)
+					if wide > 104 then gui.set_scale(n, gui.get_scale(n) * (104 / wide)) end
+				end
+				if got then kit.zone(g, s.buttons, card_x, cy - 44, 118, 88, "potere:" .. path.id .. ":" .. k .. ":" .. which) end
+			end
+			kit.piece(g, got and "bivio_nodo_acceso" or "bivio_nodo_spento", cx, LINE_Y, 40)
+			kit.text(g, tostring(k * skills.STEP), cx, LINE_Y + 7, 18, got and KC.INK or KC.SAND, "middle")
 			if got and not pick then
 				-- a step reached and not chosen yet
-				local d = ui.disc(cx + 22 - g.ox, g.oy - (y + 24), 22, KC.RED, g.node)
+				local d = ui.disc(cx + 18 - g.ox, g.oy - (LINE_Y - 18), 20, KC.RED, g.node)
 				gui.set_blend_mode(d, gui.BLEND_ALPHA)
-				kit.text(g, "!", cx + 22, y + 31, 18, KC.SAND, "middle")
-			end
-			for which = 1, 2 do
-				local on = pick == which
-				local cy = y + 76 + (which - 1) * 35
-				local cw = 138
-				local chip = kit.card(g, cx - cw / 2, cy, cw, 32, KC.ROSE, { sel = on })
-				local ink = on and KC.SAND or (got and not pick and KC.HOT_TOP) or (got and KC.MUTE) or kit.with_alpha(KC.MUTE, 0.55)
-				local n = kit.text(chip.g, kit.upper(path.steps[k][which].name), cx, cy + 22, 16, ink, "middle", 0.4)
-				local wide = kit.width(n)
-				if wide > cw - 14 then gui.set_scale(n, gui.get_scale(n) * ((cw - 14) / wide)) end
-				kit.button(s.buttons, chip, "potere:" .. path.id .. ":" .. k .. ":" .. which)
+				kit.text(g, "!", cx + 18, LINE_Y - 11, 16, KC.SAND, "middle")
 			end
 		end
 	end
@@ -273,7 +345,7 @@ local function run_cmd(s, ui_action)
 	local p = s.prof
 	local a, b = x:match("^([^:]*):?(.*)$")
 	if kind == "scheda" then
-		s.tab = x
+		s.tab, s.sheet = x, nil
 		s.draft = copy(profile.active_loadout(p).tree or {})
 	elseif kind == "assetto" then
 		p.is_active = tonumber(x)
@@ -287,6 +359,7 @@ local function run_cmd(s, ui_action)
 		s.slot = x ~= "" and x or nil
 	elseif kind == "posto" then
 		s.slot = s.slot ~= x and x or nil
+		s.sheet = nil
 	elseif kind == "famiglia" then
 		s.family = s.family ~= x and x or nil
 	elseif kind == "pezzo" then
@@ -299,9 +372,17 @@ local function run_cmd(s, ui_action)
 		-- where on the bar: that many points, as many as are free
 		local t = s.draft
 		local path = x
-		local want = math.floor((s.tap_x - 452) / 730 * skills.PATH_MAX + 0.5)
+		local want = math.floor((s.tap_x - BAR_X) / BAR_W * skills.PATH_MAX + 0.5)
+		if want >= skills.PATH_MAX - 0.5 then want = skills.PATH_MAX end
+		s.path = path
 		want = math.max(0, math.min(skills.PATH_MAX, want))
 		skills.move(t, path, want - skills.spent(t, path), skills.points(p.livello))
+	elseif kind == "via" then
+		s.path = x
+	elseif kind == "meno" or kind == "piu" then
+		-- one point at a time (Sergio, 15 Nov: the points one by one)
+		s.path = x
+		skills.move(s.draft, x, kind == "piu" and 1 or -1, skills.points(p.livello))
 	elseif kind == "potere" then
 		-- a power under a step: it becomes that step's choice
 		local k, which = b:match("^(%d+):(%d)$")

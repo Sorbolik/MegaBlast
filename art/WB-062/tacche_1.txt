@@ -1,0 +1,14 @@
+Image 1 is a rough mock-up of a game screen where the player spends points one by one on three paths: each path has a row of 25 small pips in groups of five, a round minus button and a round plus button, and on top a small flame counter of free points. Images 2 and 3 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+Draw a clean sheet on a fully transparent background with separate small pieces, well spaced, nothing touching, each piece readable at 24 pixels tall:
+row 1: an EMPTY pip (a small slightly crooked rounded diamond, dark iron #1A1418 inside, black ink) and the same pip FULL in ice blue #8FDCFF with highlight #CAF0F8;
+row 2: the pip FULL in ember #F26419 with lighter band #FFB703, and the pip FULL in mint green #5FE0B0 with a lighter band;
+row 3: a small flame shaped pip in ember (the free point to spend), and the same flame dull grey (#3A3340, spent);
+row 4: a round MINUS button (dark iron #3A3340 with a flat ivory #F4ECE1 minus sign) and a round PLUS button (ember gradient body #FFB347 to #F26419 with a dark #2A1208 plus sign), each also in a dull disabled version.
+No letters, no numbers, no background, no glow outside the ink.
+
+Riferimenti allegati in ordine
+art/WB-062/riferimenti/R2_bozza_sigilli.png
+art/WB-022/pezzo_pannello.png
+art/WB-022/pezzo_piccoli.png
+
+Quattro tacche, due fiamme e quattro pulsanti ben separati. Foglio adattato in proporzione con margini trasparenti.

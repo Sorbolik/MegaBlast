@@ -1,0 +1,35 @@
+# Le statistiche corte e il foglio di tutte, i Sigilli un sentiero alla volta
+# (Impeccable e Taste skill, Sergio 15 nov)
+imposta prova_profilo 1
+aspetta 4
+tocca_centro 640 300                # l'apprendista: lo ZAINO
+aspetta 1.5
+tocca_bordo 135 233 basso destra    # VEDI TUTTE
+aspetta 0.6
+foto S1_zaino_tutte
+tocca_centro 1130 596               # TORNA AI PEZZI
+aspetta 0.6
+foto S2_zaino_corte
+tocca_bordo 580 53 alto sinistra    # SIGILLI
+aspetta 0.6
+tocca_centro 500 494                # la riga CORAZZA
+aspetta 0.6
+foto S3_sigilli_corazza
+tocca_centro 1218 482               # + sulla CORAZZA (un punto alla volta)
+aspetta 0.3
+tocca_centro 1218 482               # + ancora
+aspetta 0.3
+tocca_centro 1218 482               # + ancora: 9 punti
+aspetta 0.6
+foto S3b_sigilli_piu
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta_stato modo=menu 3
+aspetta 0.8
+tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
+aspetta 1.5
+tocca_bordo 135 353 basso destra    # VEDI TUTTE (con +1 LIVELLO cambiano tre righe)
+aspetta 0.6
+foto S4_armeria_tutte
+tocca_bordo 543 53 alto sinistra    # BOTTEGA
+aspetta 0.6
+foto S5_bottega
