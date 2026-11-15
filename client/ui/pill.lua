@@ -10,6 +10,8 @@
 --   - in the home under the thread, in the middle (Sergio, 15 Nov, as in the
 --     proposal of 14 Nov): the shell strip with a hot dot that breathes and the
 --     text. Tapping it goes back to the room too;
+--   - in every menu the same, shorter (the time), under the thread a little
+--     left of the middle ("foot", Sergio, 15 Nov);
 --   - in a match (the draft, the battle, the podium) the chip: head, dots and
 --     time, right of the gear (or at the edge where there is no gear). It
 --     can't be tapped there (the finger is playing).
@@ -19,7 +21,8 @@
 --
 --   local pill = require "ui.pill"
 --   local p = pill.new()
---   pill.show(p, on, beside)           -- beside: nil (menus), "low" (the home: under the thread),
+--   pill.show(p, on, beside)           -- beside: nil (header), "low" (the home: under the thread),
+--                                      -- "foot" (the menus: under the thread, short),
 --                                      -- the gear node the chip sits next to,
 --                                      -- or true (a match screen without a gear: at the edge)
 --   pill.set(p, text, short, places, of, hot) -- text for the pill, short for the chip; places: dots lit
@@ -75,19 +78,27 @@ function M.new()
 	return p
 end
 
--- The home's form, under the thread (made the first time): the shell strip,
--- the hot dot, the text
-local LOW_W, LOW_H, LOW_Y = 330, 52, 640
-local function low_nodes(p)
-	if p.low then return p.low end
-	local l = {}
-	l.root = gui.new_box_node(vmath.vector3(W / 2, H - (LOW_Y + LOW_H / 2), 0), vmath.vector3(0, 0, 0))
+-- The form under the thread (made the first time, remade when it changes
+-- kind): the shell strip, the hot dot, the text. "low" is the home's, wide,
+-- in the middle, with the whole text; "foot" the menus' (Sergio, 15 Nov: «sempre
+-- quella nuova e sempre nella posizione nuova sotto la linea»), short (the time,
+-- BOT 13), a little left of the middle: on the right the action's line, on the
+-- left what the screen writes there
+local LOW_H, LOW_Y = 52, 640
+local FORMS = { low = { w = 330, cx = W / 2 }, foot = { w = 150, cx = 600 } }
+local function low_nodes(p, kind)
+	kind = kind or (p.low and p.low.kind) or "low"
+	if p.low and p.low.kind == kind then return p.low end
+	if p.low then gui.delete_node(p.low.root) end
+	local f = FORMS[kind]
+	local l = { kind = kind, w = f.w }
+	l.root = gui.new_box_node(vmath.vector3(f.cx, H - (LOW_Y + LOW_H / 2), 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(l.root, false)
 	-- stuck to the real bottom, like the thread
 	gui.set_yanchor(l.root, gui.ANCHOR_BOTTOM)
-	local g = { node = l.root, ox = W / 2, oy = LOW_Y + LOW_H / 2 }
-	l.strip = kit.strip(g, "guscio", W / 2 - LOW_W / 2, LOW_Y, LOW_W, LOW_H)
-	l.ring = gui.new_box_node(vmath.vector3(-LOW_W / 2 + 30, 0, 0), vmath.vector3(20, 20, 0))
+	local g = { node = l.root, ox = f.cx, oy = LOW_Y + LOW_H / 2 }
+	l.strip = kit.strip(g, "guscio", f.cx - f.w / 2, LOW_Y, f.w, LOW_H)
+	l.ring = gui.new_box_node(vmath.vector3(-f.w / 2 + 30, 0, 0), vmath.vector3(20, 20, 0))
 	gui.set_texture(l.ring, "ui")
 	gui.play_flipbook(l.ring, "disco_p")
 	gui.set_color(l.ring, kit.C.INK)
@@ -97,7 +108,7 @@ local function low_nodes(p)
 	gui.play_flipbook(l.dot, "disco_p")
 	gui.set_color(l.dot, kit.C.HOT)
 	gui.set_parent(l.dot, l.ring)
-	l.text = kit.text(g, "", W / 2 - LOW_W / 2 + 50, LOW_Y + LOW_H / 2 + 7, 19, kit.C.SAND, "start", 1)
+	l.text = kit.text(g, "", f.cx - f.w / 2 + 50, LOW_Y + LOW_H / 2 + 7, 19, kit.C.SAND, "start", 1)
 	gui.set_enabled(l.root, false)
 	p.low = l
 	return l
@@ -106,9 +117,10 @@ end
 local function fit_low(p)
 	local l = p.low
 	if not l then return end
+	gui.set_text(l.text, l.kind == "foot" and (p.short_text or "") or (p.long_text or ""))
 	gui.set_scale(l.text, vmath.vector3(1, 1, 1))
 	local wide = kit.width(l.text)
-	local room = LOW_W - 50 - 22
+	local room = l.w - 50 - 22
 	if wide > room then
 		local k = room / wide
 		local sc = gui.get_scale(l.text)
@@ -152,8 +164,13 @@ local function shape(p, chip)
 end
 
 function M.show(p, on, beside)
-	local low = on and beside == "low"
-	if low or p.low then gui.set_enabled(low_nodes(p).root, low) end
+	local low = on and (beside == "low" or beside == "foot")
+	if low then
+		local was = p.low and p.low.kind
+		low_nodes(p, beside)
+		if was ~= beside then fit_low(p) end
+	end
+	if p.low then gui.set_enabled(p.low.root, low) end
 	gui.set_enabled(p.root, on and not low)
 	p.beside = beside
 	if not on then
@@ -185,8 +202,8 @@ end
 
 function M.set(p, text, short, places, of, hot)
 	gui.set_text(p.text, text)
-	if p.low and gui.get_text(p.low.text) ~= text then
-		gui.set_text(p.low.text, text)
+	if text ~= p.long_text or short ~= p.short_text then
+		p.long_text, p.short_text = text, short
 		fit_low(p)
 	end
 	gui.set_text(p.short, short)

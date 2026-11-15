@@ -2055,6 +2055,10 @@ function CP.queue_update(self, dt)
 	if m == "menu" then
 		-- the home: under the thread, in the middle
 		beside = "low"
+	elseif m == "schermata" and self.schermata.mod ~= menu.podium then
+		-- every menu: the same, short, under the thread (Sergio, 15 Nov: «sempre
+		-- quella nuova e sempre nella posizione nuova sotto la linea»)
+		beside = "foot"
 	elseif m == "local" then
 		beside, on = self.btn_menu, not self.menu_open
 	elseif (m == "scelta") and not self.schier then

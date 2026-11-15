@@ -1,0 +1,17 @@
+Image 1 is a menu screen of our game: the button at the bottom right is the main action button of every menu. Images 2 and 3 are two menu buttons of the same game and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 4 is the main button we use today and image 5 is another button: both must NOT be copied, we want a different idea.
+
+Draw a new MAIN ACTION BUTTON as a thick BURNING WOODEN PLANK: a wide chunky plank about three and a half times wider than tall, its face of warm light wood (#E0A060, highlight #F2C48A, shadow #B8743C) with a few short dark grain lines only near its two ends, its bottom-left corner charred black (#2B2530) with glowing ember cracks (#F26419, #FFB703) and three fat flame tongues rising from it; its top-right corner covered by a cap of thick snow and frost (#CAF0F8) with two small icicles (#38B6FF) hanging from the top edge. The middle of the plank is plain and even, with nothing on it, so text can be written there and the plank can be stretched in width.
+
+Draw it THREE times on the sheet, one above the other, with green space between them:
+1. LIT: as described;
+2. PRESSED: the same plank pushed down: a bit flatter, the wood darker (#C98A4E), the flames smaller;
+3. OFF: the same plank burnt out and frozen: grey ash wood (#6B6375, highlight #8C929C), the charred corner cold with no embers and no flames, the frost spread over the whole right half.
+
+Thick black ink outline on every piece, cartoon comic style like images 2 and 3. Flat colors only, at most six per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no glow halo, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+art/WB-054/riferimenti/R1_primario_oggi.png
+art/WB-054/riferimenti/R2_porta_campagna.png
+art/WB-054/riferimenti/R3_porta_armeria.png
+art/WB-054/riferimenti/R4_brace_gelo_scelto.png
+art/WB-054/riferimenti/R5_gioca_sigillo.png
