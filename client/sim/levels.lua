@@ -106,7 +106,7 @@ M.addestramento = {
 			{ testo = "Si mira così, guarda me! Poi tocca a te: {mira}",
 				mostra = "grande", highlight = "mira", quando = { passo = 1 } },
 			-- while aiming: how to cancel
-			{ testo = "Più tiri lontano, più forte parte. Se cambi idea, {annulla}", highlight = "annulla",
+			{ testo = "Più allunghi la mira, più forte parte. Se cambi idea, {annulla}", highlight = "annulla",
 				subito = true, quando = { passo = 1, tocca = "mira" },
 				fino = { uno = { { tocca = "annulla" }, { usato = "primaria" } } } },
 			{ testo = "Bel colpo! Ora quello quassù, vicino a me", faccia = "ride", quando = { passo = 2 } },
@@ -120,7 +120,7 @@ M.addestramento = {
 		id = "turno",
 		titolo = "A turno",
 		tipo = "bersagli",
-		goal_text = "Qui si gioca a turni: il cronometro in basso indica il tempo rimanente. In un turno hai due attacchi, uno con un'arma primaria ed uno con la secondaria. Guarda me!",
+		goal_text = "Qui si gioca a turni: il cronometro in basso indica il tempo rimanente. In un turno hai due attacchi, uno con un'arma primaria e uno con la secondaria. Guarda me!",
 		highlight = "missile",
 		arena = {
 			{ 150, 0, 1450, 150 },
@@ -163,13 +163,13 @@ M.addestramento = {
 		},
 		righe = {
 			{ testo = "Ora prova tu!", quando = { evento = "demo_end" } },
-			{ highlight = "sword", testo = "Ora il secondo attacco: vai vicino e colpiscilo con la Spada",
+			{ highlight = "sword", testo = "Ora il secondo attacco: vai vicino e colpiscilo con la Lama",
 				quando = { passo = 1 }, fino = { passo = 2 } },
 			{ testo = "Due colpi in un turno, così si fa!", faccia = "ride", secondi = 2, quando = { passo = 2 } },
-			{ testo = "Dopo l'attacco restano pochi secondi: mettiti al riparo dietro quel muro!",
+			{ testo = "Dopo l'attacco restano pochi secondi: mettiti al riparo dietro quel muretto!",
 				quando = { passo = 2 }, fino = { passo = 3 } },
 			{ mostra = "grande", highlight = "teleport", faccia = "ride", quando = { passo = 3 },
-				testo = "Come dici? Impossibile? Grazie all'ultima trovata del Fabbro ci si arriva in un attimo. Riceverai dei globi teletrasporto ogni volta che risparmi tempo. Ti mostro come si usano, guarda me!" },
+				testo = "Impossibile, dici? Con l'ultima trovata del Fabbro ci arrivi in un attimo: i globi del teletrasporto. Ne guadagni uno ogni volta che risparmi tempo. Guarda me!" },
 		},
 		bravo = "Al sicuro. Così si gioca un turno!",
 	},
@@ -267,7 +267,7 @@ M.addestramento = {
 		righe = {
 			{ testo = "Prova a prendermi!", quando = { evento = "teleport", di = "altri" } },
 		},
-		bravo = "Non pensavi ci riuscissi così in fretta",
+		bravo = "Non pensavo che ci riuscissi così in fretta!",
 		bravo_faccia = "sorpresa",
 	},
 	-- 4 · Il burrone. Grapple and parachute (Sergio, 30 Oct): no crates, because
@@ -345,7 +345,7 @@ M.addestramento = {
 		id = "spostano",
 		titolo = "Le secondarie",
 		tipo = "corsa",
-		goal_text = "Arriviamo in cima! Prendi la cassa: dentro troverai un'arma secondaria che ti darà la possibilità di riuscirci",
+		goal_text = "Arriviamo in cima! Prendi la cassa: dentro c'è un'arma secondaria che ti porta lassù",
 		-- the first pillar higher than the jump, the second higher than the kickback;
 		-- on the left Favilla's lane, two pillars of the same heights (the second
 		-- wider: her bounce carries her a bit further)
@@ -428,12 +428,12 @@ M.addestramento = {
 	-- Duello con Favilla, the third sfida and the chapter exam: a first real match,
 	-- short, with everything (Sergio, 29 Oct: the last of the Addestramento). No
 	-- explanations any more (6 Nov): she plays and comments. You win by downing
-	-- her twice; no points (they come in the Forgia). The medal: without being downed
+	-- her twice, and the points count. The medal: without being downed
 	{
 		id = "guidata",
 		titolo = "Duello con Favilla",
 		tipo = "duello",
-		goal_text = "Un duello a punti! Fammi vedere cosa hai imparato, sarà una sfida entusiasmante!",
+		goal_text = "Un duello a punti, quello vero! Fammi vedere cosa hai imparato",
 		mappa = "cortile",
 		-- in the first turns the orbs fly slowly, to be watched
 		globi_lenti = true,
