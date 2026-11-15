@@ -20,6 +20,9 @@ foto P3_zaino
 tocca_bordo 580 53 alto sinistra    # SIGILLI
 aspetta 0.6
 foto P4_sigilli
+tocca_centro 1137 596               # STATISTICHE: il foglio al posto dei sentieri
+aspetta 0.6
+foto P4b_sigilli_statistiche
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.8

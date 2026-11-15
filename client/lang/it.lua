@@ -477,6 +477,8 @@ return {
 		stats = "STATISTICHE",
 		-- a loadout still closed: from which level
 		loadout_locked = "DAL LIV %d",
+		-- the stats come a page at a time: a tap turns it
+		page = "%d / %d ›",
 	},
 
 	-- menu/backpack.lua: the ZAINO (from the apprentice), INVENTARIO and SIGILLI
@@ -502,6 +504,9 @@ return {
 		other = "l'altra scelta: %s · %s",
 		to_choose = "scegli uno dei due",
 		pick_hint = "tocca un potere sotto un gradino per sceglierlo",
+		-- the stats' sheet of the Sigilli: open it, close it
+		see_stats = "STATISTICHE ›",
+		back_to_seals = "TORNA AI SIGILLI",
 	},
 
 	-- menu/queue.lua: GIOCA ONLINE, the queues online
