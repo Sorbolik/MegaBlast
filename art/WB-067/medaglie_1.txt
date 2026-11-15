@@ -1,0 +1,9 @@
+Image 1 is a mock-up of the PLAYER STATS screen of our game: each record card has a small round medal in its top right corner, with a roman numeral written by the game on top. Images 2 and 3 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+Draw a clean sheet on a fully transparent background with four separate small medals, well spaced, nothing touching, each readable at 32 pixels: a BRONZE medal (#D08A4A with lighter #F0B07A and darker #8A5428), a SILVER medal (#C9C6D2 with lighter #F0EEF5 and darker #8A8696), a GOLD medal (#FFC83D with lighter #FFE59A and darker #C9901A), and an EMPTY medal slot (dashed ivory outline on dark iron #2B2530, for a record not reached yet). Each medal is a slightly crooked round coin with a thick ink outline, a flat empty center for a roman numeral, and a tiny ember spark notch on its rim. No letters, no numbers, no ribbons, no background, no glow outside the ink.
+
+Riferimenti allegati in ordine
+art/WB-067/riferimenti/R1_bozza_profilo_statistiche.png
+art/WB-022/pezzo_pannello.png
+art/WB-022/pezzo_piccoli.png
+
+Bronzo, argento, oro e sede tratteggiata, con incisione arrotondata sul bordo.

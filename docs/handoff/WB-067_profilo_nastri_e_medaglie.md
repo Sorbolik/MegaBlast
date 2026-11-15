@@ -81,4 +81,14 @@ Sergio, 15 nov 22:48: le pagine del Profilo come proposte da Claude.
 
 ## Consegna di Codex
 
+| PNG e TXT omonimi in `art/WB-067/` | Tentativi | Esito visivo |
+|---|---:|---|
+| `nastri_e_rivedi_1` | 1 | Due nastri a centro libero, fiamma corta e tre schegge. Pulsanti normale e premuto separati. |
+| `nastri_e_rivedi_2` | 1 | Due nastri e due pulsanti. Nastro ghiaccio con tre schegge e fascia superiore più chiara. |
+| `nastri_e_rivedi_3` | 2 | Conservato il secondo tentativo. Fiamma più alta e due schegge. Il secondo tentativo ha mantenuto i nastri allungati. |
+| `medaglie_1` | 1 | Bronzo, argento, oro e sede tratteggiata, con incisione arrotondata sul bordo. |
+| `medaglie_2` | 1 | Quattro dischi con tacca appuntita e centri liberi. Sede vuota con tratteggio vicino al bordo. |
+
+Controllati a vista conteggio, separazione dei pezzi, centri vuoti, assenza di scritte e differenza tra normale e premuto. Tutti i fogli sono stati adattati alle misure richieste in proporzione con margini trasparenti. Verificato il canale alfa in un angolo dei sorgenti. I nastri hanno un rapporto vicino a 3:1 rispetto al 2:1 indicativo e il colore dei pulsanti conserva una sfumatura. Le tacche delle medaglie sono parte della silhouette. Restano da verificare colori esatti, leggibilità a 32 px e resa nel gioco.
+
 ## Resoconto di Claude
