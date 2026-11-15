@@ -2713,7 +2713,9 @@ end
 
 -- The campaign, on the last mission's chapter
 local function open_campaign(self)
-	show_menu(self, true)
+	-- (quiet: the home must not make its entrance under the door's passage,
+	-- the apprentice would pop and the door would jump back)
+	show_menu(self, true, true)
 	-- a chapter of the story not seen yet comes first (ui/story.lua)
 	if CP.story(self, nil, function() open_campaign(self) end) then return end
 	open_screen(self, menu.campaign, self.chosen_campaign, self.profilo.stelle,
@@ -2978,7 +2980,7 @@ end
 function CP.startup(self)
 	self.attesa = menu.attesa.new()
 	self.passaggio = menu.passaggio.new()
-	self.door_pass = menu.door_pass.new(self.passaggio)
+	self.door_pass = menu.door_pass.new()
 	self.intro = menu.intro.new()
 	self.ingresso = menu.ingresso.new()
 	if SIMULATE then

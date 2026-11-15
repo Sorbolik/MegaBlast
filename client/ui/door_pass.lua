@@ -1,43 +1,45 @@
 -- The passage of the home's doors and of the ZAINO (Sergio, 14-15 Nov):
---   door   the button shoots toward its edge and brakes there; then the blade of
---          fire and ice of the menus (ui/transition.lua, temper) crosses the
---          screen and, under it, the new screen comes (Sergio, 15 Nov: the
---          sliding page didn't drag the backdrop, so it looked apart from it;
---          the blade covers everything). Arrived, the flat band of the door
---          (WB-049) stays on that edge: where you are. Back: the blade the
---          other way, and the button comes home from its edge
+--   door   the button shoots toward its edge and brakes there; then, coming
+--          back, it drags the new screen in with it, backdrop and all, over
+--          the home that stays still under it (Sergio, 15 Nov: «vorrei
+--          semplicemente che si portasse l'altra pagina con sé»). The page's
+--          edge is a thin orange line, the button rides on it pulling; arrived,
+--          the button slips out and the line stays on that edge: where you
+--          are. Back: the line pulls the page out again, the home under it,
+--          and the button comes home from its edge
 --   zaino  the ZAINO grows out of the apprentice and goes back into it
 -- The new screen's top nodes are the ones kit.anchor and ui.root make while it
--- is open (kit.track): the ZAINO scales them.
+-- is open (kit.track): the doors drag them, the ZAINO scales them.
 --
 --   local door_pass = require "ui.door_pass"
---   local dp = door_pass.new(passaggio)            -- passaggio: ui/transition.lua
+--   local dp = door_pass.new()
 --   door_pass.open(dp, home, id, change)           -- change(): makes the new screen
 --   door_pass.close(dp, home, change)              -- change(): closes it, shows the home
 --   door_pass.grow(dp, home, change, done)         -- the ZAINO
 --   door_pass.shrink(dp, home, change, done)
 --   door_pass.owns(dp)        -- a screen opened by a door or the apprentice: its way back is here
---   door_pass.drop(dp)        -- the screen went away by another way: the band with it
+--   door_pass.drop(dp)        -- the screen went away by another way: the line with it
 --   door_pass.is_active(dp)
 
 local kit = require "ui.kit"
 local screen = require "ui.screen"
-local transition = require "ui.transition"
 local home = require "menu.home"
 
 local M = {}
 
--- the times: out to the edge, home again
-M.OUT, M.IN = 0.30, 0.36
+-- the times: out to the edge, across (forward and back), home again; the
+-- button slipping off the line and back on it
+M.OUT, M.ACROSS, M.ACROSS_BACK, M.IN, M.SLIP = 0.30, 0.62, 0.52, 0.36, 0.14
 M.GROW, M.SHRINK = 0.42, 0.32
--- the edge's middle sits this far inside the screen's border
+-- the shield's middle sits this far inside the screen's border
 local EDGE = 17
-local BAND_W = 48
+-- the line: its ink and its orange core
+local LINE, CORE = 12, 6
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
-function M.new(passaggio)
-	return { passaggio = passaggio }
+function M.new()
+	return {}
 end
 
 function M.is_active(dp) return dp.busy == true end
@@ -62,31 +64,81 @@ local function alive(list)
 	return out
 end
 
--- The flat band of the door down the whole edge (x: its middle, in the game's coordinates)
-local function edge(dp, id, x)
-	-- (not kit.anchor: it would count as one of the screen's nodes)
-	local rn = gui.new_box_node(vec(0, 720), vec(0, 0))
-	gui.set_visible(rn, false)
-	local g = { node = rn, ox = 0, oy = 0 }
-	local band = "banda_" .. id
-	local m = kit.PIECES[band]
-	local tile = BAND_W * m.h / m.w
-	local y = 720 - screen.y1 - 30
-	while y < 720 - screen.y0 + 30 do
-		kit.pic(g, band, x - BAND_W / 2, y, BAND_W, tile)
-		y = y + tile - 2
+-- every node moved by `by` along x, over t seconds
+local function slide(nodes, by, easing, t, done)
+	local left = #nodes
+	if left == 0 then if done then done() end return end
+	for _, n in ipairs(nodes) do
+		local p = gui.get_position(n)
+		gui.animate(n, "position.x", p.x + by, easing, t, 0, function()
+			left = left - 1
+			if left == 0 and done then done() end
+		end)
 	end
-	dp.edge = rn
 end
 
-local function drop_edge(dp)
-	if dp.edge then gui.delete_node(dp.edge) end
-	dp.edge = nil
+local function shift(nodes, by)
+	for _, n in ipairs(nodes) do
+		local p = gui.get_position(n)
+		gui.set_position(n, vec(p.x + by, p.y))
+	end
+end
+
+local function delete(nodes)
+	for _, n in ipairs(nodes or {}) do gui.delete_node(n) end
+end
+
+local function join(...)
+	local out = {}
+	for _, l in ipairs({ ... }) do
+		for _, n in ipairs(l) do out[#out + 1] = n end
+	end
+	return out
+end
+
+-- The page's edge: a thin orange line down the whole screen (x: its middle)
+-- (not kit.anchor: it would count as one of the screen's nodes)
+local function line(x)
+	local n = gui.new_box_node(vec(x, 360), vec(LINE, 720 * screen.FULL))
+	gui.set_color(n, kit.C.INK)
+	local core = gui.new_box_node(vec(0, 0), vec(CORE, 720 * screen.FULL))
+	gui.set_color(core, kit.C.HOT)
+	gui.set_parent(core, n)
+	return n
+end
+
+local function drop_line(dp)
+	if dp.line then gui.delete_node(dp.line) end
+	dp.line = nil
+end
+
+-- the button over everything while it drags: a top node just where its own is
+local function ride(d)
+	local parent = gui.get_parent(d.node)
+	local r = gui.new_box_node(gui.get_position(parent), vec(0, 0))
+	gui.set_visible(r, false)
+	gui.set_xanchor(r, gui.get_xanchor(parent))
+	gui.set_yanchor(r, gui.get_yanchor(parent))
+	gui.set_parent(d.node, r)
+	gui.move_above(r, nil)
+	d.parent, d.rider = parent, r
+end
+
+local function unride(d)
+	gui.set_parent(d.node, d.parent)
+	gui.delete_node(d.rider)
+	gui.set_position(d.node, d.rest)
+end
+
+local function home_on(h, on)
+	for _, n in ipairs(h.tops) do gui.set_enabled(n, on) end
+	gui.set_enabled(h.slit, false)
 end
 
 -- DOORS ---------------------------------------------------------------------------
 
--- the door: its node, where it rests, how far it goes to put its shield on its edge
+-- the door: its node, where it rests, how far it goes to put its shield on its
+-- edge; where the line ends (the other side) and how far the page travels
 local function measure(h, id)
 	local d = home.door_info(h, id)
 	local ox = d.side < 0 and screen.x0 or screen.x1 - 1280
@@ -95,6 +147,11 @@ local function measure(h, id)
 	d.dx = d.edge_x - (d.x + ox + shield * d.w)
 	d.node = d.p.node
 	d.rest = gui.get_position(d.node)
+	d.line_x = d.side < 0 and screen.x1 - LINE / 2 or screen.x0 + LINE / 2
+	-- the page starts with its edge on the shield
+	d.p0 = d.edge_x - d.line_x
+	-- off the line, out of the screen
+	d.off = -d.side * (d.w * 0.2 + 30)
 	return d
 end
 
@@ -103,17 +160,33 @@ function M.open(dp, h, id, change)
 	local d = measure(h, id)
 	-- 1. the button shoots to its edge and brakes
 	gui.animate(d.node, "position.x", d.rest.x + d.dx, gui.EASING_OUTCUBIC, M.OUT, 0, function()
-		-- 2. the blade crosses the screen from the door's side; under it the new screen
-		transition.temper(dp.passaggio, function()
-			kit.enter_begin(0)
-			kit.track_begin()
-			change()
-			kit.enter_end()
-			gui.set_position(d.node, d.rest)
-			dp.kind, dp.door = "door", id
-			edge(dp, id, d.edge_x)
-			dp.busy = false
-		end, -d.side)
+		-- 2. the new screen, made out of sight with its backdrop, its edge on the shield;
+		-- the home stays under it, with a copy of the backdrop
+		local still = kit.scene_copy()
+		kit.track_begin()
+		change()
+		dp.kind, dp.door = "door", id
+		home_on(h, true)
+		kit.scene_cut(true)
+		dp.line = line(d.line_x)
+		local page = join(alive(kit.tracked()), kit.scene_tops(), { dp.line })
+		shift(page, d.p0)
+		ride(d)
+		-- (a moment for the frame that made the screen, a long one)
+		timer.delay(0.03, false, function()
+			-- 3. the button drags it across
+			slide(join(page, { d.rider }), -d.p0, gui.EASING_INOUTCUBIC, M.ACROSS, function()
+				home_on(h, false)
+				kit.scene_cut(false)
+				delete(still)
+				-- 4. the button lets go and slips out; the line stays
+				-- (the rider went across with it)
+				gui.animate(d.node, "position.x", d.rest.x + d.dx + d.off, gui.EASING_INQUAD, M.SLIP, 0, function()
+					unride(d)
+					dp.busy = false
+				end)
+			end)
+		end)
 	end)
 end
 
@@ -121,22 +194,41 @@ function M.close(dp, h, change)
 	if dp.kind == "zaino" then return M.shrink(dp, h, change) end
 	dp.busy = true
 	local d = measure(h, dp.door)
+	local page = alive(kit.tracked())
 	kit.track_end()
-	-- the blade the other way; under it the home, the button on its edge comes home
-	transition.temper(dp.passaggio, function()
-		change()
-		drop_edge(dp)
-		gui.set_position(d.node, vec(d.rest.x + d.dx, d.rest.y))
-		gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTCUBIC, M.IN, 0.2, function()
-			dp.kind, dp.busy = nil, false
+	local tops = kit.scene_tops()
+	-- 1. the home comes back under the screen, the button back on the line
+	local still = kit.scene_copy()
+	home_on(h, true)
+	kit.scene_cut(true)
+	if not dp.line then dp.line = line(d.line_x) end
+	ride(d)
+	gui.set_position(d.node, vec(d.rest.x + d.dx - d.p0 + d.off, d.rest.y))
+	-- (out of an animation's callback: started there, some animations of the
+	-- same frame would start a frame late, and the backdrop would lag the page)
+	gui.animate(d.node, "position.x", d.rest.x + d.dx - d.p0, gui.EASING_OUTQUAD, M.SLIP, 0, function() timer.delay(0, false, function()
+		-- 2. it pulls the screen out toward its edge, the home under it
+		slide(join(page, tops, { dp.line, d.rider }), d.p0, gui.EASING_INOUTCUBIC, M.ACROSS_BACK, function()
+			-- (all in one frame: the backdrop back in its place under the home)
+			shift(tops, -d.p0)
+			kit.scene_cut(false)
+			change()
+			delete(still)
+			drop_line(dp)
+			-- 3. the button comes home from its edge
+			unride(d)
+			gui.set_position(d.node, vec(d.rest.x + d.dx, d.rest.y))
+			gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTCUBIC, M.IN, 0.05, function()
+				dp.kind, dp.busy = nil, false
+			end)
 		end)
-	end, d.side)
+	end) end)
 end
 
--- the screen went another way (a mission, a match): the band goes with it
+-- the screen went another way (a mission, a match): the line goes with it
 function M.drop(dp)
 	if dp.busy then return end
-	drop_edge(dp)
+	drop_line(dp)
 	kit.track_end()
 	dp.kind = nil
 end

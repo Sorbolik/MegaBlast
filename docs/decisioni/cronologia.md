@@ -266,3 +266,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 15 nov | Menu nuovi nel gioco (Claude): GIOCA ONLINE con anche il 1 CONTRO 1 (senza icona per ora); dal profilo tolti i momenti e il grafico a fune, non previsti nel Figma. | #325 |
 | 15 nov | Sergio: le funzioni non si tolgono (momenti e fune tornano sotto la partita aperta della cronologia); GIOCA ONLINE a pulsanti che avviano la loro coda; torna la tempra fra le schermate con la sola linguetta piatta; niente ombra ai piedi nei menu; INDOSSA veste subito. | #325 |
 | 15 nov | Sergio: Sigilli col bivio sempre in vista; uno sfondo per schermata (WB-053); pulsante primario nuovo (WB-052, il sigillo fuso solo per GIOCA online); la tendina a Codex (WB-051). | #325 |
+| 15 nov | Sergio: carte di prima al posto delle piastre di ferro; la coda della porta trascina dentro la pagina col suo sfondo, bordo a linea arancione sottile (scartate la tempra e le bande WB-049 di lato). | questa PR |

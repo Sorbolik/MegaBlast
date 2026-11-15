@@ -1,6 +1,6 @@
-# Le transizioni del 14 novembre (Figma "TRANSIZIONE", animazioni validate): la porta
-# scivola al suo bordo, la coda diventa la linguetta che trascina dentro la pagina e
-# resta lì; INDIETRO la riporta a casa. Lo ZAINO cresce dall'apprendista.
+# Le transizioni delle porte (Sergio, 15 nov): la porta scivola al suo bordo e torna
+# indietro trascinandosi dentro la pagina, sfondo compreso, sopra la home ferma; il
+# bordo della pagina è una linea arancione sottile, che resta lì; INDIETRO la riporta fuori. Lo ZAINO cresce dall'apprendista.
 # Gira anche con --schermo 1600x720 e 960x720.
 imposta prova_profilo 1
 
@@ -35,10 +35,12 @@ tocca_bordo 36 60 basso sinistra    # indietro
 aspetta 1.5
 foto 11_home
 tocca_bordo 220 294 mezzo sinistra  # CAMPAGNA, la porta di sinistra
-aspetta 0.45
+aspetta 0.62
 foto 12_campagna_entra
 aspetta 1.5
 foto 13_campagna
 tocca_bordo 36 60 basso sinistra    # indietro
-aspetta 1.5
+aspetta 0.4
+foto 14a_campagna_esce
+aspetta 1.2
 foto 14_home

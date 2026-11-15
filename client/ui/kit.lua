@@ -907,6 +907,66 @@ function M.scene_place(s, where, ref)
 	end
 end
 
+-- The backdrop's top nodes: ui/door_pass.lua drags them in with a screen
+function M.scene_tops()
+	return S and S.tops or {}
+end
+
+-- While its screen is dragged in (ui/door_pass.lua) the backdrop is cut to
+-- the real screen: nothing of it goes past the page's edge. on false: as before
+function M.scene_cut(on)
+	if not S then return end
+	local w = screen.width()
+	if on and not S.clip then
+		gui.set_size(S.base, vec(w, 720 * screen.FULL))
+		local parent = gui.get_parent(S.bg)
+		S.clip = gui.new_box_node(vec(0, 360), vec(w, 720 * 4))
+		gui.set_clipping_mode(S.clip, gui.CLIPPING_MODE_STENCIL)
+		gui.set_clipping_visible(S.clip, false)
+		gui.set_parent(S.clip, parent)
+		local p = gui.get_position(S.bg)
+		gui.set_parent(S.bg, S.clip)
+		gui.set_position(S.bg, vec(p.x, p.y - 360))
+		for _, q in ipairs(S.glints) do gui.set_enabled(q, false) end
+	elseif not on and S.clip then
+		gui.set_size(S.base, vec(1280 * screen.FULL, 720 * screen.FULL))
+		local p = gui.get_position(S.bg)
+		gui.set_parent(S.bg, gui.get_parent(S.clip))
+		gui.set_position(S.bg, vec(p.x, p.y + 360))
+		gui.delete_node(S.clip)
+		S.clip = nil
+		for _, q in ipairs(S.glints) do gui.set_enabled(q, true) end
+	end
+end
+
+-- A still copy of the backdrop as it is now, under everything (ui/door_pass.lua:
+-- the home keeps it while a screen with the real one is dragged over it).
+-- Returns its top nodes, to delete
+function M.scene_copy()
+	if not S then return {} end
+	local out = { shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, gui.get_color(S.base)) }
+	if gui.is_enabled(S.bg) and S.bg_name then
+		local back = empty(640, 0)
+		gui.set_yanchor(back, gui.ANCHOR_BOTTOM)
+		local bg = gui.new_box_node(gui.get_position(S.bg), gui.get_size(S.bg))
+		gui.set_texture(bg, "sfondo")
+		gui.set_parent(bg, back)
+		out[#out + 1] = back
+	end
+	if gui.is_enabled(S.low) then
+		local low = empty(640, 0)
+		gui.set_yanchor(low, gui.ANCHOR_BOTTOM)
+		shape(nil, 0, THREAD_Y, screen.width(), 11, C.INK, low)
+		local seam = gui.new_box_node(vec(0, THREAD_Y), vec(screen.width(), 6))
+		gui.set_texture(seam, "fucina")
+		gui.play_flipbook(seam, "filo")
+		gui.set_parent(seam, low)
+		out[#out + 1] = low
+	end
+	for i = #out, 1, -1 do gui.move_below(out[i], nil) end
+	return out
+end
+
 -- The screen's subject moves (nothing follows it, for now)
 function M.scene_focus(s, fx, fy)
 	s.fx, s.fy = fx, fy
