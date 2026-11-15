@@ -146,7 +146,7 @@ function N.snapshot(g, aim)
 		r.la, r.gn = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, rb.gone or false
 		r.gd = rb.round_done
 	end
-	-- k: "missile", "grenade", "sniper", "boomerang", "drill", "tar" or "petard", fu: ticks before the Uovo blows up
+	-- k: "missile", "grenade", "sniper", "boomerang", "drill", "tar", "petard" or "vortex", fu: ticks before the Uovo blows up
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }
 	-- o: the teleport orbs in flight (i = orb number, to follow it from one state to the next)
 	local orbs = {}

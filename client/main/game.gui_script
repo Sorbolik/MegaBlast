@@ -104,7 +104,7 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- name under its health, with the turns left (no accents: the font lacks them)
 local STATUS_NAME = { { "burn", TM.status_name.burn }, { "slow", TM.status_name.slow }, { "cracked", TM.status_name.cracked } }
 local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill", "sword", "eagle", "mallet",
-	"lunge", "bellows", "magnet", "cannon", "petard",
+	"lunge", "bellows", "vortex", "cannon", "petard",
 	"trap", "shield", "trampoline", "hook", "janus", "parachute" }
 -- border color of the four groups: primaries, secondaries, items, Grapple
 local BAR_COLORS = { ui.C.BRACE, ui.C.STEEL, ui.C.MINT, ui.C.PURPLE }
@@ -115,7 +115,7 @@ end
 -- icons of the bar and of the draft (weapons atlas, tools/grafica/armi.py)
 local WEAPON_ICON = {}
 for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "bellows", "hook",
-	"boomerang", "tar", "drill", "magnet", "cannon", "petard",
+	"boomerang", "tar", "drill", "vortex", "cannon", "petard",
 	"trap", "shield", "trampoline", "parachute" }) do
 	WEAPON_ICON[w] = w .. "_icona"
 end
@@ -930,7 +930,7 @@ end
 -- 200 locals Lua allows
 local RM = { fune = require "battle.rope", hazards = require "battle.hazards", GUSTS = 5,
 	-- the images of the new shots in flight (battle/weapons.lua, shots), by projectile kind
-	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano" } }
+	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano", vortex = "voragine_volo" } }
 -- The character sheet (Sergio, 31 Oct) in a single table: tags, lineup,
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
@@ -1384,10 +1384,8 @@ local function handle_event(self, e)
 		plate.announcement(self.robots[e.target].plate, TM.blown)
 	elseif e.type == "lunge" or e.type == "cannon" then
 		scoria.lunge(self.robots[e.robot].rig)
-	elseif e.type == "boomerang" or e.type == "magnet" then
+	elseif e.type == "boomerang" or e.type == "vortex" then
 		scoria.fire(self.robots[e.robot].rig, "throw")
-		-- the pulse of the Calamita: a ring on its centre (a short puff if there is no ground)
-		if e.type == "magnet" and e.ok then shock(self, e.x, e.y) end
 	elseif e.type == "petard_blast" or e.type == "cannon_land" or e.type == "tar_break" or e.type == "boomerang_turn" then
 		shock(self, e.x, e.y)
 	elseif e.type == "boomerang_hit" or e.type == "cannon_hit" then
@@ -2507,7 +2505,7 @@ start_local_match = function(self, picked)
 		-- prova_nuove N: N shots of the three new primaries too (Falcetto, Pozza di Pece, Trapano),
 		-- apart from prova_armi so the old scenarios' bar stays the same
 		local new_n = config_int("megablast.prova_nuove", 0)
-		-- prova_secondaria = eagle | mallet | lunge | bellows | magnet | cannon | petard: everyone has that secondary
+		-- prova_secondaria = eagle | mallet | lunge | bellows | vortex | cannon | petard: everyone has that secondary
 		local secondary_weapon = config_string("megablast.prova_secondaria", "")
 		opts = {
 			players = opts.players,
