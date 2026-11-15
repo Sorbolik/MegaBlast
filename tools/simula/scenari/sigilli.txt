@@ -1,0 +1,14 @@
+# I SIGILLI nello ZAINO (Sergio, 15 nov): sotto ogni gradino i due poteri sempre in vista,
+# quello scelto chiaro e l'altro scuro; un tocco sull'altro lo sceglie, in basso cosa fa e
+# qual è l'alternativa. Gira anche con --schermo 1600x720 e 960x720.
+imposta prova_profilo 1
+
+aspetta 4
+tocca_centro 640 300               # l'apprendista: lo zaino
+aspetta 1.5
+tocca_centro 575 667               # SIGILLI
+aspetta 0.8
+foto 01_sigilli
+tocca_centro 574 476               # ALI, gradino 5: l'altro potere
+aspetta 0.6
+foto 02_scambiato

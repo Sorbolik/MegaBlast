@@ -152,19 +152,55 @@ local function seals_tab(s)
 		end
 		-- a tap on the bar puts the points there (as many as are free)
 		kit.zone(g, s.buttons, x - 10, y + 14, w + 20, 40, "barra:" .. path.id)
+		-- every step is a fork: its two powers always in sight under the disc, the
+		-- chosen one light, the other dark; a tap on the other takes it (Sergio, 15 Nov)
 		for k = 1, skills.STEPS do
 			local cx = x + w * k * skills.STEP / skills.PATH_MAX - 18
 			local got = v >= k * skills.STEP
+			local pick = skills.pick(t, path.id, k)
 			kit.pic(g, got and "tondo_oro" or "tondo_ferro", cx - 4, y + 12, 44, 44)
 			kit.text(g, tostring(k * skills.STEP), cx + 18, y + 40, 15, got and KC.HOT_TOP or KC.SAND, "middle")
-			local pick = skills.pick(t, path.id, k)
-			local name = pick and kit.upper(path.steps[k][pick].name) or "—"
-			local n = kit.text(g, name, cx + 18, y + 76, 12, got and KC.SAND or KC.MUTE, "middle", 0.5)
-			local wide = kit.width(n)
-			if wide > 98 then gui.set_scale(n, gui.get_scale(n) * (98 / wide)) end
-			-- tapping a disc changes its power (the other of the two)
-			kit.zone(g, s.buttons, cx - 8, y + 58, 52, 30, "potere:" .. path.id .. ":" .. k)
+			if got and not pick then
+				-- a step reached and not chosen yet
+				local d = ui.disc(cx + 36 - g.ox, g.oy - (y + 16), 18, KC.RED, g.node)
+				gui.set_blend_mode(d, gui.BLEND_ALPHA)
+				kit.text(g, "!", cx + 36, y + 22, 15, KC.SAND, "middle")
+			end
+			for which = 1, 2 do
+				local on = pick == which
+				local cy = y + 62 + (which - 1) * 28
+				local cw = 92
+				local chip = kit.plate(g, cx + 18 - cw / 2, cy, cw, 24, on and KC.HOT or KC.LINE, { sk = 0, d = 3, fill = on and KC.SAND or nil })
+				local ink = on and KC.INK or (got and not pick and KC.HOT_TOP) or (got and KC.MUTE) or kit.with_alpha(KC.MUTE, 0.55)
+				local n = kit.text(chip.g, kit.upper(path.steps[k][which].name), cx + 18, cy + 17, 11, ink, "middle", 0.4)
+				local wide = kit.width(n)
+				if wide > cw - 12 then gui.set_scale(n, gui.get_scale(n) * ((cw - 12) / wide)) end
+				kit.button(s.buttons, chip, "potere:" .. path.id .. ":" .. k .. ":" .. which)
+			end
 		end
+	end
+	-- at the bottom: the power you touched (or the first to choose), and the other one
+	local fp, fk, fw = s.focus and s.focus[1], s.focus and s.focus[2], s.focus and s.focus[3]
+	if not fp then fp, fk = skills.to_choose(t) end
+	local fpath = fp and skills.BY_ID[fp]
+	if fpath then
+		local pick = fw or skills.pick(t, fp, fk)
+		local two = fpath.steps[fk]
+		if pick then
+			local other = two[3 - pick]
+			kit.text(s.low, kit.upper(two[pick].name), 140, 650, 24, KC.SAND)
+			local line = kit.text(s.low, kit.upper(T.step:format(fpath.name, fk * skills.STEP)) .. " · " .. kit.upper(two[pick].desc), 140, 674, 14, KC.HOT_TOP, "start", 0.5)
+			local wide = kit.width(line)
+			if wide > 640 then gui.set_scale(line, gui.get_scale(line) * (640 / wide)) end
+			line = kit.text(s.low, kit.upper(T.other:format(other.name, other.desc)), 140, 694, 13, KC.MUTE, "start", 0.5)
+			wide = kit.width(line)
+			if wide > 640 then gui.set_scale(line, gui.get_scale(line) * (640 / wide)) end
+		else
+			kit.text(s.low, kit.upper(T.step:format(fpath.name, fk * skills.STEP)) .. " · " .. kit.upper(T.to_choose), 140, 660, 20, KC.HOT_TOP)
+			kit.text(s.low, kit.upper(two[1].name .. " · " .. two[1].desc .. "   /   " .. two[2].name .. " · " .. two[2].desc), 140, 686, 13, KC.MUTE, "start", 0.5)
+		end
+	else
+		kit.text(s.low, kit.upper(T.pick_hint), 140, 672, 14, KC.MUTE, "start", 0.5)
 	end
 	local a = profile.active_loadout(p)
 	local a2 = { gear = a.gear, tree = t, variant = a.variant }
@@ -254,9 +290,13 @@ local function run_cmd(s, ui_action)
 		want = math.max(0, math.min(skills.PATH_MAX, want))
 		skills.move(t, path, want - skills.spent(t, path), skills.points(p.livello))
 	elseif kind == "potere" then
-		local k = tonumber(b)
-		local now = skills.pick(s.draft, a, k)
-		skills.choose(s.draft, a, k, now == 1 and 2 or 1)
+		-- a power under a step: it becomes that step's choice
+		local k, which = b:match("^(%d+):(%d)$")
+		k, which = tonumber(k), tonumber(which)
+		if k and which then
+			skills.choose(s.draft, a, k, which)
+			s.focus = { a, k, which }
+		end
 	elseif kind == "salva" then
 		local live = profile.active_loadout(p).tree
 		for key in pairs(live) do live[key] = nil end

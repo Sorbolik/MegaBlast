@@ -497,6 +497,11 @@ return {
 		of = "%d / %d",
 		save = "SALVA",
 		saved = "salvato",
+		-- the Sigilli: a step and its two powers (the chosen one and the other)
+		step = "%s · gradino %d",
+		other = "l'altra scelta: %s · %s",
+		to_choose = "scegli uno dei due",
+		pick_hint = "tocca un potere sotto un gradino per sceglierlo",
 	},
 
 	-- menu/queue.lua: GIOCA ONLINE, the queues online
