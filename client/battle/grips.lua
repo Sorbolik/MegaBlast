@@ -23,7 +23,7 @@ return {
 	bellows = { grip = { -1.5, 0 }, pivot = { -10.8, 0 }, shoulder = { 32, 110 } },
 	boomerang = { grip = { -1, -1 }, pivot = { -8, -1 }, shoulder = { 32, 110 } },
 	tar = { grip = { 4.4, 1.2 }, pivot = { -2.7, -7.9 }, shoulder = { -13.8, 111.5 } },
-	drill = { grip = { 1.8, -5.3 }, pivot = { -11.9, 0 }, shoulder = { 28.5, 133.9 } },
+	drill = { grip = { -6.3, -3.8 }, pivot = { -11.9, 0 }, shoulder = { 28.5, 133.9 } },
 	vortex = { grip = { 0, -2 }, pivot = { -8, -2 }, shoulder = { 32, 110 } },
 	cannon = { grip = { 1.6, -2 }, pivot = { -9, -1 }, shoulder = { 32, 110 } },
 	petard = { grip = { 4.4, 1.2 }, pivot = { -2.7, -7.9 }, shoulder = { -13.8, 111.5 } },

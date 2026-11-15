@@ -648,6 +648,76 @@ def icona(nome, d, box, rot, out):
     return im
 
 
+# ---------------------------------------------------------------------------
+# Le armi disegnate da Codex e ricalcate a vettori (tools/grafica/armi_ricalcate.py,
+# art/armi/): dove c'è il pezzo, si usa quello al posto della forma qui sopra, alla
+# stessa misura (la punta resta dov'era: bocca, portata) e solo rimpicciolito.
+RICALCO = os.path.join(RADICE, "art", "armi")
+# i colpi in volo fatti con un pezzo ricalcato (nome del colpo -> pezzo)
+COLPI_RICALCATI = {"razzo": "razzo", "palla": "palla", "scheggia": "scheggia", "uovo": "uovo_2",
+                   "falce": "boomerang", "fiasco": "tar", "petardo_volo": "petard",
+                   "voragine_volo": "vortex", "punta": "drill"}
+# la punta del Trapano in volo è solo il corno: si taglia via l'impugnatura
+TAGLIO = {"punta": 0.36}
+
+
+def ricalcato(nome):
+    f = os.path.join(RICALCO, nome + ".png")
+    return Image.open(f).convert("RGBA") if os.path.exists(f) else None
+
+
+def verde(im):
+    # le parti del colore della squadra sul foglio: verde pieno e la sua ombra
+    import numpy as np
+    a = np.array(im).astype(int)
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    pieno = (g > 200) & (r < 110) & (b < 110)
+    ombra = (g > 140) & (g <= 200) & (r < 70) & (b < 70)
+    return pieno, ombra
+
+
+def da_ricalco(nome, im, box, px, out):
+    import numpy as np
+    w0, h0 = box[2] - box[0], box[3] - box[1]
+    # la stessa lunghezza, ma mai più alto di un quarto oltre la forma di prima
+    s = min(w0 / im.width, h0 * 1.25 / im.height)
+    nw, nh = im.width * s, im.height * s
+    cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+    if w0 > 1.6 * h0:
+        # arma lunga: la punta resta dov'era (bocca, portata)
+        nuovo = (box[2] - nw, cy - nh / 2, box[2], cy + nh / 2)
+    else:
+        nuovo = (cx - nw / 2, cy - nh / 2, cx + nw / 2, cy + nh / 2)
+    W, H = max(1, round(nw * px)), max(1, round(nh * px))
+    assert W <= im.width, f"{nome}: il pezzo ricalcato è troppo piccolo ({im.width} < {W})"
+    pieno, ombra = verde(im)
+    a = np.array(im)
+    alfa = a[..., 3]
+    # lo strato della squadra c'è sempre (anche vuoto): il gioco lo chiede a ogni colpo
+    if True:
+        grigio = np.where(pieno, 255, np.where(ombra, 180, 0)).astype(np.uint8)
+        t = np.dstack([grigio, grigio, grigio, np.where(pieno | ombra, alfa, 0)]).astype(np.uint8)
+        a = a.copy()
+        a[pieno | ombra, :3] = 128
+        tin = Image.fromarray(t, "RGBA").resize((W, H), Image.LANCZOS)
+    base = Image.fromarray(a, "RGBA").resize((W, H), Image.LANCZOS)
+    base.save(os.path.join(OUT, nome + ".png"), optimize=True)
+    out.append(nome)
+    tin.save(os.path.join(OUT, nome + "_tinta.png"), optimize=True)
+    out.append(nome + "_tinta")
+    return base, tin, W, H, nuovo
+
+
+def icona_ricalcata(nome, im, out):
+    s = ICONA * 0.92 / max(im.width, im.height)
+    pic = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
+    tela = Image.new("RGBA", (ICONA, ICONA), (0, 0, 0, 0))
+    tela.alpha_composite(pic, ((ICONA - pic.width) // 2, (ICONA - pic.height) // 2))
+    tela.save(os.path.join(OUT, nome + "_icona.png"), optimize=True)
+    out.append(nome + "_icona")
+    return tela
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for f in os.listdir(OUT):
@@ -665,9 +735,16 @@ def main():
         d = Disegno()
         info = fn(d)
         box = info["box"]
-        base, tinta, w, h = esporta(nome, d, box, immagini)
+        pezzo = ricalcato(nome)
+        if pezzo is not None:
+            base, tinta, w, h, box = da_ricalco(nome, pezzo, box, PX, immagini)
+        else:
+            base, tinta, w, h = esporta(nome, d, box, immagini)
         ic = None
-        if rot is not None:
+        icr = ricalcato(nome + "_icona")
+        if icr is not None:
+            ic = icona_ricalcata(nome, icr, immagini)
+        elif rot is not None:
             di = Disegno()
             ic = icona(nome, di, ICONA_DI[nome](di)["box"], rot, immagini) if nome in ICONA_DI else \
                 icona(nome, d, box, rot, immagini)
@@ -698,7 +775,13 @@ def main():
         info = fn(d)
         box = info["box"]
         # in volo si disegnano GRANDI volte: piccoli come in mano non si leggono
-        base, tinta, w, h = esporta(nome, d, box, immagini, PX * GRANDI)
+        pezzo = ricalcato(COLPI_RICALCATI.get(nome, "-"))
+        if pezzo is not None:
+            if nome in TAGLIO:
+                pezzo = pezzo.crop((round(pezzo.width * TAGLIO[nome]), 0, pezzo.width, pezzo.height))
+            base, tinta, w, h, box = da_ricalco(nome, pezzo, box, PX * GRANDI, immagini)
+        else:
+            base, tinta, w, h = esporta(nome, d, box, immagini, PX * GRANDI)
         cx, cy = (box[0] + box[2]) / 2 * GRANDI, (box[1] + box[3]) / 2 * GRANDI
         t = f'"{nome}_tinta"' if tinta else "nil"
         lua.append(f'\t\t{nome} = {{ img = "{nome}", tint = {t}, x = {cx:.2f}, y = {cy:.2f}, '

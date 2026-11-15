@@ -1,6 +1,6 @@
 # WB-063 · Armi primarie: in mano, colpi e icone
 
-- **Stato:** APPROVATA (Claude, 15 nov: Sergio ha chiesto di rifare la grafica di tutte le armi e ha detto «procedi»; reversibile)
+- **Stato:** IMPLEMENTATA (15 nov) · era APPROVATA (Claude, 15 nov: Sergio ha chiesto di rifare la grafica di tutte le armi e ha detto «procedi»; reversibile)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `claude/project-thread-wfha2a` (eseguila da questo ramo: `git fetch origin claude/project-thread-wfha2a` e leggi la scheda e i riferimenti da lì; non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-063`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-063` senza chiedere conferma (il repository è privato).
@@ -142,3 +142,11 @@ originali. Corrispondenza esatta della palette, ricalco e resa in gioco
 restano da verificare.
 
 ## Resoconto di Claude
+
+15 nov. Guardati tutti i fogli: le due varianti di ogni foglio sono buone e seguono le bozze (forme, ordine, fascia verde, colori piatti).
+
+- **Tenuti:** primarie_lunghe_1, primarie_corte_1, primarie_colpi_1, primarie_icone_1. Le altre varianti restano in `art/WB-063/` come riserva.
+- **Integrato:** ricalco a vettori con `tools/stampino/vettoriale.py --tavolozza tools/stampino/tavolozze/armi.json` (SVG in `art/armi/svg/`), pezzi tagliati con `tools/grafica/armi_ricalcate.py` in `art/armi/`, poi `tools/grafica/armi.py` li usa al posto delle forme a codice: stessa lunghezza e punta nello stesso posto (bocca, portata), parte verde = strato della squadra, solo rimpicciolite.
+- **Provato:** `tools/controlli/tutti.sh` OK; scenario `armi_dipinte.txt` OK (barra con le icone nuove, armi in mano, runa in volo).
+- **Non ancora:** i tre stadi delle crepe dell'Uovo in volo (serve codice: oggi c'è solo lo stadio di mezzo); le prese nell'editor delle animazioni ritoccate solo per il Trapano; qualche puntino di colore del ricalco sul Mantice e sul mortaio, invisibile a misura di gioco.
+
