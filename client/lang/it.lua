@@ -429,18 +429,23 @@ return {
 	profile_tabs = {
 		tab_matches = "CRONOLOGIA PARTITE",
 		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
-		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
+		round_by_round_tap = "COM'È ANDATA, GIRO PER GIRO · TOCCA UN NUMERO PER RIVEDERE DA LÌ",
+		history_hint = "le ultime %s partite · tocca una partita per vedere com'è andata",
+		vs = "VS",
 		no_moments = "nessun momento da ricordare",
-		level = "LIVELLO %s",
 		-- STATISTICHE: the four big numbers
 		won = "VITTORIE",
 		best_streak = "DI FILA",
 		stars = "STELLE",
 		lost = "SCONFITTE",
-		-- the badge of a stat, with its grade in roman numbers
-		badge_pill = "BADGE %s",
-		badge_hint = "tocca una riga col badge per metterlo accanto al tuo nome (al massimo %s)",
-		next_at = "badge a %s",
+		badge_hint = "tocca un record con la medaglia per metterla accanto al tuo nome (al massimo %s)",
+		-- the player's card on the left
+		level_short = "LIV %s",
+		xp = "%s / %s XP",
+		next_to_name = "ACCANTO AL TUO NOME",
+		won_share = "%s%% delle partite vinte",
+		-- the modes, short, as chips
+		mode_short = { tutte = "TUTTE", ["2v2"] = "2V2", ["1v1"] = "1V1", torneo = "TORNEO", campagna = "CAMPAGNA" },
 		damage_by_weapon = "DANNO PER ARMA",
 		nothing_yet = "ancora niente: gioca una partita",
 		weapons = {
@@ -455,7 +460,6 @@ return {
 		outcome_lost = "SCONFITTA",
 		outcome_tie = "PAREGGIO",
 		points = "PUNTI",
-		ranking = "CLASSIFICA",
 		no_matches = "Nessuna partita ancora: gioca, e la ritrovi qui.",
 	},
 

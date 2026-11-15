@@ -10,6 +10,7 @@
 --   local tex = ill.texture(id, "carta" | "tavola" | "finale")  -- the gui texture name, or nil (no file)
 --   ill.release(id, kind)                         -- when nothing shows it anymore
 --   local tex = ill.story(id)  /  ill.story_release(id)   -- a panel of the story
+--   local tex = ill.map_mini(map)  /  ill.map_mini_release(map)   -- a map in the history
 
 local M = {}
 
@@ -65,6 +66,16 @@ end
 
 function M.story_release(id)
 	release("storia_" .. id)
+end
+
+-- The miniature of a map in a row of the PROFILO's history
+-- (tools/grafica/miniature_missioni.py, /paintings/maps_mini/<map>.jpg)
+function M.map_mini(id)
+	return load("mini_" .. id, "/paintings/maps_mini/" .. id .. ".jpg")
+end
+
+function M.map_mini_release(id)
+	release("mini_" .. id)
 end
 
 return M
