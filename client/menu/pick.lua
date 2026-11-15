@@ -210,7 +210,7 @@ local function refresh(s)
 			if not w then missing_n, first_missing = missing_n + 1, first_missing or step end
 			local x, y = 40 + (step - 1) * 8, 136 + (step - 1) * 98
 			local c = kit.card(g, x, y, 190, 88, w and STEP_COLOR[step] or KC.LINE, { sel = step == s.passo })
-			kit.text(c.g, NAME_STEP[step], x + 22, y + 26, 14, KC.MUTE, "start", 1.5)
+			kit.text(c.g, NAME_STEP[step], x + 22, y + 26, 16, KC.MUTE, "start", 1.5)
 			if w then
 				icon(s, c.g, w, x + 48, y + 58, 50)
 				fit(kit.text(c.g, kit.upper(s.nomi[w]), x + 176, y + 68, 16, KC.SAND, "end", 0.5), 96)
@@ -221,7 +221,7 @@ local function refresh(s)
 			s.scelte[step] = c
 		end
 	end
-	kit.text(g, T.everyone, 52, 352, 14, KC.MUTE, "start", 1.5)
+	kit.text(g, T.everyone, 52, 352, 16, KC.MUTE, "start", 1.5)
 	for i, w in ipairs(EVERYONE) do
 		local x, y = 44 - (i - 1) * 4, 362 + (i - 1) * 56
 		icon(s, g, w, x + 40, y + 24, 46)
@@ -243,7 +243,7 @@ local function refresh(s)
 		icon(s, c.g, w, x + CARD_W / 2, y + 88, 124)
 		fit(kit.text(c.g, kit.upper(s.nomi[w]), x + 24, y + 200, 32, KC.SAND), CARD_W - 48)
 		wrapped(c.g, s.effects[w] or "", x + 22, y + 212, 16, KC.MUTE, CARD_W - 44)
-		kit.text(c.g, T.shots_label, x + 16, y + CARD_H - 20, 14, KC.MUTE, "start", 1.5)
+		kit.text(c.g, T.shots_label, x + 16, y + CARD_H - 20, 16, KC.MUTE, "start", 1.5)
 		kit.pips(c.g, x + 82, y + CARD_H - 36, shots, shots, col)
 		if sel then
 			kit.text(c.g, T.chosen, x + CARD_W - 18, y + CARD_H - 20, 16, col, "end", 1)
@@ -256,7 +256,7 @@ local function refresh(s)
 
 	-- the time that is left (the guided draft has none)
 	if not s.guidata then
-		kit.text(g, T.time, 446, 548, 15, KC.MUTE, "start", 1.5)
+		kit.text(g, T.time, 446, 548, 16, KC.MUTE, "start", 1.5)
 		s.bar = kit.bar(g, 516, 534, 360, 14, 1, KC.HOT)
 		s.clock = kit.text(g, "", 892, 550, 22, KC.SAND)
 		bar_value(s, s.tempo / config.DRAFT_SECONDS)

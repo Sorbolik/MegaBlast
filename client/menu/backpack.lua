@@ -100,7 +100,7 @@ local function inventory(s)
 	end
 	-- under the pieces: how many, and the families (big dots: a finger hits them)
 	kit.text(g, kit.upper(T.count:format(#items)), 430, 592, 18, KC.MUTE, "start", 1)
-	gear_ui.families(s, g, 1030 - 5 * 50, 558, s.family)
+	gear_ui.families(s, g, 1006 - 5 * 50, 558, s.family)
 
 	-- the stats: with the piece chosen on, what changes
 	local a2
@@ -108,7 +108,7 @@ local function inventory(s)
 		a2 = copy(a)
 		a2.gear[s.sel[2]] = s.sel[1]
 	end
-	gear_ui.stats(s, s.rt, 1046, 104, 210, a, a2)
+	gear_ui.stats(s, s.rt, 1040, 106, 210, a, a2)
 
 	-- the piece chosen, at the bottom, and INDOSSA
 	if s.sel then
@@ -142,15 +142,20 @@ local function seals_tab(s)
 	local a2 = changed and { gear = a.gear, tree = t, variant = a.variant } or nil
 	-- the stats are a sheet of their own here (the powers take the whole width, to be
 	-- read and touched on a phone: Sergio, 15 Nov): a button opens and closes it
-	local sb = kit.card(g, 1255 - 236, 100, 236, 48, KC.ROSE, { sel = s.sheet })
-	kit.text(sb.g, s.sheet and T.back_to_seals or T.see_stats, 1255 - 118, 131, 19, KC.SAND, "middle")
-	kit.button(s.buttons, sb, "foglio")
+	-- (drawn after the sheet's panels: it sits in the head of the second one)
+	local function sheet_button()
+		local sb = kit.card(g, 1248 - 236, 102, 236, 44, KC.ROSE, { sel = s.sheet })
+		kit.text(sb.g, s.sheet and T.back_to_seals or T.see_stats, 1248 - 118, 131, 19, KC.SAND, "middle")
+		kit.button(s.buttons, sb, "foglio")
+	end
 	if s.sheet then
 		gear_ui.stats(s, g, 460, 110, 370, a, a2, { from = 1, to = gear_ui.STAT_ROWS })
 		gear_ui.stats(s, g, 878, 110, 370, a, a2, { from = gear_ui.STAT_ROWS + 1, to = #gear_ui.STATS, title = false })
+		sheet_button()
 	else
 		local pts = skills.points(p.livello)
 		kit.text(g, T.points:format(skills.spent(t), pts), 452, 132, 24, KC.HOT, "start", 1)
+		sheet_button()
 	end
 	for i, path in ipairs(not s.sheet and skills.PATHS or {}) do
 		local look = PATH_LOOK[path.id] or { KC.SAND, "barra_chiara" }

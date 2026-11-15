@@ -85,7 +85,7 @@ local function ranking(b)
 	kit.panel(kit.group(g, x + w / 2, 345).node, w, 490)
 	kit.text(g, T.ranking, x + w / 2, 132, 16, KC.HOT, "middle", 1)
 	for i, line in ipairs(T.ranking_soon) do
-		kit.text(g, kit.upper(line), x + w / 2, 300 + (i - 1) * 24, 14, KC.MUTE, "middle", 0.5)
+		kit.text(g, kit.upper(line), x + w / 2, 300 + (i - 1) * 24, 16, KC.MUTE, "middle", 0.5)
 	end
 end
 
@@ -95,16 +95,16 @@ local function yours(b, o, now)
 	local x, w = 1040, 216
 	kit.panel(kit.group(g, x + w / 2, 250).node, w, 300, "pannello_caldo")
 	fit(kit.text(g, kit.upper(o.nome), x + w / 2, 140, 22, KC.HOT, "middle"), w - 28)
-	kit.text(g, T.ends_in, x + w / 2, 176, 13, KC.MUTE, "middle", 1)
+	kit.text(g, T.ends_in, x + w / 2, 176, 16, KC.MUTE, "middle", 1)
 	kit.text(g, kit.upper(events.duration(o.a - now)), x + w / 2, 210, 30, KC.SAND, "middle")
-	kit.text(g, T.top, x + w / 2, 248, 13, KC.MUTE, "middle", 1)
+	kit.text(g, T.top, x + w / 2, 248, 16, KC.MUTE, "middle", 1)
 	-- where you are: the server doesn't keep it yet
 	kit.text(g, "–", x + w / 2, 290, 40, KC.HOT, "middle")
-	kit.text(g, T.prize, x + w / 2, 332, 12, KC.MUTE, "middle", 1)
+	kit.text(g, T.prize, x + w / 2, 332, 16, KC.MUTE, "middle", 1)
 	local first = type(o.premi) == "table" and o.premi[1]
 	local prize = first and (type(first) == "table" and (first.testo or "") or tostring(first)) or T.just_for_fun
 	kit.piece(g, "medaglia", x + 40, 362, 40)
-	fit(kit.text(g, kit.upper(prize), x + 66, 368, 15, KC.SAND), w - 84)
+	fit(kit.text(g, kit.upper(prize), x + 66, 368, 16, KC.SAND), w - 84)
 	-- a tap: its detail
 	kit.zone(g, b.buttons, x, 100, w, 300, "evento:" .. o.id)
 end
@@ -161,9 +161,9 @@ local function calendar(b, now)
 		local x, y = 330, 144 + (i - 1) * 76
 		local on = o.da <= now
 		kit.panel(kit.group(g, x + 310, y + 34).node, 620, 68, on and "pannello_caldo" or "pannello")
-		kit.text(g, kit.upper(events.kind(o)), x + 24, y + 26, 13, color(o), "start", 1.5)
+		kit.text(g, kit.upper(events.kind(o)), x + 24, y + 26, 16, color(o), "start", 1.5)
 		fit(kit.text(g, kit.upper(o.nome), x + 24, y + 54, 22, KC.SAND), 360)
-		kit.text(g, kit.upper(on and events.when(o, now) or day_n(o.da, true)), x + 596, y + 42, 15, on and KC.HOT_TOP or KC.MUTE, "end", 0.5)
+		kit.text(g, kit.upper(on and events.when(o, now) or day_n(o.da, true)), x + 596, y + 42, 16, on and KC.HOT_TOP or KC.MUTE, "end", 0.5)
 		kit.zone(g, b.buttons, x, y, 620, 68, "evento:" .. o.id)
 	end
 end
@@ -174,7 +174,7 @@ local function detail(b, o, now)
 	local x0, x1 = 240, 760
 	kit.panel(kit.group(g, 640, 340).node, 880, 500)
 	local lab = kit.label(g, x0 + 4, 126, kit.upper(events.kind(o)), color(o))
-	kit.text(g, kit.upper(events.when(o, now)), x0 + 4 + kit.width(lab) + 24, 144, 15, KC.MUTE, "start", 1)
+	kit.text(g, kit.upper(events.when(o, now)), x0 + 4 + kit.width(lab) + 24, 144, 16, KC.MUTE, "start", 1)
 	fit(kit.text(g, kit.upper(o.nome), x0, 204, 54, KC.SAND), 800)
 	if o.riga and o.riga ~= "" then fit(kit.text(g, o.riga, x0 + 2, 236, 20, KC.MUTE), 800) end
 	kit.heading(g, T.what_changes, x0 + 4, 280)
@@ -186,7 +186,7 @@ local function detail(b, o, now)
 	end
 	local when = T.from_to:format(day_n(o.da, true), day_n(o.a, true))
 	if o.torna then when = when .. " · " .. T.back_on:format(day_n(o.torna)) end
-	fit(kit.text(g, kit.upper(when), x0 + 4, 294 + n * 48 + 34, 14, KC.MUTE, "start", 0.5), 460)
+	fit(kit.text(g, kit.upper(when), x0 + 4, 294 + n * 48 + 34, 16, KC.MUTE, "start", 0.5), 460)
 	-- on the right: the prizes (the server hands them out once there are accounts)
 	kit.heading(g, T.prizes, x1, 280)
 	local premi = type(o.premi) == "table" and o.premi or {}
@@ -196,7 +196,7 @@ local function detail(b, o, now)
 		local y = 294 + (i - 1) * 48
 		local who = type(p) == "table" and p.chi
 		fit(kit.text(g, kit.upper(type(p) == "table" and (p.testo or "") or tostring(p)), x1, y + 30, 19, KC.SAND), who and 200 or 300)
-		if who then kit.text(g, kit.upper(who), x1 + 310, y + 29, 14, KC.HOT_TOP, "end", 0.5) end
+		if who then kit.text(g, kit.upper(who), x1 + 310, y + 29, 16, KC.HOT_TOP, "end", 0.5) end
 	end
 	-- an event on a normal queue is played in that queue
 	return o.da <= now and o or nil

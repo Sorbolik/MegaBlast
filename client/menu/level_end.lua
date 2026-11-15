@@ -96,7 +96,7 @@ function M.new(o, sound)
 			gui.set_scale(what, vec(sc.x * 124 / wide, sc.y * 124 / wide))
 		end
 	end
-	if o.punti then kit.text(g, kit.upper(T.points:format(o.punti)), 86, 400, 13, KC.MUTE, "start", 1.5) end
+	if o.punti then kit.text(g, kit.upper(T.points:format(o.punti)), 86, 400, 16, KC.MUTE, "start", 1.5) end
 	-- the level's record of points, always and well in sight (Sergio, 14
 	-- Nov): new in fire, otherwise in gold; with all three stars, beat it
 	local best, before = o.record_punti, o.record_prima

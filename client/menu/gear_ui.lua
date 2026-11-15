@@ -157,14 +157,15 @@ function M.value(v, how)
 	return tostring(v)
 end
 
--- The stats of the loadout a (and of a2, the same with a piece changed: "a › b")
+-- The stats of the loadout a (and of a2, the same with a piece changed: its value and an arrow)
 -- in the column at (x, y), w wide, sized for a phone (Sergio, 15 Nov): STATISTICHE
 -- and eight big rows at a time, every other row on a dark strip; a tap on the
 -- column turns the page ("statistiche:", s.stat_page). The rows that change with
--- a2 come first. Better than the base in mint, worse in ice (the font has no arrow).
+-- a2 come first. Better than the base in mint, worse in ice.
 -- o.from, o.to: only those rows, without the pages (the whole sheet of the Sigilli);
 -- o.title = false: no title
 M.STAT_ROWS = 8
+M.STAT_PAD = 12
 function M.stats(s, g, x, y, w, a, a2, o)
 	o = o or {}
 	local p = s.prof
@@ -178,6 +179,11 @@ function M.stats(s, g, x, y, w, a, a2, o)
 	else
 		order = M.STATS
 	end
+	-- behind the column an iron panel (Sergio, 15 Nov): the rows are read on it,
+	-- not on the painting; the same margin (M.STAT_PAD) on every side of the rows
+	local rh = 54
+	local tall = 34 + M.STAT_ROWS * rh
+	kit.panel(kit.group(g, x + w / 2, y + tall / 2).node, w + 2 * M.STAT_PAD, tall + 2 * M.STAT_PAD)
 	local pages = math.ceil(#order / M.STAT_ROWS)
 	local from, to = o.from, o.to
 	if not from then
@@ -187,7 +193,6 @@ function M.stats(s, g, x, y, w, a, a2, o)
 		kit.zone(g, s.buttons, x - 8, y - 8, w + 16, 44 + M.STAT_ROWS * 54, "statistiche:")
 	end
 	if o.title ~= false then kit.text(g, T.stats, x, y + 18, 22, KC.HOT, "start", 1) end
-	local rh = 54
 	for i = from, to do
 		local st = order[i]
 		local k, how = st[1], st[2]
@@ -202,20 +207,33 @@ function M.stats(s, g, x, y, w, a, a2, o)
 			col = ((v > b) ~= (LESS[k] == true)) and KC.MINT or KC.ICE
 		end
 		local t = kit.upper(M.value(v, how))
-		if after and after[k] ~= v then
-			t = t .. " › " .. kit.upper(M.value(after[k], how))
-			col = KC.HOT
-		end
+		-- with the piece chosen on: the new value, in mint when it gets better and in ice
+		-- when it gets worse (the colors of plus and minus everywhere), and a small
+		-- arrow that says where the number goes, for who does not tell the colors
 		local changes = after and after[k] ~= v
-		local n = kit.text(g, t, x + w, yy + 33, changes and 19 or 22, col, "end")
+		local up
+		if changes then
+			local v2 = after[k]
+			t = kit.upper(M.value(v2, how))
+			up = (type(v2) == "number" and v2 or v2 and 1 or 0) > (type(v) == "number" and v or v and 1 or 0)
+			col = (up ~= (LESS[k] == true)) and KC.MINT or KC.ICE
+		end
+		local n = kit.text(g, t, x + w, yy + 33, 22, col, "end")
 		local vw = kit.width(n)
 		if vw > w * 0.52 then
 			gui.set_scale(n, gui.get_scale(n) * (w * 0.52 / vw))
 			vw = w * 0.52
 		end
+		if changes then
+			local arrow = kit.piece(g, "freccia", x + w - vw - 12, yy + 26, 14)
+			gui.set_rotation(arrow, vmath.vector3(0, 0, up and 90 or -90))
+			gui.set_color(arrow, col)
+			vw = vw + 24
+		end
 		local name = kit.text(g, kit.upper(TA.stats[k]), x, yy + 32, 19, KC.SAND)
 		local wide, room = kit.width(name), w - vw - 10
-		if wide > room then gui.set_scale(name, gui.get_scale(name) * (room / wide)) end
+		-- never under 16 (the smallest text of the menus)
+		if wide > room then gui.set_scale(name, gui.get_scale(name) * math.max(room / wide, 16 / 19)) end
 	end
 end
 

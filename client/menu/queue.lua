@@ -46,8 +46,8 @@ local function card(c, g, x, y, w, h, o)
 	local size = o.size
 	local top = y + h / 2 - (size * 0.9 + (o.info and 44 or 22)) / 2 + size * 0.8
 	fit(kit.text(f, o.name, tx, top, size, KC.SAND), x + w - 70 - tx)
-	if o.sub then fit(kit.text(f, kit.upper(o.sub), tx + 2, top + 26, 15, KC.MUTE, "start", 0.5), x + w - 70 - tx) end
-	if o.info then fit(kit.text(f, kit.upper(o.info), tx + 2, top + 50, 15, KC.HOT_TOP, "start", 0.5), x + w - 70 - tx) end
+	if o.sub then fit(kit.text(f, kit.upper(o.sub), tx + 2, top + 26, 16, KC.MUTE, "start", 0.5), x + w - 70 - tx) end
+	if o.info then fit(kit.text(f, kit.upper(o.info), tx + 2, top + 50, 16, KC.HOT_TOP, "start", 0.5), x + w - 70 - tx) end
 	kit.text(f, "›", x + w - 30, y + h / 2 + size * 0.45, size * 1.3, o.hot and KC.HOT or KC.SAND, "middle")
 	kit.button(c.buttons, k, o.action)
 end
@@ -103,7 +103,9 @@ local function build(c)
 	if after then
 		kit.panel(kit.group(c.rt, 1006, 535).node, 500, 90)
 		kit.piece(c.rt, "ic_notte", 802, 535, 50)
-		fit(kit.text(c.rt, kit.upper(T.coming:format(events.when(after, now), after.nome)), 840, 541, 15, KC.MUTE, "start", 0.5), 340)
+		-- two lines at 16 (never shrunk under the smallest text): when, and what
+		fit(kit.text(c.rt, kit.upper(events.when(after, now)), 840, 530, 16, KC.SAND, "start", 0.5), 400)
+		fit(kit.text(c.rt, kit.upper(after.nome), 840, 552, 16, KC.MUTE, "start", 0.5), 400)
 	end
 
 	-- the one action: GIOCA starts the chosen queue

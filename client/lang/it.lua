@@ -335,7 +335,7 @@ return {
 		values = {
 			lancetta = "LANCETTA", mirino = "MIRINO", pressione = "PREMENDO", rilascio = "LASCIANDO",
 			levetta = "LEVETTA", grilletto = "GRILLETTO", destra = "DESTRA", sinistra = "SINISTRA",
-			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "PROVA FINE GIOCO",
+			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "FINE GIOCO",
 		},
 		-- the controller's commands (controller.COMMANDS)
 		commands = {
@@ -519,8 +519,6 @@ return {
 		own_queue = "coda sua",
 		counts_in = "conta nel %s",
 		no_event = "Nessun evento in corso",
-		-- the next event: when it starts, its name
-		coming = "%s · %s",
 		private = "STANZA PRIVATA",
 		private_short = "Con un codice",
 		duel_line = "Tu contro uno",

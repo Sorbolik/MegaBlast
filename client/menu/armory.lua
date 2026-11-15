@@ -299,7 +299,7 @@ local function build(a)
 		a2 = copy(act)
 		a2.gear[try[2]] = try[1]
 	end
-	gear_ui.stats(a, a.rt, 1046, 104, 210, act, a2)
+	gear_ui.stats(a, a.rt, 1040, 106, 210, act, a2)
 end
 
 function M.new(prof, tab, from)

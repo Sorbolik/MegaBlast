@@ -563,7 +563,7 @@ function M.action(g, label, x, y, w, h, opt)
 	p.label = M.text(p.g, label, cx, cy + size * 0.36, size, ink, "middle")
 	local muted = opt.off and C.FROST or C.MUTE
 	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, cy + 7, 19, muted, "end", 0.6)
-	elseif opt.sub then p.sub = M.text(g, opt.sub, cx, sub_y(y, h), 15, muted, "middle", 1.2) end
+	elseif opt.sub then p.sub = M.text(g, opt.sub, cx, sub_y(y, h), 16, muted, "middle", 1.2) end
 	-- the finger on it: the pressed drawing (ui.ui, premi)
 	if not opt.off then
 		local at = gui.get_position(p.label)
@@ -609,7 +609,7 @@ function M.header(list_of, label, accent, back_action, from)
 		whole("indietro", 0, 0, 76, h.back.face_node)
 		gui.set_parent(M.line(h.back.g, 82, 642, 64, 658, 7, C.SAND), h.back.face_node, true)
 		gui.set_parent(M.line(h.back.g, 64, 658, 82, 674, 7, C.SAND), h.back.face_node, true)
-		M.text(bl, from or "", 74, 713, 13, C.MUTE, "middle", 1)
+		M.text(bl, from or "", 74, 713, 16, C.MUTE, "middle", 1)
 		-- the whole corner takes the tap
 		local zone = empty(76, M.BAND / 2, 152, M.BAND, bl.node)
 		list_of[#list_of + 1] = { nodo = zone, bordo = zone, colore = CLEAR, riposo = CLEAR, ui_action = back_action, piastra = h.back }
@@ -673,7 +673,7 @@ end
 function M.choice(g, list_of, x, y, label, opts, active, w, off)
 	local h = 58
 	if g.air then w = w + M.air(0.25) end
-	M.text(g, label, x + 6, y - 12, 15, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
+	M.text(g, label, x + 6, y - 12, 16, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
 	for i, o in ipairs(opts) do
 		local ox = x + (i - 1) * w
 		local on = i == active and not off
@@ -746,17 +746,26 @@ function M.info(g, x, y, w, h)
 end
 
 -- LABELS: a small blade and the name in color
+-- how wide the backed label of the word t is
+function M.label_width(t)
+	local n = gui.new_text_node(vec(0, 0), t)
+	gui.set_font(n, "titolo")
+	local m = resource.get_text_metrics(gui.get_font_resource(gui.get_font(n)), t, { tracking = 1 / 16 })
+	gui.delete_node(n)
+	return math.ceil(m.width * 16 / FONT_SIZE) + 40
+end
+
 function M.label(g, x, y, t, color, backed)
 	if backed then
 		-- on a picture: a small iron plate, the word in its room
-		local w, h = #t * 9 + 46, 26
+		local w, h = M.label_width(t), 32
 		local cx, cy = x - 8 + w / 2, y - 1 + h / 2
 		local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
 		three(n, "piastrina", w, h)
 		local box = room("piastrina", cx, cy, w, h)
-		return M.text({ node = n, ox = cx, oy = cy, box = box }, t, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 5, 12, color, "middle", 1.2)
+		return M.text({ node = n, ox = cx, oy = cy, box = box }, t, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 6, 16, color, "middle", 1)
 	end
-	return M.text(g, t, x, y + 18, 15, color, "start", 1.2)
+	return M.text(g, t, x, y + 18, 16, color, "start", 1.2)
 end
 
 -- A section's small heading

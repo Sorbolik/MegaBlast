@@ -83,7 +83,7 @@ local function map_card(a, x, y, m)
 		local on = a.scelta.mappa == "caso"
 		local k = kit.card(g, x, y, 186, 130, on and KC.HOT or KC.ROSE, { sel = on })
 		kit.text(k.g, "?", x + 93, y + 82, 64, KC.SAND, "middle")
-		kit.text(k.g, T.random, x + 93, y + 116, 15, KC.SAND, "middle", 0.5)
+		kit.text(k.g, T.random, x + 93, y + 116, 16, KC.SAND, "middle", 0.5)
 		kit.zone(g, a.buttons, x, y, 186, 130, "mappa:caso")
 		return
 	end
@@ -93,11 +93,11 @@ local function map_card(a, x, y, m)
 	local img = kit.card_picture(k, "mappe", 92, 16 / 9, open and 1 or 0.4)
 	gui.play_flipbook(img, m.id)
 	if open then
-		kit.text(k.g, kit.upper(maps.get(m.id).name), x + 93, y + 116, 15, KC.SAND, "middle", 0.5)
+		kit.text(k.g, kit.upper(maps.get(m.id).name), x + 93, y + 116, 16, KC.SAND, "middle", 0.5)
 		kit.zone(g, a.buttons, x, y, 186, 130, "mappa:" .. m.id)
 	else
 		kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", 0, -(65 - 4 - 46), 44)
-		kit.text(k.g, kit.upper(common.opens_with:format(m.serve)), x + 93, y + 116, 11, KC.MUTE, "middle", 0.5)
+		kit.text(k.g, kit.upper(common.opens_with:format(m.serve)), x + 93, y + 116, 16, KC.MUTE, "middle", 0.5)
 	end
 end
 
@@ -140,7 +140,7 @@ local function build(a)
 	-- on the same phone there are no bots
 	kit.choice(g, a.buttons, 440, 316, common.bot, levels, level_on, 160, same)
 	-- the map: A CASO first, then the maps from the first visible one
-	kit.text(g, T.map, 446, 394, 14, KC.MUTE, "start", 1.5)
+	kit.text(g, T.map, 446, 394, 16, KC.MUTE, "start", 1.5)
 	local cards = { { random = true } }
 	for _, m in ipairs(MAPS) do cards[#cards + 1] = m end
 	local first = math.max(1, math.min(a.da, #cards - VISIBLE + 1))

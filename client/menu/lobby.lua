@@ -106,7 +106,7 @@ function M.new(of, title, parent_below)
 	s.xs = places(of)
 	-- the tip: a row to read, next to the plate
 	kit.info(g, 600, 120, 620, 70, KC.PURPLE)
-	kit.text(g, T.tip, 632, 146, 12, KC.HOT_TOP, "start", 1.5)
+	kit.text(g, T.tip, 632, 146, 16, KC.HOT_TOP, "start", 1.5)
 	s.tip = kit.text(g, M.TIPS[1], 630, 172, 16, KC.SAND)
 	s.tip_scale = gui.get_scale(s.tip)
 	fit_tip(s)

@@ -73,7 +73,7 @@ local function stair(p, block, i, count, x, w, h, per_robot, mvp, team_mode)
 	kit.text(base, tostring(block.points), x + w / 2, line, size, KC.SAND, "middle")
 	local name = team_mode and first_one.nome:gsub(" %d$", "") or first_one.nome
 	local under = kit.text(base, kit.upper(name), x + w / 2, line + (h >= 200 and 34 or h >= 140 and 24 or 20),
-		h >= 200 and 16 or 13, color, "middle", 2)
+		16, color, "middle", 2)
 	local wide = kit.width(under)
 	if wide > w - 24 then
 		local sc = gui.get_scale(under)
@@ -108,9 +108,9 @@ local function stair(p, block, i, count, x, w, h, per_robot, mvp, team_mode)
 			local over = holder(p, cx, head - 14)
 			if is_mvp then
 				kit.para(over, cx - 46, head - 18, 84, 26, 8, KC.HOT)
-				kit.text(over, T.mvp, cx, head + 1, 15, KC.INK, "middle", 1.5)
+				kit.text(over, T.mvp, cx, head + 1, 16, KC.INK, "middle", 1.5)
 			end
-			if team_mode then kit.text(over, kit.upper(g.nome), cx, head - (is_mvp and 26 or 8), 13, KC.SAND, "middle", 1) end
+			if team_mode then kit.text(over, kit.upper(g.nome), cx, head - (is_mvp and 26 or 8), 16, KC.SAND, "middle", 1) end
 			pop(over.node, M.REWARDS)
 		end
 		for _, aw in ipairs(per_robot[voice.robot] or {}) do chips[#chips + 1] = aw.name end

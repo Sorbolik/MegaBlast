@@ -42,6 +42,9 @@ local CHOICES = {
 	choice_of("profilo", { "vero", "prova" }),
 }
 local KC = kit.C
+-- the grid: the names of the choices NAME_W wide on the left, then their values;
+-- the controller's commands in two columns of cards KEY_W wide from KEYS_X
+local NAME_W, KEYS_X, KEY_W = 196, 612, 306
 
 local function build(s)
 	-- the controller light stays on the same button
@@ -54,6 +57,9 @@ local function build(s)
 	s.radice = ui.root()
 	local g = { node = s.radice, ox = 0, oy = 720 }
 
+	-- the choices on an iron panel: their names are read on it, not on the painting
+	kit.panel(kit.group(g, 32 + (NAME_W + 12 + 340 + 16) / 2, 108 + (#CHOICES * 78 + 6) / 2).node,
+		NAME_W + 12 + 340 + 16, #CHOICES * 78 + 6)
 	for i, sc in ipairs(CHOICES) do
 		local v = profile.setting(s.p, sc[1])
 		if sc[1] == "profilo" then v = profile.test and "prova" or "vero" end
@@ -62,29 +68,41 @@ local function build(s)
 			opts[k] = { m[2], sc[1] .. ":" .. m[1] }
 			if v == m[1] then on = k end
 		end
-		kit.choice(g, s.buttons, 50 + (i - 1) * 5, 134 + (i - 1) * 84, sc[2], opts, on, 200)
+		-- a row each on one grid (Sergio, 15 Nov: every text in its place, never under a
+		-- button): the name on the left, on two lines when it is long, its values on the right
+		local y = 120 + (i - 1) * 78
+		local name, second = sc[2], nil
+		local probe = kit.text(g, name, 48, y + 35, 16, KC.SAND, "start", 1)
+		if kit.width(probe) > NAME_W then
+			gui.delete_node(probe)
+			local cut = name:find(" ", math.floor(#name / 2) - 3, true) or name:find(" ", 1, true)
+			name, second = name:sub(1, cut - 1), name:sub(cut + 1)
+			kit.text(g, name, 48, y + 25, 16, KC.SAND, "start", 1)
+			kit.text(g, second, 48, y + 45, 16, KC.SAND, "start", 1)
+		end
+		kit.choice(g, s.buttons, 48 + NAME_W + 8, y, "", opts, on, 170)
 	end
 
 	-- the controller's buttons: two columns of commands
-	kit.text(g, T.controller_keys, 540, 132, 17, KC.HOT_TOP, "start", 1.5)
+	kit.text(g, T.controller_keys, KEYS_X, 132, 17, KC.HOT_TOP, "start", 1.5)
 	local n = #controller.COMMANDS
 	local per_column = math.ceil(n / 2)
 	for i, cmd in ipairs(controller.COMMANDS) do
 		local col = i <= per_column and 0 or 1
 		local row = (i - 1) % per_column
-		local x, y = 540 + col * 356 - row * 4, 150 + row * 66
+		local x, y = KEYS_X + col * (KEY_W + 16), 150 + row * 66
 		local cur = s.attesa == cmd
-		local k = kit.card(g, x, y, 340, 56, cur and KC.HOT or KC.PURPLE, { sel = cur })
-		kit.text(k.g, NAMES[cmd], x + 24, y + 36, 19, KC.SAND)
+		local k = kit.card(g, x, y, KEY_W, 56, cur and KC.HOT or KC.PURPLE, { sel = cur })
+		kit.text(k.g, NAMES[cmd], x + 22, y + 36, 19, KC.SAND)
 		if cur then
-			kit.text(k.g, T.press_a_key, x + 318, y + 35, 14, KC.HOT_TOP, "end", 1)
+			kit.text(k.g, T.press_a_key, x + KEY_W - 22, y + 35, 16, KC.HOT_TOP, "end", 1)
 		elseif controller.key_of(s.c, cmd) then
 			local gl = glyph.new(k.node, 36)
 			glyph.display(gl, s.c, controller.key_of(s.c, cmd))
-			gui.set_position(gl.radice, vmath.vector3(340 / 2 - 24 - glyph.width(gl) / 2, 0, 0))
+			gui.set_position(gl.radice, vmath.vector3(KEY_W / 2 - 22 - glyph.width(gl) / 2, 0, 0))
 		else
 			kit.text(k.g, cmd == "salta" and T.stick_up:format(T.sides[controller.side("muove")]) or T.no_key,
-				x + 318, y + 35, 13, KC.MUTE, "end", 1)
+				x + KEY_W - 22, y + 35, 16, KC.MUTE, "end", 1)
 		end
 		kit.button(s.buttons, k, "tasto:" .. cmd)
 	end
@@ -92,15 +110,16 @@ local function build(s)
 	local help = s.attesa and T.cancel:format(controller.name(s.c, "start"))
 		or (s.c.connected and T.change_remove:format(controller.name(s.c, "a"), controller.name(s.c, "y"))
 		or T.connect)
-	local t = kit.text(g, help, 540, 584, 15, KC.MUTE, "start", 1)
-	local wide = kit.width(t)
-	if wide > 690 then
+	local t = kit.text(g, help, KEYS_X, 584, 16, KC.MUTE, "start", 1)
+	local wide, room = kit.width(t), 2 * KEY_W + 16
+	if wide > room then
 		local sc = gui.get_scale(t)
-		gui.set_scale(t, vmath.vector3(sc.x * 690 / wide, sc.y * 690 / wide, 1))
+		gui.set_scale(t, vmath.vector3(sc.x * room / wide, sc.y * room / wide, 1))
 	end
 	-- (where the second column ends)
-	local reset = kit.plate(g, 876, 150 + per_column * 66 - 66, 320, 60, KC.ROSE, { sk = 0, d = 6, piece = "piastrina" })
-	kit.text(reset.g, T.reset, 876 + 160, 150 + per_column * 66 - 66 + 39, 21, KC.SAND, "middle", 0.5)
+	local rx, ry = KEYS_X + KEY_W + 16, 150 + per_column * 66 - 66
+	local reset = kit.plate(g, rx, ry - 1, KEY_W, 58, KC.ROSE, { sk = 0, d = 6, piece = "piastrina" })
+	kit.text(reset.g, T.reset, rx + KEY_W / 2, ry + 36, 21, KC.SAND, "middle", 0.5)
 	kit.button(s.buttons, reset, "ripristina")
 	for _, b in ipairs(s.buttons) do
 		if b.ui_action == lit then ui.light(s.buttons, b) end
