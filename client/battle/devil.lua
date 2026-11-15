@@ -20,7 +20,7 @@ return {
 		braccio_dietro = { img = "braccio_dietro", tint = nil, x = 2.0, y = -24.0, w = 40, h = 72 },
 		pugno = { img = "pugno", tint = nil, x = 0.0, y = 0.0, w = 32, h = 32 },
 		ala = { img = "ala", tint = nil, x = -20.0, y = 4.0, w = 60, h = 56 },
-		paracadute = { img = "paracadute", tint = "paracadute_tinta", x = 0.0, y = 2.0, w = 200, h = 324 },
+		paracadute = { img = "paracadute", tint = "paracadute_tinta", x = 0.0, y = 4.3, w = 200.0, h = 328.7 },
 		coda_1 = { img = "coda_1", tint = nil, x = 23.0, y = 0.0, w = 70, h = 56 },
 		coda_1_bordo = { img = "coda_1_bordo", tint = nil, x = 23.0, y = 0.0, w = 70, h = 56 },
 		coda_2 = { img = "coda_2", tint = nil, x = 23.0, y = 0.0, w = 70, h = 56 },

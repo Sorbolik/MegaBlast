@@ -1,4 +1,4 @@
-# Ritaglia le armi disegnate da Codex (WB-063, WB-064...) dai fogli già ricalcati a
+# Ritaglia le armi, gli oggetti e gli effetti disegnati da Codex (WB-063...066) dai fogli già ricalcati a
 # vettori e le salva una per una in art/armi/<nome>.png (trasparenti, alla misura
 # del ricalco: il gioco le rimpicciolisce, non le ingrandisce mai).
 #
@@ -35,13 +35,48 @@ FOGLI = {
     "secondarie_corte_2": ["bellows", "vortex", "cannon", "petard"],
     "secondarie_icone_2": ["sword_icona", "eagle_icona", "mallet_icona", "lunge_icona",
                            "bellows_icona", "vortex_icona", "cannon_icona", "petard_icona"],
+    "oggetti_pezzi_2": ["hook", "janus", "teleport", "parachute", "trampoline", "trap",
+                        "shield", "uncino"],
+    "oggetti_icone_1": ["hook_icona", "janus_icona", "teleport_icona", "parachute_icona",
+                        "trampoline_icona", "trap_icona", "shield_icona"],
+    "effetti_1": ["fx_runa", "fx_stella", "fx_fendente", "fx_vento",
+                  "fx_fumo", "fx_anello_fumo", "fx_risucchio", "fx_bolla",
+                  "fx_guscio", "fx_coccio", "fx_gocce", "fx_coriandolo",
+                  "fx_crepa", "fx_cenere", "fx_fiamma", "fx_scintilla"],
 }
 MARGINE = 6
+# fogli a griglia (colonne, righe): ogni cella è un pezzo, anche se fatto di più parti
+# staccate (le gocce, i fiocchi sopra la cenere)
+GRIGLIA = {"effetti_1": (4, 4)}
 
 
 def sfondo(a):
     r, g, b = a[..., 0].astype(int), a[..., 1].astype(int), a[..., 2].astype(int)
     return (r > 200) & (b > 200) & (g < 80)
+
+
+def celle(png, nomi, colonne, righe):
+    # ogni parte staccata va nella cella dove cade il suo centro
+    a = np.array(Image.open(png).convert("RGB"))
+    fuori = sfondo(a)
+    alfa = (~fuori).astype(np.uint8) * 255
+    lab, n = ndimage.label(ndimage.binary_dilation(~fuori, iterations=2))
+    ch, cw = a.shape[0] / righe, a.shape[1] / colonne
+    gruppi = [[] for _ in nomi]
+    for i, sl in enumerate(ndimage.find_objects(lab), 1):
+        cy, cx = (sl[0].start + sl[0].stop) / 2, (sl[1].start + sl[1].stop) / 2
+        k = int(cy // ch) * colonne + int(cx // cw)
+        if k < len(nomi):
+            gruppi[k].append((sl, i))
+    for gruppo, nome in zip(gruppi, nomi):
+        y0 = max(min(sl[0].start for sl, _ in gruppo) - MARGINE, 0)
+        y1 = min(max(sl[0].stop for sl, _ in gruppo) + MARGINE, a.shape[0])
+        x0 = max(min(sl[1].start for sl, _ in gruppo) - MARGINE, 0)
+        x1 = min(max(sl[1].stop for sl, _ in gruppo) + MARGINE, a.shape[1])
+        dentro = np.isin(lab[y0:y1, x0:x1], [i for _, i in gruppo])
+        rgba = np.dstack([a[y0:y1, x0:x1], np.where(dentro, alfa[y0:y1, x0:x1], 0)]).astype(np.uint8)
+        Image.fromarray(rgba, "RGBA").save(os.path.join(OUT, nome + ".png"), optimize=True)
+        print(nome, x1 - x0, "x", y1 - y0)
 
 
 def pezzi(png, nomi):
@@ -84,7 +119,9 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     for foglio, nomi in FOGLI.items():
         png = os.path.join(cartella, foglio + ".png")
-        if os.path.exists(png):
+        if os.path.exists(png) and foglio in GRIGLIA:
+            celle(png, nomi, *GRIGLIA[foglio])
+        elif os.path.exists(png):
             pezzi(png, nomi)
         else:
             print("manca", png)

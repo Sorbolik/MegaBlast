@@ -93,6 +93,29 @@ def bolla(d):
     return (-r - 1, -r - 1, r + 1, r + 1)
 
 
+# la tagliola aperta disegnata da Codex (WB-065, art/armi/trap.png): larga come la
+# forma a vettori; la luce del colore della squadra è il perno d'ottone
+TAGLIOLA_RICALCO = os.path.join(RADICE, "art", "armi", "trap.png")
+TAGLIOLA_LARGA = 24
+
+
+def tagliola_ricalcata():
+    import numpy as np
+    from PIL import Image
+    im = Image.open(TAGLIOLA_RICALCO).convert("RGBA")
+    w = round(TAGLIOLA_LARGA * PX)
+    h = round(w * im.height / im.width)
+    a = np.array(im)
+    r, g, b = a[..., 0].astype(int), a[..., 1].astype(int), a[..., 2].astype(int)
+    ottone = (abs(r - 0xD9) < 30) & (abs(g - 0xA4) < 30) & (abs(b - 0x41) < 40)
+    luce = np.zeros_like(a)
+    luce[ottone] = (255, 255, 255, 255)
+    im.resize((w, h), Image.LANCZOS).save(os.path.join(OUT, "attrezzo_tagliola.png"), optimize=True)
+    Image.fromarray(luce, "RGBA").resize((w, h), Image.LANCZOS).save(
+        os.path.join(OUT, "attrezzo_tagliola_luce.png"), optimize=True)
+    print("attrezzo_tagliola (ricalcata)", w, h, "misura nel mondo", TAGLIOLA_LARGA, round(h / PX, 1))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for nome, fn, tinta in (("attrezzo_cubo", cubo, False), ("attrezzo_tagliola", tagliola_aperta, False),
@@ -104,6 +127,8 @@ def main():
         w, h = round((box[2] - box[0]) * PX), round((box[3] - box[1]) * PX)
         rendi(d.svg(box, PX, tinta=tinta), w, h).save(os.path.join(OUT, nome + ".png"), optimize=True)
         print(nome, w, h, "misura nel mondo", round(box[2] - box[0], 1), round(box[3] - box[1], 1))
+    if os.path.exists(TAGLIOLA_RICALCO):
+        tagliola_ricalcata()
 
 
 if __name__ == "__main__":

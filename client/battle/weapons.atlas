@@ -59,6 +59,9 @@ images {
   image: "/assets/weapons/teleport_tinta.png"
 }
 images {
+  image: "/assets/weapons/teleport_icona.png"
+}
+images {
   image: "/assets/weapons/eagle.png"
 }
 images {
@@ -164,9 +167,6 @@ images {
   image: "/assets/weapons/janus_icona.png"
 }
 images {
-  image: "/assets/weapons/teleport_icona.png"
-}
-images {
   image: "/assets/weapons/trap_icona.png"
 }
 images {
@@ -180,6 +180,9 @@ images {
 }
 images {
   image: "/assets/weapons/uncino.png"
+}
+images {
+  image: "/assets/weapons/uncino_tinta.png"
 }
 images {
   image: "/assets/weapons/razzo.png"

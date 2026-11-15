@@ -1,0 +1,21 @@
+Image 1 is a rough layout sketch made by our designer for a 2D comic game set in a cartoon hell, where a small red devil apprentice fights with weapons forged by his master, the Smith, in the Forge of the Titans. Image 2 shows the drawing style of the game (character parts). 
+Redraw the objects of image 1 in a 3 by 3 grid, same order and positions, each about 300 px:
+1. Grappling crossbow: a small brass hand crossbow pointing right with a wooden grip and a rope spool, loaded with a light-iron four-pronged grappling hook; a team-green band on the body. Also draw, in the last free cell at the bottom right, the grappling hook alone with a short piece of hemp rope.
+2. Janus coin: a big brass coin seen from the front, split vertically: left half gold with an engraved profile looking left, right half team green with an engraved profile looking right, the two faces back to back.
+3. Shadow globe: a violet glass globe with a small dark shadow devil inside (round head, two little horns, two yellow eyes).
+4. Bat-wing parachute: an umbrella-like canopy made of three pointed bat wings sewn together in dark leather, ribs visible, three thin cords meeting at a hooked wooden handle, a team-green band on the canopy.
+5. Spring: a big dark-iron zig-zag spring between a wooden base and a brass top plate, a small team-green triangle on top of the plate.
+6. Bear trap: an open iron jaw trap seen three quarters from the front, two half-moon jaws with sharp light-iron teeth, a brass pivot in the middle.
+7. Round shield: a round wooden shield with a thick dark-iron rim and four brass rivets, a dark-iron anvil emblem in the middle, a team-green band above the anvil.
+Rendering rules, very strict, because every shape will be traced into vector layers:
+- Same drawing style as image 2: thick closed pure black #000000 outline around every shape and between colour areas, chunky soft slightly asymmetric comic shapes.
+- FLAT COLORS ONLY: every area is one solid colour, plus at most one hard-edged shadow shape in the darker tone of the same material. No gradients, no textures, no soft shading, no glow halos, no blur, no sparkles, no motion lines.
+- Use ONLY these colours: dark iron #3B404B, iron #59606E, light iron #8F98A8; dark brass #A8761F, brass #D9A441; dark leather #4A3019, leather #6B4A2B, light leather #C89255, wood #8A5A33; dark violet #4B2D8A, violet #9466EA, pale violet #DCC8FF; team band pure green #00FF00 with shadow #00B400; white #FFFFFF; black #000000. The shadow devil inside the globe uses pitch #2E2433.
+- Background: flat pure magenta #FF00FF everywhere, no halo around the objects, no ground shadow. Objects never touch each other.
+- No text, numbers, letters, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-065/riferimenti/R1_bozze_oggetti_pezzi.png
+art/WB-065/riferimenti/R2_stile_colori_piatti.png
+
+Strumento: image_gen. Tentativi: 3. Selezionato: 2.

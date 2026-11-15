@@ -656,9 +656,14 @@ RICALCO = os.path.join(RADICE, "art", "armi")
 # i colpi in volo fatti con un pezzo ricalcato (nome del colpo -> pezzo)
 COLPI_RICALCATI = {"razzo": "razzo", "palla": "palla", "scheggia": "scheggia", "uovo": "uovo_2",
                    "falce": "boomerang", "fiasco": "tar", "petardo_volo": "petard",
-                   "voragine_volo": "vortex", "punta": "drill"}
+                   "voragine_volo": "vortex", "punta": "drill",
+                   "globo": "teleport", "giano": "janus"}
 # la punta del Trapano in volo è solo il corno: si taglia via l'impugnatura
 TAGLIO = {"punta": 0.36}
+# il lanciarampino in mano senza l'uncino (è un pezzo a sé, vola via quando si spara):
+# si taglia dove finisce l'asta e la bocca resta a PUNTA_RAMPINO
+SENZA_PUNTA = {"hook": 0.75}
+BOX_RICALCO = {"hook": (-6.0, -6.2, PUNTA_RAMPINO, 2.8)}  # la canna a y = 0
 
 
 def ricalcato(nome):
@@ -737,6 +742,9 @@ def main():
         box = info["box"]
         pezzo = ricalcato(nome)
         if pezzo is not None:
+            if nome in SENZA_PUNTA:
+                pezzo = pezzo.crop((0, 0, round(pezzo.width * SENZA_PUNTA[nome]), pezzo.height))
+            box = BOX_RICALCO.get(nome, box)
             base, tinta, w, h, box = da_ricalco(nome, pezzo, box, PX, immagini)
         else:
             base, tinta, w, h = esporta(nome, d, box, immagini)
@@ -755,6 +763,11 @@ def main():
         foglio.append((nome, base, tinta, ic, box, prese.get(nome, [])))
     # le icone dei pulsanti tondi
     for nome, fn in ICONE.items():
+        icr = ricalcato(nome + "_icona")
+        if icr is not None:
+            if nome + "_icona" not in immagini:
+                icona_ricalcata(nome, icr, immagini)
+            continue
         d = Disegno(col=COL_ICONE)
         icona(nome, d, fn(d)["box"], 0, immagini)
     lua.append("\t},")
@@ -762,7 +775,11 @@ def main():
     for nome, fn in PEZZI.items():
         d = Disegno()
         box = fn(d)["box"]
-        base, tinta, w, h = esporta(nome, d, box, immagini)
+        pezzo = ricalcato(nome)
+        if pezzo is not None:
+            base, tinta, w, h, box = da_ricalco(nome, pezzo, box, PX, immagini)
+        else:
+            base, tinta, w, h = esporta(nome, d, box, immagini)
         cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
         t = f'"{nome}_tinta"' if tinta else "nil"
         lua.append(f'\t\t{nome} = {{ img = "{nome}", tint = {t}, x = {cx:.2f}, y = {cy:.2f}, '

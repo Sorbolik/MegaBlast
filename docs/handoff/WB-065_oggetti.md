@@ -1,6 +1,6 @@
 # WB-065 · Oggetti: Rampino, Giano, Teletrasporto, paracadute, Molla, trappola, scudo
 
-- **Stato:** APPROVATA (Claude, 15 nov: Sergio ha chiesto di rifare la grafica di tutte le armi e ha detto «procedi»; reversibile)
+- **Stato:** IMPLEMENTATA (la Molla e la tagliola chiusa passano a WB-068) · era APPROVATA (Claude, 15 nov: Sergio ha chiesto di rifare la grafica di tutte le armi e ha detto «procedi»; reversibile)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `claude/project-thread-wfha2a` (eseguila da questo ramo: `git fetch origin claude/project-thread-wfha2a` e leggi la scheda e i riferimenti da lì; non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-065`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-065` senza chiedere conferma (il repository è privato).
@@ -86,3 +86,9 @@ Rendering rules, very strict, because every shape will be traced into vector lay
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+(15 nov) Arrivati i quattro fogli; scelti `oggetti_pezzi_2` (la tagliola più aperta, Giano coi volti più chiari) e `oggetti_icone_1` (Giano coi profili, la Molla senza il triangolo bianco). Ricalcati a vettori (`art/armi/svg/`) e tagliati con `tools/grafica/armi_ricalcate.py`.
+- Nel gioco: lanciarampino in mano (tagliato dove finisce l'asta: l'uncino resta un pezzo a sé che vola via), uncino, globo del Teletrasporto in mano e in volo, moneta di Giano in volo, le sette icone (il baratto resta a vettori), la tagliola aperta posata (`tools/grafica/attrezzi.py`, il perno d'ottone prende il colore della squadra) e il paracadute ad ali di pipistrello (`tools/grafica/diavoletto.py`: il manico a uncino sul perno sopra la testa, le cinghie a vettori fino alle spalle).
+- Restano a vettori la Molla posata (la simulazione la vuole larga 36 e bassa, il disegno è alto e stretto) e la tagliola chiusa: scheda WB-068.
+- Lo scudo in mano non si vede nel gioco (c'è la bolla addosso): il disegno resta per l'icona e per le cose future.
+
