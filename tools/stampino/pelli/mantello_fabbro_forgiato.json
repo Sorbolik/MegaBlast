@@ -1,0 +1,16 @@
+{
+ "nome": "mantello_fabbro_forgiato",
+ "categoria": "mantello",
+ "mantello": {
+  "img": "mantello_fabbro_forgiato_mantello",
+  "x": -23.7,
+  "y": -49.4,
+  "w": 98.4,
+  "h": 107.3,
+  "attacco": [
+   -2,
+   116
+  ]
+ },
+ "pezzi": {}
+}

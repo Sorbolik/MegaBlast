@@ -1,0 +1,40 @@
+{
+ "_": "La Fornace addosso all'apprendista (WB-057): elmo di ferro, corazza con la grata e le spalline, stivali.",
+ "tavolozza": "tools/stampino/tavolozze/apprendista_fornace.json",
+ "colori": [
+  "#686868",
+  "#484848",
+  "#F88408",
+  "#00FFFF"
+ ],
+ "senza_corpo": [
+  "lingua",
+  "bocca",
+  "corna",
+  "corna_ombra",
+  "occhi"
+ ],
+ "senza_teste": [],
+ "riferimenti": {
+  "teste": "art/WB-057/riferimenti/R1_teste_senza_corna.png",
+  "corpo": "art/WB-057/riferimenti/R2_corpo_collo_nudo.png",
+  "pugni": "art/WB-057/riferimenti/R3_pugni.png"
+ },
+ "pelli": {
+  "elmo": "elmo_fornace",
+  "corazza": "corazza_fornace",
+  "stivali": "stivali_fornace"
+ },
+ "forme": {
+  "": {
+   "teste": "art/WB-057/elmo_base_1.png",
+   "corpo": "art/WB-057/corpo_base_1.png",
+   "pugni": "art/WB-057/pugni_base.png"
+  },
+  "_forgiato": {
+   "teste": "art/WB-057/elmo_forgiata.png",
+   "corpo": "art/WB-057/corpo_forgiata.png",
+   "pugni": "art/WB-057/pugni_forgiata.png"
+  }
+ }
+}

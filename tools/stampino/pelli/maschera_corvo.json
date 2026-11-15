@@ -1,0 +1,150 @@
+{
+ "nome": "maschera_corvo",
+ "categoria": "elmo",
+ "pezzi": {
+  "testa_1": {
+   "img": "maschera_corvo_testa",
+   "x": 19.4,
+   "y": 56.6,
+   "w": 115.8,
+   "h": 57.7,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "maschera_corvo_testa",
+   "x": 17.1,
+   "y": 54.8,
+   "w": 93.8,
+   "h": 46.7,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "maschera_corvo_testa",
+   "x": 19.4,
+   "y": 56.6,
+   "w": 115.8,
+   "h": 57.7,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "maschera_corvo_testa",
+   "x": 17.1,
+   "y": 54.8,
+   "w": 93.8,
+   "h": 46.7,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "maschera_corvo_testa",
+   "x": 19.4,
+   "y": 56.6,
+   "w": 115.2,
+   "h": 57.7,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "maschera_corvo_testa",
+   "x": 17.1,
+   "y": 54.8,
+   "w": 93.3,
+   "h": 46.7,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "maschera_corvo_testa",
+   "x": 19.5,
+   "y": 56.6,
+   "w": 116.3,
+   "h": 57.7,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "maschera_corvo_testa",
+   "x": 17.2,
+   "y": 54.8,
+   "w": 94.2,
+   "h": 46.7,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "maschera_corvo_testa",
+   "x": 19.5,
+   "y": 56.6,
+   "w": 116.3,
+   "h": 57.7,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "maschera_corvo_testa",
+   "x": 17.2,
+   "y": 54.8,
+   "w": 94.2,
+   "h": 46.7,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "maschera_corvo_testa",
+   "x": 19.4,
+   "y": 56.6,
+   "w": 115.6,
+   "h": 57.7,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "maschera_corvo_testa",
+   "x": 17.1,
+   "y": 54.8,
+   "w": 93.6,
+   "h": 46.7,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "maschera_corvo_testa",
+   "x": 19.2,
+   "y": 56.6,
+   "w": 114.7,
+   "h": 57.7,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "maschera_corvo_testa",
+   "x": 16.9,
+   "y": 54.8,
+   "w": 92.9,
+   "h": 46.7,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "maschera_corvo_testa",
+   "x": 19.4,
+   "y": 56.6,
+   "w": 115.6,
+   "h": 57.7,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "maschera_corvo_testa",
+   "x": 17.1,
+   "y": 54.8,
+   "w": 93.6,
+   "h": 46.7,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "maschera_corvo_testa",
+   "x": 19.4,
+   "y": 56.6,
+   "w": 115.8,
+   "h": 57.7,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "maschera_corvo_testa",
+   "x": 17.1,
+   "y": 54.8,
+   "w": 93.8,
+   "h": 46.7,
+   "modo": "sopra"
+  }
+ }
+}

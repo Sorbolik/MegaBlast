@@ -1,0 +1,38 @@
+{
+ "nome": "stivali_corvo",
+ "categoria": "stivali",
+ "pezzi": {
+  "gamba_1": {
+   "img": "stivali_corvo_gamba",
+   "x": 4.8,
+   "y": -30.8,
+   "w": 60.6,
+   "h": 82.8,
+   "modo": "sostituisce"
+  },
+  "gamba": {
+   "img": "stivali_corvo_gamba",
+   "x": 4.7,
+   "y": -30.8,
+   "w": 60.0,
+   "h": 82.0,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro_1": {
+   "img": "stivali_corvo_gamba_dietro",
+   "x": 4.2,
+   "y": -30.0,
+   "w": 63.1,
+   "h": 81.9,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro": {
+   "img": "stivali_corvo_gamba_dietro",
+   "x": 4.2,
+   "y": -30.0,
+   "w": 62.5,
+   "h": 81.1,
+   "modo": "sostituisce"
+  }
+ }
+}

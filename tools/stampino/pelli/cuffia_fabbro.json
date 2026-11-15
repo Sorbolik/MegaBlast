@@ -1,0 +1,150 @@
+{
+ "nome": "cuffia_fabbro",
+ "categoria": "elmo",
+ "pezzi": {
+  "testa_1": {
+   "img": "cuffia_fabbro_testa",
+   "x": 11.8,
+   "y": 61.6,
+   "w": 117.1,
+   "h": 62.3,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "cuffia_fabbro_testa",
+   "x": 10.9,
+   "y": 58.8,
+   "w": 94.9,
+   "h": 50.5,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "cuffia_fabbro_testa",
+   "x": 11.8,
+   "y": 61.6,
+   "w": 117.1,
+   "h": 62.3,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "cuffia_fabbro_testa",
+   "x": 10.9,
+   "y": 58.8,
+   "w": 94.9,
+   "h": 50.5,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "cuffia_fabbro_testa",
+   "x": 11.8,
+   "y": 61.6,
+   "w": 116.4,
+   "h": 62.3,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "cuffia_fabbro_testa",
+   "x": 10.9,
+   "y": 58.8,
+   "w": 94.3,
+   "h": 50.5,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "cuffia_fabbro_testa",
+   "x": 11.8,
+   "y": 61.6,
+   "w": 117.6,
+   "h": 62.3,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "cuffia_fabbro_testa",
+   "x": 10.9,
+   "y": 58.8,
+   "w": 95.2,
+   "h": 50.5,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "cuffia_fabbro_testa",
+   "x": 11.8,
+   "y": 61.6,
+   "w": 117.6,
+   "h": 62.3,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "cuffia_fabbro_testa",
+   "x": 10.9,
+   "y": 58.8,
+   "w": 95.2,
+   "h": 50.5,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "cuffia_fabbro_testa",
+   "x": 11.8,
+   "y": 61.6,
+   "w": 116.8,
+   "h": 62.3,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "cuffia_fabbro_testa",
+   "x": 10.9,
+   "y": 58.8,
+   "w": 94.6,
+   "h": 50.5,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "cuffia_fabbro_testa",
+   "x": 11.7,
+   "y": 61.6,
+   "w": 115.9,
+   "h": 62.3,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "cuffia_fabbro_testa",
+   "x": 10.8,
+   "y": 58.8,
+   "w": 93.9,
+   "h": 50.5,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "cuffia_fabbro_testa",
+   "x": 11.8,
+   "y": 61.6,
+   "w": 116.8,
+   "h": 62.3,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "cuffia_fabbro_testa",
+   "x": 10.9,
+   "y": 58.8,
+   "w": 94.6,
+   "h": 50.5,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "cuffia_fabbro_testa",
+   "x": 11.8,
+   "y": 61.6,
+   "w": 117.1,
+   "h": 62.3,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "cuffia_fabbro_testa",
+   "x": 10.9,
+   "y": 58.8,
+   "w": 94.9,
+   "h": 50.5,
+   "modo": "sopra"
+  }
+ }
+}

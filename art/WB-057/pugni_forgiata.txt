@@ -1,0 +1,13 @@
+Image 1 is a sheet with two arms of our character with a closed fist, on flat magenta. Image 2 is a sheet of the same character where both arms wear the FORGED iron shoulder pad with three plates and a cyan rim.
+
+Edit image 1 and return the SAME sheet: both arms exactly where they are, same size, same shapes, same pixels. Change only the top of each arm: put on it the SAME forged shoulder pad as on the arms of image 2, same shape, same details, same colours, same size relative to the arm. The rest of each arm and the fist stay bare and unchanged.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Iron grey #5A5A62 with shadows #3C3C44, orange #F28A1E grilles, cyan #00FFFF trims and rivets, thick closed black #000000 outline like the other parts.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-057/riferimenti/R3_pugni.png
+art/WB-057/corpo_forgiata.png

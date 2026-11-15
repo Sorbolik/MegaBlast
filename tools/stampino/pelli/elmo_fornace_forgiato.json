@@ -1,0 +1,150 @@
+{
+ "nome": "elmo_fornace_forgiato",
+ "categoria": "elmo",
+ "pezzi": {
+  "testa_1": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 12.2,
+   "y": 72.8,
+   "w": 111.1,
+   "h": 68.3,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 11.3,
+   "y": 67.9,
+   "w": 90.0,
+   "h": 55.3,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 12.2,
+   "y": 72.8,
+   "w": 111.1,
+   "h": 68.3,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 11.3,
+   "y": 67.9,
+   "w": 90.0,
+   "h": 55.3,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 12.2,
+   "y": 72.8,
+   "w": 110.5,
+   "h": 68.3,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 11.2,
+   "y": 67.9,
+   "w": 89.5,
+   "h": 55.3,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 12.2,
+   "y": 72.8,
+   "w": 111.6,
+   "h": 68.3,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 11.3,
+   "y": 67.9,
+   "w": 90.3,
+   "h": 55.3,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 12.2,
+   "y": 72.8,
+   "w": 111.6,
+   "h": 68.3,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 11.3,
+   "y": 67.9,
+   "w": 90.3,
+   "h": 55.3,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 12.2,
+   "y": 72.8,
+   "w": 110.9,
+   "h": 68.3,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 11.3,
+   "y": 67.9,
+   "w": 89.8,
+   "h": 55.3,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 12.1,
+   "y": 72.8,
+   "w": 110.0,
+   "h": 68.3,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 11.1,
+   "y": 67.9,
+   "w": 89.1,
+   "h": 55.3,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 12.2,
+   "y": 72.8,
+   "w": 110.9,
+   "h": 68.3,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 11.3,
+   "y": 67.9,
+   "w": 89.8,
+   "h": 55.3,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 12.2,
+   "y": 72.8,
+   "w": 111.1,
+   "h": 68.3,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "elmo_fornace_forgiato_testa",
+   "x": 11.3,
+   "y": 67.9,
+   "w": 90.0,
+   "h": 55.3,
+   "modo": "sopra"
+  }
+ }
+}

@@ -1,0 +1,38 @@
+{
+ "nome": "stivali_leviatano_forgiato",
+ "categoria": "stivali",
+ "pezzi": {
+  "gamba_1": {
+   "img": "stivali_leviatano_forgiato_gamba",
+   "x": -5.9,
+   "y": -31.7,
+   "w": 85.4,
+   "h": 84.6,
+   "modo": "sostituisce"
+  },
+  "gamba": {
+   "img": "stivali_leviatano_forgiato_gamba",
+   "x": -5.8,
+   "y": -31.7,
+   "w": 84.5,
+   "h": 83.7,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro_1": {
+   "img": "stivali_leviatano_forgiato_gamba_dietro",
+   "x": -9.6,
+   "y": -30.6,
+   "w": 86.8,
+   "h": 83.2,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro": {
+   "img": "stivali_leviatano_forgiato_gamba_dietro",
+   "x": -9.5,
+   "y": -30.6,
+   "w": 85.9,
+   "h": 82.4,
+   "modo": "sostituisce"
+  }
+ }
+}

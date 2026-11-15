@@ -1,0 +1,40 @@
+{
+ "_": "Il Leviatano addosso all'apprendista (WB-058): elmo di squame con la pinna, corazza di squame con le spalline, stivali pinnati.",
+ "tavolozza": "tools/stampino/tavolozze/apprendista_leviatano.json",
+ "colori": [
+  "#2E8478",
+  "#24685A",
+  "#90DCBC",
+  "#00FFFF"
+ ],
+ "senza_corpo": [
+  "lingua",
+  "bocca",
+  "corna",
+  "corna_ombra",
+  "occhi"
+ ],
+ "senza_teste": [],
+ "riferimenti": {
+  "teste": "art/WB-058/riferimenti/R1_teste_senza_corna.png",
+  "corpo": "art/WB-058/riferimenti/R2_corpo_collo_nudo.png",
+  "pugni": "art/WB-058/riferimenti/R3_pugni.png"
+ },
+ "pelli": {
+  "elmo": "elmo_leviatano",
+  "corazza": "corazza_leviatano",
+  "stivali": "stivali_leviatano"
+ },
+ "forme": {
+  "": {
+   "teste": "art/WB-058/elmo_base_1.png",
+   "corpo": "art/WB-058/corpo_base_1.png",
+   "pugni": "art/WB-058/pugni_base.png"
+  },
+  "_forgiato": {
+   "teste": "art/WB-058/elmo_forgiata.png",
+   "corpo": "art/WB-058/corpo_forgiata.png",
+   "pugni": "art/WB-058/pugni_forgiata.png"
+  }
+ }
+}

@@ -1,0 +1,24 @@
+{
+ "_": "Il Vuoto addosso all'apprendista (WB-041, WB-042): cappuccio chiuso, corazza con le spalline, stivali.",
+ "tavolozza": "tools/stampino/tavolozze/apprendista_vuoto.json",
+ "colori": ["#2B2147", "#1A1430", "#00FFFF"],
+ "senza_corpo": ["lingua", "bocca", "corna", "corna_ombra", "occhi"],
+ "riferimenti": {
+  "teste": "art/WB-042/riferimenti/R1_teste_senza_corna.png",
+  "corpo": "art/WB-041/riferimenti/R1_corpo_collo_nudo.png",
+  "pugni": "art/WB-042/riferimenti/R7_pugni.png"
+ },
+ "pelli": { "elmo": "cappuccio_vuoto", "corazza": "corazza_vuoto", "stivali": "stivali_vuoto" },
+ "forme": {
+  "": {
+   "teste": "art/WB-042/cappuccio_base.png",
+   "corpo": "art/WB-042/spalline_base_2.png",
+   "pugni": "art/WB-042/pugni_spalline_base.png"
+  },
+  "_forgiato": {
+   "teste": "art/WB-042/cappuccio_forgiata.png",
+   "corpo": "art/WB-042/spalline_forgiata.png",
+   "pugni": "art/WB-042/pugni_spalline_forgiata.png"
+  }
+ }
+}

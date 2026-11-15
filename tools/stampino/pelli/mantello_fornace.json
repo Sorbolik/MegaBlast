@@ -1,0 +1,16 @@
+{
+ "nome": "mantello_fornace",
+ "categoria": "mantello",
+ "mantello": {
+  "img": "mantello_fornace_mantello",
+  "x": -24.2,
+  "y": -50.9,
+  "w": 100.7,
+  "h": 110.7,
+  "attacco": [
+   -2,
+   116
+  ]
+ },
+ "pezzi": {}
+}

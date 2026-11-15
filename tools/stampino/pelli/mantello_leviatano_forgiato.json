@@ -1,0 +1,16 @@
+{
+ "nome": "mantello_leviatano_forgiato",
+ "categoria": "mantello",
+ "mantello": {
+  "img": "mantello_leviatano_forgiato_mantello",
+  "x": -26.0,
+  "y": -51.3,
+  "w": 108.2,
+  "h": 111.1,
+  "attacco": [
+   -2,
+   116
+  ]
+ },
+ "pezzi": {}
+}

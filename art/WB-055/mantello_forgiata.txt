@@ -1,0 +1,10 @@
+Image 1 is the chosen armour set "Smith" of our game (right: FORGED form). Image 2 is our "stampino". Image 3 is the basic leather cape of this set, alone on magenta.
+
+Return image 3 again: the same cape, same position, same size, exactly the same outline and folds. Change only this: make it the FORGED cape of image 1: along the hem add a brass band with a row of round pure cyan #00FFFF rivets, like in image 1. Nothing else changes. No body, nothing else on the sheet.
+
+Same rendering rules: flat colors, leather dark brown #6B4A2B with darker #4A3019 folds, lighter border #C89255, brass #D9A441, cyan #00FFFF rivets, thick closed black outline. Background: flat pure magenta #FF00FF everywhere outside the cape. No text. Landscape 3:2.
+
+Riferimenti allegati in ordine
+art/WB-055/riferimenti/R4_fabbro.png
+art/WB-055/riferimenti/R5_stampino.png
+art/WB-055/mantello_base_1.png

@@ -1,0 +1,38 @@
+{
+ "nome": "stivali_fornace_forgiato",
+ "categoria": "stivali",
+ "pezzi": {
+  "gamba_1": {
+   "img": "stivali_fornace_forgiato_gamba",
+   "x": 6.6,
+   "y": -30.4,
+   "w": 58.9,
+   "h": 82.0,
+   "modo": "sostituisce"
+  },
+  "gamba": {
+   "img": "stivali_fornace_forgiato_gamba",
+   "x": 6.6,
+   "y": -30.4,
+   "w": 58.2,
+   "h": 81.3,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro_1": {
+   "img": "stivali_fornace_forgiato_gamba_dietro",
+   "x": 1.1,
+   "y": -29.4,
+   "w": 56.8,
+   "h": 80.7,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro": {
+   "img": "stivali_fornace_forgiato_gamba_dietro",
+   "x": 1.1,
+   "y": -29.4,
+   "w": 56.3,
+   "h": 79.9,
+   "modo": "sostituisce"
+  }
+ }
+}

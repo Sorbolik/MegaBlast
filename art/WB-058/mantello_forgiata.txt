@@ -1,0 +1,10 @@
+Image 1 is the chosen armour set "Leviathan" of our game (right: FORGED form). Image 2 is our "stampino". Image 3 is the basic cape of this set, alone on magenta.
+
+Return image 3 again: the same cape, same position, same size, the same outline and folds. Change only this: make it the FORGED cape of image 1: the ribs end in small sharp cyan spikes that stick out below the hem, like in image 1. Nothing else changes. No body, nothing else on the sheet.
+
+Same rendering rules: flat colors, thick closed black outline. Scales teal #2F7F74 with shadows #1F5A54, light sea green #8FD8BE for the belly scales, the fins and the cape membrane, cyan #00FFFF trims, nothing else. Background: flat pure magenta #FF00FF everywhere outside the cape. No text. Landscape 3:2.
+
+Riferimenti allegati in ordine
+art/WB-058/riferimenti/R4_leviatano.png
+art/WB-058/riferimenti/R5_stampino.png
+art/WB-058/mantello_base_1.png

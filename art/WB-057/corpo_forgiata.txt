@@ -1,0 +1,18 @@
+Image 1 is a sheet of body parts of our character. Image 2 is the chosen armour set "Furnace" (right: FORGED form). Image 3 is image 1 with the basic armour on the torso, a shoulder pad on the top of both arms and the basic boots on both legs.
+
+Return image 3 again, the SAME sheet with every part exactly where it is and the same pixels, and change only the armour, the two shoulder pads and the boots: make them the FORGED versions of image 2, keeping the outlines of image 3:
+- armour: a wider orange grille with five slots;
+- shoulder pads: a third smaller plate at the bottom and a thin cyan rim along the lowest plate, the same on both arms;
+- boots: an iron toe cap with a cyan rim and two cyan rivets on each boot, like in image 2.
+Nothing else on the sheet changes.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Iron grey #5A5A62 with shadows #3C3C44, orange #F28A1E grilles, cyan #00FFFF trims and rivets, thick closed black #000000 outline like the other parts.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-057/riferimenti/R2_corpo_collo_nudo.png
+art/WB-057/riferimenti/R4_fornace.png
+art/WB-057/corpo_base_1.png
