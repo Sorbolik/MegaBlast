@@ -32,7 +32,7 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	-- server's events and their rules (start online)
 	eventi = require "main.events", regole = require "sim.rules",
 	-- the entry, the transitions between screens and the waiting flame
-	ingresso = require "ui.entry", passaggio = require "ui.transition", attesa = require "ui.waiting",
+	ingresso = require "ui.entry", passaggio = require "ui.transition", door_pass = require "ui.door_pass", attesa = require "ui.waiting",
 	-- the mission's postcard before the flame (ui/postcard.lua)
 	postcard = require "ui.postcard", kit = require "ui.kit",
 	-- the opening shot of a level, after the flame (ui/intro.lua)
@@ -570,10 +570,12 @@ local function close_screen(self)
 		self.schermata.mod.destroy(self.schermata.obj)
 		self.schermata = nil
 	end
+	-- a screen opened by a door that goes another way: its tab goes with it
+	if self.door_pass then menu.door_pass.drop(self.door_pass) end
 end
 
 -- without_veil: you get here with a transition (ui/transition.lua), which already covers
-local function show_menu(self, without_veil)
+local function show_menu(self, without_veil, quiet)
 	close_screen(self)
 	-- a big vignette still open goes away with its match: it would stay in
 	-- front of the home (the back button opens the wheel even over it)
@@ -583,7 +585,7 @@ local function show_menu(self, without_veil)
 	-- in the queue the connection stays: you can go around the menus (ui/pill.lua)
 	if not self.queue then disconnect(self) end
 	self.mode = "menu"
-	home.show(self.home, without_veil)
+	home.show(self.home, without_veil, quiet)
 	home.queued(self.home, self.queue ~= nil)
 	home.wear(self.home, self.profilo)
 	home.wallet(self.home, self.profilo.scaglie, self.profilo.ossidiana, self.profilo.buoni)
@@ -2976,6 +2978,7 @@ end
 function CP.startup(self)
 	self.attesa = menu.attesa.new()
 	self.passaggio = menu.passaggio.new()
+	self.door_pass = menu.door_pass.new()
 	self.intro = menu.intro.new()
 	self.ingresso = menu.ingresso.new()
 	if SIMULATE then
@@ -4661,6 +4664,7 @@ function update(self, dt)
 	light_up(self, dt_world)
 	impact.update(self.fx, dt_world)
 	frames.scope_end()
+	menu.door_pass.update(self.door_pass, dt)
 	if self.mode == "menu" then
 		home.update(self.home, dt)
 		-- every minute the events again (one starts, one ends); without network
@@ -5547,6 +5551,9 @@ function PAD.on_input(self, action_id, action)
 			-- INDIETRO: the slider the other way (from the podium, which follows the battle, the iris)
 			if self.schermata.mod == menu.podium then
 				CP.iris(self, function() show_menu(self, true) end)
+			elseif menu.door_pass.owns(self.door_pass) then
+				-- opened by a door or by the apprentice: back the same way (ui/door_pass.lua)
+				menu.door_pass.close(self.door_pass, self.home, function() show_menu(self, true, true) end)
 			else
 				CP.slide(self, -1, function() show_menu(self, true) end)
 			end
@@ -5571,11 +5578,15 @@ function PAD.on_input(self, action_id, action)
 			-- GIOCA ONLINE (menu/queue.lua) or the board (menu/board.lua): they are
 			-- redone as soon as the updated events arrive
 			local mod = choice == "online" and menu.queue or menu.board
-			CP.slide(self, 1, function() open_screen(self, mod, hud.NAMES) end)
+			if choice == "eventi" then
+				menu.door_pass.open(self.door_pass, self.home, "eventi", function() open_screen(self, mod, hud.NAMES) end)
+			else
+				CP.slide(self, 1, function() open_screen(self, mod, hud.NAMES) end)
+			end
 			-- not while the slide still moves the screen's nodes: rebuilding deletes
 			-- them, and the slide stopped on a deleted node (simulator, 3 Nov)
 			local function rebuild()
-				if menu.passaggio.is_active(self.passaggio) then
+				if menu.passaggio.is_active(self.passaggio) or menu.door_pass.is_active(self.door_pass) then
 					timer.delay(0.05, false, rebuild)
 				elseif self.schermata and self.schermata.mod == mod then
 					mod.rebuild(self.schermata.obj)
@@ -5593,7 +5604,15 @@ function PAD.on_input(self, action_id, action)
 				-- the ZAINO, from the apprentice (menu/backpack.lua)
 				zaino = function() open_screen(self, menu.backpack, self.profilo, "inventario", TEAM_COLORS[1]) end,
 			}
-			if open_view[choice] then CP.slide(self, 1, open_view[choice]) end
+			if choice == "zaino" then
+				-- the ZAINO grows out of the apprentice (ui/door_pass.lua)
+				menu.door_pass.grow(self.door_pass, self.home, open_view.zaino)
+			elseif choice == "campagna" or choice == "allenamento" or choice == "armeria" then
+				-- the door slides to its edge and drags its screen in (ui/door_pass.lua)
+				menu.door_pass.open(self.door_pass, self.home, choice, open_view[choice])
+			elseif open_view[choice] then
+				CP.slide(self, 1, open_view[choice])
+			end
 		end
 		return true
 	elseif self.mode == "scelta" or self.mode == "scelta_online" then
@@ -5716,7 +5735,7 @@ end
 function CP.on_input(self, action_id, action)
 	-- during the entry and the transitions nothing can be touched (a tap
 	-- hurries the entry's flame to its burst)
-	if self.ingresso or menu.passaggio.is_active(self.passaggio) then
+	if self.ingresso or menu.passaggio.is_active(self.passaggio) or menu.door_pass.is_active(self.door_pass) then
 		if action_id == ACTION.TOUCH and action.pressed then menu.passaggio.skip(self.passaggio) end
 		return true
 	end

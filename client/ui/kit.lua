@@ -29,6 +29,20 @@ local P = require "ui.pieces"
 
 local M = {}
 
+-- the measures of the fucina atlas's pieces (ui/pieces.lua)
+M.PIECES = P
+
+-- The top nodes a screen makes (kit.anchor, ui.root) while it is tracked:
+-- the passages that move a whole screen (ui/door_pass.lua)
+function M.track_begin()
+	M.tracking = {}
+	ui.tracking = M.tracking
+end
+function M.tracked() return M.tracking or {} end
+function M.track_end()
+	M.tracking, ui.tracking = nil, nil
+end
+
 local function hex(s, a)
 	return vmath.vector4(tonumber(s:sub(1, 2), 16) / 255, tonumber(s:sub(3, 4), 16) / 255, tonumber(s:sub(5, 6), 16) / 255, a or 1)
 end
@@ -228,6 +242,7 @@ end
 -- edge of the screen (ui/screen.lua): only nodes without a parent do that
 function M.anchor(x, y, xa, ya)
 	local n = empty(x or 0, 720 - (y or 0))
+	if M.tracking then M.tracking[#M.tracking + 1] = n end
 	if xa then gui.set_xanchor(n, xa) end
 	if ya then gui.set_yanchor(n, ya) end
 	return { node = n, ox = x or 0, oy = y or 0 }
@@ -924,6 +939,13 @@ end
 -- The screen's subject moves (nothing follows it, for now)
 function M.scene_focus(s, fx, fy)
 	s.fx, s.fy = fx, fy
+end
+
+-- The backdrop under everything (ui/door_pass.lua: the home and the new screen
+-- pass over it together)
+function M.scene_bottom()
+	if not S then return end
+	for i = #S.tops, 1, -1 do gui.move_below(S.tops[i], nil) end
 end
 
 function M.scene_drop(s)

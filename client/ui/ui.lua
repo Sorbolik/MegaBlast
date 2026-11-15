@@ -219,6 +219,8 @@ end
 function M.root()
 	local n = gui.new_box_node(vec(0, screen.y1 - 720), vec(0, 0))
 	gui.set_visible(n, false)
+	-- a screen being moved whole (ui/kit.lua, track_begin)
+	if M.tracking then M.tracking[#M.tracking + 1] = n end
 	return n
 end
 

@@ -67,22 +67,44 @@ local DOORS = {
 
 local V = vmath.vector3()
 
--- A door: its drawing, its name and a line under it, written in the room of
--- the drawing between the shield and the tip (left on the left, right on the right)
-local function door(h, g, id, name)
+-- A door's drawing with its name and a line under it, written in the room of
+-- the drawing between the shield and the tip (left on the left, right on the
+-- right), its top left at (x, y) of g
+local function draw_door(g, id, x, y, name, sub)
 	local o = DOORS[id]
-	local p = kit.sign(g, o[4], o[1], o[2], o[3])
-	local d = { p = p, side = o[5], color = o[6] }
+	local p = kit.sign(g, o[4], x, y, o[3])
+	local side, color = o[5], o[6]
 	local b = p.box
 	local cy = (b.y0 + b.y1) / 2
-	local x = d.side < 0 and b.x0 + 4 or b.x1 - 4
-	local anchor = d.side < 0 and "start" or "end"
-	d.name = kit.text(p.g, name, x, cy + o[7] * 0.28, o[7], d.color, anchor)
-	d.sub = kit.text(p.g, "", x, cy + o[7] * 0.28 + 20, 13, kit.with_alpha(d.color, 0.85), anchor, 1)
-	d.x, d.anchor = x, anchor
+	local tx = side < 0 and b.x0 + 4 or b.x1 - 4
+	local anchor = side < 0 and "start" or "end"
+	local name_n = kit.text(p.g, name, tx, cy + o[7] * 0.28, o[7], color, anchor)
+	local sub_n = kit.text(p.g, sub or "", tx, cy + o[7] * 0.28 + 20, 13, kit.with_alpha(color, 0.85), anchor, 1)
+	return p, name_n, sub_n, tx, anchor
+end
+
+local function door(h, g, id, name)
+	local o = DOORS[id]
+	local p, name_n, sub_n, x, anchor = draw_door(g, id, o[1], o[2], name)
+	local d = { p = p, side = o[5], color = o[6], id = id, name = name_n, sub = sub_n, x = x, anchor = anchor }
 	d.b = kit.button(h.buttons, p, id)
 	h.doors[#h.doors + 1] = d
+	h.door_by_id[id] = d
 	return d
+end
+
+-- A door's measures (ui/door_pass.lua): its drawing, its side, where it is in its
+-- group (that sticks to its edge) and its middle's height
+function M.door_info(h, id)
+	local d = h.door_by_id[id]
+	local o = DOORS[id]
+	return { p = d.p, id = id, side = o[5], x = o[1], y = o[2], w = d.p.w, h = d.p.h, cy = o[2] + d.p.h / 2,
+		name = gui.get_text(d.name), sub = gui.get_text(d.sub) }
+end
+
+-- The same door drawn elsewhere, with what it says now (the tab of ui/door_pass.lua)
+function M.door_copy(g, id, x, y, name, sub)
+	return draw_door(g, id, x, y, name, sub)
 end
 
 -- the small line of a door: never past its room (a long one shrinks)
@@ -93,7 +115,7 @@ local function set_sub(d, txt)
 end
 
 function M.new(color)
-	local h = { tops = {}, buttons = {}, doors = {}, t = 0, colore = color, glint_at = 0.9 }
+	local h = { tops = {}, buttons = {}, doors = {}, door_by_id = {}, t = 0, colore = color, glint_at = 0.9 }
 
 	h.scene = kit.scene(640, 350, { bg = true })
 
@@ -269,8 +291,29 @@ function M.arrive(h)
 	if h.is_visible then enter(h, 0, true) end
 end
 
--- without_veil: you get here with a transition (ui/transition.lua), which already covers
-function M.show(h, without_veil)
+-- The home seen but not listening, while a door's passage takes it out or brings
+-- it back (ui/door_pass.lua)
+function M.peek(h, on)
+	for _, n in ipairs(h.tops) do gui.set_enabled(n, on) end
+	gui.set_enabled(h.slit, false)
+end
+
+-- Where the ZAINO comes out of the apprentice: the middle of his body, on the screen
+function M.apprentice_point(h)
+	-- (its group sticks to the bottom: the real bottom is screen.y0)
+	return 640, 720 - (FEET - 380 * 0.45) + screen.y0
+end
+
+-- The ZAINO went back into him: a small squash
+function M.settle(h)
+	gui.cancel_animations(h.posa, "scale")
+	gui.set_scale(h.posa, vmath.vector3(1.01, 0.99, 1))
+	gui.animate(h.posa, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTSINE, 0.22)
+end
+
+-- without_veil: you get here with a transition (ui/transition.lua), which already covers.
+-- quiet: no entrance (a door's passage brought it back)
+function M.show(h, without_veil, quiet)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, true) end
 	gui.set_enabled(h.slit, false)
 	kit.scene_show(h.scene, true)
@@ -280,7 +323,7 @@ function M.show(h, without_veil)
 	h.is_visible = true
 	h.glint_at = h.t + 0.9
 	-- under the black veil nothing would be seen: the pieces wait for it
-	enter(h, without_veil and kit.wait or 0.2, false)
+	if not quiet then enter(h, without_veil and kit.wait or 0.2, false) end
 	if without_veil then
 		gui.cancel_animations(h.veil, "color.w")
 		gui.set_enabled(h.veil, false)
@@ -399,7 +442,7 @@ local function breathe(h)
 			gui.animate(h.posa, "scale", vmath.vector3(1, 1, 1), gui.EASING_INOUTSINE, 0.11)
 		end)
 	end)
-	gui.animate(h.bag, "rotation.z", 2, gui.EASING_OUTSINE, 0.13, 0, nil, gui.PLAYBACK_ONCE_PINGPONG)
+	gui.animate(h.bag, "euler.z", 2, gui.EASING_OUTSINE, 0.13, 0, nil, gui.PLAYBACK_ONCE_PINGPONG)
 end
 
 function M.on_input(h, action_id, action)
