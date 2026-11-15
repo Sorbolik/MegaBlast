@@ -2577,7 +2577,8 @@ function CP.mission_line(self, r)
 		return
 	end
 	local l = r.l
-	local chi = l.aspetta and "favilla" or "fabbro"
+	-- Favilla in the cortile, the Fabbro from the Forgia on
+	local chi = l.chapter == "addestramento" and "favilla" or "fabbro"
 	local txt = line.testo:gsub("{(%a+)}", PAD.texts(self))
 	if line.apertura or line.mostra == "grande" then
 		-- (the mission's illustration came before, on its postcard: CP.enter_mission)

@@ -245,7 +245,7 @@ local function livello(l, cap)
 			male(dr, "mostra è grande o striscia")
 		end
 		-- la vignetta grande ferma il gioco: si usa nelle lezioni, che aspettano te
-		if r.mostra == "grande" and not cap.aspetta then male(dr, "vignetta grande fuori dalle lezioni") end
+		if r.mostra == "grande" and not (cap.aspetta or l.lezione) then male(dr, "vignetta grande fuori dalle lezioni") end
 		if r.mostra == "grande" and r.highlight and not DISEGNI[r.highlight] then
 			male(dr, "la vignetta grande non ha il disegno di " .. r.highlight .. " (client/battle/vignette.lua)")
 		end

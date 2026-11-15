@@ -445,6 +445,7 @@ do
 		attrezzi = { { passi = 0, x = 880, y = 330 }, { passi = 2, da = { 905, 335 }, x = 1360, evento = "parachute" } },
 		spostano = { { passi = 1, y = 255 }, { passi = 4, y = 455 } },
 		tempo = { { passi = 0, x = 1200, y = 148, evento = "teleport" } },
+		baratto = { { passi = 0, x = 1240, y = 168, evento = "swap" } },
 	}
 	for id, list in pairs(SHOWS) do
 		for k, want in ipairs(list) do
@@ -480,49 +481,6 @@ do
 			check(ok_here, id .. ": Favilla's demonstration " .. k .. " does its move (x " .. math.floor(f.x) .. ", y " .. math.floor(f.y) .. ")")
 		end
 	end
-end
-
--- Giù dal bordo: each of the three targets is knocked off its rock with a single missile
-for who = 2, 4 do
-	local found, fell = false, false
-	for a = -0.5, 3.6, 0.05 do
-		for p = 0.2, 1, 0.05 do
-			if not found then
-				local _, r, g = play_mission("giu_dal_bordo", function(c)
-					c.use("missile", a, p)
-					c.hold(IDLE, 400)
-				end, nil, 420)
-				found = g.robots[1].env_kills > 0 and g.robots[who].deaths > 0
-				-- knocked off it stays down (Sergio, 30 Oct)
-				if found then fell = g.robots[who].gone or r.giu[who] end
-			end
-		end
-	end
-	check(found, "giu_dal_bordo: target " .. who .. " falls with one shot")
-	check(fell, "giu_dal_bordo: target " .. who .. " knocked off doesn't respawn")
-end
-
--- Giù dal bordo with the Rampino: from the edge of the platform the hook
--- reaches the side rocks (map unchanged, reach config.HOOK.range) and the
--- target, pulled by reel and released over the void, falls
-for who, side_of in pairs({ [2] = -1, [3] = 1 }) do
-	local found = false
-	for a = 0, 0.6, 0.02 do
-		if not found then
-			local angle_deg = side_of < 0 and math.pi - a or a
-			local _, _, g = play_mission("giu_dal_bordo", function(c)
-				c.hold(side_of < 0 and LEFT or RIGHT, function(g2)
-					local x = g2.robots[1].x
-					return side_of < 0 and x <= 775 or side_of > 0 and x >= 1145
-				end)
-				c.hold(IDLE, 10)
-				c.use("hook", angle_deg)
-				c.hold(IDLE, 300)
-			end, nil, 900)
-			found = g.robots[1].env_kills > 0 and g.robots[who].deaths > 0
-		end
-	end
-	check(found, "giu_dal_bordo: from the edge the Rampino catches target " .. who .. " and knocks it off")
 end
 
 -- The duel with Favilla: the timer waits for the controls to be touched,
@@ -566,25 +524,47 @@ do
 	check(ticks < 60 * 60 * 5, "guidata: lasts less than 5 minutes (" .. math.floor(ticks / 60) .. " s)")
 end
 
--- Due mani: after a failed first turn the bot goes back to its mission life
--- (28), not to 150: it can still be finished
+-- Il baratto del Fabbro: the crate from the sky is taken by walking, and in
+-- the lesson its single shot comes back as soon as you can attack again
 do
-	local r = missions.new("due_mani")
-	local seed, map_name, opts = missions.match(r, 3)
-	local g = game.new(seed, map_name, opts)
-	missions.prepare(r, g)
-	local rb = g.robots[2]
-	rb.hp = 10
-	missions.event(r, g, { type = "turn", robot = 2 })
-	check(rb.hp == 46 and rb.max_hp == 46, "due_mani: the bot recovers to 46, not to normal life")
+	local _, r, g = play_mission("baratto", function(c) c.cassa("grenade") end, nil, 60 * 20)
+	check(r.prese.grenade and g.robots[1].ammo.grenade == 1, "baratto: the crate with the Uovo is taken by walking")
 end
--- The weapons the Addestramento doesn't introduce: in Primo sangue the Uovo,
--- in Due mani the Schegge, in a crate near you. Walking over it you take it,
--- and it's a single shot (it doesn't come back as in the lessons)
-for _, m in ipairs({ { "primo_sangue", "grenade" }, { "due_mani", "shards" } }) do
-	local _, r, g = play_mission(m[1], function(c) c.cassa(m[2]) end, nil, 60 * 20)
-	local rb = g.robots[1]
-	check(r.prese[m[2]] and rb.ammo[m[2]] == 1, m[1] .. ": the crate with the new weapon is taken by walking")
+-- and the whole lesson: the Uovo on the target, the baratto, the orb onto the island
+do
+	local solved
+	for _, a in ipairs({ 2.2, 2.4, 2.6, 2.8 }) do
+		for _, p in ipairs({ 0.3, 0.4, 0.5, 0.6, 0.7 }) do
+			if not solved then
+				local outcome = play_mission("baratto", function(c)
+					c.cassa("grenade")
+					c.use("grenade", a, p)
+					c.hold(IDLE, 420)
+					c.use("swap", 0, 0)
+					c.hold(IDLE, 10)
+					c.hold(RIGHT, function(g) return g.robots[1].x >= 880 end)
+					c.hold(IDLE, 10)
+					c.use("teleport", math.rad(40), 0.5)
+					c.hold(IDLE, 300)
+				end, nil, 60 * 40)
+				solved = outcome == "fatta"
+			end
+		end
+	end
+	check(solved, "baratto: the Uovo, the baratto and the orb onto the island")
+	-- time gives no orbs here: without the baratto there's no way onto the island
+	local _, r = play_mission("baratto", function(c)
+		c.use("teleport", math.rad(40), 0.5)
+		c.hold(IDLE, 60)
+	end)
+	check(not r.st.steps_done[4], "baratto: no orb without the baratto")
+end
+-- In the circles' matches the crates fall as online; not in the lessons
+for _, id in ipairs({ "primo_sangue", "baratto", "guidata" }) do
+	local r = missions.new(id)
+	local _, _, opts = missions.match(r, 3)
+	local lesson = r.l.aspetta
+	check((opts.crate_every == 1000) == (lesson == true), id .. ": crates " .. (lesson and "off in the lesson" or "on in the match"))
 end
 -- and whoever respawns does so with the mission life (Fuori portata: 40)
 for _, l in ipairs(campaign.CAPITOLI[2].missioni) do
@@ -603,7 +583,7 @@ end
 -- second and the third the points the player made; without the win none (and
 -- in the profile each star earned stays)
 do
-	local r = missions.new("primo_sangue")
+	local r = missions.new("fuori_portata")
 	local lo, hi = r.l.stelle.punti[1], r.l.stelle.punti[2]
 	check(lo < hi, "stars: the third asks more points than the second")
 	r.esito, r.st.made = "fatta", lo - 1
