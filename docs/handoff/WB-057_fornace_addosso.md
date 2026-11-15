@@ -181,4 +181,23 @@ Approvata da Sergio il 15 nov («Smazziamocele tutte»). (Claude) Spalline della
 
 ## Consegna di Codex
 
+Undici fogli PNG in `art/WB-057/`, ciascuno con il prompt integrale e i riferimenti nel TXT omonimo.
+
+| File | Tentativi | Controllo visivo |
+|---|---:|---|
+| elmo_base_1 | 1 | Scelto per la calotta chiusa con grata e fascia ciano e volto libero. |
+| elmo_base_2 | 1 | Fascia leggermente più bassa. |
+| elmo_forgiata | 1 | Comignolo posteriore con fascia ciano. Volto e orecchie visibili. |
+| corpo_base_1 | 1 | Scelto per la forma della piastra e le due spalline regolari. Parte del ventre visibile. |
+| corpo_base_2 | 1 | Piastra con cinturino laterale e ventre in parte visibile. |
+| corpo_forgiata | 1 | Grata allargata, terza piastra e bordi ciano, borchie sulle punte degli stivali. |
+| pugni_base | 1 | Due spalline a due piastre, mani nude. |
+| pugni_forgiata | 1 | Due spalline a tre piastre, mani nude. Il braccio destro è leggermente spostato. |
+| mantello_base_1 | 1 | Scelto per le pieghe lunghe e l’orlo svasato. |
+| mantello_base_2 | 1 | Grate e borchie più centrali, fondo più largo. |
+| mantello_forgiata | 1 | Bordo arancione sull’orlo e pieghe simili alla base. |
+
+Controllati a vista parti presenti, disposizione, contorni, sfondo magenta e assenza di scritte. I tre fogli dell’elmo sono stati ridimensionati da 1254 × 1254 a 1024 × 1024. Gli altri sono nativi a 1536 × 1024. Restano da verificare corrispondenza dei pixel, valori esatti dei colori, ritaglio per differenza e vestibilità nel gioco.
+
+
 ## Resoconto di Claude
