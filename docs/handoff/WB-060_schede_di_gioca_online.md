@@ -114,4 +114,20 @@ Reversibile (solo immagini nuove in un ramo): approvata da Claude su richiesta d
 
 ## Consegna di Codex
 
+Generati con `image_gen` da `claude/project-thread-w00xhp` (`1a47caba`).
+In `art/WB-060/` sono presenti PNG e TXT omonimi per `schede_modalita_1`,
+`schede_modalita_2`, `schede_modalita_3`, `schede_scelte_1` e
+`schede_scelte_2`, tutti al primo tentativo. I TXT riportano prompt integrali,
+riferimenti in ordine ed esito.
+
+Controllati quattro pezzi interi e separati per foglio, interni vuoti, contorni
+neri, assenza di scritte, fiamma in basso a sinistra e ghiaccio in alto a destra.
+I bordi della selezione sono visibili, ma le sagome non coincidono con quelle
+normali. Cambiano anche i cristalli. Alcune fasce della brace sono più larghe
+del previsto. Non verificati il limite di cinque colori, la misura esatta delle
+fasce, il ricalco e il comportamento nell'allungamento in nove parti.
+
+I PNG originali misurano tutti 1774×887. La scheda richiede 1536×1024.
+Il verde opaco differisce da #00FF00 nei punti campionati.
+
 ## Resoconto di Claude
