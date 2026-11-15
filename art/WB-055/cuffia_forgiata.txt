@@ -1,0 +1,14 @@
+Image 1 is a sheet of nine heads of our character. Image 2 is the chosen armour set "Smith" (right: FORGED form). Image 3 is image 1 with the basic leather cap already drawn on the first head.
+
+Return image 3 again, the SAME sheet with every head exactly where it is and the same pixels, and change only the cap on the first head: make it the FORGED cap of image 2, with exactly the same outline as in image 3, plus: a small brass hammer emblem on the top front of the cap, above the goggles, and a thin pure cyan #00FFFF trim along the band of the cap and around the rims of the goggles. The cap stays one closed piece: no holes, no horns, no flame. Nothing else on the sheet changes.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Leather dark brown #6B4A2B with folds #4A3019, lighter straps #C89255, brass #D9A441 (the hammer too), amber lenses #F2B92C, cyan #00FFFF trims, thick closed black #000000 outline.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-055/riferimenti/R1_teste_senza_corna.png
+art/WB-055/riferimenti/R4_fabbro.png
+art/WB-055/cuffia_base_1.png

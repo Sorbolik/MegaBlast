@@ -85,6 +85,7 @@ M.PERSONAGGIO = { "apprendista_nuovo", "corna_apprendista" }
 -- FORGED_TIER (gold, level 20: Sergio, 14 Nov) a piece shows its forged form.
 M.FAMILY_SKINS = {
 	vuoto = { mask = "cappuccio_vuoto", chest = "corazza_vuoto", legs = "stivali_vuoto", cloak = "mantello_vuoto" },
+	fabbro = { mask = "cuffia_fabbro", chest = "grembiule_fabbro", legs = "stivali_fabbro", cloak = "mantello_fabbro" },
 }
 M.FORGED_TIER = 3
 local WEAR_ORDER = { "mask", "chest", "legs", "cloak" }

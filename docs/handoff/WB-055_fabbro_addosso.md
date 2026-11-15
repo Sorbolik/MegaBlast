@@ -1,6 +1,6 @@
 # WB-055 · Il Fabbro addosso all'apprendista: cuffia, corazza con spalline, stivali, mantello
 
-- **Stato:** APPROVATA (Sergio, 15 nov: «Vai, inizia con quello che mi hai detto»)
+- **Stato:** IMPLEMENTATA (approvata da Sergio il 15 nov: «Vai, inizia con quello che mi hai detto»)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `claude/project-thread-e8poye` · **Ramo delle immagini:** `design/WB-055`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-055` senza chiedere conferma (il repository è privato).
@@ -190,3 +190,18 @@ d'ottone e borchie ciano. Cuoio più bruno della tavola di stile, per distinguer
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+15 nov. Guardati gli undici fogli di `design/WB-055`.
+
+- **Tenuti:** `cuffia_base_1`, `cuffia_forgiata`, `corpo_base_1`, `corpo_forgiata`, `pugni_base`,
+  `mantello_base_1`, `mantello_forgiata`. Riserve: `cuffia_base_2`, `corpo_base_2`, `mantello_base_2`.
+- **Scartato:** `pugni_forgiata`: sulle braccia col pugno c'è il grembiule con la croce, non la
+  spallina. Per ora le braccia col pugno forgiate portano la spallina base; il foglio si rifà con WB-059.
+- **Difetti lasciati:** la spallina sul braccio aperto ha tre strati, quella sul pugno due (si vede
+  quando impugna un'arma); il grembiule lascia scoperto il fianco e una striscia di pancia.
+- **Colori:** Codex ha fatto il cuoio più caldo di quello chiesto (#8A4A1E il grembiule, #783818 la
+  cuffia) e gli occhialoni di rame (#C07838): la tavolozza `apprendista_fabbro.json` segue i suoi.
+- **Nel gioco:** pelli `cuffia_fabbro`, `grembiule_fabbro`, `stivali_fabbro`, `mantello_fabbro` (e
+  `_forgiato`), tagliate con `tools/stampino/addosso.py tools/stampino/addosso/fabbro.json` e
+  `taglia.py --mantello-px 7.2`; i pezzi del Fabbro indossati le mettono addosso
+  (`scoria.FAMILY_SKINS`). Scenari `fabbro_indossato.txt` e `fabbro_indossato_forgiato.txt`.

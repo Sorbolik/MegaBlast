@@ -1,0 +1,38 @@
+{
+ "nome": "stivali_fabbro",
+ "categoria": "stivali",
+ "pezzi": {
+  "gamba_1": {
+   "img": "stivali_fabbro_gamba",
+   "x": 4.8,
+   "y": -31.2,
+   "w": 57.1,
+   "h": 83.6,
+   "modo": "sostituisce"
+  },
+  "gamba": {
+   "img": "stivali_fabbro_gamba",
+   "x": 4.7,
+   "y": -31.2,
+   "w": 56.5,
+   "h": 82.7,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro_1": {
+   "img": "stivali_fabbro_gamba_dietro",
+   "x": 2.2,
+   "y": -30.3,
+   "w": 60.1,
+   "h": 82.4,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro": {
+   "img": "stivali_fabbro_gamba_dietro",
+   "x": 2.2,
+   "y": -30.3,
+   "w": 59.5,
+   "h": 81.6,
+   "modo": "sostituisce"
+  }
+ }
+}

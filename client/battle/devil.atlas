@@ -305,6 +305,12 @@ images {
   image: "/assets/skins/corna_apprendista_testa.png"
 }
 images {
+  image: "/assets/skins/cuffia_fabbro_forgiato_testa.png"
+}
+images {
+  image: "/assets/skins/cuffia_fabbro_testa.png"
+}
+images {
   image: "/assets/skins/favilla_ala.png"
 }
 images {
@@ -390,6 +396,48 @@ images {
 }
 images {
   image: "/assets/skins/favilla_testa_sconfitta_1.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_busto.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_forgiato_busto.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_forgiato_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_forgiato_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_forgiato_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_forgiato_spallina_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_spallina_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/stivali_fabbro_forgiato_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_fabbro_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/skins/stivali_fabbro_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_fabbro_gamba_dietro.png"
 }
 images {
   image: "/assets/skins/stivali_vuoto_forgiato_gamba.png"

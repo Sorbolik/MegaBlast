@@ -5,8 +5,14 @@ imposta prova_vuoto 1
 aspetta 3
 aspetta 3
 foto 01_home
-tocca 222 148                      # STESSO TELEFONO
-aspetta_stato modo=local turno=1 fase=aim 8
+tocca 220 172                      # ALLENAMENTO
+aspetta 2
+tocca 770 548                      # STESSO TELEFONO
+aspetta 0.5
+foto 01b_allenamento
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # GIOCA
+aspetta_stato turno=1 fase=aim 12
 aspetta 1
 zoom 02_fermo 4
 tieni destra 0.5 03_corsa 4

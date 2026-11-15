@@ -21,7 +21,8 @@ La ricetta della famiglia (JSON, percorsi dalla radice del repository):
 
   { "tavolozza": "tools/stampino/tavolozze/apprendista_vuoto.json",
     "colori": ["#2B2147", "#1A1430", "#00FFFF"],        i colori del pezzo
-    "senza_corpo": ["lingua", "bocca", "corna", "corna_ombra", "occhi"],
+    "senza_corpo": ["lingua", "bocca", "corna", "corna_ombra", "occhi"],   colori che il corpo non ha
+    "senza_teste": [],                                  e quelli che non hanno le teste
     "riferimenti": { "teste": FOGLIO, "corpo": FOGLIO, "pugni": FOGLIO },
     "pelli": { "elmo": "cappuccio_vuoto", "corazza": "corazza_vuoto", "stivali": "stivali_vuoto" },
     "forme": { "": { "teste": FOGLIO, "corpo": FOGLIO, "pugni": FOGLIO },
@@ -79,28 +80,39 @@ def grandi(m, area):
     return m
 
 
-def sovrapponi(sagoma, alfa, s0, da=0.85, a=1.2, passo=0.01):
-    """Scala e spostamento che portano la sagoma del foglio sul pezzo del gioco
-    (pixel del gioco = s * pixel del foglio + o), con la sovrapposizione migliore
-    (intersezione su unione), provando le scale una per una."""
-    ys, xs = np.nonzero(sagoma)
-    y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
-    rm = sagoma[y0:y1, x0:x1].astype(np.uint8) * 255
-    g = alfa.astype(np.float32)
+def _prova_scale(rm, g, scale):
     gs = g.sum()
+    H, W = g.shape
     meglio = None
-    for s in np.arange(s0 * da, s0 * a, s0 * passo):
+    for s in scale:
         w, h = max(1, round(rm.shape[1] * s)), max(1, round(rm.shape[0] * s))
         r = (np.asarray(Image.fromarray(rm).resize((w, h), Image.BILINEAR)) > 128).astype(np.float32)
-        H, W = g.shape
         largo = np.zeros((H + 2 * h, W + 2 * w), np.float32)
         largo[h:h + H, w:w + W] = g
         dentro = fftconvolve(largo, r[::-1, ::-1], mode="valid")
         iou = dentro / (r.sum() + gs - dentro)
         k = np.unravel_index(np.argmax(iou), iou.shape)
         if meglio is None or iou[k] > meglio[0]:
-            meglio = (float(iou[k]), float(s), k[1] - w - s * x0, k[0] - h - s * y0)
+            meglio = (float(iou[k]), float(s), k[1] - w, k[0] - h)
     return meglio
+
+
+def sovrapponi(sagoma, alfa):
+    """Scala e spostamento che portano la sagoma del foglio sul pezzo del gioco
+    (pixel del gioco = s * pixel del foglio + o), con la sovrapposizione migliore
+    (intersezione su unione). Prima in piccolo su tante scale, poi alla misura vera
+    intorno alla migliore."""
+    ys, xs = np.nonzero(sagoma)
+    y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+    rm = sagoma[y0:y1, x0:x1].astype(np.uint8) * 255
+    ya = np.nonzero(alfa.any(1))[0]
+    s0 = (ya.max() - ya.min() + 1) / (y1 - y0)
+    q = max(1, int(np.ceil(max(alfa.shape) / 320)))       # in piccolo: lato fino a 320
+    piccolo = np.asarray(Image.fromarray(alfa).resize((alfa.shape[1] // q, alfa.shape[0] // q), Image.BILINEAR))
+    _, s, _, _ = _prova_scale(rm, piccolo.astype(np.float32), np.arange(s0 * 0.85, s0 * 1.15, s0 * 0.01) / q)
+    s *= q
+    iou, s, ox, oy = _prova_scale(rm, alfa.astype(np.float32), np.arange(s * 0.985, s * 1.0151, s * 0.0025))
+    return iou, s, ox - s * x0, oy - s * y0
 
 
 def disegna(svg, x0, y0, x1, y1, k):
@@ -114,13 +126,26 @@ def disegna(svg, x0, y0, x1, y1, k):
     return np.asarray(Image.open(io.BytesIO(png)).convert("RGBA")).astype(np.float32)
 
 
-def solo_pezzo(v, colori, k, cambiato):
+def solo_pezzo(v, colori, k, cambiato, diverso):
     """Di un disegno resta solo il pezzo: i suoi colori dove il foglio è cambiato,
     i buchi chiusi (tranne il più grande, l'apertura del viso) e il contorno nero intorno."""
     vv = v[..., :3].astype(np.int32)
     pieno = v[..., 3] > 0
-    g = vicino(vv, colori, 40) & pieno & cambiato
-    g = grandi(g, int(1500 * k * k))
+    # il foglio ricalcato ha i colori esatti della tavolozza: soglia stretta, perché
+    # un cuoio può stare vicino all'ombra della pelle
+    g = vicino(vv, colori, 14) & pieno & cambiato
+    # una macchia dei colori del pezzo che sul riferimento era già quasi di quel colore
+    # (un occhio ridisegnato, giallo come le lenti) non è del pezzo
+    lab, n = ndimage.label(g)
+    if n:
+        nuovo = ndimage.mean(diverso, lab, range(1, n + 1))
+        g &= ~np.isin(lab, np.nonzero(nuovo < 0.5)[0] + 1)
+    # restano le macchie grandi e quelle piccole che stanno loro attaccate (una
+    # borchia dentro il suo contorno), non i granelli lontani
+    lab, n = ndimage.label(g)
+    if n:
+        vicine = ndimage.binary_dilation(grandi(g, int(1500 * k * k)), iterations=max(1, round(16 * k)))
+        g = np.isin(lab, np.unique(lab[vicine & g]))
     g = ndimage.binary_closing(g, iterations=max(1, round(4 * k)))
     buchi = ndimage.binary_fill_holes(g) & ~g
     lab, n = ndimage.label(buchi)
@@ -132,7 +157,7 @@ def solo_pezzo(v, colori, k, cambiato):
         dentro = np.isin(lab, chiusi)
         g |= dentro
     intorno = ndimage.binary_dilation(g, iterations=max(1, round(16 * k)))
-    return intorno & (~vicino(vv, PELLE, 40) | dentro) & pieno
+    return intorno & (~vicino(vv, PELLE, 14) | dentro) & pieno
 
 
 def posa(sopra, s, ox, oy, forma):
@@ -169,7 +194,11 @@ class Foglio:
         self.svg_f = os.path.join(lavoro, nome + ".svg")
         png = os.path.join(lavoro, nome + ".png")
         if not os.path.exists(self.svg_f) or os.path.getmtime(self.svg_f) < os.path.getmtime(foglio):
-            VT.main_colori(tavolozza, foglio, self.svg_f, png, senza=tuple(senza))
+            # il fondo è il magenta, anche se il file ha un canale alfa (un foglio
+            # rimpicciolito da Codex): senza, il ricalco prende il fondo per un colore
+            piatto = os.path.join(lavoro, nome + "_foglio.png")
+            Image.open(foglio).convert("RGB").save(piatto)
+            VT.main_colori(tavolozza, piatto, self.svg_f, png, senza=tuple(senza))
         self.svg = open(self.svg_f).read()
         self.v = TG.fondo_via(Image.open(png))
         h, w = self.v.shape[:2]
@@ -180,7 +209,9 @@ class Foglio:
         self.pezzi, _ = ndimage.label(self.v[..., 3] > 20)
         # dove il foglio consegnato è diverso dal riferimento (alla misura del riferimento)
         nuovo = np.asarray(Image.open(foglio).convert("RGB").resize(rif.size, Image.LANCZOS)).astype(np.int32)
-        d = np.sqrt(((nuovo - np.asarray(rif).astype(np.int32)) ** 2).sum(-1)) > 60
+        d = np.sqrt(((nuovo - np.asarray(rif).astype(np.int32)) ** 2).sum(-1)) > 48   # un cuoio sulla pelle cambia poco; un occhio ridisegnato ancora meno
+        # pixel per pixel, senza allargare: per dire se una macchia è nuova davvero
+        self.diverso = np.asarray(Image.fromarray(d).resize((w, h), Image.NEAREST))
         d = ndimage.binary_dilation(grandi(ndimage.binary_opening(d), 100), iterations=6)
         self.cambiato = np.asarray(Image.fromarray(d).resize((w, h), Image.NEAREST))
 
@@ -196,14 +227,16 @@ def taglia_pezzo(f, posto, modo, colori, prese):
             continue
         ys, xs = np.nonzero(c)
         h, w = ys.max() - ys.min() + 1, xs.max() - xs.min() + 1
-        if not 0.7 < (h / w) / forma_g < 1.4:      # un'altra forma: non è lui
+        if not 0.6 < (h / w) / forma_g < 1.7:      # tutt'altra forma: non è lui
             continue
-        r = sovrapponi(c, alfa, G.shape[0] / h)
+        r = sovrapponi(c, alfa)
         if meglio is None or r[0] > meglio[0][0]:
             meglio = (r, i)
     assert meglio, f"{posto}: nessuna sagoma del riferimento gli somiglia"
     (iou, s, ox, oy), i = meglio
-    assert iou > 0.93, f"{posto}: la sagoma migliore combacia solo al {iou:.2f}"
+    # il busto del gioco ha anche il fazzoletto, che sul foglio è un pezzo a parte
+    soglia = 0.75 if posto.startswith("busto") else 0.93
+    assert iou > soglia, f"{posto}: la sagoma migliore combacia solo al {iou:.2f}"
     prese.add((id(f), i))
     # i pezzi del disegno consegnato che toccano quella sagoma
     ids = np.unique(f.pezzi[ndimage.binary_dilation(f.sagome[i], iterations=5)])
@@ -218,9 +251,9 @@ def taglia_pezzo(f, posto, modo, colori, prese):
 
     def grande(mask):
         return np.asarray(Image.fromarray(mask[y0:y1, x0:x1]).resize((wk, hk), Image.NEAREST))
-    tiene = grande(zona)
+    tiene = grande(zona).copy()
     if modo == "sopra":
-        tiene &= solo_pezzo(v, colori, k, grande(f.cambiato))
+        tiene &= solo_pezzo(v, colori, k, grande(f.cambiato), grande(f.diverso))
     v[~tiene, 3] = 0
     assert (v[..., 3] > 128).sum() > 400 * k * k, f"{posto}: sul foglio non c'è nessun pezzo nuovo"
     im, dove = posa(v, s / k, s * x0 + ox, s * y0 + oy, G.shape[:2])
@@ -291,7 +324,7 @@ def main():
             if quale not in fogli or categoria not in ric["pelli"]:
                 continue
             if quale not in aperti:
-                senza = ric.get("senza_corpo", []) if quale != "teste" else []
+                senza = ric.get("senza_teste" if quale == "teste" else "senza_corpo", [])
                 aperti[quale] = Foglio(qui(fogli[quale]), qui(ric["riferimenti"][quale]),
                                        qui(ric["tavolozza"]), senza, lavoro)
             im, dove = taglia_pezzo(aperti[quale], posto, modo, colori, prese)

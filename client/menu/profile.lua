@@ -209,13 +209,15 @@ function M.record(p, r)
 end
 
 -- Only in the scenarios (imposta prova_vuoto 1 base, 2 forged at gold,
--- scenari/vuoto_indossato.txt): the active loadout wears the four pieces of the Void
-function M.sample_void(p, form)
+-- scenari/vuoto_indossato.txt): the active loadout wears the four pieces of the Void,
+-- or of another family (imposta prova_famiglia fabbro)
+function M.sample_void(p, form, family)
 	if (form or 0) <= 0 then return end
+	family = family or "vuoto"
 	local a = p.loadouts[p.is_active]
-	a.gear = { mask = "vuoto", chest = "vuoto", cloak = "vuoto", legs = "vuoto" }
+	a.gear = { mask = family, chest = family, cloak = family, legs = family }
 	for _, slot in ipairs({ "mask", "chest", "cloak", "legs" }) do
-		p.pezzi["vuoto_" .. slot] = form == 2 and 20 or 1
+		p.pezzi[family .. "_" .. slot] = form == 2 and 20 or 1
 	end
 end
 
