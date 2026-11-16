@@ -309,6 +309,42 @@ simulazione (pochi byte, e gira anche sul server).
   lo stesso shader.
 - ~~La maschera intera costa ancora ~30 ms di Lua~~ fatto in #243 (sotto).
 
+## Memoria video e peso dell'APK (16 nov)
+
+Gli atlanti sono texture RGBA non compresse: in memoria video pesano
+larghezza × altezza × 4 byte (un terzo in più con le mipmap), e nell'APK
+stanno compressi solo con LZ4. Il peso di un atlante lo decide la potenza di 2
+che contiene tutte le sue immagini: poco oltre 4096×4096 diventa 8192×8192,
+quattro volte tanto.
+
+| Atlante | Prima | Dopo | Memoria video dopo |
+|---|---|---|---|
+| `battle/devil.atlas` (diavoletto, con mipmap) | 8192×8192 | 4096×4096 | 89 MB (prima 341) |
+| `ui/fucina.atlas` | 4096×4096 | uguale | 64 MB |
+| `ui/fette.atlas` | 4096×2048 | uguale | 32 MB |
+| `ui/ui.atlas` | 2048×2048 | 2048×1024 | 8 MB (tolte ellissi e monete che non si usavano più) |
+| gli altri cinque | | uguali | 30 MB in tutto |
+
+Causa del 8192: teste, corna, cappucci ed elmi erano a 13,5 pixel per unità
+del disegno invece di 4 come il resto del corpo (`taglia.py da_svg` ingrandiva
+di nuovo gli SVG delle teste, già scritti a 4 px). La misura più grande in cui
+si vede il diavoletto è la home (338 punti di altezza per 200 unità): sul
+telefono o tablet più grande sono ~3,5 pixel veri per unità, quindi 4 basta e
+la GPU usava comunque una mipmap più piccola. Regola: **nessun pezzo oltre
+4 px per unità** (i mantelli 4,5, perché lo shader li stira).
+
+APK (arm64, release): 73,4 MB → 63,5 MB (teste −6,7, dipinti PNG ricompressi
+senza perdita con oxipng −2, immagini non più usate −0,8). Il resto: atlanti 30 MB, dipinti 28 MB, motore
+5 MB. Oltre i 50 MB Telegram rifiuta il file dal server normale dei bot: con i
+segreti `TELEGRAM_API_ID` e `TELEGRAM_API_HASH` l'APK passa da un server dei bot
+locale sul runner (fino a 2 GB, `.github/workflows/apk.yml`).
+
+Scartate per ora: compressione ASTC degli atlanti per Android (4 volte meno
+memoria video, ma è con perdita; con bob 1.14 l'APK di prova è cresciuto a
+81 MB perché tiene anche la copia RGBA), dividere l'atlante del diavoletto in due
+(stessa memoria, più codice), togliere i dipinti `_1` dall'APK (i telefoni
+sotto i 1000 pixel li usano).
+
 ## Fase 3: la maschera a strisce (9 nov)
 
 Misura nel simulatore (`fluidita.txt`, JIT spento come sul telefono): entrando in

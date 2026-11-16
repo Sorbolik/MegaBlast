@@ -196,7 +196,7 @@ def fai_piccoli():
     tre("barra_chiara", neutro(barre[1]), 44, 0.1)
     intero("tacca", barre[3], 72)
     tondi = griglia(os.path.join(p, "pezzo_tondi_1.png"), [2, 2])
-    for nome, a in zip(["tondo_ferro", "tondo_oro", "tondo_gelo"], tondi):
+    for nome, a in zip(["tondo_ferro", "tondo_oro"], tondi):
         intero(nome, a, 200)
     tre("linguetta", tondi[3], 120, 0.3)
     tre("linguetta_chiara", chiaro(tondi[3]), 120, 0.3)
@@ -318,8 +318,6 @@ MENU_INTERI = [
     ("gioca_sigillo", "gioca_sigillo", 166, "WB-046"),
     ("pedana", "pedana_griglia_1", 266, "WB-050"),
     ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
-    # la transizione (WB-049): l'attacco dello scudo sul bordo e le schegge della scia
-    ("attacco_scudo", "attacco_scudo_1", 170, "WB-049"),
     # caselle, livelli, segni (WB-044)
     ("casella", "casella", 324, "WB-044"),
     ("casella_scelta", "casella_scelta", 324, "WB-044"),
@@ -329,8 +327,6 @@ MENU_INTERI = [
     ("livello_oro", "livello_oro", 80, "WB-044"),
     ("spunta", "spunta", 56, "WB-044"),
     ("sconto", "sconto", 64, "WB-044"),
-    ("cornice_argento", "cornice_argento", 208, "WB-044"),
-    ("cornice_bronzo", "cornice_bronzo", 208, "WB-044"),
     ("podio_1", "podio_1", 420, "WB-044"),
     ("podio_2", "podio_2", 352, "WB-044"),
     ("podio_3", "podio_3", 304, "WB-044"),
@@ -342,7 +338,6 @@ MENU_INTERI = [
     ("ic_maglio", "ic_maglio", 140, "WB-047"),
     ("ic_notte", "ic_notte", 108, "WB-047"),
     ("barrato", "barrato", 34, "WB-047"),
-    ("sei_qui", "sei_qui", 48, "WB-047"),
     ("buono", "buono", 128, "WB-043"),
 ]
 # dove si scrive sulle porte e su GIOCA: la striscia piena fra lo scudo (o il sigillo) e la
@@ -360,9 +355,6 @@ MENU_TRE = [
     ("riga_scura", "riga_scura", 140, 0.08, "WB-044"),
     ("pillola", "pillola", 104, 0.2, "WB-044"),
 ]
-SCIE = ["brace", "scintilla", "fiamma", "ricciolo", "ferro", "cuoio", "paglia", "acciaio",
-        "stella", "moneta", "nastro", "oro", "ghiaccio", "fiocco", "cristallo", "gelo"]
-PORTE = ["campagna", "allenamento", "eventi", "armeria"]
 FAMIGLIE = ["fabbro", "corvo", "fornace", "leviatano", "vuoto"]
 POSTI = ["elmo", "corazza", "mantello", "stivali"]
 
@@ -440,7 +432,7 @@ def fai_segni():
     """I segni di chi sale e chi scende (WB-061, foglio 1: piatto, senza il riflesso
     bianco): avorio, il gioco li tinge."""
     segni = griglia(os.path.join(ART, "WB-061", "segni_sale_scende_1.png"), [3], 20000)
-    for nome, a in zip(["segno_sale", "segno_scende", "segno_uguale"], segni):
+    for nome, a in zip(["segno_sale", "segno_scende"], segni):
         intero(nome, a, 96)
 
 
@@ -466,15 +458,6 @@ def fai_menu():
     intero("spunta_verde", verde(ritaglio("WB-044", "spunta")), 56)
     for nome, f, h, c, d in MENU_TRE:
         tre(nome, ritaglio(d, f), h, c)
-    for k in SCIE:
-        intero("scia_" + k, ritaglio("WB-049", "scia_%s_1" % k), 84)
-    # la banda del bordo: larga il doppio di come si vede (48), si ripete in alto
-    for k in PORTE:
-        a = ritaglio("WB-049", "banda_%s_1" % k)
-        im = Image.fromarray(a, "RGBA")
-        im = im.resize((96, round(im.size[1] * 96 / im.size[0])), Image.LANCZOS)
-        salva(im, "banda_" + k)
-        MISURE["banda_" + k] = im.size
     # la lama della tempra (WB-051): corpo, bordo rovente e bordo gelato, che si
     # ripetono in alto (e il corpo anche in largo); larghi il doppio di come si vedono
     for nome, w in (("lama_corpo", 180), ("lama_fuoco", 80), ("lama_gelo", 72)):

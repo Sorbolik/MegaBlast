@@ -114,16 +114,6 @@ function M.new(color)
 
 	h.scene = kit.scene(640, 350, { bg = true })
 
-	-- STESSO TELEFONO is in ALLENAMENTO now; the scenarios of the simulator
-	-- (tools/simula) still start their match from here, with a tap on the
-	-- old place (now on ALLENAMENTO): an invisible zone, only there, first in the list
-	if sys.get_config_int("megablast.simula", 0) == 1 then
-		local sim = kit.anchor(0, 360, gui.ANCHOR_LEFT)
-		h.tops[#h.tops + 1] = sim.node
-		kit.zone(sim, h.buttons, 190, 560, 64, 24, "local")
-	end
-
-
 	-- the middle: the pedestal, the apprentice on it and the backpack, all one button
 	local mid = kit.anchor(640, PED_BOTTOM, nil, gui.ANCHOR_BOTTOM)
 	h.tops[#h.tops + 1] = mid.node
@@ -220,6 +210,16 @@ function M.new(color)
 	for _, n in ipairs({ h.play.node, tl.node, top_right.node, h.posa, bl.node }) do h.rest[n] = gui.get_position(n) end
 	-- what shakes at a thud: the sides (not the pieces that are arriving)
 	h.shaken = { right.node, left.node, tl.node }
+
+	-- STESSO TELEFONO is in ALLENAMENTO now; the scenarios of the simulator
+	-- (tools/simula) still start their match from here, with a tap on the
+	-- old place (now on ALLENAMENTO): an invisible zone, only there, last in
+	-- the list (ui.touch looks from the last: it wins over the door under it)
+	if sys.get_config_int("megablast.simula", 0) == 1 then
+		local sim = kit.anchor(0, 360, gui.ANCHOR_LEFT)
+		h.tops[#h.tops + 1] = sim.node
+		kit.zone(sim, h.buttons, 190, 560, 64, 24, "local")
+	end
 
 	M.hide(h)
 	return h
