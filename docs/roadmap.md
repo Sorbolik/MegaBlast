@@ -6,6 +6,20 @@ con varianti, costi e opzioni scartate). Questo file è la versione "nella
 pietra": ogni thread la consulta prima di proporre lavoro nuovo, e le modifiche
 passano da Sergio.
 
+## A che punto siamo (16 novembre 2026, main alla #342)
+
+| Fase | Stato | Fatto | Manca |
+|---|---|---|---|
+| 0. Chiudere la partita | quasi finita | coda online scelta nella home (GIOCA ONLINE, #341), tutorial nel cortile, 14 mappe (cortile, Forgia, fossa e una per girone), effetti sonori di base | vantaggio di chi gioca per secondo in 1v1; prova d'uscita coi 4 telefoni e approvazione di Sergio |
+| 1. Online vero | da fare | server con LuaJIT, riconnessione, `/health` e `/stats` (gira sul PC di Sergio) | VPS, dominio, TLS, SQLite, account ospite, progressione sul server, inglese, telemetria e crash |
+| 2. Primi minuti | in gran parte fatta | bot a 10 gradi, cortile e Forgia (#339), Allenamento, partite private, replay, impostazioni | rating nascosto, 2v2 premade in coda, prova delle 5 persone nuove |
+| 3. Eventi e pannello | avviata | pannello eventi su Cloudflare, schermata Eventi, Statistiche e badge, Profilo e Cronologia (#336, #342), ZAINO, Armeria, Sigilli | tornei con classifica e premi, posta, rompicapo del giorno e fantasmi, pannello sul server |
+| 4–6 | da fare | | store, acquisti, clan |
+
+Campagna dei gironi: mappe e pericoli dei 9 gironi fatti (anche online), mappa a imbuto
+fatta; si giocano Cortile e Forgia, **16 livelli su 56**: mancano le missioni dei gironi.
+In parallelo il Laboratorio bot è fermo alla generazione 86.
+
 ## Principi
 
 - **Più leggero vince**: un eseguibile Go, SQLite, zero servizi esterni finché
@@ -38,7 +52,7 @@ passano da Sergio.
 | 13 | Notifiche | Posta in gioco + notifiche locali programmate dal calendario. Push vere solo più avanti, per inviti e premi. |
 | 14 | Anti-cheat | Solo difese sul server: progressione calcolata dal server, partite offline verificate rigiocando gli input, limiti di velocità, ricevute verificate, versione minima, ban dal pannello. Nessun SDK di protezione. Ogni thread sviluppa già con questo in mente. |
 | 15 | Telemetria | Eventi nostri sul server, crash dal modulo `crash` di Defold. Una **interfaccia dei dati** a sé (giocatori attivi, nuovi, ritenzione 1 e 7 giorni, attesa in coda, partite, vittorie per arma, crash), chiarissima. |
-| 16 | Lingue | Tabella di testi `t("chiave")`, italiano e inglese dall'inizio; i testi degli eventi in due lingue dal pannello. Accessibilità minima: testi ≥ 12 px, squadre distinguibili anche per forma, effetti ridotti, levette per mancini. |
+| 16 | Lingue | Tabella di testi `t("chiave")`, italiano e inglese dall'inizio; i testi degli eventi in due lingue dal pannello. Accessibilità minima: testi ≥ 16 px (`kit.MIN_TEXT`, Sergio 15 nov; prima 12), squadre distinguibili anche per forma, effetti ridotti, levette per mancini. |
 | 17 | Audio | Ora effetti CC0 ritoccati (A), niente musica in partita. Sergio valuta un sound designer (C) più avanti. |
 | 18 | Store | Android prima, iOS un mese dopo (IPA da Windows, caricamento da GitHub Actions macOS, niente Mac), **e anche browser** servito dal nostro server. |
 | 19 | Contenuti | 6 mappe alla pubblicazione; armi nuove solo come modificatori di evento; skin = pezzi sullo **stampino**. L'editor delle animazioni avrà un connettore per modificare i pezzi di riferimento dello stampino e aggiungere o togliere pezzi a un'animazione, a un personaggio nuovo, a un'arma o a una skin d'arma. |
@@ -106,10 +120,15 @@ Gli obiettivi sono dati sul server: Sergio può aggiungerne dal pannello.
 
 ### Interfaccia: tranquilla ed essenziale
 
-Tutta l'interfaccia del gioco, in partita e nei menu, ha un carattere suo: il
-minimalismo dello stile Sagoma (`client/ui/ui.lua`, forme disegnate in codice,
-un solo font, i colori solo in `ui.C`, niente asset dipinti per la UI). Regole
-che valgono per ogni schermata nuova:
+Tutta l'interfaccia del gioco, in partita e nei menu, ha un carattere suo.
+Dal 12 novembre è lo stile **Filo di brace** (approvato da Sergio, pagina
+https://claude.ai/artifact/2RBh8w9T56E7P9kFDd4HKA), che sostituisce il minimalismo
+dello stile Sagoma: fumetto con contorno a inchiostro, forme morbide e asimmetriche,
+fuoco (in basso a sinistra, curve) contro ghiaccio (in alto a destra, spigoli) in ogni
+schermata, pulsanti con una forma che dice cosa fanno, disegnati da Codex, sfondi
+dipinti per schermata con un velo scuro leggero; movimento = arte ferma più riflessi
+lenti. Testi mai sotto 16, mai fuori dal loro riquadro, spazi armoniosi ovunque.
+Regole che valgono per ogni schermata nuova:
 
 - **Niente popup da cliccare**: nessuna finestra che interrompe, nessun "ok"
   da premere per andare avanti. Un premio o un avviso arriva nella posta in
@@ -156,12 +175,13 @@ Ogni fase ha un criterio d'uscita verificabile. Niente di una fase successiva
 entra nel codice prima che la precedente sia chiusa, salvo preparazioni a costo
 zero. Lavoro: S 1–2 giorni, M 3–5, L 1–2 settimane, XL più settimane.
 
-### 0. Chiudere la partita (in corso)
+### 0. Chiudere la partita (quasi finita)
 
 Fatto dal 26 ottobre: batch di merge, diavoletto vettoriale, editor delle
-animazioni e stampino, skin armi, mappa Crogiolo con scelta casuale, punti in
-partita, Bastione, draft online. Resta: scelta della coda online nella home, vita
-dei robot e bilanciamento, audio di base, tutorial raggiungibile dalla home, mappe 4–6.
+animazioni e stampino, skin armi, punti in partita, Bastione, draft online; poi
+scelta della coda online nella home (#341), tutorial nel cortile, mappe (14, una
+per girone), effetti sonori di base, vita dei robot a 100. Resta: il bilanciamento
+qui sotto e la prova d'uscita.
 Bilanciamento aperto (6 nov): in 1v1 chi gioca per secondo vince più spesso su tutte
 le mappe (arena, 80 partite: cortile 55-25, fossa 52-28, pavimento 46-34), è l'ordine
 dei turni e non la mappa; da decidere come compensarlo.
