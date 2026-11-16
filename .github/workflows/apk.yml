@@ -7,7 +7,8 @@
 # Con "log" spuntato l'APK è la variante debug: il motore scrive i log (le righe
 # SCATTO del contatore FPS), che si leggono senza cavo con adb (docs/prestazioni.md).
 # Segreti: ANDROID_KEYSTORE (keystore in base64), ANDROID_KEYSTORE_PASS,
-# TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID. Variabile facoltativa: SERVER_URL.
+# TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID; facoltativi TELEGRAM_API_ID e TELEGRAM_API_HASH
+# (da my.telegram.org: APK come file anche oltre 50 MB). Variabile facoltativa: SERVER_URL.
 name: APK su Telegram
 on:
   push:
@@ -43,6 +44,7 @@ jobs:
           KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
           SERVER_URL: ${{ vars.SERVER_URL }}
           VARIANTE: ${{ inputs.log && 'debug' || 'release' }}
+          API_ID: ${{ secrets.TELEGRAM_API_ID }}
         run: |
           curl -fsSL --retry 4 -o "$RUNNER_TEMP/bob.jar" https://github.com/defold/defold/releases/download/1.14.0/bob.jar
           echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/chiave.keystore"
@@ -56,8 +58,9 @@ jobs:
             --bundle-output "$RUNNER_TEMP/bundle" resolve build bundle
           find "$RUNNER_TEMP/bundle" -name '*.apk' -exec mv {} "$RUNNER_TEMP/MegaBlast.apk" \;
           ls -l "$RUNNER_TEMP/MegaBlast.apk"
-          # i bot di Telegram accettano file fino a 50 MB: oltre, si manda il link alla build
-          if [ "$(stat -c %s "$RUNNER_TEMP/MegaBlast.apk")" -gt $((49 * 1024 * 1024)) ]; then echo "grande=true" >> "$GITHUB_OUTPUT"; fi
+          # i bot di Telegram accettano file fino a 50 MB: oltre, si manda il link alla build,
+          # a meno che ci siano TELEGRAM_API_ID e TELEGRAM_API_HASH (server dei bot locale, fino a 2 GB)
+          if [ "$(stat -c %s "$RUNNER_TEMP/MegaBlast.apk")" -gt $((49 * 1024 * 1024)) ] && [ -z "$API_ID" ]; then echo "grande=true" >> "$GITHUB_OUTPUT"; fi
       - name: Conserva l'APK troppo grande per Telegram
         if: steps.build.outputs.grande == 'true'
         uses: actions/upload-artifact@v4
@@ -65,8 +68,23 @@ jobs:
           name: MegaBlast-apk
           path: ${{ runner.temp }}/MegaBlast.apk
           retention-days: 14
+      # Server dei bot di Telegram sul runner (immagine ufficiale ricompilata da aiogram): coi
+      # segreti TELEGRAM_API_ID e TELEGRAM_API_HASH (da my.telegram.org) manda file fino a 2 GB,
+      # quindi l'APK arriva sempre come file anche oltre i 50 MB del server normale.
+      - name: Server dei bot locale (file oltre 50 MB)
+        id: locale
+        env:
+          API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        run: |
+          if [ -z "$API_ID" ] || [ -z "$API_HASH" ]; then echo "url=https://api.telegram.org" >> "$GITHUB_OUTPUT"; exit 0; fi
+          docker run -d --name botapi -p 8081:8081 -v "$RUNNER_TEMP:$RUNNER_TEMP" \
+            -e TELEGRAM_API_ID="$API_ID" -e TELEGRAM_API_HASH="$API_HASH" -e TELEGRAM_LOCAL=1 aiogram/telegram-bot-api:latest
+          for i in $(seq 30); do curl -s -o /dev/null http://127.0.0.1:8081 && break; sleep 1; done
+          echo "url=http://127.0.0.1:8081" >> "$GITHUB_OUTPUT"
       - name: Manda su Telegram
         env:
+          API: ${{ steps.locale.outputs.url }}
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
           PRIMA: ${{ github.event.before }}
@@ -85,7 +103,7 @@ jobs:
             curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \
               -F "chat_id=$CHAT" -F "text=<$RUNNER_TEMP/didascalia.txt"
           else
-            curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendDocument" \
+            curl -fsS -o /dev/null "$API/bot$TOKEN/sendDocument" \
               -F "chat_id=$CHAT" -F "caption=<$RUNNER_TEMP/didascalia.txt" -F "document=@$RUNNER_TEMP/MegaBlast.apk"
           fi
           curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \
