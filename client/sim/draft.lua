@@ -12,6 +12,9 @@
 --   draft.valid(d, i, "shards")               -- can robot i take it? (primary or secondary)
 --   draft.pick(d, i, "shards")                -- picks (or changes pick) in its category
 --   draft.done(d, i)                          -- has robot i picked everything?
+--   draft.confirm(d, i)                       -- PRONTO: robot i confirms its picks (they must be done);
+--                                              -- changing a pick takes the confirmation away
+--   draft.all_ready(d)                        -- has everyone confirmed? Then the match can start at once
 --   players = draft.finish(d)                 -- at timeout: whoever is missing gets the first of the fan
 
 local C = require "sim.config"
@@ -40,7 +43,7 @@ function D.new(seed, players, seen_weapons)
 	return {
 		offer = shuffled(r, game.CRATE_WEAPONS, C.DRAFT_OFFER, seen_weapons),
 		offer2 = shuffled(r, game.DRAFT_SECONDARIES, C.DRAFT_OFFER, seen_weapons),
-		players = players, picks = {}, picks2 = {},
+		players = players, picks = {}, picks2 = {}, ready = {},
 	}
 end
 
@@ -64,6 +67,8 @@ end
 function D.pick(d, i, weapon)
 	if not D.valid(d, i, weapon) then return false end
 	local _, picks = side(d, weapon)
+	-- a changed pick is no longer confirmed
+	if picks[i] ~= weapon then d.ready[i] = nil end
 	picks[i] = weapon
 	return true
 end
@@ -73,7 +78,23 @@ function D.done(d, i)
 	return (d.picks[i] ~= nil or #d.offer == 0) and (d.picks2[i] ~= nil or #d.offer2 == 0)
 end
 
--- Confirms the picks: whoever has not picked gets the first weapon of each fan.
+-- PRONTO (Sergio, 16 Nov): robot i confirms its picks, the others see it.
+-- false if a weapon is still missing
+function D.confirm(d, i)
+	if not (d.players[i] and D.done(d, i)) then return false end
+	d.ready[i] = true
+	return true
+end
+
+-- When everyone has confirmed the match starts without waiting for the time
+function D.all_ready(d)
+	for i = 1, #d.players do
+		if not d.ready[i] then return false end
+	end
+	return true
+end
+
+-- Closes the draft: whoever has not picked gets the first weapon of each fan.
 -- Returns the players for game.new, with pick and secondary.
 function D.finish(d)
 	local out = {}

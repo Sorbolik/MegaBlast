@@ -26,6 +26,9 @@ const (
 //	                                    or join the one with that code (private.go, with its messages)
 //	{"t":"pick","w":"shards"}           start-of-match draft: one primary and one secondary
 //	                                    (the weapon tells the category; can change until time's up)
+//	{"t":"ready"}                       draft: PRONTO, both weapons picked and confirmed; the others see
+//	                                    it ("rd" in the draft), a different pick undoes it; with
+//	                                    everyone ready the match starts before time's up
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
 //	{"t":"aim","a":1.2} | {"t":"aim_end"}  I'm aiming at that angle (at most a few per second) | I stopped:
 //	                                    the others see it in the state ("aim"), without the power
@@ -520,15 +523,48 @@ func (r *Room) handle(b *Batch, m roomMsg) {
 	}
 }
 
-// handleDraft: picks during the weapon draft. The others don't see them: the
-// confirmation goes back only to whoever picked.
+// handleDraft: picks and PRONTO during the weapon draft. The others don't see
+// the picks (the confirmation goes back only to whoever picked), but they see
+// who is ready: when everyone is, the match starts without waiting for the time.
 func (r *Room) handleDraft(b *Batch, m roomMsg) {
-	if m.msg.T != "pick" {
+	slot := m.slot
+	switch m.msg.T {
+	case "pick":
+		b.Cmd("pick", r.id, func(next *Batch, res Result) {
+			var v struct {
+				Un bool `json:"un"`
+			}
+			if res.Err == nil && json.Unmarshal(res.Head, &v) == nil && v.Un {
+				r.sendDraftAll(next) // the pick took PRONTO away
+				return
+			}
+			r.draftAnswer(slot, res)
+		}).Int("i", int64(slot+1)).Str("w", m.msg.W).End()
+	case "ready":
+		b.Cmd("ready", r.id, func(next *Batch, res Result) {
+			var v struct {
+				Ok  bool `json:"ok"`
+				All bool `json:"all"`
+			}
+			if r.ended.Load() || res.Err != nil || json.Unmarshal(res.Head, &v) != nil || !v.Ok {
+				return
+			}
+			r.sendDraftAll(next)
+			if v.All && r.draftLeft > 1 {
+				r.draftLeft = 1 // the next tick starts the match
+			}
+		}).Int("i", int64(slot+1)).End()
+	}
+}
+
+// sendDraftAll sends everyone their draft again (who is ready has changed).
+func (r *Room) sendDraftAll(b *Batch) {
+	if r.ended.Load() {
 		return
 	}
-	slot := m.slot
-	b.Cmd("pick", r.id, func(_ *Batch, res Result) { r.draftAnswer(slot, res) }).
-		Int("i", int64(slot+1)).Str("w", m.msg.W).End()
+	for i := range r.seats {
+		r.sendDraft(b, i)
+	}
 }
 
 // checkAway notices dropped connections and counts the time of whoever is

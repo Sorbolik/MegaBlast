@@ -11,6 +11,7 @@
 --   schieramento.destroy(s)
 --
 --   local st = schieramento.strip(vetrine)       -- the strip at the top during the draft
+--   schieramento.strip_ready(st, ready)          -- the green tick on whoever has pressed PRONTO
 --   schieramento.strip_touch(st, action_id, action) -> true if the tap was its own
 --   schieramento.destroy(st)
 
@@ -131,8 +132,9 @@ end
 
 -- The strip at the top during the draft: a small plate per robot, its name on
 -- the team's color, the two teams apart
+local NAME_W, TICK = 92, 24   -- the room for the name, and the tick after it
 function M.strip(showcases)
-	local st = { vetrine = showcases, mini = {} }
+	local st = { vetrine = showcases, mini = {}, ticks = {}, on = {} }
 	st.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(st.radice, false)
 	local g = { node = st.radice, ox = 0, oy = 720 }
@@ -149,12 +151,26 @@ function M.strip(showcases)
 		kit.rect(g, x, 26, 5, 38, C.SQUADRA[v.squadra] or C.LIGHT)
 		local name = kit.text(g, kit.upper(v.nome or "?"), x + 22, 52, 16, KC.SAND)
 		local wide = kit.width(name)
-		if wide > 118 then
+		if wide > NAME_W then
 			local sc = gui.get_scale(name)
-			gui.set_scale(name, vec(sc.x * 118 / wide, sc.y * 118 / wide))
+			gui.set_scale(name, vec(sc.x * NAME_W / wide, sc.y * NAME_W / wide))
 		end
+		-- the green tick of whoever has pressed PRONTO, at the end of the plate
+		st.ticks[i] = kit.pic(g, "spunta_verde", x + 150 - 8 - TICK, 26 + (38 - TICK) / 2, TICK, TICK)
+		gui.set_enabled(st.ticks[i], false)
 	end
 	return st
+end
+
+-- Who is ready (menu/pick.lua, { [robot] = true } or nil): their tick shows
+function M.strip_ready(st, ready)
+	for i, n in ipairs(st.ticks) do
+		local on = ready ~= nil and ready[i] == true
+		if on ~= (st.on[i] or false) then
+			st.on[i] = on
+			gui.set_enabled(n, on)
+		end
+	end
 end
 
 -- A tap on the strip: opens the tag tapped; with the tag open any tap closes

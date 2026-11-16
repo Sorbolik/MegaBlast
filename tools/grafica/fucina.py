@@ -448,11 +448,22 @@ def ritaglio(cartella, nome):
     return np.array(Image.open(os.path.join(ART, cartella, "ritagli", nome + ".png")).convert("RGBA"))
 
 
+def verde(arr):
+    """La stessa spunta, verde: chi ha premuto PRONTO nella scelta delle armi
+    (Sergio, 16 nov). Gira solo la tinta: luci, ombre e contorno restano."""
+    hsv = np.array(Image.fromarray(arr[..., :3], "RGB").convert("HSV"))
+    hsv[..., 0] = 82  # da oro a verde (tinta 0..255)
+    out = arr.copy()
+    out[..., :3] = np.array(Image.fromarray(hsv, "HSV").convert("RGB"))
+    return out
+
+
 def fai_menu():
     for nome, f, h, d in MENU_INTERI:
         intero(nome, ritaglio(d, f), h)
         if nome in SPAZI_MISURATI:
             SPAZI[nome] = SPAZI_MISURATI[nome]
+    intero("spunta_verde", verde(ritaglio("WB-044", "spunta")), 56)
     for nome, f, h, c, d in MENU_TRE:
         tre(nome, ritaglio(d, f), h, c)
     for k in SCIE:

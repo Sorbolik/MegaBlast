@@ -146,13 +146,22 @@ function CMD.draft(c)
 end
 
 -- pick{r, i, w}: seat i picks w; if it counts, the new draft of seat i
+-- (un: the pick took its PRONTO away, the others must see it)
 function CMD.pick(c)
 	local r = room(c)
-	if N.draft_pick(r.d, c.i, c.w) then
-		answer(nil, { json(N.draft_state(r.d, c.i)) })
+	local ok, un = N.draft_pick(r.d, c.i, c.w)
+	if ok then
+		answer({ un = un }, { json(N.draft_state(r.d, c.i)) })
 	else
 		answer()
 	end
+end
+
+-- ready{r, i}: seat i presses PRONTO; ok if it counts (both weapons picked),
+-- all if now everyone is ready: the match starts without waiting for the time
+function CMD.ready(c)
+	local ok, all = N.draft_confirm(room(c).d, c.i)
+	answer({ ok = ok, all = all })
 end
 
 -- start{r}: the draft closes and the match starts; map and players (with picks)

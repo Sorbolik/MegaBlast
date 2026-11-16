@@ -2,10 +2,13 @@
 # giocatori finti (tools/simula/finti): noi siamo Rosso 1 (entriamo per
 # primi). Carte come in scelta.txt: una fila alla volta (x = 320, 640, 960;
 # y = 410), sotto le due scelte fatte (a sinistra, x = 115, y = 544 e 458). Le scelte
-# degli altri non si vedono; finito, si aspetta lo scadere del tempo.
+# degli altri non si vedono. I finti scelgono e premono PRONTO subito (segno
+# verde nella striscia); il nostro PRONTO è l'ultimo: si parte senza aspettare
+# il tempo. Prima cambiamo idea su un'arma (dopo PRONTO toglierebbe il segno
+# verde: lo prova TestDraftReady del server).
 imposta server_url ws://127.0.0.1:8090/ws
 
-aspetta 1
+aspetta 3                          # il gioco è entrato (col server già compilato il comando sotto torna subito)
 server 2v2 3
 tocca 1105 52                      # GIOCA
 aspetta 0.5
@@ -20,7 +23,13 @@ tocca 559 410                       # primaria
 aspetta 0.5
 tocca 815 410                       # secondaria
 aspetta 0.5
-foto 02_pronto
-aspetta_stato modo=online 25
+foto 02_pronto_acceso                # gli altri tre hanno già il segno verde
+tocca 115 544                       # ripensamento: torna alle primarie
+aspetta 0.3
+tocca 1071 410                      # un'altra primaria
+aspetta 0.5
+foto 03_cambiata
+tocca_bordo 175 52 basso destra    # PRONTO: erano tutti pronti, si parte subito
+aspetta_stato modo=online 4
 aspetta 2
-foto 03_partita
+foto 04_partita

@@ -2208,7 +2208,10 @@ function CP.update_choice(self, dt)
 		end
 		return false
 	end
-	if self.strip then menu.lineup.update_strip(self.strip, dt) end
+	if self.strip then
+		menu.lineup.update_strip(self.strip, dt)
+		menu.lineup.strip_ready(self.strip, menu.pick.ready(self.scelta))
+	end
 	return false
 end
 

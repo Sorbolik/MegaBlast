@@ -956,6 +956,9 @@ images {
   image: "/assets/fucina/spunta.png"
 }
 images {
+  image: "/assets/fucina/spunta_verde.png"
+}
+images {
   image: "/assets/fucina/stella.png"
 }
 images {

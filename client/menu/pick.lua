@@ -6,21 +6,25 @@
 -- crates; a tap closes it. With the controller the d-pad moves the light over
 -- cards, picks and buttons, A picks, Y opens the card and Start the wheel
 -- (ui.touch, ui/controller.lua).
--- On the same phone players pick in turn, with the timer waiting for whoever
--- reads a card. Online only whoever plays on this phone picks, until the
--- server's time runs out: the picks go to the server (docs/server.md).
--- The campaign's first draft (guided) has no timer, explains more and ends
--- with GIOCA. The wheel at the top left opens ESCI.
+-- PRONTO confirms the picks (Sergio, 16 Nov; sim/draft.lua): on the same phone
+-- there is no time, each player picks and presses PRONTO in turn, and after
+-- the last one the match starts (against the bots, after yours). Online only
+-- whoever plays on this phone picks: picks and PRONTO go to the server
+-- (docs/server.md), the others see who is ready, a different pick takes it
+-- away, and the match starts when everyone is ready or the server's time runs
+-- out. The campaign's first draft (guided) explains more and ends with GIOCA.
+-- The wheel at the top left opens ESCI.
 -- Drawn with the kit (ui/kit.lua, Figma coordinates): on the left your two
 -- picks and what everyone has, with your devil; the cards in the middle; at the
--- bottom right PRONTO, dark until both are picked. The view is rebuilt at every
+-- bottom right PRONTO, dark until both are picked (and, online, after it). The view is rebuilt at every
 -- pick (few nodes, rare).
 --
 --   local scelta = require "menu.pick"
 --   local s = scelta.new(icons, nomi, effects, commands) -- icons (weapons atlas), names and a line on each weapon's effect;
 --                                                  -- commands(): "telefono", "computer" or "controller" (for the card)
 --   scelta.show(s, d, player_names, colori, guidata) -- on the same phone: d = draft.new(...)
---   local players = scelta.update(s, dt)           -- the players for game.new, once everyone has picked (online nil)
+--   local players = scelta.update(s, dt)           -- the players for game.new, once everyone is ready (online nil)
+--   scelta.ready(s)                                -- { [robot] = true } who has pressed PRONTO (nil: no draft)
 --   scelta.on_input(s, action_id, action)          -- "esci" if ESCI is tapped
 --   scelta.online(s, m, nomi, colori, send)        -- online, at every draft message from the server;
 --                                                  -- send(msg) sends the picks
@@ -131,10 +135,10 @@ local function missing(d, who)
 	return 3
 end
 
--- The next one who has to pick on the same phone, or nil
+-- The next one who has to pick and confirm on the same phone, or nil
 local function next_one(s)
-	for i = 1, #s.d.players do
-		if not draft.done(s.d, i) then return i end
+	for _, i in ipairs(s.humans) do
+		if not s.d.ready[i] then return i end
 	end
 end
 
@@ -151,8 +155,11 @@ local function texts(s)
 	elseif p == 2 then
 		title = who .. T.pick_secondary
 		under = (guide and T.secondary_guided or T.secondary):format(shots_text(config.SECONDARY_SHOTS.draft))
+	elseif s.d.ready[s.chi] then
+		title = T.waiting
+		under = T.ready_text
 	else
-		title = T.ready
+		title = who .. (guide and T.press_play or T.press_ready)
 		under = guide and T.ready_guided or T.ready_text
 	end
 	-- with the controller the card opens with Y, and you pick with the d-pad
@@ -255,27 +262,29 @@ local function refresh(s)
 	end
 	s.shown = shown
 
-	-- the time that is left (the guided draft has none)
-	if not s.guidata then
+	-- the time that is left: only online, it is the server's
+	if s.online then
 		kit.text(g, T.time, 446, 548, 16, KC.MUTE, "start", 1.5)
 		s.bar = kit.bar(g, 516, 534, 360, 14, 1, KC.HOT)
 		s.clock = kit.text(g, "", 892, 550, 22, KC.SAND)
 		bar_value(s, s.tempo / config.DRAFT_SECONDS)
 	end
 
-	-- PRONTO: dark while a weapon is missing. Only the guided draft waits for
-	-- its tap; the others start by themselves (same phone) or with the server's time
+	-- PRONTO: dark while a weapon is missing and, online, once pressed (the
+	-- others are awaited; a different pick lights it again)
 	local opt = { size = 54 }
 	if missing_n > 0 then
 		opt.off = true
 		opt.sub = missing_n > 1 and T.missing_two or T.missing_one:format(NAME_STEP[first_missing])
+	elseif d.ready[who] then
+		opt.off = true
+		opt.sub = T.waiting
 	elseif s.online then
-		opt.sub = T.starts_at_time
+		opt.sub = T.starts_all_ready
 	end
 	local go = kit.action(right, s.guidata and common.play or T.ready_action, 930, 560, 270, 84, opt)
-	if s.guidata and missing_n == 0 then
-		s.gioca = kit.button(s.buttons, go, "gioca", { main = true })
-	end
+	if not opt.off then kit.button(s.buttons, go, "pronto", { main = true }) end
+	s.can_confirm = not opt.off
 	for _, b in ipairs(s.fixed) do s.buttons[#s.buttons + 1] = b end
 	for _, b in ipairs(s.buttons) do s.luce[#s.luce + 1] = b end
 	if lit then
@@ -317,19 +326,24 @@ end
 function M.show(s, d, giocatori, palette, guided)
 	s.d, s.giocatori, s.colori, s.guidata = d, giocatori, palette, guided
 	s.online = nil
+	-- whoever hasn't picked yet plays here: the bots already have, and are ready
+	s.humans = {}
+	for i = 1, #d.players do
+		if not draft.done(d, i) then s.humans[#s.humans + 1] = i end
+	end
 	s.chi = next_one(s)
 	s.passo = s.chi and missing(d, s.chi) or 3
-	s.tempo = config.DRAFT_SECONDS
 	open_view(s)
 end
 
 local function empty(v) return v ~= "" and v or nil end
 
--- Online: m is the server's draft message (fans, our picks, ticks left). It
+-- Online: m is the server's draft message (fans, our picks, who is ready, ticks left). It
 -- makes a copy of sim/draft.lua's state for whoever plays here.
 function M.online(s, m, giocatori, palette, send)
-	local d = { offer = m.offer, offer2 = m.offer2, players = m.players, picks = {}, picks2 = {} }
+	local d = { offer = m.offer, offer2 = m.offer2, players = m.players, picks = {}, picks2 = {}, ready = {} }
 	d.picks[m.you], d.picks2[m.you] = empty(m.p), empty(m.p2)
+	for i, on in ipairs(m.rd or {}) do d.ready[i] = on == 1 or nil end
 	local first = not s.online
 	s.d, s.giocatori, s.colori, s.guidata = d, giocatori, palette, nil
 	s.online, s.send, s.chi = true, send, m.you
@@ -364,21 +378,46 @@ function M.hide(s)
 	s.d, s.online = nil, nil
 end
 
+-- With the controller, the light goes on the button of that action
+local function light_on(s, ui_action)
+	for _, b in ipairs(s.luce) do
+		if b.ui_action == ui_action then ui.light(s.luce, b) end
+	end
+end
+
 local function choose(s, w)
 	if not (s.chi and draft.pick(s.d, s.chi, w)) then return end
 	if s.online then s.send({ t = "pick", w = w }) end
 	s.passo = missing(s.d, s.chi)
-	if s.passo == 3 and not s.online and not s.guidata then
-		-- on the same phone, when one finishes it's the next one's turn
-		local after_step = next_one(s)
-		if after_step then
-			s.chi, s.passo, s.tempo = after_step, missing(s.d, after_step), config.DRAFT_SECONDS
-		else
-			-- a moment to see the last pick before starting
-			s.fatto = 0.6
-		end
-	end
+	local pad = ui.lit_up(s.luce)
 	refresh(s)
+	-- both picked: with the controller the light goes on PRONTO
+	if pad and s.passo == 3 and s.can_confirm then light_on(s, "pronto") end
+end
+
+-- PRONTO: the picks are confirmed. Online the server tells the others; on the
+-- same phone it's the next one's turn, and after the last one the match starts
+local function confirm(s)
+	if not (s.chi and draft.confirm(s.d, s.chi)) then return end
+	if s.online then
+		s.send({ t = "ready" })
+	else
+		local after = next_one(s)
+		if not after then
+			s.fatto = true
+			return
+		end
+		s.chi, s.passo = after, missing(s.d, after)
+	end
+	local pad = ui.lit_up(s.luce)
+	refresh(s)
+	-- PRONTO has gone dark: the light goes back on the cards
+	if pad then light_on(s, "carta:1") end
+end
+
+-- Who has pressed PRONTO, by robot (for the strip of names at the top)
+function M.ready(s)
+	return s.d and s.d.ready
 end
 
 local function wrap_up(s)
@@ -393,11 +432,7 @@ end
 function M.update(s, dt)
 	if not s.d then return nil end
 	if s.figure then scoria.update(s.figure, dt, s.st) end
-	if s.fatto then
-		s.fatto = s.fatto - dt
-		if s.fatto > 0 then return nil end
-		return wrap_up(s)
-	end
+	if s.fatto then return wrap_up(s) end
 	-- held long enough: the weapon's card, and the card isn't picked
 	if s.pressed_f then
 		s.pressed_f.t = s.pressed_f.t + dt
@@ -406,18 +441,10 @@ function M.update(s, dt)
 			s.pressed_f = nil
 		end
 	end
-	-- the guided draft has no timer; on the same phone the timer waits for whoever reads the card
-	if s.guidata or (s.carta and not s.online) then return nil end
-	s.tempo = s.tempo - dt
-	bar_value(s, s.tempo / config.DRAFT_SECONDS)
-	-- online, when time runs out the server decides
-	if s.online then return nil end
-	if s.tempo <= 0 and s.chi then
-		-- when time runs out, the first weapon of each missing row
-		local who = s.chi
-		while s.chi == who and not s.fatto and s.passo <= 2 do
-			choose(s, (lane(s.d, s.passo))[1])
-		end
+	-- only online there is a time: when it runs out the server decides
+	if s.online then
+		s.tempo = s.tempo - dt
+		bar_value(s, s.tempo / config.DRAFT_SECONDS)
 	end
 	return nil
 end
@@ -449,8 +476,8 @@ local function controller(s, action)
 		return "esci"
 	elseif ui_action == "rotellina" then
 		gui.set_enabled(s.esci, not gui.is_enabled(s.esci))
-	elseif ui_action == "gioca" then
-		s.fatto = 0
+	elseif ui_action == "pronto" then
+		confirm(s)
 	elseif kind == "carta" and s.passo <= 2 then
 		local w = lane(s.d, s.passo)[i]
 		if w and u == "scheda" then
@@ -479,8 +506,8 @@ function M.on_input(s, action_id, action)
 		return
 	elseif ui_action == "esci" then
 		return "esci"
-	elseif ui_action == "gioca" then
-		s.fatto = 0
+	elseif ui_action == "pronto" then
+		confirm(s)
 		return
 	end
 	-- the card is picked on release, if it wasn't held for the card

@@ -19,6 +19,8 @@ aspetta 5
 tocca 559 410                       # primaria
 aspetta 0.3
 tocca 559 410                       # secondaria
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO: si parte
 aspetta_stato modo=local 30
 aspetta_evento over 180
 aspetta 4

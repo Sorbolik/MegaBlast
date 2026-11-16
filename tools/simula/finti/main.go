@@ -1,6 +1,6 @@
 // Giocatori finti per provare l'online nel simulatore (comando "server" degli
 // scenari, tools/simula/README.md): entrano in coda, nel draft prendono
-// l'ultima carta di primarie e secondarie e in partita, quando tocca a loro,
+// l'ultima carta di primarie e secondarie, premono PRONTO e in partita, quando tocca a loro,
 // sparano un colpo.
 //
 //	go run ./tools/simula/finti -url ws://127.0.0.1:8090/ws -modo 2v2 -n 3
@@ -79,6 +79,7 @@ func gioca(url, modo string) error {
 				scelto = true
 				manda(fmt.Sprintf(`{"t":"pick","w":%q}`, m.Offer[len(m.Offer)-1]))
 				manda(fmt.Sprintf(`{"t":"pick","w":%q}`, m.Offer2[len(m.Offer2)-1]))
+				manda(`{"t":"ready"}`) // PRONTO: senza aspettare il tempo
 			}
 		case "left":
 			// nel log del server (scenari/esci_online.txt): chi è uscito lo sappiamo subito
