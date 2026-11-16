@@ -89,8 +89,10 @@ function M.slot(g, x, y, s, opt)
 	kit.pic(g, M.icon(opt.set, opt.slot, opt.level), x + s * 0.1, y + s * 0.07, s * 0.8, s * 0.8)
 	if opt.level then
 		local top = opt.level >= equip.LIVELLO_MAX
-		kit.pic(g, top and "livello_oro" or "livello_ferro", x + s - 28, y - 10, 38, 38)
-		kit.text(g, tostring(opt.level), x + s - 9, y + 15, 16, top and KC.INK or KC.SAND, "middle")
+		-- (a smaller round on a small slot, not to hide the piece)
+		local d = s < 52 and 30 or 38
+		kit.pic(g, top and "livello_oro" or "livello_ferro", x + s - d + 10, y - 10, d, d)
+		kit.text(g, tostring(opt.level), x + s - d / 2 + 10, y + d / 2 - 4, 16, top and KC.INK or KC.SAND, "middle")
 	end
 	if opt.worn then kit.pic(g, "spunta", x + 3, y + 3, 26, 26) end
 	return line

@@ -14,7 +14,7 @@
 --   cartellino.destroy(c)
 --   cartellino.TALL(opt) / cartellino.WIDE           -- how big it is
 --   cartellino.TOP(opt)                              -- the y of its top, in the middle of the screen above the thread
---   cartellino.small(g, v, x, y, w, h, opt)          -- the short tag of the waiting room and the lineup
+--   cartellino.small(g, v, x, y, w, h, opt)          -- the short tag of the waiting room
 --                                                    -- (ui/kit.lua coordinates): update and destroy as above
 --   cartellino.badge(b, x, y, d, parent)             -- a badge alone
 
@@ -43,6 +43,7 @@ local LABEL = 24
 local ROW = 30
 local RESOURCES = 42
 local TREE = 22 + 16 + 22
+local TREE_LINE = 32      -- the Sigilli on one line (the lineup's tags)
 
 -- the colors of the Sigilli, in the order of skills.PATHS (as in menu/backpack.lua)
 local KC = kit.C
@@ -81,10 +82,20 @@ function M.TOP(opt)
 	return 417 + M.TALL(opt) / 2
 end
 
+-- how big a piece's slot is on a tag that wide
+local function piece_size(W)
+	return math.min(PIECE, math.floor((W - 2 * PAD - 3 * 8) / 4))
+end
+
+-- opt.portrait: true, or how tall the devil's room is; opt.wide: narrower than
+-- WIDE (the slots shrink); opt.label = false: no STATISTICHE title;
+-- opt.tree = "line": the Sigilli on one line, without the bar
 function M.TALL(opt)
 	opt = opt or {}
-	return PAD + HEAD + (opt.portrait and PORTRAIT or 0) + PIECES + POWERS + LABEL + 4 * ROW
-		+ RESOURCES + TREE + PAD - 4
+	local portrait = opt.portrait == true and PORTRAIT or opt.portrait or 0
+	return PAD + HEAD + portrait + piece_size(opt.wide or M.WIDE) + 14 + POWERS
+		+ (opt.label == false and 4 or LABEL) + 4 * ROW
+		+ RESOURCES + (opt.tree == "line" and TREE_LINE or TREE) + PAD - 4
 end
 
 -- A badge: the stat's shape in the grade's color, with the grade written inside
@@ -117,7 +128,7 @@ end
 function M.new(v, x, y, opt, parent)
 	opt = opt or {}
 	local c = { v = v }
-	local W, H = M.WIDE, M.TALL(opt)
+	local W, H = opt.wide or M.WIDE, M.TALL(opt)
 	local col = C.SQUADRA[v.squadra] or C.LIGHT
 	c.alto = H
 	-- an iron panel of the kit (warm for whoever plays here), as big as
@@ -148,28 +159,34 @@ function M.new(v, x, y, opt, parent)
 	-- the devil
 	if opt.portrait then
 		local scoria = require "battle.scoria"
-		local pose = box(0, H / 2 - (yy + PORTRAIT - 10), 0, 0, C.LIGHT, c.root)
+		local room = opt.portrait == true and PORTRAIT or opt.portrait
+		local pose = box(0, H / 2 - (yy + room - 10), 0, 0, C.LIGHT, c.root)
 		gui.set_visible(pose, false)
-		c.figure = scoria.new(col, scoria.PERSONAGGIO, "missile")
+		-- with the pieces he wears on (the forged shape from the upgrade tier 3)
+		local gear, tiers = {}, {}
+		for _, p in ipairs(v.pezzi or {}) do gear[p.slot], tiers[p.slot] = p.set, p.tier end
+		c.figure = scoria.new(col, scoria.look_of(gear, tiers), "missile")
 		-- always with the weapon in hand (as in the proposals), not its turn
 		c.figure.holding_weapon, c.figure.weapon_t = true, math.huge
 		c.st = { x = 0, y = 0, facing = v.verso or 1, grounded = true, moving = 0, turno = false }
 		scoria.update(c.figure, 0, c.st)
-		local fk = FIGURE_H / game.DISEGNO_H
+		local fk = FIGURE_H * room / PORTRAIT / game.DISEGNO_H
 		gui.set_scale(pose, vmath.vector3(fk, fk, 1))
 		ui.alone(0, 70 / fk, 200 / fk, with_alpha(col, 0.18), pose)
 		gui.set_parent(c.figure.root, pose)
 		scoria.set_enabled(c.figure, true)
-		yy = yy + PORTRAIT
+		yy = yy + room
 	end
 
 	-- the pieces worn: the slots of the ZAINO, each with its picture and level
 	-- (an empty slot: the shadow of what goes there)
+	local ps = piece_size(W)
+	local pgap = (wide - 4 * ps) / 3
 	for i, p in ipairs(v.pezzi or {}) do
-		gear_ui.slot(g, sx + (i - 1) * (PIECE + PIECE_GAP), yy, PIECE,
+		gear_ui.slot(g, sx + (i - 1) * (ps + pgap), yy, ps,
 			{ set = p.set, slot = p.slot, level = p.set and p.livello or nil })
 	end
-	yy = yy + PIECES
+	yy = yy + ps + 14
 
 	-- the powers, as many as stay in the line
 	local powers = v.abilities or {}
@@ -192,8 +209,12 @@ function M.new(v, x, y, opt, parent)
 
 	-- the stats, with the bars of the menus: the base, what is above it in mint;
 	-- a value under the base in red
-	kit.text(g, common.stats, sx, yy + 16, 18, KC.HOT, "start", 1)
-	yy = yy + LABEL
+	if opt.label == false then
+		yy = yy + 4
+	else
+		kit.text(g, common.stats, sx, yy + 16, 18, KC.HOT, "start", 1)
+		yy = yy + LABEL
+	end
 	local base = game.base_stats()
 	for i, r in ipairs(showcase.rows(v, base)) do
 		local key = showcase.BARS[i][1]
@@ -219,18 +240,22 @@ function M.new(v, x, y, opt, parent)
 	yy = yy + RESOURCES
 
 	-- the Sigilli: one bar of POINTS_MAX, a stretch in each path's color
-	kit.text(g, T.tree:format(v.punti or skills.POINTS_MAX), sx, yy + 16, 16, KC.MUTE, "start", 0.5)
-	yy = yy + 22
-	kit.rect(g, sx - 2, yy - 2, wide + 4, 14, KC.INK)
-	kit.rect(g, sx, yy, wide, 10, KC.TRACK)
-	local bx = sx
-	for i, punti in ipairs(v.albero or {}) do
-		local w = wide * punti / skills.POINTS_MAX
-		if w > 0 then
-			kit.rect(g, bx, yy, w, 10, BRANCHES[i] or KC.SAND)
-			kit.rect(g, bx + w - 1, yy, 2, 10, KC.INK)
+	if opt.tree == "line" then
+		yy = yy - 10
+	else
+		kit.text(g, T.tree:format(v.punti or skills.POINTS_MAX), sx, yy + 16, 16, KC.MUTE, "start", 0.5)
+		yy = yy + 22
+		kit.rect(g, sx - 2, yy - 2, wide + 4, 14, KC.INK)
+		kit.rect(g, sx, yy, wide, 10, KC.TRACK)
+		local bx = sx
+		for i, punti in ipairs(v.albero or {}) do
+			local w = wide * punti / skills.POINTS_MAX
+			if w > 0 then
+				kit.rect(g, bx, yy, w, 10, BRANCHES[i] or KC.SAND)
+				kit.rect(g, bx + w - 1, yy, 2, 10, KC.INK)
+			end
+			bx = bx + w
 		end
-		bx = bx + w
 	end
 	yy = yy + 16
 	for i = 1, #BRANCHES do
@@ -242,7 +267,7 @@ function M.new(v, x, y, opt, parent)
 	return c
 end
 
--- The short tag (waiting room, lineup): a card in the team's color with level,
+-- The short tag (waiting room): a card in the team's color with level,
 -- name, the devil, the four stats as bars and what he carries. g, x, y, w, h as
 -- in ui/kit.lua (top left corner). opt: color, sel, role (the line under the
 -- name, else the showcase's), facing
