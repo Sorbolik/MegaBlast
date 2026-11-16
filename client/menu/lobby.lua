@@ -34,7 +34,7 @@ M.TIPS = T.tips
 local KC = kit.C
 local TEAMS = ui.C.SQUADRA
 local TIP_WIDE = 566
-local TAG_W, TAG_H = 230, 330
+local TAG_W, TAG_TOP = 230, 278
 local EMPTY_W, EMPTY_H = 220, 300
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
@@ -131,7 +131,8 @@ function M.players(s, showcases)
 	for i = 1, s.of do
 		local v = showcases[i]
 		if v then
-			local c = tag.small(s.g, v, s.xs[i], 290, TAG_W, TAG_H, { color = side(s, i), sel = false })
+			-- the tag of the match, short: the devil with his pieces on, the pieces, the powers
+			local c = tag.new(v, s.xs[i] + TAG_W / 2, 720 - TAG_TOP, { wide = TAG_W, portrait = 118, short = true, color = side(s, i) }, s.radice)
 			s.card_list[#s.card_list + 1] = c
 			-- whoever just arrived comes in with a small jump
 			if i > s.n then
