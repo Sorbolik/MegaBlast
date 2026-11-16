@@ -688,6 +688,34 @@ local function capture(pose, g)
 	end
 end
 
+-- The same pose from a state of the server (apply_state reads the rest), so the
+-- match (self.g) can stay at the state being drawn while the next ones wait
+function menu.capture_net(pose, s)
+	for i, sr in ipairs(s.r) do
+		local r = pose.r[i]
+		r.x, r.y, r.g = sr.x, sr.y, sr.g
+		r.gs = sr.gs and true or false
+		if r.gs then r.gx, r.gy = sr.gx, sr.gy end
+	end
+	pose.has_p = s.p ~= nil
+	if pose.has_p then pose.p.x, pose.p.y = s.p.x, s.p.y end
+	local n = math.min(s.o and #s.o or 0, game.MAX_ORBS)
+	for i = 1, n do
+		local src, dst = s.o[i], pose.o[i]
+		dst.id, dst.x, dst.y = src.i, src.x, src.y
+	end
+	pose.no = n
+	for i = 1, game.SHARD_COUNT do pose.s[i].on = false end
+	for _, sh in ipairs(s.s or {}) do
+		local ps = pose.s[sh.i]
+		ps.on, ps.x, ps.y = true, sh.x, sh.y
+	end
+	for id in pairs(pose.c) do pose.c[id] = nil end
+	for _, c in ipairs(s.c or {}) do
+		pose.c[c.i] = { x = c.x, y = c.y, landed = c.l, seen = true, item = c.w }
+	end
+end
+
 -- ticks per frame while a bot thinks (update, the local match loop)
 local CATCHUP_BOT = 4
 
@@ -713,8 +741,10 @@ local function reset_pose(self)
 	self.pose_t = 0
 	-- online the states are drawn from a queue (main/playout.lua)
 	local pl = menu.playout
-	self.playout = self.playout or pl.new(new_pose, capture, game.SNAPSHOT_TICKS * game.DT)
+	self.playout = self.playout or pl.new(new_pose, capture, game.SNAPSHOT_TICKS * game.DT, menu.capture_net)
 	pl.reset(self.playout, self.g)
+	-- the server's events since its last state: they wait for the next one
+	self.net_events = {}
 end
 
 -- Match -----------------------------------------------------------------------
@@ -803,7 +833,6 @@ local function new_match(self, seed, map, opts)
 	self.tele_armed = false
 	self.hands, self.hand_of = {}, nil   -- on the same phone, in each one's hands
 	self.orbs_wait = 0   -- our orbs still flying toward the teleport
-	self.snap = {}
 	self.crate_tabs = {}
 	for _, n in ipairs(self.crate_nodes) do n.id = nil; gui.set_enabled(n.node, false) end
 	self.acc = 0
@@ -1305,7 +1334,8 @@ local function handle_event(self, e)
 	elseif e.type == "janus_swap" then
 		-- the two trade places: the view jumps (like a teleport), each gets a flash and a word
 		for _, id in ipairs({ e.a, e.b }) do
-			if self.mode == "online" then self.snap[id] = true else snap_robot(self, id) end
+			-- (online the queue already knows: net_state)
+			if self.mode ~= "online" then snap_robot(self, id) end
 			plate.announcement(self.robots[id].plate, TM.swapped)
 		end
 		-- a bloom of the color of whoever arrives opens at each spot, with gold sparks
@@ -1316,12 +1346,8 @@ local function handle_event(self, e)
 		self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.bx, e.by
 		sound.play("#globo", { speed = 1.5 })
 	elseif e.type == "teleport" then
-		if self.mode == "online" then
-			-- the state with the robot in its new position arrives right after the event
-			self.snap[e.robot] = true
-		else
-			snap_robot(self, e.robot)
-		end
+		-- (online the queue already knows: net_state)
+		if self.mode ~= "online" then snap_robot(self, e.robot) end
 	elseif e.type == "teleports" or e.type == "swap" then
 		-- swapping the second attack gives an orb, which flies like the time ones
 		e.amount = e.amount or 1
@@ -1546,11 +1572,7 @@ local function handle_event(self, e)
 	elseif e.type == "respawn" then
 		scoria.set_enabled(self.robots[e.robot].rig, true)
 		plate.set_enabled(self.robots[e.robot].plate, true)
-		if self.mode == "online" then
-			self.snap[e.robot] = true
-		else
-			snap_robot(self, e.robot)
-		end
+		if self.mode ~= "online" then snap_robot(self, e.robot) end
 	elseif e.type == "over" then
 		-- prova_vince 1: the first robot's team wins (scenari/podio_forgia.txt)
 		if SIMULATE and config_int("megablast.prova_vince", 0) > 0 then e.winner = self.g.robots[1].team end
@@ -1719,12 +1741,37 @@ local function apply_state(self, s)
 		t.id, t.x, t.y, t.landed, t.item, t.weapon = c.i, c.x, c.y, c.l, c.w ~= nil or nil, c.w
 		list[i] = t
 	end
-	-- into the queue, drawn at an even pace a little later (main/playout.lua)
+end
+
+-- A state arrived: into the queue with the events before it, drawn at an even
+-- pace a little later (main/playout.lua). The match changes only when the
+-- drawing gets there (net_reach): events, life, turn and rope with the robots.
+function CP.net_state(self, s)
 	local now = socket.gettime()
 	if self.playout.last_at then frames.net(now - self.playout.last_at) end
-	local snaps = next(self.snap) and self.snap or nil
-	if snaps then self.snap = {} end
-	menu.playout.arrive(self.playout, g, now, snaps)
+	-- the robots that reappear elsewhere in this state don't slide there
+	local snaps
+	for _, e in ipairs(self.net_events) do
+		if e.type == "teleport" or e.type == "respawn" then
+			snaps = snaps or {}
+			snaps[e.robot] = true
+		elseif e.type == "janus_swap" then
+			snaps = snaps or {}
+			snaps[e.a], snaps[e.b] = true, true
+		end
+	end
+	menu.playout.arrive(self.playout, s, now, snaps, { s = s, ev = self.net_events })
+	self.net_events = {}
+end
+
+function CP.net_reach(self, data)
+	for _, e in ipairs(data.ev) do
+		if self.g then handle_event(self, e) end
+	end
+	if self.g then
+		apply_state(self, data.s)
+		if self.conta then CP.conta.tick(self.conta, self.g) end
+	end
 end
 
 local function on_server_message(self, m)
@@ -1809,10 +1856,9 @@ local function on_server_message(self, m)
 		self.drawn_map = nil
 		draw_terrain(self)
 	elseif m.t == "state" and self.g then
-		apply_state(self, m)
-		if self.conta then CP.conta.tick(self.conta, self.g) end
+		CP.net_state(self, m)
 	elseif m.t == "ev" and self.g then
-		handle_event(self, m)
+		self.net_events[#self.net_events + 1] = m
 	elseif m.t == "away" then
 		show_message(self, TM.opponent_away, true)
 	elseif m.t == "back" and m.robot ~= self.me then
@@ -4650,7 +4696,8 @@ function update(self, dt)
 			local v = self.view[i]
 			v.x, v.y, v.px = self.playout.q[1].pose.r[i].x, self.playout.q[1].pose.r[i].y, nil
 		end
-		self.pose_a, self.pose_b, self.pose_t = menu.playout.advance(self.playout, dt_world, socket.gettime(), self.snap_view)
+		self.net_reach = self.net_reach or function(data) CP.net_reach(self, data) end
+		self.pose_a, self.pose_b, self.pose_t = menu.playout.advance(self.playout, dt_world, socket.gettime(), self.snap_view, self.net_reach)
 		self.pose_dt = 1
 		-- we send the server only the changes, and only on our turn
 		if my_turn(self) and self.g.phase == "aim" then

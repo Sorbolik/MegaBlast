@@ -101,4 +101,36 @@ do
 	check(#snapped == 1 and snapped[1] == 1, "teletrasporto: il robot non è stato spostato")
 end
 
+-- 4. what comes with a state (events, life, turn) is handed back when the drawing
+-- gets there: every one, once, in order, not before its state is drawn, even
+-- when the states arrive in a heap or after a long pause (the app in the background)
+do
+	local g = { x = 0, y = 0 }
+	local p = playout.new(new_pose, capture, PERIOD)
+	playout.reset(p, g)
+	local got, early = {}, 0
+	local function arrival(i)
+		if i > 40 and i <= 100 then return 100 * PERIOD + 2 end   -- sixty held back two seconds
+		return i * PERIOD + 0.02 + ((i % 7 == 0) and 0.09 or 0)
+	end
+	local nxt, t, dt, n = 1, 0, 1 / 120, 160
+	while nxt <= n or t < arrival(n) + 0.5 do
+		t = t + dt
+		while nxt <= n and arrival(nxt) <= t do
+			g.x = nxt * 6
+			playout.arrive(p, g, t, nil, { i = nxt })
+			nxt = nxt + 1
+		end
+		local a, b, k = playout.advance(p, dt, t, function() end, function(d)
+			got[#got + 1] = d.i
+		end)
+		-- drawn at or after the last state handed back, never before it
+		if #got > 0 and drawn(a, b, k) < got[#got] * 6 - 0.001 then early = early + 1 end
+	end
+	local in_order = #got == n
+	for i, v in ipairs(got) do in_order = in_order and v == i end
+	check(in_order, "coda: " .. #got .. " stati consegnati su " .. n .. ", o fuori ordine")
+	check(early == 0, "coda: " .. early .. " volte un evento prima del suo stato disegnato")
+end
+
 if fails == 0 then print("OK playout") end
