@@ -1,19 +1,4 @@
 images {
-  image: "/assets/fucina/attacco_scudo.png"
-}
-images {
-  image: "/assets/fucina/banda_allenamento.png"
-}
-images {
-  image: "/assets/fucina/banda_armeria.png"
-}
-images {
-  image: "/assets/fucina/banda_campagna.png"
-}
-images {
-  image: "/assets/fucina/banda_eventi.png"
-}
-images {
   image: "/assets/fucina/barra_brace_cx.png"
 }
 images {
@@ -168,12 +153,6 @@ images {
 }
 images {
   image: "/assets/fucina/chiodo.png"
-}
-images {
-  image: "/assets/fucina/cornice_argento.png"
-}
-images {
-  image: "/assets/fucina/cornice_bronzo.png"
 }
 images {
   image: "/assets/fucina/corona.png"
@@ -890,54 +869,6 @@ images {
   image: "/assets/fucina/scheggia_sx.png"
 }
 images {
-  image: "/assets/fucina/scia_acciaio.png"
-}
-images {
-  image: "/assets/fucina/scia_brace.png"
-}
-images {
-  image: "/assets/fucina/scia_cristallo.png"
-}
-images {
-  image: "/assets/fucina/scia_cuoio.png"
-}
-images {
-  image: "/assets/fucina/scia_ferro.png"
-}
-images {
-  image: "/assets/fucina/scia_fiamma.png"
-}
-images {
-  image: "/assets/fucina/scia_fiocco.png"
-}
-images {
-  image: "/assets/fucina/scia_gelo.png"
-}
-images {
-  image: "/assets/fucina/scia_ghiaccio.png"
-}
-images {
-  image: "/assets/fucina/scia_moneta.png"
-}
-images {
-  image: "/assets/fucina/scia_nastro.png"
-}
-images {
-  image: "/assets/fucina/scia_oro.png"
-}
-images {
-  image: "/assets/fucina/scia_paglia.png"
-}
-images {
-  image: "/assets/fucina/scia_ricciolo.png"
-}
-images {
-  image: "/assets/fucina/scia_scintilla.png"
-}
-images {
-  image: "/assets/fucina/scia_stella.png"
-}
-images {
   image: "/assets/fucina/sconto.png"
 }
 images {
@@ -945,12 +876,6 @@ images {
 }
 images {
   image: "/assets/fucina/segno_scende.png"
-}
-images {
-  image: "/assets/fucina/segno_uguale.png"
-}
-images {
-  image: "/assets/fucina/sei_qui.png"
 }
 images {
   image: "/assets/fucina/spunta.png"
@@ -984,9 +909,6 @@ images {
 }
 images {
   image: "/assets/fucina/tondo_ferro.png"
-}
-images {
-  image: "/assets/fucina/tondo_gelo.png"
 }
 images {
   image: "/assets/fucina/tondo_oro.png"

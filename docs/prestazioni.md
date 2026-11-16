@@ -322,7 +322,7 @@ quattro volte tanto.
 | `battle/devil.atlas` (diavoletto, con mipmap) | 8192×8192 | 4096×4096 | 89 MB (prima 341) |
 | `ui/fucina.atlas` | 4096×4096 | uguale | 64 MB |
 | `ui/fette.atlas` | 4096×2048 | uguale | 32 MB |
-| `ui/ui.atlas` | 2048×2048 | uguale | 16 MB |
+| `ui/ui.atlas` | 2048×2048 | 2048×1024 | 8 MB (tolte ellissi e monete che non si usavano più) |
 | gli altri cinque | | uguali | 30 MB in tutto |
 
 Causa del 8192: teste, corna, cappucci ed elmi erano a 13,5 pixel per unità
@@ -333,8 +333,8 @@ telefono o tablet più grande sono ~3,5 pixel veri per unità, quindi 4 basta e
 la GPU usava comunque una mipmap più piccola. Regola: **nessun pezzo oltre
 4 px per unità** (i mantelli 4,5, perché lo shader li stira).
 
-APK (arm64, release): 73,4 MB → 64,3 MB (teste −6,7, dipinti PNG ricompressi
-senza perdita con oxipng −2). Il resto: atlanti 30 MB, dipinti 28 MB, motore
+APK (arm64, release): 73,4 MB → 63,5 MB (teste −6,7, dipinti PNG ricompressi
+senza perdita con oxipng −2, immagini non più usate −0,8). Il resto: atlanti 30 MB, dipinti 28 MB, motore
 5 MB. Oltre i 50 MB Telegram rifiuta il file dal server normale dei bot: con i
 segreti `TELEGRAM_API_ID` e `TELEGRAM_API_HASH` l'APK passa da un server dei bot
 locale sul runner (fino a 2 GB, `.github/workflows/apk.yml`).
