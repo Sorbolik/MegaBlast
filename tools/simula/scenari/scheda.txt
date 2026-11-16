@@ -8,7 +8,7 @@ imposta prova_scelta 1
 imposta prova_durata 3
 imposta prova_profilo 1             # un profilo che ha già giocato: pezzi, poteri, badge
 
-aspetta 1.5
+aspetta 4
 foto 01_home
 tocca 220 172                      # ALLENAMENTO
 aspetta 1

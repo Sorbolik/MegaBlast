@@ -26,6 +26,7 @@
 --                                                  -- send(msg) sends the picks
 --   scelta.hide(s)
 --   scelta.when_closing(s, fn)                     -- fn() when the draft closes
+--   scelta.scene_back(s)                           -- the backdrop again, after a screen over the draft took it
 
 local config = require "sim.config"
 local draft = require "sim.draft"
@@ -339,6 +340,11 @@ function M.online(s, m, giocatori, palette, send)
 	else
 		refresh(s)
 	end
+end
+
+-- The backdrop back under the draft (the lineup had it: menu/lineup.lua)
+function M.scene_back(s)
+	if s.scene then scene_on(s, true) end
 end
 
 -- fn() when the draft closes (finished, hidden, leaving): the lineup and its

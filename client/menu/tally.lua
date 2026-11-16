@@ -42,13 +42,10 @@ function M.new(g, me, name_list)
 	return c
 end
 
-local function lap(c, g)
-	return g.final_round and T.final or T.round:format(g.round or 1)
-end
-
+-- giro: the lap as a number (the history puts the moment on that lap of the rope)
 local function moment(c, g, txt)
 	if #c.moments >= M.MOMENTS then return end
-	c.moments[#c.moments + 1] = { t = g.tick, giro = lap(c, g), testo = txt }
+	c.moments[#c.moments + 1] = { t = g.tick, giro = g.round or 1, testo = txt }
 end
 
 -- The robot me attacks with arma (also the swap for an orb, which doesn't count)

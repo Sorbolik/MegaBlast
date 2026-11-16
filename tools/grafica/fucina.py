@@ -548,10 +548,42 @@ def fai_bivio():
             intero("bivio_nodo_" + stato, nodo, 96)
         scheda("bivio_piastra_" + stato, piastra)
     t = griglia_trasparente(os.path.join(p, "tacche_1.png"), [2, 2, 2, 4], 1500)
-    nomi = ["tacca_vuota", "tacca_ali", "tacca_fucina", "tacca_corazza", "punto_libero", "punto_speso",
+    # (le prime quattro del foglio, le tacche a rombo, non servono piu': Sergio, 16 nov)
+    nomi = [None, None, None, None, "punto_libero", "punto_speso",
             "tasto_meno", "tasto_meno_spento", "tasto_piu", "tasto_piu_spento"]
     for nome, a in zip(nomi, t):
-        intero(nome, a, 96 if nome.startswith("tasto") else 64)
+        if nome:
+            intero(nome, a, 96 if nome.startswith("tasto") else 64)
+    fai_tacca_sigillo()
+
+
+def tondo_storto(w, h, raggi, n=24):
+    """I punti di un rettangolo w x h con un raggio per angolo (alto sx, alto dx,
+    basso dx, basso sx): la forma un po' storta dei pezzi."""
+    centri = [(raggi[0], raggi[0], 180), (w - raggi[1], raggi[1], 270), (w - raggi[2], h - raggi[2], 0), (raggi[3], h - raggi[3], 90)]
+    punti = []
+    for (cx, cy, a0), r in zip(centri, raggi):
+        for i in range(n + 1):
+            a = np.radians(a0 + 90 * i / n)
+            punti.append((cx + r * np.cos(a), cy + r * np.sin(a)))
+    return punti
+
+
+def fai_tacca_sigillo():
+    """La tacca dei punti dei Sigilli (Sergio, 16 nov: stretta e alta come nella
+    bozza approvata, 13 x 24 con gli angoli 5 3 6 3 e il bordo d'inchiostro):
+    disegnata qui, bianca, il gioco la tinge del colore della via."""
+    from PIL import ImageDraw
+    k = 8 * 4  # quattro volte la misura sullo schermo, disegnata otto volte piu' grande
+    w, h, bordo = 13 * k, 24 * k, 2 * k
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.polygon(tondo_storto(w, h, [5 * k, 3 * k, 6 * k, 3 * k]), fill=(18, 11, 12, 255))
+    dentro = tondo_storto(w - 2 * bordo, h - 2 * bordo, [3 * k, 1.5 * k, 4 * k, 1.5 * k])
+    d.polygon([(x + bordo, y + bordo) for x, y in dentro], fill=(255, 255, 255, 255))
+    im = im.resize((w // 8, h // 8), Image.LANCZOS)
+    salva(im, "tacca_sigillo")
+    MISURE["tacca_sigillo"] = im.size
 
 
 def fai_profilo():

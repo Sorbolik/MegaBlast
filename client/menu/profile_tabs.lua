@@ -215,11 +215,13 @@ local ROWS = 6
 local RH = 84
 -- the open match grows under its row: how it went lap by lap, its moments on the
 -- line as numbers (the approved board, WB-067 R2)
-local DETAIL = 140
+local DETAIL = 182
 local BOTTOM = 598
+-- the moments shown on the line (the match keeps more)
+local SHOWN = 4
 
 -- the rope: your team's lead at every lap, in the box x..x+w, y..y+h; the zero
--- line dashed. Returns where lap i is
+-- line dashed. Returns where lap i is (i can be between two laps)
 local function rope(g, values, x, y, w, h, my_own, another)
 	local cy = y + h / 2
 	local max = 50
@@ -227,7 +229,10 @@ local function rope(g, values, x, y, w, h, my_own, another)
 	local n = #values
 	local function point(i)
 		i = math.max(1, math.min(n, i))
-		return x + (n > 1 and (i - 1) * w / (n - 1) or w / 2), cy - values[i] / max * (h / 2 - 8)
+		local a = math.floor(i)
+		local b = math.min(n, a + 1)
+		local v = values[a] + (values[b] - values[a]) * (i - a)
+		return x + (n > 1 and (i - 1) * w / (n - 1) or w / 2), cy - v / max * (h / 2 - 8)
 	end
 	for i = 2, n do
 		local x1, y1 = point(i - 1)
@@ -248,34 +253,72 @@ local function rope(g, values, x, y, w, h, my_own, another)
 	return point, zero, cy
 end
 
+-- the lap of a moment as a number (the matches saved before 16 Nov have its
+-- words, "GIRO 3" or "ULTIMO GIRO": the number in them, or the last lap)
+local function lap_of(m, laps)
+	local r = tonumber(m.giro) or tonumber(tostring(m.giro or ""):match("%d+")) or laps
+	return math.max(1, math.min(laps, r))
+end
+
 -- under the open row: the rope across the row, the moments as numbers on it
+-- (the approved board: a gold round with the lap's number on the line, its
+-- words right under it; a tap replays from there)
 local function detail(s, g, pa, x, y, w)
-	local me = (pa.giocatori or {})[pa.me or 1] or {}
 	local my_own = KC.HOT
 	local another = KC.STEEL
 	local ok = s.replay_ok and s.replay_ok(pa.numero)
-	local moments = pa.moments or {}
+	local values = pa.fune or { 0 }
+	local laps = math.max(1, #values - 1)
+	local moments = {}
+	for i, m in ipairs(pa.moments or {}) do
+		if i > SHOWN then break end
+		moments[i] = { i = i, lap = lap_of(m, laps), testo = m.testo or "" }
+	end
 	fit(kit.text(g, kit.upper(#moments > 0 and T.round_by_round_tap or T.round_by_round), x + 32, y + 22, 16, KC.MUTE, "start", 0.5),
 		w - 64)
-	local point, zero, cy = rope(g, pa.fune or { 0 }, x + 48, y + 40, w - 112, 80, my_own, another)
-	local holes = {}
-	for i, m in ipairs(moments) do
-		if i > 4 then break end
-		local px, py = point((m.giro or 1))
-		kit.dot(g, px, py, 40, KC.INK)
-		kit.dot(g, px, py, 32, ok and GOLD or KC.MUTE)
-		kit.text(g, tostring(m.giro), px, py + 7, 16, KC.INK, "middle")
-		-- the moment's words right under its number
-		local lx = math.max(x + 110, math.min(x + w - 110, px))
-		local label = fit(kit.text(g, kit.upper(m.testo), lx, py + 42, 16, ok and KC.SAND or KC.MUTE, "middle", 0.3), 200)
-		if math.abs(py + 36 - cy) < 18 then
-			local half = kit.width(label) / 2 + 10
-			holes[#holes + 1] = { lx - half, lx + half }
+	local point, zero, cy = rope(g, values, x + 48, y + 46, w - 112, 84, my_own, another)
+	-- the moments of the same lap side by side inside it
+	local in_lap, seen = {}, {}
+	for _, m in ipairs(moments) do in_lap[m.lap] = (in_lap[m.lap] or 0) + 1 end
+	local holes, right = {}, {}
+	for _, m in ipairs(moments) do
+		seen[m.lap] = (seen[m.lap] or 0) + 1
+		local px, py = point(m.lap + seen[m.lap] / (in_lap[m.lap] + 1))
+		kit.dot(g, px, py, 36, KC.INK)
+		kit.dot(g, px, py, 30, ok and GOLD or KC.MUTE)
+		kit.text(g, tostring(m.lap), px, py + 6, 16, KC.INK, "middle")
+		-- the moment's words right under its number, on two lines if long, never
+		-- over the words of the moment before
+		local ly = py + 38
+		local lines = kit.wrap(g, kit.upper(m.testo), 16, 140)
+		local nodes, half = {}, 0
+		for li, line in ipairs(lines) do
+			nodes[li] = fit(kit.text(g, line, px, ly + (li - 1) * 18, 16, ok and KC.SAND or KC.MUTE, "middle", 0.3), 200)
+			half = math.max(half, kit.width(nodes[li]) / 2)
 		end
-		if ok then kit.zone(g, s.buttons, lx - 100, py - 24, 200, 76, "momento:" .. i) end
+		local lx = math.max(x + 32 + half, math.min(x + w - 32 - half, px))
+		local bottom = ly + (#lines - 1) * 18
+		for _, r in ipairs(right) do
+			if ly - 16 < r[3] + 6 and bottom > r[2] - 22 and lx - half < r[1] + 12 then lx = math.min(x + w - 32 - half, r[1] + 12 + half) end
+		end
+		right[#right + 1] = { lx + half, ly, bottom }
+		for li, n in ipairs(nodes) do
+			local at = gui.get_position(n)
+			at.x = lx - g.ox
+			gui.set_position(n, at)
+			local base = ly + (li - 1) * 18
+			if cy > base - 14 and cy < base + 4 then
+				local hw = kit.width(n) / 2 + 8
+				holes[#holes + 1] = { lx - hw, lx + hw }
+			end
+		end
+		if ok then
+			kit.zone(g, s.buttons, px - 28, py - 28, 56, 56, "momento:" .. m.i)
+			kit.zone(g, s.buttons, lx - half - 6, ly - 20, 2 * half + 12, bottom - ly + 28, "momento:" .. m.i)
+		end
 	end
 	zero(holes)
-	if #moments == 0 then kit.text(g, kit.upper(T.no_moments), x + w / 2, y + 152, 16, KC.MUTE, "middle", 0.5) end
+	if #moments == 0 then kit.text(g, kit.upper(T.no_moments), x + w / 2, y + 172, 16, KC.MUTE, "middle", 0.5) end
 end
 
 local function sheet_matches(s)
@@ -382,7 +425,7 @@ local function build(s)
 		kit.rect(s.veil_g, -2560, -1440, 1280 * 5, 720 * 5, kit.with_alpha(C.BOTTOM, 0.82))
 		local v = s.aperto
 		v.verso = 1
-		s.carta = tag.new(v, 640, 360 + tag.TALL({ portrait = true }) / 2, { portrait = true, tu = v.tu }, s.veil_g.node)
+		s.carta = tag.new(v, 640, tag.TOP({ portrait = true }), { portrait = true, tu = v.tu }, s.veil_g.node)
 	else
 		s.carta = nil
 	end

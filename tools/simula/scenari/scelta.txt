@@ -8,8 +8,14 @@
 imposta prova_scelta 1
 imposta giocatori 2v2
 
-aspetta 2
-tocca 222 148                      # STESSO TELEFONO
+aspetta 4
+tocca 220 172                      # ALLENAMENTO
+aspetta 1
+tocca 770 550                      # STESSO TELEFONO
+aspetta 0.3
+tocca 761 470                      # 2 CONTRO 2
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.5
 foto 00_schieramento                # prima i cartellini di tutti, due squadre
