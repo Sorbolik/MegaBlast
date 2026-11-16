@@ -89,7 +89,7 @@ ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","rd":[0,
 (`offer` le primarie, `offer2` le secondarie; `p` e `p2` le **sue** scelte:
 quelle degli altri non si mandano, Sergio 30 ott; `rd` chi ha premuto PRONTO,
 1 o 0 per ogni robot; `left` i tick rimasti;
-`vetrine` il cartellino di ognuno, livello e badge, arrivati col `hello` e
+`vetrine` il cartellino di ognuno, livello, badge e pezzi indossati, arrivati col `hello` e
 controllati dal server) e
 manda `{"t":"pick","w":"shards"}` per ognuna (l'arma dice la categoria; si può
 cambiare, i doppioni vanno bene anche fra compagni). La conferma torna solo a
@@ -224,7 +224,12 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
 Il primo messaggio del client è `{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
 (`mode`: la coda scelta in DOVE GIOCHI?, o la `coda` di un evento; `vetrina`:
 livello e al massimo tre badge, il server tiene solo i valori validi, livello
-1-999, badge di lettere minuscole con grado 1-4). Se la
+1-999, badge di lettere minuscole con grado 1-4; dal 16 nov anche `"pz":[{"set":"corvo","liv":24},…]`,
+i pezzi indossati, uno per posto nell'ordine di `equip.SLOTS`: il server ne tiene quattro, con nome di
+lettere minuscole e livello 1-30, il resto diventa posto vuoto `{"set":"","liv":0}`; servono solo a
+mostrarli sui cartellini, online non cambiano ancora le statistiche, e senza profili sul server non si
+può sapere se il giocatore li possiede; un client vecchio non manda `pz` e ignora quello degli altri,
+la versione del protocollo resta 9). Se la
 versione non è quella del server la risposta è `{"t":"error","e":"version"}` e
 il client chiede di aggiornare il gioco. La versione (`protocolVersion` in
 `server.go`, `PROTOCOL` nel client) va alzata quando i messaggi cambiano in un

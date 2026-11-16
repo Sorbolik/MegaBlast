@@ -21,7 +21,6 @@ local config = require "sim.config"
 local tag = require "ui.tag_card"
 local kit = require "ui.kit"
 local T = require("lang.text").lineup
-local NO_POWER = require("lang.text").tag_card.no_power
 local common = require("lang.text").common
 
 local M = {}
@@ -30,7 +29,7 @@ local C = ui.C
 local W, H = 1280, 720
 local TOUCH = hash("touch")
 local KC = kit.C
-local TAG_W, TAG_H = 236, 340
+local TAG_W, TAG_TOP = 250, 106   -- how wide a tag is, and where its top is
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local function with_alpha(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
@@ -62,9 +61,11 @@ function M.seats(squads)
 	return xs, false
 end
 
--- Where the short tags stand, in the same order as the strip's places: two
--- and two around the VS, or in a row
-local SHORT = { [2] = { 380, 900 }, [4] = { 174, 418, 838, 1082 } }
+-- Where the tags stand, in the same order as the strip's places: two and two
+-- around the VS, or in a row. They are the tag of the match (ui/tag_card.lua),
+-- narrower to stay four in a row, with the devil wearing his pieces and the
+-- Sigilli on one line (Sergio, 16 Nov)
+local PLACES = { [2] = { 393, 887 }, [4] = { 135, 393, 887, 1145 } }
 
 function M.new(showcases, title)
 	local s = { vetrine = showcases, card_list = {}, t = config.LINEUP_SECONDS }
@@ -93,18 +94,16 @@ function M.new(showcases, title)
 	gui.set_visible(s.radice, false)
 	local g = { node = s.radice, ox = 0, oy = 720 }
 
-	-- the tags: from left to right one up and one down
+	-- the tags, side by side
 	local order = {}
 	for i = 1, #showcases do order[i] = i end
 	table.sort(order, function(a, b) return xs[a] < xs[b] or (xs[a] == xs[b] and a < b) end)
-	local short = vs and SHORT[#order]
+	local places = vs and PLACES[#order]
 	for rank, i in ipairs(order) do
 		local v = showcases[i]
-		if short then xs[i] = short[rank] else xs[i] = 640 + (rank - (#order + 1) / 2) * 246 end
+		if places then xs[i] = places[rank] else xs[i] = 640 + (rank - (#order + 1) / 2) * (TAG_W + 8) end
 		v.verso = xs[i] < 640 and 1 or -1
-		local power = (v.abilities or {})[1]
-		s.card_list[i] = tag.small(g, v, xs[i] - TAG_W / 2, 150 + ((rank - 1) % 2) * 26, TAG_W, TAG_H,
-			{ sel = v.tu, role = power or NO_POWER })
+		s.card_list[i] = tag.new(v, xs[i], 720 - TAG_TOP, { wide = TAG_W, portrait = 118, label = false, tree = "line", tu = v.tu }, s.radice)
 		kit.pop(s.card_list[i].root, 0.05 + rank * 0.07, 0.25)
 	end
 	if vs then
