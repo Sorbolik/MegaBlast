@@ -106,6 +106,12 @@ for _, n in pairs(end_of.armi) do weapon_damage = weapon_damage + n end
 check(weapon_damage <= end_of.valori.danno + 1 and weapon_damage >= end_of.valori.danno * 0.5,
 	"count: the damage per weapon is within the standings damage (" .. weapon_damage .. " su " .. end_of.valori.danno .. ")")
 check(#end_of.partita.fune >= 2 and end_of.partita.esito:match("^[VSP]$"), "count: the rope lap by lap and the outcome")
+-- (the history puts every moment on its lap of the rope: a number, never words)
+local laps_ok = true
+for _, m in ipairs(end_of.partita.moments) do
+	if type(m.giro) ~= "number" or m.giro < 1 or m.giro > #end_of.partita.fune - 1 then laps_ok = false end
+end
+check(laps_ok, "count: every moment has its lap as a number, inside the rope")
 local ok, tick = replay.verify(r, g.tick)
 check(ok, "replay: the match replayed from the recipe comes back the same" .. (ok and "" or (" (diverges at tick " .. tostring(tick) .. ")")))
 -- the reader replays the keys as it recorded them: also a duration changed by hand

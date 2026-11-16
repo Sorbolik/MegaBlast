@@ -12,3 +12,6 @@ foto 02_statistiche_1v1
 tocca_bordo 684 53 alto sinistra    # CRONOLOGIA PARTITE
 aspetta 0.8
 foto 03_cronologia
+tocca_bordo 300 386 alto sinistra   # la seconda partita: si apre lei, le altre restano in vista
+aspetta 0.6
+foto 04_cronologia_seconda

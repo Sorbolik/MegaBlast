@@ -476,6 +476,23 @@ function M.foot_text(g, t, x, y, size, color, wide, spacing)
 	return { one(t:sub(1, best[1] - 1), y), one(t:sub(best[2] + 1), y + size + 2) }
 end
 
+-- The lines of a text that stay `wide` at that size, word by word (a word
+-- wider than that stays alone on its line: shrink it)
+function M.wrap(g, t, size, wide)
+	local function measure(txt)
+		local n = M.text(g, txt, 0, 0, size)
+		local w = M.width(n)
+		gui.delete_node(n)
+		return w
+	end
+	local lines = {}
+	for word in t:gmatch("%S+") do
+		local try = lines[#lines] and (lines[#lines] .. " " .. word)
+		if try and measure(try) <= wide then lines[#lines] = try else lines[#lines + 1] = word end
+	end
+	return lines
+end
+
 -- Capitals, the accented letters too (string.upper leaves them small)
 local ACCENTS = { ["à"] = "À", ["è"] = "È", ["é"] = "É", ["ì"] = "Ì", ["ò"] = "Ò", ["ù"] = "Ù" }
 function M.upper(t)

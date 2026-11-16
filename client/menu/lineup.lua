@@ -71,8 +71,8 @@ function M.new(showcases, title)
 	local squads = {}
 	for i, v in ipairs(showcases) do squads[i] = v.squadra end
 	local xs, vs = M.seats(squads)
-	-- a dark sheet over the draft, and the backdrop on it
-	s.scene = kit.scene(640, 360, { dim = 0.72 })
+	-- its own backdrop, whole: nothing of the draft under it shows (Sergio, 16 Nov)
+	s.scene = kit.scene(640, 360, { bg = true })
 	-- the match's name on a light plate that comes out of the real left edge
 	local top_left = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
 	local on_plate = kit.sand(top_left, -20, 30, 330, 58, KC.HOT, { sk = 22 })
@@ -83,7 +83,8 @@ function M.new(showcases, title)
 		gui.set_scale(name, vec(sc.x * 270 / wide, sc.y * 270 / wide))
 	end
 	local low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	kit.text(low, T.tap_to_pick, 80, 596, 16, KC.MUTE, "start", 1.5)
+	-- (under the thread, where every screen has its hint: on the painting it was hard to read)
+	kit.foot_text(low, T.tap_to_pick, 40, 674, 19, KC.MUTE, 660, 0.5)
 	local right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	local go = kit.action(right, T.weapons, 930, 560, 270, 84, { size = 54, sub = T.weapons_in:format(0, 0) })
 	s.tally = go.sub
@@ -198,7 +199,7 @@ function M.strip_touch(st, action_id, action)
 			gui.set_parent(st.veil, st.radice)
 			local v = st.vetrine[i]
 			v.verso = 1
-			st.aperto = tag.new(v, W / 2, 360 + tag.TALL({ portrait = true }) / 2, { portrait = true, tu = v.tu }, st.radice)
+			st.aperto = tag.new(v, W / 2, tag.TOP({ portrait = true }), { portrait = true, tu = v.tu }, st.radice)
 			st.eats = true
 			return true
 		end

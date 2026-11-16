@@ -10,7 +10,7 @@
 imposta prova_scelta 1
 imposta giocatori 2v2
 
-aspetta 2
+aspetta 4
 tocca 220 172                      # ALLENAMENTO
 aspetta 1
 tocca 761 551                      # STESSO TELEFONO

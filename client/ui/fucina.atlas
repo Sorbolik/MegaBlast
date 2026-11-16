@@ -968,16 +968,7 @@ images {
   image: "/assets/fucina/tacca.png"
 }
 images {
-  image: "/assets/fucina/tacca_ali.png"
-}
-images {
-  image: "/assets/fucina/tacca_corazza.png"
-}
-images {
-  image: "/assets/fucina/tacca_fucina.png"
-}
-images {
-  image: "/assets/fucina/tacca_vuota.png"
+  image: "/assets/fucina/tacca_sigillo.png"
 }
 images {
   image: "/assets/fucina/tasto_meno.png"

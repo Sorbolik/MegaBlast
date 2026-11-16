@@ -235,8 +235,6 @@ return {
 
 	-- menu/tally.lua: the moments of the match, in the profile's history
 	tally = {
-		final = "finale",
-		round = "giro %s",
 		long_shot = "Colpo da %d px su %s",
 		you_drop = "Butti nel vuoto %s",
 		you_kill = "Abbatti %s",
@@ -522,8 +520,7 @@ return {
 		other = "l'altra scelta: %s · %s",
 		to_choose = "scegli uno dei due",
 		pick_hint = "tocca un potere sotto un gradino per sceglierlo",
-		-- the stats' sheet of the Sigilli: open it, close it
-		see_stats = "STATISTICHE ›",
+		-- the stats' sheet of the Sigilli: its way back
 		back_to_seals = "TORNA AI SIGILLI",
 	},
 

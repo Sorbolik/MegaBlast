@@ -233,7 +233,7 @@ function M.on_input(p, action_id, action)
 		gui.set_color(p.veil, vmath.vector4(ui.C.BOTTOM.x, ui.C.BOTTOM.y, ui.C.BOTTOM.z, 0.82))
 		gui.set_parent(p.veil, p.radice)
 		v.verso = 1
-		p.carta = tag.new(v, 640, 360 + tag.TALL({ portrait = true }) / 2, { portrait = true, tu = v.tu }, p.radice)
+		p.carta = tag.new(v, 640, tag.TOP({ portrait = true }), { portrait = true, tu = v.tu }, p.radice)
 		return nil
 	end
 	-- a tap anywhere else while the receipt counts: everything at once

@@ -2201,6 +2201,8 @@ function CP.update_choice(self, dt)
 		if not menu.lineup.update(self.schier, dt) then return true end
 		menu.lineup.destroy(self.schier)
 		self.schier = nil
+		-- (the lineup had the backdrop: the draft takes it back)
+		menu.pick.scene_back(self.scelta)
 		if self.vetrine then
 			self.strip = menu.lineup.strip(self.vetrine)
 		end

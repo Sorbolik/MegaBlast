@@ -208,7 +208,9 @@ end
 -- ones where less is better).
 M.MAX = require "menu.stat_max"
 M.BASE_STUB, M.DELTA_MIN = 0.2, 8
-function M.bar(g, x, y, w, h, parts, now, after, k)
+-- colors: the parts' colors, when they aren't the four of the menus (the tag)
+function M.bar(g, x, y, w, h, parts, now, after, k, colors)
+	colors = colors or M.PART_COLORS
 	local mx = M.MAX[k]
 	if not parts or not mx or type(now) ~= "number" then return end
 	local b = parts[1]
@@ -231,10 +233,10 @@ function M.bar(g, x, y, w, h, parts, now, after, k)
 			kit.rect(g, x + x2 - 1, y, 2, h, KC.INK)
 		end
 	end
-	seg(0, at(math.min(b, solid)), M.PART_COLORS[1])
+	seg(0, at(math.min(b, solid)), colors[1])
 	for i = 2, 4 do
 		if parts[i] > 0 then
-			seg(at(math.min(v, solid)), at(math.min(v + parts[i], solid)), M.PART_COLORS[i])
+			seg(at(math.min(v, solid)), at(math.min(v + parts[i], solid)), colors[i])
 			v = v + parts[i]
 		end
 	end
