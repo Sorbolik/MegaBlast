@@ -110,8 +110,10 @@ function M.resources(v)
 	return { globi = st.teleports or 0, paracadute = st.parachutes or 0, aria = st.air_jumps or 0 }
 end
 
--- A showcase arriving from outside (online): only level and badges, checked
--- (pieces don't count online yet: they will come with profiles on the server)
+-- A showcase arriving from outside (online): level, badges and the pieces worn
+-- (pz, one per slot in the order of equip.SLOTS: { set, liv }), checked. The
+-- pieces are only shown, on the tag and on the devil: online they don't change
+-- the stats yet (they will count with the profiles on the server)
 function M.from_net(t, nome, team, under)
 	local milestones = require "menu.milestones"
 	local liv = type(t) == "table" and tonumber(t.liv)
@@ -122,17 +124,32 @@ function M.from_net(t, nome, team, under)
 		if ok and #badge < milestones.SHOWN then badge[#badge + 1] = ok end
 	end
 	local v = M.simple(nome, team, under, liv, badge)
+	for i, s in ipairs(equip.SLOTS) do
+		local pz = type(t) == "table" and type(t.pz) == "table" and t.pz[i]
+		local set, l = type(pz) == "table" and pz.set, type(pz) == "table" and tonumber(pz.liv)
+		if type(set) == "string" and equip.BY_ID[set] and l then
+			l = math.max(1, math.min(equip.LIVELLO_MAX, math.floor(l)))
+			v.pezzi[i] = { slot = s.id, set = set, livello = l, tier = equip.tier(l) }
+		end
+	end
 	-- a bot that fills the queue (server/lobby.go): its ring says BOT
 	v.bot = type(t) == "table" and t.bot == true or nil
 	return v
 end
 
--- What is sent to the server with the greeting (hello): level and badges
+-- What is sent to the server with the greeting (hello): level, badges and the
+-- pieces worn (an empty slot: set "")
 function M.for_net(p)
 	local bdg = {}
 	for _, b in ipairs(profile.badge(p)) do bdg[#bdg + 1] = { id = b.id, grado = b.grado } end
 	-- (no badges, no bdg: the empty table would be an object in JSON)
-	return { liv = p.livello, bdg = #bdg > 0 and bdg or nil }
+	local a = profile.active_loadout(p)
+	local pz = {}
+	for i, s in ipairs(equip.SLOTS) do
+		local set = a.gear[s.id]
+		pz[i] = { set = set or "", liv = set and wallet.level(p, set, s.id) or 0 }
+	end
+	return { liv = p.livello, bdg = #bdg > 0 and bdg or nil, pz = pz }
 end
 
 return M

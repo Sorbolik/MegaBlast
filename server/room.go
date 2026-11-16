@@ -55,7 +55,7 @@ type clientMsg struct {
 	Private string `json:"privata"`
 	I       int    `json:"i"`
 	G       int    `json:"g"`
-	// with the greeting: level and badges of the card (menu/showcase.lua, per_rete)
+	// with the greeting: level, badges and pieces worn of the card (menu/showcase.lua, for_net)
 	// (raw: a wrong card must not make the greeting fail)
 	Showcase json.RawMessage `json:"vetrina"`
 }
@@ -66,6 +66,11 @@ type showcaseMsg struct {
 		ID    string `json:"id"`
 		Grade int    `json:"grado"`
 	} `json:"bdg"`
+	// the pieces worn, one per slot (sim/gear.lua SLOTS): only shown on the cards
+	Pz []struct {
+		Set   string `json:"set"`
+		Level int    `json:"liv"`
+	} `json:"pz"`
 }
 
 // Badges are few (menu/milestones.lua): at most badgeMax get through, with a
@@ -74,6 +79,9 @@ const (
 	badgeMax = 3
 	gradeMax = 4
 	levelMax = 999
+	// the slots of the gear and the last level of a piece (sim/gear.lua)
+	pieceSlots    = 4
+	pieceLevelMax = 30
 )
 
 var badgeID = regexp.MustCompile(`^[a-z_]{1,16}$`)
@@ -92,6 +100,13 @@ func showcaseJSON(raw json.RawMessage) []byte {
 			return []byte("{}")
 		}
 		v = showcaseMsg{Level: only.Level}
+		// (the pieces alone, if they can be read)
+		var pieces struct {
+			Pz json.RawMessage `json:"pz"`
+		}
+		if json.Unmarshal(raw, &pieces) == nil {
+			_ = json.Unmarshal(pieces.Pz, &v.Pz)
+		}
 	}
 	out := fmt.Appendf(nil, `{"liv":%d,"bdg":[`, min(max(v.Level, 1), levelMax))
 	n := 0
@@ -108,7 +123,25 @@ func showcaseJSON(raw json.RawMessage) []byte {
 		out = fmt.Appendf(out, `{"id":%q,"grado":%d}`, b.ID, b.Grade)
 		n++
 	}
-	return append(out, "]}"...)
+	out = append(out, ']')
+	// the pieces worn: exactly pieceSlots places, a name of lowercase letters
+	// and a level in range, else the place is empty. The server has no profiles
+	// yet: it can't know whether the player owns them, they are only shown
+	if len(v.Pz) > 0 {
+		out = append(out, `,"pz":[`...)
+		for i := 0; i < pieceSlots; i++ {
+			if i > 0 {
+				out = append(out, ',')
+			}
+			if i < len(v.Pz) && badgeID.MatchString(v.Pz[i].Set) && v.Pz[i].Level >= 1 {
+				out = fmt.Appendf(out, `{"set":%q,"liv":%d}`, v.Pz[i].Set, min(v.Pz[i].Level, pieceLevelMax))
+			} else {
+				out = append(out, `{"set":"","liv":0}`...)
+			}
+		}
+		out = append(out, ']')
+	}
+	return append(out, '}')
 }
 
 func parseClientMsg(data []byte) (clientMsg, error) {
