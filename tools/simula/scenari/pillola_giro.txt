@@ -77,7 +77,9 @@ aspetta 0.5
 foto 13_scelta_armi
 tocca_centro 559 410                       # primaria
 aspetta 0.3
-tocca_centro 1071 410                       # secondaria: si parte
+tocca_centro 1071 410                       # secondaria
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO: si parte
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
 foto 14_partita

@@ -1,0 +1,30 @@
+# PRONTO contro i bot (Sergio, 16 nov): i bot hanno subito la spunta verde
+# nella striscia in alto, non c'è tempo che scorre, e la partita parte solo
+# quando premi PRONTO (in basso a destra), anche dopo aver cambiato idea.
+# Carte come in scelta.txt (x = 559, 815, 1071; y = 410).
+imposta prova_scelta 1
+
+aspetta 4
+tocca 220 172                      # ALLENAMENTO
+aspetta 1
+tocca 761 470                      # 2 CONTRO 2
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # GIOCA
+aspetta_stato modo=scelta 5
+aspetta 0.5
+tocca 640 360                      # un tocco: dai cartellini alle armi
+aspetta 0.4
+foto 01_manca                      # PRONTO spento: mancano le armi; i bot sono pronti
+tocca 559 410                      # primaria
+aspetta 0.3
+tocca 559 410                      # secondaria
+aspetta 3                          # non parte da sola e non c'è tempo
+foto 02_pronto_acceso
+tocca 115 544                      # ripensamento: torna alle primarie
+aspetta 0.3
+tocca 1071 410                     # un'altra primaria
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO: si parte
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+foto 03_partita

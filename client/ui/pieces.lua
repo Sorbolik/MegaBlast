@@ -160,6 +160,7 @@ return {
 	segno_uguale = { w = 233, h = 96 },
 	sei_qui = { w = 72, h = 48 },
 	spunta = { w = 55, h = 56 },
+	spunta_verde = { w = 55, h = 56 },
 	stella = { w = 135, h = 128 },
 	stella_spenta = { w = 134, h = 128 },
 	tacca = { w = 78, h = 72 },

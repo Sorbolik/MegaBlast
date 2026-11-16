@@ -4,12 +4,20 @@
 # 815, 1071; y = 410); a sinistra le due scelte fatte (x = 115, y = 544 e 458):
 # toccandone una si torna a quella fila. Le scelte degli altri non si vedono e
 # i doppioni vanno bene. Rosso 1 tiene premuta una carta: si apre la sua
-# scheda e non la sceglie. Blu 2 non sceglie e allo scadere prende le prime.
+# scheda e non la sceglie. Non c'è tempo (Sergio, 16 nov): ognuno conferma con
+# PRONTO, nella striscia gli spunta il segno verde e tocca al prossimo; dopo
+# l'ultimo si parte.
 imposta prova_scelta 1
 imposta giocatori 2v2
 
 aspetta 2
-tocca 222 148                      # STESSO TELEFONO
+tocca 220 172                      # ALLENAMENTO
+aspetta 1
+tocca 761 551                      # STESSO TELEFONO
+aspetta 0.3
+tocca 761 470                      # 2 CONTRO 2
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.5
 foto 00_schieramento                # prima i cartellini di tutti, due squadre
@@ -28,18 +36,30 @@ tocca 115 544                       # ripensamento: torna alle primarie
 aspetta 0.3
 tocca 815 410                       # Rosso 1: un'altra primaria
 aspetta 0.3
-tocca 1071 410                       # Rosso 1: secondaria, poi tocca a Blu 1
+tocca 1071 410                       # Rosso 1: secondaria
 aspetta 0.3
-foto 03_blu_1
+foto 03_pronto_acceso
+tocca_bordo 175 52 basso destra    # PRONTO: tocca a Blu 1
+aspetta 0.3
+foto 03_blu_1                        # Rosso 1 ha il segno verde
 tocca 815 410                       # Blu 1: primaria
 aspetta 0.3
 tocca 559 410                       # Blu 1: secondaria
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO: tocca a Rosso 2
 aspetta 0.3
 tocca 815 410                       # Rosso 2: la stessa primaria di Rosso 1, va bene
 aspetta 0.3
 tocca 1071 410                       # Rosso 2: secondaria
 aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO: tocca a Blu 2
+aspetta 0.3
+tocca 559 410                       # Blu 2: primaria
+aspetta 0.3
+tocca 559 410                       # Blu 2: secondaria
+aspetta 0.3
 foto 04_ultimo
+tocca_bordo 175 52 basso destra    # PRONTO: si parte
 aspetta_stato modo=local turno=1 fase=aim 25
 aspetta 1
 foto 05_partita

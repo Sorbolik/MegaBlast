@@ -27,6 +27,8 @@ foto 02_scelta_2v2_bot              # la striscia in alto, la rotellina sotto
 tocca 559 410                       # Rosso 1: primaria
 aspetta 0.3
 tocca 559 410                       # Rosso 1: secondaria
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO: si parte
 aspetta_stato modo=local 30
 aspetta 1
 foto 03_partita_2v2_bot
@@ -44,6 +46,8 @@ aspetta 5
 tocca 559 410
 aspetta 0.3
 tocca 559 410
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO: si parte
 aspetta_stato modo=local 30
 aspetta 1
 foto 05_partita_ffa
@@ -61,6 +65,8 @@ aspetta 5
 tocca 559 410
 aspetta 0.3
 tocca 559 410
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO: si parte
 aspetta_stato modo=local 30
 aspetta 1
 foto 07_partita_1v1
