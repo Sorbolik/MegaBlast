@@ -6,7 +6,7 @@ con varianti, costi e opzioni scartate). Questo file è la versione "nella
 pietra": ogni thread la consulta prima di proporre lavoro nuovo, e le modifiche
 passano da Sergio.
 
-## A che punto siamo (16 novembre 2026, main alla #342)
+## A che punto siamo (16 novembre 2026, main alla #346)
 
 | Fase | Stato | Fatto | Manca |
 |---|---|---|---|
