@@ -13,7 +13,7 @@ imposta prova_profilo 1
 imposta prova_scelta 1
 imposta giocatori 2v2
 
-aspetta 2
+aspetta 4
 tocca 220 172                      # ALLENAMENTO
 aspetta 1
 tocca 761 470                       # 2 CONTRO 2
@@ -74,10 +74,11 @@ tocca 62 658
 aspetta 0.3
 tocca 408 658
 aspetta 1
-tocca 36 60                         # indietro: alla home
-aspetta_stato modo=menu 3
-aspetta 0.5
-tocca 222 148                      # STESSO TELEFONO (2 contro 2)
+tocca 761 551                       # STESSO TELEFONO (nell'allenamento, dal 14 nov)
+aspetta 0.3
+tocca 761 470                       # 2 CONTRO 2
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.5
 foto 08_schieramento_2v2
@@ -92,17 +93,25 @@ tocca 559 410                       # Rosso 1
 aspetta 0.3
 tocca 559 410
 aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO
+aspetta 0.3
 tocca 815 410                       # Blu 1
 aspetta 0.3
 tocca 815 410
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO
 aspetta 0.3
 tocca 1071 410                       # Rosso 2
 aspetta 0.3
 tocca 1071 410
 aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO
+aspetta 0.3
 tocca 559 410                       # Blu 2
 aspetta 0.3
 tocca 815 410
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO
 aspetta_stato modo=local 25
 aspetta 1
 foto 10_partita_2v2
