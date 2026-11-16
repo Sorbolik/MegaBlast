@@ -238,8 +238,17 @@ function N.rules_valid(r, normal)
 	return ok and "" or err
 end
 
+-- Picks; the second value says that the pick took PRONTO away (the others must know)
 function N.draft_pick(d, i, weapon)
-	return draft.pick(d, i, weapon)
+	local was = d.ready[i]
+	local ok = draft.pick(d, i, weapon)
+	return ok, ok and was and not d.ready[i] or false
+end
+
+-- PRONTO: robot i confirms its picks; the second value says that now everyone has
+function N.draft_confirm(d, i)
+	if not draft.confirm(d, i) then return false, false end
+	return true, draft.all_ready(d)
 end
 
 function N.draft_finish(d)
@@ -249,9 +258,12 @@ function N.draft_finish(d)
 end
 
 -- The two fans (offer: primaries, offer2: secondaries) and the picks of robot i
--- (p, p2, or ""): the others' picks aren't sent (Sergio, 30 Oct)
+-- (p, p2, or ""): the others' picks aren't sent (Sergio, 30 Oct), only who
+-- has pressed PRONTO (rd: 1 or 0 for each robot)
 function N.draft_state(d, i)
-	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = d.picks[i] or "", p2 = d.picks2[i] or "" }
+	local rd = {}
+	for k = 1, #d.players do rd[k] = d.ready[k] and 1 or 0 end
+	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = d.picks[i] or "", p2 = d.picks2[i] or "", rd = rd }
 end
 
 -- The match players for the start message: team and draft picks, so the

@@ -2,8 +2,12 @@
 -- 14 Nov): the home's GIOCA. On the left the usual 2 CONTRO 2, big, and under
 -- it the STANZA PRIVATA; on the right the running events, each with its queue
 -- (a modifier has its own, a Tournament counts in the 2 vs 2), and the next one
--- coming. GIOCA, the screen's action, starts the chosen queue: a match counts
--- for all the events of its queue. Events from main/events.lua.
+-- coming. A tap on a queue only chooses it (Sergio, 16 Nov): its card gets the
+-- bright rim (WB-060, the "scelta" cards), with every other card of the same
+-- queue, and GIOCA, the screen's action, starts it: a match counts for all the
+-- events of its queue. The STANZA PRIVATA is not a queue: its tap opens it at
+-- once, and only it keeps the arrow of what goes somewhere. Events from
+-- main/events.lua.
 --
 --   local coda = require "menu.queue"
 --   local c = coda.new()
@@ -36,11 +40,12 @@ local function fit(n, w)
 end
 
 -- a queue to play: a card with its icon ih tall on the left, the name, a line
--- and an information under it, the arrow of what goes somewhere; a tap starts its
--- queue. The card has the shape of what it is (WB-060, o.kind): "brace" the usual
+-- and an information under it; a tap chooses its queue (o.action "coda:ID": the
+-- chosen one has the bright rim), or goes somewhere (the arrow). The card has the shape of what it is (WB-060, o.kind): "brace" the usual
 -- 2 vs 2, "ferro" a plain mode, "gelo" an event; on the ember the writing is ink
 local function card(c, g, x, y, w, h, o)
-	local k = kit.mode_card(g, x, y, w, h, o.kind)
+	local goes = not o.action:find("^coda:")
+	local k = kit.mode_card(g, x, y, w, h, o.kind, { sel = o.action == "coda:" .. c.sel })
 	local ember = o.kind == "brace"
 	local f = k.g
 	-- (no icon yet: the text starts where the icon would)
@@ -52,7 +57,7 @@ local function card(c, g, x, y, w, h, o)
 	fit(kit.text(f, o.name, tx, top, size, ember and KC.INK or KC.SAND), x + w - 70 - tx)
 	if o.sub then fit(kit.text(f, kit.upper(o.sub), tx + 2, top + 26, 16, ember and EMBER_SUB or KC.MUTE, "start", 0.5), x + w - 70 - tx) end
 	if o.info then fit(kit.text(f, kit.upper(o.info), tx + 2, top + 50, 16, ember and KC.INK or KC.HOT_TOP, "start", 0.5), x + w - 70 - tx) end
-	kit.text(f, "›", x + w - 30, y + h / 2 + size * 0.45, size * 1.3, ember and KC.INK or KC.SAND, "middle")
+	if goes then kit.text(f, "›", x + w - 30, y + h / 2 + size * 0.45, size * 1.3, ember and KC.INK or KC.SAND, "middle") end
 	kit.button(c.buttons, k, o.action)
 end
 
@@ -137,8 +142,12 @@ function M.on_input(c, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" or ui_action == "privata" then return ui_action end
 	if ui_action == "cerca" then return { coda = c.sel } end
+	-- a queue's card: chosen, GIOCA starts it
 	local queue = ui_action:match("^coda:(.*)$")
-	if queue then return { coda = queue } end
+	if queue and queue ~= c.sel then
+		c.sel = queue
+		build(c)
+	end
 	return nil
 end
 

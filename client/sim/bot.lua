@@ -1291,6 +1291,8 @@ function M.choose(d, i, seed, armi)
 			draft.pick(d, i, w)
 		end
 	end
+	-- a bot never keeps the others waiting
+	draft.confirm(d, i)
 end
 
 return M

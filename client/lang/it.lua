@@ -102,7 +102,8 @@ return {
 		ready_action = "PRONTO",
 		missing_two = "MANCANO 2 ARMI",
 		missing_one = "MANCA LA %s",
-		starts_at_time = "SI PARTE A FINE TEMPO",
+		starts_all_ready = "TUTTI PRONTI, SI PARTE",
+		waiting = "ASPETTI GLI ALTRI",
 		step_names = { "PRIMARIA", "SECONDARIA" },
 		shot = "%s colpo",
 		shots = "%s colpi",
@@ -115,10 +116,11 @@ return {
 		secondary_guided = "La secondaria ha %s: ogni volta che colpisci un nemico "
 			.. "con la Lama, che ce l'hai sempre, te ne torna uno. Tieni premuta una carta per la sua scheda.",
 		secondary = "Ne hai %s; colpendo un nemico con la Lama te ne torna uno.",
-		ready = "Pronto",
-		ready_guided = "Il Rampino ce l'hai sempre. Nelle altre partite la scelta ha un tempo; qui no. "
+		press_ready = "premi PRONTO",
+		press_play = "premi GIOCA",
+		ready_guided = "Il Rampino ce l'hai sempre. Online la scelta ha un tempo; qui no. "
 			.. "Tocca una scelta per cambiarla, o GIOCA.",
-		ready_text = "Il Rampino ce l'hai sempre. Tocca una scelta per cambiarla.",
+		ready_text = "Il Rampino ce l'hai sempre. Tocca una scelta per cambiarla, poi PRONTO.",
 		-- with the controller the first becomes the second (%s = the card's button)
 		hold_card = "Tieni premuta una carta",
 		press_on_card = "Premi %s su una carta",
