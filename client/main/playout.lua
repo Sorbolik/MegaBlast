@@ -73,6 +73,11 @@ function M.arrive(p, src, now, snaps, data)
 	push(p, p.capture_net, src, snaps, data)
 end
 
+-- How many states the drawing is behind the newest arrived
+function M.behind(p)
+	return math.max(0, p.n - p.t)
+end
+
 -- Advances the drawing clock by dt (0 in the hit-stop: the world stands still)
 -- and returns the two poses to draw between and how far along (0..1).
 -- on_snap(i): robot i reappears elsewhere at the start of this stretch.

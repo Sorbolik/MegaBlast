@@ -1743,6 +1743,9 @@ local function apply_state(self, s)
 	end
 end
 
+-- ticks for our shot to reach the server, taken off the time shown (net_reach)
+CP.TRIP_TICKS = 6
+
 -- A state arrived: into the queue with the events before it, drawn at an even
 -- pace a little later (main/playout.lua). The match changes only when the
 -- drawing gets there (net_reach): events, life, turn and rope with the robots.
@@ -1770,6 +1773,15 @@ function CP.net_reach(self, data)
 	end
 	if self.g then
 		apply_state(self, data.s)
+		-- on our turn the time shown is prudent: what we see is behind the server by
+		-- the queue, and the shot still has to get there (TRIP_TICKS: no ping to
+		-- measure it). A shot let go with time on the ring always leaves.
+		local g = self.g
+		if g.current == self.me and g.phase == "aim" then
+			local late = math.ceil(menu.playout.behind(self.playout) * game.SNAPSHOT_TICKS) + CP.TRIP_TICKS
+			g.timer = math.max(0, g.timer - late)
+			if g.window > 0 then g.window = math.max(1, g.window - late) end
+		end
 		if self.conta then CP.conta.tick(self.conta, self.g) end
 	end
 end
