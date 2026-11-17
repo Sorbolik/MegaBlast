@@ -85,6 +85,19 @@ function N.current(g)
 	return g.current
 end
 
+-- The player of seat i dropped (room.go, checkAway): until they are back a bot of
+-- that grade plays their turns (Sergio, 17 Nov: "non si è riempito il mio posto
+-- con un bot"); grade nil: they are back, the keys are theirs again
+function N.stand_in(g, i, grade)
+	BOTS[g] = BOTS[g] or {}
+	local b = grade and bot.new(i, grade, g.seed or 0) or nil
+	if b then
+		b.liv = setmetatable({ think_max = N.THINK_MAX }, { __index = b.liv })
+		b.stand_in = true
+	end
+	BOTS[g][i] = b
+end
+
 -- player i left the match (room.go, leave): their robot disappears
 function N.remove(g, i)
 	g:remove(i)
@@ -179,7 +192,9 @@ function N.snapshot(g, aim)
 	-- gr: the current round (the Crown only exists from SCORE.crown_rounds + 1);
 	-- hz: the state of the map's hazard (sim/hazards.lua: the storm's dir, the hail's marks and
 	-- stones), as it is, nil on the maps without one;
-	-- aim: where the robot on turn is aiming (absent if it isn't), the others see it
+	-- aim: where the robot on turn is aiming (absent if it isn't), the others see it;
+	-- si: a bot is playing this turn for a player who dropped (N.stand_in): if they
+	-- come back before it ends, their client leaves it the controls
 	local b = BOTS[g] and BOTS[g][g.current]
 	if b then aim = bot.shown_aim(b) end
 	if g.phase ~= "aim" then aim = nil end
@@ -187,7 +202,8 @@ function N.snapshot(g, aim)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
 		u = used, mt = g.match_left, ai = g.intro > 0 and g.intro or nil, fr = g.final_round, gr = g.round,
 		av = g.ahead, ab = g.ahead_base, r = robots, p = p, o = orbs, s = shards,
-		c = crates, pl = placed, hl = heals, pp = pools, hz = g.hz, aim = aim }
+		c = crates, pl = placed, hl = heals, pp = pools, hz = g.hz, aim = aim,
+		si = b and b.stand_in or nil }
 end
 
 -- Events since the last tick (a list, empty if none happened)

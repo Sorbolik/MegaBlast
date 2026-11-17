@@ -1,0 +1,33 @@
+# La connessione resta aperta ma non porta più niente (Sergio, 17 nov: "si è
+# bloccato il mio personaggio in aria, come tutto il resto", e il server andava
+# avanti): dopo 5 secondi senza stati il gioco chiude e riapre la connessione da
+# solo (CP.resync) e la partita riparte da dov'è. prova_muta 8: da 8 secondi
+# dopo l'inizio i messaggi del server non arrivano più.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_muta 8
+imposta prova_vignette no
+aspetta 1
+server 2v2 0 bot_dopo=3s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 175 52 basso destra     # GIOCA
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
+aspetta_stato modo=scelta_online 15
+aspetta_stato modo=online 25
+aspetta_stato modo=online turno=1 fase=aim 20
+aspetta 4                            # il conto 3-2-1
+tieni destra 2
+aspetta_evento muta 10
+aspetta 2
+foto 00_fermo
+aspetta_evento rientro 12            # il guardiano: dopo 5 s senza stati torna da solo
+aspetta 1.5
+foto 01_dopo_la_caduta
+tocca 1084 62                        # Rampino: i comandi sono ancora nostri
+aspetta 0.4
+mira -60 150 0.1
+aspetta_evento hook_shot 3
+aspetta_stato turno=2 fase=aim 40    # e i turni vanno avanti
+aspetta 2
+foto 02_turno_del_bot

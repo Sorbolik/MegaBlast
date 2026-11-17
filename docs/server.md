@@ -241,12 +241,24 @@ modo che un client vecchio non capirebbe. Gli altri messaggi sono in
 Con `start` il client riceve un gettone. Se la connessione cade (sui telefoni
 succede, per questo il server manda anche un ping ogni 10 s), gli altri
 ricevono `away`, i tasti tenuti premuti si lasciano e la partita va avanti: se
-era il suo turno, il tempo scorre. Si può tornare anche durante la scelta
-dell'arma (il gettone arriva già col primo `draft`). Il client riprova da solo per circa 18 s con
+era il suo turno, il tempo scorre. **Un bot al suo posto, il posto resta suo** (Sergio, 17 nov): in
+partita il posto è del giocatore fino alla fine. Se quando arriva il suo turno è assente da
+più di 5 s (`StandInTicks`; anche a turno già cominciato) lo gioca un bot col suo stesso
+robot, armi e pezzi, del grado dei bot della stanza o di quello della coda per quelle
+persone (`Room.standIn`, `N.stand_in`). Può tornare in qualsiasi momento: se rientra a metà
+del suo turno il bot lo finisce (nello stato `si`: il client lascia i comandi al bot e lo
+dice) e dal turno dopo i tasti sono di nuovo suoi. La stanza quindi non si chiude finché la
+partita dura, anche se le persone sono tutte assenti; chi esce con ESCI DALLA PARTITA
+(`leave`) invece è fuori subito, come prima. Si può tornare anche durante la scelta
+dell'arma (il gettone arriva già col primo `draft`): lì dopo 20 s (`ReconnectTicks`) senza
+tornare il giocatore è fuori (`left`). Il client riprova da solo per tutta la partita con
 `{"t":"hello","v":9,"tok":…}`; il server gli rimanda `start` con
-`"resume":true`, gli scavi del terreno e i Bastioni posati o crollati, in ordine (`sync`) e lo stato. Dopo 20 s senza
-tornare il giocatore è fuori (`left`) e, se resta una sola squadra, la
-partita si chiude.
+`"resume":true`, gli scavi del terreno e i Bastioni posati o crollati, in ordine (`sync`) e lo stato.
+**Il guardiano del client**: se in partita non arriva uno stato per 5 s, o la coda dà un
+errore, il gioco chiude la connessione e rientra così (`CP.resync`): non resta mai fermo
+su una connessione che non porta più niente. Al rientro dice al server perché era caduto
+(`{"t":"nota","w":"…"}`: motivo, turno, coda), e il server lo scrive nel log insieme a
+«ha perso la connessione» e «è tornato dopo N s».
 
 ## Numeri
 

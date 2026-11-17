@@ -528,11 +528,85 @@ func TestOnlineMatch(t *testing.T) {
 	a.waitFor(`"state"`)
 	b.waitFor(`"back"`)
 
-	// If they don't come back in time, the other is told and the match ends
+	// (who never comes back keeps the seat and a bot plays their turns: TestStandIn)
+}
+
+// Whoever drops in a match is replaced by a bot until they come back (Sergio,
+// 17 Nov: "non sono più riuscito né a rientrare e né si è riempito il mio
+// posto con un bot"): the bot plays their turn, the seat stays theirs and
+// coming back they get the match again.
+func TestStandIn(t *testing.T) {
+	url := testServer(t, func(c *Config) {
+		c.StandInTicks = tickRate / 4
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	hello := `{"t":"hello","v":9,"mode":"1v1"}`
+	a := dial(t, ctx, url)
+	a.send(hello)
+	a.waitFor(`"wait"`)
+	b := dial(t, ctx, url)
+	b.send(hello)
+	sa := a.waitFor(`"start"`)
+	b.waitFor(`"start"`)
+	a.conn.CloseNow()
+	if m := b.waitFor(`"away"`); m["robot"].(float64) != 1 {
+		t.Fatalf("unexpected away: %v", m)
+	}
+	// robot 1's turn goes on without its player: an attack is used (u in the
+	// state) well before the turn's time is up
+	began := time.Now()
+	for {
+		st := b.waitFor(`"t":"state"`)
+		if st["cur"].(float64) != 1 {
+			t.Fatalf("robot 1's turn passed without an attack: %v", st)
+		}
+		if u, _ := st["u"].(float64); u > 0 {
+			break
+		}
+	}
+	if d := time.Since(began); d > 15*time.Second {
+		t.Fatalf("the stand-in took %v to attack", d)
+	}
+	// back with the token in the middle of the turn: the seat is still theirs,
+	// the bot finishes the turn (si in the state) and the next one is theirs
+	a = dial(t, ctx, url)
+	a.send(fmt.Sprintf(`{"t":"hello","v":9,"tok":%q}`, sa["tok"]))
+	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
+		t.Fatalf("unexpected resume: %v", m)
+	}
+	b.waitFor(`"back"`)
+	if st := a.waitFor(`"t":"state"`); st["cur"].(float64) != 1 || st["si"] != true {
+		t.Fatalf("the bot should be finishing robot 1's turn: cur %v si %v", st["cur"], st["si"])
+	}
+	// player 2 passes their turn by shooting; then robot 1 is its player's again
+	for st := b.waitFor(`"t":"state"`); st["cur"].(float64) != 2; st = b.waitFor(`"t":"state"`) {
+	}
+	b.send(`{"t":"fire","a":2.2,"p":0.7}`)
+	for st := a.waitFor(`"t":"state"`); st["cur"].(float64) != 2; st = a.waitFor(`"t":"state"`) {
+	}
+	for {
+		st := a.waitFor(`"t":"state"`)
+		if st["cur"].(float64) == 1 && st["phase"] == "aim" {
+			if st["si"] != nil {
+				t.Fatalf("robot 1 is back but the bot still plays: %v", st["si"])
+			}
+			break
+		}
+	}
+	// and whoever never comes back keeps the seat: nobody is told they left
 	a.conn.CloseNow()
 	b.waitFor(`"away"`)
-	if m := b.waitFor(`"left"`); m["robot"].(float64) != 1 {
-		t.Fatalf("unexpected left: %v", m)
+	deadline := time.After(2 * time.Second)
+	for more := true; more; {
+		select {
+		case data := <-b.msgs:
+			if strings.Contains(string(data), `"left"`) {
+				t.Fatalf("the seat was not kept: %s", data)
+			}
+		case <-deadline:
+			more = false
+		}
 	}
 }
 
