@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"runtime"
 	"sync"
@@ -23,7 +24,8 @@ const protocolVersion = 9
 type Config struct {
 	Node           string // node name, goes into tokens: a load balancer can send whoever comes back to the right node
 	Workers        int
-	ReconnectTicks int // how long to wait for someone who dropped before removing them from the match
+	ReconnectTicks int // during the draft: how long to wait for someone who dropped before removing them
+	StandInTicks   int // in the match: away for longer than this when their turn comes, a bot plays it (the seat is kept to the end)
 	DraftTicks     int // if > 0 replaces config.DRAFT_SECONDS (for tests)
 	PingEvery      time.Duration
 	EventList      string        // event calendar (events.go): panel address or file, empty = no events
@@ -35,6 +37,7 @@ func DefaultConfig() Config {
 		Node:           "n1",
 		Workers:        runtime.GOMAXPROCS(0),
 		ReconnectTicks: 20 * tickRate,
+		StandInTicks:   5 * tickRate,
 		PingEvery:      10 * time.Second,
 		BotAfter:       25 * time.Second,
 	}
@@ -176,6 +179,12 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			hello = false
+			continue
+		}
+		if msg.T == "nota" {
+			// why a client had dropped or stalled, told when it's back
+			// (client/main/game.gui_script, CP.net_note): only for the log
+			log.Printf("nota del client: %.300q", msg.W)
 			continue
 		}
 		if ref := p.room.Load(); ref != nil {

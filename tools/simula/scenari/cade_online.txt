@@ -1,0 +1,30 @@
+# La connessione cade a metà partita online (Sergio, 17 nov: "si è bloccato il
+# mio personaggio in aria, come tutto il resto", e non è più ripartito): il
+# gioco si riconnette da solo, la partita riparte da dov'era e i turni vanno
+# avanti. prova_cade 8: la connessione cade da sola 8 secondi dopo l'inizio.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_cade 8
+imposta prova_vignette no
+aspetta 1
+server 2v2 0 bot_dopo=3s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 175 52 basso destra     # GIOCA
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
+aspetta_stato modo=scelta_online 15
+aspetta_stato modo=online 25
+aspetta_stato modo=online turno=1 fase=aim 20
+aspetta 4                            # il conto 3-2-1
+tieni destra 2
+aspetta_evento caduta 10
+aspetta_evento rientro 10            # torna da solo
+aspetta 1.5
+foto 01_dopo_la_caduta
+tocca 1084 62                        # Rampino: i comandi sono ancora nostri
+aspetta 0.4
+mira -60 150 0.1
+aspetta_evento hook_shot 3
+aspetta_stato turno=2 fase=aim 40    # e i turni vanno avanti
+aspetta 2
+foto 02_turno_del_bot

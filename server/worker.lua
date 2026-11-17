@@ -239,6 +239,14 @@ function CMD.remove(c)
 	answer()
 end
 
+-- stand_in{r, i, g}: a bot of grade g plays for seat i while its player is
+-- away; without g the player is back
+function CMD.stand_in(c)
+	local r = room(c)
+	if r.g then N.stand_in(r.g, c.i, c.g) end
+	answer()
+end
+
 -- free{r}: the room is closed
 function CMD.free(c)
 	ROOMS[c.r] = nil

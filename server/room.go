@@ -32,6 +32,7 @@ const (
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
 //	{"t":"aim","a":1.2} | {"t":"aim_end"}  I'm aiming at that angle (at most a few per second) | I stopped:
 //	                                    the others see it in the state ("aim"), without the power
+//	{"t":"nota","w":"..."}              back after a drop: why it had dropped or stalled, for the server's log (server.go)
 //	{"t":"leave"}                       I leave the match (in-match gear wheel): I don't come
 //	                                    back, the others know at once (also during the draft);
 //	                                    still queued: out of the queue, the server closes
@@ -173,6 +174,7 @@ type seat struct {
 	tok  string  // to come back to the match
 	away int     // ticks spent disconnected
 	gone bool    // not coming back
+	sub  bool    // away in the match: a bot plays their turns until they are back (standIn)
 	team int
 	bot  int // > 0: a bot of that grade (sim/bot.lua GRADES) that fills the queue, no connection
 	in   held
@@ -427,7 +429,7 @@ func (r *Room) Tick(b *Batch) {
 	if r.ended.Load() {
 		return
 	}
-	if !r.checkAway() {
+	if !r.checkAway(b) {
 		r.close(b)
 		return
 	}
@@ -485,8 +487,12 @@ func (r *Room) ticked(next *Batch, res Result) {
 	// after the turn is over (the client sends only on its own turn) would make
 	// the next one start walking (Sergio, 5 Nov)
 	if now != cur {
-		for _, s := range r.seats {
+		for i, s := range r.seats {
 			s.in = held{}
+			// whoever came back while the bot played their turn has the keys again
+			if s.sub && s.p != nil {
+				r.standIn(next, i, false)
+			}
 		}
 	}
 	r.cur = now - 1
@@ -510,7 +516,12 @@ func (r *Room) handle(b *Batch, m roomMsg) {
 		if s.p != nil && s.p != m.attach {
 			s.p.Close() // the old connection isn't needed any more
 		}
+		log.Printf("stanza %d: il robot %d è tornato dopo %.1f s", r.id, m.slot+1, float64(s.away)/tickRate)
 		s.p, s.away = m.attach, 0
+		// back in the middle of their turn: the bot finishes it (ticked)
+		if s.sub && !(r.started && r.cur == m.slot) {
+			r.standIn(b, m.slot, false)
+		}
 		if !r.started {
 			r.sendDraft(b, m.slot)
 		} else {
@@ -601,11 +612,12 @@ func (r *Room) sendDraftAll(b *Batch) {
 }
 
 // checkAway notices dropped connections and counts the time of whoever is
-// disconnected. Once the time to come back has passed the player really
-// leaves; the match goes on as long as at least two teams have someone
-// connected or on the way.
+// disconnected. During the draft, once the time to come back has passed the
+// player really leaves; in the match the seat is kept to the end and a bot
+// plays their turns meanwhile (standIn). The match goes on as long as at least
+// two teams have someone who didn't leave.
 // Returns false if the match must be closed.
-func (r *Room) checkAway() bool {
+func (r *Room) checkAway(b *Batch) bool {
 	teams := map[int]bool{}
 	people := 0
 	for i, s := range r.seats {
@@ -615,11 +627,17 @@ func (r *Room) checkAway() bool {
 		}
 		if s.p != nil && s.p.Closed() {
 			s.p, s.away, s.in = nil, 0, held{} // held keys are released
+			log.Printf("stanza %d: il robot %d ha perso la connessione (tick %d)", r.id, i+1, r.tick)
 			r.broadcast(fmt.Appendf(nil, `{"t":"away","robot":%d}`, i+1))
 		}
 		if s.p == nil && !s.gone {
 			s.away++
-			if s.away > r.srv.cfg.ReconnectTicks {
+			// in the match the seat stays theirs to the end: if they are away when
+			// their turn comes (a short drop is only a pause) a bot plays it
+			if r.started && !s.sub && r.cur == i && s.away > r.srv.cfg.StandInTicks {
+				r.standIn(b, i, true)
+			}
+			if !r.started && s.away > r.srv.cfg.ReconnectTicks {
 				s.gone = true
 				r.srv.sessions.Delete(s.tok)
 				r.broadcast(fmt.Appendf(nil, `{"t":"left","robot":%d}`, i+1))
@@ -632,6 +650,38 @@ func (r *Room) checkAway() bool {
 	}
 	// bots alone don't play for nobody
 	return len(teams) >= 2 && people > 0
+}
+
+// standIn gives the turns of seat slot to a bot while its player is away (on),
+// or back to the player (worker.lua, stand_in). The bot has the grade of the
+// room's bots, or the queue's for these people (botGrade). The seat stays the
+// player's until the match ends (Sergio, 17 Nov): they can come back at any time.
+func (r *Room) standIn(b *Batch, slot int, on bool) {
+	r.seats[slot].sub = on
+	c := b.Cmd("stand_in", r.id, func(_ *Batch, res Result) {
+		if res.Err != nil {
+			log.Printf("errore stand_in: %v", res.Err)
+		}
+	}).Int("i", int64(slot+1))
+	if on {
+		grade, people := 0, []*Player{}
+		for _, s := range r.seats {
+			if s.bot > 0 && grade == 0 {
+				grade = s.bot
+			}
+			if s.p != nil {
+				people = append(people, s.p)
+			}
+		}
+		if grade == 0 {
+			grade = 3
+			if len(people) > 0 {
+				grade = botGrade(people)
+			}
+		}
+		c = c.Int("g", int64(grade))
+	}
+	c.End()
 }
 
 // leave: the player of seat slot leaves by choice. Like someone who doesn't

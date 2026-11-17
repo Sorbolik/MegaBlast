@@ -63,7 +63,9 @@ local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 local PROTOCOL = 9
 -- If the connection drops in a match we retry for a while (the server keeps
 -- the seat for 20 seconds)
-local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
+-- for the whole match (ten minutes): the server keeps our seat to the end and
+-- a bot plays our turns meanwhile (server/room.go standIn)
+local RECONNECT_TRIES, RECONNECT_WAIT = 400, 1.5
 
 -- the input actions, in a single table (limit of 200 local variables)
 local ACTION = {
@@ -742,7 +744,7 @@ local function reset_pose(self)
 	self.playout = self.playout or pl.new(new_pose, capture, game.SNAPSHOT_TICKS * game.DT, menu.capture_net)
 	pl.reset(self.playout, self.g)
 	-- the server's events since its last state: they wait for the next one
-	self.net_events = {}
+	self.net_events, self.net_over = {}, nil
 end
 
 -- Match -----------------------------------------------------------------------
@@ -942,7 +944,7 @@ end
 
 local function my_turn(self)
 	if not self.g then return false end
-	return (self.mode == "local" and not self.bots[self.g.current]) or (self.mode == "online" and self.g.current == self.me)
+	return (self.mode == "local" and not self.bots[self.g.current]) or (self.mode == "online" and self.g.current == self.me and not self.g.stand_in)
 end
 
 -- Whose weapons are in the bar: online ours, locally those of whoever's turn it is
@@ -1685,6 +1687,11 @@ local function apply_state(self, s)
 	g.intro = s.ai or 0
 	-- where whoever's turn it is aims (server/net.lua): we show it, power stays secret
 	self.remote_aim = s.aim
+	-- back after a drop in the middle of our turn: the bot that played for us
+	-- finishes it (server/room.go standIn), the controls are ours from the next
+	local ours = s.si and s.cur == self.me or false
+	if ours and not g.stand_in then show_message(self, TM.stand_in) end
+	g.stand_in = ours
 	for i, r in ipairs(s.r) do
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
@@ -1759,6 +1766,34 @@ local function apply_state(self, s)
 	end
 end
 
+-- The watchman of the online match (Sergio, 17 Nov: "si è bloccato il mio
+-- personaggio in aria, come tutto il resto", and it never moved again while the
+-- server went on): if no state arrives for STALL seconds, or the queue fails,
+-- we close the connection ourselves. Its DISCONNECTED brings us back with the
+-- token and the server sends the whole match again (start with resume).
+CP.STALL = 5
+
+function CP.resync(self, why)
+	local now = socket.gettime()
+	if not self.conn or (self.resync_at and now - self.resync_at < CP.STALL) then return end
+	self.resync_at, self.state_at = now, now
+	CP.net_note(self, "mi ricollego: " .. why)
+	ws.disconnect(self.conn)
+end
+
+-- What went wrong online, with where the match and the queue were: kept (the
+-- last few) and told to the server when we are back, which writes it in its
+-- log (server.go, "nota"): a release APK has no log of its own
+function CP.net_note(self, what)
+	local g, p = self.g, self.playout
+	local where = g and p and string.format(" [turno %s fase %s, coda %d, indietro %.1f, margine %.1f, ultimo stato %.1f s fa]",
+		tostring(g.current), tostring(g.phase), #p.q, p.n - p.t, p.lag, socket.gettime() - (self.state_at or socket.gettime())) or ""
+	what = (what .. where):sub(1, 280)
+	print("ONLINE " .. what)
+	self.net_notes = self.net_notes or {}
+	if #self.net_notes < 6 then self.net_notes[#self.net_notes + 1] = what end
+end
+
 -- ticks for our shot to reach the server, taken off the time shown (net_reach)
 CP.TRIP_TICKS = 6
 
@@ -1767,6 +1802,7 @@ CP.TRIP_TICKS = 6
 -- drawing gets there (net_reach): events, life, turn and rope with the robots.
 function CP.net_state(self, s)
 	local now = socket.gettime()
+	self.state_at = now
 	if self.playout.last_at then frames.net(now - self.playout.last_at) end
 	-- the robots that reappear elsewhere in this state don't slide there
 	local snaps
@@ -1784,8 +1820,12 @@ function CP.net_state(self, s)
 end
 
 function CP.net_reach(self, data)
+	-- an event that goes wrong doesn't stop the ones after it, nor the state
 	for _, e in ipairs(data.ev) do
-		if self.g then handle_event(self, e) end
+		if self.g then
+			local ok, err = pcall(handle_event, self, e)
+			if not ok then CP.net_note(self, "evento " .. tostring(e.type) .. ": " .. tostring(err)) end
+		end
 	end
 	if self.g then
 		apply_state(self, data.s)
@@ -1875,6 +1915,8 @@ local function on_server_message(self, m)
 		self.mode = "online"
 		set_controls_visible(self, true)
 		show_message(self, m.resume and TM.back_in or TM.you_are:format(self.names[m.you]))
+		self.state_at = socket.gettime()
+		if SIMULATE and m.resume then print("SIMULA evento rientro") end
 	elseif m.t == "sync" and self.g then
 		local k = CR.list(self)
 		for _, c in ipairs(m.x) do
@@ -1887,6 +1929,8 @@ local function on_server_message(self, m)
 		CP.net_state(self, m)
 	elseif m.t == "ev" and self.g then
 		self.net_events[#self.net_events + 1] = m
+		-- the server closes right after the end: not a drop (see DISCONNECTED)
+		if m.type == "over" then self.net_over = true end
 	elseif m.t == "away" then
 		show_message(self, TM.opponent_away, true)
 	elseif m.t == "back" and m.robot ~= self.me then
@@ -1963,6 +2007,9 @@ on_socket = function(self, conn, data)
 		-- the first message states the version: in the queue, or back in the match
 		if self.tok then
 			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
+			-- and why we had dropped (CP.net_note)
+			for _, what in ipairs(self.net_notes or {}) do send(self, { t = "nota", w = what }) end
+			self.net_notes = nil
 		elseif self.privata then
 			-- the private match (menu/private.lua): a new room or a code
 			send(self, { t = "hello", v = PROTOCOL, privata = self.privata,
@@ -1974,6 +2021,8 @@ on_socket = function(self, conn, data)
 			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2",
 				vetrina = CP.vetrina.for_net(self.profilo) })
 		end
+	elseif data.event == ws.EVENT_MESSAGE and conn == self.mute then
+		-- prova_muta: nothing arrives any more
 	elseif data.event == ws.EVENT_MESSAGE then
 		local ok, m = pcall(json.decode, data.message)
 		-- any answer other than "aspetta" closes the waiting flame
@@ -1981,9 +2030,17 @@ on_socket = function(self, conn, data)
 		if ok and m then on_server_message(self, m) end
 	elseif data.event == ws.EVENT_DISCONNECTED or data.event == ws.EVENT_ERROR then
 		self.conn = nil
+		self.mute = nil
+		-- the match is over and the server closed: the end is still in the playout
+		-- queue (it is drawn a moment late), no reconnecting meanwhile
+		if self.net_over and self.mode == "online" then return end
 		local in_play = self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online"
 		if in_play and self.tok and self.tries < RECONNECT_TRIES then
 			-- in a match: we retry, the server keeps our seat
+			if self.tries == 0 then
+				CP.net_note(self, (data.event == ws.EVENT_ERROR and "errore della connessione" or "connessione chiusa")
+					.. (data.message and (": " .. tostring(data.message)) or ""))
+			end
 			self.tries = self.tries + 1
 			CP.wait(self, TM.reconnecting)
 			timer.delay(RECONNECT_WAIT, false, function()
@@ -4720,8 +4777,33 @@ function update(self, dt)
 			local v = self.view[i]
 			v.x, v.y, v.px = self.playout.q[1].pose.r[i].x, self.playout.q[1].pose.r[i].y, nil
 		end
+		-- prova_cade N: N seconds into the online match the connection drops by
+		-- itself, once (scenario cade_online.txt: the client must come back alone)
+		if SIMULATE and self.conn and not self.fell then
+			self.fall_t = (self.fall_t or 0) + dt
+			local at = config_int("megablast.prova_cade", 0)
+			if at > 0 and self.fall_t >= at then
+				self.fell = true
+				print("SIMULA evento caduta")
+				ws.disconnect(self.conn)
+			end
+			-- prova_muta N: from N seconds on this connection brings nothing more, without
+			-- closing (scenario muta_online.txt: the watchman must notice and come back)
+			local mute = config_int("megablast.prova_muta", 0)
+			if mute > 0 and self.fall_t >= mute then
+				self.fell, self.mute = true, self.conn
+				print("SIMULA evento muta")
+			end
+		end
 		self.net_reach = self.net_reach or function(data) CP.net_reach(self, data) end
-		self.pose_a, self.pose_b, self.pose_t = menu.playout.advance(self.playout, dt_world, socket.gettime(), self.snap_view, self.net_reach)
+		local now = socket.gettime()
+		local ok, a, b, k = pcall(menu.playout.advance, self.playout, dt_world, now, self.snap_view, self.net_reach)
+		if ok then
+			self.pose_a, self.pose_b, self.pose_t = a, b, k
+			if now - (self.state_at or now) > CP.STALL then CP.resync(self, "nessuno stato da " .. CP.STALL .. " s") end
+		else
+			CP.resync(self, "errore della coda: " .. tostring(a))
+		end
 		self.pose_dt = 1
 		-- we send the server only the changes, and only on our turn
 		if my_turn(self) and self.g.phase == "aim" then
