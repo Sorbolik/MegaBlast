@@ -59,6 +59,9 @@ images {
   image: "/assets/weapons/teleport_tinta.png"
 }
 images {
+  image: "/assets/weapons/teleport_icona.png"
+}
+images {
   image: "/assets/weapons/eagle.png"
 }
 images {
@@ -131,13 +134,13 @@ images {
   image: "/assets/weapons/drill_icona.png"
 }
 images {
-  image: "/assets/weapons/magnet.png"
+  image: "/assets/weapons/vortex.png"
 }
 images {
-  image: "/assets/weapons/magnet_tinta.png"
+  image: "/assets/weapons/vortex_tinta.png"
 }
 images {
-  image: "/assets/weapons/magnet_icona.png"
+  image: "/assets/weapons/vortex_icona.png"
 }
 images {
   image: "/assets/weapons/cannon.png"
@@ -158,13 +161,7 @@ images {
   image: "/assets/weapons/petard_icona.png"
 }
 images {
-  image: "/assets/weapons/scambio_icona.png"
-}
-images {
   image: "/assets/weapons/janus_icona.png"
-}
-images {
-  image: "/assets/weapons/teleport_icona.png"
 }
 images {
   image: "/assets/weapons/trap_icona.png"
@@ -177,6 +174,9 @@ images {
 }
 images {
   image: "/assets/weapons/parachute_icona.png"
+}
+images {
+  image: "/assets/weapons/scambio_icona.png"
 }
 images {
   image: "/assets/weapons/uncino.png"
@@ -240,6 +240,12 @@ images {
 }
 images {
   image: "/assets/weapons/petardo_volo_tinta.png"
+}
+images {
+  image: "/assets/weapons/voragine_volo.png"
+}
+images {
+  image: "/assets/weapons/voragine_volo_tinta.png"
 }
 margin: 0
 extrude_borders: 2

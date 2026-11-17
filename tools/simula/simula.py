@@ -59,7 +59,8 @@ PAD = {"a": ("F1", "F1"), "b": ("F2", "F2"), "x": ("F3", "F3"), "y": ("F4", "F4"
 # (gli eventi chiesti a un server che non c'è: il gioco lo sa e va avanti senza, main/events.lua)
 IGNORA = re.compile(r"^(ERROR|WARNING):SOUND|^WARNING:(DLIB: Variable LANG|ENGINE: Failed to initialize sound)"
                     r"|^ERROR:DLIB: HTTP request to '[^']*/eventi' failed")
-ERRORE = re.compile(r"^(ERROR|FATAL):|Assertion|Segmentation fault|stack traceback")
+# "SIMULA testo_piccolo": una scritta rimpicciolita sotto i 16 px (kit.check_small)
+ERRORE = re.compile(r"^(ERROR|FATAL):|Assertion|Segmentation fault|stack traceback|SIMULA testo_piccolo")
 
 
 def info(msg):
@@ -549,7 +550,9 @@ def comando(g, riga):
         g.attendi(0.1)
         g.xdo("mouseup", 3)
         g.attendi(0.2)
-        if len(a) > 2:
+        if len(a) > 3:
+            g.zoom(a[2], num(3))
+        elif len(a) > 2:
             g.scatta(a[2])
         g.xdo("mouseup", 1)
     elif c == "niente_evento":

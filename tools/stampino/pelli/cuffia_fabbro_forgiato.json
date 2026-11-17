@@ -1,0 +1,150 @@
+{
+ "nome": "cuffia_fabbro_forgiato",
+ "categoria": "elmo",
+ "pezzi": {
+  "testa_1": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 13.1,
+   "y": 62.8,
+   "w": 115.0,
+   "h": 60.9,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 11.9,
+   "y": 59.8,
+   "w": 93.2,
+   "h": 49.3,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 13.1,
+   "y": 62.8,
+   "w": 115.0,
+   "h": 60.9,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 11.9,
+   "y": 59.8,
+   "w": 93.2,
+   "h": 49.3,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 13.0,
+   "y": 62.8,
+   "w": 114.3,
+   "h": 60.9,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 11.9,
+   "y": 59.8,
+   "w": 92.6,
+   "h": 49.3,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 13.1,
+   "y": 62.8,
+   "w": 115.5,
+   "h": 60.9,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 12.0,
+   "y": 59.8,
+   "w": 93.5,
+   "h": 49.3,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 13.1,
+   "y": 62.8,
+   "w": 115.5,
+   "h": 60.9,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 12.0,
+   "y": 59.8,
+   "w": 93.5,
+   "h": 49.3,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 13.0,
+   "y": 62.8,
+   "w": 114.8,
+   "h": 60.9,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 11.9,
+   "y": 59.8,
+   "w": 92.9,
+   "h": 49.3,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 12.9,
+   "y": 62.8,
+   "w": 113.9,
+   "h": 60.9,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 11.8,
+   "y": 59.8,
+   "w": 92.2,
+   "h": 49.3,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 13.0,
+   "y": 62.8,
+   "w": 114.8,
+   "h": 60.9,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 11.9,
+   "y": 59.8,
+   "w": 92.9,
+   "h": 49.3,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 13.1,
+   "y": 62.8,
+   "w": 115.0,
+   "h": 60.9,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "cuffia_fabbro_forgiato_testa",
+   "x": 11.9,
+   "y": 59.8,
+   "w": 93.2,
+   "h": 49.3,
+   "modo": "sopra"
+  }
+ }
+}

@@ -1,0 +1,53 @@
+{
+ "_": "Il Fabbro addosso all'apprendista (WB-055): cuffia con gli occhialoni, grembiule con le spalline, stivali.",
+ "tavolozza": "tools/stampino/tavolozze/apprendista_fabbro.json",
+ "colori": [
+  "#8A4A1E",
+  "#783818",
+  "#5A2C14",
+  "#D2964E",
+  "#C07838",
+  "#D9A441",
+  "#F8C838",
+  "#F0A018",
+  "#00FFFF"
+ ],
+ "senza_corpo": [
+  "lingua",
+  "bocca",
+  "corna",
+  "corna_ombra",
+  "occhi",
+  "lenti",
+  "lenti_ombra",
+  "cuoio_scuro",
+  "rame"
+ ],
+ "senza_teste": [
+  "cuoio",
+  "cinghia",
+  "ottone"
+ ],
+ "riferimenti": {
+  "teste": "art/WB-055/riferimenti/R1_teste_senza_corna.png",
+  "corpo": "art/WB-055/riferimenti/R2_corpo_collo_nudo.png",
+  "pugni": "art/WB-055/riferimenti/R3_pugni.png"
+ },
+ "pelli": {
+  "elmo": "cuffia_fabbro",
+  "corazza": "grembiule_fabbro",
+  "stivali": "stivali_fabbro"
+ },
+ "forme": {
+  "": {
+   "teste": "art/WB-055/cuffia_base_1.png",
+   "corpo": "art/WB-055/corpo_base_1.png",
+   "pugni": "art/WB-055/pugni_base.png"
+  },
+  "_forgiato": {
+   "teste": "art/WB-055/cuffia_forgiata.png",
+   "corpo": "art/WB-055/corpo_forgiata.png",
+   "pugni": "art/WB-059/pugni_forgiata_1.png"
+  }
+ }
+}

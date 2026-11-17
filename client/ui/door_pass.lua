@@ -4,8 +4,8 @@
 --          the home that stays still under it (Sergio, 15 Nov: «vorrei
 --          semplicemente che si portasse l'altra pagina con sé»). The page's
 --          edge is a thin orange line, the button rides on it pulling and goes
---          out over the screen's border just as the line gets there; the line
---          stays on that edge: where you are. Back: the button rides the line pushing the page out, the
+--          out over the screen's border just as the line gets there, and the
+--          line after it. Back: the button rides a new line pushing the page out, the
 --          home under it; it stops on its place with a small bounce and the
 --          page goes on to the edge
 --   zaino  the ZAINO grows out of the apprentice and goes back into it
@@ -19,7 +19,7 @@
 --   door_pass.grow(dp, home, change, done)         -- the ZAINO
 --   door_pass.shrink(dp, home, change, done)
 --   door_pass.owns(dp)        -- a screen opened by a door or the apprentice: its way back is here
---   door_pass.drop(dp)        -- the screen went away by another way: the line with it
+--   door_pass.drop(dp)        -- the screen went away by another way
 --   door_pass.is_active(dp)
 
 local kit = require "ui.kit"
@@ -69,16 +69,17 @@ local function alive(list)
 	return out
 end
 
--- every node moved by `by` along x, over t seconds
+-- every node moved by `by` along x, over t seconds; done on a timer, not on the
+-- nodes' callbacks: a screen that animates one of its own nodes' position under
+-- the slide (the story opened by the CAMPAGNA) cancels that callback, and the
+-- passage would stay busy for ever, with every touch swallowed
 local function slide(nodes, by, easing, t, done)
-	local left = #nodes
-	if left == 0 then if done then done() end return end
 	for _, n in ipairs(nodes) do
 		local p = gui.get_position(n)
-		gui.animate(n, "position.x", p.x + by, easing, t, 0, function()
-			left = left - 1
-			if left == 0 and done then done() end
-		end)
+		gui.animate(n, "position.x", p.x + by, easing, t)
+	end
+	if done then
+		if #nodes == 0 then done() else timer.delay(t, false, done) end
 	end
 end
 
@@ -101,7 +102,7 @@ end
 -- With M.EDGE "tempra" (tried on 15 Nov; Sergio, 11:16: the doors keep the line
 -- alone, the temper everywhere else) while it drags it is a narrow blade of the temper (WB-051, ui/transition.lua): the
 -- red-hot edge in front (dir: the side it faces, 1 right), the iron, the frost
--- behind; arrived, the blade fades and the line stays
+-- behind; arrived, it goes out over the border
 -- (not kit.anchor: it would count as one of the screen's nodes)
 M.EDGE = "linea"
 local TALL = 720 * 2
@@ -153,6 +154,17 @@ local function drop_line(dp)
 		gui.delete_node(dp.line)
 	end
 	dp.line = nil
+end
+
+-- the line slides out of the screen, toward `dir` (1 right), and is gone;
+-- the way back makes a new one
+local function leave_line(dp, dir)
+	local n = dp.line
+	if not n then return end
+	dp.line, blade[n] = nil, nil
+	gui.animate(n, "position.x", gui.get_position(n).x + dir * LINE, gui.EASING_OUTQUAD, 0.18, 0, function()
+		gui.delete_node(n)
+	end)
 end
 
 -- the button over everything while it drags: a top node just where its own is
@@ -227,8 +239,9 @@ function M.open(dp, h, id, change)
 				home_on(h, false)
 				kit.scene_cut(false)
 				kit.scene_copy_drop(still)
-				blade_to(dp.line, 0, 0.3)
-				-- 4. the line stays; the button, out of sight, goes back home
+				-- 4. the line goes out over the border after the button (Sergio, 17 Nov:
+				-- left there it read as a defect); the button, out of sight, goes back home
+				leave_line(dp, -d.side)
 				unride(d)
 				dp.busy = false
 			end)
@@ -291,7 +304,7 @@ function M.close(dp, h, change)
 	end) end)
 end
 
--- the screen went another way (a mission, a match): the line goes with it
+-- the screen went another way (a mission, a match)
 function M.drop(dp)
 	if dp.busy then return end
 	drop_line(dp)

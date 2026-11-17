@@ -178,6 +178,17 @@ function M.panel(parent, w, h, name)
 	return nine(parent, name or "pannello", w, h, math.min(26, h * 0.3, w * 0.3))
 end
 
+-- A drawn plate in nine parts (the powers of the Sigilli, WB-062: name
+-- "bivio_piastra_acceso" ...) filling the Figma box x..x+w, y..y+h; the corners
+-- at most a third of the height. Returns { node, g } like a card
+function M.drawn_plate(g, name, x, y, w, h)
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local c = math.min(P[name].c, h * 0.34)
+	nine(n, name, w, h, c)
+	return { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+end
+
 -- A whole piece h tall centered at (x, y) of parent
 local function whole(name, x, y, h, parent)
 	local m = P[name]
@@ -385,9 +396,26 @@ local FONT_SIZE = 40
 local BASELINE = 0.36
 local PIVOTS = { start = gui.PIVOT_W, middle = gui.PIVOT_CENTER, ["end"] = gui.PIVOT_E }
 
+-- The smallest text of the menus (Sergio, 15 Nov: everything at the size of a
+-- phone): the one place to change it; M.text never writes smaller
+M.MIN_TEXT = 16
+
+-- A text shrunk to fit its room must not go under MIN_TEXT: the simulator fails
+-- on this line (tools/simula/simula.py), once for each text
+local told = {}
+function M.check_small(n)
+	local size = gui.get_scale(n).x * FONT_SIZE
+	if size >= M.MIN_TEXT - 0.5 then return end
+	local t = gui.get_text(n)
+	if told[t] then return end
+	told[t] = true
+	print(("SIMULA testo_piccolo %.1f px: %s"):format(size, t))
+end
+
 -- Text of `size` pixels on the baseline (x, y). anchor: "start" (default),
 -- "middle", "end". spacing: extra pixels between letters
 function M.text(g, t, x, y, size, color, anchor, spacing)
+	size = math.max(size, M.MIN_TEXT)
 	local n = gui.new_text_node(vec(x - g.ox, g.oy - y + size * BASELINE), t)
 	gui.set_font(n, "titolo")
 	gui.set_pivot(n, PIVOTS[anchor or "start"])
@@ -418,6 +446,7 @@ function M.keep_in(n, box, g, x, y, size, anchor)
 	gui.set_position(n, vec(px - g.ox, g.oy - base + size * k * BASELINE))
 	V.x, V.y, V.z = size * k / FONT_SIZE, size * k / FONT_SIZE, 1
 	gui.set_scale(n, V)
+	M.check_small(n)
 end
 
 -- The queue's pill under the thread in the menus (ui/pill.lua, "foot") starts
@@ -434,13 +463,13 @@ function M.foot_text(g, t, x, y, size, color, wide, spacing)
 	local function one(txt, ly)
 		local n = M.text(g, txt, x, ly, size, color, "start", spacing)
 		local w = M.width(n)
-		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)) end
+		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)); M.check_small(n) end
 		return n
 	end
 	local n = M.text(g, t, x, y, size, color, "start", spacing)
 	if M.width(n) <= room or not M.in_queue then
 		local w = M.width(n)
-		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)) end
+		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)); M.check_small(n) end
 		return { n }
 	end
 	gui.delete_node(n)
@@ -458,6 +487,23 @@ function M.foot_text(g, t, x, y, size, color, wide, spacing)
 	end
 	if not best then return { one(t, y) } end
 	return { one(t:sub(1, best[1] - 1), y), one(t:sub(best[2] + 1), y + size + 2) }
+end
+
+-- The lines of a text that stay `wide` at that size, word by word (a word
+-- wider than that stays alone on its line: shrink it)
+function M.wrap(g, t, size, wide)
+	local function measure(txt)
+		local n = M.text(g, txt, 0, 0, size)
+		local w = M.width(n)
+		gui.delete_node(n)
+		return w
+	end
+	local lines = {}
+	for word in t:gmatch("%S+") do
+		local try = lines[#lines] and (lines[#lines] .. " " .. word)
+		if try and measure(try) <= wide then lines[#lines] = try else lines[#lines + 1] = word end
+	end
+	return lines
 end
 
 -- Capitals, the accented letters too (string.upper leaves them small)
@@ -530,22 +576,25 @@ end
 -- gelo; Sergio, 15 Nov: one primary button, the same on every screen) and,
 -- at its left, a line saying what it starts. Three drawings: lit, pressed
 -- (while the finger is on it) and off (it can't be done now: grey and frozen,
--- and the line says why). opt: size (of the label), sub, off
+-- and the line says why). opt: size (of the label), sub, off. Under the thread
+-- (y from 540) it takes its place in the band; higher (the vignette, a weapon's
+-- sheet) it is drawn where asked, h tall
 local function sub_y(y, h)
 	-- under it, or over it when the thread is there
 	return y + h + 30 > 640 and y - 10 or y + h + 30
 end
 local LIT_H = 104   -- the lit drawing on the screen; the others as tall as drawn next to it
+local FACE_PAD = 6  -- between the label and the ends of the gem's free face
 
 function M.action(g, label, x, y, w, h, opt)
 	opt = opt or {}
 	local size = opt.size or math.min(92, (w - 60) / (#label * 0.56))
 	-- an action at the bottom right goes under the thread, in the band, the
 	-- way back on the other side (Sergio, 12 Nov); its line at its left
-	local foot = y >= 540 and not opt.free
+	local foot = y >= 540
 	if foot then
 		x, y, w, h = 926, M.THREAD + 10, 300, 88
-		size = math.min(size, (w - 120) / (#label * 0.6), 44)
+		size = math.min(size, 44)
 	end
 	local cx, cy = x + w / 2, y + h / 2
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
@@ -559,11 +608,33 @@ function M.action(g, label, x, y, w, h, opt)
 		gui.set_enabled(s, state == (opt.off and "spento" or "acceso"))
 		looks[state] = s
 	end
+	-- the label in the middle of the free face of the gem, away from the flame
+	-- on the left and the crystals on the right; off, on the grey part before
+	-- the ice (pieces.lua, box; Sergio, 17 Nov: never over the button's drawings).
+	-- As big as fits both faces: lit or off, the same label has the same size
+	local function face(state)
+		local f = room("primario_" .. state, cx, cy, w, P["primario_" .. state].h * k)
+		f.wide, f.tall = f.x1 - f.x0 - 2 * FACE_PAD, f.y1 - f.y0
+		return f
+	end
+	local lit, off = face("acceso"), face("spento")
+	local where = opt.off and off or lit
+	size = math.max(M.MIN_TEXT, math.min(size, lit.tall / 0.72, off.tall / 0.72))
 	local ink = opt.off and with_alpha(C.INK, 0.55) or C.INK
-	p.label = M.text(p.g, label, cx, cy + size * 0.36, size, ink, "middle")
+	p.label = M.text(p.g, label, (where.x0 + where.x1) / 2, (where.y0 + where.y1) / 2 + size * 0.36, size, ink, "middle")
+	local full = gui.get_scale(p.label)
+	-- another label on the same button (the vignette: AVANTI, then VAI!)
+	p.set_label = function(t)
+		gui.set_text(p.label, t)
+		gui.set_scale(p.label, full)
+		local lw = M.width(p.label)
+		local fit = math.min(1, lit.wide / lw, off.wide / lw)
+		if fit < 1 then gui.set_scale(p.label, full * fit); M.check_small(p.label) end
+	end
+	p.set_label(label)
 	local muted = opt.off and C.FROST or C.MUTE
-	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, cy + 6, 16, muted, "end", 1)
-	elseif opt.sub then p.sub = M.text(g, opt.sub, cx, sub_y(y, h), 15, muted, "middle", 1.2) end
+	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, cy + 7, 19, muted, "end", 0.6)
+	elseif opt.sub then p.sub = M.text(g, opt.sub, cx, sub_y(y, h), 16, muted, "middle", 1.2) end
 	-- the finger on it: the pressed drawing (ui.ui, premi)
 	if not opt.off then
 		local at = gui.get_position(p.label)
@@ -609,7 +680,7 @@ function M.header(list_of, label, accent, back_action, from)
 		whole("indietro", 0, 0, 76, h.back.face_node)
 		gui.set_parent(M.line(h.back.g, 82, 642, 64, 658, 7, C.SAND), h.back.face_node, true)
 		gui.set_parent(M.line(h.back.g, 64, 658, 82, 674, 7, C.SAND), h.back.face_node, true)
-		M.text(bl, from or "", 74, 713, 13, C.MUTE, "middle", 1)
+		M.text(bl, from or "", 74, 713, 16, C.MUTE, "middle", 1)
 		-- the whole corner takes the tap
 		local zone = empty(76, M.BAND / 2, 152, M.BAND, bl.node)
 		list_of[#list_of + 1] = { nodo = zone, bordo = zone, colore = CLEAR, riposo = CLEAR, ui_action = back_action, piastra = h.back }
@@ -673,7 +744,8 @@ end
 function M.choice(g, list_of, x, y, label, opts, active, w, off)
 	local h = 58
 	if g.air then w = w + M.air(0.25) end
-	M.text(g, label, x + 6, y - 12, 15, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
+	-- the label nearer its own row than the one above (Sergio, 17 Nov)
+	M.text(g, label, x + 6, y - 6, 16, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
 	for i, o in ipairs(opts) do
 		local ox = x + (i - 1) * w
 		local on = i == active and not off
@@ -699,6 +771,51 @@ function M.card(g, x, y, w, h, color, opt)
 	if opt.sel then nine(n, "pannello_caldo", w + 12, h + 12, math.min(26, h * 0.34)) end
 	local parts = nine(n, "pannello", w, h, math.min(22, h * 0.3))
 	if opt.off then tint(parts, vmath.vector4(0.62, 0.62, 0.7, 0.8)) end
+	card_in(n)
+	return k
+end
+
+-- MODE CARDS (WB-060): the cards of GIOCA ONLINE, shaped by what they are:
+-- kind "brace" (the usual mode: ember, the flame out of the bottom left corner),
+-- "ferro" (a plain mode), "gelo" (an event: iron with the ice edge, crystals out
+-- of the top right corner), "spenta" (not yet open). In nine parts, the corners
+-- always at the drawing's scale; the flame and the crystals are a whole piece on
+-- their corner (pieces.lua: box says how far it sticks out of the body).
+-- opt.sel: the chosen one (its bright rim). Returns { node, g } like M.card
+local MODE_SCALE = 0.44
+function M.mode_card(g, x, y, w, h, kind, opt)
+	opt = opt or {}
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local k = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+	local name = "scheda_" .. kind .. (opt.sel and "_scelta" or "")
+	local m = P[name]
+	local s = math.min(MODE_SCALE, 0.34 * h / m.c)
+	local c = m.c * s
+	-- how far the flame (bottom left) or the crystals (top right) come inside the body:
+	-- the sides next to them start where they end
+	local f = P[name .. "_fregio"]
+	local flame = f and (f.box[1] > 0 or f.box[4] > 0)
+	local fw, fh = f and f.w * s or 0, f and f.h * s or 0
+	local in_w = f and fw - (flame and f.box[1] or f.box[3]) * s or c
+	local in_h = f and fh - (flame and f.box[4] or f.box[2]) * s or c
+	-- a part filling the box from (xa, ya) to (xb, yb), measured from the top left corner
+	local function part(i, xa, ya, xb, yb)
+		return pic(name .. "_" .. i, -w / 2 + (xa + xb) / 2, h / 2 - (ya + yb) / 2, xb - xa + 1, yb - ya + 1, n)
+	end
+	k.parts = {
+		part(5, c, c, w - c, h - c),
+		part(2, c, 0, f and not flame and w - in_w or w - c, c),
+		part(8, flame and in_w or c, h - c, w - c, h),
+		part(4, 0, c, c, flame and h - in_h or h - c),
+		part(6, w - c, f and not flame and in_h or c, w, h - c),
+		part(1, 0, 0, c, c), part(3, w - c, 0, w, c), part(7, 0, h - c, c, h), part(9, w - c, h - c, w, h),
+	}
+	if flame then
+		pic(name .. "_fregio", -w / 2 - f.box[1] * s + fw / 2, -h / 2 - f.box[4] * s + fh / 2, fw, fh, n)
+	elseif f then
+		pic(name .. "_fregio", w / 2 + f.box[3] * s - fw / 2, h / 2 + f.box[2] * s - fh / 2, fw, fh, n)
+	end
 	card_in(n)
 	return k
 end
@@ -746,17 +863,26 @@ function M.info(g, x, y, w, h)
 end
 
 -- LABELS: a small blade and the name in color
+-- how wide the backed label of the word t is
+function M.label_width(t)
+	local n = gui.new_text_node(vec(0, 0), t)
+	gui.set_font(n, "titolo")
+	local m = resource.get_text_metrics(gui.get_font_resource(gui.get_font(n)), t, { tracking = 1 / 16 })
+	gui.delete_node(n)
+	return math.ceil(m.width * 16 / FONT_SIZE) + 40
+end
+
 function M.label(g, x, y, t, color, backed)
 	if backed then
 		-- on a picture: a small iron plate, the word in its room
-		local w, h = #t * 9 + 46, 26
+		local w, h = M.label_width(t), 32
 		local cx, cy = x - 8 + w / 2, y - 1 + h / 2
 		local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
 		three(n, "piastrina", w, h)
 		local box = room("piastrina", cx, cy, w, h)
-		return M.text({ node = n, ox = cx, oy = cy, box = box }, t, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 5, 12, color, "middle", 1.2)
+		return M.text({ node = n, ox = cx, oy = cy, box = box }, t, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 6, 16, color, "middle", 1)
 	end
-	return M.text(g, t, x, y + 18, 15, color, "start", 1.2)
+	return M.text(g, t, x, y + 18, 16, color, "start", 1.2)
 end
 
 -- A section's small heading

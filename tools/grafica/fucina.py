@@ -86,7 +86,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara") and not nome.startswith("primario"):    # (sfumati, e il primario: la scritta la mette kit.action)
+    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara") and not nome.startswith("primario"):    # (sfumati, e il primario: il suo spazio e' misurato, SPAZI_PRIMARIO)
         SPAZI[nome] = spazio(im)
 
 
@@ -190,13 +190,14 @@ def fai_piccoli():
     for nome, a in zip(["stella", "stella_spenta", "medaglia", "ingranaggio", "corona", "freccia"], segni):
         intero(nome, a, 128)
     barre = griglia(os.path.join(p, "pezzo_barre_1.png"), [1, 1, 1, 1, 1], 600)
-    tre("guscio", barre[0], 64, 0.12)
+    # (alto il doppio: la targa del profilo della home lo disegna a 76, Sergio 17 nov)
+    tre("guscio", barre[0], 128, 0.12)
     tre("barra_brace", barre[1], 44, 0.1)
     tre("barra_gelo", barre[2], 44, 0.1)
     tre("barra_chiara", neutro(barre[1]), 44, 0.1)
     intero("tacca", barre[3], 72)
     tondi = griglia(os.path.join(p, "pezzo_tondi_1.png"), [2, 2])
-    for nome, a in zip(["tondo_ferro", "tondo_oro", "tondo_gelo"], tondi):
+    for nome, a in zip(["tondo_ferro", "tondo_oro"], tondi):
         intero(nome, a, 200)
     tre("linguetta", tondi[3], 120, 0.3)
     tre("linguetta_chiara", chiaro(tondi[3]), 120, 0.3)
@@ -311,13 +312,13 @@ MENU_INTERI = [
     # la home: le porte (WB-046, a destra lo scudo verso il bordo), GIOCA, pedana e zainetto
     ("porta_campagna", "porta_campagna", 236, "WB-046"),
     ("porta_allenamento", "porta_allenamento", 226, "WB-046"),
-    ("porta_eventi", "porta_eventi_dx", 236, "WB-046"),
+    # lo striscione EVENTI: il nastro con la piega di WB-061 (Sergio, 15 nov; fra tre
+    # idee), accorciato nel mezzo liscio per avere l'ingombro di quello di WB-046
+    ("porta_eventi", "porta_eventi_piega", 236, "WB-061"),
     ("porta_armeria", "porta_armeria_dx", 226, "WB-046"),
     ("gioca_sigillo", "gioca_sigillo", 166, "WB-046"),
     ("pedana", "pedana_griglia_1", 266, "WB-050"),
     ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
-    # la transizione (WB-049): l'attacco dello scudo sul bordo e le schegge della scia
-    ("attacco_scudo", "attacco_scudo_1", 170, "WB-049"),
     # caselle, livelli, segni (WB-044)
     ("casella", "casella", 324, "WB-044"),
     ("casella_scelta", "casella_scelta", 324, "WB-044"),
@@ -327,10 +328,6 @@ MENU_INTERI = [
     ("livello_oro", "livello_oro", 80, "WB-044"),
     ("spunta", "spunta", 56, "WB-044"),
     ("sconto", "sconto", 64, "WB-044"),
-    ("cornice_argento", "cornice_argento", 208, "WB-044"),
-    ("cornice_bronzo", "cornice_bronzo", 208, "WB-044"),
-    ("bordino_brace", "bordino_brace", 140, "WB-044"),
-    ("bordino_gelo", "bordino_gelo", 140, "WB-044"),
     ("podio_1", "podio_1", 420, "WB-044"),
     ("podio_2", "podio_2", 352, "WB-044"),
     ("podio_3", "podio_3", 304, "WB-044"),
@@ -342,7 +339,6 @@ MENU_INTERI = [
     ("ic_maglio", "ic_maglio", 140, "WB-047"),
     ("ic_notte", "ic_notte", 108, "WB-047"),
     ("barrato", "barrato", 34, "WB-047"),
-    ("sei_qui", "sei_qui", 48, "WB-047"),
     ("buono", "buono", 128, "WB-043"),
 ]
 # dove si scrive sulle porte e su GIOCA: la striscia piena fra lo scudo (o il sigillo) e la
@@ -351,26 +347,117 @@ MENU_INTERI = [
 SPAZI_MISURATI = {
     "porta_campagna": (240, 50, 189, 51),
     "porta_allenamento": (225, 44, 166, 37),
-    "porta_eventi": (110, 36, 236, 50),
+    "porta_eventi": (185, 52, 252, 58),   # (a destra 12 px dal medaglione, come ARMERIA)
     "porta_armeria": (120, 50, 225, 56),
     "gioca_sigillo": (180, 28, 149, 48),
+}
+# dove si scrive sul pulsante primario (la gemma di WB-054): la faccia piena davanti, senza
+# la fiamma a sinistra e i cristalli a destra; sullo spento solo la parte grigia, prima del
+# ghiaccio (Sergio, 17 nov: la scritta mai sopra i disegni del tasto). Misurati con spazio()
+# sul disegno intero, con la tinta presa dalla faccia.
+SPAZI_PRIMARIO = {
+    "primario_acceso": (99, 79, 79, 48),
+    "primario_premuto": (71, 62, 78, 33),
+    "primario_spento": (59, 78, 178, 39),
 }
 # i pezzi lunghi in tre parti (nome, file, altezza, capo, cartella): si allunga solo il mezzo
 MENU_TRE = [
     ("riga_scura", "riga_scura", 140, 0.08, "WB-044"),
-    ("riga_oro", "riga_oro", 140, 0.08, "WB-044"),
     ("pillola", "pillola", 104, 0.2, "WB-044"),
 ]
-BADGE = 4
-SCIE = ["brace", "scintilla", "fiamma", "ricciolo", "ferro", "cuoio", "paglia", "acciaio",
-        "stella", "moneta", "nastro", "oro", "ghiaccio", "fiocco", "cristallo", "gelo"]
-PORTE = ["campagna", "allenamento", "eventi", "armeria"]
 FAMIGLIE = ["fabbro", "corvo", "fornace", "leviatano", "vuoto"]
 POSTI = ["elmo", "corazza", "mantello", "stivali"]
 
 
+def corpo(arr):
+    """Il rettangolo del corpo di una scheda (senza la fiamma o i cristalli che escono):
+    le righe e le colonne piene almeno a meta'. Torna x0, y0, x1, y1."""
+    m = arr[..., 3] > 128
+    righe, colonne = m.sum(axis=1), m.sum(axis=0)
+    ys = np.where(righe > 0.5 * righe.max())[0]
+    xs = np.where(colonne > 0.5 * colonne.max())[0]
+    return xs[0], ys[0], xs[-1] + 1, ys[-1] + 1
+
+
+def scheda(nome, arr, fregio=None):
+    """Una scheda di WB-060 in nove parti (angoli interi, lati allungati in un verso,
+    il mezzo piatto) piu' il suo fregio: l'angolo grande con la fiamma (in basso a
+    sinistra) o coi cristalli (in alto a destra), che esce dal corpo e si disegna
+    intero sopra. fregio = (dove, dentro in largo, dentro in alto) in pixel del disegno.
+    Nelle misure del fregio, box dice di quanto esce dal corpo (sinistra, alto, destra, basso)."""
+    x0, y0, x1, y1 = corpo(arr)
+    im = Image.fromarray(arr, "RGBA")
+    c = round((y1 - y0) * 0.24)
+    xs = [(x0, x0 + c), (x0 + c, x1 - c), (x1 - c, x1)]
+    ys = [(y0, y0 + c), (y0 + c, y1 - c), (y1 - c, y1)]
+    # i lati accanto al fregio si prendono dove il fregio e' finito: il gioco li
+    # allunga da li', cosi' la fiamma o i cristalli non finiscono stirati nel lato
+    dove, dx, dy = fregio or (None, 0, 0)
+    k = 1
+    for r, (ya, yb) in enumerate(ys):
+        for q, (xa, xb) in enumerate(xs):
+            if dove == "fiamma" and (r, q) == (2, 1):
+                xa = x0 + dx
+            elif dove == "fiamma" and (r, q) == (1, 0):
+                yb = y1 - dy
+            elif dove == "cristalli" and (r, q) == (0, 1):
+                xb = x1 - dx
+            elif dove == "cristalli" and (r, q) == (1, 2):
+                ya = y0 + dy
+            p = im.crop((xa, ya, xb, yb))
+            # il mezzo e' piatto: basta un quadratino
+            if r == 1 and q == 1:
+                p = p.crop((p.size[0] // 2 - 8, p.size[1] // 2 - 8, p.size[0] // 2 + 8, p.size[1] // 2 + 8))
+            salva(p, "%s_%d" % (nome, k))
+            k += 1
+    MISURE[nome] = (x1 - x0, y1 - y0, c)
+    if fregio:
+        h, w = arr.shape[:2]
+        if dove == "fiamma":
+            taglio = (0, y1 - dy, x0 + dx, h)
+            fuori = (x0, 0, 0, h - y1)
+        else:
+            taglio = (x1 - dx, 0, w, y0 + dy)
+            fuori = (0, y0, w - x1, 0)
+        p = im.crop(taglio)
+        salva(p, nome + "_fregio")
+        MISURE[nome + "_fregio"] = p.size
+        SPAZI[nome + "_fregio"] = fuori
+
+
+def fai_schede():
+    """Le schede di GIOCA ONLINE (WB-060): brace, ferro, gelo e ferro spento, normali
+    e scelte (col bordo acceso). Tenuti i fogli 1: china piu' pulita e lati piu' dritti."""
+    p = os.path.join(ART, "WB-060")
+    fregi = {"brace": ("fiamma", 235, 170), "gelo": ("cristalli", 200, 95), "gelo_scelta": ("cristalli", 250, 95)}
+    for foglio, coda in (("schede_modalita_1", ""), ("schede_scelte_1", "_scelta")):
+        cs = griglia(os.path.join(p, foglio + ".png"), [2, 2], 20000)
+        # in ordine di lettura: brace e ferro sopra, gelo e spenta sotto
+        for tipo, a in zip(["brace", "ferro", "gelo", "spenta"], cs):
+            n = tipo + coda
+            scheda("scheda_" + n, a, fregi.get(n) or fregi.get(tipo))
+
+
+def fai_segni():
+    """I segni di chi sale e chi scende (WB-061, foglio 1: piatto, senza il riflesso
+    bianco): avorio, il gioco li tinge."""
+    segni = griglia(os.path.join(ART, "WB-061", "segni_sale_scende_1.png"), [3], 20000)
+    for nome, a in zip(["segno_sale", "segno_scende"], segni):
+        intero(nome, a, 96)
+
+
 def ritaglio(cartella, nome):
     return np.array(Image.open(os.path.join(ART, cartella, "ritagli", nome + ".png")).convert("RGBA"))
+
+
+def verde(arr):
+    """La stessa spunta, verde: chi ha premuto PRONTO nella scelta delle armi
+    (Sergio, 16 nov). Gira solo la tinta: luci, ombre e contorno restano."""
+    hsv = np.array(Image.fromarray(arr[..., :3], "RGB").convert("HSV"))
+    hsv[..., 0] = 82  # da oro a verde (tinta 0..255)
+    out = arr.copy()
+    out[..., :3] = np.array(Image.fromarray(hsv, "HSV").convert("RGB"))
+    return out
 
 
 def fai_menu():
@@ -378,19 +465,9 @@ def fai_menu():
         intero(nome, ritaglio(d, f), h)
         if nome in SPAZI_MISURATI:
             SPAZI[nome] = SPAZI_MISURATI[nome]
+    intero("spunta_verde", verde(ritaglio("WB-044", "spunta")), 56)
     for nome, f, h, c, d in MENU_TRE:
         tre(nome, ritaglio(d, f), h, c)
-    for i in range(1, BADGE + 1):
-        intero("badge_%d" % i, ritaglio("WB-047", "badge_%d" % i), 68 if i < 4 else 90)
-    for k in SCIE:
-        intero("scia_" + k, ritaglio("WB-049", "scia_%s_1" % k), 84)
-    # la banda del bordo: larga il doppio di come si vede (48), si ripete in alto
-    for k in PORTE:
-        a = ritaglio("WB-049", "banda_%s_1" % k)
-        im = Image.fromarray(a, "RGBA")
-        im = im.resize((96, round(im.size[1] * 96 / im.size[0])), Image.LANCZOS)
-        salva(im, "banda_" + k)
-        MISURE["banda_" + k] = im.size
     # la lama della tempra (WB-051): corpo, bordo rovente e bordo gelato, che si
     # ripetono in alto (e il corpo anche in largo); larghi il doppio di come si vedono
     for nome, w in (("lama_corpo", 180), ("lama_fuoco", 80), ("lama_gelo", 72)):
@@ -411,6 +488,7 @@ def fai_menu():
         for stato in ("acceso", "premuto", "spento"):
             r = ritaglio("WB-054", "primario_%s_%s" % (scelta, stato))
             tre("primario_" + stato, r, round(200 * r.shape[0] / acceso_h), 0.3)
+            SPAZI["primario_" + stato] = SPAZI_PRIMARIO["primario_" + stato]
     # le icone dei pezzi (WB-043): base e forgiata per famiglia e posto; il posto vuoto
     for f in FAMIGLIE:
         for p in POSTI:
@@ -418,6 +496,149 @@ def fai_menu():
                 intero("ic_%s_%s_%s" % (f, p, g), ritaglio("WB-043", "ic_%s_%s_%s" % (f, p, g)), 240)
     for p in POSTI:
         intero("vuoto_" + p, ritaglio("WB-043", "vuoto_" + p), 240)
+
+
+def trasparente(percorso):
+    """Un foglio di Codex gia' trasparente (WB-062, WB-067): via l'alone di pixel
+    mezzi trasparenti attorno ai pezzi (la china esterna e' piena)."""
+    a = np.array(Image.open(percorso).convert("RGBA")).astype(float)
+    al = a[..., 3]
+    a[..., 3] = np.clip((al - 90) / 100, 0, 1) * 255
+    return a.astype(np.uint8)
+
+
+def griglia_trasparente(percorso, per_riga, minimo=1500):
+    cs = sorted(pezzi(trasparente(percorso), minimo), key=lambda t: t[0])
+    out = []
+    for n in per_riga:
+        out += sorted(cs[:n], key=lambda t: t[1])
+        cs = cs[n:]
+    return [t[2] for t in out]
+
+
+def fai_bivio():
+    """I Sigilli col bivio (WB-062, foglio 1, Sergio 15 nov): per acceso, spento e
+    chiuso il binario dei punti (in tre parti, si allunga), il nodo del gradino, i
+    rami su e giu', la piastra del potere (in nove parti). E le tacche dei punti,
+    le fiammelle dei punti liberi, i pulsanti meno e piu' (foglio 1 delle tacche)."""
+    p = os.path.join(ART, "WB-062")
+    o = trasparente(os.path.join(p, "pezzi_bivio_1.png"))
+    # i rami su e giu' a volte si toccano: un pezzo troppo alto si taglia nella riga
+    # piu' vuota a meta' altezza
+    tutti = []
+    for y, x, a in pezzi(o, 3000):
+        h = a.shape[0]
+        if h > 250:
+            piene = (a[..., 3] > 0).sum(axis=1)
+            k = int(h * 0.35) + int(np.argmin(piene[int(h * 0.35):int(h * 0.65)]))
+            tutti += [(y, x, a[:k]), (y + k, x, a[k:])]
+        else:
+            tutti.append((y, x, a))
+    righe = {}
+    for y, x, a in tutti:
+        r = int((y + a.shape[0] / 2) / (o.shape[0] / 3))
+        righe.setdefault(r, []).append((y, x, a))
+    for r, stato in enumerate(("acceso", "spento", "chiuso")):
+        riga = righe[r]
+        # da sinistra: binario, nodo, i due rami (su sopra, giu' sotto), piastra
+        riga.sort(key=lambda t: t[1])
+        binario, nodo = riga[0][2], riga[1][2]
+        rami = sorted(riga[2:4], key=lambda t: t[0])
+        su, giu = rami[0][2], rami[1][2]
+        piastra = riga[4][2]
+        # i rami su e giu' li disegna il codice (quelli del foglio sono troppo larghi
+        # per cinque gradini in una riga); binario e nodo chiusi non servono
+        if stato != "chiuso":
+            tre("bivio_binario_" + stato, binario, 40, 0.3)
+            intero("bivio_nodo_" + stato, nodo, 96)
+        scheda("bivio_piastra_" + stato, piastra)
+    t = griglia_trasparente(os.path.join(p, "tacche_1.png"), [2, 2, 2, 4], 1500)
+    # (le prime quattro del foglio, le tacche a rombo, non servono piu': Sergio, 16 nov)
+    nomi = [None, None, None, None, "punto_libero", "punto_speso",
+            "tasto_meno", "tasto_meno_spento", "tasto_piu", "tasto_piu_spento"]
+    for nome, a in zip(nomi, t):
+        if nome:
+            intero(nome, a, 96 if nome.startswith("tasto") else 64)
+    fai_tacca_sigillo()
+
+
+def tondo_storto(w, h, raggi, n=24):
+    """I punti di un rettangolo w x h con un raggio per angolo (alto sx, alto dx,
+    basso dx, basso sx): la forma un po' storta dei pezzi."""
+    centri = [(raggi[0], raggi[0], 180), (w - raggi[1], raggi[1], 270), (w - raggi[2], h - raggi[2], 0), (raggi[3], h - raggi[3], 90)]
+    punti = []
+    for (cx, cy, a0), r in zip(centri, raggi):
+        for i in range(n + 1):
+            a = np.radians(a0 + 90 * i / n)
+            punti.append((cx + r * np.cos(a), cy + r * np.sin(a)))
+    return punti
+
+
+def fai_tacca_sigillo():
+    """La tacca dei punti dei Sigilli (Sergio, 16 nov: stretta e alta come nella
+    bozza approvata, 13 x 24 con gli angoli 5 3 6 3 e il bordo d'inchiostro):
+    disegnata qui, bianca, il gioco la tinge del colore della via."""
+    from PIL import ImageDraw
+    k = 8 * 4  # quattro volte la misura sullo schermo, disegnata otto volte piu' grande
+    w, h, bordo = 13 * k, 24 * k, 2 * k
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.polygon(tondo_storto(w, h, [5 * k, 3 * k, 6 * k, 3 * k]), fill=(18, 11, 12, 255))
+    dentro = tondo_storto(w - 2 * bordo, h - 2 * bordo, [3 * k, 1.5 * k, 4 * k, 1.5 * k])
+    d.polygon([(x + bordo, y + bordo) for x, y in dentro], fill=(255, 255, 255, 255))
+    im = im.resize((w // 8, h // 8), Image.LANCZOS)
+    salva(im, "tacca_sigillo")
+    MISURE["tacca_sigillo"] = im.size
+
+
+def fai_profilo():
+    """Il Profilo (WB-067, fogli 1): il nastro della vittoria (fiamma) e della
+    sconfitta (schegge), in tre parti; il pulsante per rivedere, normale e premuto;
+    le medaglie dei record, bronzo, argento, oro e il posto vuoto."""
+    p = os.path.join(ART, "WB-067")
+    n = griglia_trasparente(os.path.join(p, "nastri_e_rivedi_1.png"), [2, 2], 3000)
+    tre("nastro_vittoria", n[0], 96, 0.3)
+    intero("rivedi", n[1], 120)
+    tre("nastro_sconfitta", n[2], 96, 0.3)
+    intero("rivedi_premuto", n[3], 120)
+    m = griglia_trasparente(os.path.join(p, "medaglie_1.png"), [4], 3000)
+    for nome, a in zip(["medaglia_bronzo", "medaglia_argento", "medaglia_oro", "medaglia_vuota"], m):
+        intero(nome, a, 80)
+    fai_record()
+
+
+# le icone dei record, nell'ordine del foglio (gli id di client/menu/milestones.lua)
+RECORD = ["nel_vuoto", "abbattuti", "a_segno", "danno", "globi", "colpo_lungo", "casse", "vinte", "cadute"]
+LATO_RECORD = 96
+
+
+def fai_record():
+    """Le nove icone dei record (WB-069, foglio 1): una griglia 3 x 3. Ogni icona
+    e' fatta di piu' pezzi staccati (la scintilla del martello, i punti dell'arco),
+    quindi si taglia a caselle e non a pezzi; ognuna va al centro di un quadrato,
+    cosi' nel gioco hanno tutte lo stesso ingombro. Delle cadute resta solo il
+    diavoletto: le lineette di movimento sono nere e sul ferro scuro non si vedono."""
+    a = trasparente(os.path.join(ART, "WB-069", "icone_record_1.png"))
+    pieno = a[..., 3] > 40
+    ys, xs = np.where(pieno)
+    y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+    for i, nome in enumerate(RECORD):
+        r, c = divmod(i, 3)
+        cy0, cy1 = y0 + (y1 - y0) * r // 3, y0 + (y1 - y0) * (r + 1) // 3
+        cx0, cx1 = x0 + (x1 - x0) * c // 3, x0 + (x1 - x0) * (c + 1) // 3
+        casella = a[cy0:cy1, cx0:cx1].copy()
+        if nome == "cadute":
+            lab, n = ndi.label(casella[..., 3] > 40)
+            grande = 1 + int(np.argmax(ndi.sum(casella[..., 3] > 40, lab, range(1, n + 1))))
+            casella[lab != grande] = 0
+        ky, kx = np.where(casella[..., 3] > 40)
+        im = Image.fromarray(casella[ky.min():ky.max() + 1, kx.min():kx.max() + 1], "RGBA")
+        k = (LATO_RECORD - 4) / max(im.size)
+        im = im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)
+        tela = Image.new("RGBA", (LATO_RECORD, LATO_RECORD), (0, 0, 0, 0))
+        tela.alpha_composite(im, ((LATO_RECORD - im.size[0]) // 2, (LATO_RECORD - im.size[1]) // 2))
+        salva(tela, "record_" + nome)
+        MISURE["record_" + nome] = (LATO_RECORD, LATO_RECORD)
 
 
 def fai_atlante():
@@ -444,6 +665,10 @@ if __name__ == "__main__":
     fai_pezzi()
     fai_piccoli()
     fai_menu()
+    fai_schede()
+    fai_segni()
+    fai_bivio()
+    fai_profilo()
     fai_fette()
     fai_sfondi()
     fai_filo()

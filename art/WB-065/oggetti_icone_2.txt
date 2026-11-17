@@ -1,0 +1,15 @@
+Image 1 is a rough layout sketch made by our designer for a 2D comic game set in a cartoon hell, where a small red devil apprentice fights with weapons forged by his master, the Smith, in the Forge of the Titans. Image 2 shows the drawing style of the game (character parts). 
+Draw seven square game icons in a 4 by 2 grid like image 1 (the last cell stays empty magenta), same order: Grappling hook, Janus coin, Shadow globe, Bat-wing parachute, Spring, Bear trap, Shield. Each icon is one single object, big, filling about four fifths of a 300 by 300 px cell, with the outline even thicker than in the object drawings. Few big shapes, at most four colours plus black. Each must stay recognizable as a pure black silhouette at 40 px.
+1. Four-pronged hook with a coil of rope below. 2. Two-faced coin, gold half and red half (use #E5484D for the red half on the icon). 3. Violet globe with the shadow devil and yellow eyes. 4. Open bat-wing umbrella with cords. 5. Zig-zag spring between wood and brass, small arrow-triangle on top. 6. Open jaw trap. 7. Round wooden shield with the anvil.
+Rendering rules, very strict, because every shape will be traced into vector layers:
+- Same drawing style as image 2: thick closed pure black #000000 outline around every shape and between colour areas, chunky soft slightly asymmetric comic shapes.
+- FLAT COLORS ONLY: every area is one solid colour, plus at most one hard-edged shadow shape in the darker tone of the same material. No gradients, no textures, no soft shading, no glow halos, no blur, no sparkles, no motion lines.
+- Use ONLY these colours: dark iron #3B404B, iron #59606E, light iron #8F98A8; dark brass #A8761F, brass #D9A441; dark leather #4A3019, leather #6B4A2B, light leather #C89255, wood #8A5A33; dark violet #4B2D8A, violet #9466EA, pale violet #DCC8FF; white #FFFFFF; black #000000. Only for the coin icon also red #E5484D.
+- Background: flat pure magenta #FF00FF everywhere, no halo around the objects, no ground shadow. Objects never touch each other.
+- No text, numbers, letters, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-065/riferimenti/R1_bozze_oggetti_icone.png
+art/WB-065/riferimenti/R2_stile_colori_piatti.png
+
+Strumento: image_gen. Tentativi: 3. Selezionato: 3.

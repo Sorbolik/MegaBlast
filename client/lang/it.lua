@@ -54,7 +54,7 @@ return {
 				},
 				["4_arrivo_a"] = { { "favilla", "Ehi, nuovo! Sei tu quello che vuole fare il fabbro?" } },
 				["4_arrivo_b"] = { { "apprendista", "Sì! E diventerò il più forte di tutti." } },
-				["4_arrivo_c"] = { { "favilla", "Ah sì? Io sono Favilla, l'apprendista più vecchia. Il più forte, qui, è chi mi sta dietro." } },
+				["4_arrivo_c"] = { { "favilla", "Ah sì? Io sono Favilla, l'apprendista più grande. Il più forte, qui, è chi mi sta dietro." } },
 				["5_fabbro_a"] = {
 					{ "fabbro", "Un altro. Favilla, insegnagli tu. Se impara, lo voglio nella Forgia." },
 					{ "apprendista", "(...è enorme.)" },
@@ -70,7 +70,7 @@ return {
 			regalo = {
 				s_regalo = {
 					{ "fabbro", "Te li sei guadagnati. Mettili, laggiù il pavimento brucia." },
-					{ "didascalia", "Gli stivali sono nell'ARMERIA." },
+					{ "didascalia", "Gli stivali sono nel tuo ZAINO. E ora si apre l'ARMERIA." },
 				},
 			},
 			insieme = {
@@ -84,9 +84,9 @@ return {
 				["6_rapimento_b"] = { { "didascalia", "Giù, sempre più giù, fino in fondo all'inferno." } },
 				["6_rapimento_c"] = {
 					{ "apprendista", "Chi era?!" },
-					{ "fabbro", "Lucifero. È finita giù, in fondo all'inferno. Ti ci porto io, un girone alla volta." },
+					{ "fabbro", "Lucifero. L'ha portata in fondo all'inferno. Ti accompagno io, un girone alla volta, finché il fuoco regge." },
 				},
-				s_ghiaccio = { { "didascalia", "In fondo all'ultimo girone, nel ghiaccio, Favilla aspetta." } },
+				s_ghiaccio = { { "didascalia", "In fondo all'ultimo girone, nel ghiaccio, Lucifero le ruba il calore per liberarsi. Favilla aspetta te." } },
 			},
 		},
 	},
@@ -102,7 +102,8 @@ return {
 		ready_action = "PRONTO",
 		missing_two = "MANCANO 2 ARMI",
 		missing_one = "MANCA LA %s",
-		starts_at_time = "SI PARTE A FINE TEMPO",
+		starts_all_ready = "TUTTI PRONTI, SI PARTE",
+		waiting = "ASPETTI GLI ALTRI",
 		step_names = { "PRIMARIA", "SECONDARIA" },
 		shot = "%s colpo",
 		shots = "%s colpi",
@@ -115,10 +116,11 @@ return {
 		secondary_guided = "La secondaria ha %s: ogni volta che colpisci un nemico "
 			.. "con la Lama, che ce l'hai sempre, te ne torna uno. Tieni premuta una carta per la sua scheda.",
 		secondary = "Ne hai %s; colpendo un nemico con la Lama te ne torna uno.",
-		ready = "Pronto",
-		ready_guided = "Il Rampino ce l'hai sempre. Nelle altre partite la scelta ha un tempo; qui no. "
+		press_ready = "premi PRONTO",
+		press_play = "premi GIOCA",
+		ready_guided = "Il Rampino ce l'hai sempre. Online la scelta ha un tempo; qui no. "
 			.. "Tocca una scelta per cambiarla, o GIOCA.",
-		ready_text = "Il Rampino ce l'hai sempre. Tocca una scelta per cambiarla.",
+		ready_text = "Il Rampino ce l'hai sempre. Tocca una scelta per cambiarla, poi PRONTO.",
 		-- with the controller the first becomes the second (%s = the card's button)
 		hold_card = "Tieni premuta una carta",
 		press_on_card = "Premi %s su una carta",
@@ -233,8 +235,6 @@ return {
 
 	-- menu/tally.lua: the moments of the match, in the profile's history
 	tally = {
-		final = "finale",
-		round = "giro %s",
 		long_shot = "Colpo da %d px su %s",
 		you_drop = "Butti nel vuoto %s",
 		you_kill = "Abbatti %s",
@@ -312,7 +312,7 @@ return {
 		orda_line = "Tu da solo contro tre.",
 		resistenza_line = "Resisti fino all'ultimo giro.",
 		bottino_line = "Prendi più del tuo avversario.",
-		custode_line = "Il guardiano del girone. Battilo e si scende.",
+		custode_line = "Il guardiano del capitolo: battilo e si va avanti.",
 	},
 
 	-- menu/lineup.lua: the line-up before the match
@@ -335,7 +335,7 @@ return {
 		values = {
 			lancetta = "LANCETTA", mirino = "MIRINO", pressione = "PREMENDO", rilascio = "LASCIANDO",
 			levetta = "LEVETTA", grilletto = "GRILLETTO", destra = "DESTRA", sinistra = "SINISTRA",
-			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "PROVA FINE GIOCO",
+			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "FINE GIOCO",
 		},
 		-- the controller's commands (controller.COMMANDS)
 		commands = {
@@ -386,15 +386,16 @@ return {
 		sign = "firma: %s",
 		sign_off = "firma dallo scatto 10: %s",
 		-- the other pieces of the slot (the slot in uppercase)
-		others = "GLI ALTRI %s CHE HAI",
-		tap_one = "tocca per sceglierlo",
+		others = "I TUOI %s",
+		-- the slots in the plural
+		plural = { mask = "ELMI", chest = "CORAZZE", cloak = "MANTELLI", legs = "STIVALI" },
 		-- BOTTEGA
 		yours = "tuo",
 		offers = "OFFERTE DEL FABBRO",
 		-- the time until midnight
 		change_in = "cambiano tra %s",
 		day = "PEZZI DEL GIORNO",
-		day_line = "%d pezzi · cambiano domani",
+		day_line = "cambiano domani",
 		use_voucher = "USA UN BUONO",
 		you_have = "ne hai %d",
 	},
@@ -406,7 +407,8 @@ return {
 		at_max = "AL MASSIMO",
 		proof = "%d / %d partite col pezzo addosso",
 		proof_first = "prima la prova",
-		upgrade = "POTENZIA",
+		-- (not POTENZIA: that is the tab already, Sergio 15 Nov)
+		upgrade = "+1 LIVELLO",
 		missing = "mancano %s",
 		pick_ware = "tocca un pezzo",
 		in_wardrobe = "ce l'hai già",
@@ -427,24 +429,30 @@ return {
 	profile_tabs = {
 		tab_matches = "CRONOLOGIA PARTITE",
 		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
-		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
+		round_by_round_tap = "COM'È ANDATA, GIRO PER GIRO · TOCCA UN NUMERO PER RIVEDERE DA LÌ",
+		history_hint = "le ultime %s partite · tocca una partita per vedere com'è andata",
+		vs = "VS",
 		no_moments = "nessun momento da ricordare",
-		level = "LIVELLO %s",
 		-- STATISTICHE: the four big numbers
 		won = "VITTORIE",
 		best_streak = "DI FILA",
 		stars = "STELLE",
 		lost = "SCONFITTE",
-		-- the badge of a stat, with its grade in roman numbers
-		badge_pill = "BADGE %s",
-		badge_hint = "tocca una riga col badge per metterlo accanto al tuo nome (al massimo %s)",
-		next_at = "badge a %s",
+		badge_hint = "tocca un record con la medaglia per metterla accanto al tuo nome (al massimo %s)",
+		-- the player's card on the left
+		level_short = "LIV %s",
+		xp = "%s / %s XP",
+		next_to_name = "ACCANTO AL TUO NOME",
+		won_share = "%s%% delle partite vinte",
+		-- the modes, short, as chips
+		mode_short = { tutte = "TUTTE", ["2v2"] = "2V2", ["1v1"] = "1V1", torneo = "TORNEO", campagna = "CAMPAGNA" },
 		damage_by_weapon = "DANNO PER ARMA",
+		legend_primary = "PRIMARIE", legend_secondary = "SECONDARIE",
 		nothing_yet = "ancora niente: gioca una partita",
 		weapons = {
 			missile = "Lanciarune", grenade = "Uovo", shards = "Schegge", punch = "Pugno", sniper = "Cecchino",
 			sword = "Lama", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice",
-			boomerang = "Falcetto", tar = "Pece", drill = "Trapano", magnet = "Calamita", cannon = "Cannonata", petard = "Petardo",
+			boomerang = "Falcetto", tar = "Pece", drill = "Trapano", vortex = "Voragine", cannon = "Cannonata", petard = "Petardo",
 		},
 		-- CRONOLOGIA PARTITE (os.date formats)
 		today = "oggi %H:%M",
@@ -453,7 +461,6 @@ return {
 		outcome_lost = "SCONFITTA",
 		outcome_tie = "PAREGGIO",
 		points = "PUNTI",
-		ranking = "CLASSIFICA",
 		no_matches = "Nessuna partita ancora: gioca, e la ritrovi qui.",
 	},
 
@@ -461,7 +468,7 @@ return {
 
 	-- menu/home.lua: the home
 	home = {
-		leave_queue_first = "esci dalla coda per giocarla",
+		leave_queue_first = "esci dalla coda",
 		-- in the profile's round: the name, until the online accounts give one (placeholder)
 		player = "APPRENDISTA",
 		level = "LIV %d",
@@ -475,6 +482,15 @@ return {
 		-- slot and family: "ELMO · CORVO"
 		piece = "%s · %s",
 		stats = "STATISTICHE",
+		-- the column of the stats shows only what changes; this opens all of them
+		see_all = "VEDI TUTTE ›",
+		-- the colors of the bars: where the points come from
+		parts = { "BASE", "LIVELLO", "PEZZI", "SIGILLI" },
+		-- the piece chosen changes nothing / your pieces leave everything as at the start
+		no_change = "non cambia niente",
+		all_base = "tutte come all'inizio",
+		-- the sheet of all the stats: back to the pieces
+		back_to_pieces = "TORNA AI PEZZI",
 		-- a loadout still closed: from which level
 		loadout_locked = "DAL LIV %d",
 	},
@@ -487,13 +503,16 @@ return {
 		loadout = "ASSETTO",
 		seal_loadout = "ASSETTO SIGILLI",
 		all = "TUTTI",
-		count = "%d pezzi",
 		nothing = "nessun pezzo qui: li trovi in armeria",
 		-- under the piece chosen: level, grade and what it does
-		piece_line = "liv %d · grado %s %s · %s",
+		piece_line = "liv %d · grado %s %s",
 		wear = "INDOSSA",
 		worn = "ce l'hai addosso",
-		points = "PUNTI  %d / %d",
+		-- the Sigilli: the points still to spend (a flame each) and those used
+		free = "PUNTI LIBERI",
+		used = "%d / %d USATI",
+		-- under the points of a path: what one point gives, and all of them now
+		per_point = "1 PUNTO: %s · ORA %s",
 		of = "%d / %d",
 		save = "SALVA",
 		saved = "salvato",
@@ -502,6 +521,8 @@ return {
 		other = "l'altra scelta: %s · %s",
 		to_choose = "scegli uno dei due",
 		pick_hint = "tocca un potere sotto un gradino per sceglierlo",
+		-- the stats' sheet of the Sigilli: its way back
+		back_to_seals = "TORNA AI SIGILLI",
 	},
 
 	-- menu/queue.lua: GIOCA ONLINE, the queues online
@@ -514,8 +535,6 @@ return {
 		own_queue = "coda sua",
 		counts_in = "conta nel %s",
 		no_event = "Nessun evento in corso",
-		-- the next event: when it starts, its name
-		coming = "%s · %s",
 		private = "STANZA PRIVATA",
 		private_short = "Con un codice",
 		duel_line = "Tu contro uno",
@@ -634,7 +653,7 @@ return {
 		weapons = {
 			missile = "LANCIARUNE", grenade = "UOVO DI FIAMMA", shards = "SCIAME DI SCHEGGE", punch = "PUGNO DEL TITANO",
 			sniper = "CECCHINO", sword = "LAMA", eagle = "TONANTE", mallet = "MAGLIO", lunge = "AFFONDO", bellows = "MANTICE",
-			boomerang = "FALCETTO", tar = "POZZA DI PECE", drill = "TRAPANO", magnet = "CALAMITA", cannon = "CANNONATA", petard = "PETARDO",
+			boomerang = "FALCETTO", tar = "POZZA DI PECE", drill = "TRAPANO", vortex = "VORAGINE", cannon = "CANNONATA", petard = "PETARDO",
 			hook = "RAMPINO", janus = "GIANO", teleport = "TELETRASPORTO", parachute = "PARACADUTE", trampoline = "TRAMPOLINO",
 		},
 		-- the turn's phases on the clock
@@ -718,7 +737,7 @@ return {
 		},
 		-- Favilla at your side in the Forgia
 		favilla_compagna = {
-			turno = { "Tocca a me: copritemi!", "Guarda come si fa!" },
+			turno = { "Tocca a me: coprimi!", "Guarda come si fa!" },
 			colpisce = { "Preso!", "Uno a zero per noi!" },
 			colpito = { "Ahi! Occhio a dove miri!", "Mi hanno presa!" },
 			scappa = { "Di qua!", "Arrivo!" },
@@ -757,7 +776,7 @@ return {
 			boomerang = "Una falce che va, gira e torna: colpisce due volte, al ritorno incrina l'armatura",
 			tar = "Un fiasco che lascia una pozza di pece: chi ci sta brucia, per due turni",
 			drill = "Scava una galleria nel terreno e scoppia dall'altra parte: rallenta",
-			magnet = "Tira verso un punto davanti a te tutti i robot vicini",
+			vortex = "Una sfera nera: dove scoppia apre un buco grande e tira dentro chi e vicino",
 			cannon = "Ti lanci come una palla di cannone: chi trovi sulla strada prende l'urto",
 			petard = "Una bomba che rimbalza e spinge via, senza scavare",
 			hook = "Aggancia un bordo e ti arrampichi; su un nemico, lo tiri da te",
@@ -791,8 +810,8 @@ return {
 		-- the line under EVENTI in the home
 		no_net = "senza rete",
 		running = "%d in corso",
-		next_in = "il prossimo tra %s",
-		none_planned = "nessuno in programma",
+		next_in = "tra %s",
+		none_planned = "niente in arrivo",
 		kinds = { mod = "MODIFICATORE", torneo = "TORNEO", sfida = "SFIDA", xp = "XP" },
 		-- the rules in words, one per line
 		weapons = "Armi: %s",
@@ -830,12 +849,12 @@ return {
 		weapon_found = { missile = "il Lanciarune", grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge",
 			punch = "il Pugno del Titano", sniper = "il Cecchino", eagle = "il Tonante", mallet = "il Maglio",
 			lunge = "l'Affondo", bellows = "il Mantice", boomerang = "il Falcetto", tar = "la Pozza di Pece",
-			drill = "il Trapano", magnet = "la Calamita", cannon = "la Cannonata", petard = "il Petardo", hook = "il Rampino", janus = "il Giano", parachute = "un Paracadute",
+			drill = "il Trapano", vortex = "la Voragine", cannon = "la Cannonata", petard = "il Petardo", hook = "il Rampino", janus = "il Giano", parachute = "un Paracadute",
 			trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" },
 		-- the weapons in the match-start draft, and their effect (no accents)
 		draft_names = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
 			sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice", hook = "Rampino",
-			boomerang = "Falcetto", tar = "Pozza di Pece", drill = "Trapano", magnet = "Calamita", cannon = "Cannonata", petard = "Petardo" },
+			boomerang = "Falcetto", tar = "Pozza di Pece", drill = "Trapano", vortex = "Voragine", cannon = "Cannonata", petard = "Petardo" },
 		draft_effects = {
 			grenade = "Rimbalza e scoppia dopo 5 s: cratere grande",
 			shards = "Raffica di 8 schegge: rallenta",
@@ -848,7 +867,7 @@ return {
 			boomerang = "Va, gira e torna: colpisce due volte e al ritorno incrina l'armatura",
 			tar = "Pozza di pece che brucia chi ci sta, per due turni",
 			drill = "Scava una galleria e scoppia dall'altra parte: rallenta",
-			magnet = "Tira a un punto davanti a te chi e vicino",
+			vortex = "Apre un buco grande e tira dentro chi e vicino",
 			cannon = "Ti lanci in aria: chi trovi sulla strada prende l'urto",
 			petard = "Bomba che rimbalza e spinge via, senza scavare",
 			hook = "Tira a te il nemico (da lontano lo molla a meta strada), o ti porta sulla piattaforma colpita",

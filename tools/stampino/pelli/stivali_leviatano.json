@@ -1,0 +1,38 @@
+{
+ "nome": "stivali_leviatano",
+ "categoria": "stivali",
+ "pezzi": {
+  "gamba_1": {
+   "img": "stivali_leviatano_gamba",
+   "x": 0.9,
+   "y": -31.6,
+   "w": 71.9,
+   "h": 84.3,
+   "modo": "sostituisce"
+  },
+  "gamba": {
+   "img": "stivali_leviatano_gamba",
+   "x": 0.9,
+   "y": -31.5,
+   "w": 71.1,
+   "h": 83.5,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro_1": {
+   "img": "stivali_leviatano_gamba_dietro",
+   "x": -3.2,
+   "y": -30.6,
+   "w": 73.9,
+   "h": 83.2,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro": {
+   "img": "stivali_leviatano_gamba_dietro",
+   "x": -3.1,
+   "y": -30.6,
+   "w": 73.2,
+   "h": 82.4,
+   "modo": "sostituisce"
+  }
+ }
+}

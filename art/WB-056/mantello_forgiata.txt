@@ -1,0 +1,10 @@
+Image 1 is the chosen armour set "Crow" of our game (right: FORGED form). Image 2 is our "stampino". Image 3 is the basic cape of this set, alone on magenta.
+
+Return image 3 again: the same cape, same position, same size, the same outline and folds. Change only this: make it the FORGED cape of image 1: violet tips on the long feathers of the hem and a thin cyan trim along the top edge. Nothing else changes. No body, nothing else on the sheet.
+
+Same rendering rules: flat colors, thick closed black outline. Feathers dark slate #3A3A52 with shadows #26263A, violet #8E5FD0 feather tips, cyan #00FFFF trims, nothing else. Background: flat pure magenta #FF00FF everywhere outside the cape. No text. Landscape 3:2.
+
+Riferimenti allegati in ordine
+art/WB-056/riferimenti/R4_corvo.png
+art/WB-056/riferimenti/R5_stampino.png
+art/WB-056/mantello_base_1.png

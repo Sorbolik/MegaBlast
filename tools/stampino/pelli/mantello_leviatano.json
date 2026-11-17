@@ -1,0 +1,16 @@
+{
+ "nome": "mantello_leviatano",
+ "categoria": "mantello",
+ "mantello": {
+  "img": "mantello_leviatano_mantello",
+  "x": -25.1,
+  "y": -50.6,
+  "w": 106.7,
+  "h": 109.6,
+  "attacco": [
+   -2,
+   116
+  ]
+ },
+ "pezzi": {}
+}

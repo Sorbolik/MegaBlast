@@ -1,0 +1,14 @@
+Image 1 is a sheet of nine heads of our character. Image 2 is the chosen armour set "Crow" (right: FORGED form). Image 3 is image 1 with the basic headpiece already drawn on the first head.
+
+Return image 3 again, the SAME sheet with every head exactly where it is and the same pixels, and change only the headpiece on the first head: make it the FORGED one of image 2, keeping the outline of image 3, plus: a round cyan ring emblem on the side of the cap and a crest of four or five long dark feathers with violet tips sweeping BACKWARD from the back of the cap (not on the top of the head, the top stays clean and round). It stays one closed piece: no holes, no horns, no flame. Nothing else on the sheet changes.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Feathers dark slate #3A3A52 with shadows #26263A, violet #8E5FD0 feather tips, cyan #00FFFF trims, thick closed black #000000 outline like the other parts.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-056/riferimenti/R1_teste_senza_corna.png
+art/WB-056/riferimenti/R4_corvo.png
+art/WB-056/maschera_base_1.png

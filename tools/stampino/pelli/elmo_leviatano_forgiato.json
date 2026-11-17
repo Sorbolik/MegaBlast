@@ -1,0 +1,150 @@
+{
+ "nome": "elmo_leviatano_forgiato",
+ "categoria": "elmo",
+ "pezzi": {
+  "testa_1": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 1.5,
+   "y": 48.6,
+   "w": 128.9,
+   "h": 106.2,
+   "modo": "sopra"
+  },
+  "testa": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 2.6,
+   "y": 48.3,
+   "w": 104.5,
+   "h": 86.0,
+   "modo": "sopra"
+  },
+  "testa_colpita_1": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 1.5,
+   "y": 48.6,
+   "w": 128.9,
+   "h": 106.2,
+   "modo": "sopra"
+  },
+  "testa_colpita": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 2.6,
+   "y": 48.3,
+   "w": 104.5,
+   "h": 86.0,
+   "modo": "sopra"
+  },
+  "testa_felice_1": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 1.6,
+   "y": 48.6,
+   "w": 128.2,
+   "h": 106.2,
+   "modo": "sopra"
+  },
+  "testa_felice": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 2.6,
+   "y": 48.3,
+   "w": 103.8,
+   "h": 86.0,
+   "modo": "sopra"
+  },
+  "testa_ko_1": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 1.5,
+   "y": 48.6,
+   "w": 129.5,
+   "h": 106.2,
+   "modo": "sopra"
+  },
+  "testa_ko": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 2.6,
+   "y": 48.3,
+   "w": 104.8,
+   "h": 86.0,
+   "modo": "sopra"
+  },
+  "testa_mira_1": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 1.5,
+   "y": 48.6,
+   "w": 129.5,
+   "h": 106.2,
+   "modo": "sopra"
+  },
+  "testa_mira": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 2.6,
+   "y": 48.3,
+   "w": 104.8,
+   "h": 86.0,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata_1": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 1.5,
+   "y": 48.6,
+   "w": 128.7,
+   "h": 106.2,
+   "modo": "sopra"
+  },
+  "testa_arrabbiata": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 2.6,
+   "y": 48.3,
+   "w": 104.2,
+   "h": 86.0,
+   "modo": "sopra"
+  },
+  "testa_sconfitta_1": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 1.5,
+   "y": 48.6,
+   "w": 127.6,
+   "h": 106.2,
+   "modo": "sopra"
+  },
+  "testa_sconfitta": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 2.5,
+   "y": 48.3,
+   "w": 103.4,
+   "h": 86.0,
+   "modo": "sopra"
+  },
+  "testa_paura_1": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 1.5,
+   "y": 48.6,
+   "w": 128.7,
+   "h": 106.2,
+   "modo": "sopra"
+  },
+  "testa_paura": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 2.6,
+   "y": 48.3,
+   "w": 104.2,
+   "h": 86.0,
+   "modo": "sopra"
+  },
+  "testa_provocazione_1": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 1.5,
+   "y": 48.6,
+   "w": 128.9,
+   "h": 106.2,
+   "modo": "sopra"
+  },
+  "testa_provocazione": {
+   "img": "elmo_leviatano_forgiato_testa",
+   "x": 2.6,
+   "y": 48.3,
+   "w": 104.5,
+   "h": 86.0,
+   "modo": "sopra"
+  }
+ }
+}

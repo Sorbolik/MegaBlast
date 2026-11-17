@@ -11,6 +11,7 @@
 --   schieramento.destroy(s)
 --
 --   local st = schieramento.strip(vetrine)       -- the strip at the top during the draft
+--   schieramento.strip_ready(st, ready)          -- the green tick on whoever has pressed PRONTO
 --   schieramento.strip_touch(st, action_id, action) -> true if the tap was its own
 --   schieramento.destroy(st)
 
@@ -20,7 +21,6 @@ local config = require "sim.config"
 local tag = require "ui.tag_card"
 local kit = require "ui.kit"
 local T = require("lang.text").lineup
-local NO_POWER = require("lang.text").tag_card.no_power
 local common = require("lang.text").common
 
 local M = {}
@@ -29,7 +29,7 @@ local C = ui.C
 local W, H = 1280, 720
 local TOUCH = hash("touch")
 local KC = kit.C
-local TAG_W, TAG_H = 236, 340
+local TAG_W, TAG_TOP = 250, 106   -- how wide a tag is, and where its top is
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local function with_alpha(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
@@ -61,17 +61,19 @@ function M.seats(squads)
 	return xs, false
 end
 
--- Where the short tags stand, in the same order as the strip's places: two
--- and two around the VS, or in a row
-local SHORT = { [2] = { 380, 900 }, [4] = { 174, 418, 838, 1082 } }
+-- Where the tags stand, in the same order as the strip's places: two and two
+-- around the VS, or in a row. They are the tag of the match (ui/tag_card.lua),
+-- narrower to stay four in a row, with the devil wearing his pieces and the
+-- Sigilli on one line (Sergio, 16 Nov)
+local PLACES = { [2] = { 393, 887 }, [4] = { 135, 393, 887, 1145 } }
 
 function M.new(showcases, title)
 	local s = { vetrine = showcases, card_list = {}, t = config.LINEUP_SECONDS }
 	local squads = {}
 	for i, v in ipairs(showcases) do squads[i] = v.squadra end
 	local xs, vs = M.seats(squads)
-	-- a dark sheet over the draft, and the backdrop on it
-	s.scene = kit.scene(640, 360, { dim = 0.72 })
+	-- its own backdrop, whole: nothing of the draft under it shows (Sergio, 16 Nov)
+	s.scene = kit.scene(640, 360, { bg = true })
 	-- the match's name on a light plate that comes out of the real left edge
 	local top_left = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
 	local on_plate = kit.sand(top_left, -20, 30, 330, 58, KC.HOT, { sk = 22 })
@@ -82,7 +84,8 @@ function M.new(showcases, title)
 		gui.set_scale(name, vec(sc.x * 270 / wide, sc.y * 270 / wide))
 	end
 	local low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	kit.text(low, T.tap_to_pick, 80, 596, 16, KC.MUTE, "start", 1.5)
+	-- (under the thread, where every screen has its hint: on the painting it was hard to read)
+	kit.foot_text(low, T.tap_to_pick, 40, 674, 19, KC.MUTE, 660, 0.5)
 	local right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	local go = kit.action(right, T.weapons, 930, 560, 270, 84, { size = 54, sub = T.weapons_in:format(0, 0) })
 	s.tally = go.sub
@@ -91,18 +94,16 @@ function M.new(showcases, title)
 	gui.set_visible(s.radice, false)
 	local g = { node = s.radice, ox = 0, oy = 720 }
 
-	-- the tags: from left to right one up and one down
+	-- the tags, side by side
 	local order = {}
 	for i = 1, #showcases do order[i] = i end
 	table.sort(order, function(a, b) return xs[a] < xs[b] or (xs[a] == xs[b] and a < b) end)
-	local short = vs and SHORT[#order]
+	local places = vs and PLACES[#order]
 	for rank, i in ipairs(order) do
 		local v = showcases[i]
-		if short then xs[i] = short[rank] else xs[i] = 640 + (rank - (#order + 1) / 2) * 246 end
+		if places then xs[i] = places[rank] else xs[i] = 640 + (rank - (#order + 1) / 2) * (TAG_W + 8) end
 		v.verso = xs[i] < 640 and 1 or -1
-		local power = (v.abilities or {})[1]
-		s.card_list[i] = tag.small(g, v, xs[i] - TAG_W / 2, 150 + ((rank - 1) % 2) * 26, TAG_W, TAG_H,
-			{ sel = v.tu, role = power or NO_POWER })
+		s.card_list[i] = tag.new(v, xs[i], 720 - TAG_TOP, { wide = TAG_W, portrait = 118, label = false, tree = "line", tu = v.tu }, s.radice)
 		kit.pop(s.card_list[i].root, 0.05 + rank * 0.07, 0.25)
 	end
 	if vs then
@@ -128,10 +129,13 @@ function M.on_input(s, action_id, action)
 	end
 end
 
--- The strip at the top during the draft: a small plate per robot, its name on
--- the team's color, the two teams apart
+-- The strip at the top during the draft: a small light plate per robot (the
+-- sand plates of the menus: Sergio, 17 Nov), a dot in the team's color and its
+-- name in ink, the two teams apart
+local NAME_W, TICK = 92, 24   -- the room for the name, and the tick after it
+local MINI_W, MINI_H, MINI_STEP = 170, 44, 180
 function M.strip(showcases)
-	local st = { vetrine = showcases, mini = {} }
+	local st = { vetrine = showcases, mini = {}, ticks = {}, on = {} }
 	st.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(st.radice, false)
 	local g = { node = st.radice, ox = 0, oy = 720 }
@@ -143,17 +147,34 @@ function M.strip(showcases)
 	table.sort(order, function(a, b) return xs[a] < xs[b] or (xs[a] == xs[b] and a < b) end)
 	for rank, i in ipairs(order) do
 		local v = showcases[i]
-		local x = 330 + (rank - 1) * 170 + (vs and rank > #order / 2 and 40 or 0)
-		st.mini[i] = kit.rect(g, x, 26, 150, 38, with_alpha(KC.INK, 0.5))
-		kit.rect(g, x, 26, 5, 38, C.SQUADRA[v.squadra] or C.LIGHT)
-		local name = kit.text(g, kit.upper(v.nome or "?"), x + 22, 52, 16, KC.SAND)
+		local x = 320 + (rank - 1) * MINI_STEP + (vs and rank > #order / 2 and 40 or 0)
+		local p = kit.plate(g, x, 23, MINI_W, MINI_H, KC.ROSE, { sk = 0, fill = KC.SAND })
+		st.mini[i] = p.node
+		local b = p.box
+		local mid = (b.y0 + b.y1) / 2
+		kit.dot(p.g, b.x0 + 6, mid, 12, C.SQUADRA[v.squadra] or C.LIGHT)
+		local name = kit.text(p.g, kit.upper(v.nome or "?"), b.x0 + 18, mid + 6, 16, KC.INK)
 		local wide = kit.width(name)
-		if wide > 118 then
+		if wide > NAME_W then
 			local sc = gui.get_scale(name)
-			gui.set_scale(name, vec(sc.x * 118 / wide, sc.y * 118 / wide))
+			gui.set_scale(name, vec(sc.x * NAME_W / wide, sc.y * NAME_W / wide))
 		end
+		-- the green tick of whoever has pressed PRONTO, at the end of the plate
+		st.ticks[i] = kit.pic(p.g, "spunta_verde", b.x1 - TICK, mid - TICK / 2, TICK, TICK)
+		gui.set_enabled(st.ticks[i], false)
 	end
 	return st
+end
+
+-- Who is ready (menu/pick.lua, { [robot] = true } or nil): their tick shows
+function M.strip_ready(st, ready)
+	for i, n in ipairs(st.ticks) do
+		local on = ready ~= nil and ready[i] == true
+		if on ~= (st.on[i] or false) then
+			st.on[i] = on
+			gui.set_enabled(n, on)
+		end
+	end
 end
 
 -- A tap on the strip: opens the tag tapped; with the tag open any tap closes
@@ -182,7 +203,7 @@ function M.strip_touch(st, action_id, action)
 			gui.set_parent(st.veil, st.radice)
 			local v = st.vetrine[i]
 			v.verso = 1
-			st.aperto = tag.new(v, W / 2, 360 + tag.TALL({ portrait = true }) / 2, { portrait = true, tu = v.tu }, st.radice)
+			st.aperto = tag.new(v, W / 2, tag.TOP({ portrait = true }), { portrait = true, tu = v.tu }, st.radice)
 			st.eats = true
 			return true
 		end

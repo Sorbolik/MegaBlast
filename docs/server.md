@@ -25,7 +25,7 @@ connessione (goroutine) ──hello──► Lobby (una coda per modalità)
 - **Simulazione in LuaJIT** (`proc.go`, `worker.lua`, dal 9 nov): ogni worker ha
   un processo `luajit` con le partite (e le scelte delle armi) delle sue stanze,
   per id. A ogni tick le stanze scrivono i loro comandi in un solo pacchetto
-  (`open`, `draft`, `pick`, `start`, `tick`, `resume`, `remove`, `free`: tabelle
+  (`open`, `draft`, `pick`, `ready`, `start`, `tick`, `resume`, `remove`, `free`: tabelle
   Lua, una riga ogni 200 comandi), il worker lo manda al processo e legge le
   risposte: un solo giro per worker e tick, non uno per stanza. Ogni risposta ha
   una testa piccola che legge il Go (chi è di turno, se è finita) e i messaggi già
@@ -85,16 +85,24 @@ c'è almeno una persona. Le code degli eventi non hanno bot.
 
 
 Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`):
-ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","you":1,"tok":…,"players":[{"team":1},…],"vetrine":[{"liv":12,"bdg":[…]},…],"left":1200}`
+ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","rd":[0,1],"you":1,"tok":…,"players":[{"team":1},…],"vetrine":[{"liv":12,"bdg":[…]},…],"left":1200}`
 (`offer` le primarie, `offer2` le secondarie; `p` e `p2` le **sue** scelte:
-quelle degli altri non si mandano, Sergio 30 ott; `left` i tick rimasti;
-`vetrine` il cartellino di ognuno, livello e badge, arrivati col `hello` e
+quelle degli altri non si mandano, Sergio 30 ott; `rd` chi ha premuto PRONTO,
+1 o 0 per ogni robot; `left` i tick rimasti;
+`vetrine` il cartellino di ognuno, livello, badge e pezzi indossati, arrivati col `hello` e
 controllati dal server) e
 manda `{"t":"pick","w":"shards"}` per ognuna (l'arma dice la categoria; si può
 cambiare, i doppioni vanno bene anche fra compagni). La conferma torna solo a
-chi ha scelto. L'attrezzo non si sceglie: il Rampino ce l'hanno tutti. Allo
+chi ha scelto. L'attrezzo non si sceglie: il Rampino ce l'hanno tutti.
+**PRONTO** (Sergio, 16 nov): con tutte e due le armi scelte il client manda
+`{"t":"ready"}` e il `draft` torna a tutti con `rd` aggiornato (la spunta verde
+sul nome); una scelta diversa toglie il pronto (e il `draft` torna di nuovo a
+tutti), l'arma di prima no. I bot sono pronti subito. Quando sono pronti tutti la
+partita parte al tick dopo, senza aspettare il tempo. Il tempo resta il limite: allo
 scadere di `config.DRAFT_SECONDS` chi non ha scelto prende la prima arma di ogni
-ventaglio e parte la partita. Il tempo della scelta comprende anche i
+ventaglio e parte la partita, pronti o no. Chi è caduto o uscito durante la
+scelta non è pronto: lì si aspetta il tempo. La versione del protocollo non
+cambia: un client vecchio non manda `ready` e aspetta il tempo come prima. Il tempo della scelta comprende anche i
 `config.LINEUP_SECONDS` dello schieramento (i cartellini di tutti, prima
 di scegliere: `client/menu/lineup.lua`), in cui si può già scegliere
 (`start`, anche lui con `vetrine`, e con `players`: squadra e scelte di
@@ -216,7 +224,12 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
 Il primo messaggio del client è `{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
 (`mode`: la coda scelta in DOVE GIOCHI?, o la `coda` di un evento; `vetrina`:
 livello e al massimo tre badge, il server tiene solo i valori validi, livello
-1-999, badge di lettere minuscole con grado 1-4). Se la
+1-999, badge di lettere minuscole con grado 1-4; dal 16 nov anche `"pz":[{"set":"corvo","liv":24},…]`,
+i pezzi indossati, uno per posto nell'ordine di `equip.SLOTS`: il server ne tiene quattro, con nome di
+lettere minuscole e livello 1-30, il resto diventa posto vuoto `{"set":"","liv":0}`; servono solo a
+mostrarli sui cartellini, online non cambiano ancora le statistiche, e senza profili sul server non si
+può sapere se il giocatore li possiede; un client vecchio non manda `pz` e ignora quello degli altri,
+la versione del protocollo resta 9). Se la
 versione non è quella del server la risposta è `{"t":"error","e":"version"}` e
 il client chiede di aggiornare il gioco. La versione (`protocolVersion` in
 `server.go`, `PROTOCOL` nel client) va alzata quando i messaggi cambiano in un

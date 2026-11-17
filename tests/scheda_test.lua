@@ -83,6 +83,11 @@ local r6 = showcase.rows(showcase.with_stats(showcase.simple("Blu", 2, ""), st))
 check(r6[2].valore == "+6%" and math.abs(r6[2].offset - 0.6) < 1e-6, "showcase: +6% and the offset in tenths of SCALE")
 local net = showcase.from_net({ liv = 1e9, bdg = { { id = "globi", grado = 2 }, { id = "boh", grado = 1 }, "x" } }, "Blu", 2, "")
 check(net.livello == 999 and #net.badge == 1 and net.badge[1].id == "globi", "showcase: the one arriving online is checked")
+local worn = showcase.from_net({ liv = 5, pz = { { set = "corvo", liv = 25 }, { set = "boh", liv = 3 }, { set = "", liv = 0 }, { set = "fornace", liv = 900 } } }, "Blu", 2, "")
+check(worn.pezzi[1].set == "corvo" and worn.pezzi[1].tier == 3 and worn.pezzi[2].set == nil and worn.pezzi[3].set == nil
+	and worn.pezzi[4].livello == equip.LIVELLO_MAX, "showcase: the pieces arriving online are checked (known family, level in range)")
+local sent = showcase.for_net(q)
+check(#sent.pz == #equip.SLOTS and sent.pz[1].set == "corvo" and sent.pz[1].liv == 25, "showcase: the pieces worn go with the greeting")
 local pr = showcase.for_net(p)
 check(pr.liv == p.livello and #(pr.bdg or {}) <= milestones.SHOWN, "showcase: level and badges go with the greeting")
 check(showcase.for_net(profile.new()).bdg == nil, "showcase: no badges, no bdg (in JSON it would be an object)")
@@ -106,6 +111,12 @@ for _, n in pairs(end_of.armi) do weapon_damage = weapon_damage + n end
 check(weapon_damage <= end_of.valori.danno + 1 and weapon_damage >= end_of.valori.danno * 0.5,
 	"count: the damage per weapon is within the standings damage (" .. weapon_damage .. " su " .. end_of.valori.danno .. ")")
 check(#end_of.partita.fune >= 2 and end_of.partita.esito:match("^[VSP]$"), "count: the rope lap by lap and the outcome")
+-- (the history puts every moment on its lap of the rope: a number, never words)
+local laps_ok = true
+for _, m in ipairs(end_of.partita.moments) do
+	if type(m.giro) ~= "number" or m.giro < 1 or m.giro > #end_of.partita.fune - 1 then laps_ok = false end
+end
+check(laps_ok, "count: every moment has its lap as a number, inside the rope")
 local ok, tick = replay.verify(r, g.tick)
 check(ok, "replay: the match replayed from the recipe comes back the same" .. (ok and "" or (" (diverges at tick " .. tostring(tick) .. ")")))
 -- the reader replays the keys as it recorded them: also a duration changed by hand

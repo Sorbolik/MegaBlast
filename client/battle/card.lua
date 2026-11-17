@@ -11,6 +11,7 @@
 --   scheda.DATI.missile                            -- the kind and the bars, for whoever shows it elsewhere (what it does: lang/it.lua card.what)
 
 local ui = require "ui.ui"
+local kit = require "ui.kit"
 local controller = require "ui.controller"
 local hud = require "battle.hud"
 local screen = require "ui.screen"
@@ -20,7 +21,7 @@ local common = require("lang.text").common
 local M = {}
 
 local C = ui.C
--- the weapon kind: the label at the top, the border color (the one of the
+-- the weapon kind: the label at the top, its color (the one of the
 -- weapon bar) and the third bar
 local TYPES = {
 	primaria = { nome = T.kinds.primaria, colore = C.BRACE, terza = T.third_bar.primaria },
@@ -44,7 +45,7 @@ M.DATI = {
 	boomerang = { tipo = "primaria", bars = { 3, 3, 3 } },
 	tar = { tipo = "primaria", bars = { 2, 3, 5 } },
 	drill = { tipo = "primaria", bars = { 3, 3, 2 } },
-	magnet = { tipo = "secondaria", bars = { 1, 2, 4 } },
+	vortex = { tipo = "secondaria", bars = { 2, 4, 4 } },
 	cannon = { tipo = "secondaria", bars = { 3, 5, 5 } },
 	petard = { tipo = "secondaria", bars = { 1, 3, 5 } },
 	hook = { tipo = "movimento" },
@@ -56,8 +57,10 @@ M.DATI = {
 
 local BAR_NAMES = T.bars
 local OFF = vmath.vector4(1, 1, 1, 0.14)
-local W, H = 560, 560
+local W, H = 560, 600
 local WIDE = 480
+-- the OK button: its size and its middle, from the card's middle
+local OK_W, OK_H, OK_Y = 230, 64, -246
 
 -- how to use it, with the controls you have
 local function use(d, weapon_name, commands)
@@ -94,17 +97,20 @@ function M.open_view(weapon_name, commands)
 	local veil = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(1280 * screen.FULL, 720 * screen.FULL, 0))
 	gui.set_color(veil, vmath.vector4(0, 0, 0, 0.62))
 	gui.set_parent(veil, c.radice)
-	local paper, border = ui.panel(0, 0, W, H, c.radice)
-	gui.set_color(border, col)
-	ui.text(kind.nome, 0, 245, 0.8, col, paper)
-	ui.alone(0, 150, 230, vmath.vector4(col.x, col.y, col.z, 0.4), paper)
-	local icon_img = gui.new_box_node(vmath.vector3(0, 150, 0), vmath.vector3(130, 130, 0))
+	-- the iron panel of the menus, with its ink outline (ui/kit.lua; Sergio, 17 Nov)
+	local paper = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(W, H, 0))
+	gui.set_visible(paper, false)
+	gui.set_parent(paper, c.radice)
+	kit.panel(paper, W, H)
+	ui.text(kind.nome, 0, 258, 0.8, col, paper)
+	ui.alone(0, 162, 230, vmath.vector4(col.x, col.y, col.z, 0.4), paper)
+	local icon_img = gui.new_box_node(vmath.vector3(0, 162, 0), vmath.vector3(130, 130, 0))
 	gui.set_texture(icon_img, "armi")
 	gui.play_flipbook(icon_img, weapon_name .. "_icona")
 	gui.set_parent(icon_img, paper)
-	ui.title(hud.NAMES[weapon_name] or string.upper(weapon_name), 0, 58, 0.9, C.LIGHT, paper)
-	riga(T.what[weapon_name], 2, 0.9, C.TEXT, paper)
-	local y = -62
+	ui.title(hud.NAMES[weapon_name] or string.upper(weapon_name), 0, 70, 0.9, C.LIGHT, paper)
+	riga(T.what[weapon_name], 14, 0.9, C.TEXT, paper)
+	local y = -50
 	if d.bars then
 		for i, v in ipairs(d.bars) do
 			local nome = ui.text(BAR_NAMES[i] or kind.terza, -190, y, 0.8, C.OFF, paper)
@@ -115,8 +121,10 @@ function M.open_view(weapon_name, commands)
 			y = y - 36
 		end
 	end
-	riga(use(d, weapon_name, commands), d.bars and -188 or -110, 0.8, C.TEXT, paper)
-	c.prova = ui.button({}, 0, -240, 250, 64, T.ok, nil, { main = true, colore = col }, paper)
+	-- how to use it: its two lines end well above the button
+	riga(use(d, weapon_name, commands), d.bars and -172 or -100, 0.8, C.TEXT, paper)
+	-- OK is the primary button of the menus, the gem
+	c.ok = kit.action({ node = paper, ox = 0, oy = 0 }, T.ok, -OK_W / 2, -OK_Y - OK_H / 2, OK_W, OK_H, { size = 30 })
 	-- arrives with a small hop
 	gui.set_scale(paper, vmath.vector3(0.6, 0.6, 1))
 	gui.animate(paper, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.35)
@@ -124,7 +132,7 @@ function M.open_view(weapon_name, commands)
 end
 
 function M.press(c, x, y)
-	return gui.pick_node(c.prova, x, y)
+	return gui.pick_node(c.ok.node, x, y)
 end
 
 function M.close_view(c)

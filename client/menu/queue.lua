@@ -2,8 +2,12 @@
 -- 14 Nov): the home's GIOCA. On the left the usual 2 CONTRO 2, big, and under
 -- it the STANZA PRIVATA; on the right the running events, each with its queue
 -- (a modifier has its own, a Tournament counts in the 2 vs 2), and the next one
--- coming. GIOCA, the screen's action, starts the chosen queue: a match counts
--- for all the events of its queue. Events from main/events.lua.
+-- coming. A tap on a queue only chooses it (Sergio, 16 Nov): its card gets the
+-- bright rim (WB-060, the "scelta" cards), with every other card of the same
+-- queue, and GIOCA, the screen's action, starts it: a match counts for all the
+-- events of its queue. The STANZA PRIVATA is not a queue: its tap opens it at
+-- once, and only it keeps the arrow of what goes somewhere. Events from
+-- main/events.lua.
 --
 --   local coda = require "menu.queue"
 --   local c = coda.new()
@@ -22,6 +26,8 @@ local M = {}
 local KC = kit.C
 
 -- how many running events fit on the right
+-- the small line on the ember card: a dark brown, read on the orange
+local EMBER_SUB = kit.hex("4a1c06")
 local MAX_EVENTS = 2
 -- each kind's icon (the modifiers, like the Maglio's, have the hammer)
 local ICON = { mod = "ic_maglio", torneo = "ic_torneo" }
@@ -34,10 +40,13 @@ local function fit(n, w)
 end
 
 -- a queue to play: a card with its icon ih tall on the left, the name, a line
--- and an information under it, the arrow of what goes somewhere; a tap starts its
--- queue (Sergio, 15 Nov: the cards of before, not the iron plates, which are going)
+-- and an information under it; a tap chooses its queue (o.action "coda:ID": the
+-- chosen one has the bright rim), or goes somewhere (the arrow). The card has the shape of what it is (WB-060, o.kind): "brace" the usual
+-- 2 vs 2, "ferro" a plain mode, "gelo" an event; on the ember the writing is ink
 local function card(c, g, x, y, w, h, o)
-	local k = kit.card(g, x, y, w, h, KC.ROSE, { sel = o.hot })
+	local goes = not o.action:find("^coda:")
+	local k = kit.mode_card(g, x, y, w, h, o.kind, { sel = o.action == "coda:" .. c.sel })
+	local ember = o.kind == "brace"
 	local f = k.g
 	-- (no icon yet: the text starts where the icon would)
 	local ih = o.ih
@@ -45,10 +54,10 @@ local function card(c, g, x, y, w, h, o)
 	local tx = o.icon and x + 62 + ih or x + 36
 	local size = o.size
 	local top = y + h / 2 - (size * 0.9 + (o.info and 44 or 22)) / 2 + size * 0.8
-	fit(kit.text(f, o.name, tx, top, size, KC.SAND), x + w - 70 - tx)
-	if o.sub then fit(kit.text(f, kit.upper(o.sub), tx + 2, top + 26, 15, KC.MUTE, "start", 0.5), x + w - 70 - tx) end
-	if o.info then fit(kit.text(f, kit.upper(o.info), tx + 2, top + 50, 15, KC.HOT_TOP, "start", 0.5), x + w - 70 - tx) end
-	kit.text(f, "›", x + w - 30, y + h / 2 + size * 0.45, size * 1.3, o.hot and KC.HOT or KC.SAND, "middle")
+	fit(kit.text(f, o.name, tx, top, size, ember and KC.INK or KC.SAND), x + w - 70 - tx)
+	if o.sub then fit(kit.text(f, kit.upper(o.sub), tx + 2, top + 26, 16, ember and EMBER_SUB or KC.MUTE, "start", 0.5), x + w - 70 - tx) end
+	if o.info then fit(kit.text(f, kit.upper(o.info), tx + 2, top + 50, 16, ember and KC.INK or KC.HOT_TOP, "start", 0.5), x + w - 70 - tx) end
+	if goes then kit.text(f, "›", x + w - 30, y + h / 2 + size * 0.45, size * 1.3, ember and KC.INK or KC.SAND, "middle") end
 	kit.button(c.buttons, k, o.action)
 end
 
@@ -80,13 +89,13 @@ local function build(c)
 		if i > 2 then break end
 		also[i] = kit.upper(o.nome)
 	end
-	card(c, c.left, 36, 110, 700, 220, { hot = true, icon = "ic_2contro2", ih = 130, size = 52,
+	card(c, c.left, 36, 110, 700, 220, { kind = "brace", icon = "ic_2contro2", ih = 130, size = 52,
 		name = common.modes["2v2"], sub = T.usual_match, info = #also > 0 and T.also_counts:format(table.concat(also, ", ")) or nil,
 		action = "coda:2v2" })
 	-- every online queue is here (Sergio): the 1 vs 1 too, still without its icon
-	card(c, c.left, 36, 350, 340, 120, { size = 30, name = common.modes["1v1"], sub = T.duel_line,
+	card(c, c.left, 36, 350, 340, 120, { kind = "ferro", size = 30, name = common.modes["1v1"], sub = T.duel_line,
 		action = "coda:1v1" })
-	card(c, c.left, 396, 350, 340, 120, { icon = "ic_stanza", ih = 52, size = 26, name = T.private, sub = T.private_short,
+	card(c, c.left, 396, 350, 340, 120, { kind = "ferro", icon = "ic_stanza", ih = 52, size = 26, name = T.private, sub = T.private_short,
 		action = "privata" })
 
 	-- on the right: the running events and the next one
@@ -95,15 +104,17 @@ local function build(c)
 	end
 	for i, o in ipairs(running) do
 		local own = o.coda ~= o.modo
-		card(c, c.rt, 756, 110 + (i - 1) * 190, 500, 175, { icon = ICON[o.tipo] or "ic_notte",
+		card(c, c.rt, 756, 110 + (i - 1) * 190, 500, 175, { kind = "gelo", icon = ICON[o.tipo] or "ic_notte",
 			ih = 64, size = 30, name = kit.upper(o.nome), sub = T.event:format(events.when(o, now)),
 			info = own and T.own_queue or T.counts_in:format(common.modes["2v2"]), action = "coda:" .. (own and o.coda or "2v2") })
 	end
 	local after = events.upcoming(now)[1]
 	if after then
-		kit.panel(kit.group(c.rt, 1006, 535).node, 500, 90)
+		kit.mode_card(c.rt, 756, 490, 500, 90, "spenta")
 		kit.piece(c.rt, "ic_notte", 802, 535, 50)
-		fit(kit.text(c.rt, kit.upper(T.coming:format(events.when(after, now), after.nome)), 840, 541, 15, KC.MUTE, "start", 0.5), 340)
+		-- two lines at 16 (never shrunk under the smallest text): when, and what
+		fit(kit.text(c.rt, kit.upper(events.when(after, now)), 840, 530, 16, KC.SAND, "start", 0.5), 400)
+		fit(kit.text(c.rt, kit.upper(after.nome), 840, 552, 16, KC.MUTE, "start", 0.5), 400)
 	end
 
 	-- the one action: GIOCA starts the chosen queue
@@ -131,8 +142,12 @@ function M.on_input(c, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" or ui_action == "privata" then return ui_action end
 	if ui_action == "cerca" then return { coda = c.sel } end
+	-- a queue's card: chosen, GIOCA starts it
 	local queue = ui_action:match("^coda:(.*)$")
-	if queue then return { coda = queue } end
+	if queue and queue ~= c.sel then
+		c.sel = queue
+		build(c)
+	end
 	return nil
 end
 

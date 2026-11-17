@@ -55,7 +55,9 @@ local PED_X = 640 - 0.37 * PED_W
 local FEET = PED_TOP + 0.30 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
-local BAG = 62
+local BAG = 46
+-- the experience bar of the profile plate, full
+local PLATE_BAR = 231
 
 -- the doors: x, y, width, piece, side, color of the writing, size of the name
 local DOORS = {
@@ -79,7 +81,7 @@ local function draw_door(g, id, x, y, name, sub)
 	local tx = side < 0 and b.x0 + 4 or b.x1 - 4
 	local anchor = side < 0 and "start" or "end"
 	local name_n = kit.text(p.g, name, tx, cy + o[7] * 0.28, o[7], color, anchor)
-	local sub_n = kit.text(p.g, sub or "", tx, cy + o[7] * 0.28 + 20, 13, kit.with_alpha(color, 0.85), anchor, 1)
+	local sub_n = kit.text(p.g, sub or "", tx, cy + o[7] * 0.28 + 20, 16, kit.with_alpha(color, 0.85), anchor, 1)
 	return p, name_n, sub_n, tx, anchor
 end
 
@@ -106,23 +108,13 @@ end
 local function set_sub(d, txt)
 	gui.set_text(d.sub, txt)
 	local b = d.p.box
-	kit.keep_in(d.sub, b, d.p.g, d.x, (b.y0 + b.y1) / 2 + 28, 13, d.anchor)
+	kit.keep_in(d.sub, b, d.p.g, d.x, (b.y0 + b.y1) / 2 + 28, kit.MIN_TEXT, d.anchor)
 end
 
 function M.new(color)
 	local h = { tops = {}, buttons = {}, doors = {}, door_by_id = {}, t = 0, colore = color, glint_at = 0.9 }
 
 	h.scene = kit.scene(640, 350, { bg = true })
-
-	-- STESSO TELEFONO is in ALLENAMENTO now; the scenarios of the simulator
-	-- (tools/simula) still start their match from here, with a tap on the
-	-- old place (now on ALLENAMENTO): an invisible zone, only there, first in the list
-	if sys.get_config_int("megablast.simula", 0) == 1 then
-		local sim = kit.anchor(0, 360, gui.ANCHOR_LEFT)
-		h.tops[#h.tops + 1] = sim.node
-		kit.zone(sim, h.buttons, 190, 560, 64, 24, "local")
-	end
-
 
 	-- the middle: the pedestal, the apprentice on it and the backpack, all one button
 	local mid = kit.anchor(640, PED_BOTTOM, nil, gui.ANCHOR_BOTTOM)
@@ -154,7 +146,7 @@ function M.new(color)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	h.glow = 0
-	h.bag = kit.piece(mid, "zainetto", PED_X + 0.86 * PED_W, PED_TOP + 0.52 * PED_H - 56 + BAG / 2, BAG)
+	h.bag = kit.piece(mid, "zainetto", PED_X + 0.88 * PED_W, PED_TOP + 0.52 * PED_H - BAG / 2, BAG)
 	local hy = FEET - 380 - 10
 	h.hero = kit.zone(mid, h.buttons, PED_X - 10, hy, PED_W + 20, PED_BOTTOM + 6 - hy, "zaino")
 
@@ -162,15 +154,16 @@ function M.new(color)
 	local tl = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = tl.node
 	h.top_left = tl
+	-- (Sergio, 17 Nov: bigger; the level stops before the shell's rivet)
 	local x, y = 22, 20
-	kit.strip(tl, "guscio", x + 30, y + 8, 250, 56)
-	kit.piece(tl, "tondo_oro", x + 36, y + 36, 72)
-	h.face_at = { x + 36, y + 36 }
-	h.who = kit.text(tl, T.player, x + 82, y + 34, 22, C.SAND)
-	h.level = kit.text(tl, "", x + 266, y + 33, 14, C.HOT, "end", 1)
-	kit.strip(tl, "riga_scura", x + 82, y + 42, 186, 14)
-	h.xp = kit.strip(tl, "barra_brace", x + 84, y + 44, 124, 10)
-	kit.zone(tl, h.buttons, x, y, 280, 72, "profilo")
+	kit.strip(tl, "guscio", x + 41, y + 11, 388, 76)
+	kit.piece(tl, "tondo_oro", x + 49, y + 49, 98)
+	h.face_at = { x + 49, y + 49 }
+	h.who = kit.text(tl, T.player, x + 111, y + 46, 30, C.SAND)
+	h.level = kit.text(tl, "", x + 385, y + 45, 20, C.HOT, "end", 1)
+	kit.strip(tl, "riga_scura", x + 111, y + 57, 274, 19)
+	h.xp = kit.strip(tl, "barra_brace", x + 114, y + 60, 168, 13)
+	kit.zone(tl, h.buttons, x, y, 430, 98, "profilo")
 
 	-- the doors at the sides of the apprentice, each with its shape
 	local left = kit.anchor(0, 360, gui.ANCHOR_LEFT)
@@ -220,6 +213,16 @@ function M.new(color)
 	for _, n in ipairs({ h.play.node, tl.node, top_right.node, h.posa, bl.node }) do h.rest[n] = gui.get_position(n) end
 	-- what shakes at a thud: the sides (not the pieces that are arriving)
 	h.shaken = { right.node, left.node, tl.node }
+
+	-- STESSO TELEFONO is in ALLENAMENTO now; the scenarios of the simulator
+	-- (tools/simula) still start their match from here, with a tap on the
+	-- old place (now on ALLENAMENTO): an invisible zone, only there, last in
+	-- the list (ui.touch looks from the last: it wins over the door under it)
+	if sys.get_config_int("megablast.simula", 0) == 1 then
+		local sim = kit.anchor(0, 360, gui.ANCHOR_LEFT)
+		h.tops[#h.tops + 1] = sim.node
+		kit.zone(sim, h.buttons, 190, 560, 64, 24, "local")
+	end
 
 	M.hide(h)
 	return h
@@ -348,9 +351,9 @@ function M.profile(h, p)
 	local profile = require "menu.profile"
 	gui.set_text(h.level, T.level:format(p.livello or 1))
 	local f = math.min(1, (p.xp or 0) / profile.xp_level(p.livello or 1))
-	kit.strip_width(h.xp, math.max(14, 182 * f))
+	kit.strip_width(h.xp, math.max(18, PLATE_BAR * f))
 	if h.face then gui.delete_node(h.face) end
-	h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 60, h.color, scoria.player)
+	h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 82, h.color, scoria.player)
 	-- the first chapter with a mission still to win
 	local stars = p.stelle or {}
 	local chapter
@@ -392,7 +395,7 @@ function M.wear(h, p)
 	pose_now(h)
 	if h.face then
 		gui.delete_node(h.face)
-		h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 60, h.color, scoria.player)
+		h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 82, h.color, scoria.player)
 	end
 end
 

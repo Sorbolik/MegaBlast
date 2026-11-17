@@ -8,7 +8,7 @@ imposta prova_scelta 1
 imposta prova_durata 3
 imposta prova_profilo 1             # un profilo che ha già giocato: pezzi, poteri, badge
 
-aspetta 1.5
+aspetta 4
 foto 01_home
 tocca 220 172                      # ALLENAMENTO
 aspetta 1
@@ -28,7 +28,9 @@ tocca 640 360                       # lo chiude
 aspetta 0.3
 tocca 559 410                       # primaria
 aspetta 0.3
-tocca 1071 410                       # secondaria: si parte
+tocca 1071 410                       # secondaria
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO: si parte
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
 mira 150 100 0.4

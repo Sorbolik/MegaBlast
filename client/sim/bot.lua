@@ -111,13 +111,25 @@ M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletra
 -- with the orb to the worst den, covered and where nobody sees it (tana: how
 -- much that counts; piano: every turn's plan); testa_calda: charges in even
 -- at the cost of dying; cecchino: shoots from where it is and walks little;
--- spingitore: looks for the void (an environment kill is worth triple).
+-- spingitore: looks for the void (an environment kill is worth triple);
+-- sopravvissuto: below.
 local push_scoring = {}
 for k, v in pairs(C.SCORE) do push_scoring[k] = v end
 push_scoring.env_kill = C.SCORE.env_kill * 3
+-- sopravvissuto: not written by hand, the specialist evolvi.py grew to die
+-- as little as possible (the champion of generation 40 on the four maps, 3 Nov,
+-- branch bot-notte, strumenti/arena/specialisti2/specialisti.json): afraid of
+-- losing life, a great taste for the orb, it shelters. Il codardo of the Forgia.
+local survivor_scoring = {}
+for k, v in pairs(C.SCORE) do survivor_scoring[k] = v end
+survivor_scoring.env_kill, survivor_scoring.kill, survivor_scoring.damage = 25, 49.9405, 0.51457
 M.PERSONALITIES = {
 	codardo = { vita_mia = 2, morte = 120, teletrasporto = 225, den = 12,
 		piano = { attacca_entro = 4, poi = "teletrasporto" } },
+	sopravvissuto = { vita_mia = 1.75522, vita_compagno = 0.3104, morte = 66.16183, strada = 0.04404,
+		teletrasporto = 383.00209, globo_riparo = 5.93875, cassa = 20.05285, cassa_fame = 3.99748,
+		punteggio = survivor_scoring, armi = { punch = 1.42177, mallet = 1.42177, lunge = 1.42177, sword = 1.42177,
+			sniper = 0.97579, missile = 0.97579, grenade = 0.97579, shards = 0.97579, eagle = 0.97579, bellows = 0.51734 } },
 	testa_calda = { vita_mia = 0.15, morte = 15, strada = 0.004 },
 	cecchino = { strada = 0.05, teletrasporto = 25 },
 	spingitore = { punteggio = push_scoring },
@@ -265,7 +277,7 @@ local function quiet(w)
 	end
 	for _, rb in ipairs(w.robots) do
 		if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.hook_shot or rb.mallet
-			or rb.cannon or rb.pull) then
+			or rb.cannon) then
 			return false
 		end
 	end
@@ -631,6 +643,7 @@ local ARC_WEAPONS = {
 	tar = function(g) return game.GRENADE_SPEED, g.gravity * game.GRENADE_GRAVITY end,
 	petard = function(g) return game.GRENADE_SPEED, g.gravity * game.GRENADE_GRAVITY end,
 	drill = function(g) return game.MISSILE_SPEED, g.gravity * game.MISSILE_GRAVITY end,
+	vortex = function(g) return game.MISSILE_SPEED, g.gravity * game.MISSILE_GRAVITY end,
 	trampoline = function(g) return game.GRENADE_SPEED, g.gravity * game.GRENADE_GRAVITY end,
 }
 
@@ -740,9 +753,6 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 				end
 			elseif wpn == "boomerang" then
 				if dist < C.BOOMERANG.range + 40 then add(wpn, straight, 1, "volo") end
-			elseif wpn == "magnet" then
-				-- the centre is C.MAGNET.distance along the aim: aim so that the enemy is inside the pulse
-				if dist < C.MAGNET.distance + C.MAGNET.radius then add(wpn, straight, 1, "tutto") end
 			elseif wpn == "cannon" then
 				-- the flight at full power, towards the enemy or a bit above it
 				if dist < 600 then
@@ -1281,6 +1291,8 @@ function M.choose(d, i, seed, armi)
 			draft.pick(d, i, w)
 		end
 	end
+	-- a bot never keeps the others waiting
+	draft.confirm(d, i)
 end
 
 return M

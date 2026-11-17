@@ -336,7 +336,7 @@ function M.new(palette, tick)
 	p.tie_s = ""
 	-- before the last lap, under the board
 	p.avviso = root_node(HALF, Y - NOTICE_Y)
-	ui.text(T.last_round_soon, 0, 0, SMALL, ui.GOLD, p.avviso)
+	ui.text(T.last_round_soon, 0, 0, CAPTION, ui.GOLD, p.avviso)
 	p.notice_on = false
 	gui.set_enabled(p.avviso, false)
 	-- the last-lap banner, in the middle of the screen

@@ -27,6 +27,7 @@
 --   vignette.CHI.favilla                  -- name and color of who speaks
 
 local ui = require "ui.ui"
+local kit = require "ui.kit"
 local T = require("lang.text").vignette
 local common = require("lang.text").common
 local scoria = require "battle.scoria"
@@ -65,6 +66,7 @@ M.SWIPE_UP = SWIPE_UP
 local BIG_W, BIG_H = 980, 400
 local BIG_FACE = 230
 local DRAW_W, DRAW_H = 640, 262
+local NEXT_H = 64       -- the button that goes on
 local DRAW_K = 2.3   -- the drawing's devil, times its size in the match
 
 local V3 = vmath.vector3()
@@ -87,6 +89,16 @@ local function panel(x, y, w, h, parent)
 	gui.set_color(b, INK)
 	gui.set_inherit_alpha(b, true) -- the strip goes see-through whole (M.ghost)
 	return n, b
+end
+
+-- An ink frame around a box w x h centered at (x, y) of parent, made before it:
+-- the outline of Filo di brace (Sergio, 17 Nov) on the big vignette
+local OUTLINE = 5
+local function outline(x, y, w, h, parent)
+	local n, b = ui.panel(x, y, w + 2 * OUTLINE, h + 2 * OUTLINE, parent)
+	gui.set_color(n, INK)
+	gui.set_color(b, INK)
+	return n
 end
 
 local function face(chi, faccia, x, y, s, parent)
@@ -634,12 +646,13 @@ View.__index = View
 local function build_drawing(view, name)
 	local spec = DRAW[name]
 	if view.drawing then
-		gui.delete_node(view.drawing.clip)
+		gui.delete_node(view.drawing.frame)
 		view.drawing = nil
 	end
 	if not spec then return end
 	local d = { spec = spec, t = 0 }
-	d.clip = box(view.draw_x, view.draw_y, DRAW_W, DRAW_H, BOX, view.paper)
+	d.frame = outline(view.draw_x, view.draw_y, DRAW_W, DRAW_H, view.paper)
+	d.clip = box(0, 0, DRAW_W, DRAW_H, BOX, d.frame)
 	gui.set_clipping_mode(d.clip, gui.CLIPPING_MODE_STENCIL)
 	d.stage = gui.new_box_node(vec(0, 0), vec(1, 1))
 	gui.set_visible(d.stage, false)
@@ -664,7 +677,7 @@ local function show_page(view)
 	gui.set_color(view.name, colore)
 	gui.set_text(view.text, p.testo)
 	build_drawing(view, p.disegno)
-	gui.set_text(view.next_text, last and T.go or common.next)
+	view.next.set_label((view.pad and "A  " or "") .. (last and T.go or common.next))
 	for k, n in ipairs(view.dots) do gui.set_color(n, k == view.i and INK or INK_SOFT) end
 end
 
@@ -678,7 +691,8 @@ function M.open(v, pages, pad)
 	local drawn = false
 	for _, pg in ipairs(pages) do if pg.disegno and DRAW[pg.disegno] then drawn = true end end
 	local bw, bh, bf = drawn and BIG_W or 820, drawn and BIG_H or 250, drawn and BIG_FACE or 150
-	view.paper = panel(0, 10, bw, bh, view.radice)
+	view.outline = outline(0, 10, bw, bh, view.radice)
+	view.paper = panel(0, 0, bw, bh, view.outline)
 	local left = -bw / 2 + 28 + bf / 2
 	local fy = bh / 2 - 28 - bf / 2
 	view.frame, view.face = face(nil, nil, left, fy, bf, view.paper)
@@ -696,27 +710,22 @@ function M.open(v, pages, pad)
 	local sx, sy, dx, dy
 	-- the dots closer together when there are many (RILEGGI)
 	local step = math.min(18, 140 / math.max(1, #pages - 1))
+	-- the button is the primary one of the menus, the gem (ui/kit.lua; Sergio, 17 Nov)
+	local nx, nw
 	if drawn then
-		view.next = box(left, by, bf, 56, INK, view.paper)
-		sx, sy = left - bf / 2 + 60, by + 44
+		nx, nw = left, bf
+		sx, sy = left - bf / 2 + 60, by + 50
 		dx, dy = left + bf / 2 - 5 - (#pages - 1) * step, sy
 	else
-		view.next = box(bw / 2 - 28 - 110, by, 220, 56, INK, view.paper)
+		nx, nw = bw / 2 - 28 - 110, 220
 		sx, sy = bw / 2 - 28 - 220 - 100, by
 		dx, dy = rx + 9, by
 	end
+	view.pad = pad
+	view.next = kit.action({ node = view.paper, ox = 0, oy = 0 }, "", nx - nw / 2, -by - NEXT_H / 2, nw, NEXT_H, { size = 28 })
 	view.skip = box(sx, sy, 160, 40, c(0, 0, 0, 0), view.paper)
 	ink(pad and T.close_pad or T.close, -60, 12, 0.55, INK_SOFT, nil, view.skip)
 	gui.set_enabled(view.skip, #pages > 1)
-	view.next_text = gui.new_text_node(vec(0, 0), "")
-	gui.set_font(view.next_text, "titolo")
-	gui.set_color(view.next_text, PAPER)
-	gui.set_scale(view.next_text, vmath.vector3(0.7, 0.7, 1))
-	gui.set_parent(view.next_text, view.next)
-	if pad then
-		local a = ink("A", -96, 14, 0.5, PAPER, nil, view.next)
-		gui.set_pivot(a, gui.PIVOT_NW)
-	end
 	-- the page dots, when there is more than one
 	if #pages > 1 then
 		for k = 1, #pages do
@@ -724,8 +733,8 @@ function M.open(v, pages, pad)
 		end
 	end
 	show_page(view)
-	gui.set_scale(view.paper, vmath.vector3(0.7, 0.7, 1))
-	gui.animate(view.paper, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3)
+	gui.set_scale(view.outline, vmath.vector3(0.7, 0.7, 1))
+	gui.animate(view.outline, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3)
 	v.view = view
 	show_strip(v, nil)
 	return view
@@ -756,7 +765,7 @@ end
 -- (true: it's over)
 function View.press(view, x, y)
 	if gui.is_enabled(view.skip) and gui.pick_node(view.skip, x, y) then return true end
-	if gui.pick_node(view.next, x, y) then return advance(view) end
+	if gui.pick_node(view.next.node, x, y) then return advance(view) end
 	return false
 end
 

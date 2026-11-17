@@ -1,16 +1,18 @@
 -- The PROFILO (Figma "RIORGANIZZAZIONE MENU · 14 nov", Consigliata/8 and /9;
 -- Sergio, 14 Nov): it opens from the round at the top left of the home. The
 -- title is your name, under it your level. Two tabs:
---   STATISTICHE         four big numbers (won, best streak, stars, lost), the
---                       mode as chips, the stats as rows with their badge
---                       (tapping a row puts its badge next to your name), on
---                       the right the damage per weapon
---   CRONOLOGIA PARTITE  the last matches as rows: outcome, mode and map, who was
---                       there (tapping a face shows their tag from that time),
---                       points, ranking (the server doesn't keep it yet: a
---                       placeholder), when, RIVEDI; tapping a row opens under
---                       it how it went lap by lap and its moments (a tap: the
---                       replay from there)
+--   STATISTICHE         (the approved board, WB-067 R1) on the left the player's
+--                       card: level in a ring of experience, the medals next to
+--                       your name, won/lost bar, best streak and stars; in the
+--                       middle the mode as chips and the records as cards in two
+--                       columns with their icon and medal (tapping one puts it next to
+--                       your name); on the right the damage per weapon
+--   CRONOLOGIA PARTITE  (WB-067 R2) the last matches as rows: the ribbon with the
+--                       outcome, mode and map, the map's miniature, the teams
+--                       (tapping a face shows their tag from that time), points,
+--                       when, the round RIVEDI; tapping a row opens under it how
+--                       it went lap by lap with its moments as numbers on the
+--                       line (a tap: the replay from there)
 -- The pieces and the Sigilli are in the ZAINO (menu/backpack.lua). Rebuilt at
 -- every tap, like the armory.
 --
@@ -26,6 +28,8 @@ local coins = require "ui.coins"
 local screen = require "ui.screen"
 local game = require "sim.game"
 local score = require "battle.score"
+local scoria = require "battle.scoria"
+local ill = require "ui.illustrations"
 local maps = require "sim.maps"
 local profile = require "menu.profile"
 local milestones = require "menu.milestones"
@@ -40,6 +44,8 @@ local C = ui.C
 local KC = kit.C
 local TOUCH = hash("touch")
 local ROMAN = { "I", "II", "III", "IV" }
+local MEDALS = { "medaglia_bronzo", "medaglia_argento", "medaglia_oro", "medaglia_oro" }
+local GOLD = kit.hex("ffc83d")
 -- the modes of the stats, as the Figma's chips (all of them first)
 local MODES = { "tutte", "2v2", "1v1", "torneo", "campagna" }
 
@@ -63,59 +69,114 @@ local function sheet_stats(s)
 	local g = s.left
 	local st = profile.statistics(p, s.gruppo)
 	local matches, won = st.partite or 0, st.vinte or 0
-	-- four big numbers, each in its panel
-	local big = {
-		{ thousands(won), T.won, KC.HOT },
-		{ thousands(st.serie or 0), T.best_streak, KC.SAND },
-		{ thousands(profile.total_stars(p)), T.stars, KC.SAND },
-		{ thousands(matches - won), T.lost, KC.STEEL },
-	}
-	for i, b in ipairs(big) do
-		local x = 36 + (i - 1) * 200
-		kit.panel(kit.group(g, x + 93, 172).node, 186, 112)
-		kit.text(g, b[1], x + 93, 178, 44, b[3], "middle")
-		kit.text(g, b[2], x + 93, 206, 14, KC.MUTE, "middle", 1)
-	end
-	-- which matches
-	local list, active = {}, 1
-	for i, gr in ipairs(MODES) do
-		list[i] = { kit.upper(profile.GROUP_NAMES[gr]), "gruppo:" .. gr }
-		if gr == s.gruppo then active = i end
-	end
-	require("menu.gear_ui").chips(s, g, 36, 240, list, active)
-
-	-- the stats with their badges: the badge comes from the total of all modes
 	local all = profile.statistics(p, "tutte")
 	local picked = {}
 	for _, id in ipairs(p.badge) do picked[id] = true end
-	local step = 32
+
+	-- on the left, the player's card (the approved board, WB-067 R1)
+	kit.panel(kit.group(g, 180, 344).node, 296, 492)
+	-- the level: your face in a ring that fills with the experience
+	local need = profile.xp_level(p.livello or 1)
+	local f = math.max(0, math.min(1, (p.xp or 0) / need))
+	local rx, ry, rr = 100, 168, 47
+	kit.dot(g, rx, ry, 108, KC.INK)
+	kit.dot(g, rx, ry, 94, kit.with_alpha(KC.STEEL, 0.25))
+	local steps = 64
+	for i = 0, math.floor(steps * f + 0.5) - 1 do
+		local a = math.pi / 2 - (i / steps) * 2 * math.pi
+		kit.dot(g, rx + rr * math.cos(a), ry - rr * math.sin(a), 11, KC.HOT)
+	end
+	kit.dot(g, rx, ry, 82, KC.INK)
+	score.face(g.node, rx - g.ox, g.oy - ry, 76, s.colore, scoria.player)
+	kit.text(g, T.level_short:format(p.livello or 1), 164, 164, 30, KC.SAND)
+	fit(kit.text(g, T.xp:format(thousands(p.xp or 0), thousands(need)), 164, 190, 16, KC.MUTE, "start", 0.4), 148)
+	-- the medals next to your name: the chosen ones, then an empty place
+	kit.text(g, T.next_to_name, 50, 250, 16, KC.HOT, "start", 0.6)
+	local shown = {}
+	for _, id in ipairs(p.badge) do
+		local t = milestones.BY_ID[id]
+		local grade = t and t.thresholds and milestones.grade(t, all[id] or 0) or 0
+		if grade > 0 and #shown < milestones.SHOWN then shown[#shown + 1] = { t = t, grade = grade } end
+	end
+	for i = 1, milestones.SHOWN do
+		local x = 50 + (i - 1) * 88
+		local b = shown[i]
+		if b then
+			kit.card(g, x, 264, 76, 80, KC.ROSE, { sel = true })
+			kit.piece(g, MEDALS[b.grade], x + 38, 292, 36)
+			kit.text(g, ROMAN[b.grade], x + 38, 298, 16, KC.INK, "middle")
+			fit(kit.text(g, b.t.badge, x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
+			kit.zone(g, s.buttons, x, 264, 76, 80, "badge:" .. b.t.id)
+		else
+			kit.card(g, x, 264, 76, 80, KC.ROSE, { off = true })
+			kit.text(g, "+", x + 38, 316, 34, KC.MUTE, "middle")
+		end
+	end
+	-- won and lost: one bar, ember and ice
+	kit.text(g, kit.upper(thousands(won) .. " " .. T.won), 50, 390, 18, KC.HOT, "start", 0.4)
+	kit.text(g, kit.upper(thousands(matches - won) .. " " .. T.lost), 310, 390, 18, KC.STEEL, "end", 0.4)
+	kit.strip(g, "riga_scura", 50, 400, 260, 24)
+	local wf = matches > 0 and won / matches or 0
+	if matches > won then kit.strip(g, "barra_gelo", 52, 402, 256, 20) end
+	if won > 0 then kit.strip(g, "barra_brace", 52, 402, math.max(20, 256 * wf), 20) end
+	kit.text(g, kit.upper(T.won_share:format(math.floor(wf * 100 + 0.5))), 180, 448, 16, KC.MUTE, "middle", 0.4)
+	-- best streak and stars
+	for i, b in ipairs({ { thousands(st.serie or 0), T.best_streak, KC.HOT }, { thousands(profile.total_stars(p)), T.stars, KC.SAND } }) do
+		local x = 50 + (i - 1) * 138
+		kit.card(g, x, 470, 122, 100, KC.ROSE)
+		kit.text(g, b[1], x + 61, 526, 38, b[3], "middle")
+		kit.text(g, b[2], x + 61, 554, 16, KC.MUTE, "middle", 0.6)
+	end
+
+	-- in the middle: which matches, then the records as cards in two columns
+	local list, active = {}, 1
+	for i, gr in ipairs(MODES) do
+		list[i] = { T.mode_short[gr] or kit.upper(profile.GROUP_NAMES[gr]), "gruppo:" .. gr }
+		if gr == s.gruppo then active = i end
+	end
+	require("menu.gear_ui").chips(s, g, 350, 98, list, active)
+	local cw, ch = 218, 70
 	for i, t in ipairs(milestones.WHITELIST) do
-		local y = 288 + (i - 1) * step
+		local x = 350 + ((i - 1) % 2) * (cw + 14)
+		local y = 160 + math.floor((i - 1) / 2) * (ch + 12)
 		local tot = all[t.id] or 0
 		local grade = t.thresholds and milestones.grade(t, tot) or 0
 		local chosen = picked[t.id] and grade > 0
-		kit.strip(g, chosen and "riga_oro" or "riga_scura", 36, y, 760, 29)
-		local ink = chosen and KC.INK or KC.SAND
-		kit.text(g, kit.upper(t.nome), 52, y + 21, 16, ink)
-		kit.text(g, kit.upper(thousands(st[t.id] or 0) .. (t.unit and (" " .. t.unit) or "")), 640, y + 21, 18,
-			chosen and KC.INK or KC.HOT, "end")
+		kit.card(g, x, y, cw, ch, KC.ROSE, { sel = chosen })
+		-- its icon (WB-069), drawn by Codex: what the record is, at a glance
+		kit.piece(g, "record_" .. t.id, x + 32, y + ch / 2, 48)
+		local num = kit.upper(thousands(st[t.id] or 0) .. (t.unit and (" " .. t.unit) or ""))
+		local n = fit(kit.text(g, num, x + 60, y + 34, 24, KC.HOT), 120)
+		fit(kit.text(g, kit.upper(t.nome), x + 60, y + 57, 16, KC.SAND, "start", 0.3), cw - 72)
 		if grade > 0 then
-			-- the badge's plate (iron, bronze, silver, gold) with its grade
-			kit.pic(g, "badge_" .. grade, 660, y + 1, 110, 110 * (grade == 4 and 90 or 68) / (grade == 4 and 273 or 268))
-			kit.text(g, T.badge_pill:format(ROMAN[grade]), 715, y + 20, 13, grade >= 3 and KC.INK or KC.SAND, "middle", 0.5)
-			kit.zone(g, s.buttons, 36, y - 2, 760, step, "badge:" .. t.id)
+			-- the medal on the corner (WB-067: bronze, silver, gold; the fourth gold too)
+			kit.piece(g, MEDALS[grade], x + cw - 16, y + 14, 34)
+			kit.text(g, ROMAN[grade], x + cw - 16, y + 20, 16, KC.INK, "middle")
+			kit.zone(g, s.buttons, x, y, cw, ch, "badge:" .. t.id)
 		elseif t.thresholds then
-			local next_at = milestones.next(t, tot)
-			kit.text(g, kit.upper(T.next_at:format(thousands(next_at))), 715, y + 20, 11, KC.MUTE, "middle", 0.5)
+			-- not yet: the empty medal, and how far the first one is
+			kit.piece(g, "medaglia_vuota", x + cw - 16, y + 14, 34)
+			local nw = kit.width(n)
+			fit(kit.text(g, "/ " .. thousands(milestones.next(t, tot)), x + 66 + nw, y + 34, 16, KC.MUTE, "start", 0.3),
+				math.max(10, cw - 102 - nw))
 		end
 	end
-	kit.text(g, kit.upper(T.badge_hint:format(milestones.SHOWN)), 40, 288 + #milestones.WHITELIST * step + 12, 12, KC.MUTE, "start", 1)
+	-- how the medals work: at the foot, where there is room to read it
+	kit.foot_text(s.low, kit.upper(T.badge_hint:format(milestones.SHOWN)), 140, 674, 19, KC.MUTE, 1080, 0.5)
 
-	-- on the right, the damage per weapon
+	-- on the right, the damage per weapon, each with its picture
 	local r = s.rt
-	local x, w = 830, 426
-	kit.panel(kit.group(r, x + w / 2, 351).node, w, 470)
-	kit.text(r, T.damage_by_weapon, x + w / 2, 150, 20, KC.HOT, "middle", 1)
+	local x, w = 822, 426
+	kit.panel(kit.group(r, x + w / 2, 344).node, w, 492)
+	kit.text(r, T.damage_by_weapon, x + 24, 140, 22, KC.HOT, "start", 1)
+	-- what the two colours of the bars say (Sergio, 17 Nov)
+	local lx = x + 24
+	for _, l in ipairs({ { "barra_brace", T.legend_primary }, { "barra_gelo", T.legend_secondary } }) do
+		kit.strip(r, "riga_scura", lx, 154, 30, 16)
+		kit.strip(r, l[1], lx + 2, 156, 26, 12)
+		lx = lx + 38
+		lx = lx + kit.width(kit.text(r, l[2], lx, 168, 16, KC.MUTE, "start", 0.3)) + 22
+	end
 	local weapons = {}
 	for id, n in pairs(st.armi or {}) do weapons[#weapons + 1] = { w = id, n = n } end
 	table.sort(weapons, function(a, b)
@@ -123,16 +184,21 @@ local function sheet_stats(s)
 		return a.w < b.w
 	end)
 	if #weapons == 0 then
-		kit.text(r, kit.upper(T.nothing_yet), x + w / 2, 340, 14, KC.MUTE, "middle", 1)
+		kit.text(r, kit.upper(T.nothing_yet), x + w / 2, 340, 19, KC.MUTE, "middle", 0.6)
 	end
 	local first = weapons[1] and weapons[1].n or 1
 	for i, a in ipairs(weapons) do
-		if i > 6 then break end
-		local y = 186 + (i - 1) * 62
-		kit.text(r, kit.upper(T.weapons[a.w] or a.w), x + 32, y + 16, 16, KC.SAND)
-		kit.text(r, thousands(a.n), x + w - 32, y + 16, 16, KC.MUTE, "end")
-		kit.strip(r, "riga_scura", x + 32, y + 24, w - 64, 18)
-		kit.strip(r, game.SECONDARY[a.w] and "barra_gelo" or "barra_brace", x + 34, y + 26, math.max(18, (w - 68) * a.n / first), 14)
+		if i > 7 then break end
+		local y = 186 + (i - 1) * 56
+		kit.dot(r, x + 42, y + 22, 46, KC.INK)
+		local ic = gui.new_box_node(vmath.vector3(x + 42 - r.ox, r.oy - (y + 22), 0), vmath.vector3(40, 40, 0))
+		gui.set_parent(ic, r.node)
+		gui.set_texture(ic, "armi")
+		gui.play_flipbook(ic, a.w .. "_icona")
+		fit(kit.text(r, kit.upper(T.weapons[a.w] or a.w), x + 76, y + 14, 18, KC.SAND), 220)
+		kit.text(r, thousands(a.n), x + w - 24, y + 14, 18, KC.MUTE, "end")
+		kit.strip(r, "riga_scura", x + 76, y + 22, w - 100, 22)
+		kit.strip(r, game.SECONDARY[a.w] and "barra_gelo" or "barra_brace", x + 78, y + 24, math.max(18, (w - 104) * a.n / first), 18)
 	end
 end
 
@@ -148,57 +214,115 @@ local function when(t)
 end
 
 local OUTCOME = { V = { T.outcome_won, KC.HOT }, S = { T.outcome_lost, KC.STEEL }, P = { T.outcome_tie, KC.SAND } }
--- the rows the Figma shows (the profile keeps more, for the replays)
+-- the rows the board shows (the profile keeps more, for the replays)
 local ROWS = 6
--- the open match shows under its row how it went and its moments, without a box
--- of their own (Sergio, 15 Nov: the features stay, even where Figma has no room)
-local DETAIL = 132
+local RH = 84
+-- the open match grows under its row: how it went lap by lap, its moments on the
+-- line as numbers (the approved board, WB-067 R2)
+local DETAIL = 182
 local BOTTOM = 598
+-- the moments shown on the line (the match keeps more)
+local SHOWN = 4
 
--- the rope: your team's lead at every lap, in the box x..x+w, y..y+h
+-- the rope: your team's lead at every lap, in the box x..x+w, y..y+h; the zero
+-- line dashed. Returns where lap i is (i can be between two laps)
 local function rope(g, values, x, y, w, h, my_own, another)
 	local cy = y + h / 2
 	local max = 50
 	for _, v in ipairs(values) do max = math.max(max, math.abs(v)) end
 	local n = #values
 	local function point(i)
-		return x + (n > 1 and (i - 1) * w / (n - 1) or w / 2), cy - values[i] / max * (h / 2 - 8)
+		i = math.max(1, math.min(n, i))
+		local a = math.floor(i)
+		local b = math.min(n, a + 1)
+		local v = values[a] + (values[b] - values[a]) * (i - a)
+		return x + (n > 1 and (i - 1) * w / (n - 1) or w / 2), cy - v / max * (h / 2 - 8)
 	end
 	for i = 2, n do
 		local x1, y1 = point(i - 1)
 		local x2, y2 = point(i)
+		kit.line(g, x1, y1, x2, y2, 9, KC.INK)
 		kit.line(g, x1, y1, x2, y2, 5, values[i] >= 0 and my_own or another)
 	end
-	for i = 1, n do
-		local px, py = point(i)
-		local d = ui.disc(px - g.ox, g.oy - py, i == n and 16 or 10, values[i] >= 0 and my_own or another, g.node)
-		gui.set_blend_mode(d, gui.BLEND_ALPHA)
+	-- the zero line, dashed, with a gap where a moment's words cross it
+	local function zero(holes)
+		for dx = 0, w - 12, 24 do
+			local free = true
+			for _, h in ipairs(holes) do
+				if x + dx + 12 > h[1] and x + dx < h[2] then free = false end
+			end
+			if free then kit.line(g, x + dx, cy, x + dx + 12, cy, 2, kit.with_alpha(KC.MUTE, 0.5)) end
+		end
 	end
+	return point, zero, cy
 end
 
--- under the open row: the rope on the left, the moments beside it
+-- the lap of a moment as a number (the matches saved before 16 Nov have its
+-- words, "GIRO 3" or "ULTIMO GIRO": the number in them, or the last lap)
+local function lap_of(m, laps)
+	local r = tonumber(m.giro) or tonumber(tostring(m.giro or ""):match("%d+")) or laps
+	return math.max(1, math.min(laps, r))
+end
+
+-- under the open row: the rope across the row, the moments as numbers on it
+-- (the approved board: a gold round with the lap's number on the line, its
+-- words right under it; a tap replays from there)
 local function detail(s, g, pa, x, y, w)
-	local me = (pa.giocatori or {})[pa.me or 1] or {}
-	local my_own = C.SQUADRA[me.squadra or 1] or C.SQUADRA[1]
-	local another = C.SQUADRA[2]
-	for _, pl in ipairs(pa.giocatori or {}) do
-		if pl.squadra ~= me.squadra then another = C.SQUADRA[pl.squadra] or another end
-	end
-	kit.text(g, kit.upper(T.round_by_round), x + 40, y + 22, 13, KC.MUTE, "start", 1)
-	rope(g, pa.fune or { 0 }, x + 46, y + 32, 360, 86, my_own, another)
-	local mx = x + 470
+	local my_own = KC.HOT
+	local another = KC.STEEL
 	local ok = s.replay_ok and s.replay_ok(pa.numero)
-	local moments = pa.moments or {}
-	kit.text(g, kit.upper(T.moments), mx, y + 22, 13, KC.MUTE, "start", 1)
-	if #moments == 0 then kit.text(g, kit.upper(T.no_moments), mx, y + 62, 14, KC.MUTE, "start", 1) end
-	local mw = math.min(300, (w - 470 - 40 - 2 * 16) / 3)
-	for i, m in ipairs(moments) do
-		if i > 3 then break end
-		local px = mx + (i - 1) * (mw + 16)
-		local pl = kit.card(g, px, y + 40, mw, 52, KC.ROSE, { off = not ok })
-		fit(kit.text(pl.g, kit.upper(m.giro .. " · " .. m.testo), px + 20, y + 72, 15, ok and KC.SAND or KC.MUTE), mw - 36)
-		kit.button(s.buttons, pl, "momento:" .. i, { spento = not ok })
+	local values = pa.fune or { 0 }
+	local laps = math.max(1, #values - 1)
+	local moments = {}
+	for i, m in ipairs(pa.moments or {}) do
+		if i > SHOWN then break end
+		moments[i] = { i = i, lap = lap_of(m, laps), testo = m.testo or "" }
 	end
+	fit(kit.text(g, kit.upper(#moments > 0 and T.round_by_round_tap or T.round_by_round), x + 32, y + 22, 16, KC.MUTE, "start", 0.5),
+		w - 64)
+	local point, zero, cy = rope(g, values, x + 48, y + 46, w - 112, 84, my_own, another)
+	-- the moments of the same lap side by side inside it
+	local in_lap, seen = {}, {}
+	for _, m in ipairs(moments) do in_lap[m.lap] = (in_lap[m.lap] or 0) + 1 end
+	local holes, right = {}, {}
+	for _, m in ipairs(moments) do
+		seen[m.lap] = (seen[m.lap] or 0) + 1
+		local px, py = point(m.lap + seen[m.lap] / (in_lap[m.lap] + 1))
+		kit.dot(g, px, py, 36, KC.INK)
+		kit.dot(g, px, py, 30, ok and GOLD or KC.MUTE)
+		kit.text(g, tostring(m.lap), px, py + 6, 16, KC.INK, "middle")
+		-- the moment's words right under its number, on two lines if long, never
+		-- over the words of the moment before
+		local ly = py + 38
+		local lines = kit.wrap(g, kit.upper(m.testo), 16, 140)
+		local nodes, half = {}, 0
+		for li, line in ipairs(lines) do
+			nodes[li] = fit(kit.text(g, line, px, ly + (li - 1) * 18, 16, ok and KC.SAND or KC.MUTE, "middle", 0.3), 200)
+			half = math.max(half, kit.width(nodes[li]) / 2)
+		end
+		local lx = math.max(x + 32 + half, math.min(x + w - 32 - half, px))
+		local bottom = ly + (#lines - 1) * 18
+		for _, r in ipairs(right) do
+			if ly - 16 < r[3] + 6 and bottom > r[2] - 22 and lx - half < r[1] + 12 then lx = math.min(x + w - 32 - half, r[1] + 12 + half) end
+		end
+		right[#right + 1] = { lx + half, ly, bottom }
+		for li, n in ipairs(nodes) do
+			local at = gui.get_position(n)
+			at.x = lx - g.ox
+			gui.set_position(n, at)
+			local base = ly + (li - 1) * 18
+			if cy > base - 14 and cy < base + 4 then
+				local hw = kit.width(n) / 2 + 8
+				holes[#holes + 1] = { lx - hw, lx + hw }
+			end
+		end
+		if ok then
+			kit.zone(g, s.buttons, px - 28, py - 28, 56, 56, "momento:" .. m.i)
+			kit.zone(g, s.buttons, lx - half - 6, ly - 20, 2 * half + 12, bottom - ly + 28, "momento:" .. m.i)
+		end
+	end
+	zero(holes)
+	if #moments == 0 then kit.text(g, kit.upper(T.no_moments), x + w / 2, y + 172, 16, KC.MUTE, "middle", 0.5) end
 end
 
 local function sheet_matches(s)
@@ -208,59 +332,83 @@ local function sheet_matches(s)
 		kit.text(g, kit.upper(T.no_matches), 36, 160, 20, KC.MUTE, "start", 0.5)
 		return
 	end
+	kit.foot_text(s.low, kit.upper(T.history_hint:format(profile.MATCHES)), 140, 674, 19, KC.MUTE, 1080, 0.5)
 	-- the row goes across the whole screen; the middle columns follow its room
 	local w = screen.width() - 72
-	local mid = (w - 1220) / 2
-	local y = 112
+	local mid = (w - 1208) / 2
+	local y = 96
 	for i, pa in ipairs(p.partite) do
-		if i > ROWS or y + 70 > BOTTOM then break end
+		if i > ROWS or y + RH > BOTTOM then break end
 		local x = 36
 		local open = i == s.open
 		local e = OUTCOME[pa.esito] or OUTCOME.P
-		kit.panel(kit.group(g, x + w / 2, y + 35).node, w, 70, open and "pannello_caldo" or "pannello")
+		local h = open and RH + DETAIL or RH
+		kit.card(g, x, y, w, h, KC.ROSE, { sel = open })
 		-- the whole row opens and closes (under the faces and RIVEDI, which are their own)
-		kit.zone(g, s.buttons, x, y, w, 70, "partita:" .. i)
-		-- the cap on the left: ember if won, ice if not
-		kit.pic(g, pa.esito == "V" and "bordino_brace" or "bordino_gelo", x - 10, y + 6, 58 * 88 / 140, 58)
-		kit.text(g, e[1], x + 40, y + 34, 26, e[2])
+		kit.zone(g, s.buttons, x, y, w, RH, "partita:" .. i)
+		-- the head of the row: the ribbon (WB-067), ember if won, ice if not, the word on it
+		kit.strip(g, pa.esito == "V" and "nastro_vittoria" or "nastro_sconfitta", x - 8, y, 196, RH)
+		fit(kit.text(g, e[1], x + 12, y + RH / 2 + 10, 26, KC.INK), 140)
+		-- mode and map
 		local map = maps.get(pa.mappa or "")
-		fit(kit.text(g, kit.upper((profile.GROUP_NAMES[pa.gruppo] or pa.gruppo or "") .. (map and (" · " .. map.name) or "")),
-			x + 41, y + 56, 13, KC.MUTE, "start", 0.5), 250)
-		-- who was there
+		fit(kit.text(g, kit.upper(profile.GROUP_NAMES[pa.gruppo] or pa.gruppo or ""), x + 200, y + 36, 20, KC.SAND), 180)
+		fit(kit.text(g, kit.upper(map and map.name or ""), x + 200, y + 62, 16, KC.MUTE, "start", 0.4), 180)
+		-- the map's miniature
+		local tex = pa.mappa and ill.map_mini(pa.mappa)
+		if tex then
+			s.minis[#s.minis + 1] = pa.mappa
+			local mx = x + 392 + mid * 0.3
+			kit.rect(g, mx - 3, y + 11, 116, 62, KC.INK)
+			local n = gui.new_box_node(vmath.vector3(mx + 55 - g.ox, g.oy - (y + RH / 2), 0), vmath.vector3(110, 56, 0))
+			gui.set_parent(n, g.node)
+			gui.set_texture(n, tex)
+		end
+		-- who was there: your team, VS, the others
+		local mine = (pa.giocatori or {})[pa.me or 1] or {}
+		local sides = { {}, {} }
 		for k, pl in ipairs(pa.giocatori or {}) do
 			if k > 4 then break end
-			local fx = x + 318 + mid * 0.4 + (k - 1) * 52
-			score.face(g.node, fx - g.ox, g.oy - (y + 35), 46, C.SQUADRA[pl.squadra] or C.LIGHT, pl.look)
-			kit.zone(g, s.buttons, fx - 26, y + 6, 52, 58, "giocatore:" .. i .. ":" .. k)
+			local side = pl.squadra == mine.squadra and sides[1] or sides[2]
+			side[#side + 1] = k
 		end
-		local px = x + 654 + mid
-		kit.text(g, thousands(pa.punti and pa.punti[1] or 0), px, y + 38, 30, KC.SAND, "end")
-		kit.text(g, kit.upper(T.points), px, y + 58, 12, KC.MUTE, "end", 1)
-		-- the ranking: not kept yet (placeholder until the server has it)
-		kit.text(g, "–", px + 30, y + 38, 24, KC.MUTE)
-		kit.text(g, kit.upper(T.ranking), px + 30, y + 58, 12, KC.MUTE, "start", 1)
-		kit.text(g, kit.upper(when(pa.quando)), x + 844 + mid * 1.4, y + 41, 16, KC.MUTE)
-		-- RIVEDI, when the replay is on this phone
+		local fx = x + 546 + mid * 0.6
+		for si, side in ipairs(sides) do
+			if si == 2 then
+				kit.text(g, T.vs, fx + 14, y + RH / 2 + 7, 18, KC.MUTE, "middle", 0.5)
+				fx = fx + 34
+			end
+			for _, k in ipairs(side) do
+				local pl = pa.giocatori[k]
+				score.face(g.node, fx + 22 - g.ox, g.oy - (y + RH / 2), 46, C.SQUADRA[pl.squadra] or C.LIGHT, pl.look)
+				kit.zone(g, s.buttons, fx, y + 10, 46, RH - 20, "giocatore:" .. i .. ":" .. k)
+				fx = fx + 50
+			end
+		end
+		local px = x + 826 + mid
+		kit.text(g, thousands(pa.punti and pa.punti[1] or 0), px, y + 42, 32, KC.SAND)
+		kit.text(g, kit.upper(T.points), px, y + 66, 16, KC.MUTE, "start", 0.6)
+		kit.text(g, kit.upper(when(pa.quando)), x + 946 + mid * 1.4, y + RH / 2 + 7, 18, KC.MUTE, "start", 0.5)
+		-- RIVEDI: the round play button (WB-067); grey when the replay isn't on this phone
 		local ok = s.replay_ok and s.replay_ok(pa.numero)
-		local b = kit.plate(g, x + w - 168, y + 14, 140, 42, KC.HOT, { sk = 0, fill = KC.SAND })
-		kit.text(b.g, common.replay, x + w - 98, y + 43, 20, ok and KC.INK or kit.with_alpha(KC.INK, 0.4), "middle")
-		kit.button(s.buttons, b, "rivedi:" .. i, { spento = not ok })
-		y = y + 80
-		if open then
-			detail(s, g, pa, x, y - 6, w)
-			y = y + DETAIL
-		end
+		local b = kit.piece(g, ok and "rivedi" or "rivedi_premuto", x + w - 52, y + RH / 2, 66)
+		if not ok then gui.set_color(b, vmath.vector4(0.55, 0.55, 0.55, 0.7)) end
+		kit.button(s.buttons, { node = b }, "rivedi:" .. i, { spento = not ok })
+		if open then detail(s, g, pa, x, y + RH - 8, w) end
+		y = y + h + 14
 	end
 end
+
 
 -- Screen ----------------------------------------------------------------------------
 
 local function build(s)
 	if s.head then kit.header_delete(s.head) end
-	for _, k in ipairs({ "left", "rt", "veil_g" }) do
+	for _, k in ipairs({ "left", "rt", "low", "veil_g" }) do
 		if s[k] then gui.delete_node(s[k].node); s[k] = nil end
 	end
 	s.buttons = {}
+	for _, m in ipairs(s.minis or {}) do ill.map_mini_release(m) end
+	s.minis = {}
 	local p = s.prof
 	-- the title is your name; a long one shrinks before the tabs
 	s.head = kit.header(s.buttons, TH.player, KC.HOT, "indietro", common.home)
@@ -268,12 +416,12 @@ local function build(s)
 	if tw > 262 then
 		for _, n in ipairs(s.head.title) do gui.set_scale(n, gui.get_scale(n) * (262 / tw)) end
 	end
-	kit.text(s.head.top_left, kit.upper(T.level:format(p.livello or 1)), 36, 100, 15, KC.MUTE, "start", 1)
 	s.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(s.head.top_right, 1110, 44).node, 0, 0)
 	kit.tabs(s.head.top_left, s.buttons, 320, 28, { { common.stats, "scheda:statistiche" }, { T.tab_matches, "scheda:partite" } },
 		s.scheda == "partite" and 2 or 1, KC.PURPLE, true)
 	s.left = kit.anchor(0, 0, gui.ANCHOR_LEFT)
 	s.rt = kit.anchor(1280, 0, gui.ANCHOR_RIGHT)
+	s.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	if s.scheda == "partite" then sheet_matches(s) else sheet_stats(s) end
 	if s.aperto then
 		-- a player's tag from a past match, on top of everything
@@ -281,7 +429,7 @@ local function build(s)
 		kit.rect(s.veil_g, -2560, -1440, 1280 * 5, 720 * 5, kit.with_alpha(C.BOTTOM, 0.82))
 		local v = s.aperto
 		v.verso = 1
-		s.carta = tag.new(v, 640, 360 + tag.TALL({ portrait = true }) / 2, { portrait = true, tu = v.tu }, s.veil_g.node)
+		s.carta = tag.new(v, 640, tag.TOP({ portrait = true }), { portrait = true, tu = v.tu }, s.veil_g.node)
 	else
 		s.carta = nil
 	end
@@ -350,8 +498,9 @@ function M.on_input(s, action_id, action)
 end
 
 function M.destroy(s)
+	for _, m in ipairs(s.minis or {}) do ill.map_mini_release(m) end
 	kit.header_delete(s.head)
-	for _, k in ipairs({ "left", "rt", "veil_g" }) do
+	for _, k in ipairs({ "left", "rt", "low", "veil_g" }) do
 		if s[k] then gui.delete_node(s[k].node) end
 	end
 	kit.scene_drop(s.scene)

@@ -1,0 +1,16 @@
+{
+ "nome": "mantello_corvo",
+ "categoria": "mantello",
+ "mantello": {
+  "img": "mantello_corvo_mantello",
+  "x": -23.7,
+  "y": -53.1,
+  "w": 94.9,
+  "h": 114.7,
+  "attacco": [
+   -2,
+   116
+  ]
+ },
+ "pezzi": {}
+}

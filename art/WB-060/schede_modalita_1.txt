@@ -1,0 +1,20 @@
+Image 1 is a rough mock-up of the PLAY ONLINE screen of our game: the big orange card on the left, the two dark cards under it, the two dark cards with a blue icy corner on the right and the small dull card at the bottom right are hand-made placeholders. Image 2 is the same screen today, made of plain dark rectangles that we want to replace. Images 3 and 4 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 5 is the main button of the game: copy the way its flame and its ice crystals are drawn. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 with a lighter band #FFB703 and a darker band #B8440F, ivory is #F4ECE1, ice is #38B6FF with highlight #CAF0F8.
+
+Draw a sheet with FOUR separate empty card frames, in two rows of two, each one large and filling its cell. Every card is about twice as wide as tall, with soft slightly crooked corners and slightly wavy hand-drawn sides:
+1. the EMBER card: the whole card is ember (#F26419), with a narrow lighter band (#FFB703) along the top edge and a narrow darker band (#B8440F) along the bottom edge; at the BOTTOM LEFT corner the card swells into one chunky tongue of flame that curls outward and downward, drawn like the flame of image 5. The other three corners are plain. The inside is a flat plain ember area, completely empty.
+2. the IRON card: dark iron (#2B2530) with a narrow flat highlight (#6B6375) along the top edge, a small rivet in each corner; all four corners plain. The inside is a flat plain dark area, completely empty.
+3. the ICE card: the same dark iron card, but with a thin ice-blue edge (#38B6FF) along the top side, and at the TOP RIGHT corner a cluster of two or three chunky angular ice crystals (#38B6FF, facets #CAF0F8) that stick out of the corner, drawn like the crystals of image 5. The other three corners are plain, no rivets near the crystals. The inside is a flat plain dark area, completely empty.
+4. the DULL card: a quieter version of the iron card, about four times wider than tall, duller iron (#221D26) with a very faint highlight (#3A3540), no rivets; it must look calm and switched off. The inside is flat, plain and empty.
+
+On every card the four sides between the corners are plain and even, and the light and shadow bands are narrow (less than a tenth of the card height), so the card can be stretched wider or taller and text can be written anywhere inside with a comfortable margin. The flame is only at the bottom left corner of card 1; the crystals are only at the top right corner of card 3.
+
+Thick black ink outline on every piece, cartoon comic style, same line weight as images 3-4. Flat colors only, at most five per piece, no detail thinner than the outline, so the pieces can be traced into vectors. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters, numbers or icons inside the cards. Flat pure green background (#00FF00). The pieces are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+1. art/WB-060/riferimenti/R1_bozza_gioca_online.jpg
+2. art/WB-060/riferimenti/R2_gioca_online_oggi.jpg
+3. art/WB-022/pezzo_pannello.png
+4. art/WB-022/pezzo_piccoli.png
+5. art/WB-054/ritagli/primario_gemma_acceso.png
+
+Generato con image_gen, un tentativo. Quattro schede separate, interni vuoti. Formato 1774×887 e verde campionato diverso da #00FF00. Bande della brace da verificare rispetto al limite di altezza.

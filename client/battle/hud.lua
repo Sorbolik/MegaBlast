@@ -414,8 +414,9 @@ function M.swap()
 	gui.set_visible(s.radice, false)
 	s.tondo = M.token(0, 0, SWAP_D, "scambio", ui.C.PURPLE, s.radice, "gettone")
 	local x = SWAP_D / 2 + 10
-	for _, r in ipairs({ { T.swap_1, 8 }, { T.swap_2, -8 } }) do
-		local n = fit(ui.text(r[1], x, r[2], 0.5, ui.C.TEXT, s.radice))
+	-- two lines at 16 px (Sergio, 17 Nov: nothing to read is smaller)
+	for _, r in ipairs({ { T.swap_1, 11 }, { T.swap_2, -11 } }) do
+		local n = fit(ui.text(r[1], x, r[2], 0.8, ui.C.TEXT, s.radice))
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
 	M.swap_update(s, false)

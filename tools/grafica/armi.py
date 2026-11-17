@@ -1,22 +1,22 @@
-# Le armi del diavoletto, disegnate a vettori (SVG) e convertite in PNG.
-# Stile del diavoletto: contorno nero spesso (come il diavoletto), colori pieni con una
-# sfumatura semplice (scuro sotto, chiaro sopra) e qualche riga interna.
-# Scrive:
+# Le armi e gli oggetti del diavoletto, disegnati da Codex (WB-063...065) e ricalcati a
+# vettori: tools/grafica/armi_ricalcate.py ne taglia i pezzi in art/armi/, e qui si
+# mettono alla misura del gioco (solo rimpiccioliti) e si scrivono:
 #   client/assets/weapons/<arma>.png         l'arma in mano (punta verso destra)
 #   client/assets/weapons/<arma>_tinta.png   le parti col colore della squadra
-#                                         (bianche e grigie, il gioco le tinge)
+#                                         (il verde del foglio, il gioco le tinge)
 #   client/assets/weapons/<arma>_icona.png   l'icona della barra e della scelta
-#   client/assets/weapons/<proiettile>.png   i colpi in volo (razzo, palla del
-#                                         Cecchino, uovo, scheggia, globo)
+#   client/assets/weapons/<proiettile>.png   i colpi in volo
 #   client/battle/weapons.atlas
 #   client/battle/weapons.lua             misure in unità del mondo, origine
 #                                         nella spalla, x avanti e y in su
 #   simulazione/foto/armi_anteprima.png   tutte insieme, per guardarle
 #
-# Le misure: la bocca del Lanciarune e la lama sono per un robot alto 16 (nel
-# gioco ×K = game.DISEGNO_H / game.CORPO / 16 = 1,75: la bocca torna a
-# game.MUZZLE = 24,5); il Maglio e l'Affondo sono lunghi config.MALLET.reach e
-# config.LUNGE.reach (lì la simulazione colpisce).
+# Le misure (le scatole qui sotto) sono quelle delle armi di prima, fatte a codice: la
+# bocca del Lanciarune e la lama per un robot alto 16 (nel gioco ×K = game.DISEGNO_H /
+# game.CORPO / 16 = 1,75: la bocca torna a game.MUZZLE = 24,5); il Maglio e l'Affondo
+# lunghi config.MALLET.reach e config.LUNGE.reach (lì la simulazione colpisce). Il
+# disegno sta nella scatola: un'arma lunga tiene la punta sul bordo davanti.
+# Solo l'icona dello scambio (il baratto) resta disegnata a vettori qui.
 #
 # python3 tools/grafica/armi.py   (serve cairosvg: pip install cairosvg)
 import os
@@ -32,520 +32,76 @@ LUA = os.path.join(RADICE, "client", "battle", "weapons.lua")
 ATLAS = os.path.join(RADICE, "client", "battle", "weapons.atlas")
 PRESE = os.path.join(RADICE, "client", "battle", "grips.lua")
 ANTEPRIMA = os.path.join(RADICE, "simulazione", "foto", "armi_anteprima.png")
+RICALCO = os.path.join(RADICE, "art", "armi")
 
 # pixel delle immagini per unità del mondo: a zoom vicino su un telefono
-# un'unità è 4-5 pixel veri. Si disegna al doppio e si rimpicciolisce.
+# un'unità è 4-5 pixel veri.
 PX = 6
 ICONA = 128  # lato delle icone, in pixel
 GRANDI = 1.6  # i colpi in volo, più grandi delle loro misure
 
-# misure (vedi sopra)
-MUZZLE = 14
-SWORD_REACH = 40
-MALLET_REACH = 44
-LUNGE_REACH = 40
-H = 28  # altezza del corpo nel mondo, senza game.CORPO (game.REF_H)
+from vettori import BORDO, COL, Disegno, rendi  # noqa: E402
 
-from vettori import BORDO, RIGA, INK, COL, Disegno, rendi  # noqa: E402
-
-# ---------------------------------------------------------------------------
-# Le armi. x verso dove si mira, y in su. Il punto dove la mano le tiene non è
-# qui: lo dice client/battle/grips.lua, fatto nell'editor delle
-# animazioni (l'anteprima lo legge per disegnare il pugno).
-
-
-def lanciarune(d):
-    # tubo rosso da spalla con fasce d'ottone, bocca svasata e rune accese
-    L = MUZZLE
-    d.poli([(-7.5, -2.2), (-9.5, -3.2), (-9.5, 3.2), (-7.5, 2.2)], "ferro")          # scarico
-    d.rect(-7.5, -2.8, L - 2 + 7.5, 5.6, "rosso", r=1.2)                            # tubo
-    d.poli([(L - 3, -2.8), (L + 0.6, -4.0), (L + 0.6, 4.0), (L - 3, 2.8)], "ottone")  # bocca
-    d.ellisse(L + 0.4, 0, 0.9, 3.2, "ferro", contorno=False)
-    d.rect(-6.2, -3.2, 1.6, 6.4, "ottone", r=0.5)                                   # fasce
-    d.rect(4.6, -3.2, 1.6, 6.4, "ottone", r=0.5)
-    d.rect(-4.0, -1.0, 8.0, 2.0, "bianco", r=1.0, tinta=True)                        # rune
-    d.rect(-1.5, 2.8, 3.2, 1.6, "ferro", r=0.4)                                      # mirino
-    d.poli([(1.0, -2.8), (3.6, -2.8), (2.6, -6.2), (0.6, -6.0)], "cuoio")            # impugnatura
-    d.riga("M-2.8,-0.55 L-1.8,0.55 M-0.6,-0.55 L0.4,0.55 M1.6,-0.55 L2.6,0.55", INK, 0.28)
-    d.riga(f"M-7,2 L{L - 3.5},2", COL["rosso"][2], 0.5)
-    return dict(box=(-11.5, -8, L + 2.5, 6.5))
-
-
-def cecchino(d):
-    # fucile lungo: calcio di legno, canna d'acciaio, cannocchiale con la lente tinta
-    L = MUZZLE + 6
-    d.path("M-7,-3.6 L-7,1.4 L0,1.2 L4,1.2 L4,-1.2 L0,-1.6 Z", "legno")               # calcio
-    d.rect(2, -1.5, 8, 3.0, "ferro", r=0.6)                                          # castello
-    d.rect(9, -0.8, L - 9, 1.6, "acciaio", r=0.4)                                    # canna
-    d.rect(L - 1.4, -1.2, 1.6, 2.4, "ferro", r=0.3)                                  # volata
-    d.rect(1.5, 2.0, 8, 2.2, "ferro", r=1.0)                                         # cannocchiale
-    d.cerchio(9.7, 3.1, 1.4, "bianco", tinta=True)
-    d.rect(4.6, 1.2, 1.2, 1.0, "ferro", contorno=False)
-    d.poli([(3.6, -1.5), (5.2, -1.5), (4.6, -4.2), (3.2, -4.0)], "legno")           # impugnatura
-    d.riga("M-6.2,-0.8 L-1,-0.6", COL["legno"][0], 0.35)
-    d.riga(f"M10,0.5 L{L - 1.6},0.5", COL["acciaio"][2], 0.35)
-    return dict(box=(-9.5, -6.5, L + 2, 6.5))
-
-
-def uovo(d, cx=0.0, cy=0.0):
-    # uovo di drago rosso con le crepe di fuoco (tinte) e una miccia
-    d.ellisse(cx, cy, 3.4, 4.2, "rosso")
-    d.path(f"M{cx - 2.6},{cy + 0.8} L{cx - 1.2},{cy - 0.4} L{cx - 0.2},{cy + 1.2} L{cx + 1.2},{cy - 0.2} "
-           f"L{cx + 2.7},{cy + 1.0} L{cx + 2.4},{cy - 0.6} L{cx + 1.2},{cy - 1.8} L{cx - 0.2},{cy - 0.4} "
-           f"L{cx - 1.2},{cy - 1.9} L{cx - 2.5},{cy - 0.7} Z", "bianco", tinta=True, contorno=False)
-    d.rect(cx - 1.3, cy + 3.6, 2.6, 1.3, "ottone", r=0.3)
-    d.path(f"M{cx},{cy + 4.9} Q{cx + 1.4},{cy + 6.2} {cx + 0.6},{cy + 7.0}", "fuoco", contorno=False)
-    d.riga(f"M{cx},{cy + 4.9} Q{cx + 1.2},{cy + 5.8} {cx + 0.8},{cy + 6.6}", INK, 0.45)
-    d.cerchio(cx + 0.8, cy + 6.8, 0.75, "fuoco")
-    d.riga(f"M{cx - 2.2},{cy + 2.4} Q{cx - 1.6},{cy + 3.4} {cx - 0.4},{cy + 3.7}", COL["rosso"][2], 0.55)
-
-
-def uovo_in_mano(d):
-    uovo(d, 4.4, 1.6)
-    return dict(box=(-0.5, -4.5, 9.5, 11))
-
-
-def sciame(d):
-    # trombone di legno con la bocca a campana piena di schegge di cristallo
-    d.path("M-7,-3.4 L-7,1.0 L-1,1.6 L-1,-1.6 Z", "legno")                           # calcio
-    d.rect(-1.5, -1.9, 10, 3.8, "legno", r=0.8)                                      # corpo
-    d.poli([(8, -1.9), (17.5, -4.6), (17.5, 4.6), (8, 1.9)], "ottone")              # campana
-    d.ellisse(17.3, 0, 1.0, 4.2, "ferro", contorno=False)
-    for (x, y, a) in [(16.6, 2.4, 30), (17.4, -0.4, 0), (16.4, -2.8, -30)]:          # schegge
-        d.poli([(x - 1.2, y - 0.8), (x + 2.6, y + 0.0), (x - 1.2, y + 0.8)], "bianco", tinta=True)
-    d.rect(1.8, -2.3, 1.4, 4.6, "ottone", r=0.4)
-    d.rect(6.2, -2.3, 1.4, 4.6, "ottone", r=0.4)
-    d.poli([(2.2, -1.9), (4.0, -1.9), (3.4, -4.8), (1.8, -4.6)], "cuoio")
-    d.riga("M8.5,1.2 L17,3.6", COL["ottone"][2], 0.5)
-    return dict(box=(-9.5, -7.5, 20.5, 7.5))
-
-
-def pugno(d):
-    # guanto da titano: un pugno corazzato rosso con le nocche d'ottone
-    d.rect(-1.0, -3.4, 4.4, 6.8, "cuoio", r=1.2)                                     # polsino
-    d.rect(1.8, -4.4, 8.6, 8.8, "rosso", r=3.4)                                      # pugno
-    d.rect(8.0, -4.0, 3.2, 8.0, "ottone", r=1.4)                                     # nocche
-    d.cerchio(4.8, 0.0, 1.5, "bianco", tinta=True)                                   # gemma
-    d.riga("M8.6,1.35 L10.8,1.35 M8.6,-1.35 L10.8,-1.35", COL["ottone"][0], 0.4)
-    d.riga("M3,-4.0 Q5.5,-2.5 8,-4.0", COL["rosso"][0], 0.45)
-    d.riga("M3.6,3.4 L7.6,3.4", COL["rosso"][2], 0.6)
-    return dict(box=(-3.5, -7, 13.5, 7))
-
-
-def lama(d):
-    # spadone: lama larga d'acciaio col filo chiaro, elsa d'ottone a corna,
-    # impugnatura rossa e la gemma tinta
-    L = SWORD_REACH
-    g = 6.0                                                                          # elsa
-    d.rect(-1.6, -1.0, g + 0.6, 2.0, "cuoio", r=0.6)                                 # manico
-    d.cerchio(-2.0, 0, 1.5, "ottone")                                                # pomo
-    d.path(f"M{g},-1.9 L{L - 4.5},-1.9 L{L},0 L{L - 4.5},1.9 L{g},1.9 Z", "acciaio")  # lama
-    d.path(f"M{g + 0.5},0.15 L{L - 4.8},0.15 L{L - 1.2},0.15", "acciaio", contorno=False)
-    d.path(f"M{g - 1.2},-4.6 Q{g - 0.2},-2.2 {g - 0.6},0 Q{g - 0.2},2.2 {g - 1.2},4.6 "
-           f"L{g + 0.2},4.2 Q{g + 1.3},2.2 {g + 1.2},0 Q{g + 1.3},-2.2 {g + 0.2},-4.2 Z", "ottone")
-    d.cerchio(g + 0.1, 0, 1.1, "bianco", tinta=True)
-    d.riga(f"M{g + 2},0.9 L{L - 5},0.9", COL["acciaio"][2], 0.55)
-    d.riga(f"M{g + 2},-0.2 L{L - 6},-0.2", COL["acciaio"][0], 0.3)
-    d.riga("M-0.6,-1 L0.6,1 M1.2,-1 L2.4,1 M3,-1 L4.2,1", COL["cuoio"][0], 0.3)
-    return dict(box=(-5, -7, L + 2.5, 7))
-
-
-def globo(d, cx=0.0, cy=0.0, r=4.2):
-    # globo del teletrasporto: vetro scuro con il vortice acceso (tinto)
-    d.cerchio(cx, cy, r, "ferro")
-    d.path(f"M{cx - r * 0.55},{cy} A{r * 0.55},{r * 0.55} 0 1 1 {cx + r * 0.2},{cy + r * 0.5} "
-           f"A{r * 0.3},{r * 0.3} 0 1 0 {cx - r * 0.1},{cy - r * 0.1} Z", "bianco", tinta=True, contorno=False)
-    d.cerchio(cx, cy, r * 0.22, "bianco", tinta=True, contorno=False)
-    d.riga(f"M{cx - r * 0.6},{cy + r * 0.45} Q{cx - r * 0.2},{cy + r * 0.8} {cx + r * 0.3},{cy + r * 0.72}",
-           "#ffffff", r * 0.14)
-
-
-def globo_in_mano(d):
-    globo(d, 4.8, 1.2, 4.2)
-    return dict(box=(-0.5, -4.5, 10.5, 7))
-
-
-def giano(d, cx=0.0, cy=0.0, r=4.6):
-    # Giano, la moneta a due facce dell'attrezzo di scambio: l'ottone da un lato
-    # e la metà tinta (il colore di chi la lancia) dall'altro, con due frecce
-    # opposte (uno scambio) sul davanti
-    d.cerchio(cx, cy, r, "ottone")
-    d.cerchio(cx, cy, r * 0.66, "ferro", contorno=False)
-    ro, ri = r * 0.86, r * 0.62
-    d.path(f"M{cx},{cy - ro} A{ro},{ro} 0 0 0 {cx},{cy + ro} L{cx},{cy + ri} A{ri},{ri} 0 0 1 {cx},{cy - ri} Z",
-           "bianco", tinta=True, contorno=False)
-    for lato in (-1, 1):
-        # lato 1: la freccia in alto va a destra; -1: quella in basso va a sinistra
-        y = cy + lato * r * 0.25
-        t = r * 0.09
-        x0, x1, x2 = cx - lato * r * 0.4, cx + lato * r * 0.14, cx + lato * r * 0.42
-        d.poli([(x0, y + t), (x1, y + t), (x1, y + r * 0.2), (x2, y), (x1, y - r * 0.2), (x1, y - t), (x0, y - t)],
-               "ottone", contorno=False)
-
-
-def tonante(d):
-    # pistolone: canna grossa d'acciaio, tamburo d'ottone, cane a corno, calcio rosso
-    d.path("M0.4,-1.0 L3.6,-1.0 L2.6,-6.2 L-0.6,-5.8 Z", "rosso")                    # calcio
-    d.rect(0, -1.6, 7.0, 4.2, "ferro", r=0.8)                                        # castello
-    d.rect(6.2, -0.2, 11.5, 2.8, "acciaio", r=0.5)                                   # canna
-    d.rect(16.6, -0.5, 1.6, 3.4, "ferro", r=0.4)                                     # volata
-    d.rect(3.4, -1.2, 3.6, 3.4, "ottone", r=1.0)                                     # tamburo
-    d.path("M0.6,2.4 Q-0.6,4.2 -1.8,4.4 Q-0.6,3.0 -0.4,1.6 Z", "osso")              # cane a corno
-    d.cerchio(1.6, -3.4, 0.7, "bianco", tinta=True)
-    d.riga("M3.9,0.1 L6.5,0.1 M3.9,1.0 L6.5,1.0", COL["ottone"][0], 0.3)
-    d.riga("M7,1.9 L16.4,1.9", COL["acciaio"][2], 0.45)
-    d.riga("M2.8,-1.6 Q3.6,-3.0 2.6,-3.2", INK, 0.35)
-    return dict(box=(-4, -8.5, 20.5, 6.5))
-
-
-# la punta del lanciarampino, dove sta l'uncino quando è in canna
+# la punta del lanciarampino, dove sta l'uncino quando è in canna (HOOK_TIP di
+# client/battle/scoria.lua)
 PUNTA_RAMPINO = 15.2
 
-
-def rampino(d):
-    # lanciarampino: tubo di ferro, verricello d'ottone e la bocca dove sta
-    # l'uncino (disegnato a parte: vola via quando si spara)
-    d.rect(-2.5, -1.5, 15, 3.0, "ferro", r=0.7)
-    d.cerchio(2.2, -1.2, 2.2, "ottone")                                              # verricello
-    d.cerchio(2.2, -1.2, 0.8, "ferro", contorno=False)
-    d.poli([(4.6, -1.4), (6.2, -1.4), (5.6, -4.6), (4.2, -4.4)], "cuoio")
-    d.rect(11.8, -2.0, 3.4, 4.0, "ottone", r=0.6)                                    # bocca
-    d.rect(7.5, -0.6, 3.8, 1.2, "bianco", r=0.6, tinta=True)
-    d.riga("M-2,0.7 L11.6,0.7", COL["ferro"][2], 0.4)
-    return dict(box=(-5, -7.5, 25, 7.5))
-
-
-def uncino(d, ox=0.0):
-    # l'uncino del rampino, stile spia: asta d'acciaio con l'anello per il
-    # filo dietro (origine) e quattro punte ricurve davanti (due di lato si
-    # vedono di scorcio). x verso dove vola; ox lo sposta avanti (in canna)
-    n0 = len(d.forme)
-    d.cerchio(0.8, 0, 1.4, "acciaio")                                                # anello
-    d.cerchio(0.8, 0, 0.55, "ferro", contorno=False)
-    d.rect(1.8, -0.9, 5.4, 1.8, "acciaio", r=0.5)                                    # asta
-    d.path("M5.8,-0.7 Q8.6,-1.0 9.6,-4.0 Q10.0,-5.8 8.4,-6.2 L8.0,-4.9 Q8.6,-3.8 7.8,-2.8 "
-           "Q7.0,-2.1 5.8,-2.0 Z", "acciaio")                                       # punta sotto
-    d.path("M5.8,0.7 Q8.6,1.0 9.6,4.0 Q10.0,5.8 8.4,6.2 L8.0,4.9 Q8.6,3.8 7.8,2.8 "
-           "Q7.0,2.1 5.8,2.0 Z", "acciaio")                                         # punta sopra
-    d.path("M6.4,-0.5 Q8.8,-0.7 9.3,-2.4 L8.6,-2.9 Q8.0,-1.7 6.4,-1.4 Z", "ferro")   # punte di scorcio
-    d.path("M6.4,0.5 Q8.8,0.7 9.3,2.4 L8.6,2.9 Q8.0,1.7 6.4,1.4 Z", "ferro")
-    d.poli([(6.8, -1.0), (10.6, 0), (6.8, 1.0)], "acciaio")                         # punta davanti
-    d.riga(f"M{2.4 + ox},0.35 L{6.6 + ox},0.35", COL["acciaio"][2], 0.4)
-    if ox:
-        for i in range(n0, len(d.forme)):
-            el, col, t, c = d.forme[i]
-            d.forme[i] = (el + f' transform="translate({ox},0)"', col, t, c)
-    return dict(box=(-2, -8, 12.5, 8))
-
-
-def rampino_carico(d):
-    # per l'icona: il lanciarampino con l'uncino in canna
-    info = rampino(d)
-    uncino(d, PUNTA_RAMPINO)
-    return info
-
-
-def maglio(d):
-    # Maglio: manico di legno lungo, testa di pietra cerchiata d'ottone; la
-    # faccia che batte è sul lato -y (quello che va avanti quando cala)
-    R = MALLET_REACH
-    T = H * 0.3
-    A = H * 0.44
-    d.rect(-3, -0.9, R - T + 3.5, 1.8, "legno", r=0.8)                                # manico
-    d.rect(-3.6, -1.3, 2.6, 2.6, "ferro", r=0.6)                                     # pomo
-    d.rect(R - T, -A / 2, T, A, "pietra", r=1.4)                                     # testa
-    d.rect(R - T - 0.3, -A / 2 + 2.0, T + 0.6, 1.4, "ottone", r=0.4)
-    d.rect(R - T - 0.3, A / 2 - 3.4, T + 0.6, 1.4, "ottone", r=0.4)
-    d.rect(R - T + 0.6, -A / 2 - 0.6, T - 1.2, 1.4, "acciaio", r=0.4)               # faccia che batte
-    d.cerchio(R - T / 2, 0, 1.3, "bianco", tinta=True)
-    d.rect(4, -1.2, 5, 2.4, "cuoio", r=0.6)                                           # fasciatura
-    d.riga("M5,-1 L5.8,1 M6.6,-1 L7.4,1 M8.2,-1 L9,1", COL["cuoio"][0], 0.3)
-    d.riga(f"M{R - T + 1},{A / 2 - 1} L{R - 1},{A / 2 - 1}", COL["pietra"][2], 0.5)
-    d.riga(f"M{R - T + 2.2},-1.8 L{R - T + 3.6},-0.6 L{R - T + 3},0.8", COL["pietra"][0], 0.35)
-    return dict(box=(-6, -A / 2 - 3, R + 2.5, A / 2 + 2.5))
-
-
-def affondo(d):
-    # Affondo: il forcone del diavolo, asta di legno scuro e tre punte rosse
-    # come la coda; la punta centrale arriva a config.LUNGE.reach
-    R = LUNGE_REACH
-    d.rect(-7, -0.8, R - 6 + 7, 1.6, "legno", r=0.7)                                 # asta
-    d.rect(R - 10.8, -1.2, 2.4, 2.4, "ottone", r=0.4)                                 # ghiera
-    d.path(f"M{R - 7},-4.6 Q{R - 7.4},0 {R - 7},4.6 L{R - 5.2},4.6 Q{R - 5.6},0 {R - 5.2},-4.6 Z", "rosso")  # traversa
-    d.poli([(R - 5.6, -1.0), (R, 0), (R - 5.6, 1.0)], "rosso")                        # punta
-    d.path(f"M{R - 6.4},3.2 Q{R - 3},3.4 {R - 1.2},5.2 Q{R - 3.4},5.4 {R - 6.4},4.8 Z", "rosso")
-    d.path(f"M{R - 6.4},-3.2 Q{R - 3},-3.4 {R - 1.2},-5.2 Q{R - 3.4},-5.4 {R - 6.4},-4.8 Z", "rosso")
-    d.cerchio(R - 9.6, 0, 0.75, "bianco", tinta=True, contorno=False)
-    d.riga(f"M-6,0.45 L{R - 9},0.45", COL["legno"][2], 0.35)
-    return dict(box=(-9.5, -7.5, R + 2.5, 7.5))
-
-
-def mantice(d):
-    # Mantice: il soffietto della forgia. Due assi di legno a cuneo con le
-    # pieghe di cuoio in mezzo, maniglie dietro e il beccuccio d'ottone davanti
-    d.poli([(-3.5, 1.6), (9.5, 0.9), (9.5, 5.4), (-3.5, 3.4)], "legno")               # asse sopra
-    d.poli([(-3.5, -1.6), (9.5, -0.9), (9.5, -5.4), (-3.5, -3.4)], "legno")           # asse sotto
-    d.path("M-2.8,1.6 L-1.4,0 L-2.8,-1.6 L9.6,-0.9 L11.8,-2.6 L11.8,2.6 L9.6,0.9 Z", "cuoio")  # cuoio
-    d.riga("M1,1.4 L2.2,0 L1,-1.4 M4.4,1.2 L5.6,0 L4.4,-1.2 M7.8,1.0 L9,0 L7.8,-1.0",
-           COL["cuoio"][0], 0.35)                                                    # pieghe
-    d.poli([(11.2, -2.4), (17.0, -0.9), (17.0, 0.9), (11.2, 2.4)], "ottone")          # beccuccio
-    d.rect(16.6, -1.2, 1.6, 2.4, "ferro", r=0.4)
-    d.rect(-6.2, 2.0, 3.2, 1.4, "legno", r=0.6)                                      # maniglie
-    d.rect(-6.2, -3.4, 3.2, 1.4, "legno", r=0.6)
-    d.cerchio(3.2, 3.6, 0.8, "bianco", tinta=True)
-    d.cerchio(3.2, -3.6, 0.8, "bianco", tinta=True)
-    d.riga("M-3,2.7 L9,2.4 M-3,-2.7 L9,-2.4", COL["legno"][2], 0.35)
-    return dict(box=(-8, -7.5, 20.5, 7.5))
-
-
-# Le armi nuove (9 novembre 2026): tre primarie e tre secondarie.
-
-def falcetto(d):
-    # Falcetto: una falce di ferro con la lama curva (parti tinte nel dorso) e il manico di legno
-    d.rect(-6, -1.0, 8, 2.0, "legno", r=0.8)                                          # manico
-    d.rect(1.4, -1.6, 1.6, 3.2, "ottone", r=0.4)                                      # ghiera
-    d.path("M2.4,1.4 Q9,10.5 17.5,6.4 Q12,6.6 8.2,1.2 Z", "acciaio")                  # lama
-    d.path("M3.4,1.6 Q9,8.4 15.2,6.0 Q10.4,5.2 7.4,1.6 Z", "bianco", tinta=True, contorno=False)  # dorso tinto
-    d.riga("M3.6,2.2 Q9,7.4 15.4,6.2", COL["acciaio"][2], 0.4)
-    return dict(box=(-8.5, -4.5, 19.5, 11.5))
-
-
-def fiasco_in_mano(d):
-    # fiasco di pece: ampolla tonda con il collo, tappo di sughero e la pece che gorgoglia
-    fiasco(d, 4.4, 1.6)
-    return dict(box=(-1.5, -4.5, 10, 11))
-
-
-def fiasco(d, cx=0.0, cy=0.0):
-    d.cerchio(cx, cy, 3.6, "ferro")
-    d.path(f"M{cx - 3.4},{cy - 0.4} Q{cx},{cy + 1.2} {cx + 3.4},{cy - 0.4} Q{cx + 3.2},{cy - 2.8} {cx},{cy - 3.4} "
-           f"Q{cx - 3.2},{cy - 2.8} {cx - 3.4},{cy - 0.4} Z", "bianco", tinta=True, contorno=False)  # la pece, tinta
-    d.rect(cx - 1.2, cy + 3.0, 2.4, 2.8, "ferro", r=0.4)                                # collo
-    d.rect(cx - 1.5, cy + 5.4, 3.0, 1.6, "legno", r=0.5)                                # tappo
-    d.riga(f"M{cx - 2.2},{cy + 1.8} Q{cx - 1.6},{cy + 2.6} {cx - 0.6},{cy + 2.8}", COL["ferro"][2], 0.5)
-
-
-def trapano(d):
-    # lanciatrivella: tubo di ferro con la punta a spirale d'ottone davanti
-    L = MUZZLE
-    d.poli([(-7.5, -2.2), (-9.5, -3.2), (-9.5, 3.2), (-7.5, 2.2)], "ferro")           # scarico
-    d.rect(-7.5, -2.8, L - 4 + 7.5, 5.6, "ferro", r=1.2)                              # tubo
-    d.rect(-4.0, -1.0, 8.0, 2.0, "bianco", r=1.0, tinta=True)                          # rune
-    d.rect(-6.2, -3.2, 1.6, 6.4, "ottone", r=0.5)
-    d.rect(4.6, -3.2, 1.6, 6.4, "ottone", r=0.5)
-    d.poli([(L - 4.5, -2.6), (L + 7.0, 0), (L - 4.5, 2.6)], "ottone")                 # punta
-    d.riga(f"M{L - 3},-2.0 L{L - 1},1.8 M{L},-1.4 L{L + 1.8},1.0 M{L + 2.6},-0.8 L{L + 4},0.5", COL["ottone"][0], 0.45)
-    d.poli([(1.0, -2.8), (3.6, -2.8), (2.6, -6.2), (0.6, -6.0)], "cuoio")             # impugnatura
-    return dict(box=(-11.5, -8, L + 8.5, 6.5))
-
-
-def punta(d):
-    # la punta del Trapano in volo: cono d'ottone a spirale, coda rossa
-    d.poli([(-4.2, -2.2), (-2.0, -1.0), (-2.0, 1.0), (-4.2, 2.2)], "rosso")
-    d.rect(-3.2, -1.7, 3.6, 3.4, "ferro", r=0.8)
-    d.poli([(0.2, -2.1), (6.6, 0), (0.2, 2.1)], "ottone")
-    d.riga("M1.2,-1.6 L2.2,1.6 M3.0,-1.1 L3.8,1.1", COL["ottone"][0], 0.4)
-    d.rect(-2.2, -0.5, 2.0, 1.0, "bianco", r=0.5, tinta=True)
-    return dict(box=(-6, -4.5, 8.5, 4.5))
-
-
-def calamita(d):
-    # Calamita: un ferro di cavallo rosso con i poli bianchi (tinti), tenuto per la curva
-    d.path("M-3,-3 Q-8,-3 -8,2 L-8,5 L-4.8,5 L-4.8,2 Q-4.8,-0.4 -3,-0.4 L3.4,-0.4 Q5.2,-0.4 5.2,2 L5.2,5 "
-           "L8.4,5 L8.4,2 Q8.4,-3 3.4,-3 Z", "rosso")
-    d.rect(-8, 3.2, 3.2, 3.0, "bianco", r=0.3, tinta=True)
-    d.rect(5.2, 3.2, 3.2, 3.0, "bianco", r=0.3, tinta=True)
-    d.riga("M-3,-1.9 L3.4,-1.9", COL["rosso"][2], 0.5)
-    d.riga("M-6.8,4.2 L-5.2,4.2 M5.6,4.2 L7.4,4.2", INK, 0.35)
-    return dict(box=(-11, -5.5, 11, 8))
-
-
-def cannonata(d):
-    # Cannonata: un mortaio corto di ferro con la bocca larga e il fondo a sfera
-    L = MUZZLE
-    d.cerchio(-6, 0, 3.8, "ferro")                                                    # culatta
-    d.poli([(-4, -3.0), (L - 3, -4.6), (L - 3, 4.6), (-4, 3.0)], "ferro")             # canna
-    d.rect(L - 4.5, -5.4, 3.4, 10.8, "ottone", r=0.8)                                 # bocca
-    d.rect(-0.8, -3.4, 1.8, 6.8, "ottone", r=0.5)
-    d.rect(5.6, -4.0, 1.8, 8.0, "ottone", r=0.5)
-    d.cerchio(2.6, 0, 1.0, "bianco", tinta=True)
-    d.poli([(-1.5, -3.0), (1.0, -3.0), (0.2, -6.6), (-2.2, -6.2)], "cuoio")           # impugnatura
-    d.riga(f"M-3,2 L{L - 4},3.2", COL["ferro"][2], 0.45)
-    return dict(box=(-11.5, -8.5, L + 2, 6.5))
-
-
-def petardo_in_mano(d):
-    petardo(d, 4.4, 1.6)
-    return dict(box=(-1.5, -4.5, 10, 11))
-
-
-def petardo(d, cx=0.0, cy=0.0):
-    # petardo: bomba nera tonda con la fascia tinta e la miccia accesa
-    d.cerchio(cx, cy, 3.2, "ferro")
-    d.rect(cx - 3.2, cy - 0.8, 6.4, 1.6, "bianco", tinta=True, contorno=False)
-    d.rect(cx - 1.0, cy + 2.8, 2.0, 1.2, "ottone", r=0.3)
-    d.riga(f"M{cx},{cy + 4.0} Q{cx + 1.2},{cy + 5.2} {cx + 0.6},{cy + 6.0}", INK, 0.45)
-    d.cerchio(cx + 0.7, cy + 6.1, 0.8, "fuoco")
-    d.riga(f"M{cx - 2.2},{cy + 1.4} Q{cx - 1.6},{cy + 2.2} {cx - 0.6},{cy + 2.4}", COL["ferro"][2], 0.5)
-
-
-def falce_volo(d):
-    # la falce che gira in volo: mezzaluna d'acciaio con il dorso tinto
-    d.path("M-4.6,2.4 Q-0.4,-5.4 5.2,-3.0 Q1.2,-3.0 -1.6,2.6 Z", "acciaio")
-    d.path("M-3.4,2.0 Q-0.2,-3.6 3.6,-2.8 Q0.4,-2.2 -2.0,2.2 Z", "bianco", tinta=True, contorno=False)
-    d.rect(-2.2, 1.6, 2.6, 1.6, "legno", r=0.5)
-    return dict(box=(-6, -6, 6.5, 5))
-
-
-def fiasco_volo(d):
-    fiasco(d, 0, -1.4)
-    return dict(box=(-5.5, -7.5, 5.5, 7.5))
-
-
-def petardo_volo(d):
-    petardo(d, 0, -1.4)
-    return dict(box=(-5.0, -5.5, 5.0, 6.5))
-
-
-# I colpi in volo: origine nel centro, x nel verso in cui vanno
-
-def razzo(d):
-    d.poli([(-4.4, -2.4), (-2.2, -1.0), (-2.2, 1.0), (-4.4, 2.4)], "ottone")         # alette
-    d.rect(-3.2, -1.3, 6.0, 2.6, "rosso", r=1.2)
-    d.path("M2.4,-1.3 Q5.4,0 2.4,1.3 Z", "ottone")
-    d.rect(-1.0, -0.5, 2.2, 1.0, "bianco", r=0.5, tinta=True)
-    return dict(box=(-6.5, -4.5, 6.5, 4.5))
-
-
-def palla(d):
-    # la palla del Cecchino: rimbalza, la allunga il gioco
-    d.cerchio(0, 0, 2.2, "acciaio")
-    d.rect(-2.2, -0.45, 4.4, 0.9, "bianco", tinta=True, contorno=False)
-    d.riga("M-1.1,1.2 Q0,1.8 1.0,1.3", "#ffffff", 0.45)
-    return dict(box=(-4, -4, 4, 4))
-
-
-def uovo_volo(d):
-    uovo(d, 0, -1.4)
-    return dict(box=(-5.5, -7.5, 5.5, 7.5))
-
-
-def scheggia(d):
-    d.poli([(-2.6, -1.1), (3.2, 0), (-2.6, 1.1), (-1.6, 0)], "bianco", tinta=True)
-    return dict(box=(-4.5, -3, 5, 3))
-
-
-def globo_volo(d):
-    globo(d, 0, 0, 3.2)
-    return dict(box=(-5, -5, 5, 5))
-
-
-def giano_volo(d):
-    giano(d, 0, 0, 3.4)
-    return dict(box=(-5, -5, 5, 5))
-
-
-# nome nel gioco: disegno, angolo dell'icona (gradi, verso l'alto a destra;
-# None: senza icona)
+# Le armi in mano: la scatola (x0, y0, x1, y1) nel mondo. x verso dove si mira, y in
+# su. Il punto dove la mano le tiene non è qui: lo dice client/battle/grips.lua, fatto
+# nell'editor delle animazioni (l'anteprima lo legge per disegnare il pugno).
 ARMI = {
-    "missile": (lanciarune, 35),
-    "sniper": (cecchino, 35),
-    "grenade": (uovo_in_mano, 0),
-    "shards": (sciame, 35),
-    "punch": (pugno, 20),
-    "sword": (lama, 45),
-    "teleport": (globo_in_mano, None),  # il pulsante usa il globo in volo
-    "eagle": (tonante, 25),
-    "hook": (rampino, 35),
-    "mallet": (maglio, 45),
-    "lunge": (affondo, 45),
-    "bellows": (mantice, 30),
-    "boomerang": (falcetto, 30),
-    "tar": (fiasco_in_mano, 0),
-    "drill": (trapano, 35),
-    "magnet": (calamita, 20),
-    "cannon": (cannonata, 30),
-    "petard": (petardo_in_mano, 0),
+    "missile": (-11.5, -8, 16.5, 6.5),
+    "sniper": (-9.5, -6.5, 22, 6.5),
+    "grenade": (-0.5, -4.5, 9.5, 11),
+    "shards": (-9.5, -7.5, 20.5, 7.5),
+    "punch": (-3.5, -7, 13.5, 7),
+    "sword": (-5, -7, 42.5, 7),
+    "teleport": (-0.5, -4.5, 10.5, 7),
+    "eagle": (-4, -8.5, 20.5, 6.5),
+    # il lanciarampino senza l'uncino (è un pezzo a sé, vola via quando si spara): la
+    # bocca a PUNTA_RAMPINO, la canna a y = 0
+    "hook": (-6.0, -6.2, PUNTA_RAMPINO, 2.8),
+    "mallet": (-6, -9.16, 46.5, 8.66),
+    "lunge": (-9.5, -7.5, 42.5, 7.5),
+    "bellows": (-8, -7.5, 20.5, 7.5),
+    "boomerang": (-8.5, -4.5, 19.5, 11.5),
+    "tar": (-1.5, -4.5, 10, 11),
+    "drill": (-11.5, -8, 22.5, 6.5),
+    "vortex": (-1.0, -4.5, 10, 9),
+    "cannon": (-11.5, -8.5, 16, 6.5),
+    "petard": (-1.5, -4.5, 10, 11),
 }
-# pezzi che non si impugnano, grandi come in mano: l'uncino del Rampino (in
-# canna e in volo, battle/rope.lua)
+# il lanciarampino si taglia dove finisce l'asta (il resto del foglio è l'uncino)
+SENZA_PUNTA = {"hook": 0.75}
+# pezzi che non si impugnano, grandi come in mano: l'uncino del Rampino (in canna e in
+# volo, battle/rope.lua)
 PEZZI = {
-    "uncino": uncino,
+    "uncino": (-2, -8, 12.5, 8),
 }
-# icone disegnate diversamente dall'arma in mano
-ICONA_DI = {"hook": rampino_carico}
+# i colpi in volo: nome -> (pezzo ricalcato, scatola)
 COLPI = {
-    "razzo": razzo,
-    "palla": palla,
-    "uovo": uovo_volo,
-    "scheggia": scheggia,
-    "globo": globo_volo,
-    "giano": giano_volo,
-    "falce": falce_volo,
-    "fiasco": fiasco_volo,
-    "punta": punta,
-    "petardo_volo": petardo_volo,
+    "razzo": ("razzo", (-6.5, -4.5, 6.5, 4.5)),
+    "palla": ("palla", (-4, -4, 4, 4)),
+    "uovo": ("uovo_2", (-5.5, -7.5, 5.5, 7.5)),
+    "scheggia": ("scheggia", (-4.5, -3, 5, 3)),
+    "globo": ("teleport", (-5, -5, 5, 5)),
+    "giano": ("janus", (-5, -5, 5, 5)),
+    "falce": ("boomerang", (-6, -6, 6.5, 5)),
+    "fiasco": ("tar", (-5.5, -7.5, 5.5, 7.5)),
+    "punta": ("drill", (-6, -4.5, 8.5, 4.5)),
+    "petardo_volo": ("petard", (-5.0, -5.5, 5.0, 6.5)),
+    "voragine_volo": ("vortex", (-5, -5, 5, 5)),
 }
+# la punta del Trapano in volo è solo il corno: si taglia via l'impugnatura
+TAGLIO = {"punta": 0.36}
+# le icone dei pulsanti tondi degli oggetti (l'arma in mano non c'è)
+ICONE = ["janus", "trap", "shield", "trampoline", "parachute"]
 
 
 # ---------------------------------------------------------------------------
-# Icone dei pulsanti tondi (solo icona, niente in mano): teletrasporto, oggetti.
-# Il viola è il colore del movimento (teletrasporto e attrezzo, docs/decisioni/interfaccia.md).
+# L'icona dello scambio (il baratto), l'unica ancora a vettori. Il viola è il colore
+# del movimento (teletrasporto e attrezzo, docs/decisioni/interfaccia.md).
 COL_ICONE = dict(COL, viola=("#4b2d8a", "#9466ea", "#dcc8ff"))
-
-
-def portale(d):
-    # teletrasporto: un portale viola che gira, con la scintilla al centro
-    d.cerchio(0, 0, 6.0, "viola")
-    d.cerchio(0, 0, 4.0, "ferro")
-    d.path("M-3.2,0 A3.2,3.2 0 1 1 1.0,3.0 A1.9,1.9 0 1 0 -0.6,-0.6 Z", "viola", contorno=False)
-    d.cerchio(0, 0, 1.1, "osso", contorno=False)
-    for x, y in ((5.6, 5.0), (-5.8, -4.8)):
-        d.poli([(x, y + 1.6), (x + 0.5, y + 0.5), (x + 1.6, y), (x + 0.5, y - 0.5), (x, y - 1.6),
-                (x - 0.5, y - 0.5), (x - 1.6, y), (x - 0.5, y + 0.5)], "osso")
-    return dict(box=(-7.6, -7.6, 7.6, 7.6))
-
-
-def tagliola(d):
-    # trappola: la tagliola che scatta, due ganasce d'acciaio coi denti
-    for lato in (-1, 1):
-        # ganascia: un arco spesso, i denti verso l'altra
-        y0 = lato * 1.4
-        d.path(f"M-6.6,{y0} Q0,{y0 + lato * 8.4} 6.6,{y0} L5.0,{y0} Q0,{y0 + lato * 5.8} -5.0,{y0} Z", "acciaio")
-        for x in (-4.2, -1.4, 1.4, 4.2):
-            yb = y0 + lato * (2.4 - 0.12 * x * x)
-            d.poli([(x - 1.0, yb), (x, y0 - lato * 0.3), (x + 1.0, yb)], "osso")
-    d.cerchio(-6.6, 0, 1.4, "ottone")
-    d.cerchio(6.6, 0, 1.4, "ottone")
-    return dict(box=(-8.4, -6.4, 8.4, 6.4))
-
-
-def scudo(d):
-    # scudo: lo stemma d'acciaio cerchiato d'ottone
-    p = "M0,-6.2 Q5.6,-3.6 5.4,4.8 L0,6.2 L-5.4,4.8 Q-5.6,-3.6 0,-6.2 Z"
-    d.path(p, "ottone")
-    d.path("M0,-4.6 Q4.0,-2.6 3.9,3.8 L0,4.8 L-3.9,3.8 Q-4.0,-2.6 0,-4.6 Z", "acciaio", contorno=False)
-    d.riga("M0,-4.4 L0,4.6 M-3.8,1.4 L3.8,1.4", COL["acciaio"][0], 0.5)
-    return dict(box=(-7, -7.2, 7, 7.2))
-
-
-def trampolino_icona(d):
-    # trampolino: il telo teso sulle due molle
-    for x in (-4.2, 4.2):
-        d.rect(x - 0.8, -5.4, 1.6, 2.6, "ferro", r=0.4)
-        for y in (-2.4, -1.2, 0.0):
-            d.ellisse(x, y, 1.7, 0.55, "ottone")
-    d.rect(-7.0, 1.0, 14, 2.4, "rosso", r=1.2)
-    return dict(box=(-8.4, -6.2, 8.4, 4.6))
-
-
-def paracadute(d):
-    # paracadute: la cupola a spicchi con le funi e il diavoletto (un sacchetto) appeso
-    d.riga("M-6.0,1.2 L0,-4.6 M6.0,1.2 L0,-4.6 M-2.0,1.0 L0,-4.6 M2.0,1.0 L0,-4.6", INK, 0.5)
-    d.path("M-6.6,1.2 A6.6,6.0 0 0 0 6.6,1.2 Q4.4,0.2 2.2,1.2 Q0,0.2 -2.2,1.2 Q-4.4,0.2 -6.6,1.2 Z", "osso")
-    d.path("M-2.2,1.2 A2.6,6.0 0 0 0 2.2,1.2 Q0,0.2 -2.2,1.2 Z", "rosso", contorno=False)
-    d.rect(-1.3, -6.4, 2.6, 2.0, "cuoio", r=0.4)
-    return dict(box=(-8, -7.4, 8, 8.4))
 
 
 def scambio(d):
@@ -572,38 +128,8 @@ def scambio(d):
     return dict(box=(-7.6, -7.6, 7.6, 7.6))
 
 
-def giano_icona(d):
-    giano(d, 0, 0, 6.6)
-    return dict(box=(-7.6, -7.6, 7.6, 7.6))
-
-
-ICONE = {
-    "scambio": scambio,
-    "janus": giano_icona,
-    "teleport": portale,
-    "trap": tagliola,
-    "shield": scudo,
-    "trampoline": trampolino_icona,
-    "parachute": paracadute,
-}
-
-
-def esporta(nome, d, box, out, px=PX):
-    w = round((box[2] - box[0]) * px)
-    h = round((box[3] - box[1]) * px)
-    base = rendi(d.svg(box, px), w, h)
-    base.save(os.path.join(OUT, nome + ".png"), optimize=True)
-    out.append(nome)
-    tinta = None
-    if any(t for _, _, t, _ in d.forme):
-        tinta = rendi(d.svg(box, px, tinta=True), w, h)
-        tinta.save(os.path.join(OUT, nome + "_tinta.png"), optimize=True)
-        out.append(nome + "_tinta")
-    return base, tinta, w, h
-
-
 def icona(nome, d, box, rot, out):
-    # l'arma ruotata, adattata al quadrato con un margine
+    # il disegno ruotato, adattato al quadrato con un margine
     import math
     x0, y0, x1, y1 = box
     a = math.radians(rot)
@@ -630,6 +156,67 @@ def icona(nome, d, box, rot, out):
     return im
 
 
+# ---------------------------------------------------------------------------
+# I pezzi ricalcati, alla misura del gioco.
+def ricalcato(nome):
+    return Image.open(os.path.join(RICALCO, nome + ".png")).convert("RGBA")
+
+
+def verde(im):
+    # le parti del colore della squadra sul foglio: verde pieno e la sua ombra
+    import numpy as np
+    a = np.array(im).astype(int)
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    pieno = (g > 200) & (r < 110) & (b < 110)
+    ombra = (g > 140) & (g <= 200) & (r < 70) & (b < 70)
+    return pieno, ombra
+
+
+def da_ricalco(nome, im, box, px, out, sempre_tinta=True):
+    import numpy as np
+    w0, h0 = box[2] - box[0], box[3] - box[1]
+    # la stessa lunghezza, ma mai più alto di un quarto oltre la forma di prima
+    s = min(w0 / im.width, h0 * 1.25 / im.height)
+    nw, nh = im.width * s, im.height * s
+    cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+    if w0 > 1.6 * h0:
+        # arma lunga: la punta resta dov'era (bocca, portata)
+        nuovo = (box[2] - nw, cy - nh / 2, box[2], cy + nh / 2)
+    else:
+        nuovo = (cx - nw / 2, cy - nh / 2, cx + nw / 2, cy + nh / 2)
+    W, H = max(1, round(nw * px)), max(1, round(nh * px))
+    assert W <= im.width, f"{nome}: il pezzo ricalcato è troppo piccolo ({im.width} < {W})"
+    pieno, ombra = verde(im)
+    a = np.array(im)
+    alfa = a[..., 3]
+    # lo strato della squadra c'è sempre per armi e colpi (anche vuoto: il gioco lo
+    # chiede a ogni colpo); per i pezzi solo se c'è il verde
+    tin = None
+    if sempre_tinta or pieno.any() or ombra.any():
+        grigio = np.where(pieno, 255, np.where(ombra, 180, 0)).astype(np.uint8)
+        t = np.dstack([grigio, grigio, grigio, np.where(pieno | ombra, alfa, 0)]).astype(np.uint8)
+        a = a.copy()
+        a[pieno | ombra, :3] = 128
+        tin = Image.fromarray(t, "RGBA").resize((W, H), Image.LANCZOS)
+    base = Image.fromarray(a, "RGBA").resize((W, H), Image.LANCZOS)
+    base.save(os.path.join(OUT, nome + ".png"), optimize=True)
+    out.append(nome)
+    if tin:
+        tin.save(os.path.join(OUT, nome + "_tinta.png"), optimize=True)
+        out.append(nome + "_tinta")
+    return base, tin, W, H, nuovo
+
+
+def icona_ricalcata(nome, im, out):
+    s = ICONA * 0.92 / max(im.width, im.height)
+    pic = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
+    tela = Image.new("RGBA", (ICONA, ICONA), (0, 0, 0, 0))
+    tela.alpha_composite(pic, ((ICONA - pic.width) // 2, (ICONA - pic.height) // 2))
+    tela.save(os.path.join(OUT, nome + "_icona.png"), optimize=True)
+    out.append(nome + "_icona")
+    return tela
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for f in os.listdir(OUT):
@@ -643,48 +230,40 @@ def main():
            "return {", "\tweapons = {"]
     foglio = []
     prese = impugnature()
-    for nome, (fn, rot) in ARMI.items():
-        d = Disegno()
-        info = fn(d)
-        box = info["box"]
-        base, tinta, w, h = esporta(nome, d, box, immagini)
-        ic = None
-        if rot is not None:
-            di = Disegno()
-            ic = icona(nome, di, ICONA_DI[nome](di)["box"], rot, immagini) if nome in ICONA_DI else \
-                icona(nome, d, box, rot, immagini)
-        cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+
+    def riga(nome, tinta, box, k=1):
+        cx, cy = (box[0] + box[2]) / 2 * k, (box[1] + box[3]) / 2 * k
         t = f'"{nome}_tinta"' if tinta else "nil"
         lua.append(f'\t\t{nome} = {{ img = "{nome}", tint = {t}, x = {cx:.2f}, y = {cy:.2f}, '
-                   f'w = {box[2] - box[0]:.2f}, h = {box[3] - box[1]:.2f} }},')
+                   f'w = {(box[2] - box[0]) * k:.2f}, h = {(box[3] - box[1]) * k:.2f} }},')
+
+    for nome, box in ARMI.items():
+        pezzo = ricalcato(nome)
+        if nome in SENZA_PUNTA:
+            pezzo = pezzo.crop((0, 0, round(pezzo.width * SENZA_PUNTA[nome]), pezzo.height))
+        base, tinta, w, h, box = da_ricalco(nome, pezzo, box, PX, immagini)
+        ic = icona_ricalcata(nome, ricalcato(nome + "_icona"), immagini)
+        riga(nome, tinta, box)
         foglio.append((nome, base, tinta, ic, box, prese.get(nome, [])))
-    # le icone dei pulsanti tondi
-    for nome, fn in ICONE.items():
-        d = Disegno(col=COL_ICONE)
-        icona(nome, d, fn(d)["box"], 0, immagini)
+    for nome in ICONE:
+        icona_ricalcata(nome, ricalcato(nome + "_icona"), immagini)
+    d = Disegno(col=COL_ICONE)
+    icona("scambio", d, scambio(d)["box"], 0, immagini)
     lua.append("\t},")
     lua.append("\tpieces = {")
-    for nome, fn in PEZZI.items():
-        d = Disegno()
-        box = fn(d)["box"]
-        base, tinta, w, h = esporta(nome, d, box, immagini)
-        cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
-        t = f'"{nome}_tinta"' if tinta else "nil"
-        lua.append(f'\t\t{nome} = {{ img = "{nome}", tint = {t}, x = {cx:.2f}, y = {cy:.2f}, '
-                   f'w = {box[2] - box[0]:.2f}, h = {box[3] - box[1]:.2f} }},')
+    for nome, box in PEZZI.items():
+        base, tinta, w, h, box = da_ricalco(nome, ricalcato(nome), box, PX, immagini, sempre_tinta=False)
+        riga(nome, tinta, box)
     lua.append("\t},")
     lua.append("\tshots = {")
     colpi = []
-    for nome, fn in COLPI.items():
-        d = Disegno()
-        info = fn(d)
-        box = info["box"]
+    for nome, (pz, box) in COLPI.items():
         # in volo si disegnano GRANDI volte: piccoli come in mano non si leggono
-        base, tinta, w, h = esporta(nome, d, box, immagini, PX * GRANDI)
-        cx, cy = (box[0] + box[2]) / 2 * GRANDI, (box[1] + box[3]) / 2 * GRANDI
-        t = f'"{nome}_tinta"' if tinta else "nil"
-        lua.append(f'\t\t{nome} = {{ img = "{nome}", tint = {t}, x = {cx:.2f}, y = {cy:.2f}, '
-                   f'w = {(box[2] - box[0]) * GRANDI:.2f}, h = {(box[3] - box[1]) * GRANDI:.2f} }},')
+        pezzo = ricalcato(pz)
+        if nome in TAGLIO:
+            pezzo = pezzo.crop((round(pezzo.width * TAGLIO[nome]), 0, pezzo.width, pezzo.height))
+        base, tinta, w, h, box = da_ricalco(nome, pezzo, box, PX * GRANDI, immagini)
+        riga(nome, tinta, box, GRANDI)
         colpi.append((nome, base, tinta))
     lua.append("\t},")
     lua.append("}")

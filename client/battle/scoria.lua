@@ -87,6 +87,10 @@ M.PERSONAGGIO = { "apprendista_nuovo", "corna_apprendista" }
 -- FORGED_TIER (gold, level 20: Sergio, 14 Nov) a piece shows its forged form.
 M.FAMILY_SKINS = {
 	vuoto = { mask = "cappuccio_vuoto", chest = "corazza_vuoto", legs = "stivali_vuoto", cloak = "mantello_vuoto" },
+	fabbro = { mask = "cuffia_fabbro", chest = "grembiule_fabbro", legs = "stivali_fabbro", cloak = "mantello_fabbro" },
+	corvo = { mask = "maschera_corvo", chest = "corazza_corvo", legs = "stivali_corvo", cloak = "mantello_corvo" },
+	fornace = { mask = "elmo_fornace", chest = "corazza_fornace", legs = "stivali_fornace", cloak = "mantello_fornace" },
+	leviatano = { mask = "elmo_leviatano", chest = "corazza_leviatano", legs = "stivali_leviatano", cloak = "mantello_leviatano" },
 }
 M.FORGED_TIER = 3
 local WEAR_ORDER = { "mask", "chest", "legs", "cloak" }
@@ -424,7 +428,7 @@ end
 local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
 	punch = -0.9, eagle = -0.6, hook = -0.4, bellows = -0.3,
-	boomerang = -0.5, tar = -0.5, drill = -0.3, magnet = -0.4, cannon = -0.3, petard = -0.5,
+	boomerang = -0.5, tar = -0.5, drill = -0.3, vortex = -0.4, cannon = -0.3, petard = -0.5,
 	mallet = 2,  -- on the shoulder: as long as it is, pointing down it would go into the terrain
 	lunge = 1.3,  -- straight up: pointing down it would go into the terrain
 }

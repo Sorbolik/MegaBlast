@@ -33,11 +33,15 @@ pad a                               # la chiude
 aspetta 0.3
 pad a                               # Rosso: primaria
 aspetta 0.3
-pad a                               # Rosso: secondaria (la luce resta sulla seconda carta)
+pad a                               # Rosso: secondaria (la luce va su PRONTO)
+aspetta 0.3
+pad a                               # Rosso: PRONTO (la luce va sulla prima carta di Blu)
 aspetta 0.3
 pad a                               # Blu: primaria
 aspetta 0.3
-pad a                               # Blu: secondaria, si parte
+pad a                               # Blu: secondaria
+aspetta 0.3
+pad a                               # Blu: PRONTO, si parte
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 foto 05_battaglia

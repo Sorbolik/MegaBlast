@@ -1,0 +1,13 @@
+Image 1 is a sheet of nine heads of our character on flat magenta (the same head with nine faces, no horns). Image 2 is the chosen armour set "Crow" of our game: left the BASIC form, right the FORGED form.
+
+Edit image 1 and return the SAME sheet: all nine heads stay exactly where they are, same size, same shapes, same faces, same pixels. Change only the FIRST head (top left): put on it the crow MASK of the BASIC form of image 2: a snug cap of dark slate feathers that covers the top and the back of the head down to the brow, with a short pointed crow beak sticking out over the forehead like a visor and a thin cyan V-shaped trim along its lower edge. The face stays fully visible and unchanged; the pointed ears come out on the sides. It is ONE CLOSED piece with a clean rounded top: no holes, no openings. Horns and the head flame will be drawn later on top of it as separate parts: draw no horns and no flame. The other eight heads do not change at all.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Feathers dark slate #3A3A52 with shadows #26263A, cyan #00FFFF trims, thick closed black #000000 outline like the other parts. The armour colours must be clearly different from the red skin.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-056/riferimenti/R1_teste_senza_corna.png
+art/WB-056/riferimenti/R4_corvo.png

@@ -1,0 +1,17 @@
+Image 1 is a sheet of body parts of our character on flat magenta: the green neckerchief at the top, the torso with a bare neck in the middle, the tail, two arms, two legs and a fist below. Image 2 is the chosen armour set "Furnace" of our game: left the BASIC form, right the FORGED form.
+
+Edit image 1 and return the SAME sheet: every part stays exactly where it is, same size, same shapes, same colors, same pixels. Change only these:
+1. On the torso: the ARMOUR of the BASIC form of image 2: a breastplate of grey iron with rounded corners covering the chest and the belly, with an orange grille of three vertical slots in the middle and four round cyan rivets at its corners, held by two iron straps going up over the shoulders. The armour follows the outline of the torso exactly and leaves the bare neck stub free.
+2. On the top of BOTH arms, over the shoulder: a SHOULDER PAD that belongs to this armour: two overlapping curved plates of the same grey iron, the upper one a little wider, with one round cyan rivet on the upper plate. The pad covers the rounded top of the arm and the upper part of the upper arm, follows the arm's outline and is a little wider than the arm; the rest of the arm, the hand and the fingers stay bare and unchanged. Both arms get the same pad.
+3. On BOTH legs: the BOOTS of the BASIC form of image 2: heavy grey iron boots covering the feet and the lower part of the leg up to the middle of the shin, with a cyan band at the top. The toes are hidden inside the boots; the boots keep the shape of the foot.
+The neckerchief, the tail and the fist do not change at all.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Iron grey #5A5A62 with shadows #3C3C44, orange #F28A1E grilles, cyan #00FFFF trims and rivets, thick closed black #000000 outline like the other parts. The armour colours must be clearly different from the red skin.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+art/WB-057/riferimenti/R2_corpo_collo_nudo.png
+art/WB-057/riferimenti/R4_fornace.png

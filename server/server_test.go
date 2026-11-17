@@ -536,6 +536,53 @@ func TestOnlineMatch(t *testing.T) {
 	}
 }
 
+// PRONTO (Sergio, 16 Nov): it counts only with both weapons picked, the others
+// see it, a different pick takes it away, and when everyone is ready the
+// match starts without waiting for the draft's time (here a minute)
+func TestDraftReady(t *testing.T) {
+	url := testServer(t, func(c *Config) { c.DraftTicks = 60 * tickRate })
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	hello := `{"t":"hello","v":9,"mode":"1v1"}`
+	a := dial(t, ctx, url)
+	a.send(hello)
+	a.waitFor(`"wait"`)
+	b := dial(t, ctx, url)
+	b.send(hello)
+	d := a.waitFor(`"draft"`)
+	offer, offer2 := d["offer"].([]any), d["offer2"].([]any)
+	pick := func(c *testClient, w any) { c.send(`{"t":"pick","w":"` + w.(string) + `"}`) }
+	// until the draft says so: rd is who is ready, robot by robot
+	until := func(c *testClient, rd ...float64) {
+		t.Helper()
+		for {
+			d := c.waitFor(`"draft"`)
+			got := d["rd"].([]any)
+			if got[0] == rd[0] && got[1] == rd[1] {
+				return
+			}
+		}
+	}
+	a.send(`{"t":"ready"}`) // nothing picked: it doesn't count
+	pick(a, offer[0])
+	pick(a, offer2[0])
+	a.send(`{"t":"ready"}`)
+	until(b, 1, 0) // the other one sees it
+	until(a, 1, 0)
+	pick(a, offer[1]) // a different pick: no longer ready
+	until(b, 0, 0)
+	a.send(`{"t":"ready"}`)
+	until(b, 1, 0)
+	pick(b, offer[0])
+	pick(b, offer2[1])
+	b.send(`{"t":"ready"}`)
+	st := b.waitFor(`"start"`)
+	p := st["players"].([]any)[0].(map[string]any)
+	if p["pick"] != offer[1] || p["secondary"] != offer2[0] {
+		t.Fatalf("the match must start with the picks made: %v", st)
+	}
+}
+
 // 2 v 2: everyone takes what they want, even the same weapon as their
 // teammate, and sees only their own picks (Sergio, 30 Oct); everyone has the Rampino
 func TestTeamDraft(t *testing.T) {
@@ -690,12 +737,15 @@ func TestShowcases(t *testing.T) {
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
 	// an empty Lua table arrives as an object: the greeting still counts
-	b.send(`{"t":"hello","v":9,"mode":"1v1","vetrina":{"liv":100000,"bdg":{}}}`)
+	// the pieces worn: four places, wrong names and levels out of range don't pass
+	b.send(`{"t":"hello","v":9,"mode":"1v1","vetrina":{"liv":100000,"bdg":{},"pz":[{"set":"corvo","liv":24},` +
+		`{"set":"<b>","liv":3},{"set":"fornace","liv":900},{"set":"","liv":0},{"set":"vuoto","liv":5}]}}`)
 	showcases := func(m map[string]any) string {
 		j, _ := json.Marshal(m["vetrine"])
 		return string(j)
 	}
-	want := `[{"bdg":[{"grado":2,"id":"mira"},{"grado":4,"id":"globi"},{"grado":1,"id":"casse"}],"liv":12},{"bdg":[],"liv":999}]`
+	want := `[{"bdg":[{"grado":2,"id":"mira"},{"grado":4,"id":"globi"},{"grado":1,"id":"casse"}],"liv":12},{"bdg":[],"liv":999,` +
+		`"pz":[{"liv":24,"set":"corvo"},{"liv":0,"set":""},{"liv":30,"set":"fornace"},{"liv":0,"set":""}]}]`
 	if d := b.waitFor(`"draft"`); showcases(d) != want {
 		t.Fatalf("cards in the draft: %s, expected %s", showcases(d), want)
 	}

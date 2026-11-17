@@ -209,13 +209,15 @@ function M.record(p, r)
 end
 
 -- Only in the scenarios (imposta prova_vuoto 1 base, 2 forged at gold,
--- scenari/vuoto_indossato.txt): the active loadout wears the four pieces of the Void
-function M.sample_void(p, form)
+-- scenari/vuoto_indossato.txt): the active loadout wears the four pieces of the Void,
+-- or of another family (imposta prova_famiglia fabbro)
+function M.sample_void(p, form, family)
 	if (form or 0) <= 0 then return end
+	family = family or "vuoto"
 	local a = p.loadouts[p.is_active]
-	a.gear = { mask = "vuoto", chest = "vuoto", cloak = "vuoto", legs = "vuoto" }
+	a.gear = { mask = family, chest = family, cloak = family, legs = family }
 	for _, slot in ipairs({ "mask", "chest", "cloak", "legs" }) do
-		p.pezzi["vuoto_" .. slot] = form == 2 and 20 or 1
+		p.pezzi[family .. "_" .. slot] = form == 2 and 20 or 1
 	end
 end
 
@@ -240,7 +242,7 @@ function M.sample(p, near_level_up, campaign_done)
 	p.statistiche["1v1"] = { partite = 9, vinte = 4, colpi = 60, a_segno = 31, danno = 2100, abbattuti = 8, globi = 20,
 		colpo_lungo = 700, casse = 6, serie = 2, armi = { missile = 1200, sniper = 900 } }
 	p.serie, p.badge = 1, { "colpo_lungo" }
-	-- the history (CRONOLOGIA PARTITE, scenari/profilo.txt): no replays on the phone
+	-- the history (CRONOLOGIA PARTITE, scenari/profilo.txt)
 	local now = os.time()
 	for i, m in ipairs({ { "V", "2v2", "forgia", 612, 0 }, { "S", "2v2", "limbo", 288, 1 }, { "V", "1v1", "gola", 540, 2 },
 		{ "V", "2v2", "ira", 701, 26 }, { "S", "torneo", "eresia", 199, 30 }, { "V", "2v2", "avarizia", 466, 60 } }) do
@@ -249,8 +251,10 @@ function M.sample(p, near_level_up, campaign_done)
 			me = 1, giocatori = { { nome = "TU", squadra = 1 }, { nome = "FAVILLA", squadra = 1 }, { nome = "BRACE", squadra = 2 },
 				{ nome = "ZOLFO", squadra = 2 } } }
 	end
-	-- how the last one went, lap by lap, and its moments (the open row of the history)
-	p.partite[1].fune = { 0, 40, 25, -30, -10, 60, 110, 90, 140, 212 }
+	-- how the last one went, lap by lap, and its moments (the open row of the history);
+	-- shown as a match that can be rewatched (the gold rounds), though its file isn't there
+	p.partite[1].replay = true
+	p.partite[1].fune = { 0, 40, 25, -30, -10, 60, 110, 90, 140, 180, 212 }
 	p.partite[1].moments = { { giro = 3, testo = "colpo lungo su BRACE", t = 2400 },
 		{ giro = 6, testo = "ZOLFO nel vuoto", t = 5200 }, { giro = 10, testo = "il colpo finale", t = 9100 } }
 	-- the campaign: the Training done, the Forge up to the Due mani (the board, scenari/bacheca.txt)

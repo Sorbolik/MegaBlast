@@ -104,7 +104,7 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- name under its health, with the turns left (no accents: the font lacks them)
 local STATUS_NAME = { { "burn", TM.status_name.burn }, { "slow", TM.status_name.slow }, { "cracked", TM.status_name.cracked } }
 local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill", "sword", "eagle", "mallet",
-	"lunge", "bellows", "magnet", "cannon", "petard",
+	"lunge", "bellows", "vortex", "cannon", "petard",
 	"trap", "shield", "trampoline", "hook", "janus", "parachute" }
 -- border color of the four groups: primaries, secondaries, items, Grapple
 local BAR_COLORS = { ui.C.BRACE, ui.C.STEEL, ui.C.MINT, ui.C.PURPLE }
@@ -115,7 +115,7 @@ end
 -- icons of the bar and of the draft (weapons atlas, tools/grafica/armi.py)
 local WEAPON_ICON = {}
 for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "bellows", "hook",
-	"boomerang", "tar", "drill", "magnet", "cannon", "petard",
+	"boomerang", "tar", "drill", "vortex", "cannon", "petard",
 	"trap", "shield", "trampoline", "parachute" }) do
 	WEAPON_ICON[w] = w .. "_icona"
 end
@@ -516,7 +516,6 @@ local function open_wheel(self, is_open)
 	gui.set_enabled(self.btn_reread, is_open and self.mode == "local" and self.missione ~= nil and #self.vign_pages > 0)
 	gui.set_text(self.btn_aim_text, TM.aim_mode:format(string.upper(profile.setting(self.profilo, "mira"))))
 	gui.set_text(self.rotellina[2].testo, self.mode == "connecting" and TM.quit_search or TM.quit_match)
-	if self.sala then menu.lobby.wheel_open(self.sala, is_open) end
 end
 
 local function set_controls_visible(self, visible)
@@ -930,7 +929,27 @@ end
 -- 200 locals Lua allows
 local RM = { fune = require "battle.rope", hazards = require "battle.hazards", GUSTS = 5,
 	-- the images of the new shots in flight (battle/weapons.lua, shots), by projectile kind
-	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano" } }
+	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano", vortex = "voragine_volo" } }
+-- The weapons' signatures (WB-066): one drawing on the impact, tinted
+-- (battle/impact.lua, impact.sign). The explosion's comes from the last shot fired.
+RM.SIGN = {
+	brace = { 1, 0.48, 0.1 }, white = { 1, 0.97, 0.92 }, steel = { 0.72, 0.84, 0.95 },
+	shell = { 0.3, 0.25, 0.3 }, clay = { 0.78, 0.41, 0.23 }, pitch = { 0.36, 0.28, 0.4 },
+	paper = { 0.95, 0.79, 0.3 }, void = { 0.55, 0.4, 0.9 },
+}
+function RM.blast_signature(self, e)
+	-- only a shot fired a moment ago (a missile lost in the water leaves no blast)
+	local w = self.last_shot_t and self.clock - self.last_shot_t < 8 and self.last_shot
+	self.last_shot = nil
+	if w == "fire" then
+		impact.sign(self.fx, "fx_runa", e.x, e.y, e.r * 1.6, RM.SIGN.brace, "pop")
+	elseif w == "grenade" then
+		for _ = 1, 3 do impact.sign(self.fx, "fx_guscio", e.x, e.y, e.r * 0.4, RM.SIGN.shell, "fall") end
+	elseif w == "vortex" then
+		impact.sign(self.fx, "fx_risucchio", e.x, e.y, e.r * 2, RM.SIGN.void, "shrink")
+	end
+end
+
 -- The character sheet (Sergio, 31 Oct) in a single table: tags, lineup,
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
@@ -1173,6 +1192,9 @@ function CP.open_room(self, m)
 	if of < 1 or of > game.MAX_PLAYERS or type(m.vetrine) ~= "table" then return end
 	if not self.sala then
 		self.sala = menu.lobby.new(of, profile.GROUP_NAMES[self.coda] or "", self.btn_menu)
+		-- the room has its own ways out: the gear of the search goes away
+		open_wheel(self, false)
+		gui.set_enabled(self.btn_menu, false)
 	end
 	-- ours first, then the others in queue order
 	local list = { CP.vetrina.from_profile(self.profilo, common.you, nil, TM.in_queue) }
@@ -1263,6 +1285,7 @@ local function handle_event(self, e)
 		-- the Trapano's tunnel ("carve") digs without the blast
 		if e.type == "explosion" then
 			explosion(self, e.x, e.y, e.r)
+			RM.blast_signature(self, e)
 			self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.x, e.y
 		end
 	elseif e.type == "phoenix" then
@@ -1275,6 +1298,7 @@ local function handle_event(self, e)
 	elseif e.type == "orb_time" then
 		show_message(self, TM.orb_time:format(who_name(self, e.robot), math.floor(e.ticks / 60 + 0.5)))
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
+		self.last_shot, self.last_shot_t = e.type, self.clock
 		-- recoil of the Rune launcher (and of the sniper), throw momentum, shard burst
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
 		scoria.fire(self.robots[e.robot].rig, kind)
@@ -1379,36 +1403,52 @@ local function handle_event(self, e)
 		-- the gust: the bellows squash and a fan of air leaves the nozzle
 		scoria.fire(self.robots[e.robot].rig, "missile")
 		RM.gust(self, e.x, e.y, e.angle)
+		impact.sign(self.fx, "fx_vento", e.x + math.cos(e.angle) * 30, e.y + math.sin(e.angle) * 30, 34, RM.SIGN.white, "pop",
+			math.deg(e.angle))
 	elseif e.type == "bellows_hit" then
 		self.shot_x, self.shot_y, self.shot_t = self.g.robots[e.robot].x, self.g.robots[e.robot].y + game.DISEGNO_H / 2, self.clock
 		plate.announcement(self.robots[e.target].plate, TM.blown)
 	elseif e.type == "lunge" or e.type == "cannon" then
 		scoria.lunge(self.robots[e.robot].rig)
-	elseif e.type == "boomerang" or e.type == "magnet" then
+	elseif e.type == "boomerang" or e.type == "vortex" then
+		self.last_shot, self.last_shot_t = e.type, self.clock
 		scoria.fire(self.robots[e.robot].rig, "throw")
-		-- the pulse of the Calamita: a ring on its centre (a short puff if there is no ground)
-		if e.type == "magnet" and e.ok then shock(self, e.x, e.y) end
 	elseif e.type == "petard_blast" or e.type == "cannon_land" or e.type == "tar_break" or e.type == "boomerang_turn" then
 		shock(self, e.x, e.y)
+		if e.type == "petard_blast" then
+			impact.sign(self.fx, "fx_anello_fumo", e.x, e.y, (e.r or 30) * 1.8, RM.SIGN.white, "pop")
+			for _ = 1, 3 do impact.sign(self.fx, "fx_coriandolo", e.x, e.y, 9, RM.SIGN.paper, "fall") end
+		elseif e.type == "tar_break" then
+			for _ = 1, 3 do impact.sign(self.fx, "fx_coccio", e.x, e.y, 10, RM.SIGN.clay, "fall") end
+			impact.sign(self.fx, "fx_bolla", e.x, e.y + 6, 14, RM.SIGN.pitch, "drift")
+		end
 	elseif e.type == "boomerang_hit" or e.type == "cannon_hit" then
 		self.shot_x, self.shot_y, self.shot_t = self.g.robots[e.robot].x, self.g.robots[e.robot].y + game.DISEGNO_H / 2, self.clock
 		shock(self, e.x, e.y)
+		if e.type == "boomerang_hit" then
+			impact.sign(self.fx, "fx_fendente", e.x, e.y, 26, RM.SIGN.white, "pop", math.random(-30, 30))
+		else
+			impact.sign(self.fx, "fx_stella", e.x, e.y, 30, RM.SIGN.white, "pop")
+		end
 	elseif e.type == "mallet" then
 		scoria.fire(self.robots[e.robot].rig, "throw")
 	elseif e.type == "mallet_hit" then
 		-- the wave where the hammer struck; if the hitter bounces, its plate says so
 		shock(self, e.x, e.y)
+		if e.target then impact.sign(self.fx, "fx_stella", e.x, e.y, 32, RM.SIGN.white, "pop") end
 		local by = self.g.robots[e.robot]
 		if e.target then self.shot_x, self.shot_y, self.shot_t = by.x, by.y + game.SWORD_PIVOT_Y, self.clock end
 		if e.bounce then plate.announcement(self.robots[e.robot].plate, TM.bounce) end
 	elseif e.type == "lunge_hit" then
 		shock(self, e.x, e.y)
+		impact.sign(self.fx, "fx_stella", e.x, e.y, 26, RM.SIGN.steel, "pop")
 		self.shot_x, self.shot_y, self.shot_t = e.x, e.y, self.clock
 	elseif e.type == "sniper_bounce" then
 		-- the sniper's shot bounces clumsily: it squashes and shakes
 		self.boing = self.clock
 	elseif e.type == "sniper_hit" then
 		shock(self, e.x, e.y)
+		impact.sign(self.fx, "fx_gocce", e.x, e.y, 22, RM.SIGN.brace, "pop")
 		plate.announcement(self.robots[e.target].plate, TM.knocked)
 		self.shot_x, self.shot_y, self.shot_t = e.x, e.y, self.clock
 	elseif e.type == "gust" then
@@ -1452,8 +1492,12 @@ local function handle_event(self, e)
 		-- the new weapon goes in hand
 		if profile.new_weapon(self.profilo, e.weapon) then profile.save(self.profilo) end
 		CP.give(self, e.robot, e.weapon, self.mode == "local" and e.robot == 1 and self.missione)
+	elseif e.type == "sword_hit" then
+		local o = self.g.robots[e.target]
+		if o then impact.sign(self.fx, "fx_fendente", o.x, o.y + game.HURT_Y, 26, RM.SIGN.steel, "pop", math.random(-30, 30)) end
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
+		impact.sign(self.fx, "fx_stella", e.x, e.y, 34, RM.SIGN.white, "pop")
 		self.shot_x, self.shot_y, self.shot_t = e.x, e.y, self.clock
 		self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD * 0.5, e.x, e.y
 	elseif e.type == "points" then
@@ -1539,6 +1583,18 @@ local function handle_event(self, e)
 	end
 end
 
+-- The match is over and its screen covers the field: the devils, their plates
+-- and Favilla go (Sergio, 17 Nov: nothing of the match behind the earnings).
+-- The next match puts them back
+function CP.clear_field(self)
+	for i = 1, game.MAX_PLAYERS do
+		scoria.set_enabled(self.robots[i].rig, false)
+		plate.set_enabled(self.robots[i].plate, false)
+	end
+	if self.favilla then CP.favilla.update(self.favilla, 0, 0, nil, nil) end
+	self.favilla_at = nil
+end
+
 -- The podium, with the results of the match just ended. Whoever plays on this
 -- phone (online their robot, locally the first) gains experience.
 local function open_podium(self)
@@ -1569,6 +1625,7 @@ local function open_podium(self)
 	for i, g in ipairs(giocatori) do g.vetrina = self.match_showcases and self.match_showcases[i] end
 	show_message(self, "", true)
 	set_controls_visible(self, false)
+	CP.clear_field(self)
 	-- first the screen, then the mode: if new breaks, no mode is left without a screen
 	self.schermata = { mod = menu.podium, obj = menu.podium.new(res, giocatori, me, gain, self.profilo, number) }
 	self.schermata.obj.tick = function(i) sound.play("#punto", { speed = 1 + 0.08 * i }) end
@@ -2051,28 +2108,24 @@ function CP.queue_update(self, dt)
 	end
 	q.t = q.t + dt
 	if q.bot_left then q.bot_left = math.max(0, q.bot_left - dt) end
-	-- the pill in the menus (and over the lineup, laid out like a header);
-	-- in a match the chip, right of the gear, hidden while the gear is open
-	local m, beside, on = self.mode, nil, self.mode ~= "connecting"
+	-- one pill everywhere (ui/pill.lua; Sergio, 17 Nov): under the thread where
+	-- there is one, in a battle right of the gear (hidden while the gear is open)
+	-- or at the edge where there is no gear
+	local m, kind, gear, on = self.mode, "top", nil, self.mode ~= "connecting"
 	if m == "menu" then
-		-- the home: under the thread, in the middle
-		beside = "low"
-	elseif m == "schermata" and self.schermata.mod ~= menu.podium then
-		-- every menu: the same, short, under the thread (Sergio, 15 Nov: «sempre
-		-- quella nuova e sempre nella posizione nuova sotto la linea»)
-		beside = "foot"
+		kind = "low"
+	elseif m == "schermata" then
+		-- (the podium's steps come down into the band: there it sits at the top)
+		kind = self.schermata.mod == menu.podium and "head" or "foot"
+	elseif m == "scelta" then
+		-- the lineup and the draft (hidden while the draft's gear is open)
+		kind, on = "foot", self.schier ~= nil or not gui.is_enabled(self.scelta.esci)
 	elseif m == "local" then
-		beside, on = self.btn_menu, not self.menu_open
-	elseif (m == "scelta") and not self.schier then
-		beside, on = self.scelta.rotellina, not gui.is_enabled(self.scelta.esci)
-	elseif m == "ended" or (m == "schermata" and self.schermata.mod == menu.podium) then
-		-- the end of the match and the podium: the chip at the edge (no gear there)
-		beside = true
+		gear, on = self.btn_menu, not self.menu_open
 	end
-	if on ~= p.on or beside ~= p.beside then
+	if on ~= p.on or kind ~= p.kind or gear ~= p.gear then
 		p.on = on
-		menu.pill.show(p, on, beside)
-		if on then menu.pill.raise(p) end
+		menu.pill.show(p, on, kind, gear)
 	end
 	if not on and not q.found then return end
 	local text, short
@@ -2096,7 +2149,7 @@ function CP.queue_update(self, dt)
 			short = TP.short_bots:format(math.ceil(q.bot_left))
 		end
 	end
-	menu.pill.set(p, text, short, q.found and (q.of or 0) or (q.n or 0), q.of or 0, q.found ~= nil)
+	menu.pill.set(p, text, short, q.found ~= nil)
 	menu.pill.update(p, dt)
 end
 
@@ -2148,7 +2201,7 @@ function CP.open_lineup(self, showcases, title, seconds_left)
 	end
 	self.schier = menu.lineup.new(showcases, title)
 	if seconds_left then self.schier.t = seconds_left end
-	-- the queue's pill above the lineup, in the middle of its top row
+	-- the queue's pill above the lineup
 	if self.pill then menu.pill.raise(self.pill) end
 end
 
@@ -2159,12 +2212,17 @@ function CP.update_choice(self, dt)
 		if not menu.lineup.update(self.schier, dt) then return true end
 		menu.lineup.destroy(self.schier)
 		self.schier = nil
+		-- (the lineup had the backdrop: the draft takes it back)
+		menu.pick.scene_back(self.scelta)
 		if self.vetrine then
 			self.strip = menu.lineup.strip(self.vetrine)
 		end
 		return false
 	end
-	if self.strip then menu.lineup.update_strip(self.strip, dt) end
+	if self.strip then
+		menu.lineup.update_strip(self.strip, dt)
+		menu.lineup.strip_ready(self.strip, menu.pick.ready(self.scelta))
+	end
 	return false
 end
 
@@ -2507,7 +2565,7 @@ start_local_match = function(self, picked)
 		-- prova_nuove N: N shots of the three new primaries too (Falcetto, Pozza di Pece, Trapano),
 		-- apart from prova_armi so the old scenarios' bar stays the same
 		local new_n = config_int("megablast.prova_nuove", 0)
-		-- prova_secondaria = eagle | mallet | lunge | bellows | magnet | cannon | petard: everyone has that secondary
+		-- prova_secondaria = eagle | mallet | lunge | bellows | vortex | cannon | petard: everyone has that secondary
 		local secondary_weapon = config_string("megablast.prova_secondaria", "")
 		opts = {
 			players = opts.players,
@@ -2579,7 +2637,8 @@ function CP.mission_line(self, r)
 		return
 	end
 	local l = r.l
-	local chi = l.aspetta and "favilla" or "fabbro"
+	-- Favilla in the cortile, the Fabbro from the Forgia on
+	local chi = l.chapter == "addestramento" and "favilla" or "fabbro"
 	local txt = line.testo:gsub("{(%a+)}", PAD.texts(self))
 	if line.apertura or line.mostra == "grande" then
 		-- (the mission's illustration came before, on its postcard: CP.enter_mission)
@@ -2598,7 +2657,7 @@ function CP.mission_line(self, r)
 		end
 	end
 	-- the big vignette read (VAI, or vignettes off): now Favilla can show the move
-	if line.mostra == "grande" and (not self.vign_on or (self.vign_line == line and not self.carta)) then
+	if (line.mostra == "grande" or line.apertura) and (not self.vign_on or (self.vign_line == line and not self.carta)) then
 		missions.line_read(r)
 	end
 	-- a big vignette still waiting to open (a weapon found is flying to its
@@ -2871,6 +2930,7 @@ local function open_level_end(self)
 	show_message(self, "", true)
 	score.goal(self.punti, nil)
 	self.vign:quiet()
+	CP.clear_field(self)
 	local won = r.esito == "fatta"
 	open_screen(self, menu.level_end, {
 		titolo = r.l.titolo, stelle = won and missions.stars(r) or { false, false, false },
@@ -3359,7 +3419,7 @@ local function update_bar(self)
 		end
 	end
 	-- the column's title, above the last item
-	if ogg_top then set_pos(self.items_title, tele.x, ogg_top + 13) end
+	if ogg_top then set_pos(self.items_title, tele.x, ogg_top + 16) end
 	if self.items_on ~= (ogg_top ~= nil) then
 		self.items_on = ogg_top ~= nil
 		gui.set_enabled(self.items_title, self.items_on)
@@ -4006,10 +4066,10 @@ local function render(self, dt)
 		local notch = aim_name.VIBRATE_TICKS and aim_name.notch(self.aim_power)
 		if notch and self.notch and notch ~= self.notch then vibrate_touch() end
 		self.notch = notch
-		-- in the Training lessons, as help, the whole trajectory down to the terrain:
+		-- in the lessons (the Training, the Fabbro's), as help, the whole trajectory down to the terrain:
 		-- the one of the shot that would fire now, so with the aim from a moment
 		-- earlier like the release of the sticks (sticks.shot), not the live finger
-		if self.missione and self.missione.l.chapter == "addestramento" then
+		if self.missione and self.missione.l.aspetta then
 			local n, a, p = HELP_POINTS, self.aim_angle, self.aim_power
 			if self.aim_pad.id then
 				a, p = sticks.shot(self.aim_st, self.clock, a, p)
@@ -4447,7 +4507,7 @@ function init(self)
 	-- the halo in your color behind what you hold
 	self.chosen_glow = glow(0, 0, SLOT * 1.7, WHITE)
 	gui.set_parent(self.chosen_glow, self.bar)
-	self.items_title = label(0, 0, TM.items, 0.55)
+	self.items_title = label(0, 0, TM.items, 1)
 	gui.set_color(self.items_title, ui.C.MINT)
 	gui.set_parent(self.items_title, self.bar)
 	gui.set_enabled(self.items_title, false)
@@ -4508,7 +4568,7 @@ function init(self)
 	self.pill = menu.pill.new()
 	self.profilo = profile.load_up()
 	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2, config_int("megablast.prova_profilo", 0) == 3) end
-	if SIMULATE then profile.sample_void(self.profilo, config_int("megablast.prova_vuoto", 0)) end
+	if SIMULATE then profile.sample_void(self.profilo, config_int("megablast.prova_vuoto", 0), sys.get_config_string("megablast.prova_famiglia", "vuoto")) end
 	home.wear(self.home, self.profilo)
 	self.scelta = menu.pick.new(WEAPON_ICON, TM.draft_names, TM.draft_effects, self.comandi)
 
@@ -4880,6 +4940,8 @@ local function quit_match(self)
 	end)
 end
 
+CP.leave_room = quit_match
+
 -- A finger (or the mouse) touches down at (x, y). id tells fingers apart.
 -- x, y arrive stretched over 1280 x 720 (as gui.pick_node wants them): for
 -- everything else they are brought back to game coordinates (ui/screen.lua)
@@ -4914,7 +4976,7 @@ local function pointer_down(self, id, px, py)
 		else
 			local hit = self.sala and menu.lobby.exit_hit(self.sala, px, py)
 			if hit == "esci" then
-				quit_match(self)
+				CP.leave_room(self)
 			elseif hit == "menu" then
 				CP.queue_to_menu(self)
 			end
@@ -5361,7 +5423,10 @@ function PAD.every_frame(self)
 	if self.menu_requested then
 		self.menu_requested = nil
 		local from_b = c.giu.b or (self.pad_b_t and self.clock - self.pad_b_t < 0.3)
-		if not from_b and (self.controls_visible and (self.mode == "local" or self.mode == "online") or self.mode == "connecting") then
+		if not from_b and self.mode == "connecting" and self.sala then
+			-- the waiting room has no gear: back leaves the queue, like its arrow
+			CP.leave_room(self)
+		elseif not from_b and (self.controls_visible and (self.mode == "local" or self.mode == "online") or self.mode == "connecting") then
 			open_wheel(self, not self.menu_open)
 		end
 	end
@@ -5452,6 +5517,14 @@ function PAD.event(self, e)
 		and (self.mode == "menu" or self.mode == "schermata" or self.mode == "ended") then
 		-- the controller's way to the pill: the gear button goes back to the room
 		CP.queue_open(self)
+	elseif self.mode == "connecting" and self.sala then
+		-- the waiting room: B is its arrow (out of the queue), the gear's button
+		-- goes around the menus staying in the queue
+		if e.ui == "indietro" then
+			CP.leave_room(self)
+		elseif command == "rotellina" then
+			CP.queue_to_menu(self)
+		end
 	elseif command == "rotellina" and (self.controls_visible or self.mode == "connecting") then
 		open_wheel(self, true)
 		ui.navigate(self.rotellina, "giu")

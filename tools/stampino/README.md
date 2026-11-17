@@ -53,6 +53,11 @@ disegno; il diavoletto è alto 200 unità): `foglio.json`.
   L'attacco è in mezzo al bordo in alto, 4 unità sotto (`ATTACCO_GIU`). I mantelli si salvano
   a 4,5 pixel per unità (`PX_MANTELLO`), sempre dal disegno più grande, mai ingranditi:
   `python3 tools/stampino/taglia.py art/WB-032/vuoto_base_B.png --nome mantello_vuoto --categoria mantello --mantello-px 7.2`
+- **I pezzi di una famiglia addosso all'apprendista** (cuffia o cappuccio, corazza con le spalline,
+  stivali: WB-041, WB-042, WB-055) non passano dallo stampino: Codex li disegna sui fogli
+  dell'apprendista e li taglia `python3 tools/stampino/addosso.py tools/stampino/addosso/<famiglia>.json`
+  (con `--prova CARTELLA` non tocca il gioco e fa `anteprima.png`), poi `taglia.py --rifai`. La
+  ricetta dice fogli, riferimenti, tavolozza e colori del pezzo; come funziona è scritto in cima allo script.
 - **Si disegnano solo le caselle che cambiano.** Le vuote restano come sono.
 - **Le facce:** una testa nuova senza le altre facce le fa tutte (non cambia
   espressione). Un elmo disegnato sulla `testa` sta su tutte le facce.

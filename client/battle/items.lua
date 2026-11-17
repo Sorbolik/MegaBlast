@@ -62,9 +62,9 @@ local function image(nome, w, h, parent)
 end
 
 -- Trap: the open jaw trap lying on the ground (tools/grafica/attrezzi.py),
--- with its plate lit in the team colour; springboard: the Molla, a padded
+-- (drawn by Codex, WB-065), its brass pivot lit in the team colour; springboard: the Molla, a padded
 -- board on a spring, flat, with a chevron pointing the way it launches
-local TRAP_W, TRAP_H, TRAP_DY = 28, 8.6, 2.7
+local TRAP_W, TRAP_H, TRAP_DY = 24, 16.3, 7.6
 local MOLLA_W, MOLLA_H, MOLLA_DY = 39.2, 15.4, 6.1
 local SNAP_W, SNAP_H, SNAP_DY = 20.8, 16.6, 6.7
 local SNAPS = 2

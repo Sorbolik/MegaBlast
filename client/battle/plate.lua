@@ -49,14 +49,16 @@ local max = math.max
 -- background BORDER wider on each side
 local W, H, BORDER = 40, 5, 1
 local BASE = H / 2 + BORDER   -- from the bottom point of the plate to the center of the bar
-local NAME_Y = BASE + 6.5     -- center of the name above the bar
+local NAME_Y = BASE + 8.5     -- center of the name above the bar
 local BAR_BG = vmath.vector4(0.04, 0.03, 0.05, 0.9)
--- scale of the "titolo" font (scale 1 = about 40 px)
-local NAME_SCALE, NUMBER_SCALE, STATE_SCALE, BANNER_SCALE = 0.25, 0.2, 0.18, 0.3
-local STATE_Y, BANNER_Y, BANNER_RISE, BANNER_T = -(BASE + 4), 22, 14, 1.4
+-- scale of the "titolo" font (scale 1 = about 40 px; on screen ON_SCREEN times
+-- that): the name 16 px like every text one has to read (Sergio, 17 Nov), the
+-- numbers beside the bar and the state 13 (bigger they would outgrow the bar)
+local NAME_SCALE, NUMBER_SCALE, STATE_SCALE, BANNER_SCALE = 0.36, 0.3, 0.3, 0.36
+local STATE_Y, BANNER_Y, BANNER_RISE, BANNER_T = -(BASE + 6.5), 26, 14, 1.4
 -- a bot's comment: above the turn arrow, for QUIP_T seconds (the last
 -- QUIP_FADE fading); a new one covers it only after QUIP_KEEP seconds
-local QUIP_Y, QUIP_SCALE, QUIP_T, QUIP_FADE, QUIP_KEEP = 42, 0.38, 2.6, 0.4, 0.8
+local QUIP_Y, QUIP_SCALE, QUIP_T, QUIP_FADE, QUIP_KEEP = 46, 0.38, 2.6, 0.4, 0.8
 -- The plate stays the same size on screen at every zoom (Sergio, 3 Nov: from
 -- far away it must not be bigger than the character): scale ON_SCREEN / zoom
 -- (0.85 until Sergio found it «ancora un po' piccolo», 3 Nov)
@@ -66,7 +68,7 @@ local ON_SCREEN = 1.1
 local CROWN_W, CROWN_GAP = 13.5, 2
 local CROWN_H = CROWN_W * 59 / 108
 -- where the name ends at the top
-local NAME_TOP = NAME_Y + 6
+local NAME_TOP = NAME_Y + 8
 -- the arrow: a V ARROW_W wide and ARROW_H tall (two bars at 45 degrees, the
 -- dark border ARROW_EDGE thicker), ARROW_GAP above the name (in the node that
 -- jolts with a hit, like the name); it bobs ARROW_BOB up and down every ARROW_T seconds

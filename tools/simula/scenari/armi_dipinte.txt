@@ -1,0 +1,41 @@
+# Le armi disegnate da Codex (WB-063, WB-064) e ricalcate a vettori: la barra con le
+# icone, ogni arma in mano e qualche colpo in volo.
+imposta prova_armi 2
+imposta prova_nuove 2
+imposta prova_secondaria vortex
+imposta prova_vicino 200
+imposta zoom 2
+
+aspetta 3
+foto 00_home
+tocca 222 148                      # ALLENAMENTO
+aspetta 1.5
+tocca 765 549                      # STESSO TELEFONO
+aspetta 0.5
+tocca 1075 55                      # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 10
+aspetta 1
+foto 01_barra
+tocca 38 62                         # Falcetto
+annulla 120 0 02_falcetto 5
+tocca 130 62                        # Cecchino
+annulla 120 0 03_cecchino 5
+tocca 225 62                        # Pugno del Titano
+annulla 120 0 04_pugno 5
+tocca 318 62                        # Sciame di Schegge
+annulla 120 0 05_sciame 5
+tocca 412 62                        # Uovo di Fiamma
+annulla 120 0 06_uovo 5
+tocca 506 62                        # Lanciarune
+annulla 120 0 07_lanciarune 5
+tocca 774 62                        # Lama
+annulla 120 0 08_lama 5
+tocca 868 62                        # Voragine
+annulla 120 0 09_voragine 5
+tocca 506 62                        # Lanciarune: la runa in volo
+mira 140 -10 0.5
+aspetta 0.25
+zoom 10_runa_in_volo 3
+aspetta_evento explosion 4         # la firma della runa sull'impatto (WB-066)
+aspetta 0.08
+zoom 11_firma_runa 3

@@ -1,0 +1,10 @@
+Image 1 is the chosen armour set "Furnace" of our game (right: FORGED form). Image 2 is our "stampino". Image 3 is the basic cape of this set, alone on magenta.
+
+Return image 3 again: the same cape, same position, same size, the same outline and folds. Change only this: make it the FORGED cape of image 1: an orange band along the hem, like in image 1. Nothing else changes. No body, nothing else on the sheet.
+
+Same rendering rules: flat colors, thick closed black outline. Iron grey #5A5A62 with shadows #3C3C44, orange #F28A1E grilles, cyan #00FFFF trims and rivets, nothing else. Background: flat pure magenta #FF00FF everywhere outside the cape. No text. Landscape 3:2.
+
+Riferimenti allegati in ordine
+art/WB-057/riferimenti/R4_fornace.png
+art/WB-057/riferimenti/R5_stampino.png
+art/WB-057/mantello_base_1.png

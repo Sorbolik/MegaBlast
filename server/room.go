@@ -26,6 +26,9 @@ const (
 //	                                    or join the one with that code (private.go, with its messages)
 //	{"t":"pick","w":"shards"}           start-of-match draft: one primary and one secondary
 //	                                    (the weapon tells the category; can change until time's up)
+//	{"t":"ready"}                       draft: PRONTO, both weapons picked and confirmed; the others see
+//	                                    it ("rd" in the draft), a different pick undoes it; with
+//	                                    everyone ready the match starts before time's up
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
 //	{"t":"aim","a":1.2} | {"t":"aim_end"}  I'm aiming at that angle (at most a few per second) | I stopped:
 //	                                    the others see it in the state ("aim"), without the power
@@ -35,7 +38,7 @@ const (
 //
 // "j" says whether jump is still held down: releasing it while rising makes the jump short.
 // "w" is the weapon: "missile" (if missing), "sword", "teleport", a secondary picked
-// at the start ("eagle", "mallet", "lunge", "bellows", "magnet", "cannon", "petard") or a crate
+// at the start ("eagle", "mallet", "lunge", "bellows", "vortex", "cannon", "petard") or a crate
 // weapon ("grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill"): the simulation only uses it if the robot has shots.
 type clientMsg struct {
 	T    string  `json:"t"`
@@ -52,7 +55,7 @@ type clientMsg struct {
 	Private string `json:"privata"`
 	I       int    `json:"i"`
 	G       int    `json:"g"`
-	// with the greeting: level and badges of the card (menu/showcase.lua, per_rete)
+	// with the greeting: level, badges and pieces worn of the card (menu/showcase.lua, for_net)
 	// (raw: a wrong card must not make the greeting fail)
 	Showcase json.RawMessage `json:"vetrina"`
 }
@@ -63,6 +66,11 @@ type showcaseMsg struct {
 		ID    string `json:"id"`
 		Grade int    `json:"grado"`
 	} `json:"bdg"`
+	// the pieces worn, one per slot (sim/gear.lua SLOTS): only shown on the cards
+	Pz []struct {
+		Set   string `json:"set"`
+		Level int    `json:"liv"`
+	} `json:"pz"`
 }
 
 // Badges are few (menu/milestones.lua): at most badgeMax get through, with a
@@ -71,6 +79,9 @@ const (
 	badgeMax = 3
 	gradeMax = 4
 	levelMax = 999
+	// the slots of the gear and the last level of a piece (sim/gear.lua)
+	pieceSlots    = 4
+	pieceLevelMax = 30
 )
 
 var badgeID = regexp.MustCompile(`^[a-z_]{1,16}$`)
@@ -89,6 +100,13 @@ func showcaseJSON(raw json.RawMessage) []byte {
 			return []byte("{}")
 		}
 		v = showcaseMsg{Level: only.Level}
+		// (the pieces alone, if they can be read)
+		var pieces struct {
+			Pz json.RawMessage `json:"pz"`
+		}
+		if json.Unmarshal(raw, &pieces) == nil {
+			_ = json.Unmarshal(pieces.Pz, &v.Pz)
+		}
 	}
 	out := fmt.Appendf(nil, `{"liv":%d,"bdg":[`, min(max(v.Level, 1), levelMax))
 	n := 0
@@ -105,7 +123,25 @@ func showcaseJSON(raw json.RawMessage) []byte {
 		out = fmt.Appendf(out, `{"id":%q,"grado":%d}`, b.ID, b.Grade)
 		n++
 	}
-	return append(out, "]}"...)
+	out = append(out, ']')
+	// the pieces worn: exactly pieceSlots places, a name of lowercase letters
+	// and a level in range, else the place is empty. The server has no profiles
+	// yet: it can't know whether the player owns them, they are only shown
+	if len(v.Pz) > 0 {
+		out = append(out, `,"pz":[`...)
+		for i := 0; i < pieceSlots; i++ {
+			if i > 0 {
+				out = append(out, ',')
+			}
+			if i < len(v.Pz) && badgeID.MatchString(v.Pz[i].Set) && v.Pz[i].Level >= 1 {
+				out = fmt.Appendf(out, `{"set":%q,"liv":%d}`, v.Pz[i].Set, min(v.Pz[i].Level, pieceLevelMax))
+			} else {
+				out = append(out, `{"set":"","liv":0}`...)
+			}
+		}
+		out = append(out, ']')
+	}
+	return append(out, '}')
 }
 
 func parseClientMsg(data []byte) (clientMsg, error) {
@@ -520,15 +556,48 @@ func (r *Room) handle(b *Batch, m roomMsg) {
 	}
 }
 
-// handleDraft: picks during the weapon draft. The others don't see them: the
-// confirmation goes back only to whoever picked.
+// handleDraft: picks and PRONTO during the weapon draft. The others don't see
+// the picks (the confirmation goes back only to whoever picked), but they see
+// who is ready: when everyone is, the match starts without waiting for the time.
 func (r *Room) handleDraft(b *Batch, m roomMsg) {
-	if m.msg.T != "pick" {
+	slot := m.slot
+	switch m.msg.T {
+	case "pick":
+		b.Cmd("pick", r.id, func(next *Batch, res Result) {
+			var v struct {
+				Un bool `json:"un"`
+			}
+			if res.Err == nil && json.Unmarshal(res.Head, &v) == nil && v.Un {
+				r.sendDraftAll(next) // the pick took PRONTO away
+				return
+			}
+			r.draftAnswer(slot, res)
+		}).Int("i", int64(slot+1)).Str("w", m.msg.W).End()
+	case "ready":
+		b.Cmd("ready", r.id, func(next *Batch, res Result) {
+			var v struct {
+				Ok  bool `json:"ok"`
+				All bool `json:"all"`
+			}
+			if r.ended.Load() || res.Err != nil || json.Unmarshal(res.Head, &v) != nil || !v.Ok {
+				return
+			}
+			r.sendDraftAll(next)
+			if v.All && r.draftLeft > 1 {
+				r.draftLeft = 1 // the next tick starts the match
+			}
+		}).Int("i", int64(slot+1)).End()
+	}
+}
+
+// sendDraftAll sends everyone their draft again (who is ready has changed).
+func (r *Room) sendDraftAll(b *Batch) {
+	if r.ended.Load() {
 		return
 	}
-	slot := m.slot
-	b.Cmd("pick", r.id, func(_ *Batch, res Result) { r.draftAnswer(slot, res) }).
-		Int("i", int64(slot+1)).Str("w", m.msg.W).End()
+	for i := range r.seats {
+		r.sendDraft(b, i)
+	}
 }
 
 // checkAway notices dropped connections and counts the time of whoever is

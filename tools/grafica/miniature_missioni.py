@@ -28,6 +28,8 @@ QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.abspath(os.path.join(QUI, "..", ".."))
 DIPINTI = os.path.join(RADICE, "client", "paintings")
 OUT = os.path.join(DIPINTI, "missions")
+# le miniature delle mappe delle partite (CRONOLOGIA del PROFILO): <mappa>.jpg
+OUT_MAPPE = os.path.join(DIPINTI, "maps_mini")
 
 # la scena si disegna a 1920 x 1080 (il mondo, 3 pixel per cella della griglia 640 x 360)
 SW, SH, CELLA = 1920, 1080, 3
@@ -72,6 +74,31 @@ for _, cap in ipairs(campaign.CAPITOLI) do
     out[#out + 1] = string.format('{"id":%s,"mappa":%s,"sfondo":%s,"finale":%s,"gruppi":[%s],"rows":[%s]}',
       q(l.id), q(id), bg and q(bg) or "null", tostring(i == #cap.missioni and #cap.missioni > 1),
       table.concat(groups, ","), table.concat(rows, ","))
+  end
+end
+-- le mappe delle partite (la CRONOLOGIA del PROFILO): una miniatura per mappa
+local fatte = {}
+local lista = { "forgia" }
+for _, id in ipairs(maps.ROTATION) do lista[#lista + 1] = id end
+for _, id in ipairs(maps.CIRCLES) do lista[#lista + 1] = id end
+for _, id in ipairs(lista) do
+  if not fatte[id] and maps.get(id) then
+    fatte[id] = true
+    local t = terrain.new(760, 360, 3, 60)
+    maps.get(id).build(t)
+    local rows = {}
+    for cy = 359, 0, -1 do
+      local r = {}
+      for cx = 0, 639 do r[#r + 1] = t:get(cx, cy) > 0 and "1" or "0" end
+      rows[#rows + 1] = q(table.concat(r))
+    end
+    local bg = dipinti.maps[id]
+    local groups = {}
+    for _, g in ipairs(bg and dipinti.backgrounds[bg].groups or {}) do
+      groups[#groups + 1] = string.format('{"name":%s,"y0":%d,"h":%d,"parallax":%s}', q(g.name), g.y0, g.h, g.parallax)
+    end
+    out[#out + 1] = string.format('{"id":%s,"mappa":%s,"sfondo":%s,"finale":false,"gruppi":[%s],"rows":[%s]}',
+      q("mappa_" .. id), q(id), bg and q(bg) or "null", table.concat(groups, ","), table.concat(rows, ","))
   end
 end
 print("[" .. table.concat(out, ",") .. "]")
@@ -228,6 +255,14 @@ def main():
     impronte = {}
     for m in leggi():
         im, griglia = scena(m)
+        if m["id"].startswith("mappa_"):
+            # la miniatura di una mappa nella riga della CRONOLOGIA (110 x 58, al doppio)
+            os.makedirs(OUT_MAPPE, exist_ok=True)
+            f = os.path.join(OUT_MAPPE, m["mappa"] + ".jpg")
+            im.crop(ritaglio(griglia, 220, 116)).resize((220, 116), Image.LANCZOS).save(f, quality=88, optimize=True)
+            print("scritta", os.path.relpath(f, RADICE))
+            impronte[m["id"]] = impronta(m)
+            continue
         for suffisso, (w, h) in FORMATI.items():
             if suffisso == "_finale" and not m["finale"]:
                 continue

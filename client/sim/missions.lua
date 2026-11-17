@@ -38,6 +38,8 @@
 -- A mission (fields, all data except where stated):
 --   id, titolo, goal_text (the first line, until the first thing is done), highlight
 --     (the control the goal_text highlights, as in the lines below)
+--   lezione = true: a lesson outside the Addestramento (the Fabbro's, in the
+--     Forgia): it plays like the cortile's (time waits, no crates, retries)
 --   tipo: what kind of level it is (corsa, bersagli, duello, squadra, orda,
 --     resistenza, bottino, custode): only shown, on its card in the CAMPAGNA and
 --     its postcard (ui/level_types.lua), the rules don't read it
@@ -80,12 +82,10 @@
 --   The cards (below) open when the hit of the step has landed
 --   regole: other opts of game.new; secondi: match length; globi: how many
 --     teleports the player starts with; vita, punti = { [robot] = n } at the start;
---     regrow = { robot, ... }: every turn they come back with full life
 --   obiettivo: the steps (below), in order unless in_order = false
 --   the mission fails if the match ends first; al_tempo = "abbattimenti": when
 --     time runs out you win if you downed the others at least as many times as
 --     they downed you (the Duello: on a tie Favilla gives it to you)
---   turni: past this many player turns it starts over
 --   al_posto: everyone respawns at their spawn, as in the lessons (the sniper
 --     knocked off its island comes back there, not within reach)
 --   stelle = { punti = { 120, 200 } }: after the Training (Sergio, 14 Nov) the
@@ -201,7 +201,7 @@ local CRATE_ABOVE = 280
 -- the spark is a glow this wide around its point (battle/favilla.lua draws it
 -- the same size): it is taken when your hit circle touches it
 local SPARK_R = 13
-local RETRY_TEXT = "Ritenta! Prendi confidenza con i comandi, prenditi il tuo tempo: {mira}"
+local RETRY_TEXT = "Ritenta! Con calma, prendi confidenza con i comandi: {mira}"
 
 -- Which weapon someone just used: the attack event -> weapon name
 local ATTACKS = {
@@ -246,10 +246,11 @@ local PER_ID, NEXT_ID = {}, {}
 local function install(l, cap, map)
 	PER_ID[l.id] = l
 	l.chapter = cap.id
-	-- in the lessons time waits for you to touch the controls (capitolo.aspetta)
-	l.aspetta = cap.aspetta
-	-- the nearly forced next action: the lessons, not the Prima partita
-	l.riprova = l.aspetta and not l.guidata and l.tipo ~= "duello"
+	-- in the lessons time waits for you to touch the controls (capitolo.aspetta,
+	-- or lezione: the Fabbro's lesson in the Forgia)
+	l.aspetta = cap.aspetta or l.lezione
+	-- the nearly forced next action: the lessons, not the sfide
+	l.riprova = l.aspetta and l.tipo ~= "duello"
 	if type(l.obiettivo) == "table" then
 		for _, p in ipairs(l.obiettivo) do
 			if p.only then p.permitted = allowed_fn(p.only) end
@@ -471,8 +472,9 @@ function M.match(r, seed, picks, help, own)
 	end
 	local opts = { players = players }
 	for k, v in pairs(l.regole or {}) do opts[k] = v end
-	-- no crates: missions don't change with chance
-	if not l.guidata and not opts.crate_every then opts.crate_every = 1000 end
+	-- no crates in the lessons and the sfide: they don't change with chance. In
+	-- the circles' matches they fall as online (Sergio, 15 Nov)
+	if l.aspetta and not opts.crate_every then opts.crate_every = 1000 end
 	-- in the lessons no healing circles popping up at random (Sergio, 29 Oct)
 	if l.aspetta then opts.heals = false end
 	-- and no points where the lesson doesn't talk about them (Sergio, 31 Oct)
@@ -496,7 +498,7 @@ function M.prepare(r, g, bots)
 		rb.gone, rb.dead, rb.hp, rb.respawn_in = true, true, 0, nil
 	end
 	if l.secondi then g.match_left = l.secondi * 60 end
-	-- the mission's life is also the full one: regrow goes back there, not to 150
+	-- the mission's life is also the full one, to respawn with
 	for i, v in pairs(l.vita or {}) do
 		g.robots[i].hp, g.robots[i].max_hp = v, v
 	end
@@ -669,8 +671,9 @@ end
 -- (if you haven't already touched it this turn).
 local function show_line(r, line)
 	r.riga, r.line_until, r.line_yields, r.line = line.testo, line.fino, line.yields, line
-	-- a big vignette: Favilla shows the move only once it has been read (M.line_read)
-	r.big_unread = line.mostra == "grande" or nil
+	-- a big vignette: Favilla shows the move only once it has been read (M.line_read);
+	-- the opening of a lesson she shows moves in too (it's a big vignette there)
+	r.big_unread = (line.mostra == "grande" or line.apertura and r.l.aspetta and r.l.dimostra ~= nil) or nil
 	r.line_ticks = line.secondi and line.secondi * 60 or (line.fino and 2 or 1) * LINE_SECONDS * 60
 	r.luce = line.highlight
 	r.awaiting = nil
@@ -795,12 +798,6 @@ function M.event(r, g, e, bots)
 		-- the bot on turn shows what the player will do next (sim/bot.lua, b.piano)
 		local b = bots and bots[e.robot]
 		if b then b.piano = l.plans and l.plans[st.bot_turns] or nil end
-		for _, i in ipairs(l.regrow or {}) do
-			local rb = g.robots[i]
-			if not rb.dead then rb.hp = rb.max_hp end
-		end
-		-- past the mission's turns it starts over
-		if l.turni and st.turni > l.turni and not r.esito then r.esito = "fallita" end
 	elseif e.type == "teleport" and e.robot == PLAYER then
 		count(st, "teletrasporti")
 	elseif e.type == "teleports" and e.robot == PLAYER then
@@ -892,7 +889,7 @@ local function attempt_over(r, g)
 	if not t or r.esito then return end
 	local rb = g.robots[PLAYER]
 	local frozen = not (g.projectile or g:shards_flying() or #g.orbs > 0) and (rb.dead or rb.grounded
-		and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch or rb.lunge or rb.mallet or rb.recoil or rb.cannon or rb.pull))
+		and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch or rb.lunge or rb.mallet or rb.recoil or rb.cannon))
 	t.t = frozen and t.t + 1 or 0
 	if t.t < MISS_TICK then return end
 	r.shot = nil
@@ -1011,13 +1008,16 @@ local NO_AIM = { parachute = true, shield = true, swap = true }
 local function settled(g, rb)
 	if g.projectile or g.burst or g:shards_flying() or #g.orbs > 0 then return false end
 	return rb.dead or rb.grounded and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch
-		or rb.lunge or rb.mallet or rb.recoil or rb.cannon or rb.pull or rb.parachute)
+		or rb.lunge or rb.mallet or rb.recoil or rb.cannon or rb.parachute)
 end
 
 -- she can always use the move she shows: the weapon, an orb, a parachute
 local function arm(g, rb, w)
 	g.used.primary, g.used.secondary, g.used.tool = false, false, false
-	if w == "teleport" then
+	if w == "swap" then
+		-- the baratto comes after a first attack
+		g.used.primary = true
+	elseif w == "teleport" then
 		rb.teleports_left = math.max(rb.teleports_left, 1)
 	elseif w == "parachute" then
 		rb.parachutes_left = math.max(rb.parachutes_left, 1)

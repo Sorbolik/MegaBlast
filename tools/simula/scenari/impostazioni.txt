@@ -11,7 +11,7 @@ imposta prova_pad playstation
 
 aspetta 2
 tocca_bordo 74 54 basso sinistra       # la rotellina delle impostazioni
-aspetta 0.5
+aspetta 1.2                         # le schede sono entrate tutte
 foto 01_impostazioni
 tocca_centro 350 557                # MIRA: MIRINO
 tocca_centro 706 476                # SALTA: aspetta il tasto

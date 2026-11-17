@@ -272,6 +272,96 @@ images {
   image: "/assets/skins/cappuccio_vuoto_testa.png"
 }
 images {
+  image: "/assets/skins/corazza_corvo_busto.png"
+}
+images {
+  image: "/assets/skins/corazza_corvo_forgiato_busto.png"
+}
+images {
+  image: "/assets/skins/corazza_corvo_forgiato_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/corazza_corvo_forgiato_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/corazza_corvo_forgiato_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/corazza_corvo_forgiato_spallina_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/corazza_corvo_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/corazza_corvo_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/corazza_corvo_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/corazza_corvo_spallina_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/corazza_fornace_busto.png"
+}
+images {
+  image: "/assets/skins/corazza_fornace_forgiato_busto.png"
+}
+images {
+  image: "/assets/skins/corazza_fornace_forgiato_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/corazza_fornace_forgiato_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/corazza_fornace_forgiato_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/corazza_fornace_forgiato_spallina_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/corazza_fornace_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/corazza_fornace_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/corazza_fornace_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/corazza_fornace_spallina_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/corazza_leviatano_busto.png"
+}
+images {
+  image: "/assets/skins/corazza_leviatano_forgiato_busto.png"
+}
+images {
+  image: "/assets/skins/corazza_leviatano_forgiato_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/corazza_leviatano_forgiato_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/corazza_leviatano_forgiato_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/corazza_leviatano_forgiato_spallina_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/corazza_leviatano_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/corazza_leviatano_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/corazza_leviatano_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/corazza_leviatano_spallina_braccio_dietro_2.png"
+}
+images {
   image: "/assets/skins/corazza_vuoto_busto.png"
 }
 images {
@@ -303,6 +393,24 @@ images {
 }
 images {
   image: "/assets/skins/corna_apprendista_testa.png"
+}
+images {
+  image: "/assets/skins/cuffia_fabbro_forgiato_testa.png"
+}
+images {
+  image: "/assets/skins/cuffia_fabbro_testa.png"
+}
+images {
+  image: "/assets/skins/elmo_fornace_forgiato_testa.png"
+}
+images {
+  image: "/assets/skins/elmo_fornace_testa.png"
+}
+images {
+  image: "/assets/skins/elmo_leviatano_forgiato_testa.png"
+}
+images {
+  image: "/assets/skins/elmo_leviatano_testa.png"
 }
 images {
   image: "/assets/skins/favilla_ala.png"
@@ -392,6 +500,42 @@ images {
   image: "/assets/skins/favilla_testa_sconfitta_1.png"
 }
 images {
+  image: "/assets/skins/grembiule_fabbro_busto.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_forgiato_busto.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_forgiato_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_forgiato_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_forgiato_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_forgiato_spallina_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_spallina_braccio_2.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/grembiule_fabbro_spallina_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/maschera_corvo_forgiato_testa.png"
+}
+images {
+  image: "/assets/skins/maschera_corvo_testa.png"
+}
+images {
   image: "/assets/skins/palpebre_apprendista_nuovo_testa_1_chiusi.png"
 }
 images {
@@ -426,6 +570,54 @@ images {
 }
 images {
   image: "/assets/skins/palpebre_apprendista_nuovo_testa_sconfitta_1_socchiusi.png"
+}
+images {
+  image: "/assets/skins/stivali_corvo_forgiato_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_corvo_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/skins/stivali_corvo_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_corvo_gamba_dietro.png"
+}
+images {
+  image: "/assets/skins/stivali_fabbro_forgiato_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_fabbro_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/skins/stivali_fabbro_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_fabbro_gamba_dietro.png"
+}
+images {
+  image: "/assets/skins/stivali_fornace_forgiato_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_fornace_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/skins/stivali_fornace_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_fornace_gamba_dietro.png"
+}
+images {
+  image: "/assets/skins/stivali_leviatano_forgiato_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_leviatano_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/skins/stivali_leviatano_gamba.png"
+}
+images {
+  image: "/assets/skins/stivali_leviatano_gamba_dietro.png"
 }
 images {
   image: "/assets/skins/stivali_vuoto_forgiato_gamba.png"

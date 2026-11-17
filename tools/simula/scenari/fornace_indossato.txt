@@ -1,0 +1,20 @@
+# I quattro pezzi della Fornace (WB-057) indossati, base (livello 1): elmo di ferro,
+# corazza con la grata con le spalline, stivali e mantello, nella home e in battaglia. Da vicino: --scala 2.
+imposta prova_vuoto 1
+imposta prova_famiglia fornace
+
+aspetta 3
+aspetta 3
+foto 01_home
+tocca 220 172                      # ALLENAMENTO
+aspetta 3
+tocca 770 548                      # STESSO TELEFONO
+aspetta 1
+foto 01b_allenamento
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # GIOCA
+aspetta_stato turno=1 fase=aim 12
+aspetta 1
+zoom 02_fermo 4
+tieni destra 0.5 03_corsa 4
+aspetta 2

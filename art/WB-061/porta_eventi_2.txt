@@ -1,0 +1,17 @@
+Image 1 is the home screen of our game with four big menu buttons: CAMPAIGN (ember, ending in a tongue of flame), TRAINING (steel, ending in a wooden practice sword tip), EVENTS (gold banner with a round crown medallion on its right end) and ARMOURY (dark iron with an ice edge, ending in a chipped ice shard). Image 2 is the EVENTS button alone: it is the poorest of the four, just a flat gold band cut like a swallow tail. Images 3 and 4 are the CAMPAIGN and ARMOURY buttons: they show how rich and special the end of a button should be, and the ink STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+
+Redraw the EVENTS button as a real cloth tournament banner, THREE different ideas one under the other with green space between them. Each one keeps exactly the layout of image 2: the same length and height, the same round medallion with the gold rim, the dark red (#8E1E1E) disc and the crown at the RIGHT end, the tail at the LEFT end, and a plain, even, empty gold body in the middle (the game writes the name there and stretches only the middle). Gold is #FFB703 with a lighter band #FFE08A and a darker band #F26419; the back of the cloth is a darker gold (#C77800); dark red is #8E1E1E.
+1. FOLDED RIBBON: at the left end the cloth folds back on itself once before the swallow tail, showing its darker back (#C77800), and the two points of the swallow tail are slightly uneven, like cloth moving.
+2. FRINGED STANDARD: the left end is cut into a swallow tail with a short dark red (#8E1E1E) hem along the cut and three chunky gold tassels hanging from it; a short dark red hem also runs behind the medallion.
+3. WAVING PENNANT: the left end narrows into one long waving point with a single soft fold, and a small dark red (#8E1E1E) stripe follows the lower edge only in the last quarter near the point.
+In all three the middle of the band stays perfectly plain and even, with no folds, seams or decoration, so text can be written on it with a comfortable margin.
+
+Thick black ink outline, cartoon comic style, same line weight as images 3-4. Flat colors only, at most six per button, no detail thinner than the outline, so the buttons can be traced into vectors. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The three buttons are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti allegati in ordine
+1. art/WB-061/riferimenti/R1_home_oggi.jpg
+2. art/WB-046/ritagli/porta_eventi.png
+3. art/WB-046/ritagli/porta_campagna.png
+4. art/WB-046/ritagli/porta_armeria.png
+
+Primo tentativo. Tre striscioni separati. Ingombri rispetto a R2 non verificati.
