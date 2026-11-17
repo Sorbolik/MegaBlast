@@ -16,7 +16,6 @@ local profile = require "menu.profile"
 local TP = require("lang.text").pill
 local TM = require("lang.text").match
 local common = require("lang.text").common
-local loadout = require "sim.loadout"
 local awards = require "sim.awards"
 local draft = require "sim.draft"
 local bot = require "sim.bot"
@@ -2381,8 +2380,9 @@ function CP.match_coins(self, r, stats_before, gain)
 	local p = self.profilo
 	-- against bots or on the same phone: half, like the training
 	r.bots = not self.online_end
-	local rows = W.match(p, r, W.today())
+	local rows, won = W.match(p, r, W.today())
 	local obs = W.obsidian(stats_before, profile.statistics(p, "tutte"), gain.level_before, gain.livello)
+	for _, row in ipairs(won) do table.insert(obs, 1, row) end
 	W.apply(p, rows)
 	W.apply(p, obs)
 	local gifts = W.gifts(p, profile.statistics(p, "tutte"), p.livello)
@@ -2417,9 +2417,9 @@ function CP.mission_coins(self, gain, chapters)
 		if l.key == "done" then first = true end
 		if l.key == "stars" then new = l.n end
 	end
-	local rows = W.mission(first, new)
-	-- Ossidiana: every 5 levels of the devil, a chapter finished
-	local obs = W.obsidian({}, {}, gain.level_before, gain.livello)
+	local rows, obs = W.mission(first, new, gain.record)
+	-- Ossidiana: the new stars, every 5 levels of the devil, a chapter finished
+	for _, row in ipairs(W.obsidian({}, {}, gain.level_before, gain.livello)) do obs[#obs + 1] = row end
 	if W.chapters_done(p, CP.chapters) > chapters then obs[#obs + 1] = W.chapter()[1] end
 	W.apply(p, rows)
 	W.apply(p, obs)
@@ -2587,7 +2587,7 @@ start_local_match = function(self, picked)
 		players[i] = {}
 		for k, v in pairs(p) do players[i][k] = v end
 	end
-	players[1].stats = loadout.stats(game.base_stats(), my_own, profile.levels(self.profilo, my_own), self.profilo.livello)
+	players[1].stats = profile.stats(self.profilo, my_own, game.base_stats())
 	opts.players = players
 	-- random start points (sim/game.lua start_points); the simulator keeps the fixed
 	-- ones unless asked (imposta prova_spawn_casuali 1), so the old scenarios stay put
@@ -2708,7 +2708,7 @@ local function start_mission(self, id, picks)
 	self.want_intro = nil
 	-- your pieces, Sigilli and level count in the campaign (from the Forgia on)
 	local my_own = profile.active_loadout(self.profilo)
-	local own = loadout.stats(game.base_stats(), my_own, profile.levels(self.profilo, my_own), self.profilo.livello)
+	local own = profile.stats(self.profilo, my_own, game.base_stats())
 	new_match(self, missions.match(r, os.time(), picks, profile.help(self.profilo, id), own))
 	-- prova_durata N also in the missions' battles (scenari/podio_forgia.txt)
 	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0

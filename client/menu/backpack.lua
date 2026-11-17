@@ -194,7 +194,7 @@ end
 -- "+4.8%": what the points of a path give now (the end of its description)
 local function gain(path, n)
 	local tail = path.per_point_desc:match("(%S*%%s%S*)$") or "+%s"
-	local v = string.format("%.1f", n * skills.PER_POINT_SHOWN):gsub("%.0$", "")
+	local v = string.format("%.1f", n * path.shown):gsub("%.0$", "")
 	return tail:format(v)
 end
 

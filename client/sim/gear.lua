@@ -32,12 +32,16 @@ M.TIERS = #M.TIER_LEVELS + 1
 -- the level from which a piece is "gold": it counts for its family's bonus
 M.GOLD = 20
 
--- Scaglie to go up TO each level (2..30): the normal levels rise slowly,
--- the steps cost about three normal levels. 3,050 for a piece at 30.
-M.COSTS = { [10] = 150, [20] = 300, [30] = 450 }
-for l = 2, 9 do M.COSTS[l] = 15 + 5 * (l - 2) end
-for l = 11, 19 do M.COSTS[l] = 60 + 5 * (l - 11) end
-for l = 21, 29 do M.COSTS[l] = 110 + 5 * (l - 21) end
+-- Scaglie to go up TO each level (2..30). Sergio, 17 Nov (plan
+-- https://claude.ai/artifact/7pJTt98FayH3kovFAMmhsd): a strong player makes
+-- about 400 Scaglie an hour, and a piece at 30 has to take about 100 hours:
+-- 40,000 in all, light at the start (the first step in five hours and a
+-- half) and heavy at the end (the last third of the levels is two thirds of
+-- the cost). tools/economia/conti.lua turns these into hours.
+M.COSTS = { [10] = 1200, [20] = 4000, [30] = 6800 }
+for l = 2, 9 do M.COSTS[l] = 55 + 20 * (l - 2) end
+for l = 11, 19 do M.COSTS[l] = 500 + 100 * (l - 11) end
+for l = 21, 29 do M.COSTS[l] = 1500 + 150 * (l - 21) end
 -- the Proof of a step: matches played wearing the piece at the level just
 -- below it (9, 19, 29) before you can buy the step
 M.PROOF = { [10] = 3, [20] = 5, [30] = 8 }
@@ -61,8 +65,8 @@ end
 
 -- The stats the pieces touch. points: counted in points (life, Attack and
 -- Defense: a share of 0.25 is 25 points); less: lower is better (a plus
--- lowers them); move: the movement, with its own lower caps (the maps are
--- drawn for a jump, Sergio 14 Nov).
+-- lowers them: they stop sooner, at zero they would switch the mechanic off);
+-- move: the movement, with its own values and caps.
 M.STATS = {
 	attack = { points = true }, defense = { points = true }, max_hp = { points = true },
 	walk_speed = { move = true }, jump_height = { move = true }, air_speed = { move = true },
@@ -77,15 +81,24 @@ M.MAINS = {
 	legs = { "walk_speed", "jump_height" },
 	cloak = { "air_speed", "fall_damage_mul" },
 }
--- The rows of a piece at level 30 (shares of the base; points for life,
--- Attack and Defense). Every piece has the same budget: one main, two
--- secondaries, one minus that never goes away (Sergio, 14 Nov: «rinunci ad
--- una statistica»).
-M.MAIN, M.SECOND, M.MINUS = 0.25, 0.10, 0.08
+-- The rows of a piece at level 30, by the stat's group (shares of the base;
+-- points for life, Attack and Defense). Every piece has the same budget: one
+-- main, two secondaries, one minus worth a secondary (Sergio, 14 Nov:
+-- «rinunci ad una statistica»). Sergio, 17 Nov (plan
+-- https://claude.ai/artifact/7pJTt98FayH3kovFAMmhsd): the maximum of a stat
+-- is four times the one before and comes from many sources, none more than
+-- about a fifth: the level 12%, the Sigilli's points 20% and powers 8%, a
+-- piece's main 21%, the other pieces' secondaries 7% each, the family pair
+-- 4%, the Tempra 7% (not in the game yet).
+M.ROWS = {
+	power = { main = 0.60, second = 0.20, pair = 0.10 },
+	move = { main = 0.25, second = 0.08, pair = 0.05 },
+	less = { main = 0.25, second = 0.10, pair = 0.05 },
+}
 -- the caps on the pluses of a stat: from the pieces alone, and from
--- everything (pieces and Sigilli) over the base
-M.CAP_PIECES = { power = 0.60, move = 0.25 }
-M.CAP_ALL = { power = 0.70, move = 0.30 }
+-- everything (level, Sigilli and pieces) over the base
+M.CAP_PIECES = { power = 1.70, move = 0.70, less = 0.50 }
+M.CAP_ALL = { power = 2.80, move = 1.20, less = 0.60 }
 
 -- The signatures: one per piece, only that piece has it. They are stats of
 -- the robot (config.STATS, default 0) read by sim/game.lua. max: its value
@@ -115,11 +128,15 @@ M.SIGNS = {
 }
 -- how much of a signature's max at each grade (I: off)
 M.SIGN_TIERS = { 0, 0.5, 0.75, 1 }
+-- Ossidiana to light a signature up to each grade (lit, bright, full): the
+-- piece must have reached the step 10, 20, 30 (Sergio, 17 Nov: the Scaglie
+-- raise the numbers, the Ossidiana lights the powers). menu/wallet.lua
+M.SIGN_COSTS = { 160, 320, 640 }
 
 -- Families: for each slot { main, { two secondaries }, minus, signature }; art:
 -- the piece's picture once it is drawn (nil: the placeholder of
 -- menu/armory.lua); color: the family's color on the placeholders. pair: the
--- bonus of two gold pieces ({ stat, share }); style: the four gold pieces
+-- bonus of two gold pieces ({ stat }, worth ROWS[group].pair); style: the four gold pieces
 -- (new rules, next PR: text only for now).
 M.SETS = {
 	{ id = "fabbro", name = "FABBRO", style_name = "Equilibrio", color = "ffb703",
@@ -129,7 +146,7 @@ M.SETS = {
 			legs = { "walk_speed", { "defense", "attack" }, "air_speed", "sig_climb" },
 			cloak = { "fall_damage_mul", { "max_hp", "attack" }, "teleport_ticks", "sig_chute" },
 		},
-		pair = { stat = "max_hp", share = 0.03 },
+		pair = { stat = "max_hp" },
 		style = { a = "Mestiere: la prima cassa che apri ti dà un colpo in più di quell'arma, salto -5%",
 			b = "Mano pesante: la Lama spinge il 15% in più, salto -5%" } },
 	{ id = "corvo", name = "CORVO", style_name = "Aria", color = "9ec4e0",
@@ -139,7 +156,7 @@ M.SETS = {
 			legs = { "jump_height", { "air_speed", "walk_speed" }, "defense", "sig_soft" },
 			cloak = { "air_speed", { "jump_height", "attack" }, "defense", "sig_glide" },
 		},
-		pair = { stat = "air_speed", share = 0.04 },
+		pair = { stat = "air_speed" },
 		style = { a = "Picchiata: cadendo su un nemico da più di 150 px gli fai 10 di danno e lo spingi, vita -5",
 			b = "Volo radente: aria +10%, vita -5" } },
 	{ id = "fornace", name = "FORNACE", style_name = "Territorio", color = "f26419",
@@ -149,7 +166,7 @@ M.SETS = {
 			legs = { "walk_speed", { "attack", "blast_push" }, "max_hp", "sig_stomp" },
 			cloak = { "air_speed", { "attack", "fall_damage_mul" }, "knockback_mul", "sig_air_fire" },
 		},
-		pair = { stat = "blast_push", share = 0.03 },
+		pair = { stat = "blast_push" },
 		style = { a = "Terra rovente: le tue esplosioni lasciano braci per un turno, chi ci finisce il turno perde 5, salto -5%",
 			b = "Brace lunga: braci per due turni, 3 a turno, salto -5%" } },
 	{ id = "leviatano", name = "LEVIATANO", style_name = "Resistenza", color = "5cdbb8",
@@ -159,7 +176,7 @@ M.SETS = {
 			legs = { "walk_speed", { "defense", "knockback_mul" }, "jump_height", "sig_rooted" },
 			cloak = { "fall_damage_mul", { "defense", "knockback_mul" }, "air_speed", "sig_ballast" },
 		},
-		pair = { stat = "knockback_mul", share = 0.04 },
+		pair = { stat = "knockback_mul" },
 		style = { a = "Ancora: se finisci il turno senza muoverti prendi metà spinta fino al tuo turno, corsa -5%",
 			b = "Scaglie dure: il primo colpo di ogni turno nemico ti fa 3 in meno, corsa -5%" } },
 	{ id = "vuoto", name = "VUOTO", style_name = "Inganno", color = "c49cff",
@@ -169,7 +186,7 @@ M.SETS = {
 			legs = { "walk_speed", { "teleport_ticks", "jump_height" }, "defense", "sig_blink_run" },
 			cloak = { "air_speed", { "teleport_ticks", "walk_speed" }, "max_hp", "sig_far_orb" },
 		},
-		pair = { stat = "teleport_ticks", share = 0.05 },
+		pair = { stat = "teleport_ticks" },
 		style = { a = "Senza scia: gli avversari non vedono la tua mira né dove va il globo, vita -5",
 			b = "Passo nel vuoto: dopo un teletrasporto il primo colpo che prendi spinge la metà, vita -5" } },
 }
@@ -193,28 +210,40 @@ function M.tier(level)
 end
 
 -- How much of a row's level-30 value a piece has at that level: linear
--- with a jump at every step (Sergio, 14 Nov: «si deve sentire»): 20% at
--- level 1, then 70% of the rest spread evenly and 10% at each step 10, 20, 30.
+-- with a jump at every step (Sergio, 14 and 17 Nov: «i potenziamenti si
+-- devono sentire»): 10% at level 1, then 55% of the rest spread evenly and
+-- 15% at each step 10, 20, 30 (a step is worth about five levels).
 function M.growth(level)
 	level = math.max(1, math.min(M.LIVELLO_MAX, level or 1))
-	return 0.2 + 0.8 * (0.7 * (level - 1) / (M.LIVELLO_MAX - 1) + 0.1 * (M.tier(level) - 1))
+	return 0.1 + 0.9 * (0.55 * (level - 1) / (M.LIVELLO_MAX - 1) + 0.15 * (M.tier(level) - 1))
 end
 
 local function round(v) return math.floor(v * 1000 + 0.5) / 1000 end
 
+local function group(stat)
+	local info = M.STATS[stat]
+	return info.move and "move" or (info.less and "less" or "power")
+end
+M.group = group
+
 -- A piece's rows at a level: { { stat, good = share, row = "main" | "second" |
 -- "minus" | "sign" }, ... } (good > 0 helps, < 0 hurts; a signature's good is
--- its value, 0 below the step 10)
-function M.piece(set, slot, level)
+-- its value, 0 while it is off). The minus grows with the piece like the
+-- other rows: the more a piece gives, the more it takes. sign: how far the
+-- player has lit the signature (0..3, never past the piece's steps); nil: as
+-- far as the piece's steps go (the bots' pieces).
+function M.piece(set, slot, level, sign)
 	local f = M.BY_ID[set]
 	local p = f and f.pieces[slot]
 	if not p then return {} end
 	local k = M.growth(level)
-	local out = { { stat = p[1], good = round(M.MAIN * k), row = "main" } }
-	for _, s in ipairs(p[2]) do out[#out + 1] = { stat = s, good = round(M.SECOND * k), row = "second" } end
-	out[#out + 1] = { stat = p[3], good = -M.MINUS, row = "minus" }
+	local out = { { stat = p[1], good = round(M.ROWS[group(p[1])].main * k), row = "main" } }
+	for _, s in ipairs(p[2]) do out[#out + 1] = { stat = s, good = round(M.ROWS[group(s)].second * k), row = "second" } end
+	out[#out + 1] = { stat = p[3], good = -round(M.ROWS[group(p[3])].second * k), row = "minus" }
 	local sg = M.SIGNS[p[4]]
-	out[#out + 1] = { stat = p[4], good = round(sg.max * M.SIGN_TIERS[M.tier(level)]), row = "sign" }
+	local grade = M.tier(level)
+	if sign then grade = math.min(grade, sign + 1) end
+	out[#out + 1] = { stat = p[4], good = round(sg.max * M.SIGN_TIERS[grade]), row = "sign" }
 	return out
 end
 
@@ -232,12 +261,10 @@ function M.pairs_on(gear, levels)
 	return out
 end
 
-local function group(stat) return M.STATS[stat].move and "move" or "power" end
-
 -- The pieces' effect on each stat (shares), the pluses already capped at
 -- CAP_PIECES (the minuses are never capped), and the signatures' values:
--- { stat = good }
-function M.goods(gear, levels)
+-- { stat = good }. signs: the signatures lit ({ mask = 0..3 }), nil: by the levels
+function M.goods(gear, levels, signs)
 	local plus, minus, out = {}, {}, {}
 	local function add(stat, good)
 		if good >= 0 then plus[stat] = (plus[stat] or 0) + good else minus[stat] = (minus[stat] or 0) + good end
@@ -245,7 +272,7 @@ function M.goods(gear, levels)
 	for _, s in ipairs(M.SLOTS) do
 		local g = gear[s.id]
 		if g then
-			for _, e in ipairs(M.piece(g, s.id, levels and levels[s.id] or 1)) do
+			for _, e in ipairs(M.piece(g, s.id, levels and levels[s.id] or 1, signs and (signs[s.id] or 0))) do
 				if e.row == "sign" then
 					if e.good > 0 then out[e.stat] = (out[e.stat] or 0) + e.good end
 				else
@@ -256,7 +283,7 @@ function M.goods(gear, levels)
 	end
 	for _, id in ipairs(M.pairs_on(gear, levels)) do
 		local b = M.BY_ID[id].pair
-		add(b.stat, b.share)
+		add(b.stat, M.ROWS[group(b.stat)].pair)
 	end
 	for stat in pairs(M.STATS) do
 		local v = math.min(plus[stat] or 0, M.CAP_PIECES[group(stat)]) + (minus[stat] or 0)
@@ -269,8 +296,8 @@ end
 -- nothing. A plus never takes a stat past CAP_ALL from the base, unless the
 -- Sigilli alone already did (then the pieces add nothing to it). The
 -- signatures are added as they are.
-function M.apply(st, base, gear, levels)
-	for stat, good in pairs(M.goods(gear, levels)) do
+function M.apply(st, base, gear, levels, signs)
+	for stat, good in pairs(M.goods(gear, levels, signs)) do
 		local info, b, v = M.STATS[stat], base[stat], st[stat]
 		if not info then
 			st[stat] = (v or 0) + good

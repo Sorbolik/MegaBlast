@@ -10,8 +10,9 @@
 -- 1. fewer points than paths: POINTS_MAX points for 3 * PATH_MAX, so you finish
 --    two paths at most and give something up;
 -- 2. every point is worth a little (PER_POINT), the thresholds are worth a lot;
--- 3. with all points of a path its stat goes up 10% at most (there is a test):
---    the powers are sidegrades or situational;
+-- 3. all the points of a path give a fifth of the maximum of its stats
+--    (Sergio, 17 Nov: every stat comes from many sources, sim/gear.lua): 55
+--    points of power, 25% of movement; the first threshold's powers a little more;
 -- 4. free rebuild outside matches (sim/loadout.lua keeps the loadouts).
 --
 -- A chosen tree: { wings = 18, armor = 12, forge = 4, pick = { wings = { 2, 1, 1 }, ... } }
@@ -31,36 +32,43 @@ M.PATH_MAX = 25
 M.STEP = 5
 M.STEPS = M.PATH_MAX / M.STEP
 -- What the player's level gives by itself, on top of the points (Sergio, 14
--- Nov: «statistiche di base flat ad ogni livello»): at LEVEL_MAX these points
--- of Attack and life, 70% spread evenly over the levels and 6% at every
--- tenth level (10, 20, 30, 40, 50), so a round level is felt.
-M.LEVEL_BONUS = { attack = 10, max_hp = 10 }
+-- Nov: «statistiche di base flat ad ogni livello»; 17 Nov: four times as
+-- much, and a little of everything): at LEVEL_MAX these points of Attack,
+-- Defense and life and these shares of movement, 70% spread evenly over the
+-- levels and 6% at every tenth level (10, 20, 30, 40, 50), so a round level
+-- is felt.
+M.LEVEL_BONUS = { attack = 35, defense = 35, max_hp = 35 }
+M.LEVEL_MOVE = { walk_speed = 0.15, jump_height = 0.15, air_speed = 0.15 }
 function M.level_share(level)
 	level = math.max(1, math.min(M.LEVEL_MAX, level or 1))
 	return 0.7 * (level - 1) / (M.LEVEL_MAX - 1) + 0.06 * math.floor(level / 10)
 end
--- the points each stat gets at that level: { attack = 4.2, max_hp = 4.2 }
+-- the points each stat gets at that level: { attack = 4.2, max_hp = 4.2, ... }
 function M.level_bonus(level)
 	local k, out = M.level_share(level), {}
 	for stat, v in pairs(M.LEVEL_BONUS) do out[stat] = math.floor(v * k * 10 + 0.5) / 10 end
 	return out
 end
+-- the share of movement at that level: { walk_speed = 0.063, ... }
+function M.level_move(level)
+	local k, out = M.level_share(level), {}
+	for stat, v in pairs(M.LEVEL_MOVE) do out[stat] = math.floor(v * k * 1000 + 0.5) / 1000 end
+	return out
+end
 
--- what one point gives, as the screen writes it (0.4% or 0.4 hp, all paths)
-M.PER_POINT_SHOWN = 0.4
-
--- per_point: the path's stat, each point (add per point, or mul = 1 + share per point);
--- per_point_desc: what all the points give, %s is points * PER_POINT_SHOWN.
+-- per_point: the path's stats, each point (add per point, or mul = 1 + share per point);
+-- per_point_desc: what all the points give, %s is points * shown (what one
+-- point gives, as the screen writes it: 1% or 2.2 points).
 -- steps[k] = the two powers at threshold k * STEP. power_name: what the player
 -- card calls it (ui/tag_card.lua).
 M.PATHS = {
 	{ id = "wings", name = "ALI", desc = "Muoversi: salto, corsa, globi, Rampino",
-		per_point = { { stat = "jump_height", share = 0.004 }, { stat = "walk_speed", share = 0.004 },
-			{ stat = "air_speed", share = 0.004 } },
-		per_point_desc = "salto, corsa e aria +%s%%",
+		per_point = { { stat = "jump_height", share = 0.01 }, { stat = "walk_speed", share = 0.01 },
+			{ stat = "air_speed", share = 0.01 } },
+		per_point_desc = "salto, corsa e aria +%s%%", shown = 1,
 		steps = {
-			{ { name = "Passo di brace", desc = "Corsa +5%", effects = { { stat = "walk_speed", mul = 1.05 } } },
-				{ name = "Salto lungo", desc = "Salto +5%", effects = { { stat = "jump_height", mul = 1.05 } } } },
+			{ { name = "Passo di brace", desc = "Corsa +10%", effects = { { stat = "walk_speed", mul = 1.1 } } },
+				{ name = "Salto lungo", desc = "Salto +10%", effects = { { stat = "jump_height", mul = 1.1 } } } },
 			{ { name = "Balzo nel vuoto", desc = "Un salto in aria", power_name = "salto in aria",
 					effects = { { stat = "air_jumps", add = 1 } } },
 				{ name = "Ali di riserva", desc = "Un paracadute in più", power_name = "paracadute in più",
@@ -79,10 +87,10 @@ M.PATHS = {
 					effects = { { stat = "extra_hooks", add = 1 } } } },
 		} },
 	{ id = "armor", name = "CORAZZA", desc = "Resistere: vita, cadute, spinte, scudi",
-		per_point = { { stat = "max_hp", add = 0.4 } },
-		per_point_desc = "vita +%s",
+		per_point = { { stat = "max_hp", add = 2.2 }, { stat = "defense", add = 2.2 } },
+		per_point_desc = "vita e Difesa +%s", shown = 2.2,
 		steps = {
-			{ { name = "Crosta", desc = "Vita +5", effects = { { stat = "max_hp", add = 5 } } },
+			{ { name = "Crosta", desc = "Vita +20", effects = { { stat = "max_hp", add = 20 } } },
 				{ name = "Ossa di pietra", desc = "Danno da caduta -30%", effects = { { stat = "fall_damage_mul", mul = 0.7 } } } },
 			{ { name = "Radici", desc = "Spinta subita -20%", power_name = "radici",
 					effects = { { stat = "knockback_mul", mul = 0.8 } } },
@@ -102,8 +110,8 @@ M.PATHS = {
 					effects = { { stat = "shield_mul", mul = 2 } } } },
 		} },
 	{ id = "forge", name = "FUCINA", desc = "Colpire e ingannare: spinte, trappole, casse",
-		per_point = { { stat = "blast_push", share = 0.004 } },
-		per_point_desc = "spinta delle tue esplosioni +%s%%",
+		per_point = { { stat = "attack", add = 2.2 }, { stat = "blast_push", share = 0.022 } },
+		per_point_desc = "Attacco e spinta dei colpi +%s", shown = 2.2,
 		steps = {
 			{ { name = "Trappola larga", desc = "Raggio delle trappole +20%", effects = { { stat = "trap_radius", mul = 1.2 } } },
 				{ name = "Molla dura", desc = "I tuoi trampolini lanciano il 20% più in alto",

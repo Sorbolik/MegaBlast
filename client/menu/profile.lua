@@ -27,7 +27,9 @@ M.XP = { match = 40, points_share = 0.5, points_max = 120, win = 60, second = 30
 -- of a campaign level: the first time it's done, each new star, played again with nothing new
 M.XP_MISSION = { done = 40, star = 60, replay = 20 }
 -- experience to go from level n to n + 1: XP_BASE + XP_STEP * (n - 1)
-M.XP_BASE, M.XP_STEP = 150, 25
+-- (Sergio, 17 Nov: level 50 in about 240 hours of a strong player, who makes
+-- about 2,900 an hour; light at the start: level 2 after three matches)
+M.XP_BASE, M.XP_STEP = 600, 560
 M.LEVEL_MAX = skills.LEVEL_MAX
 
 -- The settings and their defaults (docs/impostazioni.md)
@@ -75,6 +77,11 @@ end
 -- levels of the pieces worn by a loadout: { mask = 1..30, ... } (sim/loadout.lua's stats)
 function M.levels(p, a)
 	return wallet.levels(p, a)
+end
+
+-- the stats the loadout a plays with: Sigilli, level, pieces and their signatures lit
+function M.stats(p, a, base)
+	return loadout.stats(base, a, wallet.levels(p, a), p.livello, wallet.signs(p, a))
 end
 
 -- The loadout that goes into a match: the pieces of the active loadout
@@ -235,7 +242,9 @@ function M.sample(p, near_level_up, campaign_done)
 	end
 	p.buoni = 2
 	p.prova.corvo_cloak, p.prova.fornace_chest = 2, 5
-	p.scaglie, p.ossidiana = 1240, 35
+	p.scaglie, p.ossidiana = 12400, 350
+	-- the helmet's signature lit at its first grade: the second can be lit
+	p.firme.corvo_mask = 1
 	p.statistiche["2v2"] = { partite = 48, vinte = 27, colpi = 310, a_segno = 190, danno = 14500, abbattuti = 60,
 		nel_vuoto = 23, globi = 140, colpo_lungo = 1180, casse = 35, cadute = 12, morti = 30, serie = 4,
 		armi = { missile = 5200, grenade = 3100, eagle = 2600, sword = 1800, mallet = 1300, shards = 500 } }
@@ -299,9 +308,12 @@ function M.mission(p, id, stars, made)
 	local x, lines = M.XP_MISSION, {}
 	if first then lines[#lines + 1] = { key = "done", xp = x.done } end
 	if new > 0 then lines[#lines + 1] = { key = "stars", n = new, xp = x.star * new } end
-	if #lines == 0 then lines[1] = { key = "replay", xp = x.replay } end
+	-- a replay counts only when it beats the record of points
+	local record = made ~= nil and before ~= nil and made > before
+	if #lines == 0 then lines[1] = { key = record and "replay" or "replay_plain", xp = record and x.replay or 0 } end
 	local gain = add_xp(p, lines)
 	gain.record_before = before
+	gain.record = record
 	return gain
 end
 
@@ -395,7 +407,7 @@ function M.endgame(p)
 	for _, f in ipairs(equip.SETS) do
 		for _, s in ipairs(equip.SLOTS) do
 			local k = wallet.key(f.id, s.id)
-			p.posseduti[k], p.pezzi[k], p.prova[k] = true, equip.LIVELLO_MAX, nil
+			p.posseduti[k], p.pezzi[k], p.prova[k], p.firme[k] = true, equip.LIVELLO_MAX, nil, #equip.SIGN_COSTS
 		end
 	end
 	for _, cap in ipairs(require("sim.campaign").CAPITOLI) do
