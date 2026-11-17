@@ -114,7 +114,7 @@ local function fit(p)
 	gui.set_text(p.text, text)
 	local w = math.max(MIN_W, math.min(MAX_W[p.kind] or MIN_W, TEXT_X + wide + END_PAD))
 	local room = w - TEXT_X - END_PAD
-	if wide > room then gui.set_scale(p.text, p.scale * (room / wide)) end
+	if wide > room then gui.set_scale(p.text, p.scale * (room / wide)); kit.check_small(p.text) end
 	if w ~= p.w then
 		kit.strip_width(p.strip, w)
 		p.w = w
