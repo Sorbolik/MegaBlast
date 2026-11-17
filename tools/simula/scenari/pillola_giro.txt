@@ -20,7 +20,7 @@ tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 1
 foto 01_sala
-tocca_centro 832 79                       # TORNA AI MENU · RESTI IN CODA
+tocca_bordo 208 54 basso destra                    # TORNA AI MENU · RESTI IN CODA
 aspetta_stato modo=menu coda=si 3
 aspetta 1
 foto 02_home

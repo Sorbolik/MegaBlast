@@ -56,6 +56,8 @@ local FEET = PED_TOP + 0.30 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
 local BAG = 46
+-- the experience bar of the profile plate, full
+local PLATE_BAR = 231
 
 -- the doors: x, y, width, piece, side, color of the writing, size of the name
 local DOORS = {
@@ -106,7 +108,7 @@ end
 local function set_sub(d, txt)
 	gui.set_text(d.sub, txt)
 	local b = d.p.box
-	kit.keep_in(d.sub, b, d.p.g, d.x, (b.y0 + b.y1) / 2 + 28, 13, d.anchor)
+	kit.keep_in(d.sub, b, d.p.g, d.x, (b.y0 + b.y1) / 2 + 28, kit.MIN_TEXT, d.anchor)
 end
 
 function M.new(color)
@@ -152,15 +154,16 @@ function M.new(color)
 	local tl = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = tl.node
 	h.top_left = tl
+	-- (Sergio, 17 Nov: bigger; the level stops before the shell's rivet)
 	local x, y = 22, 20
-	kit.strip(tl, "guscio", x + 30, y + 8, 286, 56)
-	kit.piece(tl, "tondo_oro", x + 36, y + 36, 72)
-	h.face_at = { x + 36, y + 36 }
-	h.who = kit.text(tl, T.player, x + 82, y + 34, 22, C.SAND)
-	h.level = kit.text(tl, "", x + 296, y + 33, 16, C.HOT, "end", 1)
-	kit.strip(tl, "riga_scura", x + 82, y + 42, 216, 14)
-	h.xp = kit.strip(tl, "barra_brace", x + 84, y + 44, 124, 10)
-	kit.zone(tl, h.buttons, x, y, 316, 72, "profilo")
+	kit.strip(tl, "guscio", x + 41, y + 11, 388, 76)
+	kit.piece(tl, "tondo_oro", x + 49, y + 49, 98)
+	h.face_at = { x + 49, y + 49 }
+	h.who = kit.text(tl, T.player, x + 111, y + 46, 30, C.SAND)
+	h.level = kit.text(tl, "", x + 385, y + 45, 20, C.HOT, "end", 1)
+	kit.strip(tl, "riga_scura", x + 111, y + 57, 274, 19)
+	h.xp = kit.strip(tl, "barra_brace", x + 114, y + 60, 168, 13)
+	kit.zone(tl, h.buttons, x, y, 430, 98, "profilo")
 
 	-- the doors at the sides of the apprentice, each with its shape
 	local left = kit.anchor(0, 360, gui.ANCHOR_LEFT)
@@ -348,9 +351,9 @@ function M.profile(h, p)
 	local profile = require "menu.profile"
 	gui.set_text(h.level, T.level:format(p.livello or 1))
 	local f = math.min(1, (p.xp or 0) / profile.xp_level(p.livello or 1))
-	kit.strip_width(h.xp, math.max(14, 182 * f))
+	kit.strip_width(h.xp, math.max(18, PLATE_BAR * f))
 	if h.face then gui.delete_node(h.face) end
-	h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 60, h.color, scoria.player)
+	h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 82, h.color, scoria.player)
 	-- the first chapter with a mission still to win
 	local stars = p.stelle or {}
 	local chapter
@@ -392,7 +395,7 @@ function M.wear(h, p)
 	pose_now(h)
 	if h.face then
 		gui.delete_node(h.face)
-		h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 60, h.color, scoria.player)
+		h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 82, h.color, scoria.player)
 	end
 end
 

@@ -516,7 +516,6 @@ local function open_wheel(self, is_open)
 	gui.set_enabled(self.btn_reread, is_open and self.mode == "local" and self.missione ~= nil and #self.vign_pages > 0)
 	gui.set_text(self.btn_aim_text, TM.aim_mode:format(string.upper(profile.setting(self.profilo, "mira"))))
 	gui.set_text(self.rotellina[2].testo, self.mode == "connecting" and TM.quit_search or TM.quit_match)
-	if self.sala then menu.lobby.wheel_open(self.sala, is_open) end
 end
 
 local function set_controls_visible(self, visible)
@@ -1193,6 +1192,9 @@ function CP.open_room(self, m)
 	if of < 1 or of > game.MAX_PLAYERS or type(m.vetrine) ~= "table" then return end
 	if not self.sala then
 		self.sala = menu.lobby.new(of, profile.GROUP_NAMES[self.coda] or "", self.btn_menu)
+		-- the room has its own ways out: the gear of the search goes away
+		open_wheel(self, false)
+		gui.set_enabled(self.btn_menu, false)
 	end
 	-- ours first, then the others in queue order
 	local list = { CP.vetrina.from_profile(self.profilo, common.you, nil, TM.in_queue) }
@@ -1581,6 +1583,18 @@ local function handle_event(self, e)
 	end
 end
 
+-- The match is over and its screen covers the field: the devils, their plates
+-- and Favilla go (Sergio, 17 Nov: nothing of the match behind the earnings).
+-- The next match puts them back
+function CP.clear_field(self)
+	for i = 1, game.MAX_PLAYERS do
+		scoria.set_enabled(self.robots[i].rig, false)
+		plate.set_enabled(self.robots[i].plate, false)
+	end
+	if self.favilla then CP.favilla.update(self.favilla, 0, 0, nil, nil) end
+	self.favilla_at = nil
+end
+
 -- The podium, with the results of the match just ended. Whoever plays on this
 -- phone (online their robot, locally the first) gains experience.
 local function open_podium(self)
@@ -1611,6 +1625,7 @@ local function open_podium(self)
 	for i, g in ipairs(giocatori) do g.vetrina = self.match_showcases and self.match_showcases[i] end
 	show_message(self, "", true)
 	set_controls_visible(self, false)
+	CP.clear_field(self)
 	-- first the screen, then the mode: if new breaks, no mode is left without a screen
 	self.schermata = { mod = menu.podium, obj = menu.podium.new(res, giocatori, me, gain, self.profilo, number) }
 	self.schermata.obj.tick = function(i) sound.play("#punto", { speed = 1 + 0.08 * i }) end
@@ -2093,28 +2108,24 @@ function CP.queue_update(self, dt)
 	end
 	q.t = q.t + dt
 	if q.bot_left then q.bot_left = math.max(0, q.bot_left - dt) end
-	-- the pill in the menus (and over the lineup, laid out like a header);
-	-- in a match the chip, right of the gear, hidden while the gear is open
-	local m, beside, on = self.mode, nil, self.mode ~= "connecting"
+	-- one pill everywhere (ui/pill.lua; Sergio, 17 Nov): under the thread where
+	-- there is one, in a battle right of the gear (hidden while the gear is open)
+	-- or at the edge where there is no gear
+	local m, kind, gear, on = self.mode, "top", nil, self.mode ~= "connecting"
 	if m == "menu" then
-		-- the home: under the thread, in the middle
-		beside = "low"
-	elseif m == "schermata" and self.schermata.mod ~= menu.podium then
-		-- every menu: the same, short, under the thread (Sergio, 15 Nov: «sempre
-		-- quella nuova e sempre nella posizione nuova sotto la linea»)
-		beside = "foot"
+		kind = "low"
+	elseif m == "schermata" then
+		-- (the podium's steps come down into the band: there it sits at the top)
+		kind = self.schermata.mod == menu.podium and "head" or "foot"
+	elseif m == "scelta" then
+		-- the lineup and the draft (hidden while the draft's gear is open)
+		kind, on = "foot", self.schier ~= nil or not gui.is_enabled(self.scelta.esci)
 	elseif m == "local" then
-		beside, on = self.btn_menu, not self.menu_open
-	elseif (m == "scelta") and not self.schier then
-		beside, on = self.scelta.rotellina, not gui.is_enabled(self.scelta.esci)
-	elseif m == "ended" or (m == "schermata" and self.schermata.mod == menu.podium) then
-		-- the end of the match and the podium: the chip at the edge (no gear there)
-		beside = true
+		gear, on = self.btn_menu, not self.menu_open
 	end
-	if on ~= p.on or beside ~= p.beside then
+	if on ~= p.on or kind ~= p.kind or gear ~= p.gear then
 		p.on = on
-		menu.pill.show(p, on, beside)
-		if on then menu.pill.raise(p) end
+		menu.pill.show(p, on, kind, gear)
 	end
 	if not on and not q.found then return end
 	local text, short
@@ -2138,7 +2149,7 @@ function CP.queue_update(self, dt)
 			short = TP.short_bots:format(math.ceil(q.bot_left))
 		end
 	end
-	menu.pill.set(p, text, short, q.found and (q.of or 0) or (q.n or 0), q.of or 0, q.found ~= nil)
+	menu.pill.set(p, text, short, q.found ~= nil)
 	menu.pill.update(p, dt)
 end
 
@@ -2190,7 +2201,7 @@ function CP.open_lineup(self, showcases, title, seconds_left)
 	end
 	self.schier = menu.lineup.new(showcases, title)
 	if seconds_left then self.schier.t = seconds_left end
-	-- the queue's pill above the lineup, in the middle of its top row
+	-- the queue's pill above the lineup
 	if self.pill then menu.pill.raise(self.pill) end
 end
 
@@ -2919,6 +2930,7 @@ local function open_level_end(self)
 	show_message(self, "", true)
 	score.goal(self.punti, nil)
 	self.vign:quiet()
+	CP.clear_field(self)
 	local won = r.esito == "fatta"
 	open_screen(self, menu.level_end, {
 		titolo = r.l.titolo, stelle = won and missions.stars(r) or { false, false, false },
@@ -3407,7 +3419,7 @@ local function update_bar(self)
 		end
 	end
 	-- the column's title, above the last item
-	if ogg_top then set_pos(self.items_title, tele.x, ogg_top + 13) end
+	if ogg_top then set_pos(self.items_title, tele.x, ogg_top + 16) end
 	if self.items_on ~= (ogg_top ~= nil) then
 		self.items_on = ogg_top ~= nil
 		gui.set_enabled(self.items_title, self.items_on)
@@ -4495,7 +4507,7 @@ function init(self)
 	-- the halo in your color behind what you hold
 	self.chosen_glow = glow(0, 0, SLOT * 1.7, WHITE)
 	gui.set_parent(self.chosen_glow, self.bar)
-	self.items_title = label(0, 0, TM.items, 0.55)
+	self.items_title = label(0, 0, TM.items, 1)
 	gui.set_color(self.items_title, ui.C.MINT)
 	gui.set_parent(self.items_title, self.bar)
 	gui.set_enabled(self.items_title, false)
@@ -4928,6 +4940,8 @@ local function quit_match(self)
 	end)
 end
 
+CP.leave_room = quit_match
+
 -- A finger (or the mouse) touches down at (x, y). id tells fingers apart.
 -- x, y arrive stretched over 1280 x 720 (as gui.pick_node wants them): for
 -- everything else they are brought back to game coordinates (ui/screen.lua)
@@ -4962,7 +4976,7 @@ local function pointer_down(self, id, px, py)
 		else
 			local hit = self.sala and menu.lobby.exit_hit(self.sala, px, py)
 			if hit == "esci" then
-				quit_match(self)
+				CP.leave_room(self)
 			elseif hit == "menu" then
 				CP.queue_to_menu(self)
 			end
@@ -5409,7 +5423,10 @@ function PAD.every_frame(self)
 	if self.menu_requested then
 		self.menu_requested = nil
 		local from_b = c.giu.b or (self.pad_b_t and self.clock - self.pad_b_t < 0.3)
-		if not from_b and (self.controls_visible and (self.mode == "local" or self.mode == "online") or self.mode == "connecting") then
+		if not from_b and self.mode == "connecting" and self.sala then
+			-- the waiting room has no gear: back leaves the queue, like its arrow
+			CP.leave_room(self)
+		elseif not from_b and (self.controls_visible and (self.mode == "local" or self.mode == "online") or self.mode == "connecting") then
 			open_wheel(self, not self.menu_open)
 		end
 	end
@@ -5500,6 +5517,14 @@ function PAD.event(self, e)
 		and (self.mode == "menu" or self.mode == "schermata" or self.mode == "ended") then
 		-- the controller's way to the pill: the gear button goes back to the room
 		CP.queue_open(self)
+	elseif self.mode == "connecting" and self.sala then
+		-- the waiting room: B is its arrow (out of the queue), the gear's button
+		-- goes around the menus staying in the queue
+		if e.ui == "indietro" then
+			CP.leave_room(self)
+		elseif command == "rotellina" then
+			CP.queue_to_menu(self)
+		end
 	elseif command == "rotellina" and (self.controls_visible or self.mode == "connecting") then
 		open_wheel(self, true)
 		ui.navigate(self.rotellina, "giu")

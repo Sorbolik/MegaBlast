@@ -1,0 +1,22 @@
+Image 1 is the PLAYER STATS screen of our game, a cartoon turn-based artillery game played by little red horned devils: in the middle there are nine record cards, and each card has a plain colored dot on its left. Those dots are placeholders: each one must become a small icon that says what the record is. Images 2 and 3 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 4 is one of the weapon icons of the game: copy its level of detail, it must read at 40 pixels.
+Draw a clean sheet on a fully transparent background with NINE separate small icons in a grid of 3 columns and 3 rows, well spaced, nothing touching, all the same visual size, each one a single bold shape that reads at 40 pixels, no disc and no frame behind them. In reading order:
+1) GRAVEDIGGER (enemies knocked into the void): a shovel stuck upright in a small mound of earth; main color light blue #8FDBFF, with ivory #F4E9D8 blade highlight.
+2) HUNTER (enemies knocked out): a small horned devil skull with two X eyes; main color red #FF5C5C with ivory horns.
+3) AIM (shots on target): a round target with two rings and a bold center dot, one small notch at the top; main color orange-sand #FFB054, center dot dark #2A1208.
+4) HAMMER (damage dealt): a short heavy blacksmith hammer tilted as if striking, with one small spark; main color ember #F26419 with a gold #FFB703 band.
+5) LIGHTNING (orbs earned): a round orb with a bold lightning bolt inside; main color violet #B08CFF, bolt ivory.
+6) FAR (longest shot): a dotted arc going from bottom left to bottom right that ends in a small flag; main color gold #FFC83D.
+7) LOOTER (crates opened): a small wooden crate with its lid lifted open; main color wood brown #CC8A54 with darker #8A5428 planks.
+8) WINNER (matches won): a simple trophy cup with two handles; main color mint green #5CDDA8 with a lighter band.
+9) FALLS (times you fell): a little horned devil tumbling upside down with two short speed lines above his feet; main color warm grey #7D7069 with ivory horns.
+At most five flat colors per icon. No letters, no numbers, no background, no shadows on the ground, no glow outside the ink.
+
+Riferimenti allegati in ordine
+R1: art/WB-069/riferimenti/R1_profilo_statistiche.png
+R2: art/WB-022/pezzo_piccoli.png
+R3: art/WB-067/medaglie_1.png
+R4: client/assets/weapons/grenade_icona.png
+
+ImageGen integrato con alpha. Foglio centrato su tela trasparente 1536×1536 a scala originale.
+Selezionato al secondo tentativo. Nel primo il grigio dominava sulla testa del martello. Nel foglio selezionato, la tacca di Mira è resa da due intagli attorno a una sporgenza e le linee di movimento di Cadute sono poco visibili sul fondo scuro.
+Palette e nero valutati a vista. L'antialias e le sfumature locali producono più valori RGB dei cinque colori piatti richiesti.

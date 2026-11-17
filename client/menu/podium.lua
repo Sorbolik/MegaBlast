@@ -121,7 +121,8 @@ local function stair(p, block, i, count, x, w, h, per_robot, mvp, team_mode)
 	-- the awards on the step, as many as fit
 	local cx, cy = x + 20, line + (h >= 200 and 60 or 40)
 	for j, t in ipairs(chips) do
-		local wide_chip = #t * 9 + 34
+		-- as wide as its plate really is, plus the air to the next one
+		local wide_chip = kit.label_width(t) + 4
 		if cx + wide_chip > x + w and cx > x + 20 then cx, cy = x + 20, cy + 28 end
 		if cy + 24 > M.FLOOR - 4 then break end
 		local c = holder(p, cx + wide_chip / 2, cy + 11)

@@ -43,7 +43,8 @@ function M.new(o, sound)
 	gui.set_visible(f.radice, false)
 	local g = { node = f.radice, ox = 0, oy = 720 }
 	-- the devil in the middle: he cheers if it went well
-	local pose = gui.new_box_node(vec(640, 720 - 636), vec(0, 0))
+	-- (his feet above the thread: Sergio, 17 Nov)
+	local pose = gui.new_box_node(vec(640, 720 - 598), vec(0, 0))
 	gui.set_visible(pose, false)
 	gui.set_parent(pose, f.radice)
 	f.figure = scoria.new(ui.C.SQUADRA[1], scoria.player)
@@ -109,12 +110,13 @@ function M.new(o, sound)
 	-- at the bottom left what else you can do, at the right the way on
 	f.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	f.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	local again = kit.plate(f.low, 60, 612, 170, 52, KC.PURPLE, { sk = 14, d = 6 })
-	kit.text(again.g, common.retry, 152, 646, 20, KC.SAND, "middle", 0.9)
+	-- (under the thread, like every other button of the band: Sergio, 17 Nov)
+	local again = kit.plate(f.low, 60, 640, 170, 52, KC.PURPLE, { sk = 14, d = 6 })
+	kit.text(again.g, common.retry, 152, 674, 20, KC.SAND, "middle", 0.9)
 	kit.button(f.buttons, again, "riprova")
 	if o.avanti then
-		local list = kit.plate(f.low, 250, 612, 190, 52, KC.PURPLE, { sk = 14, d = 6 })
-		kit.text(list.g, common.campaign, 352, 646, 20, KC.SAND, "middle", 0.9)
+		local list = kit.plate(f.low, 250, 640, 190, 52, KC.PURPLE, { sk = 14, d = 6 })
+		kit.text(list.g, common.campaign, 352, 674, 20, KC.SAND, "middle", 0.9)
 		kit.button(f.buttons, list, "indietro")
 	end
 	local label = o.avanti and common.next or common.campaign

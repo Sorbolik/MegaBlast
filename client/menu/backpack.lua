@@ -34,6 +34,8 @@ local common = require("lang.text").common
 local M = {}
 
 local KC = kit.C
+-- how wide the lines of the piece chosen are, in the band: they stop before the action
+local LINE_ROOM = 680
 -- the paths of the Sigilli: their color (Figma: movement ice, defense mint, arsenal ember)
 local PATH_COLOR = { wings = KC.STEEL, armor = KC.MINT, forge = KC.HOT_BOTTOM }
 
@@ -66,12 +68,29 @@ end
 
 -- INVENTARIO ------------------------------------------------------------------------
 
+-- A piece's effects ("+5% CORSA  +2 DIFESA ...") on lines `room` wide at the
+-- smallest size, cut between two effects; past the second line the rest stays on it
+local function effect_lines(g, effects, room)
+	local lines = {}
+	for e in (effects .. "  "):gmatch("(.-)  ") do
+		local try = lines[#lines] and (lines[#lines] .. "  " .. e)
+		local fits = #lines >= 2
+		if try and not fits then
+			local n = kit.text(g, try, 0, 0, kit.MIN_TEXT, nil, "start", 0.5)
+			fits = kit.width(n) <= room
+			gui.delete_node(n)
+		end
+		if try and fits then lines[#lines] = try else lines[#lines + 1] = e end
+	end
+	return lines
+end
+
 local function inventory(s)
 	local p = s.prof
 	local a = profile.active_loadout(p)
 	gear_ui.loadouts(s, s.left, 36, 96, p.is_active, "assetto", T.loadout)
 	gear_ui.devil(s, s.left, 250, 600, 360)
-	gear_ui.worn(s, s.left, a, 250, 600, 360, 36, { 206, 308, 410, 512 }, 72, s.slot)
+	gear_ui.worn(s, s.left, a, 250, 600, 360, 36, { 208, 310, 412, 514 }, 68, s.slot)
 
 	-- the stats: with the piece chosen on, what changes; VEDI TUTTE opens all of them
 	-- in the middle, in place of the pieces
@@ -106,8 +125,8 @@ local function inventory(s)
 		if #items == 0 then
 			kit.text(g, kit.upper(T.nothing), 730, 300, 18, KC.MUTE, "middle", 1)
 		end
-		-- under the pieces the families (big dots: a finger hits them)
-		gear_ui.families(s, g, 1006 - 5 * 50, 558, s.family)
+		-- under the pieces the families, each dot with its name
+		gear_ui.families(s, g, 723, 558, s.family)
 		gear_ui.stats_short(s, s.rt, 1040, 106, 210, a, a2)
 	end
 
@@ -116,10 +135,25 @@ local function inventory(s)
 		local set, slot = s.sel[1], s.sel[2]
 		local level = wallet.level(p, set, slot)
 		gear_ui.slot(s.low, 140, 630, 64, { set = set, slot = slot })
-		kit.text(s.low, gear_ui.name(set, slot), 220, 656, 28, KC.SAND)
+		-- its name, then its grade and its effects on two short lines that stop
+		-- before the action and its line (Sergio, 17 Nov); in the queue, before
+		-- the pill, the effects alone on two lines (the grade is on the slot's corner)
+		kit.text(s.low, gear_ui.name(set, slot), 220, 648, 26, KC.SAND)
 		local tier = equip.tier(level)
-		kit.foot_text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier], gear_ui.effects(set, slot, level))),
-			220, 688, 18, KC.MUTE, 720, 0.5)
+		local effects = kit.upper(gear_ui.effects(set, slot, level))
+		if kit.in_queue then
+			local room = kit.PILL_X0 - 16 - (220 + screen.x0)
+			local lines = effect_lines(s.low, effects, room)
+			for i = 1, math.min(2, #lines) do
+				local n = kit.text(s.low, lines[i], 220, 650 + i * 22, kit.MIN_TEXT, KC.MUTE, "start", 0.5)
+				local wide = kit.width(n)
+				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
+			end
+		else
+			local grade = kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier]))
+			kit.foot_text(s.low, grade, 220, 672, 18, KC.MUTE, LINE_ROOM, 0.5)
+			kit.foot_text(s.low, effects, 220, 696, 18, KC.MUTE, LINE_ROOM, 0.5)
+		end
 		local worn = a.gear[slot] == set
 		s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { size = 44, off = worn, sub = worn and kit.upper(T.worn) or nil })
 		kit.button(s.buttons, s.action, "indossa", { main = true, spento = worn })

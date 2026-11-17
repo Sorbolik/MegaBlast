@@ -12,7 +12,7 @@
 --   gear_ui.sheet(s, g, a, a2, back)                    -- all the stats, big, in the middle
 --   gear_ui.loadouts(s, g, x, y, active, prefix, label) -- the three loadouts
 --   gear_ui.chips(s, g, x, y, list, active)             -- a row of filters
---   gear_ui.families(s, g, x, y, active)                -- the families' dots
+--   gear_ui.families(s, g, cx, y, active)               -- the families: dots with their names
 --   gear_ui.effects(set, slot, level)                   -- "+4% IN ARIA  −2% VITA"
 --   gear_ui.devil(s, g, cx, feet, h)                    -- the apprentice, s.figure
 
@@ -137,7 +137,8 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 		kit.line(g, sx, sy, sx + 18, sy, 2, lit)
 		kit.line(g, sx + 18, sy, px, py, 2, lit)
 		kit.pic(g, "chiodo", px - 8, py - 8, 16, 16)
-		kit.text(g, sl.name, x, y - 9, 18, KC.SAND, "start", 1)
+		-- the label nearer its own slot than the one above (Sergio, 17 Nov)
+		kit.text(g, sl.name, x, y - 7, 18, KC.SAND, "start", 1)
 		M.slot(g, x, y, size, { set = set, slot = sl.id, level = level, sel = sel == sl.id })
 		kit.zone(g, s.buttons, x - 4, y - 24, size + 30, size + 28, "posto:" .. sl.id)
 	end
@@ -369,7 +370,8 @@ end
 -- changes (a2), or with nothing chosen the rows your pieces move from the base,
 -- at most M.SHORT_ROWS; under it VEDI TUTTE opens all of them in one screen
 -- (M.sheet, "foglio"). The same column on every screen where the gear changes
--- (Sergio, 15 Nov 22:48). Returns the bottom of the button
+-- (Sergio, 15 Nov 22:48)
+M.SEE_ALL_Y = 540
 function M.stats_short(s, g, x, y, w, a, a2)
 	local p = s.prof
 	local base = game.base_stats()
@@ -379,12 +381,13 @@ function M.stats_short(s, g, x, y, w, a, a2)
 	for _, st in ipairs(M.STATS) do
 		if ref[st[1]] ~= now[st[1]] and #rows < M.SHORT_ROWS then rows[#rows + 1] = st end
 	end
-	local tall = M.stats(s, g, x, y, w, a, a2, { rows = rows, empty = a2 and T.no_change or T.all_base, legend = true })
-	local bottom = y + tall + M.STAT_PAD + 14
-	local b = kit.card(g, x - M.STAT_PAD, bottom, w + 2 * M.STAT_PAD, 56, KC.ROSE)
-	kit.text(b.g, T.see_all, x + w / 2, bottom + 36, 20, KC.SAND, "middle", 0.5)
+	M.stats(s, g, x, y, w, a, a2, { rows = rows, empty = a2 and T.no_change or T.all_base, legend = true })
+	-- always in the same place, at the bottom of the column (Sergio, 17 Nov: a
+	-- button never moves with how many rows there are)
+	local top = M.SEE_ALL_Y
+	local b = kit.card(g, x - M.STAT_PAD, top, w + 2 * M.STAT_PAD, 56, KC.ROSE)
+	kit.text(b.g, T.see_all, x + w / 2, top + 36, 20, KC.SAND, "middle", 0.5)
 	kit.button(s.buttons, b, "foglio")
-	return bottom + 56
 end
 
 -- All the stats in one screen (Sergio, 15 Nov: no pages), big, in two columns
@@ -436,15 +439,28 @@ function M.chips(s, g, x, y, list, active)
 	return cx
 end
 
--- The families as dots of their color from (x, y): tapping one shows only its
+-- The families as dots of their color with their name (Sergio, 17 Nov: a dot
+-- alone says nothing), one row centered on cx: tapping one shows only its
 -- pieces ("famiglia:<id>"), again all of them; the chosen one has a ring
-function M.families(s, g, x, y, active)
+local FAMILY_DOT, FAMILY_GAP, FAMILY_AIR = 34, 6, 16
+function M.families(s, g, cx, y, active)
+	local names, total = {}, -FAMILY_AIR
 	for i, f in ipairs(equip.SETS) do
-		local cx, cy = x + (i - 1) * 50 + 24, y + 24
-		if active == f.id then kit.dot(g, cx, cy, 44, KC.HOT) end
-		kit.dot(g, cx, cy, 34, KC.INK)
-		kit.dot(g, cx, cy, 28, kit.hex(f.color))
-		kit.zone(g, s.buttons, cx - 25, cy - 30, 50, 60, "famiglia:" .. f.id)
+		names[i] = kit.text(g, f.name, 0, y + 30, 16, active == f.id and KC.HOT or KC.SAND, "start", 0.3)
+		total = total + FAMILY_DOT + FAMILY_GAP + kit.width(names[i]) + FAMILY_AIR
+	end
+	local x = cx - total / 2
+	for i, f in ipairs(equip.SETS) do
+		local w = FAMILY_DOT + FAMILY_GAP + kit.width(names[i])
+		local dx, dy = x + FAMILY_DOT / 2, y + 24
+		if active == f.id then kit.dot(g, dx, dy, 44, KC.HOT) end
+		kit.dot(g, dx, dy, FAMILY_DOT, KC.INK)
+		kit.dot(g, dx, dy, 28, kit.hex(f.color))
+		local pos = gui.get_position(names[i])
+		pos.x = x + FAMILY_DOT + FAMILY_GAP - g.ox
+		gui.set_position(names[i], pos)
+		kit.zone(g, s.buttons, x - FAMILY_AIR / 2, dy - 30, w + FAMILY_AIR, 60, "famiglia:" .. f.id)
+		x = x + w + FAMILY_AIR
 	end
 end
 

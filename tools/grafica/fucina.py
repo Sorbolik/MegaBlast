@@ -86,7 +86,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara") and not nome.startswith("primario"):    # (sfumati, e il primario: la scritta la mette kit.action)
+    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara") and not nome.startswith("primario"):    # (sfumati, e il primario: il suo spazio e' misurato, SPAZI_PRIMARIO)
         SPAZI[nome] = spazio(im)
 
 
@@ -190,7 +190,8 @@ def fai_piccoli():
     for nome, a in zip(["stella", "stella_spenta", "medaglia", "ingranaggio", "corona", "freccia"], segni):
         intero(nome, a, 128)
     barre = griglia(os.path.join(p, "pezzo_barre_1.png"), [1, 1, 1, 1, 1], 600)
-    tre("guscio", barre[0], 64, 0.12)
+    # (alto il doppio: la targa del profilo della home lo disegna a 76, Sergio 17 nov)
+    tre("guscio", barre[0], 128, 0.12)
     tre("barra_brace", barre[1], 44, 0.1)
     tre("barra_gelo", barre[2], 44, 0.1)
     tre("barra_chiara", neutro(barre[1]), 44, 0.1)
@@ -346,9 +347,18 @@ MENU_INTERI = [
 SPAZI_MISURATI = {
     "porta_campagna": (240, 50, 189, 51),
     "porta_allenamento": (225, 44, 166, 37),
-    "porta_eventi": (185, 52, 236, 58),
+    "porta_eventi": (185, 52, 252, 58),   # (a destra 12 px dal medaglione, come ARMERIA)
     "porta_armeria": (120, 50, 225, 56),
     "gioca_sigillo": (180, 28, 149, 48),
+}
+# dove si scrive sul pulsante primario (la gemma di WB-054): la faccia piena davanti, senza
+# la fiamma a sinistra e i cristalli a destra; sullo spento solo la parte grigia, prima del
+# ghiaccio (Sergio, 17 nov: la scritta mai sopra i disegni del tasto). Misurati con spazio()
+# sul disegno intero, con la tinta presa dalla faccia.
+SPAZI_PRIMARIO = {
+    "primario_acceso": (99, 79, 79, 48),
+    "primario_premuto": (71, 62, 78, 33),
+    "primario_spento": (59, 78, 178, 39),
 }
 # i pezzi lunghi in tre parti (nome, file, altezza, capo, cartella): si allunga solo il mezzo
 MENU_TRE = [
@@ -478,6 +488,7 @@ def fai_menu():
         for stato in ("acceso", "premuto", "spento"):
             r = ritaglio("WB-054", "primario_%s_%s" % (scelta, stato))
             tre("primario_" + stato, r, round(200 * r.shape[0] / acceso_h), 0.3)
+            SPAZI["primario_" + stato] = SPAZI_PRIMARIO["primario_" + stato]
     # le icone dei pezzi (WB-043): base e forgiata per famiglia e posto; il posto vuoto
     for f in FAMIGLIE:
         for p in POSTI:
@@ -593,6 +604,41 @@ def fai_profilo():
     m = griglia_trasparente(os.path.join(p, "medaglie_1.png"), [4], 3000)
     for nome, a in zip(["medaglia_bronzo", "medaglia_argento", "medaglia_oro", "medaglia_vuota"], m):
         intero(nome, a, 80)
+    fai_record()
+
+
+# le icone dei record, nell'ordine del foglio (gli id di client/menu/milestones.lua)
+RECORD = ["nel_vuoto", "abbattuti", "a_segno", "danno", "globi", "colpo_lungo", "casse", "vinte", "cadute"]
+LATO_RECORD = 96
+
+
+def fai_record():
+    """Le nove icone dei record (WB-069, foglio 1): una griglia 3 x 3. Ogni icona
+    e' fatta di piu' pezzi staccati (la scintilla del martello, i punti dell'arco),
+    quindi si taglia a caselle e non a pezzi; ognuna va al centro di un quadrato,
+    cosi' nel gioco hanno tutte lo stesso ingombro. Delle cadute resta solo il
+    diavoletto: le lineette di movimento sono nere e sul ferro scuro non si vedono."""
+    a = trasparente(os.path.join(ART, "WB-069", "icone_record_1.png"))
+    pieno = a[..., 3] > 40
+    ys, xs = np.where(pieno)
+    y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+    for i, nome in enumerate(RECORD):
+        r, c = divmod(i, 3)
+        cy0, cy1 = y0 + (y1 - y0) * r // 3, y0 + (y1 - y0) * (r + 1) // 3
+        cx0, cx1 = x0 + (x1 - x0) * c // 3, x0 + (x1 - x0) * (c + 1) // 3
+        casella = a[cy0:cy1, cx0:cx1].copy()
+        if nome == "cadute":
+            lab, n = ndi.label(casella[..., 3] > 40)
+            grande = 1 + int(np.argmax(ndi.sum(casella[..., 3] > 40, lab, range(1, n + 1))))
+            casella[lab != grande] = 0
+        ky, kx = np.where(casella[..., 3] > 40)
+        im = Image.fromarray(casella[ky.min():ky.max() + 1, kx.min():kx.max() + 1], "RGBA")
+        k = (LATO_RECORD - 4) / max(im.size)
+        im = im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)
+        tela = Image.new("RGBA", (LATO_RECORD, LATO_RECORD), (0, 0, 0, 0))
+        tela.alpha_composite(im, ((LATO_RECORD - im.size[0]) // 2, (LATO_RECORD - im.size[1]) // 2))
+        salva(tela, "record_" + nome)
+        MISURE["record_" + nome] = (LATO_RECORD, LATO_RECORD)
 
 
 def fai_atlante():

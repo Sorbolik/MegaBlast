@@ -27,7 +27,7 @@ check(#above == 1 and above[1].id == "torneo-1", "the Torneo counts for the 2v2 
 local cc = events.with_queue(NOW)
 check(#cc == 1 and cc[1].id == "maglio-1", "the Maglio has its own queue")
 check(events.home_line(NOW) == "2 in corso", "home line with two events")
-check(events.home_line(NOW + 100000) == "il prossimo tra 20h 13m", "home line with no running events: " .. events.home_line(NOW + 100000))
+check(events.home_line(NOW + 100000) == "tra 20h 13m", "home line with no running events: " .. events.home_line(NOW + 100000))
 check(events.duration(90000) == "1g 1h" and events.duration(3000) == "50m" and events.duration(7200) == "2h", "durate")
 check(events.when(events.lista[2], NOW) == "finisce tra 2h", "when it ends")
 local c = events.what_changes(events.lista[1], { punch = "PUGNO", mallet = "MAGLIO" })
