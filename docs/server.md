@@ -341,7 +341,7 @@ Primo passo dei profili ospite (piano https://claude.ai/artifact/UTmrfNCuWCLBgDt
 a fine allenamento il telefono manda la ricetta della partita (`client/sim/replay.lua`,
 `M.encode`: una tabella Lua coi numeri a 17 cifre) con `POST /ricetta?p=<telefono>&j=<Lua>`
 (`client/main/recipe_check.lua`, senza aspettare la risposta). Il server la rigioca in un
-processo `luajit` a parte (`server/verify.lua`, una ricetta alla volta, al massimo 60 s,
+processo `luajit` a parte (`server/verify.lua`, con la priorità più bassa, una ricetta alla volta: un'altra che arriva intanto riceve 503 e non entra in coda; al massimo 60 s,
 4 MB), due volte: coi tasti dei bot scritti nella ricetta (torna la fisica?) e coi bot che
 ripensano (tornano anche i bot?), e scrive nel log per esempio
 «ricetta da Android SM-A525F (LuaJIT 2.1.0-beta3): fisica: torna, bot: torna, 21600 tick

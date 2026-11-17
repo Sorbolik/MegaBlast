@@ -36,7 +36,8 @@ const (
 	recipeTimeout = 60 * time.Second // a replay longer than this is stopped
 )
 
-// one replay at a time, so the matches online never wait for the checks
+// one replay at a time (another one arriving meanwhile gets 503 and is not
+// queued), at the lowest priority, so the matches online never wait for it
 var recipeSlot = make(chan struct{}, 1)
 
 // RecipeCheck is verify.lua's answer.
@@ -63,11 +64,17 @@ func checkRecipe(ctx context.Context, text []byte) (RecipeCheck, error) {
 	cmd := exec.CommandContext(ctx, LuaJIT, filepath.Join(luaDir, "verify.lua"), luaDir)
 	cmd.Stdin = bytes.NewReader(text)
 	cmd.Stderr = os.Stderr
-	out, err := cmd.Output()
-	if err != nil {
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Start(); err != nil {
 		return c, fmt.Errorf("luajit: %w", err)
 	}
-	if err := json.Unmarshal(out, &c); err != nil {
+	// the lowest priority: the cores go to the live matches first
+	lowPriority(cmd.Process.Pid)
+	if err := cmd.Wait(); err != nil {
+		return c, fmt.Errorf("luajit: %w", err)
+	}
+	if err := json.Unmarshal(out.Bytes(), &c); err != nil {
 		return c, fmt.Errorf("risposta di verify.lua: %w", err)
 	}
 	return c, nil
