@@ -7,7 +7,7 @@
 name: Gioco web sul VPS
 on:
   push:
-    branches: [main, claude/project-thread-37oz8j]  # PROVA: il ramo si toglie prima del merge
+    branches: [main]
     paths: ['client/**', 'tools/web/**', 'tools/simula/senza_estensioni.py', 'tools/vps/web.sh']
   workflow_dispatch:
 permissions:
