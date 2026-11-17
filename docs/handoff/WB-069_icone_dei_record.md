@@ -77,4 +77,12 @@ FULMINE, LONTANO, PREDONE, VINCITORE, e le cadute).
 
 ## Consegna di Codex
 
+- `art/WB-069/icone_record_1.png` e `icone_record_1.txt` · 1 tentativo.
+- `art/WB-069/icone_record_2.png` e `icone_record_2.txt` · 2 tentativi.
+- `art/WB-069/icone_record_3.png` e `icone_record_3.txt` · 2 tentativi.
+
+Generati con ImageGen integrato, prompt integrale e riferimenti R1–R4 nell'ordine della scheda. I tre PNG hanno alpha e misurano 1536×1536 px. Il generatore ha restituito tele più piccole, centrate su una tela trasparente senza ridimensionare le figure.
+
+Verificati la griglia 3 × 3, l'ordine, le sagome separate, l'assenza di testo e di cornici, i colori dominanti e la leggibilità dei nove soggetti in anteprima a 40 px su #2B2530. Nei primi tentativi dei fogli 2 e 3 il grigio dominava sulla testa del martello. Nei fogli scelti le linee di movimento di Cadute sono poco visibili sul ferro scuro. Nel foglio 3 la tacca di Mira è resa da due intagli. I contorni appaiono neri e spessi a vista. L'antialias e le sfumature locali producono più valori RGB dei cinque colori piatti richiesti. I valori esatti del nero e della palette non sono stati certificati. Ricalco e resa nel gioco da verificare.
+
 ## Resoconto di Claude
