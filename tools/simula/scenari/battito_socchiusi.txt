@@ -1,0 +1,11 @@
+# Il battito degli occhi (WB-040), a metà: palpebre socchiuse, senza elmo, fermo
+# e mirando (la faccia della mira ha le sue). Da vicino: --scala 2.
+imposta prova_battito half
+imposta prova_vignette no
+imposta prova_missione il_fabbro
+
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 3
+zoom 01_fermo_socchiusi 4
+mira 200 160 0.6 02_mira_socchiusi 4
+aspetta 2
