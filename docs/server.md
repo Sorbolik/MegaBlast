@@ -345,8 +345,10 @@ che tocca `server/` o `client/sim/` il workflow **Server sul VPS** lo ricompila,
 lo riavvia (lo spegnimento aspetta la fine delle partite, `KillMode=mixed` lascia
 vivi i processi `luajit` fino ad allora) e controlla `/health`. Script, segreti e
 variabili in [tools/vps/README.md](../tools/vps/README.md). L'APK cerca il server
-nella variabile `SERVER_URL` di GitHub; editor, simulatore e build web restano
-su `127.0.0.1`.
+nella variabile `SERVER_URL` di GitHub; editor, simulatore e build web del PC
+restano su `127.0.0.1`. Allo stesso indirizzo Caddy serve anche il gioco web
+(workflow **Gioco web sul VPS**, a ogni merge che tocca il client): chi gioca dal
+browser, come Gabri, apre `http://49.13.44.34/`.
 
 ## Crescere
 

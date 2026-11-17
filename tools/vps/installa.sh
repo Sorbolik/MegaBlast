@@ -26,7 +26,7 @@ apt-get -y -q upgrade
 
 echo "== utente $UTENTE (senza accesso, senza root)"
 id "$UTENTE" >/dev/null 2>&1 || useradd --system --home-dir "$DATI" --shell /usr/sbin/nologin "$UTENTE"
-install -d -o root -g root -m 755 "$CASA"
+install -d -o root -g root -m 755 "$CASA" "$CASA/web"
 install -d -o "$UTENTE" -g "$UTENTE" -m 750 "$DATI"
 install -d -m 755 /etc/megablast
 
@@ -85,7 +85,12 @@ cat > /etc/caddy/Caddyfile <<CADDY
 # tools/vps/installa.sh: tutto al server di MegaBlast, WebSocket compresa
 $INDIRIZZO {
 	encode gzip
-	reverse_proxy 127.0.0.1:8080
+	# il server: WebSocket, controlli, calendario degli eventi
+	@server path /ws /health /stats /eventi
+	reverse_proxy @server 127.0.0.1:8080
+	# il resto è il gioco web (tools/vps/web.sh; index.html = megablast.html)
+	root * $CASA/web
+	file_server
 }
 CADDY
 systemctl enable caddy >/dev/null
@@ -155,6 +160,8 @@ UNIT
 systemctl daemon-reload
 systemctl enable --now megablast-copia.timer >/dev/null
 
+# aggiorna.sh rilancia questo script quando cambia
+sha256sum "$0" | cut -d" " -f1 > /etc/megablast/installa.sha
 echo "== fatto"
 if [ -x "$CASA/megablast-server" ]; then
   systemctl --no-pager --lines=3 status megablast.service || true

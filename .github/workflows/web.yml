@@ -1,0 +1,67 @@
+# Gioco web sul VPS (per Gabri e per chi prova dal browser): a ogni merge su main
+# che tocca il client costruisce la build HTML5 (tools/web/build.sh) collegata
+# al server del VPS (variabile SERVER_URL) e la porta in /opt/megablast/web
+# (tools/vps/web.sh), dove Caddy la serve all'indirizzo del server (http://IP/).
+# A mano: Actions > Gioco web sul VPS > Run workflow (anche da un ramo).
+# Stessi segreto e variabili di "Server sul VPS" (tools/vps/README.md).
+name: Gioco web sul VPS
+on:
+  push:
+    branches: [main, claude/project-thread-37oz8j]  # PROVA: il ramo si toglie prima del merge
+    paths: ['client/**', 'tools/web/**', 'tools/simula/senza_estensioni.py', 'tools/vps/web.sh']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: web-vps
+  cancel-in-progress: true
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VPS_HOST: ${{ vars.VPS_HOST }}
+      HA_CHIAVE: ${{ secrets.VPS_SSH_KEY != '' }}
+    steps:
+      - name: Segreto e host
+        id: pronto
+        run: |
+          if [ "$HA_CHIAVE" != true ] || [ -z "$VPS_HOST" ]; then
+            echo "::notice::Manca il segreto VPS_SSH_KEY o la variabile VPS_HOST: niente da fare"
+            echo "si=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "si=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.pronto.outputs.si == 'true'
+      - uses: actions/setup-java@v4
+        if: steps.pronto.outputs.si == 'true'
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Build web
+        if: steps.pronto.outputs.si == 'true'
+        env:
+          SERVER_URL: ${{ vars.SERVER_URL }}
+          MEGABLAST_CACHE: ${{ runner.temp }}/cache
+        run: |
+          mkdir -p "$MEGABLAST_CACHE"
+          curl -fsSL --retry 4 -o "$MEGABLAST_CACHE/bob.jar" https://github.com/defold/defold/releases/download/1.14.0/bob.jar
+          JAVA="$(command -v java)" bash tools/web/build.sh
+          ls -l simulazione/web simulazione/web/archive
+      - name: Porta sul VPS
+        if: steps.pronto.outputs.si == 'true'
+        env:
+          CHIAVE: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          install -m 600 /dev/null "$RUNNER_TEMP/chiave"
+          printf '%s\n' "$CHIAVE" > "$RUNNER_TEMP/chiave"
+          bash tools/vps/web.sh "root@$VPS_HOST" "$RUNNER_TEMP/chiave"
+          rm -f "$RUNNER_TEMP/chiave"
+      - name: Controlla la pagina
+        if: steps.pronto.outputs.si == 'true'
+        run: |
+          curl -fsS "http://$VPS_HOST/" | grep -q dmloader.js
+          curl -fsS -o /dev/null "http://$VPS_HOST/dmloader.js"
+          curl -fsS "http://$VPS_HOST/eventi" | head -c 200; echo
+          echo "OK: http://$VPS_HOST/"
