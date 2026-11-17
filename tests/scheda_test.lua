@@ -152,6 +152,19 @@ do
 	check(not profile.new_player(p) and p.scaglie == profile.TEST_COINS, "end game: the campaign done and the wallet full")
 	local again = profile.endgame(p)
 	check(again.buoni == profile.TEST_VOUCHERS, "end game: filling it again tops the vouchers up")
+	-- every resource and no upgrade (Sergio, 17 Nov)
+	local r = profile.resources(profile.new())
+	local none = true
+	for _, f in ipairs(equip.SETS) do
+		for _, s in ipairs(equip.SLOTS) do
+			if not wallet.owns(r, f.id, s.id) or wallet.level(r, f.id, s.id) ~= 1 or wallet.sign(r, f.id, s.id) ~= 0 then none = false end
+		end
+	end
+	check(none and r.scaglie == profile.TEST_COINS and r.ossidiana == profile.TEST_COINS,
+		"resources: the wallet full, every piece owned at level 1, no signature lit")
+	r.pezzi[wallet.key("corvo", "mask")] = 7
+	profile.resources(r)
+	check(wallet.level(r, "corvo", "mask") == 7, "resources: a load keeps what was upgraded")
 end
 
 if failures > 0 then

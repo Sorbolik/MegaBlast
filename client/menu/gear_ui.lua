@@ -286,8 +286,8 @@ function M.stats(s, g, x, y, w, a, a2, o)
 	o = o or {}
 	local p = s.prof
 	local base = game.base_stats()
-	local now = loadout.stats(base, a, wallet.levels(p, a), p.livello)
-	local after = a2 and loadout.stats(base, a2, (a2.levels or wallet.levels(p, a2)), p.livello)
+	local now = loadout.stats(base, a, wallet.levels(p, a), p.livello, wallet.signs(p, a))
+	local after = a2 and loadout.stats(base, a2, (a2.levels or wallet.levels(p, a2)), p.livello, wallet.signs(p, a2))
 	local parts = parts_of(p, base, a, now)
 	local order = {}
 	if o.rows then
@@ -375,8 +375,8 @@ M.SEE_ALL_Y = 540
 function M.stats_short(s, g, x, y, w, a, a2)
 	local p = s.prof
 	local base = game.base_stats()
-	local now = loadout.stats(base, a, wallet.levels(p, a), p.livello)
-	local ref = a2 and loadout.stats(base, a2, (a2.levels or wallet.levels(p, a2)), p.livello) or base
+	local now = loadout.stats(base, a, wallet.levels(p, a), p.livello, wallet.signs(p, a))
+	local ref = a2 and loadout.stats(base, a2, (a2.levels or wallet.levels(p, a2)), p.livello, wallet.signs(p, a2)) or base
 	local rows = {}
 	for _, st in ipairs(M.STATS) do
 		if ref[st[1]] ~= now[st[1]] and #rows < M.SHORT_ROWS then rows[#rows + 1] = st end

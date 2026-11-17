@@ -43,18 +43,20 @@ local function apply(st, mods)
 end
 
 -- Final stats. base: the sim's game.base_stats(). levels: levels of the worn
--- pieces ({ mask = 1..30, ... }, missing: 1). level: the player's level (nil:
--- 1). First the Sigilli, then the pieces with their caps (sim/gear.lua), then
--- what the level gives by itself (sim/skills.lua). Integer values (hp,
+-- pieces ({ mask = 1..30, ... }, missing: 1), signs: their signatures lit
+-- ({ mask = 0..3 }, nil: as far as the levels go). level: the player's level (nil:
+-- 1). First the Sigilli, then what the level gives by itself (sim/skills.lua),
+-- then the pieces, which stop at the caps over the base (sim/gear.lua). Integer values (hp,
 -- ticks) stay integers.
-function M.stats(base, a, levels, level)
+function M.stats(base, a, levels, level, signs)
 	local st = {}
 	for k, v in pairs(base) do st[k] = v end
 	local mods = {}
 	skills.mods(a.tree or {}, mods)
 	apply(st, mods)
-	equip.apply(st, base, a.gear or {}, levels)
 	for stat, v in pairs(skills.level_bonus(level)) do st[stat] = st[stat] + v end
+	for stat, v in pairs(skills.level_move(level)) do st[stat] = st[stat] * (1 + v) end
+	equip.apply(st, base, a.gear or {}, levels, signs)
 	for k, v in pairs(M.MIN) do
 		if type(st[k]) == "number" and st[k] < v then st[k] = v end
 	end

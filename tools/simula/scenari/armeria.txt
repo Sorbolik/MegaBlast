@@ -16,3 +16,10 @@ foto 03_pezzo_scelto
 tocca_bordo 178 52 basso destra     # COMPRA
 aspetta 0.8
 foto 04_comprato
+# la firma si accende con l'Ossidiana (17 nov): l'elmo ha il primo grado, il secondo costa 320
+tocca_bordo 374 53 alto sinistra    # POTENZIA
+aspetta 0.8
+foto 05_firma_da_accendere
+tocca_centro 560 50                # ACCENDI LA FIRMA
+aspetta 0.8
+foto 06_firma_accesa

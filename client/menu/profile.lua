@@ -27,7 +27,9 @@ M.XP = { match = 40, points_share = 0.5, points_max = 120, win = 60, second = 30
 -- of a campaign level: the first time it's done, each new star, played again with nothing new
 M.XP_MISSION = { done = 40, star = 60, replay = 20 }
 -- experience to go from level n to n + 1: XP_BASE + XP_STEP * (n - 1)
-M.XP_BASE, M.XP_STEP = 150, 25
+-- (Sergio, 17 Nov: level 50 in about 240 hours of a strong player, who makes
+-- about 2,900 an hour; light at the start: level 2 after three matches)
+M.XP_BASE, M.XP_STEP = 600, 560
 M.LEVEL_MAX = skills.LEVEL_MAX
 
 -- The settings and their defaults (docs/impostazioni.md)
@@ -77,6 +79,11 @@ function M.levels(p, a)
 	return wallet.levels(p, a)
 end
 
+-- the stats the loadout a plays with: Sigilli, level, pieces and their signatures lit
+function M.stats(p, a, base)
+	return loadout.stats(base, a, wallet.levels(p, a), p.livello, wallet.signs(p, a))
+end
+
 -- The loadout that goes into a match: the pieces of the active loadout
 -- (is_active) and the Sigilli of the active Sigilli's loadout (seal_active):
 -- the ZAINO keeps them apart (Sergio, 14 Nov). Same tables, so changing its
@@ -105,8 +112,12 @@ end
 
 -- The experience of a match, line by line. r = { points, won = true | false |
 -- nil (tie), second = true (2nd in free for all), mvp = true, awards = { award } }
-function M.match_xp(r)
+-- Against bots or on the same phone (r.bots) the experience is like the
+-- Scaglie (Sergio, 17 Nov): half, and only the first wallet.BOTS_DAY matches
+-- of the day (paid = false: that day's are over, nothing).
+function M.match_xp(r, paid)
 	local x = M.XP
+	if r.bots and paid == false then return { { key = "bots_over", xp = 0 } } end
 	local lines = { { key = "match", xp = x.match } }
 	local pts = math.max(0, math.floor((r.points or 0) + 0.5))
 	if pts > 0 then
@@ -116,12 +127,17 @@ function M.match_xp(r)
 	elseif r.second then lines[#lines + 1] = { key = "second", xp = x.second } end
 	if r.mvp then lines[#lines + 1] = { key = "mvp", xp = x.mvp } end
 	for _, a in ipairs(r.awards or {}) do lines[#lines + 1] = { key = "award", name = a.name, xp = x.award } end
+	if r.bots then
+		for _, l in ipairs(lines) do l.xp = math.floor(l.xp / 2 + 0.5) end
+	end
 	return lines
 end
 
 -- End of match (see match_xp). Updates the profile and returns the gain (add_xp).
-function M.match_end(p, r)
-	local g = add_xp(p, M.match_xp(r))
+-- today ("2026-11-17"): for the day's count of the matches against bots, which
+-- wallet.match moves on after this
+function M.match_end(p, r, today)
+	local g = add_xp(p, M.match_xp(r, not r.bots or wallet.bots_pay(p, today)))
 	-- the Proof of the steps: one more match for each piece worn
 	wallet.wear(p, M.active_loadout(p))
 	return g
@@ -235,7 +251,9 @@ function M.sample(p, near_level_up, campaign_done)
 	end
 	p.buoni = 2
 	p.prova.corvo_cloak, p.prova.fornace_chest = 2, 5
-	p.scaglie, p.ossidiana = 1240, 35
+	p.scaglie, p.ossidiana = 12400, 350
+	-- the helmet's signature lit at its first grade: the second can be lit
+	p.firme.corvo_mask = 1
 	p.statistiche["2v2"] = { partite = 48, vinte = 27, colpi = 310, a_segno = 190, danno = 14500, abbattuti = 60,
 		nel_vuoto = 23, globi = 140, colpo_lungo = 1180, casse = 35, cadute = 12, morti = 30, serie = 4,
 		armi = { missile = 5200, grenade = 3100, eagle = 2600, sword = 1800, mallet = 1300, shards = 500 } }
@@ -299,9 +317,12 @@ function M.mission(p, id, stars, made)
 	local x, lines = M.XP_MISSION, {}
 	if first then lines[#lines + 1] = { key = "done", xp = x.done } end
 	if new > 0 then lines[#lines + 1] = { key = "stars", n = new, xp = x.star * new } end
-	if #lines == 0 then lines[1] = { key = "replay", xp = x.replay } end
+	-- a replay counts only when it beats the record of points
+	local record = made ~= nil and before ~= nil and made > before
+	if #lines == 0 then lines[1] = { key = record and "replay" or "replay_plain", xp = record and x.replay or 0 } end
 	local gain = add_xp(p, lines)
 	gain.record_before = before
+	gain.record = record
 	return gain
 end
 
@@ -380,6 +401,8 @@ end
 -- to tune the top of the progression and then go back down): a second save,
 -- picked in the settings, that never touches the real one. Online it changes
 -- nothing: the server plays everyone with the base stats.
+-- (false: the real profile; "prova": the end game; "risorse": every resource
+-- and no upgrade, below)
 M.test = false
 -- the balance it always has (topped up at every load)
 M.TEST_COINS = 999999
@@ -389,13 +412,14 @@ M.TEST_VOUCHERS = 99
 -- all to spend), every piece owned at the last level, the whole campaign done
 -- with the three stars, every weapon seen, the story already read, the wallet
 -- full. The caps come from sim/skills.lua and sim/gear.lua, so they follow them.
-function M.endgame(p)
+function M.endgame(p, fresh)
 	local equip = require "sim.gear"
 	p.livello, p.xp = M.LEVEL_MAX, 0
 	for _, f in ipairs(equip.SETS) do
 		for _, s in ipairs(equip.SLOTS) do
 			local k = wallet.key(f.id, s.id)
-			p.posseduti[k], p.pezzi[k], p.prova[k] = true, equip.LIVELLO_MAX, nil
+			p.posseduti[k] = true
+			if not fresh then p.pezzi[k], p.prova[k], p.firme[k] = equip.LIVELLO_MAX, nil, #equip.SIGN_COSTS end
 		end
 	end
 	for _, cap in ipairs(require("sim.campaign").CAPITOLI) do
@@ -409,8 +433,17 @@ function M.endgame(p)
 	return p
 end
 
+-- The test profile with every resource and no upgrade (Sergio, 17 Nov: "voglio
+-- vedere come si uppa"): the full wallet, every piece owned at level 1 with its
+-- signature off, the last level with no Sigilli point spent, everything open.
+-- It starts over every time it is picked in the settings; a load only tops
+-- the wallet up, so what was upgraded stays until then.
+function M.resources(p)
+	return M.endgame(p, true)
+end
+
 local function file()
-	return sys.get_save_file("megablast", M.test and "profilo_prova" or "profilo")
+	return sys.get_save_file("megablast", M.test == "risorse" and "profilo_risorse" or M.test and "profilo_prova" or "profilo")
 end
 
 -- which profile the phone uses: its own small file, outside both profiles
@@ -418,9 +451,11 @@ local function choice_file()
 	return sys.get_save_file("megablast", "profilo_scelto")
 end
 
+-- false, "prova" or "risorse"
 function M.test_chosen()
 	local ok, t = pcall(sys.load, choice_file())
-	return ok and type(t) == "table" and t.prova == true
+	if not ok or type(t) ~= "table" then return false end
+	return t.quale == "risorse" and "risorse" or t.prova == true and "prova"
 end
 
 -- Switches to the test profile (on = true) or back to the real one. p (the
@@ -428,11 +463,21 @@ end
 -- one; the settings (aim, controller buttons...) belong to the phone and
 -- come along.
 function M.choose_test(p, on)
-	if (on and true or false) == M.test then return p end
+	if on == true then on = "prova" end
+	on = on or false
+	-- (picking the resources one again starts it over)
+	if on == M.test and on ~= "risorse" then return p end
 	M.save(p)
 	local settings = p.impostazioni
-	sys.save(choice_file(), { prova = on and true or false })
-	local other = M.load_up()
+	sys.save(choice_file(), { prova = on == "prova", quale = on or nil })
+	local other
+	if on == "risorse" then
+		-- picked again: it starts over
+		M.test = on
+		other = M.resources(M.new())
+	else
+		other = M.load_up()
+	end
 	for k in pairs(p) do p[k] = nil end
 	for k, v in pairs(other) do p[k] = v end
 	p.impostazioni = settings
@@ -445,7 +490,7 @@ function M.load_up()
 	local ok, p = pcall(sys.load, file())
 	if not ok or type(p) ~= "table" or p.versione ~= M.VERSION then
 		p = M.new()
-		return M.test and M.endgame(p) or p
+		return M.test == "risorse" and M.resources(p) or M.test and M.endgame(p) or p
 	end
 	-- a field added to nuovo() later is missing from older saves of the same
 	-- version: it starts empty, without resetting the profile
@@ -467,7 +512,7 @@ function M.load_up()
 	end
 	p.livello = math.min(p.livello, M.LEVEL_MAX)
 	-- the test profile: everything at the top again (new pieces, new missions, coins spent)
-	if M.test then M.endgame(p) end
+	if M.test == "risorse" then M.resources(p) elseif M.test then M.endgame(p) end
 	return p
 end
 
