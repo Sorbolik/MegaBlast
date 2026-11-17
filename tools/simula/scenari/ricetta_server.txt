@@ -1,0 +1,26 @@
+# Piano dei profili ospite, PR 1: a fine partita sul telefono il gioco manda
+# la ricetta al server, che la rigioca e scrive nel suo log se torna uguale
+# (simulazione/server.txt: «ricetta da Linux ...: fisica: torna, bot: torna»).
+# Partita da 3 secondi sullo stesso telefono, un colpo a testa per due giri.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_durata 3
+imposta prova_vignette no
+
+aspetta 1
+server 2v2 0
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 150 100 0.4
+aspetta_evento fire 5
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_stato turno=1 fase=aim 40
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_evento over 60
+aspetta 4
+foto 01_podio
