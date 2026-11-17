@@ -85,8 +85,9 @@ cat > /etc/caddy/Caddyfile <<CADDY
 # tools/vps/installa.sh: tutto al server di MegaBlast, WebSocket compresa
 $INDIRIZZO {
 	encode gzip
-	# il server: WebSocket, controlli, calendario degli eventi
-	@server path /ws /health /stats /eventi
+	# il server: WebSocket, controlli, calendario degli eventi, partite mandate (/ricetta)
+	# (un percorso nuovo del server va aggiunto qui)
+	@server path /ws /health /stats /eventi /ricetta
 	reverse_proxy @server 127.0.0.1:8080
 	# il resto è il gioco web (tools/vps/web.sh; index.html = megablast.html)
 	root * $CASA/web
