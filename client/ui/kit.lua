@@ -400,6 +400,18 @@ local PIVOTS = { start = gui.PIVOT_W, middle = gui.PIVOT_CENTER, ["end"] = gui.P
 -- phone): the one place to change it; M.text never writes smaller
 M.MIN_TEXT = 16
 
+-- A text shrunk to fit its room must not go under MIN_TEXT: the simulator fails
+-- on this line (tools/simula/simula.py), once for each text
+local told = {}
+function M.check_small(n)
+	local size = gui.get_scale(n).x * FONT_SIZE
+	if size >= M.MIN_TEXT - 0.5 then return end
+	local t = gui.get_text(n)
+	if told[t] then return end
+	told[t] = true
+	print(("SIMULA testo_piccolo %.1f px: %s"):format(size, t))
+end
+
 -- Text of `size` pixels on the baseline (x, y). anchor: "start" (default),
 -- "middle", "end". spacing: extra pixels between letters
 function M.text(g, t, x, y, size, color, anchor, spacing)
@@ -434,6 +446,7 @@ function M.keep_in(n, box, g, x, y, size, anchor)
 	gui.set_position(n, vec(px - g.ox, g.oy - base + size * k * BASELINE))
 	V.x, V.y, V.z = size * k / FONT_SIZE, size * k / FONT_SIZE, 1
 	gui.set_scale(n, V)
+	M.check_small(n)
 end
 
 -- The queue's pill under the thread in the menus (ui/pill.lua, "foot") starts
@@ -450,13 +463,13 @@ function M.foot_text(g, t, x, y, size, color, wide, spacing)
 	local function one(txt, ly)
 		local n = M.text(g, txt, x, ly, size, color, "start", spacing)
 		local w = M.width(n)
-		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)) end
+		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)); M.check_small(n) end
 		return n
 	end
 	local n = M.text(g, t, x, y, size, color, "start", spacing)
 	if M.width(n) <= room or not M.in_queue then
 		local w = M.width(n)
-		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)) end
+		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)); M.check_small(n) end
 		return { n }
 	end
 	gui.delete_node(n)
@@ -616,7 +629,7 @@ function M.action(g, label, x, y, w, h, opt)
 		gui.set_scale(p.label, full)
 		local lw = M.width(p.label)
 		local fit = math.min(1, lit.wide / lw, off.wide / lw)
-		if fit < 1 then gui.set_scale(p.label, full * fit) end
+		if fit < 1 then gui.set_scale(p.label, full * fit); M.check_small(p.label) end
 	end
 	p.set_label(label)
 	local muted = opt.off and C.FROST or C.MUTE
