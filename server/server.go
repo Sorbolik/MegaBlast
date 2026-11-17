@@ -78,6 +78,7 @@ func (s *Server) Drain() {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", s.handleWS)
+	mux.HandleFunc("/ricetta", s.handleRecipe)
 	// for the load balancer: 503 when the node is shutting down or full
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		if s.draining.Load() || max(s.sched.Load(), s.botSched.Load()) > 0.8 {

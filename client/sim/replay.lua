@@ -98,10 +98,23 @@ end
 
 -- The input of g's next step, read from the recipe
 function M.read_step(l, g, bots)
-	local b = not l.r.bot_keys and bots[g.current]
+	local b = (l.rethink or not l.r.bot_keys) and bots[g.current]
 	-- the shot lasts one tick only
 	if l.cur.fire then l.cur = { left = l.cur.left, right = l.cur.right, jump = l.cur.jump, hold = l.cur.hold } end
-	if b then return bot.input(b, g) end
+	if b then
+		local keys = bot.input(b, g)
+		if l.rethink then
+			-- the bots think again: their written keys are skipped, and the
+			-- last ones stay held as when the recipe was written
+			local e = l.r.input[l.k]
+			while e and e.t <= g.tick + 1 do
+				l.k = l.k + 1
+				e = l.r.input[l.k]
+			end
+			l.cur = keys
+		end
+		return keys
+	end
 	local e = l.r.input[l.k]
 	while e and e.t == g.tick + 1 do
 		l.cur = { left = e.l, right = e.r, jump = e.j, hold = e.h,
@@ -114,9 +127,12 @@ end
 
 -- Replays the recipe and compares fingerprints. Returns true, or false and
 -- the tick of the first different (or missing) fingerprint.
-function M.verify(r, max_tick)
+-- rethink: the bots think again even if the recipe has their keys (the
+-- server checks the bots too, not only the physics)
+function M.verify(r, max_tick, rethink)
 	local g, bots = M.match(r)
 	local l = M.reader(r)
+	l.rethink = rethink
 	local n = 1
 	local waits = r.impronte
 	max_tick = max_tick or (waits[#waits] and waits[#waits].t) or 0
@@ -130,6 +146,75 @@ function M.verify(r, max_tick)
 	end
 	if waits[n] then return false, waits[n].t end
 	return true
+end
+
+-- A recipe as text, to send it to the server: a Lua table literal with the
+-- numbers at 17 digits, so the shots' angles and powers come back exact
+-- (a JSON at 14 digits would change them and the match with them).
+local function encode(v, out)
+	local kind = type(v)
+	if kind == "number" then
+		assert(v == v and v ~= math.huge and v ~= -math.huge, "recipe: number not finite")
+		if v == math.floor(v) and math.abs(v) < 2 ^ 53 then
+			out[#out + 1] = string.format("%d", v)
+		else
+			out[#out + 1] = string.format("%.17g", v)
+		end
+	elseif kind == "string" then
+		out[#out + 1] = string.format("%q", v)
+	elseif kind == "boolean" then
+		out[#out + 1] = tostring(v)
+	elseif kind == "table" then
+		out[#out + 1] = "{"
+		local n = #v
+		for i = 1, n do
+			encode(v[i], out)
+			out[#out + 1] = ","
+		end
+		-- the other keys in order, so the same recipe is always the same text
+		local keys = {}
+		for k in pairs(v) do
+			if not (type(k) == "number" and k >= 1 and k <= n and k == math.floor(k)) then keys[#keys + 1] = k end
+		end
+		table.sort(keys, function(a, b)
+			if type(a) ~= type(b) then return type(a) < type(b) end
+			return a < b
+		end)
+		for _, k in ipairs(keys) do
+			out[#out + 1] = "["
+			encode(k, out)
+			out[#out + 1] = "]="
+			encode(v[k], out)
+			out[#out + 1] = ","
+		end
+		out[#out + 1] = "}"
+	else
+		error("recipe: cannot write a " .. kind)
+	end
+end
+
+function M.encode(r)
+	local t = {}
+	for k, v in pairs(r) do
+		-- ultimo: the last keys, only for writing it
+		if k ~= "ultimo" then t[k] = v end
+	end
+	local out = {}
+	encode(t, out)
+	return table.concat(out)
+end
+
+-- The recipe back from M.encode's text, or nil. The text runs with no
+-- globals at all, so it can only build tables (whoever sends a loop gets
+-- stopped by the server's timeout).
+function M.decode(s)
+	if type(s) ~= "string" then return nil end
+	local f = loadstring("return " .. s, "=ricetta")
+	if not f then return nil end
+	setfenv(f, {})
+	local ok, r = pcall(f)
+	if ok and type(r) == "table" and type(r.input) == "table" and type(r.impronte) == "table" then return r end
+	return nil
 end
 
 return M

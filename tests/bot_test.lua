@@ -53,6 +53,33 @@ r.seme = r.seme + 1
 local ok2 = replay.verify(r, 1200)
 check(not ok2, "recipe: with a different seed the fingerprints don't match")
 
+-- The recipe as text (sent to the server, guest profiles PR 1): it comes back
+-- the same, with the bots' keys or with the bots thinking again
+do
+	local players = {}
+	for i, p in ipairs(config.MODES["2v2"]) do players[i] = { team = p.team, bot = "normale" } end
+	local r7 = replay.new(9, "pavimento", { players = players })
+	r7.bot_keys = true
+	local g7, bots = replay.match(r7)
+	while g7.phase ~= "over" and g7.tick < 3600 do
+		g7:step(replay.input(r7, g7, bots))
+		replay.after(r7, g7)
+	end
+	local text = replay.encode(r7)
+	check(replay.encode(replay.decode(text)) == text, "recipe text: decode gives back the same recipe")
+	local back = replay.decode(text)
+	check(replay.verify(back), "recipe text: replays the same match with the bots' keys")
+	check(replay.verify(back, nil, true), "recipe text: replays the same match with the bots thinking again")
+	local shot
+	for _, e in ipairs(back.input) do if e.f then shot = e break end end
+	check(shot ~= nil, "recipe text: the bots shot")
+	if shot then
+		shot.f.a = shot.f.a + 0.01
+		check(not replay.verify(back), "recipe text: a shot aimed a little differently doesn't hold")
+	end
+	check(replay.decode("os.exit()") == nil and replay.decode("{}") == nil, "recipe text: only a recipe table is read")
+end
+
 -- 2 vs 2 and free-for-all, on the other map
 for _, modo in ipairs({ "2v2", "ffa" }) do
 	local g2 = match(5, modo, "normale", "fossa")
