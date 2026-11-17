@@ -8,7 +8,9 @@
 # SCATTO del contatore FPS), che si leggono senza cavo con adb (docs/prestazioni.md).
 # Segreti: ANDROID_KEYSTORE (keystore in base64), ANDROID_KEYSTORE_PASS,
 # TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID; facoltativi TELEGRAM_API_ID e TELEGRAM_API_HASH
-# (da my.telegram.org: APK come file anche oltre 50 MB). Variabile facoltativa: SERVER_URL.
+# (da my.telegram.org: APK come file anche oltre 50 MB). Variabile facoltativa: SERVER_URL
+# (dove l'APK cerca il server: il VPS, wss://DOMINIO/ws o ws://IP/ws); a mano si può
+# dare un altro server solo per quell'APK (per esempio il PC di casa).
 name: APK su Telegram
 on:
   push:
@@ -19,6 +21,10 @@ on:
         description: "APK coi log (variante debug, per leggere gli scatti con adb logcat)"
         type: boolean
         default: false
+      server_url:
+        description: "Server di questo APK (es. ws://192.168.1.9:8080/ws per il PC di casa); vuoto = la variabile SERVER_URL"
+        type: string
+        default: ""
 permissions:
   contents: read
   pull-requests: read  # novita.py legge la sezione "Per Telegram" delle PR
@@ -42,7 +48,7 @@ jobs:
         env:
           KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
           KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
-          SERVER_URL: ${{ vars.SERVER_URL }}
+          SERVER_URL: ${{ inputs.server_url || vars.SERVER_URL }}
           VARIANTE: ${{ inputs.log && 'debug' || 'release' }}
           API_ID: ${{ secrets.TELEGRAM_API_ID }}
         run: |

@@ -335,6 +335,19 @@ fra persone. La memoria del Go è quasi solo connessioni (0,1–0,2 MB a partita
 nei processi `luajit` una 2v2 coi bot sta in circa 1 MB (34 MB in tutto i
 quattro processi con 30 partite).
 
+## Sul VPS (17 nov)
+
+Il server pubblico gira su un VPS Hetzner Cloud (Ubuntu 24.04, Germania,
+`megablast-1`): servizio systemd `megablast` con un utente senza privilegi,
+in ascolto solo su `127.0.0.1:8080`, e Caddy davanti sulle porte 80 e 443
+(WebSocket su `/ws`, TLS automatico quando c'è il dominio). A ogni merge su main
+che tocca `server/` o `client/sim/` il workflow **Server sul VPS** lo ricompila,
+lo riavvia (lo spegnimento aspetta la fine delle partite, `KillMode=mixed` lascia
+vivi i processi `luajit` fino ad allora) e controlla `/health`. Script, segreti e
+variabili in [tools/vps/README.md](../tools/vps/README.md). L'APK cerca il server
+nella variabile `SERVER_URL` di GitHub; editor, simulatore e build web restano
+su `127.0.0.1`.
+
 ## Crescere
 
 - **Più core**: i worker sono uno per core (`-workers`), basta una macchina più
