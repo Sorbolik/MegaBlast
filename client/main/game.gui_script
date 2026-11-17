@@ -985,6 +985,8 @@ end
 -- start_local (they use new_match, show_menu and the others)
 local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", tag = require "ui.tag_card",
 	vignette = require "battle.vignette", favilla = require "battle.favilla", tale = require "ui.story",
+	-- the recipes of the matches played here go to the server, which checks them
+	recipe_check = require "main.recipe_check",
 	-- Scaglie and Ossidiana (menu/wallet.lua) and the campaign's chapters (a finished one gives Ossidiana)
 	wallet = require "menu.wallet", chapters = require("sim.campaign").CAPITOLI }
 
@@ -2480,6 +2482,12 @@ function CP.record(self, res)
 	local r = CP.conta.finish(c, self.g, res, { gruppo = self.cp_group or res.mode, mappa = self.g.map,
 		quando = os.time(), giocatori = self.match_showcases })
 	local pa = profile.record(self.profilo, r)
+	-- a training match played on this phone: the server checks the recipe (the
+	-- campaign's missions not yet: their script changes the match outside the
+	-- recipe, so they will need replaying with the missions, PR 5 of the plan)
+	if self.cp_replay and self.g.phase == "over" then
+		CP.recipe_check.send(server_url(), self.ricetta)
+	end
 	if self.cp_replay then
 		pa.replay = pcall(sys.save, CP.file_replay(pa.numero), { r = self.ricetta }) or nil
 	else

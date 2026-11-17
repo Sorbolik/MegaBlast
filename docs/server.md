@@ -335,6 +335,22 @@ fra persone. La memoria del Go è quasi solo connessioni (0,1–0,2 MB a partita
 nei processi `luajit` una 2v2 coi bot sta in circa 1 MB (34 MB in tutto i
 quattro processi con 30 partite).
 
+## Ricette delle partite del telefono (17 nov)
+
+Primo passo dei profili ospite (piano https://claude.ai/artifact/UTmrfNCuWCLBgDtuG8PTbU):
+a fine allenamento il telefono manda la ricetta della partita (`client/sim/replay.lua`,
+`M.encode`: una tabella Lua coi numeri a 17 cifre) con `POST /ricetta?p=<telefono>&j=<Lua>`
+(`client/main/recipe_check.lua`, senza aspettare la risposta). Il server la rigioca in un
+processo `luajit` a parte (`server/verify.lua`, una ricetta alla volta, al massimo 60 s,
+4 MB), due volte: coi tasti dei bot scritti nella ricetta (torna la fisica?) e coi bot che
+ripensano (tornano anche i bot?), e scrive nel log per esempio
+«ricetta da Android SM-A525F (LuaJIT 2.1.0-beta3): fisica: torna, bot: torna, 21600 tick
+(360.0 s di partita), rigiocata in 180 + 1500 ms». Con `-ricette CARTELLA` tiene quelle che
+non tornano. Per ora non paga e non salva niente: misura se la stessa partita torna uguale
+sul telefono (ARM, o Lua normale nella build web) e sul server (x86). Le missioni della
+campagna non si mandano ancora: il loro copione cambia la partita fuori dalla ricetta.
+Scenario `tools/simula/scenari/ricetta_server.txt`.
+
 ## Sul VPS (17 nov)
 
 Il server pubblico gira su un VPS Hetzner Cloud (Ubuntu 24.04, Germania,

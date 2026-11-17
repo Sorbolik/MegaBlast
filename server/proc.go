@@ -71,6 +71,9 @@ func writeLuaDir() {
 	if luaDirErr = os.WriteFile(filepath.Join(luaDir, "net.lua"), netLua, 0o644); luaDirErr == nil {
 		luaDirErr = os.WriteFile(filepath.Join(luaDir, "worker.lua"), workerLua, 0o644)
 	}
+	if luaDirErr == nil {
+		luaDirErr = os.WriteFile(filepath.Join(luaDir, "verify.lua"), verifyLua, 0o644)
+	}
 }
 
 // Proc is a luajit process with the simulation loaded.
