@@ -744,7 +744,7 @@ local function reset_pose(self)
 	self.playout = self.playout or pl.new(new_pose, capture, game.SNAPSHOT_TICKS * game.DT, menu.capture_net)
 	pl.reset(self.playout, self.g)
 	-- the server's events since its last state: they wait for the next one
-	self.net_events = {}
+	self.net_events, self.net_over = {}, nil
 end
 
 -- Match -----------------------------------------------------------------------
@@ -1929,6 +1929,8 @@ local function on_server_message(self, m)
 		CP.net_state(self, m)
 	elseif m.t == "ev" and self.g then
 		self.net_events[#self.net_events + 1] = m
+		-- the server closes right after the end: not a drop (see DISCONNECTED)
+		if m.type == "over" then self.net_over = true end
 	elseif m.t == "away" then
 		show_message(self, TM.opponent_away, true)
 	elseif m.t == "back" and m.robot ~= self.me then
@@ -2029,6 +2031,9 @@ on_socket = function(self, conn, data)
 	elseif data.event == ws.EVENT_DISCONNECTED or data.event == ws.EVENT_ERROR then
 		self.conn = nil
 		self.mute = nil
+		-- the match is over and the server closed: the end is still in the playout
+		-- queue (it is drawn a moment late), no reconnecting meanwhile
+		if self.net_over and self.mode == "online" then return end
 		local in_play = self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online"
 		if in_play and self.tok and self.tries < RECONNECT_TRIES then
 			-- in a match: we retry, the server keeps our seat
