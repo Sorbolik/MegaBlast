@@ -105,7 +105,10 @@ PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitRootLogin prohibit-password
 SSH
-systemctl reload ssh 2>/dev/null || systemctl reload sshd
+# controlla la configurazione prima; su Ubuntu 24.04 ssh parte a richiesta (ssh.socket):
+# se il servizio è fermo la nuova configurazione vale già dalla prossima connessione
+sshd -t
+systemctl try-reload-or-restart ssh.service 2>/dev/null || systemctl try-reload-or-restart sshd.service 2>/dev/null || true
 
 echo "== aggiornamenti di sicurezza automatici"
 cat > /etc/apt/apt.conf.d/20auto-upgrades <<APT
