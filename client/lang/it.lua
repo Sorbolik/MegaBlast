@@ -331,12 +331,12 @@ return {
 		-- the settings at the top (profile.SETTINGS) and their values
 		choices = {
 			mira = "MIRA", sparo = "SPARO COL CONTROLLER", potenza = "POTENZA COL CONTROLLER",
-			levette = "LEVETTA CHE MUOVE", fps = "CONTATORE FPS", profilo = "PROFILO",
+			levette = "LEVETTA CHE MUOVE", fps = "CONTATORE FPS", profilo = "PROFILO", profilo_zero = "PROFILO DI PROVA",
 		},
 		values = {
 			lancetta = "LANCETTA", mirino = "MIRINO", pressione = "PREMENDO", rilascio = "LASCIANDO",
 			levetta = "LEVETTA", grilletto = "GRILLETTO", destra = "DESTRA", sinistra = "SINISTRA",
-			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "FINE GIOCO",
+			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "FINE GIOCO", risorse = "DA ZERO",
 		},
 		-- the controller's commands (controller.COMMANDS)
 		commands = {

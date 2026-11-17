@@ -392,6 +392,8 @@ end
 -- to tune the top of the progression and then go back down): a second save,
 -- picked in the settings, that never touches the real one. Online it changes
 -- nothing: the server plays everyone with the base stats.
+-- (false: the real profile; "prova": the end game; "risorse": every resource
+-- and no upgrade, below)
 M.test = false
 -- the balance it always has (topped up at every load)
 M.TEST_COINS = 999999
@@ -401,13 +403,14 @@ M.TEST_VOUCHERS = 99
 -- all to spend), every piece owned at the last level, the whole campaign done
 -- with the three stars, every weapon seen, the story already read, the wallet
 -- full. The caps come from sim/skills.lua and sim/gear.lua, so they follow them.
-function M.endgame(p)
+function M.endgame(p, fresh)
 	local equip = require "sim.gear"
 	p.livello, p.xp = M.LEVEL_MAX, 0
 	for _, f in ipairs(equip.SETS) do
 		for _, s in ipairs(equip.SLOTS) do
 			local k = wallet.key(f.id, s.id)
-			p.posseduti[k], p.pezzi[k], p.prova[k], p.firme[k] = true, equip.LIVELLO_MAX, nil, #equip.SIGN_COSTS
+			p.posseduti[k] = true
+			if not fresh then p.pezzi[k], p.prova[k], p.firme[k] = equip.LIVELLO_MAX, nil, #equip.SIGN_COSTS end
 		end
 	end
 	for _, cap in ipairs(require("sim.campaign").CAPITOLI) do
@@ -421,8 +424,17 @@ function M.endgame(p)
 	return p
 end
 
+-- The test profile with every resource and no upgrade (Sergio, 17 Nov: "voglio
+-- vedere come si uppa"): the full wallet, every piece owned at level 1 with its
+-- signature off, the last level with no Sigilli point spent, everything open.
+-- It starts over every time it is picked in the settings; a load only tops
+-- the wallet up, so what was upgraded stays until then.
+function M.resources(p)
+	return M.endgame(p, true)
+end
+
 local function file()
-	return sys.get_save_file("megablast", M.test and "profilo_prova" or "profilo")
+	return sys.get_save_file("megablast", M.test == "risorse" and "profilo_risorse" or M.test and "profilo_prova" or "profilo")
 end
 
 -- which profile the phone uses: its own small file, outside both profiles
@@ -430,9 +442,11 @@ local function choice_file()
 	return sys.get_save_file("megablast", "profilo_scelto")
 end
 
+-- false, "prova" or "risorse"
 function M.test_chosen()
 	local ok, t = pcall(sys.load, choice_file())
-	return ok and type(t) == "table" and t.prova == true
+	if not ok or type(t) ~= "table" then return false end
+	return t.quale == "risorse" and "risorse" or t.prova == true and "prova"
 end
 
 -- Switches to the test profile (on = true) or back to the real one. p (the
@@ -440,11 +454,21 @@ end
 -- one; the settings (aim, controller buttons...) belong to the phone and
 -- come along.
 function M.choose_test(p, on)
-	if (on and true or false) == M.test then return p end
+	if on == true then on = "prova" end
+	on = on or false
+	-- (picking the resources one again starts it over)
+	if on == M.test and on ~= "risorse" then return p end
 	M.save(p)
 	local settings = p.impostazioni
-	sys.save(choice_file(), { prova = on and true or false })
-	local other = M.load_up()
+	sys.save(choice_file(), { prova = on == "prova", quale = on or nil })
+	local other
+	if on == "risorse" then
+		-- picked again: it starts over
+		M.test = on
+		other = M.resources(M.new())
+	else
+		other = M.load_up()
+	end
 	for k in pairs(p) do p[k] = nil end
 	for k, v in pairs(other) do p[k] = v end
 	p.impostazioni = settings
@@ -457,7 +481,7 @@ function M.load_up()
 	local ok, p = pcall(sys.load, file())
 	if not ok or type(p) ~= "table" or p.versione ~= M.VERSION then
 		p = M.new()
-		return M.test and M.endgame(p) or p
+		return M.test == "risorse" and M.resources(p) or M.test and M.endgame(p) or p
 	end
 	-- a field added to nuovo() later is missing from older saves of the same
 	-- version: it starts empty, without resetting the profile
@@ -479,7 +503,7 @@ function M.load_up()
 	end
 	p.livello = math.min(p.livello, M.LEVEL_MAX)
 	-- the test profile: everything at the top again (new pieces, new missions, coins spent)
-	if M.test then M.endgame(p) end
+	if M.test == "risorse" then M.resources(p) elseif M.test then M.endgame(p) end
 	return p
 end
 

@@ -40,6 +40,8 @@ local CHOICES = {
 	choice_of("fps", { "spento", "acceso" }),
 	-- the end-game test profile (menu/profile.lua, endgame): its own save
 	choice_of("profilo", { "vero", "prova" }),
+	-- (its third value on a row of its own: three do not fit at 16 px)
+	choice_of("profilo_zero", { "risorse" }),
 }
 local KC = kit.C
 -- the grid: the names of the choices NAME_W wide on the left, then their values;
@@ -47,7 +49,9 @@ local KC = kit.C
 -- title and its help line inside: two columns of cards KEY_W wide from KEYS_X,
 -- KEY_GAP apart, a row every KEY_ROW
 local NAME_W = 196
-local PANEL_Y, PANEL_H = 108, #CHOICES * 78 + 6
+-- (a row every ROW: seven rows above the bottom line)
+local ROW = 66
+local PANEL_Y, PANEL_H = 108, #CHOICES * ROW + 6
 local KEYS_PANEL_X, KEYS_PANEL_W = 608, 640
 local KEYS_X, KEY_W, KEY_H, KEY_GAP = KEYS_PANEL_X + 16, 298, 54, 12
 local KEYS_Y, KEY_ROW = 154, 62
@@ -68,15 +72,15 @@ local function build(s)
 		NAME_W + 12 + 340 + 16, PANEL_H)
 	for i, sc in ipairs(CHOICES) do
 		local v = profile.setting(s.p, sc[1])
-		if sc[1] == "profilo" then v = profile.test and "prova" or "vero" end
-		local opts, on = {}, 1
+		if sc[1] == "profilo" or sc[1] == "profilo_zero" then v = profile.test or "vero" end
+		local opts, on = {}, sc[1]:find("^profilo") and 0 or 1
 		for k, m in ipairs(sc[3]) do
-			opts[k] = { m[2], sc[1] .. ":" .. m[1] }
+			opts[k] = { m[2], (sc[1] == "profilo_zero" and "profilo" or sc[1]) .. ":" .. m[1] }
 			if v == m[1] then on = k end
 		end
 		-- a row each on one grid (Sergio, 15 Nov: every text in its place, never under a
 		-- button): the name on the left, on two lines when it is long, its values on the right
-		local y = 120 + (i - 1) * 78
+		local y = 114 + (i - 1) * ROW
 		local name, second = sc[2], nil
 		local probe = kit.text(g, name, 48, y + 35, 16, KC.SAND, "start", 1)
 		if kit.width(probe) > NAME_W then
@@ -178,7 +182,7 @@ function M.on_input(s, action_id, action)
 		if kind == "tasto" then
 			s.attesa = s.attesa ~= value and value or nil
 		elseif kind == "profilo" then
-			profile.choose_test(s.p, value == "prova")
+			profile.choose_test(s.p, value ~= "vero" and value)
 		else
 			profile.set(s.p, kind, value)
 			profile.save(s.p)
