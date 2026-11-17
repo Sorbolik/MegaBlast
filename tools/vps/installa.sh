@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prepara un VPS Ubuntu 24.04 per il server di MegaBlast. Si lancia da root sul
+# Prepara un VPS Ubuntu (24.04 o più nuovo) per il server di MegaBlast. Si lancia da root sul
 # VPS e si può rilanciare quante volte si vuole: rifà solo quello che manca.
 #
 #   sudo DOMINIO=gioco.esempio.it EVENTI=https://…/eventi.json bash installa.sh
@@ -21,6 +21,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo "== pacchetti"
 apt-get update -q
 apt-get install -y -q --no-install-recommends luajit caddy ufw sqlite3 curl ca-certificates unattended-upgrades
+echo "sistema: $(. /etc/os-release; echo "$PRETTY_NAME"), processore $(uname -m)"
 apt-get -y -q upgrade
 
 echo "== utente $UTENTE (senza accesso, senza root)"
@@ -104,7 +105,7 @@ PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitRootLogin prohibit-password
 SSH
-systemctl reload ssh
+systemctl reload ssh 2>/dev/null || systemctl reload sshd
 
 echo "== aggiornamenti di sicurezza automatici"
 cat > /etc/apt/apt.conf.d/20auto-upgrades <<APT
