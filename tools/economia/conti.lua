@@ -47,6 +47,15 @@ local function partita(r)
 	return somma(righe, "scaglie"), profile.match_end(profile.new(), r).xp, somma(oss, "ossidiana")
 end
 
+-- una partita di allenamento (contro i bot o sullo stesso telefono): metà di
+-- tutto, niente Ossidiana, e solo le prime wallet.BOTS_DAY del giorno
+local function allenamento(r)
+	local p = profile.new()
+	r.bots = true
+	local xp = profile.match_end(p, r, "x").xp
+	return somma((wallet.match(p, r, "x")), "scaglie"), xp
+end
+
 -- quello che entra in un'ora
 local function ora(g)
 	local s, x, o = 0, 0, 0
@@ -103,6 +112,9 @@ for _, g in ipairs(GIOCATORI) do
 	if not controlla then
 		print(string.format("Giocatore %s: in un'ora %d Scaglie, %d esperienza, %.1f Ossidiana", g.nome, s, x, o))
 		for _, r in ipairs(righe) do print(string.format("  %-46s %7.1f ore", r[2], r[3])) end
+		local as, ax = allenamento({ points = g.punti, won = true, mvp = true })
+		print(string.format("  in allenamento, una vittoria da migliore: %d Scaglie e %d esperienza (solo le prime %d partite del giorno: al massimo %d e %d)",
+			as, ax, wallet.BOTS_DAY, as * wallet.BOTS_DAY, ax * wallet.BOTS_DAY))
 	end
 	if g.nome == "forte" then
 		for _, r in ipairs(righe) do

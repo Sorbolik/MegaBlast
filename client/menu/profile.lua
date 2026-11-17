@@ -112,8 +112,12 @@ end
 
 -- The experience of a match, line by line. r = { points, won = true | false |
 -- nil (tie), second = true (2nd in free for all), mvp = true, awards = { award } }
-function M.match_xp(r)
+-- Against bots or on the same phone (r.bots) the experience is like the
+-- Scaglie (Sergio, 17 Nov): half, and only the first wallet.BOTS_DAY matches
+-- of the day (paid = false: that day's are over, nothing).
+function M.match_xp(r, paid)
 	local x = M.XP
+	if r.bots and paid == false then return { { key = "bots_over", xp = 0 } } end
 	local lines = { { key = "match", xp = x.match } }
 	local pts = math.max(0, math.floor((r.points or 0) + 0.5))
 	if pts > 0 then
@@ -123,12 +127,17 @@ function M.match_xp(r)
 	elseif r.second then lines[#lines + 1] = { key = "second", xp = x.second } end
 	if r.mvp then lines[#lines + 1] = { key = "mvp", xp = x.mvp } end
 	for _, a in ipairs(r.awards or {}) do lines[#lines + 1] = { key = "award", name = a.name, xp = x.award } end
+	if r.bots then
+		for _, l in ipairs(lines) do l.xp = math.floor(l.xp / 2 + 0.5) end
+	end
 	return lines
 end
 
 -- End of match (see match_xp). Updates the profile and returns the gain (add_xp).
-function M.match_end(p, r)
-	local g = add_xp(p, M.match_xp(r))
+-- today ("2026-11-17"): for the day's count of the matches against bots, which
+-- wallet.match moves on after this
+function M.match_end(p, r, today)
+	local g = add_xp(p, M.match_xp(r, not r.bots or wallet.bots_pay(p, today)))
 	-- the Proof of the steps: one more match for each piece worn
 	wallet.wear(p, M.active_loadout(p))
 	return g

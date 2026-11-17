@@ -243,6 +243,18 @@ gu = profile.match_end(p, { points = 1000, won = false })
 check(gu.lines[2].xp == x.points_max and #gu.lines == 2, "the points give at most " .. x.points_max)
 gu = profile.match_end(p, { points = 0, second = true })
 check(#gu.lines == 2 and gu.lines[2].key == "second", "second in free for all")
+-- against bots: half the experience, and only the first matches of the day
+do
+	local wallet = require "menu.wallet"
+	local q = profile.new()
+	local full = profile.match_end(profile.new(), { points = 148, won = true, mvp = true }).xp
+	local half = profile.match_end(q, { points = 148, won = true, mvp = true, bots = true }, "2026-11-17")
+	check(half.xp == full / 2, "against bots the experience is half")
+	q.bot_giorno, q.bot_partite = "2026-11-17", wallet.BOTS_DAY
+	local none = profile.match_end(q, { points = 148, won = true, bots = true }, "2026-11-17")
+	check(none.xp == 0 and none.lines[1].key == "bots_over", "after the day's matches against bots: no experience")
+	check(profile.match_end(q, { points = 0, bots = true }, "2026-11-18").xp == profile.XP.match / 2, "the next day it pays again")
+end
 -- after the last level: braci
 p.livello, p.xp = profile.LEVEL_MAX, profile.xp_level(profile.LEVEL_MAX) - 100
 gu = profile.match_end(p, { points = 240, won = true, mvp = true })

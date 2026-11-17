@@ -158,7 +158,7 @@ return {
 		title = "GUADAGNI",
 		xp = "XP",
 		lines = { match = "Partita", win = "Vittoria", second = "Secondo posto", mvp = "MVP",
-			done = "Prima volta", replay = "Record battuto", replay_plain = "Rigiocata senza record", daily = "Prima vittoria di oggi",
+			done = "Prima volta", bots_over = "Allenamento di oggi finito", replay = "Record battuto", replay_plain = "Rigiocata senza record", daily = "Prima vittoria di oggi",
 			level = "Ogni 5 livelli", chapter = "Capitolo finito",
 			obs_match = "Ossidiana della vittoria", obs_stars = "Ossidiana delle stelle" },
 		points_line = "Punti %s",

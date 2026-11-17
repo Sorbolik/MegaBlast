@@ -1616,7 +1616,9 @@ local function open_podium(self)
 	local r = { points = mine.points, won = won, second = res.mode == "ffa" and mine.place == 2,
 		mvp = mvp == my_own, awards = per_robot[my_own] }
 	local stats_before = profile.statistics(self.profilo, "tutte")
-	local gain = profile.match_end(self.profilo, r)
+	-- against bots or on the same phone: half, like the training
+	r.bots = not self.online_end
+	local gain = profile.match_end(self.profilo, r, CP.wallet.today())
 	profile.save(self.profilo)
 	-- the stats and the match into the profile (also saves the replay)
 	local number = CP.record(self, res)
@@ -2378,8 +2380,6 @@ end
 function CP.match_coins(self, r, stats_before, gain)
 	local W = CP.wallet
 	local p = self.profilo
-	-- against bots or on the same phone: half, like the training
-	r.bots = not self.online_end
 	local rows, won = W.match(p, r, W.today())
 	local obs = W.obsidian(stats_before, profile.statistics(p, "tutte"), gain.level_before, gain.livello)
 	for _, row in ipairs(won) do table.insert(obs, 1, row) end

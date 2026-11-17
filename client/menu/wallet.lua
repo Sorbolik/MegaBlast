@@ -33,7 +33,8 @@ M.DAILY = 40              -- first win of the day (choice 7A)
 -- points (a replay that doesn't pays nothing: replaying a one-minute lesson
 -- in a row paid more than playing online, Sergio's plan of 17 Nov), each new star
 M.MISSION, M.REPLAY, M.STAR = 15, 8, 5
--- training against bots: half, only the first matches of the day
+-- training against bots: half (the experience too, menu/profile.lua), only the
+-- first matches of the day
 M.BOTS_DAY = 10
 
 -- Ossidiana earned playing. The Scaglie reward playing, the Ossidiana
@@ -325,6 +326,11 @@ end
 -- of the match ({ { key = "obs_match", ossidiana } }, only online), and does
 -- not touch the profile except for the day of the bonus and the bots' count:
 -- apply adds them.
+-- whether a match against bots still pays today (it doesn't count it: match does)
+function M.bots_pay(p, today)
+	return p.bot_giorno ~= today or (p.bot_partite or 0) < M.BOTS_DAY
+end
+
 function M.match(p, r, today)
 	if r.quit then return {}, {} end
 	local half = 1
