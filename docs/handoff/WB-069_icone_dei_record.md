@@ -1,6 +1,6 @@
 # WB-069 · Profilo: le nove icone dei record
 
-- **Stato:** APPROVATA (Sergio, 17 nov 9:21: «se servono schede di codex dammele, ad esempio per le icone che ci si aspetta che siano icone nel profilo»)
+- **Stato:** IMPLEMENTATA (17 nov) · APPROVATA (Sergio, 17 nov 9:21: «se servono schede di codex dammele, ad esempio per le icone che ci si aspetta che siano icone nel profilo»)
 - **Data:** 2026-11-17
 - **Ramo della scheda:** `claude/project-thread-sqn69w` (Codex la esegue da qui: `git fetch origin claude/project-thread-sqn69w`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-069`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-069` senza chiedere conferma (il repository è privato).
@@ -86,3 +86,19 @@ Generati con ImageGen integrato, prompt integrale e riferimenti R1–R4 nell'ord
 Verificati la griglia 3 × 3, l'ordine, le sagome separate, l'assenza di testo e di cornici, i colori dominanti e la leggibilità dei nove soggetti in anteprima a 40 px su #2B2530. Nei primi tentativi dei fogli 2 e 3 il grigio dominava sulla testa del martello. Nei fogli scelti le linee di movimento di Cadute sono poco visibili sul ferro scuro. Nel foglio 3 la tacca di Mira è resa da due intagli. I contorni appaiono neri e spessi a vista. L'antialias e le sfumature locali producono più valori RGB dei cinque colori piatti richiesti. I valori esatti del nero e della palette non sono stati certificati. Ricalco e resa nel gioco da verificare.
 
 ## Resoconto di Claude
+
+17 nov. Guardati i tre fogli su ferro scuro (#2B2530). **Usato il foglio 1**: le nove figure sono le
+più pulite e della stessa mano (pala, teschio, bersaglio, martello con la fascia oro, globo col
+fulmine, arco con la bandierina, cassa, coppa, diavoletto che cade). Scartati il 2 (il manico del
+martello ha una punta gialla che sembra un secondo pezzo, il diavoletto delle cadute si legge meno) e
+il 3 (martello col manico nero, tacca del bersaglio doppia, cadute poco chiare).
+
+- Tagliate da `tools/grafica/fucina.py` (`fai_record`): a caselle, perché ogni icona ha pezzi staccati;
+  ognuna al centro di un quadrato di 96 px (`record_<id>` nell'atlante `fucina`). Delle cadute sono
+  tolte le lineette di movimento: nere, sul ferro scuro non si vedevano.
+- Nel gioco: `client/menu/profile_tabs.lua`, al posto dei tondi colorati, alte 48 px.
+- Verificato: scenario `profilo.txt` nel simulatore, foto `docs/handoff/img/WB-069_profilo_icone.png`;
+  controlli di sintassi, dell'editor e dei testi.
+- Limiti visti: l'arco del COLPO PIÙ LUNGO è sottile e a 48 px è la meno forte delle nove; il grigio
+  delle CADUTE stacca poco dal ferro. Si leggono, ma se Sergio le vuole più decise si rifanno solo quelle due.
+- Non verificato: su telefono vero.
