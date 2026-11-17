@@ -177,9 +177,8 @@ end
 -- The header of the menu screens (Sergio, 4 Nov: "le interfacce non si
 -- devono spostare per lei, ma devono essere già pensate con lei in mente"):
 -- the same on every screen. One row EDGE from the real top: on the left the
--- back button and the title, in the middle the queue's pill (ui/pill.lua, a
--- SLOT_W x SLOT_H place nothing else ever uses), on the right the screen's
--- own controls. The tabs go in the first row under it, at the content's left
+-- back button and the title, on the right the screen's own controls (the
+-- queue's pill is under the thread: ui/pill.lua). The tabs go in the first row under it, at the content's left
 -- margin (EDGE in game coordinates): they belong to the content, which on a
 -- 20:9 screen stays in the middle. The header's nodes have no parent, so
 -- they stick to the real edges (ui/screen.lua);
@@ -202,7 +201,6 @@ M.CONTENT_TOP = 720 - 118      -- the first row under the header (24 under it)
 M.TABS_Y = M.CONTENT_TOP - 24  -- center of the tabs, in that first row
 M.TAB_H = 48
 M.BODY_TOP = 720 - 190          -- on a screen with tabs the content starts under them
-M.SLOT_W, M.SLOT_H = 440, 52    -- the pill's place, in the middle of the header
 
 local function corner(x, xanchor, yanchor)
 	local n = gui.new_box_node(vec(x, yanchor and M.HEAD_Y or 0), vec(0, 0))

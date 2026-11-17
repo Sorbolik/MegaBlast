@@ -79,7 +79,7 @@ end
 
 -- a mission's card (ui/kit.lua): the frame in its kind's colour, the miniature
 -- of its map cut to the card's corner, the kind's label, the name; closed, it
--- is dark under a padlock. ih: how tall the picture is
+-- is dark, a padlock in its corner. ih: how tall the picture is
 local function card(c, l, x, y, w, h, ih, kind, state)
 	local g = c.kg
 	local locked = state == "locked"
@@ -105,7 +105,8 @@ local function card(c, l, x, y, w, h, ih, kind, state)
 		kit.label(k.g, x + w - kit.label_width(t) - 4, y + 12, t, KC.STAR, true)
 	end
 	if locked then
-		kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", 0, -(h / 2 - 4 - ih / 2), math.min(50, ih * 0.55))
+		-- the padlock in the top right corner: the kind's label stays free (Sergio, 17 Nov)
+		kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", w / 2 - 24, -(h / 2 - 28), 36)
 	else
 		kit.zone(g, c.buttons, x, y, w, h, "missione:" .. l.id)
 	end
@@ -113,6 +114,33 @@ local function card(c, l, x, y, w, h, ih, kind, state)
 	c.from[l.id] = { x = x + w / 2, y = 720 - (y + 4 + ih / 2) + gui.get_position(c.radice).y, w = w - 8, h = ih }
 	return k
 end
+
+-- A card's name on one line `short` wide, or on two: the first `wide`, the
+-- second `short` (the stars are beside it). Returns the lines
+local function title_lines(g, t, size, wide, short)
+	local function width(txt)
+		local n = kit.text(g, txt, 0, 0, size)
+		local w = kit.width(n)
+		gui.delete_node(n)
+		return w
+	end
+	if width(t) <= short then return { t } end
+	local first, rest = nil, {}
+	for word in t:gmatch("%S+") do
+		local try = first and (first .. " " .. word) or word
+		if #rest == 0 and (not first or width(try) <= wide) then first = try else rest[#rest + 1] = word end
+	end
+	if #rest == 0 then
+		-- it fits the wide line but not beside the stars: the last word goes down
+		local head, last = t:match("^(.*)%s(%S+)$")
+		if not head then return { t } end
+		return { head, last }
+	end
+	return { first, table.concat(rest, " ") }
+end
+
+-- where the cards' grid starts
+local GRID_X = 440
 
 local function card_list(c, cap)
 	local g = c.kg
@@ -132,17 +160,25 @@ local function card_list(c, cap)
 		local l = list[i]
 		local unlocked = is_mission_unlocked(c, list, i)
 		local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
-		local x, y = 440 + col * (w + 20) - row * 10, 180 + row * (h + 20)
+		-- (one grid for every row: Sergio, 17 Nov)
+		local x, y = GRID_X + col * (w + 20), 180 + row * (h + 20)
 		local is_new = l.id == next_id
-		local k = card(c, l, x, y, w, h, h - 46, "carta", not unlocked and "locked" or is_new and "new" or "open")
+		local k = card(c, l, x, y, w, h, h - 50, "carta", not unlocked and "locked" or is_new and "new" or "open")
 		local count = #missions.criteria(l)
 		local d = cols == 3 and 16 or 13
-		local room = w - 30 - (is_new and 62 or unlocked and count * d * 1.2 + 6 or 0)
-		fit(kit.text(k.g, kit.upper(l.titolo), x + 18, y + h - 22, cols == 3 and 19 or 16, unlocked and KC.SAND or KC.MUTE), room)
+		-- the name: on one line beside the stars (or NUOVA), or, too long for
+		-- that, on two lines, the stars beside the second: never shrunk to stay in
+		local size = cols == 3 and 19 or 16
+		local color = unlocked and KC.SAND or KC.MUTE
+		local right = is_new and 62 or unlocked and count * d * 1.2 + 6 or 0
+		local lines = title_lines(k.g, kit.upper(l.titolo), size, w - 30, w - 30 - right)
+		local base = y + h - (#lines > 1 and 12 or 21)
+		if #lines > 1 then kit.text(k.g, lines[1], x + 18, base - size - 2, size, color) end
+		fit(kit.text(k.g, lines[#lines], x + 18, base, size, color), w - 30 - right)
 		if is_new and unlocked then
-			kit.text(k.g, T.new, x + w - 10, y + h - 22, 16, KC.HOT_TOP, "end", 1)
+			kit.text(k.g, T.new, x + w - 10, base, 16, KC.HOT_TOP, "end", 1)
 		elseif unlocked then
-			little_stars(k.g, c.stelle[l.id] or {}, count, l.medaglia ~= nil, x + w - 4 - count * d * 1.2, y + h - 27, d)
+			little_stars(k.g, c.stelle[l.id] or {}, count, l.medaglia ~= nil, x + w - 4 - count * d * 1.2, base - 5, d)
 		end
 	end
 	if final then
@@ -150,18 +186,18 @@ local function card_list(c, cap)
 		local rows = math.ceil(pinned / cols)
 		local fy, fw = 180 + rows * (h + 20), cols == 3 and 520 or 480
 		local is_new = final.id == next_id
-		local k = kit.card(g, 420, fy, fw, 56, is_new and unlocked and KC.HOT or unlocked and KC.STAR or KC.LINE, { sel = is_new and unlocked })
-		fit(kit.text(k.g, T.final:format(kit.upper(final.titolo)), 446, fy + 35, 17, unlocked and KC.SAND or KC.MUTE), fw - 130)
+		local k = kit.card(g, GRID_X, fy, fw, 56, is_new and unlocked and KC.HOT or unlocked and KC.STAR or KC.LINE, { sel = is_new and unlocked })
+		fit(kit.text(k.g, T.final:format(kit.upper(final.titolo)), GRID_X + 26, fy + 35, 17, unlocked and KC.SAND or KC.MUTE), fw - 130)
 		if not unlocked then
 			kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", fw / 2 - 40, 0, 34)
 		elseif is_new then
-			kit.text(k.g, T.new, 420 + fw - 24, fy + 34, 16, KC.HOT_TOP, "end", 1)
+			kit.text(k.g, T.new, GRID_X + fw - 24, fy + 34, 16, KC.HOT_TOP, "end", 1)
 		else
 			local count = #missions.criteria(final)
-			little_stars(k.g, c.stelle[final.id] or {}, count, final.medaglia ~= nil, 420 + fw - 30 - count * 20, fy + 28, 17)
+			little_stars(k.g, c.stelle[final.id] or {}, count, final.medaglia ~= nil, GRID_X + fw - 30 - count * 20, fy + 28, 17)
 		end
-		if unlocked then kit.zone(g, c.buttons, 420, fy, fw, 56, "missione:" .. final.id) end
-		c.from[final.id] = { x = 420 + fw / 2, y = 720 - (fy + 28) + gui.get_position(c.radice).y, w = fw, h = 56 }
+		if unlocked then kit.zone(g, c.buttons, GRID_X, fy, fw, 56, "missione:" .. final.id) end
+		c.from[final.id] = { x = GRID_X + fw / 2, y = 720 - (fy + 28) + gui.get_position(c.radice).y, w = fw, h = 56 }
 	end
 end
 
@@ -212,6 +248,8 @@ local MAP_X, LOOK_Y, COVER, LOOK_TIME = 640, 310, 0.2, 0.3
 local NEXT_DIM, OFF_DIM = 0.78, 0.56
 -- a drag this long (pixels of the 720 high screen) moves the stack
 local DRAG = 60
+-- the plates of the two chapters done, under the thread
+local CHAPTER_W = 250
 -- the plate of the story shown at the bottom of it all
 local PRISON = "s_ghiaccio"
 -- the accent of each circle: its name on the rail and on the slice
@@ -272,13 +310,15 @@ local function slice(c, i, at, from)
 	gui.set_scale(n, vmath.vector3(at.k, at.k, 1))
 	local sg = { node = n, ox = 0, oy = 0 }
 	local r = T.rings[i]
-	kit.text(sg, T.ring_name:format(r[1], r[2]), 0, h * 0.36, 22, closed and KC.MUTE or RING_ACCENT[i], "middle", 1.5)
+	-- (the slice is drawn at at.k: its texts are never under the smallest size on the screen)
+	local function size(s) return math.max(s, kit.MIN_TEXT / at.k) end
+	kit.text(sg, T.ring_name:format(r[1], r[2]), 0, h * 0.36, size(22), closed and KC.MUTE or RING_ACCENT[i], "middle", 1.5)
 	if closed then
 		-- the padlock inside, on the right; the next one says what opens it
 		local lock = kit.piece(sg, "lucchetto", SLICE_W * 0.36, h * 0.12, i == RING_AT + 1 and 46 or 38)
 		if i > RING_AT + 1 then gui.set_color(lock, vmath.vector4(0.6, 0.6, 0.66, 1)) end
 		if i == RING_AT + 1 then
-			kit.text(sg, T.ring_opens:format(T.rings[RING_AT][3]), 0, -h * 0.1, 17, KC.SAND, "middle", 1)
+			kit.text(sg, T.ring_opens:format(T.rings[RING_AT][3]), 0, -h * 0.1, size(17), KC.SAND, "middle", 1)
 		end
 	else
 		-- the levels along the top face: the one to play burns, the keeper last
@@ -294,7 +334,7 @@ local function slice(c, i, at, from)
 			end
 			if keeper then
 				kit.piece(sg, "corona", x, y - 30, 20)
-				kit.text(sg, r[3], x, y + 42, 16, KC.SAND, "middle", 1)
+				kit.text(sg, r[3], x, y + 42, size(16), KC.SAND, "middle", 1)
 			end
 		end
 	end
@@ -358,20 +398,24 @@ local function build_map(c)
 	kit.text(tl, T.ring_title:format(r[1], state), 34, 108, 16, KC.MUTE, "start", 1.5)
 	note(tl, 170, KC.ICE, T.hazard, { r[4], r[5] })
 	note(tl, 280, KC.HOT, T.keeper, { r[3] })
-	-- the top floor, at the bottom left on the thread: the two chapters done
-	local x = 168
-	for _, cap in ipairs({ payload.CAPITOLI[1], payload.CAPITOLI[2] }) do
+	-- the top floor, at the bottom left under the thread: the two chapters done,
+	-- each on a small plate with its name and its stars at the smallest size or
+	-- more (Sergio, 17 Nov); side by side, or, in the queue, one over the other
+	-- before the pill
+	local stacked = kit.in_queue
+	for i, cap in ipairs({ payload.CAPITOLI[1], payload.CAPITOLI[2] }) do
 		local name = cap == payload.CAPITOLI[1] and T.cortile or kit.upper(cap.titolo)
-		local p = kit.plate(c.low, x, 632, 230, 68, KC.ROSE, { sk = 0 })
+		local x = stacked and 168 or 168 + (i - 1) * (CHAPTER_W + 12)
+		local y, tall = stacked and 620 + (i - 1) * 46 or 640, stacked and 42 or 52
+		local p = kit.plate(c.low, x, y, CHAPTER_W, tall, KC.ROSE, { sk = 0 })
 		local b = p.box
-		local mid = (b.y0 + b.y1) / 2
-		local label = kit.text(p.g, name, b.x0, mid + 7, 19, KC.SAND, "start", 0.5)
+		local mid = y + tall / 2
+		local label = kit.text(p.g, name, b.x0 + 4, mid + 6, 17, KC.SAND, "start", 0.5)
 		local got, all = chapter_stars(c, cap)
-		local count = kit.text(p.g, T.ring_stars:format(got, all), b.x1, mid + 6, 16, KC.MUTE, "end", 0.5)
-		ui.star(b.x1 - kit.width(count) - 14 - p.g.ox, p.g.oy - mid, 18, KC.STAR, p.g.node)
-		fit(label, b.x1 - b.x0 - kit.width(count) - 34)
+		local count = kit.text(p.g, T.ring_stars:format(got, all), b.x1 - 4, mid + 6, 16, KC.MUTE, "end", 0.5)
+		ui.star(b.x1 - 4 - kit.width(count) - 14 - p.g.ox, p.g.oy - mid, 18, KC.STAR, p.g.node)
+		fit(label, b.x1 - b.x0 - 8 - kit.width(count) - 34)
 		kit.button(c.buttons, p, "capitolo:" .. cap.id)
-		x = x + 240
 	end
 	-- (over the stack: the lower slices pass behind them)
 	gui.move_above(c.low.node, c.radice)

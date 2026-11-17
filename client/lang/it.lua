@@ -447,6 +447,7 @@ return {
 		-- the modes, short, as chips
 		mode_short = { tutte = "TUTTE", ["2v2"] = "2V2", ["1v1"] = "1V1", torneo = "TORNEO", campagna = "CAMPAGNA" },
 		damage_by_weapon = "DANNO PER ARMA",
+		legend_primary = "PRIMARIE", legend_secondary = "SECONDARIE",
 		nothing_yet = "ancora niente: gioca una partita",
 		weapons = {
 			missile = "Lanciarune", grenade = "Uovo", shards = "Schegge", punch = "Pugno", sniper = "Cecchino",
@@ -467,7 +468,7 @@ return {
 
 	-- menu/home.lua: the home
 	home = {
-		leave_queue_first = "esci dalla coda per giocarla",
+		leave_queue_first = "esci dalla coda",
 		-- in the profile's round: the name, until the online accounts give one (placeholder)
 		player = "APPRENDISTA",
 		level = "LIV %d",
@@ -504,7 +505,7 @@ return {
 		all = "TUTTI",
 		nothing = "nessun pezzo qui: li trovi in armeria",
 		-- under the piece chosen: level, grade and what it does
-		piece_line = "liv %d · grado %s %s · %s",
+		piece_line = "liv %d · grado %s %s",
 		wear = "INDOSSA",
 		worn = "ce l'hai addosso",
 		-- the Sigilli: the points still to spend (a flame each) and those used
@@ -809,8 +810,8 @@ return {
 		-- the line under EVENTI in the home
 		no_net = "senza rete",
 		running = "%d in corso",
-		next_in = "il prossimo tra %s",
-		none_planned = "nessuno in programma",
+		next_in = "tra %s",
+		none_planned = "niente in arrivo",
 		kinds = { mod = "MODIFICATORE", torneo = "TORNEO", sfida = "SFIDA", xp = "XP" },
 		-- the rules in words, one per line
 		weapons = "Armi: %s",

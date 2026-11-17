@@ -106,7 +106,7 @@ local function show_line(s)
 		kit.pop(s.balloon, 0, 0.18, 0.85)
 	end
 	local last = s.page == #s.pages and s.line >= #pg.lines
-	gui.set_text(s.next_text, last and TV.go or common.next)
+	s.go.set_label(last and TV.go or common.next)
 end
 
 local function show_page(s)
@@ -132,7 +132,7 @@ function M.new(pages, can_skip)
 	s.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	s.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	local go = kit.action(s.right, common.next, 930, 610, 270, 76, { size = 50 })
-	s.next_text = go.label
+	s.go = go
 	kit.button(s.buttons, go, "avanti", { main = true })
 	if can_skip then
 		local skip = kit.plate(s.low, 60, 636, 150, 48, KC.PURPLE, { sk = 14, d = 5 })

@@ -400,6 +400,18 @@ local PIVOTS = { start = gui.PIVOT_W, middle = gui.PIVOT_CENTER, ["end"] = gui.P
 -- phone): the one place to change it; M.text never writes smaller
 M.MIN_TEXT = 16
 
+-- A text shrunk to fit its room must not go under MIN_TEXT: the simulator fails
+-- on this line (tools/simula/simula.py), once for each text
+local told = {}
+function M.check_small(n)
+	local size = gui.get_scale(n).x * FONT_SIZE
+	if size >= M.MIN_TEXT - 0.5 then return end
+	local t = gui.get_text(n)
+	if told[t] then return end
+	told[t] = true
+	print(("SIMULA testo_piccolo %.1f px: %s"):format(size, t))
+end
+
 -- Text of `size` pixels on the baseline (x, y). anchor: "start" (default),
 -- "middle", "end". spacing: extra pixels between letters
 function M.text(g, t, x, y, size, color, anchor, spacing)
@@ -434,6 +446,7 @@ function M.keep_in(n, box, g, x, y, size, anchor)
 	gui.set_position(n, vec(px - g.ox, g.oy - base + size * k * BASELINE))
 	V.x, V.y, V.z = size * k / FONT_SIZE, size * k / FONT_SIZE, 1
 	gui.set_scale(n, V)
+	M.check_small(n)
 end
 
 -- The queue's pill under the thread in the menus (ui/pill.lua, "foot") starts
@@ -450,13 +463,13 @@ function M.foot_text(g, t, x, y, size, color, wide, spacing)
 	local function one(txt, ly)
 		local n = M.text(g, txt, x, ly, size, color, "start", spacing)
 		local w = M.width(n)
-		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)) end
+		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)); M.check_small(n) end
 		return n
 	end
 	local n = M.text(g, t, x, y, size, color, "start", spacing)
 	if M.width(n) <= room or not M.in_queue then
 		local w = M.width(n)
-		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)) end
+		if w > room then gui.set_scale(n, gui.get_scale(n) * (room / w)); M.check_small(n) end
 		return { n }
 	end
 	gui.delete_node(n)
@@ -563,22 +576,25 @@ end
 -- gelo; Sergio, 15 Nov: one primary button, the same on every screen) and,
 -- at its left, a line saying what it starts. Three drawings: lit, pressed
 -- (while the finger is on it) and off (it can't be done now: grey and frozen,
--- and the line says why). opt: size (of the label), sub, off
+-- and the line says why). opt: size (of the label), sub, off. Under the thread
+-- (y from 540) it takes its place in the band; higher (the vignette, a weapon's
+-- sheet) it is drawn where asked, h tall
 local function sub_y(y, h)
 	-- under it, or over it when the thread is there
 	return y + h + 30 > 640 and y - 10 or y + h + 30
 end
 local LIT_H = 104   -- the lit drawing on the screen; the others as tall as drawn next to it
+local FACE_PAD = 6  -- between the label and the ends of the gem's free face
 
 function M.action(g, label, x, y, w, h, opt)
 	opt = opt or {}
 	local size = opt.size or math.min(92, (w - 60) / (#label * 0.56))
 	-- an action at the bottom right goes under the thread, in the band, the
 	-- way back on the other side (Sergio, 12 Nov); its line at its left
-	local foot = y >= 540 and not opt.free
+	local foot = y >= 540
 	if foot then
 		x, y, w, h = 926, M.THREAD + 10, 300, 88
-		size = math.min(size, (w - 120) / (#label * 0.6), 44)
+		size = math.min(size, 44)
 	end
 	local cx, cy = x + w / 2, y + h / 2
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
@@ -592,8 +608,30 @@ function M.action(g, label, x, y, w, h, opt)
 		gui.set_enabled(s, state == (opt.off and "spento" or "acceso"))
 		looks[state] = s
 	end
+	-- the label in the middle of the free face of the gem, away from the flame
+	-- on the left and the crystals on the right; off, on the grey part before
+	-- the ice (pieces.lua, box; Sergio, 17 Nov: never over the button's drawings).
+	-- As big as fits both faces: lit or off, the same label has the same size
+	local function face(state)
+		local f = room("primario_" .. state, cx, cy, w, P["primario_" .. state].h * k)
+		f.wide, f.tall = f.x1 - f.x0 - 2 * FACE_PAD, f.y1 - f.y0
+		return f
+	end
+	local lit, off = face("acceso"), face("spento")
+	local where = opt.off and off or lit
+	size = math.max(M.MIN_TEXT, math.min(size, lit.tall / 0.72, off.tall / 0.72))
 	local ink = opt.off and with_alpha(C.INK, 0.55) or C.INK
-	p.label = M.text(p.g, label, cx, cy + size * 0.36, size, ink, "middle")
+	p.label = M.text(p.g, label, (where.x0 + where.x1) / 2, (where.y0 + where.y1) / 2 + size * 0.36, size, ink, "middle")
+	local full = gui.get_scale(p.label)
+	-- another label on the same button (the vignette: AVANTI, then VAI!)
+	p.set_label = function(t)
+		gui.set_text(p.label, t)
+		gui.set_scale(p.label, full)
+		local lw = M.width(p.label)
+		local fit = math.min(1, lit.wide / lw, off.wide / lw)
+		if fit < 1 then gui.set_scale(p.label, full * fit); M.check_small(p.label) end
+	end
+	p.set_label(label)
 	local muted = opt.off and C.FROST or C.MUTE
 	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, cy + 7, 19, muted, "end", 0.6)
 	elseif opt.sub then p.sub = M.text(g, opt.sub, cx, sub_y(y, h), 16, muted, "middle", 1.2) end
@@ -706,7 +744,8 @@ end
 function M.choice(g, list_of, x, y, label, opts, active, w, off)
 	local h = 58
 	if g.air then w = w + M.air(0.25) end
-	M.text(g, label, x + 6, y - 12, 16, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
+	-- the label nearer its own row than the one above (Sergio, 17 Nov)
+	M.text(g, label, x + 6, y - 6, 16, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
 	for i, o in ipairs(opts) do
 		local ox = x + (i - 1) * w
 		local on = i == active and not off
