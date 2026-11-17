@@ -1,0 +1,17 @@
+# Il profilo di prova «DA ZERO» (Sergio, 17 nov): tutte le risorse e nessun
+# potenziamento, per vedere come si potenzia. Riparte da capo ogni volta che lo si sceglie.
+aspetta 9
+tocca_bordo 74 54 basso sinistra       # la rotellina delle impostazioni
+aspetta 1
+tocca 335 180                         # DA ZERO
+aspetta 0.5
+foto 01_da_zero
+tocca 72 60                           # indietro
+aspetta_stato modo=menu 3
+aspetta 2
+tocca_bordo 210 170 mezzo destra      # la porta ARMERIA
+aspetta 1.5
+foto 02_armeria
+tocca_bordo 178 52 basso destra       # +1 LIVELLO
+aspetta 0.8
+foto 03_un_livello

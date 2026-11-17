@@ -91,8 +91,9 @@ local function upgrade(a)
 		kit.text(g, tostring(t), tx, 284, 17, KC.MUTE, "middle")
 	end
 	-- what it does now, and at the next level
-	local now = equip.piece(set, slot, level)
-	local after = nxt and equip.piece(set, slot, nxt.level)
+	local lit = wallet.sign(p, set, slot)
+	local now = equip.piece(set, slot, level, lit)
+	local after = nxt and equip.piece(set, slot, nxt.level, lit)
 	local y = 308
 	for i, e in ipairs(now) do
 		if e.row ~= "sign" then
@@ -124,8 +125,8 @@ local function upgrade(a)
 	for _, e in ipairs(now) do
 		if e.row == "sign" then
 			local sg = equip.SIGNS[e.stat]
-			local on = e.good > 0
-			fit(kit.text(g, kit.upper((on and T.sign or T.sign_off):format(sg.name)), x + RIGHT_COL, ry, 18,
+			local on = lit > 0
+			fit(kit.text(g, kit.upper(on and T.sign:format(gear_ui.ROMAN[lit], sg.name) or T.sign_off:format(sg.name)), x + RIGHT_COL, ry, 18,
 				on and KC.HOT_TOP or KC.MUTE, "start", 0.5), rw)
 		end
 	end
@@ -145,6 +146,17 @@ local function upgrade(a)
 			n = n + 1
 		end
 	end
+
+	-- the signature is lit with Ossidiana, a grade for each step done (Sergio, 17 Nov)
+	local sn = wallet.sign_next(p, set, slot)
+	local can = sn and not sn.level and p.ossidiana >= sn.cost
+	local sb = kit.plate(a.low2, 430, 638, 260, 64, KC.HOT, { sk = 0, fill = KC.SAND })
+	kit.piece(a.low2, "gemma", 473, 669, 46)
+	kit.text(sb.g, T.light_sign, 502, 668, 22, can and KC.INK or kit.with_alpha(KC.INK, 0.45))
+	local note = not sn and T.sign_top or sn.level and T.sign_needs:format(sn.level)
+		or T.sign_cost:format(sn.cost)
+	kit.text(sb.g, kit.upper(note), 504, 690, 17, kit.with_alpha(KC.INK, 0.75), "start", 0.5)
+	kit.button(a.buttons, sb, "firma", { spento = not can })
 
 	-- the price and POTENZIA
 	if nxt then
@@ -346,6 +358,9 @@ local function run_cmd(a, ui_action)
 				if equip.tier(level) > before then a.step = { gear_ui.slot_of(sel[2]).name, equip.BY_ID[sel[1]].name, level } end
 			end
 		end
+	elseif kind == "firma" then
+		local sel = chosen(a)
+		if sel and wallet.light(p, sel[1], sel[2]) then sound.play("#martello") end
 	elseif kind == "merce" then
 		-- an offer is bought at the shop's price; the day's pieces at the full one
 		local offer = wallet.shop(p, wallet.today())[s2] == s1

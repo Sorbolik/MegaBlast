@@ -158,8 +158,9 @@ return {
 		title = "GUADAGNI",
 		xp = "XP",
 		lines = { match = "Partita", win = "Vittoria", second = "Secondo posto", mvp = "MVP",
-			done = "Prima volta", replay = "Rigiocata", daily = "Prima vittoria di oggi",
-			level = "Ogni 5 livelli", chapter = "Capitolo finito" },
+			done = "Prima volta", bots_over = "Allenamento di oggi finito", replay = "Record battuto", replay_plain = "Rigiocata senza record", daily = "Prima vittoria di oggi",
+			level = "Ogni 5 livelli", chapter = "Capitolo finito",
+			obs_match = "Ossidiana della vittoria", obs_stars = "Ossidiana delle stelle" },
 		points_line = "Punti %s",
 		award = "Premio %s",
 		stars = "Stelle nuove ×%s",
@@ -330,12 +331,12 @@ return {
 		-- the settings at the top (profile.SETTINGS) and their values
 		choices = {
 			mira = "MIRA", sparo = "SPARO COL CONTROLLER", potenza = "POTENZA COL CONTROLLER",
-			levette = "LEVETTA CHE MUOVE", fps = "CONTATORE FPS", profilo = "PROFILO",
+			levette = "LEVETTA CHE MUOVE", fps = "CONTATORE FPS", profilo = "PROFILO", profilo_zero = "PROFILO DI PROVA",
 		},
 		values = {
 			lancetta = "LANCETTA", mirino = "MIRINO", pressione = "PREMENDO", rilascio = "LASCIANDO",
 			levetta = "LEVETTA", grilletto = "GRILLETTO", destra = "DESTRA", sinistra = "SINISTRA",
-			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "FINE GIOCO",
+			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "FINE GIOCO", risorse = "DA ZERO",
 		},
 		-- the controller's commands (controller.COMMANDS)
 		commands = {
@@ -382,9 +383,14 @@ return {
 		-- the next step: its level, the grade it opens
 		next_step = "PROSSIMO SCATTO: %d · GRADO %s, %s",
 		all_steps = "TUTTI GLI SCATTI FATTI",
-		-- the signature (it lights up at the step 10)
-		sign = "firma: %s",
-		sign_off = "firma dallo scatto 10: %s",
+		-- the signature: how far it is lit (roman number) and its name; it is lit
+		-- with Ossidiana, a grade for each step done
+		sign = "firma %s: %s",
+		sign_off = "firma spenta: %s",
+		light_sign = "ACCENDI LA FIRMA",
+		sign_cost = "%d ossidiana",
+		sign_needs = "dallo scatto %d",
+		sign_top = "al massimo",
 		-- the other pieces of the slot (the slot in uppercase)
 		others = "I TUOI %s",
 		-- the slots in the plural
@@ -419,9 +425,9 @@ return {
 		step_new = "NUOVO",
 		-- the grade in roman numbers, its name
 		step_grade = "GRADO %s · %s",
-		step_look = "Firma più forte, aspetto nuovo",
-		-- the step 10: the piece's signature lights up
-		step_sign_on = "Firma accesa, aspetto nuovo",
+		step_look = "Aspetto nuovo, firma da rafforzare",
+		-- the step 10: the piece's signature can be lit (with Ossidiana)
+		step_sign_on = "Aspetto nuovo, firma da accendere",
 		step_top = "Al massimo: tutto al pieno",
 	},
 

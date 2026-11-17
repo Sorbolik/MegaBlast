@@ -16,7 +16,6 @@
 
 local game = require "sim.game"
 local skills = require "sim.skills"
-local loadout = require "sim.loadout"
 local equip = require "sim.gear"
 local profile = require "menu.profile"
 local wallet = require "menu.wallet"
@@ -64,7 +63,7 @@ function M.from_profile(p, nome, team, under, tournament)
 		v.pezzi[i] = { slot = s.id, set = set, livello = set and wallet.level(p, set, s.id) or 0, tier = tiers[s.id] or 1 }
 	end
 	for i, r in ipairs(skills.PATHS) do v.albero[i] = skills.spent(a.tree or {}, r.id) end
-	v.stats = copy_stats(loadout.stats(game.base_stats(), a, profile.levels(p, a), p.livello))
+	v.stats = copy_stats(profile.stats(p, a, game.base_stats()))
 	return v
 end
 

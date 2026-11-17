@@ -9,6 +9,7 @@
 --   scaglie, ossidiana: the balance
 --   pezzi[set_slot]: the level of a piece (missing: 1)
 --   posseduti[set_slot]: the pieces owned (bought, from a voucher or a gift)
+--   firme[set_slot]: how far the piece's signature is lit (0..3, missing: 0)
 --   buoni: the Smith's vouchers not used yet (one piece of your choice)
 --   regali[key]: the gifts already given (so each comes once)
 --   prova[set_slot]: matches worn at the level below a step (the Proof)
@@ -28,12 +29,20 @@ M.WIN, M.SECOND = 15, 8   -- the win (the team in 2 vs 2), 2nd in free for all
 M.MVP = 5
 M.AWARD, M.AWARDS_MAX = 3, 2
 M.DAILY = 40              -- first win of the day (choice 7A)
--- campaign missions: the first time, a replay, each new star
+-- campaign missions: the first time, a replay that beats your record of
+-- points (a replay that doesn't pays nothing: replaying a one-minute lesson
+-- in a row paid more than playing online, Sergio's plan of 17 Nov), each new star
 M.MISSION, M.REPLAY, M.STAR = 15, 8, 5
--- training against bots: half, only the first matches of the day
+-- training against bots: half (the experience too, menu/profile.lua), only the
+-- first matches of the day
 M.BOTS_DAY = 10
 
--- Ossidiana earned playing: a badge going up a grade (I..IV), every
+-- Ossidiana earned playing. The Scaglie reward playing, the Ossidiana
+-- rewards winning (Sergio, 17 Nov: «rendiamola farmabile»): an online win,
+-- the MVP, the first win of the day, each new star of the campaign; no cap.
+M.OBS_WIN, M.OBS_MVP, M.OBS_DAILY = 1, 1, 5
+M.OBS_STAR = 2
+-- And at the milestones: a badge going up a grade (I..IV), every
 -- LEVEL_EVERY levels of the devil, a finished chapter of the campaign
 M.OBS_BADGE = { 5, 10, 20, 40 }
 M.OBS_LEVEL, M.LEVEL_EVERY = 15, 5
@@ -44,6 +53,11 @@ function M.init(p)
 	p.ossidiana = p.ossidiana or 0
 	p.pezzi = p.pezzi or {}
 	p.posseduti = p.posseduti or {}
+	-- before 17 Nov a signature lit up with its piece's steps: those stay lit
+	if not p.firme then
+		p.firme = {}
+		for k, l in pairs(p.pezzi) do p.firme[k] = equip.tier(l) - 1 end
+	end
 	p.buoni = p.buoni or 0
 	p.regali = p.regali or {}
 	p.prova = p.prova or {}
@@ -61,18 +75,17 @@ M.key = key
 -- BOTTEGA has four pieces of the day (one per slot, among those you don't
 -- own), the CATALOGO always has all of them for more; the Smith's hand
 -- lowers both. Ossidiana never buys pieces.
-M.PRICE_SHOP, M.PRICE_CATALOG = 500, 750
+M.PRICE_SHOP, M.PRICE_CATALOG = 4000, 6000
 
--- the Smith's vouchers and the gifts (choice 23A): the Battle of the Forge
--- gives the Smith's boots, a badge reaching grade IV and the levels of
--- VOUCHER_LEVELS give a voucher. GIFT_MISSIONS: campaign levels by id, with the
--- piece they give and/or the vouchers (the finale of each girone: one voucher,
--- to be added here as the girone arrives). The first Gran Torneo will give one too.
+-- the Smith's vouchers and the gifts (choice 23A; fewer since 17 Nov, a
+-- piece is worth much more now): the Battle of the Forge gives the Smith's
+-- boots, the levels of VOUCHER_LEVELS give a voucher. GIFT_MISSIONS: campaign
+-- levels by id, with the piece they give and/or the vouchers (the finale of
+-- each girone: one voucher, to be added here as the girone arrives).
 M.GIFT_MISSIONS = {
 	{ id = "battaglia_forgia", piece = { "fabbro", "legs" } },
 }
-M.VOUCHER_GRADE = 4
-M.VOUCHER_LEVELS = { 25, 50 }
+M.VOUCHER_LEVELS = { 50 }
 
 function M.owns(p, set, slot)
 	return p.posseduti[key(set, slot)] == true
@@ -180,11 +193,6 @@ function M.gifts(p, stats, level)
 			end)
 		end
 	end
-	for _, s in ipairs(milestones.WHITELIST) do
-		if s.thresholds and milestones.grade(s, stats[s.id] or 0) >= M.VOUCHER_GRADE then
-			once("badge_" .. s.id, { key = "voucher", why = "badge", id = s.id }, function() p.buoni = p.buoni + 1 end)
-		end
-	end
 	for _, l in ipairs(M.VOUCHER_LEVELS) do
 		if (level or 1) >= l then
 			once("livello_" .. l, { key = "voucher", why = "level", level = l }, function() p.buoni = p.buoni + 1 end)
@@ -210,6 +218,42 @@ end
 -- level of a piece (1 if never upgraded)
 function M.level(p, set, slot)
 	return p.pezzi[key(set, slot)] or 1
+end
+
+-- how far a piece's signature is lit: 0 (off) .. 3 (full), never past its steps
+function M.sign(p, set, slot)
+	return math.min(p.firme[key(set, slot)] or 0, equip.tier(M.level(p, set, slot)) - 1)
+end
+
+-- What lighting the signature one more grade asks: { grade, cost, level } (level:
+-- the step the piece must have reached, nil when it has), or nil at the top
+function M.sign_next(p, set, slot)
+	local g = M.sign(p, set, slot) + 1
+	if not equip.SIGN_COSTS[g] then return nil end
+	local step = equip.TIER_LEVELS[g]
+	return { grade = g, cost = equip.SIGN_COSTS[g], level = M.level(p, set, slot) < step and step or nil }
+end
+
+-- Lights the signature one more grade. Returns the grade, or nil and why
+-- ("max", "level", "ossidiana")
+function M.light(p, set, slot)
+	local n = M.sign_next(p, set, slot)
+	if not n then return nil, "max" end
+	if n.level then return nil, "level" end
+	if p.ossidiana < n.cost then return nil, "ossidiana" end
+	p.ossidiana = p.ossidiana - n.cost
+	p.firme[key(set, slot)] = n.grade
+	return n.grade
+end
+
+-- the signatures lit of the pieces worn by a loadout: { mask = 0..3, ... }
+function M.signs(p, a)
+	local t = {}
+	for _, s in ipairs(equip.SLOTS) do
+		local set = a.gear[s.id]
+		t[s.id] = set and M.sign(p, set, s.id) or 0
+	end
+	return t
 end
 
 -- the Smith's hand: a piece of that slot already at the top
@@ -278,15 +322,21 @@ end
 -- Scaglie of a match: r = { points, won = true|false|nil, second, mvp,
 -- awards = { ... }, bots = true (training or the same phone), quit = true }
 -- (the r of profile.match_end); today: "2026-11-10".
--- Returns the rows { { key, scaglie } } (nothing when quit) and does not touch
--- the profile except for the day of the bonus and the bots' count: apply
--- adds them.
+-- Returns the rows { { key, scaglie } } (nothing when quit) and the Ossidiana
+-- of the match ({ { key = "obs_match", ossidiana } }, only online), and does
+-- not touch the profile except for the day of the bonus and the bots' count:
+-- apply adds them.
+-- whether a match against bots still pays today (it doesn't count it: match does)
+function M.bots_pay(p, today)
+	return p.bot_giorno ~= today or (p.bot_partite or 0) < M.BOTS_DAY
+end
+
 function M.match(p, r, today)
-	if r.quit then return {} end
+	if r.quit then return {}, {} end
 	local half = 1
 	if r.bots then
 		if p.bot_giorno ~= today then p.bot_giorno, p.bot_partite = today, 0 end
-		if p.bot_partite >= M.BOTS_DAY then return {} end
+		if p.bot_partite >= M.BOTS_DAY then return {}, {} end
 		p.bot_partite = p.bot_partite + 1
 		half = 0.5
 	end
@@ -301,11 +351,17 @@ function M.match(p, r, today)
 	if r.mvp then add("mvp", M.MVP) end
 	-- one row per award, like the receipt's lines
 	for i = 1, math.min(M.AWARDS_MAX, #(r.awards or {})) do add("award", M.AWARD) end
+	local ob = 0
+	if not r.bots then
+		if r.won then ob = ob + M.OBS_WIN end
+		if r.mvp then ob = ob + M.OBS_MVP end
+	end
 	if r.won and not r.bots and p.giorno ~= today then
 		p.giorno = today
 		add("daily", M.DAILY)
+		ob = ob + M.OBS_DAILY
 	end
-	return rows
+	return rows, ob > 0 and { { key = "obs_match", ossidiana = ob } } or {}
 end
 
 -- how many campaign chapters have all their missions done (the Ossidiana of
@@ -322,11 +378,18 @@ function M.chapters_done(p, chapters)
 	return n
 end
 
--- Scaglie of a campaign mission: first time (or a replay) and the new stars
-function M.mission(first, new_stars)
-	local rows = { { key = first and "done" or "replay", scaglie = first and M.MISSION or M.REPLAY } }
-	if new_stars > 0 then rows[2] = { key = "stars", scaglie = M.STAR * new_stars, n = new_stars } end
-	return rows
+-- Scaglie of a campaign mission: the first time, the new stars, a replay
+-- only when it beats the record of points (record). And the Ossidiana of the
+-- new stars ({ { key = "obs_stars", ossidiana } })
+function M.mission(first, new_stars, record)
+	local rows = {}
+	if first then
+		rows[1] = { key = "done", scaglie = M.MISSION }
+	elseif record or new_stars > 0 then
+		rows[1] = { key = "replay", scaglie = M.REPLAY }
+	end
+	if new_stars > 0 then rows[#rows + 1] = { key = "stars", scaglie = M.STAR * new_stars, n = new_stars } end
+	return rows, new_stars > 0 and { { key = "obs_stars", ossidiana = M.OBS_STAR * new_stars } } or {}
 end
 
 -- Ossidiana earned between two moments: the badges' grades before and after
