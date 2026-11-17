@@ -16,7 +16,7 @@ tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=scelta_online 15
 aspetta_stato modo=online 25
 aspetta_stato modo=online turno=1 fase=aim 20
-aspetta 1
+aspetta 4                            # il conto 3-2-1
 tieni salta 0.1
 tocca 1180 62                        # TELE in aria
 mira -40 140 0.2

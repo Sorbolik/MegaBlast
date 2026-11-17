@@ -1,0 +1,34 @@
+# Online tutto esce dalla stessa coda dei robot (Sergio, 16 nov: "ogni tanto non
+# vedo il mio stesso rampino partire, e poi mi ritrovo nel punto dove sarei
+# finito"): eventi, fune, vita e turno aspettano il disegno (main/playout.lua,
+# net_reach), anche su una rete che trattiene i messaggi fino a 120 ms. Il
+# Rampino tirato in alto si deve vedere in volo con la sua fune, poi cadere.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_rete 120
+imposta prova_vignette no
+aspetta 1
+server 2v2 0 bot_dopo=3s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 175 52 basso destra     # GIOCA
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
+aspetta_stato modo=scelta_online 15
+aspetta_stato modo=online 25
+aspetta_stato modo=online turno=1 fase=aim 20
+aspetta 4                            # il conto 3-2-1
+tocca 1084 62                        # Rampino (tondo accanto al TELE)
+aspetta 0.4
+mira -60 150 0.1                     # in alto: vola per tutta la corsa
+aspetta_evento hook_shot 3
+foto 01_fune_in_volo
+aspetta_evento hook 2
+foto 02_fune_che_cade
+aspetta 1.5
+foto 03_dopo
+# il turno di un bot fino in fondo: quello che fa si vede e il turno passa
+aspetta_stato turno=2 fase=aim 40
+aspetta 2
+foto 04_turno_del_bot
+aspetta_stato turno=3 fase=aim 40
+foto 05_turno_dopo
