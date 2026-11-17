@@ -173,6 +173,14 @@ local function sheet_stats(s)
 	local x, w = 822, 426
 	kit.panel(kit.group(r, x + w / 2, 344).node, w, 492)
 	kit.text(r, T.damage_by_weapon, x + 24, 140, 22, KC.HOT, "start", 1)
+	-- what the two colours of the bars say (Sergio, 17 Nov)
+	local lx = x + 24
+	for _, l in ipairs({ { "barra_brace", T.legend_primary }, { "barra_gelo", T.legend_secondary } }) do
+		kit.strip(r, "riga_scura", lx, 154, 30, 16)
+		kit.strip(r, l[1], lx + 2, 156, 26, 12)
+		lx = lx + 38
+		lx = lx + kit.width(kit.text(r, l[2], lx, 168, 16, KC.MUTE, "start", 0.3)) + 22
+	end
 	local weapons = {}
 	for id, n in pairs(st.armi or {}) do weapons[#weapons + 1] = { w = id, n = n } end
 	table.sort(weapons, function(a, b)
@@ -185,7 +193,7 @@ local function sheet_stats(s)
 	local first = weapons[1] and weapons[1].n or 1
 	for i, a in ipairs(weapons) do
 		if i > 7 then break end
-		local y = 166 + (i - 1) * 60
+		local y = 186 + (i - 1) * 56
 		kit.dot(r, x + 42, y + 22, 46, KC.INK)
 		local ic = gui.new_box_node(vmath.vector3(x + 42 - r.ox, r.oy - (y + 22), 0), vmath.vector3(40, 40, 0))
 		gui.set_parent(ic, r.node)

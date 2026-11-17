@@ -4,7 +4,7 @@ imposta prova_profilo 1
 aspetta 4
 tocca_centro 640 300                # l'apprendista: lo ZAINO
 aspetta 1.5
-tocca_bordo 135 233 basso destra    # VEDI TUTTE
+tocca_bordo 135 152 basso destra    # VEDI TUTTE
 aspetta 0.6
 foto S1_zaino_tutte
 tocca_centro 1130 596               # TORNA AI PEZZI
@@ -27,7 +27,7 @@ aspetta_stato modo=menu 3
 aspetta 0.8
 tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
 aspetta 1.5
-tocca_bordo 135 353 basso destra    # VEDI TUTTE (con +1 LIVELLO cambiano tre righe)
+tocca_bordo 135 152 basso destra    # VEDI TUTTE (con +1 LIVELLO cambiano tre righe)
 aspetta 0.6
 foto S4_armeria_tutte
 tocca_bordo 543 53 alto sinistra    # BOTTEGA

@@ -129,9 +129,11 @@ function M.on_input(s, action_id, action)
 	end
 end
 
--- The strip at the top during the draft: a small plate per robot, its name on
--- the team's color, the two teams apart
+-- The strip at the top during the draft: a small light plate per robot (the
+-- sand plates of the menus: Sergio, 17 Nov), a dot in the team's color and its
+-- name in ink, the two teams apart
 local NAME_W, TICK = 92, 24   -- the room for the name, and the tick after it
+local MINI_W, MINI_H, MINI_STEP = 170, 44, 180
 function M.strip(showcases)
 	local st = { vetrine = showcases, mini = {}, ticks = {}, on = {} }
 	st.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
@@ -145,17 +147,20 @@ function M.strip(showcases)
 	table.sort(order, function(a, b) return xs[a] < xs[b] or (xs[a] == xs[b] and a < b) end)
 	for rank, i in ipairs(order) do
 		local v = showcases[i]
-		local x = 330 + (rank - 1) * 170 + (vs and rank > #order / 2 and 40 or 0)
-		st.mini[i] = kit.rect(g, x, 26, 150, 38, with_alpha(KC.INK, 0.5))
-		kit.rect(g, x, 26, 5, 38, C.SQUADRA[v.squadra] or C.LIGHT)
-		local name = kit.text(g, kit.upper(v.nome or "?"), x + 22, 52, 16, KC.SAND)
+		local x = 320 + (rank - 1) * MINI_STEP + (vs and rank > #order / 2 and 40 or 0)
+		local p = kit.plate(g, x, 23, MINI_W, MINI_H, KC.ROSE, { sk = 0, fill = KC.SAND })
+		st.mini[i] = p.node
+		local b = p.box
+		local mid = (b.y0 + b.y1) / 2
+		kit.dot(p.g, b.x0 + 6, mid, 12, C.SQUADRA[v.squadra] or C.LIGHT)
+		local name = kit.text(p.g, kit.upper(v.nome or "?"), b.x0 + 18, mid + 6, 16, KC.INK)
 		local wide = kit.width(name)
 		if wide > NAME_W then
 			local sc = gui.get_scale(name)
 			gui.set_scale(name, vec(sc.x * NAME_W / wide, sc.y * NAME_W / wide))
 		end
 		-- the green tick of whoever has pressed PRONTO, at the end of the plate
-		st.ticks[i] = kit.pic(g, "spunta_verde", x + 150 - 8 - TICK, 26 + (38 - TICK) / 2, TICK, TICK)
+		st.ticks[i] = kit.pic(p.g, "spunta_verde", b.x1 - TICK, mid - TICK / 2, TICK, TICK)
 		gui.set_enabled(st.ticks[i], false)
 	end
 	return st

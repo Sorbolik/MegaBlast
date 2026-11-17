@@ -26,6 +26,10 @@ M.COLOR = { scaglia = ui.C.GOLD, ossidiana = ui.C.OBSIDIAN }
 -- the flight: one coin every GAP seconds, each FLIGHT long
 M.GAP, M.FLIGHT = 0.04, 0.45
 
+-- the wallet's plates around the line y = 44 of the header, and their numbers
+local PLATE_Y, PLATE_H = 19, 50
+local TEXT, TEXT_Y = 22, 52
+
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
 function M.icon(kind, x, y, d, parent)
@@ -62,14 +66,15 @@ function M.wallet(scaglie, ossidiana, parent, x, y)
 	gui.set_visible(w.border, false)
 	gui.set_parent(w.border, w.root)
 	w.room = {}
-	for _, o in ipairs({ { "scaglia", 962, 112 }, { "ossidiana", 1084, 88 } }) do
+	-- (Sergio, 17 Nov: bigger; the three plates end at 1260, 12 apart)
+	for _, o in ipairs({ { "scaglia", 876, 146 }, { "ossidiana", 1034, 114 } }) do
 		local kind, x, wide = o[1], o[2], o[3]
-		local p = kit.plate(g, x, 25, wide, 38, kit.C.ROSE, { sk = 0 })
-		w.at[kind] = vec(x + 12 - g.ox, 0)
-		M.icon(kind, x + 12 - g.ox, 0, 30, w.root)
-		local box = { x0 = x + 31, x1 = p.box.x1, y0 = p.box.y0, y1 = p.box.y1 }
+		local p = kit.plate(g, x, PLATE_Y, wide, PLATE_H, kit.C.ROSE, { sk = 0 })
+		w.at[kind] = vec(x + 16 - g.ox, 0)
+		M.icon(kind, x + 16 - g.ox, 0, 40, w.root)
+		local box = { x0 = x + 42, x1 = p.box.x1, y0 = p.box.y0, y1 = p.box.y1 }
 		w.room[kind] = box.x1 - box.x0
-		w.text[kind] = kit.text({ node = p.g.node, ox = p.g.ox, oy = p.g.oy, box = box }, "", x + 31, 51, 17, kit.C.SAND)
+		w.text[kind] = kit.text({ node = p.g.node, ox = p.g.ox, oy = p.g.oy, box = box }, "", x + 42, TEXT_Y, TEXT, kit.C.SAND)
 		w.scale = gui.get_scale(w.text[kind])
 	end
 	M.set(w, scaglie, ossidiana)
@@ -101,10 +106,10 @@ end
 function M.vouchers(w, n)
 	if not w.vouchers then
 		local g = { node = w.root, ox = 1110, oy = 44 }
-		local p = kit.plate(g, 1182, 25, 78, 38, kit.C.ROSE, { sk = 0 })
+		local p = kit.plate(g, 1160, PLATE_Y, 100, PLATE_H, kit.C.ROSE, { sk = 0 })
 		w.vouchers = p
-		kit.piece(p.g, "buono", 1192, 44, 44)
-		w.vouchers_text = kit.text(p.g, "", p.box.x1 - 4, 51, 17, kit.C.HOT, "end")
+		kit.piece(p.g, "buono", 1174, 44, 56)
+		w.vouchers_text = kit.text(p.g, "", p.box.x1 - 4, TEXT_Y, TEXT, kit.C.HOT, "end")
 	end
 	gui.set_enabled(w.vouchers.node, n > 0)
 	gui.set_text(w.vouchers_text, tostring(n))

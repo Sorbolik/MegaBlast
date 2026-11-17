@@ -155,9 +155,6 @@ images {
   image: "/assets/ui/pillola_bordo.png"
 }
 images {
-  image: "/assets/ui/favilla_p.png"
-}
-images {
   image: "/assets/ui/stella_p.png"
 }
 images {

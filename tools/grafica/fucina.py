@@ -86,7 +86,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara") and not nome.startswith("primario"):    # (sfumati, e il primario: la scritta la mette kit.action)
+    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara") and not nome.startswith("primario"):    # (sfumati, e il primario: il suo spazio e' misurato, SPAZI_PRIMARIO)
         SPAZI[nome] = spazio(im)
 
 
@@ -190,7 +190,8 @@ def fai_piccoli():
     for nome, a in zip(["stella", "stella_spenta", "medaglia", "ingranaggio", "corona", "freccia"], segni):
         intero(nome, a, 128)
     barre = griglia(os.path.join(p, "pezzo_barre_1.png"), [1, 1, 1, 1, 1], 600)
-    tre("guscio", barre[0], 64, 0.12)
+    # (alto il doppio: la targa del profilo della home lo disegna a 76, Sergio 17 nov)
+    tre("guscio", barre[0], 128, 0.12)
     tre("barra_brace", barre[1], 44, 0.1)
     tre("barra_gelo", barre[2], 44, 0.1)
     tre("barra_chiara", neutro(barre[1]), 44, 0.1)
@@ -346,9 +347,18 @@ MENU_INTERI = [
 SPAZI_MISURATI = {
     "porta_campagna": (240, 50, 189, 51),
     "porta_allenamento": (225, 44, 166, 37),
-    "porta_eventi": (185, 52, 236, 58),
+    "porta_eventi": (185, 52, 252, 58),   # (a destra 12 px dal medaglione, come ARMERIA)
     "porta_armeria": (120, 50, 225, 56),
     "gioca_sigillo": (180, 28, 149, 48),
+}
+# dove si scrive sul pulsante primario (la gemma di WB-054): la faccia piena davanti, senza
+# la fiamma a sinistra e i cristalli a destra; sullo spento solo la parte grigia, prima del
+# ghiaccio (Sergio, 17 nov: la scritta mai sopra i disegni del tasto). Misurati con spazio()
+# sul disegno intero, con la tinta presa dalla faccia.
+SPAZI_PRIMARIO = {
+    "primario_acceso": (99, 79, 79, 48),
+    "primario_premuto": (71, 62, 78, 33),
+    "primario_spento": (59, 78, 178, 39),
 }
 # i pezzi lunghi in tre parti (nome, file, altezza, capo, cartella): si allunga solo il mezzo
 MENU_TRE = [
@@ -478,6 +488,7 @@ def fai_menu():
         for stato in ("acceso", "premuto", "spento"):
             r = ritaglio("WB-054", "primario_%s_%s" % (scelta, stato))
             tre("primario_" + stato, r, round(200 * r.shape[0] / acceso_h), 0.3)
+            SPAZI["primario_" + stato] = SPAZI_PRIMARIO["primario_" + stato]
     # le icone dei pezzi (WB-043): base e forgiata per famiglia e posto; il posto vuoto
     for f in FAMIGLIE:
         for p in POSTI:

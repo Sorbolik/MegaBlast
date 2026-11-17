@@ -44,6 +44,9 @@ quella in uso è `c.tasti`, che le impostazioni cambiano.
 Su Android B manda anche il tasto "indietro" del telefono: il gioco lo
 riconosce (B tenuto o premuto da meno di 0,3 s) e non apre la rotellina.
 
+Nella sala d'attesa online non c'è la rotellina (17 nov): B esce dalla coda, come la
+freccia in basso a sinistra, e Start torna ai menu restando in coda *(scelta di Claude)*.
+
 ## Impostazioni: i tasti da cambiare
 
 Nella home, la rotellina in alto a destra apre IMPOSTAZIONI

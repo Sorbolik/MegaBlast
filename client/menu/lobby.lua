@@ -6,18 +6,20 @@
 -- are and the time that passes; below, a tip that changes every TIP_EVERY
 -- seconds. When the queue is full the lineup takes over (menu/lineup.lua).
 -- If nobody else arrives, after the server's BotAfter (25 s, lobby.go) bots
--- fill the empty places: the line counts it down (BOT TRA N s). ESCI DALLA
--- CODA, at the bottom, leaves the queue (like the gear's ESCI DALLA RICERCA).
+-- fill the empty places: the line counts it down (BOT TRA N s). The room is a
+-- screen like the others (Sergio, 17 Nov): its name at the top left in the
+-- yellow of GIOCA ONLINE, the way back at the bottom left, which here leaves
+-- the queue (ESCI DALLA CODA under it), and on the right the one plate that
+-- goes around the menus staying in the queue. No gear here.
 --
 --   local s = sala.new(of, titolo, parent_below)  -- of: players of the match; parent_below: the
---                                                 -- gear, which stays above (its wheel too)
+--                                                 -- room goes under this node (the battle's gear)
 --   sala.giocatori(s, vetrine) -> true if someone new arrived (vetrine: menu/showcase.lua, in queue order)
 --   sala.bot_in(s, secs)                         -- the bots arrive in secs seconds (nil: no bots, events)
 --   sala.exit_hit(s, x, y) -> "esci" on ESCI DALLA CODA, "menu" on TORNA AI MENU (the queue
 --                                stays alive: ui/pill.lua), nil elsewhere (x, y as gui.pick_node wants them)
 --   sala.since(s, secs)                          -- the queue started secs seconds ago (back from the menus)
 --   sala.update(s, dt)
---   sala.wheel_open(s, open)                     -- the gear's wheel covers the title: it hides it
 --   sala.destroy(s)
 
 local ui = require "ui.ui"
@@ -99,10 +101,13 @@ function M.new(of, title, parent_below)
 	kit.text(on_plate.g, T.searching, 92, 178, 48, KC.INK)
 	kit.info(tg, 90, 222, 440, 38, KC.HOT)
 	s.riga = kit.text(tg, "", 114, 248, 17, KC.SAND, "start", 1)
-	-- the screen's name, next to the gear (it sticks to the real corner like it)
-	s.top = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
-	gui.move_above(s.top.node, s.radice)
-	kit.title(s.top, require("lang.text").queue.title, KC.RED, 112, 76)
+	-- the screen's name and the way back, as on every screen (they stick to the
+	-- real corners): the arrow leaves the queue, and says so
+	s.buttons = {}
+	s.head = kit.header(s.buttons, require("lang.text").queue.title, KC.HOT, "esci", "")
+	for _, n in ipairs(s.head.tops) do gui.move_above(n, s.radice) end
+	s.exit = s.buttons[#s.buttons].nodo
+	kit.text(s.head.back.g, T.leave_queue, 20, 713, 16, KC.MUTE, "start", 1)
 	s.xs = places(of)
 	-- the tip: a row to read, next to the plate
 	kit.info(g, 600, 120, 620, 70, KC.PURPLE)
@@ -110,14 +115,13 @@ function M.new(of, title, parent_below)
 	s.tip = kit.text(g, M.TIPS[1], 630, 172, 16, KC.SAND)
 	s.tip_scale = gui.get_scale(s.tip)
 	fit_tip(s)
-	s.buttons = {}
-	local back = kit.plate(g, 640, 620, 330, 52, KC.ROSE, { sk = 14, d = 6 })
-	kit.text(back.g, T.back_to_menus, 640 + 172, 620 + 32, 16, KC.SAND, "middle", 0.5)
+	-- on the right, under the thread: around the menus, still in the queue
+	s.low = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
+	gui.move_above(s.low.node, s.radice)
+	local back = kit.plate(s.low, 900, 638, 344, 56, KC.ROSE, { sk = 14, d = 6 })
+	kit.text(back.g, T.back_to_menus, 900 + 172, 638 + 34, 17, KC.SAND, "middle", 0.5)
 	kit.button(s.buttons, back, "menu")
-	local exit = kit.plate(g, 1000, 620, 230, 52, KC.ROSE, { sk = 14, d = 6 })
-	kit.text(exit.g, T.leave_queue, 1000 + 122, 620 + 32, 16, KC.SAND, "middle", 0.5)
-	kit.button(s.buttons, exit, "esci")
-	s.back, s.exit = back.node, exit.node
+	s.back = back.node
 	s.title = title
 	M.update(s, 0)
 	return s
@@ -193,17 +197,13 @@ function M.update(s, dt)
 	end
 end
 
-function M.wheel_open(s, open)
-	gui.set_enabled(s.testa, not open)
-	gui.set_enabled(s.top.node, not open)
-end
-
 function M.destroy(s)
 	if s.radice then gui.delete_node(s.radice) end
 	if s.scene then kit.scene_drop(s.scene) end
 	s.scene = nil
-	if s.top then gui.delete_node(s.top.node) end
-	s.top = nil
+	if s.head then kit.header_delete(s.head) end
+	if s.low then gui.delete_node(s.low.node) end
+	s.head, s.low = nil, nil
 	s.radice = nil
 end
 
