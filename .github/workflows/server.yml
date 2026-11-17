@@ -1,0 +1,66 @@
+# Server sul VPS: a ogni merge su main che tocca il server o la simulazione
+# compila il server, lo porta sul VPS, lo riavvia e controlla /health
+# (tools/vps/aggiorna.sh). A mano: Actions > Server sul VPS > Run workflow,
+# con "installa" spuntato rilancia prima tools/vps/installa.sh (pacchetti,
+# servizio, Caddy, firewall); con "carico" N fa poi la prova di carico
+# (tools/vps/carico.sh).
+# Segreto VPS_SSH_KEY (la chiave privata del deploy); variabili VPS_HOST (IP o
+# nome del VPS), facoltative VPS_DOMINIO e VPS_EVENTI. Senza segreto o host il
+# workflow non fa niente. Spiegazioni in tools/vps/README.md.
+name: Server sul VPS
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', 'client/sim/**', 'tools/vps/**', 'go.mod', 'go.sum']
+  workflow_dispatch:
+    inputs:
+      installa:
+        description: "Rilancia prima installa.sh (pacchetti, servizio, Caddy, firewall)"
+        type: boolean
+        default: false
+      carico:
+        description: "Dopo, prova di carico sul VPS con tante partite (0 = niente)"
+        type: number
+        default: 0
+permissions:
+  contents: read
+concurrency:
+  group: server-vps
+  cancel-in-progress: false  # mai interrompere un riavvio a metà
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20  # il riavvio aspetta la fine delle partite (al più 10 minuti)
+    env:
+      VPS_HOST: ${{ vars.VPS_HOST }}
+      HA_CHIAVE: ${{ secrets.VPS_SSH_KEY != '' }}
+    steps:
+      - name: Segreto e host
+        id: pronto
+        run: |
+          if [ "$HA_CHIAVE" != true ] || [ -z "$VPS_HOST" ]; then
+            echo "::notice::Manca il segreto VPS_SSH_KEY o la variabile VPS_HOST: niente da fare"
+            echo "si=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "si=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.pronto.outputs.si == 'true'
+      - uses: actions/setup-go@v5
+        if: steps.pronto.outputs.si == 'true'
+        with:
+          go-version-file: go.mod
+      - name: Aggiorna il server
+        if: steps.pronto.outputs.si == 'true'
+        env:
+          CHIAVE: ${{ secrets.VPS_SSH_KEY }}
+          INSTALLA: ${{ inputs.installa && '1' || '' }}
+          DOMINIO: ${{ vars.VPS_DOMINIO }}
+          EVENTI: ${{ vars.VPS_EVENTI }}
+          CARICO: ${{ inputs.carico || 0 }}
+        run: |
+          install -m 600 /dev/null "$RUNNER_TEMP/chiave"
+          printf '%s\n' "$CHIAVE" > "$RUNNER_TEMP/chiave"
+          bash tools/vps/aggiorna.sh "root@$VPS_HOST" "$RUNNER_TEMP/chiave"
+          if [ "${CARICO:-0}" -gt 0 ]; then bash tools/vps/carico.sh "root@$VPS_HOST" "$RUNNER_TEMP/chiave" "$CARICO" 30s 2v2; fi
+          rm -f "$RUNNER_TEMP/chiave"

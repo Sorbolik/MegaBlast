@@ -11,7 +11,7 @@ passano da Sergio.
 | Fase | Stato | Fatto | Manca |
 |---|---|---|---|
 | 0. Chiudere la partita | quasi finita | coda online scelta nella home (GIOCA ONLINE, #341), tutorial nel cortile, 14 mappe (cortile, Forgia, fossa e una per girone), effetti sonori di base | vantaggio di chi gioca per secondo in 1v1; prova d'uscita coi 4 telefoni e approvazione di Sergio |
-| 1. Online vero | da fare | server con LuaJIT, riconnessione, `/health` e `/stats` (gira sul PC di Sergio) | VPS, dominio, TLS, SQLite, account ospite, progressione sul server, inglese, telemetria e crash |
+| 1. Online vero | da fare | server con LuaJIT, riconnessione, `/health` e `/stats`; VPS Hetzner con installazione e aggiornamento automatici (`tools/vps/`) | dominio, TLS, SQLite, account ospite, progressione sul server, inglese, telemetria e crash |
 | 2. Primi minuti | in gran parte fatta | bot a 10 gradi, cortile e Forgia (#339), Allenamento, partite private, replay, impostazioni | rating nascosto, 2v2 premade in coda, prova delle 5 persone nuove |
 | 3. Eventi e pannello | avviata | pannello eventi su Cloudflare, schermata Eventi, Statistiche e badge, Profilo e Cronologia (#336, #342), ZAINO, Armeria, Sigilli | tornei con classifica e premi, posta, rompicapo del giorno e fantasmi, pannello sul server |
 | 4–6 | da fare | | store, acquisti, clan |
