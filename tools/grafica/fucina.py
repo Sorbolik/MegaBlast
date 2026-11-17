@@ -604,6 +604,41 @@ def fai_profilo():
     m = griglia_trasparente(os.path.join(p, "medaglie_1.png"), [4], 3000)
     for nome, a in zip(["medaglia_bronzo", "medaglia_argento", "medaglia_oro", "medaglia_vuota"], m):
         intero(nome, a, 80)
+    fai_record()
+
+
+# le icone dei record, nell'ordine del foglio (gli id di client/menu/milestones.lua)
+RECORD = ["nel_vuoto", "abbattuti", "a_segno", "danno", "globi", "colpo_lungo", "casse", "vinte", "cadute"]
+LATO_RECORD = 96
+
+
+def fai_record():
+    """Le nove icone dei record (WB-069, foglio 1): una griglia 3 x 3. Ogni icona
+    e' fatta di piu' pezzi staccati (la scintilla del martello, i punti dell'arco),
+    quindi si taglia a caselle e non a pezzi; ognuna va al centro di un quadrato,
+    cosi' nel gioco hanno tutte lo stesso ingombro. Delle cadute resta solo il
+    diavoletto: le lineette di movimento sono nere e sul ferro scuro non si vedono."""
+    a = trasparente(os.path.join(ART, "WB-069", "icone_record_1.png"))
+    pieno = a[..., 3] > 40
+    ys, xs = np.where(pieno)
+    y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+    for i, nome in enumerate(RECORD):
+        r, c = divmod(i, 3)
+        cy0, cy1 = y0 + (y1 - y0) * r // 3, y0 + (y1 - y0) * (r + 1) // 3
+        cx0, cx1 = x0 + (x1 - x0) * c // 3, x0 + (x1 - x0) * (c + 1) // 3
+        casella = a[cy0:cy1, cx0:cx1].copy()
+        if nome == "cadute":
+            lab, n = ndi.label(casella[..., 3] > 40)
+            grande = 1 + int(np.argmax(ndi.sum(casella[..., 3] > 40, lab, range(1, n + 1))))
+            casella[lab != grande] = 0
+        ky, kx = np.where(casella[..., 3] > 40)
+        im = Image.fromarray(casella[ky.min():ky.max() + 1, kx.min():kx.max() + 1], "RGBA")
+        k = (LATO_RECORD - 4) / max(im.size)
+        im = im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)
+        tela = Image.new("RGBA", (LATO_RECORD, LATO_RECORD), (0, 0, 0, 0))
+        tela.alpha_composite(im, ((LATO_RECORD - im.size[0]) // 2, (LATO_RECORD - im.size[1]) // 2))
+        salva(tela, "record_" + nome)
+        MISURE["record_" + nome] = (LATO_RECORD, LATO_RECORD)
 
 
 def fai_atlante():

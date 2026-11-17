@@ -5,7 +5,7 @@
 --                       card: level in a ring of experience, the medals next to
 --                       your name, won/lost bar, best streak and stars; in the
 --                       middle the mode as chips and the records as cards in two
---                       columns with their medal (tapping one puts it next to
+--                       columns with their icon and medal (tapping one puts it next to
 --                       your name); on the right the damage per weapon
 --   CRONOLOGIA PARTITE  (WB-067 R2) the last matches as rows: the ribbon with the
 --                       outcome, mode and map, the map's miniature, the teams
@@ -45,11 +45,7 @@ local KC = kit.C
 local TOUCH = hash("touch")
 local ROMAN = { "I", "II", "III", "IV" }
 local MEDALS = { "medaglia_bronzo", "medaglia_argento", "medaglia_oro", "medaglia_oro" }
--- the round of each record card, one colour each (the approved board, WB-067 R1)
 local GOLD = kit.hex("ffc83d")
-local RECORD_COLORS = { vmath.vector4(0.56, 0.86, 1, 1), vmath.vector4(1, 0.36, 0.36, 1), vmath.vector4(1, 0.69, 0.33, 1),
-	vmath.vector4(1, 0.48, 0.1, 1), vmath.vector4(0.69, 0.55, 1, 1), vmath.vector4(1, 0.78, 0.24, 1),
-	vmath.vector4(0.8, 0.54, 0.33, 1), vmath.vector4(0.36, 0.87, 0.66, 1), vmath.vector4(0.49, 0.44, 0.41, 1) }
 -- the modes of the stats, as the Figma's chips (all of them first)
 local MODES = { "tutte", "2v2", "1v1", "torneo", "campagna" }
 
@@ -147,8 +143,8 @@ local function sheet_stats(s)
 		local grade = t.thresholds and milestones.grade(t, tot) or 0
 		local chosen = picked[t.id] and grade > 0
 		kit.card(g, x, y, cw, ch, KC.ROSE, { sel = chosen })
-		kit.dot(g, x + 32, y + ch / 2, 40, KC.INK)
-		kit.dot(g, x + 32, y + ch / 2, 32, RECORD_COLORS[(i - 1) % #RECORD_COLORS + 1])
+		-- its icon (WB-069), drawn by Codex: what the record is, at a glance
+		kit.piece(g, "record_" .. t.id, x + 32, y + ch / 2, 48)
 		local num = kit.upper(thousands(st[t.id] or 0) .. (t.unit and (" " .. t.unit) or ""))
 		local n = fit(kit.text(g, num, x + 60, y + 34, 24, KC.HOT), 120)
 		fit(kit.text(g, kit.upper(t.nome), x + 60, y + 57, 16, KC.SAND, "start", 0.3), cw - 72)

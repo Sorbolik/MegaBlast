@@ -614,6 +614,33 @@ images {
   image: "/assets/fucina/punto_speso.png"
 }
 images {
+  image: "/assets/fucina/record_a_segno.png"
+}
+images {
+  image: "/assets/fucina/record_abbattuti.png"
+}
+images {
+  image: "/assets/fucina/record_cadute.png"
+}
+images {
+  image: "/assets/fucina/record_casse.png"
+}
+images {
+  image: "/assets/fucina/record_colpo_lungo.png"
+}
+images {
+  image: "/assets/fucina/record_danno.png"
+}
+images {
+  image: "/assets/fucina/record_globi.png"
+}
+images {
+  image: "/assets/fucina/record_nel_vuoto.png"
+}
+images {
+  image: "/assets/fucina/record_vinte.png"
+}
+images {
   image: "/assets/fucina/riga_scura_cx.png"
 }
 images {
