@@ -16,6 +16,8 @@ SSH_OPZ=(-o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30)
 cd "$(dirname "$0")/../.."
 remoto() { ssh "${SSH_OPZ[@]}" "$DOVE" "$@"; }
 
+# la prima volta (niente servizio sul VPS) l'installazione si fa da sola
+remoto 'test -f /etc/systemd/system/megablast.service' || INSTALLA=1
 if [ -n "${INSTALLA:-}" ]; then
   echo "== installa.sh sul VPS"
   scp "${SSH_OPZ[@]}" tools/vps/installa.sh "$DOVE:/root/installa.sh"
