@@ -26,9 +26,9 @@ aspetta_evento hook 2
 foto 02_fune_che_cade
 aspetta 1.5
 foto 03_dopo
-# il turno di un bot: il colpo, lo scoppio e il danno insieme
+# il turno di un bot fino in fondo: quello che fa si vede e il turno passa
 aspetta_stato turno=2 fase=aim 40
-aspetta_evento explosion 12
-foto 04_scoppio_del_bot
 aspetta 2
-foto 05_dopo_lo_scoppio
+foto 04_turno_del_bot
+aspetta_stato turno=3 fase=aim 40
+foto 05_turno_dopo
