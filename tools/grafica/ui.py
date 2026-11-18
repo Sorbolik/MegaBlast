@@ -54,6 +54,17 @@ yy, xx = np.mgrid[0:n * SS, 0:n * SS]
 r = np.hypot(xx - (n * SS - 1) / 2, yy - (n * SS - 1) / 2) / (n * SS / 2)
 salva(np.clip(1 - r, 0, 1) ** 2, n, "alone.png")
 
+# i raggi a bande del cielo a fumetto dietro le sagome dei menu (Sergio, 18 nov): 22
+# spicchi, uno pieno e uno vuoto, che sfumano dal centro verso fuori; li colora e li fa
+# oscillare il codice (client/ui/kit.lua)
+n = 512
+yy, xx = np.mgrid[0:n * SS, 0:n * SS]
+cx = (n * SS - 1) / 2
+r = np.hypot(xx - cx, yy - cx) / (n * SS / 2)
+spicchio = np.floor((np.arctan2(yy - cx, xx - cx) + np.pi) / (2 * np.pi) * 22).astype(int) % 2 == 0
+dentro = np.clip((r - 0.04) / 0.04, 0, 1)
+salva(spicchio * dentro * np.clip(1 - r / 0.6, 0, 1), n, "raggi.png")
+
 
 
 def griglia(n):

@@ -1,6 +1,6 @@
 # WB-073 · Sagome dei menu, una per pagina
 
-- **Stato:** APPROVATA (Sergio, 18 nov, 11:02: «proviamo la C»; 11:03: «vorrei una diversa per ogni pagina»; le proposte su https://claude.ai/artifact/DCwXT2kmBrf535D67MBu4f)
+- **Stato:** IMPLEMENTATA (era APPROVATA; Sergio, 18 nov, 11:02: «proviamo la C»; 11:03: «vorrei una diversa per ogni pagina»; le proposte su https://claude.ai/artifact/DCwXT2kmBrf535D67MBu4f)
 - **Data:** 2026-11-18
 - **Ramo della scheda:** `claude/project-thread-flvu6y` (Codex la esegue da lì, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-073`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-073` senza chiedere conferma (il repository è privato).
