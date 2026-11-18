@@ -9,7 +9,7 @@
 package.path = "client/?.lua;" .. package.path
 
 local equip = require "sim.gear"
-local wallet = require "menu.wallet"
+local wallet = require "sim.wallet"
 local profile = require "menu.profile"
 local awards = require "sim.awards"
 

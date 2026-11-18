@@ -130,7 +130,7 @@ M.SIGNS = {
 M.SIGN_TIERS = { 0, 0.5, 0.75, 1 }
 -- Ossidiana to light a signature up to each grade (lit, bright, full): the
 -- piece must have reached the step 10, 20, 30 (Sergio, 17 Nov: the Scaglie
--- raise the numbers, the Ossidiana lights the powers). menu/wallet.lua
+-- raise the numbers, the Ossidiana lights the powers). sim/wallet.lua
 M.SIGN_COSTS = { 160, 320, 640 }
 
 -- Families: for each slot { main, { two secondaries }, minus, signature }; art:

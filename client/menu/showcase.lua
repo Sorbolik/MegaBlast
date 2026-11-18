@@ -19,7 +19,7 @@ local game = require "sim.game"
 local skills = require "sim.skills"
 local equip = require "sim.gear"
 local profile = require "menu.profile"
-local wallet = require "menu.wallet"
+local wallet = require "sim.wallet"
 local T = require("lang.text").showcase
 
 local M = {}

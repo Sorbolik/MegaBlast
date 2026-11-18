@@ -140,7 +140,7 @@ function M.net_clean(eq)
 	for _, s in ipairs(equip.SLOTS) do
 		local l, sg = type(eq.lv) == "table" and eq.lv[s.id], type(eq.sg) == "table" and eq.sg[s.id]
 		out.lv[s.id] = whole(l, 1, equip.LIVELLO_MAX) and l or 1
-		-- a signature is lit as far as the piece's step (menu/wallet.lua, sign)
+		-- a signature is lit as far as the piece's step (sim/wallet.lua, sign)
 		out.sg[s.id] = whole(sg, 0, #equip.SIGN_TIERS - 1) and math.min(sg, equip.tier(out.lv[s.id]) - 1) or 0
 	end
 	if not M.valid(net_loadout(out), skills.points(out.liv)) then return nil end
