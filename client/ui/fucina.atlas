@@ -26,6 +26,15 @@ images {
   image: "/assets/fucina/barra_gelo_sx.png"
 }
 images {
+  image: "/assets/fucina/barra_stendardo_cx.png"
+}
+images {
+  image: "/assets/fucina/barra_stendardo_dx.png"
+}
+images {
+  image: "/assets/fucina/barra_stendardo_sx.png"
+}
+images {
   image: "/assets/fucina/barrato.png"
 }
 images {
@@ -933,6 +942,9 @@ images {
 }
 images {
   image: "/assets/fucina/stella_spenta.png"
+}
+images {
+  image: "/assets/fucina/stendardo.png"
 }
 images {
   image: "/assets/fucina/tacca.png"

@@ -1,0 +1,16 @@
+Image 1 shows the experience bar our game uses today in the player's profile: it is crooked, wobbly and uneven, and we want a NEW one that is perfectly straight. Image 2 shows approved coins of the same game and image 3 a button of the same game: copy their style exactly, a cartoon comic look with a thick slightly irregular black ink outline, flat colors with one flat highlight and one flat shadow, real thickness and relief.
+
+Draw on plain green (#00FF00) three separate horizontal pieces, one above the other, well apart, all exactly the same length (about 1300 px) and perfectly straight and horizontal:
+1. EMPTY GROOVE (about 70 px tall): a channel carved into dark forged iron, rounded ends like a capsule. Outer thick black ink outline, a thin lighter iron lip along the bottom edge (#5A5263), the inside of the channel very dark (#1A161D) with a darker shadow band along its top inner edge, as if the channel were really cut into the metal. The middle part must be EXACTLY the same all along its length: no scratches, no rivets, no bends, so the game can stretch it.
+2. MOLTEN FILL (about 46 px tall, so it fits inside the groove with an even margin): molten gold and ember metal, core #FFB703, lower half #F26419, one straight thin bright highlight line along the top (#FFE08A), thick black ink outline, rounded left end and flat cut right end. Uniform along its length, no bubbles or patterns that would repeat visibly when stretched.
+3. HOT TIP (about 70 px tall, about 70 px wide): the leading end of the molten fill, a short rounded cap glowing white-yellow (#FFF3B0 core, #FFB703 edge) with a few very small sparks just around it, still with the black ink outline. It sits at the right end of the fill to show where your experience has arrived.
+No letters, no numbers, no frame around everything, no shadow on the ground, no glow outside the ink except the small sparks of piece 3.
+
+Riferimenti allegati in ordine
+art/WB-075/riferimenti/R2_oggi.png
+art/WB-075/riferimenti/R3_monete_approvate.png
+art/WB-075/riferimenti/R4_stile.png
+
+ImageGen integrato. Tentativi 1, selezionato il 1.
+Foglio ridotto in proporzione e centrato su tela verde 1536×1024.
+Incavo, riempimento e punta destra separati. Incavo e riempimento quasi rettilinei ma di lunghezza e spessore diversi da quelli indicati.

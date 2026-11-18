@@ -86,7 +86,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara") and not nome.startswith("primario"):    # (sfumati, e il primario: il suo spazio e' misurato, SPAZI_PRIMARIO)
+    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara", "barra_stendardo") and not nome.startswith("primario"):    # (sfumati, e il primario: il suo spazio e' misurato, SPAZI_PRIMARIO)
         SPAZI[nome] = spazio(im)
 
 
@@ -187,6 +187,19 @@ def fai_perle():
         intero(nome, t[2], 64)
     for nome, t in zip(["slot_vuoto", "slot_acceso", "slot_rovente"], giu):
         intero(nome, t[2], 128)
+
+
+def fai_stendardo():
+    """Il riquadro del profilo in home (WB-075, Sergio 18 nov: «facciamo la d1»): anello e
+    stendardo in un pezzo solo (stendardo_1), con l'incavo della barra e la moneta del livello
+    forgiati dentro; il riempimento della barra e' quello dritto di barra_2, senza la punta
+    (Sergio: «o metti bene la capocchia, oppure lasci senza»). Capi corti: con poca esperienza
+    la barra resta corta."""
+    p = os.path.join(ART, "WB-075")
+    st = max(pezzi(senza_verde(os.path.join(p, "stendardo_1.png"))), key=lambda t: t[2].size)
+    intero("stendardo", st[2], 224)
+    barra = sorted(pezzi(senza_verde(os.path.join(p, "barra_2.png"))), key=lambda t: t[0])
+    tre("barra_stendardo", barra[1][2], 16, 0.03)
 
 
 def fai_secondario():
@@ -722,6 +735,7 @@ if __name__ == "__main__":
     fai_pezzi()
     fai_monete()
     fai_perle()
+    fai_stendardo()
     fai_secondario()
     fai_piccoli()
     fai_menu()
