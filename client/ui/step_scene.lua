@@ -9,10 +9,12 @@
 --         bar of molten metal (ui/ingots.lua), the step's level empty and beating
 --         like a heart faster and faster; embers rise, the painting comes closer and trembles
 --   1.30, 1.70, 2.02  three blows, closer and harder: a short freeze, a shake, an
---         ember flash over the whole painting, sparks, the level fills a third
+--         ember flash over the whole painting, sparks, the level fills a third; the
+--         signature's slot, not there before, is born as a dot and grows, red-hot
 --   2.15  held: silence, almost dark, the embers stop, only the level white
 --   2.75  the explosion: white flash, a shock ring, rays turning in the new grade's
---         color, the painting tinted with it, the metal flows again in it;
+--         color, the painting tinted with it, the metal flows again in it, the
+--         slot opens all, empty;
 --         of the piece only its silhouette, black against the light
 --   3.23  the silhouette cools into the piece as it is now (the forged one at 20)
 --   3.25  SCATTO! falls from big and slams
@@ -39,6 +41,7 @@ local M = {}
 M.CHARGE, M.SUSPENSE, M.BOOM, M.REVEAL, M.TITLE = 0.45, 2.15, 2.75, 3.23, 3.25
 M.BLOWS = { { 1.30, 0.05, 0.42, 0.33 }, { 1.70, 0.07, 0.60, 0.50 }, { 2.02, 0.11, 0.80, 0.72 } } -- t, freeze, trauma, flash
 M.ROWS, M.GO = { 3.65, 3.80, 3.95 }, 4.20
+M.GROW = { 0.16, 0.42, 0.68 }  -- how big the step's slot is after each blow
 M.HOLD = 7.0   -- it goes away by itself
 local ROMAN = { "I", "II", "III", "IV" }
 local W, H = 1280, 720
@@ -115,13 +118,14 @@ function M.new(o)
 	-- the bar of the level, the step still to forge
 	sc.ingots = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_parent(sc.ingots, sc.root)
-	sc.bar = ingots.draw({ node = sc.ingots, ox = 0, oy = 720 }, IX, IY, IW, IH, level - 1, o.lit or 0)
+	sc.bar = ingots.draw({ node = sc.ingots, ox = 0, oy = 720 }, IX, IY, IW, IH, level - 1, o.lit or 0, math.floor(level / 10))
 	sc.step = sc.bar.next
 	sc.step_scale = gui.get_scale(sc.step)
 	sc.bar.next_fill(0)
 	gui.set_color(sc.step, KC.HOT)
 	local at = gui.get_position(sc.bar.node) + gui.get_position(sc.step)
-	-- the step is at a stud: the stud is what beats and glows hotter at each blow
+	-- the step's slot is not there yet: it is born at the first blow as a dot, grows
+	-- at each blow, glowing hotter, and opens at the explosion (Sergio, 18 Nov)
 	sc.stud = sc.bar.studs[math.floor(level / 10)]
 	sc.stud_face = sc.bar.gems[math.floor(level / 10)]
 	if sc.stud then at = gui.get_position(sc.bar.node) + gui.get_position(sc.stud) end
@@ -208,9 +212,12 @@ local function events(sc, t, quiet)
 		sc.bar.set(sc.level, sc.color, 0.45, 0.06)
 		local stud = sc.stud
 		if stud then
-			gui.set_scale(stud, vmath.vector3(1, 1, 1))
+			gui.set_enabled(stud, true)
+			gui.set_scale(stud, vmath.vector3(M.GROW[3], M.GROW[3], 1))
 			gui.set_color(sc.stud_face, ingots.STUD_OFF)
-			gui.animate(stud, "scale", vmath.vector3(1.35, 1.35, 1), gui.EASING_INOUTSINE, 0.5, 0.6, nil, gui.PLAYBACK_LOOP_PINGPONG)
+			gui.animate(stud, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, 0, function()
+				gui.animate(stud, "scale", vmath.vector3(1.15, 1.15, 1), gui.EASING_INOUTSINE, 0.5, 0.3, nil, gui.PLAYBACK_LOOP_PINGPONG)
+			end)
 		end
 	end
 	if once("reveal", M.REVEAL) then
@@ -294,7 +301,18 @@ local function draw(sc, t)
 		gui.set_scale(sc.step, vmath.vector3(k, k * (0.85 + 0.35 * (sx - 1)), 1))
 		gui.set_color(sc.step, fill >= 1 and KC.SEAM or KC.HOT)
 		if sc.stud then
-			gui.set_scale(sc.stud, vmath.vector3(sx, sx, 1))
+			-- nothing, a dot, bigger, almost all: each blow makes it grow with a kick
+			local grow = 0
+			for i, b in ipairs(M.BLOWS) do
+				if t >= b[1] then
+					local from = M.GROW[i - 1] or 0
+					grow = lerp(from, M.GROW[i], eo(seg(t, b[1], b[1] + 0.12)))
+					if t < b[1] + 0.06 then grow = grow + 0.12 end
+				end
+			end
+			gui.set_enabled(sc.stud, grow > 0)
+			grow = grow * (1 + 0.08 * beat)
+			gui.set_scale(sc.stud, vmath.vector3(grow, grow, 1))
 			local hot = { [0] = ingots.STUD_OFF, KC.HOT_BOTTOM, KC.HOT, KC.SEAM }
 			gui.set_color(sc.stud_face, hot[math.floor(fill * 3 + 0.5)])
 		end
