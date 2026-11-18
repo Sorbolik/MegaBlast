@@ -94,7 +94,7 @@ Verificati contorni spessi, separazione, assenza di scritte e riconoscibilità d
   Ossidiana da `monete_2` (la sinistra), Scaglia e buono da `scavate_2` (scelta di Claude: la
   fiammella e il martello più scavati, e reggono a 24 px). Le taglia `tools/grafica/fucina.py`
   (`fai_monete`) nei pezzi `gemma`, `scaglia` e `buono`, alti uguali. Scartate `monete_1`,
-  `monete_3`, `scavate_1` e `scavate_3` (restano nel ramo come storia). Simulazione OK
+  `monete_3`, `scavate_1` e `scavate_3` (tolte dal ramo di lavoro, restano nel ramo `design/WB-072`). Simulazione OK
   (`zaino_scheda.txt`): portafoglio, prezzi e pulsanti secondari si leggono.
 - [x] tutti i criteri rispettati; a 24 px l'incisione del buono si attenua ma martello e incudine si riconoscono.
 

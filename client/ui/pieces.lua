@@ -77,8 +77,6 @@ return {
 	lama_corpo = { w = 180, h = 713 },
 	lama_fuoco = { w = 80, h = 713 },
 	lama_gelo = { w = 72, h = 713 },
-	linguetta = { w = 226, h = 120, c = 68, box = { 47, 22, 67, 21 } },
-	linguetta_chiara = { w = 226, h = 120, c = 68, box = { 48, 22, 68, 21 } },
 	livello_ferro = { w = 78, h = 80 },
 	livello_oro = { w = 79, h = 80 },
 	lucchetto = { w = 102, h = 120 },

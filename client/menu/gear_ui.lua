@@ -374,7 +374,6 @@ end
 -- at most M.SHORT_ROWS; under it VEDI TUTTE opens all of them in one screen
 -- (M.sheet, "foglio"). The same column on every screen where the gear changes
 -- (Sergio, 15 Nov 22:48)
-M.SEE_ALL_Y = 540
 function M.stats_short(s, g, x, y, w, a, a2)
 	local p = s.prof
 	local base = game.base_stats()

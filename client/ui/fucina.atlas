@@ -335,24 +335,6 @@ images {
   image: "/assets/fucina/lama_gelo.png"
 }
 images {
-  image: "/assets/fucina/linguetta_chiara_cx.png"
-}
-images {
-  image: "/assets/fucina/linguetta_chiara_dx.png"
-}
-images {
-  image: "/assets/fucina/linguetta_chiara_sx.png"
-}
-images {
-  image: "/assets/fucina/linguetta_cx.png"
-}
-images {
-  image: "/assets/fucina/linguetta_dx.png"
-}
-images {
-  image: "/assets/fucina/linguetta_sx.png"
-}
-images {
   image: "/assets/fucina/livello_ferro.png"
 }
 images {

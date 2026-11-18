@@ -251,8 +251,7 @@ def fai_piccoli():
     tondi = griglia(os.path.join(p, "pezzo_tondi_1.png"), [2, 2])
     for nome, a in zip(["tondo_ferro", "tondo_oro"], tondi):
         intero(nome, a, 200)
-    tre("linguetta", tondi[3], 120, 0.3)
-    tre("linguetta_chiara", chiaro(tondi[3]), 120, 0.3)
+    # (la linguetta e la linguetta chiara non si usano piu': le linguette dei menu sono solo scritte)
 
 
 def chiaro(arr):

@@ -110,3 +110,5 @@ con la forma), tre stati come la gemma. Numero assegnato dal coordinatore.
 I sei PNG misurano 1536×1024 px. I tre fogli delle monete sono stati ridotti in proporzione e centrati con margini verdi. Il verde generato presenta lievi scostamenti da #00FF00. Verificati contorni spessi, separazione, assenza di scritte, incavi vuoti e centri liberi. Il premuto è più basso e nello spento la brace è scura. Il contrasto fra acceso e spento è tenue in scala di grigi. I tre stati differiscono leggermente in altezza e nei bordi e non si sovrappongono esattamente. Le sfumature e l'antialias producono più di sei valori RGB. La Scaglia con fiammella e l'Ossidiana nera e viola con bordo magenta si riconoscono in anteprima a 24 px. Ritaglio, allungamento a tre parti, ricalco e resa in gioco da verificare.
 
 ## Resoconto di Claude
+
+- 18 nov: né il secondario né le monete di questo giro sono entrati nel gioco (il secondario «Ferro liscio» è disegnato a vettori in `tools/grafica/fucina.py`, le monete sono quelle di WB-072). I fogli sono stati tolti dal ramo di lavoro e restano nel ramo `design/WB-071`.
