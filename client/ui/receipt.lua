@@ -17,7 +17,7 @@
 --     top: where GUADAGNI is written (ui/kit.lua coordinates: 1280 x 720, y from the top);
 --       the rows go down from there, on the right; parent: a node at the screen's bottom left
 --     gain: profile.match_end or profile.mission (lines, xp, level_before, livello, braci...)
---       gain.coins = { rows, obsidian } (menu/wallet.lua), already in the profile
+--       gain.coins = { rows, obsidian } (sim/wallet.lua), already in the profile
 --     buttons: the screen's list, METTI I PUNTI goes there with the action "sigilli"
 --   receipt.update(r, dt, tick, coin, xp)  -- tick(i): the sound of a line, i from 1;
 --                                          -- coin(kind, i): a coin landing in the pill;
@@ -99,7 +99,7 @@ function M.merge(lines, c)
 	for _, row in ipairs(c and c.obsidian or {}) do
 		out[#out + 1] = { key = row.key, id = row.id, grade = row.grade, ossidiana = row.ossidiana }
 	end
-	-- the gifts (menu/wallet.lua): a piece, a Smith's voucher
+	-- the gifts (sim/wallet.lua): a piece, a Smith's voucher
 	for _, row in ipairs(c and c.gifts or {}) do
 		out[#out + 1] = { key = row.key, set = row.set, slot = row.slot }
 	end

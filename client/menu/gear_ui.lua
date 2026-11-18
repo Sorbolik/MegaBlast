@@ -22,7 +22,7 @@ local game = require "sim.game"
 local equip = require "sim.gear"
 local loadout = require "sim.loadout"
 local scoria = require "battle.scoria"
-local wallet = require "menu.wallet"
+local wallet = require "sim.wallet"
 local TA = require("lang.text").armory
 local T = require("lang.text").gear_ui
 

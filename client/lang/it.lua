@@ -175,7 +175,7 @@ return {
 		place_points = "METTI I PUNTI",
 		brace = "+%s brace accanto al livello",
 		braci = "+%s braci accanto al livello",
-		-- the gifts (menu/wallet.lua): a piece (slot and family), a voucher
+		-- the gifts (sim/wallet.lua): a piece (slot and family), a voucher
 		gift_piece = "In regalo: %s del %s",
 		gift_voucher = "Un buono del Fabbro",
 	},

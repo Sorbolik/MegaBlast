@@ -988,8 +988,8 @@ local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", ta
 	vignette = require "battle.vignette", favilla = require "battle.favilla", tale = require "ui.story",
 	-- the recipes of the matches played here go to the server, which checks them
 	recipe_check = require "main.recipe_check",
-	-- Scaglie and Ossidiana (menu/wallet.lua) and the campaign's chapters (a finished one gives Ossidiana)
-	wallet = require "menu.wallet", chapters = require("sim.campaign").CAPITOLI }
+	-- Scaglie and Ossidiana (sim/wallet.lua) and the campaign's chapters (a finished one gives Ossidiana)
+	wallet = require "sim.wallet", chapters = require("sim.campaign").CAPITOLI }
 
 -- The zoom (Sergio, 3 Nov, choice Z1; 4 Nov): one button, top right, that is
 -- both a switch and a slider. Inside it a small lens slides on a track with a
@@ -2527,7 +2527,7 @@ function CP.record(self, res)
 	return pa.replay and pa.numero or nil
 end
 
--- Scaglie and Ossidiana of a match (menu/wallet.lua): the rows go to the
+-- Scaglie and Ossidiana of a match (sim/wallet.lua): the rows go to the
 -- podium's receipt. Online the full price; against bots and on the same
 -- phone half, and only the first ones of the day
 function CP.match_coins(self, r, stats_before, gain)
