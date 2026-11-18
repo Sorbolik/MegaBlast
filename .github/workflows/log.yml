@@ -12,7 +12,7 @@ on:
         type: string
         default: "ricetta da"
       da:
-        description: "Da quando, come lo capisce journalctl --since (es. -1h, -30min, 2026-11-17 22:00, today)"
+        description: "Da quando, come lo capisce journalctl --since (es. -1h, -30min, today, 2026-11-18 06:00)"
         type: string
         default: "-1h"
       a:
@@ -20,7 +20,7 @@ on:
         type: string
         default: ""
       prova:
-        description: "Prima prova POST /ricetta (dal VPS e da fuori) e mostra Caddyfile e log di Caddy"
+        description: "Prova anche POST /ricetta (dal VPS e da fuori) e mostra Caddyfile, errori di Caddy e richieste a /ricetta"
         type: boolean
         default: false
 permissions:
@@ -55,7 +55,8 @@ jobs:
           curl -sS -i -m 20 -X POST --data prova "http://127.0.0.1:8080/ricetta?p=prova-8080&j=curl" | head -20
           echo "== Caddyfile"; cat /etc/caddy/Caddyfile
           echo "== versione del server"; ls -l /opt/megablast/megablast-server; systemctl status megablast --no-pager -n 0 | head -5
-          echo "== log di Caddy da oggi 06:00 UTC"; journalctl -u caddy --no-pager -o short-iso --since "today 06:00" | tail -n 50
+          echo "== errori di Caddy da oggi"; journalctl -u caddy --no-pager -o short-iso --since today | tail -n 50
+          echo "== richieste a /ricetta (log di accesso di Caddy)"; cat /var/log/caddy/megablast*.log 2>/dev/null | grep -F "\"/ricetta" | tail -n 50
           echo "== righe del server con ricetta da oggi"; journalctl -u megablast --no-pager -o short-iso --since today | grep -i ricetta | tail -n 50' || true
           fi
           rm -f "$RUNNER_TEMP/chiave"
