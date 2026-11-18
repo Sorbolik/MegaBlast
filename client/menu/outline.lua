@@ -29,7 +29,7 @@ local WIDTH, WIDTH_INK = 0.0115, 0.032
 -- two pieces of a place nearer than twice this are one shape (devil heights)
 local CLOSE = 0.016
 -- the glow around the lit pieces: how far it goes (devil heights) and how strong
-local GLOW, GLOW_ALPHA = 0.05, 0.38
+local GLOW, GLOW_ALPHA = 0.055, 0.6
 
 function M.new(figure, pose, look)
 	local o = { figure = figure }

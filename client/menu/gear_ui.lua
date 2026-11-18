@@ -136,7 +136,8 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 		local level = set and wallet.level(s.prof, set, sl.id)
 		local p = at[sl.id]
 		local bx, by = cx + p[1] * k, feet + p[2] * k
-		colors[cats[sl.id]] = sel == sl.id and vmath.vector4(1, 0.62, 0.12, 1) or vmath.vector4(0.93, 0.86, 0.68, 1)
+		-- only the piece chosen is lit (Sergio, 18 Nov)
+		if sel == sl.id then colors[cats[sl.id]] = vmath.vector4(1, 0.62, 0.12, 1) end
 		if level then
 			local top = level >= equip.LIVELLO_MAX
 			kit.pic(g, top and "livello_oro" or "livello_ferro", bx - 17, by - 17, 34, 34)
