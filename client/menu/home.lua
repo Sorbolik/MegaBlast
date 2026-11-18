@@ -65,12 +65,12 @@ local BANNER = {
 	name_y = 56, name_size = 26, level_size = 24, fill_h = 9,
 }
 -- the head in the ring, without the team ring (Sergio, 18 Nov: «in home non hai mica una
--- squadra»): its chin sits exactly on the lower edge of the ring's dark disc and it is
--- as big as it takes to look centred in the ring (it sticks out above and at the sides).
--- How far up it goes is measured on the simulator's photo: at this size the chin's ink
--- ends on the gold's inner edge, 36.5 under the ring's centre
-local FACE_D = 100
-local FACE_UP = 8.8
+-- squadra»): its chin starts exactly from the ring's lower inner edge and it is as big
+-- as it can be with its lower outline still inside the dark disc (measured on the
+-- simulator's photo; bigger, the jaw goes over the gold, and cutting it on the disc
+-- left a visible step); horns, helmet and ear stick out above and at the side
+local FACE_D = 80
+local FACE_UP = 0
 
 -- The face in the banner's ring (made again when the look changes)
 local function put_face(h)
