@@ -1,0 +1,35 @@
+# Il passaggio fra i menu (Sergio, 18 nov, proposta 2): i pezzi della schermata
+# vecchia tornano ai loro bordi, lo sfondo cambia in un lampo, i pezzi della
+# nuova entrano dai loro bordi uno dopo l'altro. Dalla home: impostazioni,
+# profilo e GIOCA ONLINE, e ritorno.
+imposta prova_profilo 1
+
+aspetta 4
+foto 00_home
+tocca_bordo 74 54 basso sinistra    # la rotellina delle impostazioni
+aspetta 0.12
+foto 01_vecchi_ai_bordi
+aspetta 0.14
+foto 02_nuovi_entrano
+aspetta 0.8
+foto 03_impostazioni
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta 0.3
+foto 04_home_entra
+aspetta 1
+foto 05_home
+tocca_bordo 120 56 alto sinistra    # il tondo del profilo
+aspetta 0.3
+foto 06_profilo_entra
+aspetta 1
+foto 07_profilo
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta 1.2
+tocca_bordo 175 52 basso destra     # GIOCA ONLINE
+aspetta 0.3
+foto 08_gioca_entra
+aspetta 1.5
+foto 09_gioca_online
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta 1.5
+foto 10_home

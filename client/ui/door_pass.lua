@@ -3,11 +3,11 @@
 --          back, it drags the new screen in with it, backdrop and all, over
 --          the home that stays still under it (Sergio, 15 Nov: «vorrei
 --          semplicemente che si portasse l'altra pagina con sé»). The page's
---          edge wears the band its door drew (WB-049), outside it; the button rides
---          on it pulling and goes out over the screen's border with it. Back:
---          the button rides a new band pushing the page out, the home under
+--          edge is a thin orange line, outside it; the button rides on it
+--          pulling and goes out over the screen's border with it. Back:
+--          the button rides a new line pushing the page out, the home under
 --          it; it stops on its place with a small bounce, the page and its
---          band go on out of the screen
+--          line go on out of the screen
 --   zaino  the ZAINO grows out of the apprentice and goes back into it
 -- The new screen's top nodes are the ones kit.anchor and ui.root make while it
 -- is open (kit.track): the doors drag them, the ZAINO scales them.
@@ -96,50 +96,26 @@ local function join(...)
 	return out
 end
 
--- The page's edge (Sergio, 18 Nov: instead of the orange line): the band its door
--- drew for it (WB-049, atlas fucina), down the whole screen, x its middle: the top,
--- the middle repeated as many times as keep it about EDGE_W wide (never stretched),
--- the bottom.
--- One piece more beside the page (Sergio, 18 Nov: «non deve finire sopra né alla
--- home né alla pagina»): stuck outside its edge, it comes in with the drag and goes
--- out over the border as the page fills the screen; the way back, the same.
+-- The page's edge: a thin orange line down the whole screen, x its middle (Sergio,
+-- 18 Nov: back to the line, the drawn bands «troppo appariscenti»). One piece more
+-- beside the page (Sergio, 18 Nov: «non deve finire sopra né alla home né alla
+-- pagina»): stuck outside its edge, it comes in with the drag and goes out over the
+-- border as the page fills the screen; the way back, the same.
 -- (not kit.anchor: it would count as one of the screen's nodes)
-M.EDGE_W = 64
--- forward, the band comes in from the border to the shield in this time
+-- its ink and its orange core
+local LINE, CORE = 12, 6
+-- forward, the line comes in from the border to the shield in this time
 M.ENTER = 0.1
--- how much of the band lies on the page's edge (its ink), so the two are one
+-- how much of the line lies on the page's edge, so the two are one
 M.FUSE = 0.06
--- a door's band on this screen: how many middles, its scale and its width
-local function fit(id)
-	local P = kit.PIECES
-	local top, mid, bottom = P["bordo_" .. id .. "_su"], P["bordo_" .. id .. "_mezzo"], P["bordo_" .. id .. "_giu"]
-	local tall = screen.height()
-	-- the width nearest EDGE_W
-	local n, k = 1, nil
-	for i = 1, 12 do
-		local ki = tall / (top.h + i * mid.h + bottom.h)
-		if not k or math.abs(top.w * ki - M.EDGE_W) < math.abs(top.w * k - M.EDGE_W) then n, k = i, ki end
-	end
-	return n, k, top.w * k, top, mid, bottom, tall
-end
 
-local function band(id, x)
-	local n, k, w, top, mid, bottom, tall = fit(id)
-	local b = gui.new_box_node(vec(x, 360), vec(0, 0))
-	gui.set_visible(b, false)
-	local y = tall / 2
-	local function piece(part, h)
-		local node = gui.new_box_node(vec(0, y - h * k / 2), vec(w, h * k + 1))
-		gui.set_texture(node, "fucina")
-		gui.play_flipbook(node, "bordo_" .. id .. "_" .. part)
-		gui.set_parent(node, b)
-		gui.set_inherit_alpha(node, true)
-		y = y - h * k
-	end
-	piece("su", top.h)
-	for _ = 1, n do piece("mezzo", mid.h) end
-	piece("giu", bottom.h)
-	return b
+local function line(x)
+	local n = gui.new_box_node(vec(x, 360), vec(LINE, 720 * screen.FULL))
+	gui.set_color(n, kit.C.INK)
+	local core = gui.new_box_node(vec(0, 0), vec(CORE, 720 * screen.FULL))
+	gui.set_color(core, kit.C.HOT)
+	gui.set_parent(core, n)
+	return n
 end
 
 local function drop_line(dp)
@@ -183,14 +159,14 @@ local function measure(h, id)
 	d.dx = d.edge_x - (d.x + ox + shield * d.w)
 	d.node = d.p.node
 	d.rest = gui.get_position(d.node)
-	-- the band beside the page's edge (the side toward the door), so it ends just
+	-- the line beside the page's edge (the side toward the door), so it ends just
 	-- out of the other border
-	local _, _, bw = fit(id)
+	local bw = LINE
 	local out = bw * (0.5 - M.FUSE)
 	d.line_x = d.side < 0 and screen.x1 + out or screen.x0 - out
-	-- the page starts with the band on the shield
+	-- the page starts with the line on the shield
 	d.p0 = d.edge_x - d.line_x
-	-- where the band is just out of this border: forward it starts there, back
+	-- where the line is just out of this border: forward it starts there, back
 	-- the page goes on until it is there
 	d.back = d.p0 + d.side * (EDGE + bw / 2)
 	-- off the line, out of the screen
@@ -211,13 +187,13 @@ function M.open(dp, h, id, change)
 		dp.kind, dp.door = "door", id
 		home_on(h, true)
 		kit.scene_cut(true)
-		dp.line = band(id, d.line_x)
+		dp.line = line(d.line_x)
 		local page = join(alive(kit.tracked()), kit.scene_tops(), { dp.line })
-		-- the band starts out of the screen, just past the border (Sergio, 18 Nov:
+		-- the line starts out of the screen, just past the border (Sergio, 18 Nov:
 		-- dragged in from the edge, never drawn all at once)
 		shift(page, d.back)
 		ride(d)
-		-- (a moment for the frame that made the screen, a long one) the band
+		-- (a moment for the frame that made the screen, a long one) the line
 		-- comes in from the border up to the shield, then the button drags
 		timer.delay(0.03, false, function() slide(page, d.p0 - d.back, gui.EASING_OUTQUAD, M.ENTER, function()
 			-- 3. the button drags it across, and in the last stretch it goes out
@@ -229,7 +205,7 @@ function M.open(dp, h, id, change)
 				home_on(h, false)
 				kit.scene_cut(false)
 				kit.scene_copy_drop(still)
-				-- 4. the band is out of the screen, gone (Sergio, 17 Nov: left there it
+				-- 4. the line is out of the screen, gone (Sergio, 17 Nov: left there it
 				-- read as a defect); the button, out of sight, goes back home
 				drop_line(dp)
 				unride(d)
@@ -257,7 +233,7 @@ function M.close(dp, h, change)
 	local still = kit.scene_copy(h.scene)
 	home_on(h, true)
 	kit.scene_cut(true)
-	if not dp.line then dp.line = band(dp.door, d.line_x) end
+	if not dp.line then dp.line = line(d.line_x) end
 	ride(d)
 	gui.set_position(d.node, vec(d.rest.x + d.dx - d.p0 + d.off, d.rest.y))
 	-- (out of an animation's callback: started there, some animations of the
@@ -282,7 +258,7 @@ function M.close(dp, h, change)
 			drop_line(dp)
 			done()
 		end)
-		-- the button rides the band just as far as its place
+		-- the button rides the line just as far as its place
 		gui.animate(d.node, "position.x", d.rest.x + d.dx - d.p0 + d.back, gui.EASING_INOUTCUBIC, M.ACROSS_BACK)
 		timer.delay(M.ACROSS_BACK * reach((d.p0 - d.dx) / d.back), false, function()
 			gui.cancel_animations(d.node, "position.x")
