@@ -1,0 +1,17 @@
+Image 1 is the APPROVED direction for the new menu backgrounds of a mobile game about little devils in Dante's hell: two big dark SILHOUETTE masses framing the screen from the sides, a calm empty centre (top: a screen without interface; bottom: the home screen with its interface on top). Image 1 is only a rough sketch by the art director: keep its layout, darkness and calm, NOT its blurry shapes. Image 2 is an approved background of the same game: use it ONLY for the hand, the thick near-black ink outlines and the kind of shapes of the place; do NOT copy its details, objects or colors. Image 3 shows a menu screen in use: the interface covers most of the screen and must stay the only lit, important thing (do not draw the interface).
+
+Paint ONE wide 16:9 image (1672x941) on a fully TRANSPARENT background (if you need a key color, use flat pure #00FF00 and remove it cleanly, no green fringe): only two silhouette masses, nothing else.
+
+Style of the masses, follow exactly: flat comic-book silhouettes, almost black (#0C0A0D) with thick near-black ink outlines (#050405), smooth confident curves, NO small details, NO textures, NO gradients, NO blur, NO soft edges, NO glow, NO objects floating in the middle. Each mass has two flat layers: in front the near-black silhouette, a little behind and inward a second flat silhouette slightly lighter (left one dark warm brown #3A2219, right one dark slate blue #1A2A3A) that gives depth. Along the inner edge of each front mass (the edge facing the centre of the screen) a thin flat rim of light, 6-10 px, hard edged: warm orange #F26419 on the left mass, icy blue #38B6FF on the right mass. The place must be recognizable ONLY from the outline of the silhouettes, like a shadow theatre.
+
+Composition, follow exactly: the LEFT mass rises from the bottom-left corner (fire side), the RIGHT mass hangs from the top-right corner and runs down the right edge (ice side: its outline carries a few big icicles and frost crust, Lucifer's ice entering the place). Both masses touch their edges of the picture and reach inward at most 25% of the width; the middle 50% of the picture, and everything above the left mass and below the right mass, stays completely empty and transparent. The phone may crop about 10% from each side: the recognizable part of each outline sits between 8% and 25% of the width from its edge. The floor line is at 83% of the height from the top: the left mass stands on it and simply continues down to the bottom edge (that part will be covered). No characters, no creatures, no text, no letters, no numbers, no interface, no frame, no signature.
+
+This one is for the menu screen CAMPAGNA (choosing the next campaign mission). The two silhouettes, each one a different shape from every other screen of the game: LEFT: the edge of the abyss: a rocky ledge with a stairway carved in the rock going down and a chain railing on short posts. RIGHT: a crooked wooden signpost on a rock spur hanging over the pit, crusted with ice and icicles.
+
+Riferimenti allegati in ordine
+R1 art/WB-073/riferimenti/R1_bozza_sagome.jpg
+R2 art/WB-073/riferimenti/R2_stile_campagna.jpg
+R3 art/WB-073/riferimenti/R3_armeria_in_uso.jpg
+
+ImageGen integrato. Tre tentativi, selezionato il 3. PNG originale 1672×941 con alpha.
+La massa destra scende fino al bordo inferiore. Sopra la quota del pavimento, le masse entrano del 32% a sinistra e del 23% a destra. La fascia inferiore attraversa il centro per 12 px sulla mezzeria.

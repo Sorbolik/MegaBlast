@@ -186,4 +186,20 @@ Reversibile (solo immagini in un ramo): approvata su richiesta di Sergio (18 nov
 
 ## Consegna di Codex
 
+ImageGen integrato con i nove prompt integrali, riferimenti R1–R3 in ordine e trasparenza diretta. I nove PNG originali misurano 1672×941 px.
+
+| File | Tentativi | Tentativo scelto | Ingresso delle masse sopra la quota del pavimento, sinistra / destra | Fascia inferiore sulla mezzeria |
+|---|---:|---:|---:|---:|
+| `art/WB-073/sagome_home.png` e `sagome_home.txt` | 3 | 3 | 27% / 24% | 48 px |
+| `art/WB-073/sagome_zaino.png` e `sagome_zaino.txt` | 3 | 2 | 27% / 34% | 65 px |
+| `art/WB-073/sagome_armeria.png` e `sagome_armeria.txt` | 3 | 1 | 32% / 24% | 57 px |
+| `art/WB-073/sagome_profilo.png` e `sagome_profilo.txt` | 3 | 1 | 24% / 27% | 0 px |
+| `art/WB-073/sagome_eventi.png` e `sagome_eventi.txt` | 3 | 2 | 33% / 28% | 63 px |
+| `art/WB-073/sagome_gioca_online.png` e `sagome_gioca_online.txt` | 3 | 3 | 25% / 26% | 96 px |
+| `art/WB-073/sagome_campagna.png` e `sagome_campagna.txt` | 3 | 3 | 32% / 23% | 12 px |
+| `art/WB-073/sagome_allenamento.png` e `sagome_allenamento.txt` | 3 | 3 | 28% / 29% | 96 px |
+| `art/WB-073/sagome_impostazioni.png` e `sagome_impostazioni.txt` | 3 | 1 | 28% / 27% | 26 px |
+
+Verificati il canale alpha, i soggetti delle nove pagine, i bordi arancio e azzurri e l'assenza di interfaccia, scritte e firme. La mezzeria è libera per tutta l'altezza nel Profilo. Nelle altre otto pagine una fascia scura unisce le masse in basso. In ogni PNG almeno una massa supera il 25% già sopra la quota del pavimento (83% dell'altezza) e il lato ghiaccio raggiunge il bordo inferiore. Alcuni profili hanno dettagli interni e filetti più spessi del richiesto. Le misure della tabella usano alpha pari o superiore a 128 e sono arrotondate. Ritagli e sovrapposizione alle schermate nel simulatore da verificare.
+
 ## Resoconto di Claude
