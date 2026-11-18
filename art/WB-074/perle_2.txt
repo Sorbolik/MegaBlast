@@ -1,0 +1,19 @@
+Image 1 is a sketch of how our game shows the level of a piece of equipment: thirty small beads on a thin black ink thread, and at levels 10, 20 and 30 a big bead that is the slot of the piece's signature, where a gem is set. Image 2 shows three approved coins of the same game: the OSSIDIANA (a faceted black and violet gem with a bright magenta rim), the SCAGLIA (an eight-sided gold coin with a flame carved into it) and the blacksmith's voucher (a round dark iron token with a hammer carved into it). Copy their style exactly: thick slightly irregular black ink outline, flat colors with one flat highlight and one flat shadow, real thickness and relief, details carved into the surface. Image 3 is a button of the same game and confirms the STYLE: like a cartoon comic, soft hand-drawn slightly crooked shapes, never sharp or spiky.
+
+Draw SIX separate icons on plain green (#00FF00), in two rows, well apart from each other, no thread between them.
+Top row, three SMALL BEADS, all exactly the same size (about 140 px wide), each a round bead seen from the front with a thick ink outline, one flat highlight at the top left and a darker band at the bottom right that shows it is round:
+1. EMPTY BEAD: dark forged iron (#3A3340, highlight #5A5263, shadow #1E1A22).
+2. FULL BEAD: neutral very light grey metal (#E6E6E6, highlight #FFFFFF, shadow #A8A8A8), no other color: the game tints it.
+3. NEXT BEAD: glowing ember orange (#F26419, core #FFB703, highlight #FFE08A), hot as metal just taken from the fire.
+Bottom row, three BIG SIGNATURE SLOTS, all exactly the same size (about 300 px wide, a bit more than twice the small beads), each a round thick token of dark forged iron (#3A3340, highlight #5A5263, side #1E1A22) with a raised rim:
+4. EMPTY SLOT: in its face a hollow in the exact shape of the Ossidiana gem of image 2 (a diamond), CARVED INTO the iron like the flame and the hammer of image 2: a dark shadow band (#1E1A22 and black ink) along the upper left edge of the hollow, a thin light band (#5A5263) along its lower right edge, the bottom of the hollow very dark (#141017). It must look empty, waiting for its gem.
+5. LIT SLOT: exactly the same token, with the Ossidiana gem of image 2 set inside the hollow, sitting deep in it, its magenta rim (#FF70D1) glowing softly inside the hollow only.
+6. RED-HOT SLOT: exactly the same empty token as number 4, but red-hot as just forged: the iron glowing orange and yellow (#F26419, #FFB703, white core #FFF3B0 in the hollow), outline still black ink.
+Each icon must read at 16 pixels for the beads and 32 pixels for the slots: one bold full silhouette, no thin details. No letters, no numbers, no thread, no shadow on the ground, no glow outside the ink.
+
+Riferimenti allegati in ordine
+R1 art/WB-074/riferimenti/R1_perle_bozza.png
+R2 art/WB-074/riferimenti/R2_monete_approvate.png
+R3 art/WB-074/riferimenti/R3_stile.png
+
+ImageGen integrato. 1 tentativo. Foglio ridotto in proporzione e centrato su tela verde 1536×1024 per avvicinare le icone alle larghezze richieste. Il verde generato si discosta leggermente da #00FF00. Perline distinguibili a 16 px e slot a 32 px. Alcune superfici hanno sfumature leggere.
