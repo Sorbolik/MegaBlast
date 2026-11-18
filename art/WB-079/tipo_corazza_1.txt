@@ -1,0 +1,13 @@
+Image 1 is the CHEST ARMOUR of our game (image 1, one of our real armours). Image 2 shows our inventory grid with the category symbols in the top-left tabs: those symbols are TOO GENERIC and must be replaced (the helmet looks like a stop sign, the armour like a T-shirt, the cape like a skirt). Keep only their size, their sand color and their thick outline.
+
+Draw ONE tiny category symbol for a comic-style mobile game interface: a game BREASTPLATE seen from the front, clearly made of metal and not of cloth: a hard rounded chest plate with a vertical ridge in the middle, TWO BIG ROUND SHOULDER PADS (pauldrons) standing out wider than the chest on both sides, and a belt band across the bottom. No sleeves: it must never look like a T-shirt.
+
+It must read at 20 pixels inside a small dark tab: one bold silhouette with at most two or three big inner shapes, no small details. Fill: one flat light sand color (#EAD9B0) with one flat darker sand shadow tone (#C9AE7C) on one side. Thick pure black outline of constant thickness, clean and smooth, the same weight as the outline of image 1.
+
+No text, no frame, no background shape, no gradient, no glow, no other objects. At most four colors. Centered, filling about 80% of the image, on a flat pure magenta #FF00FF background.
+
+Riferimenti allegati in ordine
+Image 1 art/WB-079/riferimenti/R_corazza_nostra.png
+Image 2 art/WB-079/riferimenti/R_simboli_da_rifare.png
+
+ImageGen integrato. 1 tentativo. Sagoma centrata e ridimensionata in proporzione su tela 1024×1024. Simbolo riconoscibile in anteprima a 20 px su ferro scuro. Magenta e campiture con lievi variazioni RGB.
