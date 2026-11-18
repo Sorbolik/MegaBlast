@@ -112,7 +112,7 @@ function M.effect_row(g, x, y, set, slot, level, lit, room, line_h)
 				gui.set_position(n, pos)
 			end
 		end
-		cx = cx + w + 16
+		cx = cx + w + 18
 	end
 	return line, made
 end

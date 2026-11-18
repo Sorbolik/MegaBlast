@@ -780,7 +780,6 @@ M.TAB_HOT, M.TAB_COLD = TAB_HOT, TAB_COLD
 
 -- the slant of the blade's cut across the tags (degrees, up to the right)
 M.CUT_SLANT = 1.6
-local CUT_K = math.tan(math.rad(M.CUT_SLANT))
 
 -- one side of a cut word: a stencil as wide as the word, its edge on the cut
 -- line, with a copy of the text inside (kept where it was on the screen)
@@ -802,8 +801,7 @@ local function cut_half(g, text, mid, cut_y, w, up, size, color)
 end
 
 -- cut: a table, when the tags are cut through by the blade (the ARMERIA in the
--- ZAINO, Sergio 18 Nov): every word cold, in two halves along one slanted line
--- that starts at x; cut[i] = { top, bottom, top_text, bottom_text, mid }
+-- ZAINO, Sergio 18 Nov): every word cold, in two halves along a slanted line; cut[i] = { top, bottom, top_text, bottom_text, mid }
 function M.tabs(g, list_of, x, y, tabs, active, accent, tag, cut)
 	local h, cx = tag and 50 or 58, x
 	local key = tag and tabs[1] and tabs[1][2]
@@ -817,7 +815,8 @@ function M.tabs(g, list_of, x, y, tabs, active, accent, tag, cut)
 			local mid = cx + slot / 2
 			if cut then
 				local size, base = on and 30 or 22, y + (on and 37 or 35)
-				local cut_y = base - size * 0.36 - (mid - x) * CUT_K
+				-- each word cut through its own middle (a long slant would miss the last one)
+				local cut_y = base - size * 0.36
 				local text = { tab[1], mid, base }
 				local top, tt = cut_half(g, text, mid, cut_y, slot + 40, true, size, TAB_COLD)
 				local bottom, bt = cut_half(g, text, mid, cut_y, slot + 40, false, size, TAB_COLD)
