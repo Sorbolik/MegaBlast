@@ -28,6 +28,11 @@ Un giro:
      in migliore.json.
 Il giro 0 parte da una rete a caso: nessuna idea del gioco.
 
+Con --umane FILE (gli esempi delle partite giocate dalle persone,
+turni_umani.lua --esempi) la rete impara anche da quelle, a ogni giro e già
+dal giro 0, ripetute --peso-umane volte: parte da come gioca una persona e poi
+continua da sola (come AlphaGo, in piccolo).
+
 Risultati in simulazione/arena/impara/ (o --cartella): stato.json e rete_N.json
 (per riprendere), storia.json, evoluzione.md, campioni.json (la rete di ogni
 giro, da mettere in players[i].pesi).
@@ -145,6 +150,17 @@ def esempi(partite):
             np.array(catene, dtype=np.int64), np.array(ms, dtype=np.float64))
 
 
+def umane(file, peso):
+    """Gli esempi delle partite delle persone (turni_umani.lua --esempi), ripetuti
+    peso volte, con catene che non si mescolano a quelle dei giri."""
+    partite = [json.loads(r) for r in Path(file).read_text(encoding="utf-8").splitlines() if r.strip()]
+    x, y, catene, ms = esempi(partite)
+    catene = catene + 9 * 10 ** 15
+    reps = max(1, int(peso))
+    return (np.tile(x, (reps, 1)), np.tile(y, reps),
+            np.concatenate([catene + k * 10 ** 12 for k in range(reps)]), np.tile(ms, reps))
+
+
 def ritorni(rete, xn, y, catene, ms, lam):
     """TD(λ) all'indietro lungo la catena di ogni robot: dopo l'ultimo turno
     l'esito vero, prima (m' - m) + (1 - λ) V(x') + λ G'. Con λ = 1 è l'esito vero."""
@@ -180,9 +196,17 @@ def main():
     ap.add_argument("--punteggio")
     ap.add_argument("--processi", type=int, default=None)
     ap.add_argument("--seme", type=int, default=1)
+    ap.add_argument("--grado", type=int, help="numero del grado di bot.GRADES da battere al posto del bot di oggi")
+    ap.add_argument("--umane", help="esempi delle partite delle persone (turni_umani.lua --esempi)")
+    ap.add_argument("--peso-umane", type=int, default=3, help="quante volte contano gli esempi delle persone")
     ap.add_argument("--nuova", action="store_true", help="ricomincia da zero (cancella la cartella)")
     ap.add_argument("--cartella", default=str(arena.REPO / "simulazione" / "arena" / "impara"))
     args = ap.parse_args()
+    # il bot da battere: quello di oggi, o il grado scelto (--grado 10)
+    RIF = evolvi.riferimento(evolvi.dal_gioco(None, args.grado)) if args.grado else {}
+    UMANE = umane(args.umane, args.peso_umane) if args.umane else None
+    if UMANE is not None:
+        print(f"esempi delle persone: {len(UMANE[1]) // max(1, args.peso_umane)} (contano {args.peso_umane} volte)")
 
     radice = Path(args.cartella).resolve()
     if args.nuova and radice.exists():
@@ -212,7 +236,7 @@ def main():
         for k in range(max(0, giro - args.passate), giro - 1):
             r, m_, s_ = leggi_rete(radice / f"rete_{k}.json")
             passate.append(per_lua(r, strati, m_, s_) | {"esplora": args.esplora})
-        individui = [{}] + [adesso | {"esplora": args.esplora}] * args.copie + passate
+        individui = [RIF] + [adesso | {"esplora": args.esplora}] * args.copie + passate
         cartella = radice / f"giro_{giro}"
         cartella.mkdir(parents=True, exist_ok=True)
         file_pesi = evolvi.scrivi_pesi(cartella, individui)
@@ -240,6 +264,8 @@ def main():
         giri = range(max(0, giro - args.memoria + 1), giro + 1)
         X, Y, CAT, M = (np.concatenate([np.load(radice / f"giro_{k}" / f"{nome}.npy") for k in giri])
                         for nome in ("x", "y", "catene", "m"))
+        if UMANE is not None and len(UMANE[1]):
+            X, Y, CAT, M = (np.concatenate([a, b]) for a, b in zip((X, Y, CAT, M), UMANE))
         if giro == 0:
             # una caratteristica quasi sempre uguale (le morti dei compagni) non deve
             # diventare un peso enorme quando cambia
@@ -253,7 +279,7 @@ def main():
         voce = {"giro": giro, "partite": len(partite), "esempi": len(y), "esempi_studiati": len(X),
                 "bravura_rete": round(tot["alto"] / max(1, tot["volte"]), 4), "oggi": evolvi.comportamento(b[1]),
                 "rete": evolvi.comportamento(b[2]), **studio}
-        e = evolvi.esame(radice, giro, nuova_lua, args)
+        e = evolvi.esame(radice, giro, nuova_lua, args, RIF)
         e["giro"] = giro
         if not stato["esami"] or e["vince"] > max(v["vince"] for v in stato["esami"]):
             (radice / "migliore.json").write_text(json.dumps(nuova_lua | {"giro": giro}), encoding="utf-8")
@@ -261,7 +287,7 @@ def main():
         stato["storia"].append(voce)
         stato["giro"] = giro
         print(f"giro {giro}: {len(y)} esempi nuovi, impara su {len(X)} (varianza spiegata {studio['spiegata']:.2f}); "
-              f"esame: la rete arriva più in alto del bot di oggi nel {100 * e['vince']:.0f}% delle partite")
+              f"esame: la rete arriva più in alto del {'grado ' + str(args.grado) if args.grado else 'bot di oggi'} nel {100 * e['vince']:.0f}% delle partite")
 
         file_stato.write_text(json.dumps(stato), encoding="utf-8")
         (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],
@@ -281,7 +307,8 @@ def main():
 def rapporto(stato, args):
     out = ["# Bot che imparano a gradiente\n",
            f"Rete {stato['strati']} ({quanti(stato['strati'])} pesi), {args.partite} partite per giro, "
-           f"livello {args.livello}, modo {args.modo}, TD(λ) {args.lam}, memoria {args.memoria} giri.\n",
+           f"livello {args.livello}, modo {args.modo}, TD(λ) {args.lam}, memoria {args.memoria} giri"
+           + (f", esempi delle persone da {args.umane} (x{args.peso_umane})" if args.umane else "") + ".\n",
            "Esame: in quante delle stesse partite la rete del giro arriva più in alto del bot di oggi. "
            "Varianza spiegata: quanto la rete prevede il suo obiettivo (0 niente, 1 tutto) su esempi che non ha studiato. "
            "La rete con l'esame migliore è in migliore.json.\n",

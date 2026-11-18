@@ -10,6 +10,7 @@
 --
 --   vetrina.from_profile(p, nome, squadra, sotto, torneo)  -- whoever plays on this phone
 --   vetrina.simple(nome, squadra, sotto, livello, badge)   -- bots, teammates, online opponents
+--   vetrina.from_eq(eq, nome, squadra, sotto)  -- a bot wearing an eq (training, sim/loadout.lua rival)
 --   vetrina.with_stats(v, st)                -- the match's real stats (g.robots[i].stats)
 --   vetrina.righe(v, base)                   -- the four bars: { nome, valore, offset }
 --   vetrina.resources(v)                     -- orbs, parachutes, air jumps
@@ -72,6 +73,34 @@ function M.simple(nome, team, under, livello, badge)
 		pezzi = empty_pieces(), abilities = {}, albero = {}, punti = 0 }
 	for i in ipairs(skills.PATHS) do v.albero[i] = 0 end
 	v.stats = copy_stats(game.base_stats())
+	return v
+end
+
+-- A bot that wears an eq (sim/loadout.lua, rival: the training's bots): its
+-- level, its pieces and its Sigilli, with the stats that come out of them
+function M.from_eq(eq, nome, team, under)
+	local loadout = require "sim.loadout"
+	local v = M.simple(nome, team, under, eq.liv)
+	for i, s in ipairs(equip.SLOTS) do
+		local set = eq.gear and eq.gear[s.id]
+		if set then v.pezzi[i] = { slot = s.id, set = set, livello = eq.lv[s.id], tier = equip.tier(eq.lv[s.id]) } end
+	end
+	local a = { tree = {} }
+	for k, n in pairs(eq.tree or {}) do
+		if k == "pick" then
+			a.tree.pick = {}
+			for path, list in pairs(n) do
+				a.tree.pick[path] = {}
+				for j, w in pairs(list) do a.tree.pick[path][tonumber(j) or j] = w end
+			end
+		else
+			a.tree[k] = n
+		end
+	end
+	v.abilities = M.abilities(a)
+	for i, r in ipairs(skills.PATHS) do v.albero[i] = skills.spent(a.tree, r.id) end
+	v.punti = skills.points(eq.liv)
+	v.stats = copy_stats(loadout.net_stats(eq, game.base_stats()))
 	return v
 end
 

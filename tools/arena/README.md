@@ -75,6 +75,20 @@ strumenti finiscono nel gioco: il gioco usa il bot euristico.
 Serve luajit (sul PC di Windows: `luajit.exe` nel PATH, o `--luajit C:\percorso\luajit.exe`).
 Il video usa il simulatore (`tools/simula`), quindi solo su Linux.
 
+## Turni delle persone
+
+```bash
+luajit tools/arena/turni_umani.lua partite/*.lua                 # contro il grado 10
+luajit tools/arena/turni_umani.lua --pesi nuovo.lua partite/*.lua  # un bot nuovo: ha imparato?
+```
+
+Le partite giocate sul telefono arrivano al server e ogni notte finiscono nel ramo
+`partite-registrate` (`git fetch origin partite-registrate`, cartella `partite/`). Per ogni
+turno di una persona lo strumento rimette la partita a quel momento e fa giocare il turno al
+bot (`--grado`, `--semi` volte), poi confronta i punti di vantaggio della squadra in quel turno
+e le mosse: `simulazione/arena/umani/confronto.md` dice in quali mosse la persona fa meglio
+del bot, `turni.jsonl` ha ogni turno. Rifatto col bot nuovo dice se ha imparato.
+
 ## Collaudo delle missioni
 
 ```bash

@@ -31,6 +31,34 @@ var verifyLua []byte
 // same are kept, to study them; "" = not kept.
 var RecipeDir = ""
 
+// MatchDir (main.go, -partite): where every recipe that arrives is kept, as
+// it arrives (before the replay, so a busy server doesn't lose it): the
+// matches played by people, material for training the bots
+// (.github/workflows/partite.yml copies them to the partite-registrate
+// branch); "" = not kept.
+var MatchDir = ""
+
+// saveRecipe writes a recipe's text in dir, named by time and platform.
+func saveRecipe(dir, platform string, text []byte) {
+	tag := strings.Map(func(r rune) rune {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' {
+			return r
+		}
+		return '_'
+	}, platform)
+	if len(tag) > 30 {
+		tag = tag[:30]
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		log.Printf("ricetta non salvata: %v", err)
+		return
+	}
+	name := filepath.Join(dir, time.Now().Format("20060102-150405.000")+"_"+tag+".lua")
+	if err := os.WriteFile(name, text, 0o644); err != nil {
+		log.Printf("ricetta non salvata: %v", err)
+	}
+}
+
 const (
 	recipeMax     = 4 << 20          // bytes of a recipe at most
 	recipeTimeout = 60 * time.Second // a replay longer than this is stopped
@@ -108,7 +136,8 @@ func yesNo(ok bool, tick int) string {
 // handleRecipe: POST /ricetta?p=<platform>&j=<Lua or LuaJIT version>, body =
 // the recipe's text. Answers verify.lua's JSON.
 func (s *Server) handleRecipe(w http.ResponseWriter, r *http.Request) {
-	who := clean(r.URL.Query().Get("p")) + " (" + clean(r.URL.Query().Get("j")) + ")"
+	platform := clean(r.URL.Query().Get("p"))
+	who := platform + " (" + clean(r.URL.Query().Get("j")) + ")"
 	// every request goes into the log, the refused ones too: so it shows
 	// whether the phone's recipe arrives at all
 	if r.Method != http.MethodPost {
@@ -123,6 +152,9 @@ func (s *Server) handleRecipe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("ricetta da %s: arrivata, %d byte", who, len(text))
+	if MatchDir != "" {
+		saveRecipe(MatchDir, platform, text)
+	}
 	select {
 	case recipeSlot <- struct{}{}:
 	default:
@@ -144,10 +176,7 @@ func (s *Server) handleRecipe(w http.ResponseWriter, r *http.Request) {
 			who, yesNo(c.Physics, c.PhysicsTick), yesNo(c.Bots, c.BotsTick), c.Ticks, float64(c.Ticks)/60, c.Ms, c.BotsMs)
 	}
 	if RecipeDir != "" && (c.Err != "" || !c.Physics || !c.Bots) {
-		name := filepath.Join(RecipeDir, time.Now().Format("20060102-150405.000")+".lua")
-		if err := os.WriteFile(name, text, 0o644); err != nil {
-			log.Printf("ricetta non salvata: %v", err)
-		}
+		saveRecipe(RecipeDir, platform, text)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(c)

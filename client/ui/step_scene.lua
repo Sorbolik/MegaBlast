@@ -1,7 +1,7 @@
 -- The step of a piece (levels 10, 20 and 30; page "Scaglie e Ossidiana",
 -- choice 11A): the one scene longer than 200 ms besides the home's unlocks,
--- once per step, skipped with a tap, back by itself. A dark sheet with the
--- rays (ui/kit.lua, Figma coordinates), SCATTO on a light plate with the piece
+-- once per step, skipped with a tap, back by itself. Its own backdrop over the
+-- armory (ui/kit.lua, Figma coordinates), SCATTO on a light plate with the piece
 -- and its notches, the devil in the middle: three hammer blows (a 4 px shake
 -- and eight sparks each), at the third a white flash, the notches take the
 -- new grade's color and what is new comes in on the right.
@@ -36,10 +36,8 @@ local function vec(x, y) return vmath.vector3(x, y, 0) end
 function M.new(slot_name, set_name, level, on_blow, color)
 	local tier = equip.tier(level)
 	local sc = { t = 0, blows = 0, on_blow = on_blow, tier = tier, done = false, new = {}, notches = {}, level = level }
-	sc.back = gui.new_box_node(vec(W / 2, H / 2), vec(W * screen.FULL, H * screen.FULL))
-	gui.set_color(sc.back, vmath.vector4(KC.INK.x, KC.INK.y, KC.INK.z, 0))
-	gui.animate(sc.back, "color.w", 0.92, gui.EASING_OUTQUAD, M.DARK)
-	sc.scene = kit.scene(640, 350, { halo = 520, accent = KC.PURPLE })
+	-- its own backdrop over the armory, which keeps the real one (ui/kit.lua, over)
+	sc.scene = kit.scene(640, 350, { over = true })
 	sc.root = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(sc.root, false)
 	local g = { node = sc.root, ox = 0, oy = 720 }
@@ -164,7 +162,6 @@ function M.delete(sc)
 	gui.delete_node(sc.right.node)
 	gui.delete_node(sc.flash)
 	kit.scene_drop(sc.scene)
-	gui.delete_node(sc.back)
 end
 
 return M
