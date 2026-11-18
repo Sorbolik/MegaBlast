@@ -2,6 +2,7 @@
 -- fucina atlas (w, h and, for the pieces in three or nine parts, the cap c;
 -- box: the margins left, top, right, bottom of the room to write in).
 return {
+	attacco_scudo = { w = 148, h = 230 },
 	barra_brace = { w = 378, h = 44, c = 38 },
 	barra_chiara = { w = 378, h = 44, c = 38 },
 	barra_gelo = { w = 382, h = 44, c = 38 },
@@ -13,6 +14,18 @@ return {
 	bivio_piastra_acceso = { w = 409, h = 214, c = 51 },
 	bivio_piastra_chiuso = { w = 414, h = 219, c = 53 },
 	bivio_piastra_spento = { w = 411, h = 216, c = 52 },
+	bordo_allenamento_giu = { w = 128, h = 244 },
+	bordo_allenamento_mezzo = { w = 128, h = 193 },
+	bordo_allenamento_su = { w = 128, h = 181 },
+	bordo_armeria_giu = { w = 128, h = 202 },
+	bordo_armeria_mezzo = { w = 128, h = 207 },
+	bordo_armeria_su = { w = 128, h = 148 },
+	bordo_campagna_giu = { w = 128, h = 227 },
+	bordo_campagna_mezzo = { w = 128, h = 233 },
+	bordo_campagna_su = { w = 128, h = 138 },
+	bordo_eventi_giu = { w = 128, h = 316 },
+	bordo_eventi_mezzo = { w = 128, h = 148 },
+	bordo_eventi_su = { w = 128, h = 202 },
 	brace = { w = 146, h = 120 },
 	brace_spenta = { w = 150, h = 120 },
 	buono = { w = 128, h = 128 },
