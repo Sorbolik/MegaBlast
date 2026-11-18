@@ -131,7 +131,9 @@ end
 local function hexc(h)
 	return vmath.vector4(tonumber(h:sub(1, 2), 16) / 255, tonumber(h:sub(3, 4), 16) / 255, tonumber(h:sub(5, 6), 16) / 255, 1)
 end
-M.TINT = { corvo = hexc("7476a3"), fabbro = hexc("dc7c3b"), fornace = hexc("858892"), leviatano = hexc("4bccc1"), vuoto = hexc("9a61b7") }
+-- the type symbol's colour: one per slot, the same whatever the family, like a label
+-- (Sergio, 18 Nov: «sempre uguale per tutte le armature, sempre uguale per tutte le scarpe»)
+M.TINT = { mask = hexc("f26419"), chest = hexc("9ec4e0"), cloak = hexc("b07ce8"), legs = hexc("5cdbb8"), gloves = hexc("ffb703") }
 
 -- the name of a slot in the type symbols (WB-078)
 local TYPE = { mask = "tipo_elmo", chest = "tipo_corazza", cloak = "tipo_mantello", legs = "tipo_stivali", gloves = "tipo_guanti" }
@@ -163,7 +165,7 @@ function M.slot(g, x, y, s, opt)
 	if opt.slot and TYPE[opt.slot] then
 		keep(kit.pic(g, "linguetta", x - s * 0.05, y - s * 0.05, tab, tab))
 		local sym = keep(fit(g, TYPE[opt.slot], x - s * 0.05 + tab * 0.18, y - s * 0.05 + tab * 0.16, tab * 0.64, tab * 0.64))
-		if opt.set and M.TINT[opt.set] then gui.set_color(sym, M.TINT[opt.set]) end
+		gui.set_color(sym, M.TINT[opt.slot])
 	end
 	if not opt.set then return made end
 	if opt.level then
@@ -261,10 +263,9 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 				gui.move_below(plate.node, num)
 				shift(num, lx + pad + sym + gap)
 				shift(arrow, lx + pad + sym + gap + nw + 6)
-			else
-				gui.set_color(icon, vmath.vector4(1, 1, 1, 0.45))
 			end
-			if set and M.TINT[set] then gui.set_color(icon, M.TINT[set]) end
+			local tint = M.TINT[sl.id]
+			gui.set_color(icon, num and tint or vmath.vector4(tint.x, tint.y, tint.z, 0.45))
 			-- the label opens the place too
 			kit.zone(g, s.buttons, lx, by - lh / 2, lw, lh, "posto:" .. sl.id)
 		end
