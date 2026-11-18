@@ -36,7 +36,7 @@ local M = {}
 local KC = kit.C
 local ingots = require "ui.ingots"
 -- the effects on the left of the panel, the signature on the right
-local RIGHT_COL = 312
+local RIGHT_COL = 316
 M.X, M.W = 430, 580
 
 -- a text never wider than max (a long one shrinks)
@@ -86,13 +86,17 @@ function M.draw(s, g, sel)
 	local now = equip.piece(set, slot, level, lit)
 	local after = nxt and equip.piece(set, slot, nxt.level, lit)
 	local y = 330
+	-- each row: the stat's name in yellow, its value, and on the right only how
+	-- much the next level changes it, green if better, red if worse (Sergio, 18 Nov)
 	for i, e in ipairs(now) do
 		if e.row ~= "sign" then
-			local col = e.good >= 0 and KC.MINT or KC.RED
-			local n = fit(kit.text(g, gear_ui.effect(e), x + 28, y + 17, 21, col), 200)
+			local v, name = gear_ui.effect_parts(e)
+			local n = fit(kit.text(g, name, x + 28, y + 17, 19, KC.HOT), 126)
 			s.bench.rows[#s.bench.rows + 1] = n
+			kit.text(g, v, x + 222, y + 17, 19, e.good >= 0 and KC.SAND or KC.RED, "end")
 			if after and after[i] and after[i].good ~= e.good then
-				kit.text(g, "› " .. gear_ui.effect(after[i]):match("^(%S+)"), x + RIGHT_COL - 8, y + 17, 18, KC.HOT, "end")
+				local d = gear_ui.effect_parts(e, after[i])
+				kit.text(g, d, x + RIGHT_COL - 24, y + 17, 19, after[i].good > e.good and KC.MINT or KC.RED, "end")
 			end
 			y = y + 28
 		end
@@ -100,7 +104,7 @@ function M.draw(s, g, sel)
 
 	-- the signature: its name, its three grades as gems, and what it gives (at
 	-- the grade lit; off: what it will give once lit)
-	local rw = w - 28 - RIGHT_COL
+	local rw = w - 40 - RIGHT_COL
 	local rx = x + RIGHT_COL
 	for _, e in ipairs(now) do
 		if e.row == "sign" then
@@ -108,8 +112,8 @@ function M.draw(s, g, sel)
 			local on = lit > 0
 			-- FIRMA (or FIRMA SPENTA), its name, what it gives now, and what it
 			-- gives at the next step (its studs sit on the bar)
-			kit.text(g, kit.upper(on and T.sign or T.sign_off), rx, 344, 16, on and KC.HOT_TOP or KC.MUTE, "start", 1)
-			local title = fit(kit.text(g, kit.upper(sg.name), rx, 367, 20, on and KC.HOT_TOP or KC.SAND, "start", 0.5), rw)
+			kit.text(g, kit.upper(on and T.sign or T.sign_off), rx, 340, 16, on and KC.HOT_TOP or KC.MUTE, "start", 1)
+			local title = fit(kit.text(g, kit.upper(sg.name), rx, 362, 20, on and KC.HOT_TOP or KC.SAND, "start", 0.5), rw)
 			s.bench.sign, s.bench.lit, s.bench.desc = title, lit, {}
 			s.bench.stat = e.stat
 			local value = sign_value(e.stat, math.max(1, lit))
@@ -118,10 +122,10 @@ function M.draw(s, g, sel)
 			local nxt_sign = lit < 3 and sg.desc:find("%%d") and (lit > 0)
 			local max_lines = nxt_sign and 3 or 4
 			for li = 1, math.min(max_lines, #lines) do
-				s.bench.desc[li] = fit(kit.text(g, lines[li], rx, 388 + (li - 1) * 17, 16, ink, "start"), rw)
+				s.bench.desc[li] = fit(kit.text(g, lines[li], rx, 382 + (li - 1) * 17, 16, ink, "start"), rw)
 			end
 			if nxt_sign then
-				local ly = 388 + math.min(max_lines, #lines) * 17
+				local ly = 382 + math.min(max_lines, #lines) * 17
 				local step = equip.TIER_LEVELS[lit + 1]
 				local line = level >= step and T.sign_next_now:format(sign_value(e.stat, lit + 1))
 					or T.sign_next:format(step, sign_value(e.stat, lit + 1))

@@ -61,6 +61,20 @@ function M.effect(e)
 	return (t:gsub("^%-", "−")) .. " " .. name
 end
 
+-- a row split in two: its value ("−19,1%", "+15") and its stat's name; with
+-- e2, the change from e to e2 instead of the value ("−0,4%")
+function M.effect_parts(e, e2)
+	local info = equip.STATS[e.stat]
+	local name = kit.upper(TA.stats[e.stat] or e.stat)
+	local function shown(x)
+		if info.points then return math.floor(x.good * 100 + 0.5) end
+		return (info.less and -x.good or x.good) * 100
+	end
+	local v = e2 and shown(e2) - shown(e) or shown(e)
+	local t = info.points and string.format("%+d", v) or string.format("%+.1f%%", v):gsub("%.0%%", "%%"):gsub("%.", ",")
+	return (t:gsub("^%-", "−")), name
+end
+
 -- the rows of a piece but its signature, in one line
 function M.effects(set, slot, level)
 	local t = {}
@@ -176,7 +190,7 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 		-- only the piece chosen is lit (Sergio, 18 Nov)
 		if sel == sl.id then colors[cats[sl.id]] = vmath.vector4(1, 0.62, 0.12, 1) end
 		-- one label, shaped like a button: the type's symbol and the level, or
-		-- a "+" on an empty place (Sergio, 18 Nov); on the outer side, never over
+		-- only the dimmed symbol on an empty place (Sergio, 18 Nov); on the outer side, never over
 		-- the devil. Symbol, number and arrow are measured, then the label is as
 		-- wide as them with even padding; all centered on the plate's face (2 px
 		-- above its middle: the shadow under it), the arrow sits 2 px lower
@@ -184,18 +198,21 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 			local top = level and level >= equip.LIVELLO_MAX
 			local lh, pad, sym, gap = 44, 16, 26, 8
 			local cy = by - 2
-			local num = kit.text(g, level and tostring(level) or "+", 0, cy + 7, 19,
-				top and KC.HOT or level and KC.SAND or KC.MUTE)
-			local arrow = kit.text(g, "›", 0, cy + 5, 19, KC.MUTE)
-			local nw, aw = kit.width(num), kit.width(arrow)
-			local lw = pad + sym + gap + nw + 6 + aw + pad
+			-- empty: only the symbol, dimmed (no number, no arrow: Sergio, 18 Nov)
+			local num = level and kit.text(g, tostring(level), 0, cy + 7, 19, top and KC.HOT or KC.SAND)
+			local arrow = level and kit.text(g, "›", 0, cy + 5, 19, KC.MUTE)
+			local nw, aw = num and kit.width(num) or 0, arrow and kit.width(arrow) or 0
+			local lw = level and pad + sym + gap + nw + 6 + aw + pad or pad + sym + pad
 			local lx = left[sl.id] and math.max(screen.x0 + 12, bx + 17 - lw) or bx - 17
 			local plate = kit.strip(g, M.LABEL, lx, by - lh / 2, lw, lh)
-			gui.move_below(plate.node, num)
 			local icon = fit(g, TYPE[sl.id], lx + pad, cy - sym / 2, sym, sym)
-			if not level then gui.set_color(icon, vmath.vector4(1, 1, 1, 0.45)) end
-			shift(num, lx + pad + sym + gap)
-			shift(arrow, lx + pad + sym + gap + nw + 6)
+			if num then
+				gui.move_below(plate.node, num)
+				shift(num, lx + pad + sym + gap)
+				shift(arrow, lx + pad + sym + gap + nw + 6)
+			else
+				gui.set_color(icon, vmath.vector4(1, 1, 1, 0.45))
+			end
 			-- the label opens the place too
 			kit.zone(g, s.buttons, lx, by - lh / 2, lw, lh, "posto:" .. sl.id)
 		end
