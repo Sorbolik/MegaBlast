@@ -1,0 +1,18 @@
+Image 1 is a menu screen of our game, a cartoon turn-based artillery game played by little red horned devils. At the bottom center there is a light sand-colored plate with a blue gem and the words ACCENDI LA FIRMA: it is a secondary button, and it must be redesigned because it looks like a title plate, not like something to press. At the bottom right there is the main action button, the orange gem with a flame on the left and ice crystals on the right (image 2 shows it alone): it stays as it is and must remain the strongest button on the screen. Image 3 is another button of the same game and is the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+
+Draw the new SECONDARY BUTTON as a slab of dark FORGED IRON: a wide rounded slab about four and a half times wider than tall, dark iron (#3A3340) with a lighter top bevel (#5A5263) and a darker thick bottom edge (#1E1A22) that gives it a little thickness, like a key you can press. Along its bottom-left edge a thin glowing ember seam (#F26419 with #FFB703 core), as if the iron was still hot there; along its top-right edge a thin pale frost rim (#CAF0F8). No flames and no crystals sticking out: the slab keeps a clean rounded outline. On the LEFT end there is an empty round socket set into the iron, dark (#151217) with a thin bright rim, about as tall as two thirds of the slab, where the game will place an icon: draw NOTHING inside the socket. The middle of the slab is plain and even, with nothing on it, so text can be written there and the slab can be stretched in width.
+
+Draw it THREE times on the sheet, one above the other, same size, with plenty of plain green (#00FF00) space between them:
+1. LIT: as described.
+2. PRESSED: the same slab pushed down: the bottom edge much thinner, the whole top a little lower, the ember seam brighter.
+3. OFF: the same slab cold: grey-blue iron (#4A5560, bevel #66727D, edge #2A3138), the ember seam dark and dead (#5A3A30), the frost rim dull, the socket matte.
+No letters, no numbers, no icons, no shadow on the ground, no glow outside the ink. Background plain green #00FF00 so it can be cut out.
+
+Riferimenti allegati in ordine
+R1 art/WB-071/riferimenti/R1_targhe_chiare_oggi.png
+R2 art/WB-071/riferimenti/R2_primario.png
+R3 art/WB-071/riferimenti/R3_porta_armeria.png
+
+ImageGen integrato. Tentativi con immagine prodotta 1.
+Centro libero, incavo vuoto e premuto più basso. Le sagome differiscono leggermente, il contrasto in bianco e nero è tenue e le sfumature superano i sei colori.
+Il verde generato è vicino a #00FF00 e presenta lievi variazioni.

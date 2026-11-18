@@ -104,4 +104,9 @@ con la forma), tre stati come la gemma. Numero assegnato dal coordinatore.
 
 ## Consegna di Codex
 
+- `art/WB-071/secondario_1.png`, `secondario_2.png`, `secondario_3.png` e i tre `.txt` omonimi. Rispettivamente 2, 1 e 1 tentativi con immagine prodotta.
+- `art/WB-071/monete_1.png`, `monete_2.png`, `monete_3.png` e i tre `.txt` omonimi. Un'immagine prodotta per variante. Due chiamate per la terza variante si sono fermate alla lettura dei riferimenti.
+
+I sei PNG misurano 1536×1024 px. I tre fogli delle monete sono stati ridotti in proporzione e centrati con margini verdi. Il verde generato presenta lievi scostamenti da #00FF00. Verificati contorni spessi, separazione, assenza di scritte, incavi vuoti e centri liberi. Il premuto è più basso e nello spento la brace è scura. Il contrasto fra acceso e spento è tenue in scala di grigi. I tre stati differiscono leggermente in altezza e nei bordi e non si sovrappongono esattamente. Le sfumature e l'antialias producono più di sei valori RGB. La Scaglia con fiammella e l'Ossidiana nera e viola con bordo magenta si riconoscono in anteprima a 24 px. Ritaglio, allungamento a tre parti, ricalco e resa in gioco da verificare.
+
 ## Resoconto di Claude
