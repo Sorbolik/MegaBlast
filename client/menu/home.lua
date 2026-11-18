@@ -29,6 +29,7 @@
 
 local game = require "sim.game"
 local scoria = require "battle.scoria"
+local clock = require "ui.clock"
 local score = require "battle.score"
 local ui = require "ui.ui"
 local kit = require "ui.kit"
@@ -56,15 +57,34 @@ local FEET = PED_TOP + 0.30 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
 local BAG = 46
--- the experience bar of the profile plate, full
-local PLATE_BAR = 231
+-- the profile's banner (WB-075): its height on screen, its width per unit of height,
+-- and where its parts are on the drawing, as fractions of its width and height:
+-- the ring's centre, the groove (from, to, middle) and the coin's centre
+local BANNER = {
+	h = 112, w_per_h = 805 / 224,
+	ring = { 0.1335, 0.5045 }, groove = { 0.267, 0.759, 0.636 }, coin = { 0.833, 0.520 },
+	name_y = 56, name_size = 26, level_size = 24, fill_h = 9,
+}
+-- the head in the ring, without the team ring (Sergio, 18 Nov: «in home non hai mica una
+-- squadra»): bigger than the ring's dark disc (0.676 of the banner's height), it may
+-- stick out above and at the sides but its chin stays inside the disc, so it goes up
+-- by as much as it is wider than the disc
+local DISC_R = 0.676 * BANNER.h / 2
+local FACE_D = 88
+local FACE_UP = FACE_D / 2 - DISC_R - 2
+
+-- The face in the banner's ring (made again when the look changes)
+local function put_face(h)
+	if h.face then gui.delete_node(h.face) end
+	h.face = score.face(h.top_left.node, h.face_at[1], -(h.face_at[2] - FACE_UP), FACE_D, h.color, scoria.player, true)
+end
 
 -- the doors: x, y, width, piece, side, color of the writing, size of the name
 local DOORS = {
-	campagna = { 22, 372, 396, "porta_campagna", -1, hex("2a1206"), 29 },
-	allenamento = { 22, 494, 376, "porta_allenamento", -1, hex("1d1a20"), 24 },
-	eventi = { 862, 372, 396, "porta_eventi", 1, hex("3a1a05"), 29 },
-	armeria = { 882, 494, 376, "porta_armeria", 1, hex("f4ece1"), 29 },
+	campagna = { 22, 354, 396, "porta_campagna", -1, hex("2a1206"), 29 },
+	allenamento = { 22, 476, 376, "porta_allenamento", -1, hex("1d1a20"), 24 },
+	eventi = { 862, 354, 396, "porta_eventi", 1, hex("3a1a05"), 29 },
+	armeria = { 882, 476, 376, "porta_armeria", 1, hex("f4ece1"), 29 },
 }
 
 local V = vmath.vector3()
@@ -114,7 +134,7 @@ end
 function M.new(color)
 	local h = { tops = {}, buttons = {}, doors = {}, door_by_id = {}, t = 0, colore = color, glint_at = 0.9 }
 
-	h.scene = kit.scene(640, 350, { bg = true })
+	h.scene = kit.scene(640, 350, { bg = "cielo" })
 
 	-- the middle: the pedestal, the apprentice on it and the backpack, all one button
 	local mid = kit.anchor(640, PED_BOTTOM, nil, gui.ANCHOR_BOTTOM)
@@ -141,6 +161,7 @@ function M.new(color)
 	gui.set_scale(body_shape, V)
 	h.body_shape = body_shape
 	h.corpo, h.look, h.color = scoria.new(color, scoria.player), scoria.player, color
+	clock.sync(h.corpo)
 	gui.set_parent(h.corpo.root, body_shape)
 	scoria.set_enabled(h.corpo, true)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
@@ -154,16 +175,22 @@ function M.new(color)
 	local tl = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = tl.node
 	h.top_left = tl
-	-- (Sergio, 17 Nov: bigger; the level stops before the shell's rivet)
-	local x, y = 22, 20
-	kit.strip(tl, "guscio", x + 41, y + 11, 388, 76)
-	kit.piece(tl, "tondo_oro", x + 49, y + 49, 98)
-	h.face_at = { x + 49, y + 49 }
-	h.who = kit.text(tl, T.player, x + 111, y + 46, 30, C.SAND)
-	h.level = kit.text(tl, "", x + 385, y + 45, 20, C.HOT, "end", 1)
-	kit.strip(tl, "riga_scura", x + 111, y + 57, 274, 19)
-	h.xp = kit.strip(tl, "barra_brace", x + 114, y + 60, 168, 13)
-	kit.zone(tl, h.buttons, x, y, 430, 98, "profilo")
+	-- one forged piece (WB-075, Sergio 18 Nov: «facciamo la d1»): the ring with the
+	-- face, the banner with the name, the groove of the experience and the coin of
+	-- the level, all measured on the drawing (BANNER)
+	local x, y = 22, 18
+	local bw = BANNER.h * BANNER.w_per_h
+	kit.pic(tl, "stendardo", x, y, bw, BANNER.h)
+	h.face_at = { x + bw * BANNER.ring[1], y + BANNER.h * BANNER.ring[2] }
+	h.who = kit.text(tl, T.player, x + bw * BANNER.groove[1], y + BANNER.name_y, BANNER.name_size, C.SAND)
+	local cx, cy = x + bw * BANNER.coin[1], y + BANNER.h * BANNER.coin[2]
+	-- the number's middle on the coin's middle (kit.text puts the baseline at y)
+	h.level = kit.text(tl, "", cx, cy + BANNER.level_size * 0.36, BANNER.level_size, C.SAND, "middle")
+	gui.set_outline(h.level, C.INK)     -- ivory on gold: the ink outline makes it read
+	h.xp_x, h.xp_w = x + bw * BANNER.groove[1] + 3, bw * (BANNER.groove[2] - BANNER.groove[1]) - 6
+	local fh = BANNER.fill_h
+	h.xp = kit.strip(tl, "barra_stendardo", h.xp_x, y + BANNER.h * BANNER.groove[3] - fh / 2, h.xp_w, fh)
+	kit.zone(tl, h.buttons, x, y, bw, BANNER.h, "profilo")
 
 	-- the doors at the sides of the apprentice, each with its shape
 	local left = kit.anchor(0, 360, gui.ANCHOR_LEFT)
@@ -314,7 +341,7 @@ function M.show(h, without_veil, quiet)
 	h.is_visible = true
 	h.glint_at = h.t + 0.9
 	-- under the black veil nothing would be seen: the pieces wait for it
-	if not quiet then enter(h, without_veil and kit.wait or 0.2, false) end
+	if not quiet then enter(h, without_veil and 0 or 0.2, false) end
 	if without_veil then
 		gui.cancel_animations(h.veil, "color.w")
 		gui.set_enabled(h.veil, false)
@@ -351,9 +378,8 @@ function M.profile(h, p)
 	local profile = require "menu.profile"
 	gui.set_text(h.level, T.level:format(p.livello or 1))
 	local f = math.min(1, (p.xp or 0) / profile.xp_level(p.livello or 1))
-	kit.strip_width(h.xp, math.max(18, PLATE_BAR * f))
-	if h.face then gui.delete_node(h.face) end
-	h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 82, h.color, scoria.player)
+	kit.strip_width(h.xp, math.max(BANNER.fill_h, h.xp_w * f))
+	put_face(h)
 	-- the first chapter with a mission still to win
 	local stars = p.stelle or {}
 	local chapter
@@ -388,15 +414,13 @@ function M.wear(h, p)
 	local enabled = gui.is_enabled(h.corpo.root)
 	gui.delete_node(h.corpo.root)
 	h.corpo = scoria.new(h.color, scoria.player)
+	clock.sync(h.corpo, 1)
 	gui.set_parent(h.corpo.root, parent)
 	scoria.set_enabled(h.corpo, enabled)
 	-- posed at once: made while the home is hidden, it would show up raw (the
 	-- weapon at its feet, the arms anyhow) under a door's passage
 	pose_now(h)
-	if h.face then
-		gui.delete_node(h.face)
-		h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 82, h.color, scoria.player)
-	end
+	if h.face then put_face(h) end
 end
 
 function M.queued(h, on)

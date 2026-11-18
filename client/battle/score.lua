@@ -192,14 +192,17 @@ local function face_token(parent)
 end
 
 -- A turn-order face standing still, for the menus (the match list in the profile): the
--- same face as in the HUD, d wide, ring in the team colour, head and helmet of look
-function M.face(parent, x, y, d, color, look)
+-- same face as in the HUD, d wide, ring in the team colour, head and helmet of look;
+-- bare: only the head, without the disc and the team ring (the home: there is no team)
+function M.face(parent, x, y, d, color, look, bare)
 	local f = face_token(parent)
 	gui.set_enabled(f.radice, true)
 	gui.set_visible(f.radice, true)
 	gui.set_inherit_alpha(f.radice, false)   -- the list's row is nearly see-through
 	for _, n in ipairs({ f.alone, f.crema, f.interno, f.velo, f.nome }) do gui.set_enabled(n, false) end
 	gui.set_color(f.anello, color)
+	gui.set_enabled(f.anello, not bare)
+	gui.set_enabled(f.fondo, not bare)
 	face_head(f, look)
 	position(f.radice, x, y)
 	scale(f.radice, d / FACE_D)

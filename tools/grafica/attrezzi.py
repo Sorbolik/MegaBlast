@@ -1,8 +1,7 @@
-# Gli attrezzi in battaglia, disegnati a vettori come le armi (vettori.py):
-# il cubo di ferro in cui cadono trappola, scudo e trampolino (sopra il gioco
-# mette l'icona dell'attrezzo), la tagliola scattata (chiusa), il trampolino (la
-# Molla) e la bolla dello scudo addosso. La tagliola posata (aperta) e le firme
-# delle armi sono di Codex (WB-065, WB-066), ricalcate in art/armi/.
+# Gli attrezzi in battaglia: a vettori (vettori.py) il cubo di ferro in cui cadono
+# trappola, scudo e trampolino (sopra il gioco mette l'icona dell'attrezzo) e la bolla
+# dello scudo addosso; di Codex, ricalcate in art/armi/, la tagliola posata e quella
+# scattata, la Molla con la sua freccia (WB-065, WB-068) e le firme delle armi (WB-066).
 # Le parti "luce" sono bianche: il gioco le tinge col colore della squadra.
 # Scrive client/assets/fx/attrezzo_*.png e le firme fx_*.png (vanno in client/battle/battle.atlas).
 #
@@ -16,14 +15,10 @@ sys.path.insert(0, QUI)
 RADICE = os.path.join(QUI, "..", "..")
 OUT = os.path.join(RADICE, "client", "assets", "fx")
 
-from vettori import COL, INK, Disegno, rendi  # noqa: E402
+from vettori import COL, Disegno, rendi  # noqa: E402
 
 PX = 6   # pixel per unità del mondo, come le armi
 COL = dict(COL)
-COL.update({
-    "ruggine": ("#5a2e1c", "#8a4a2a", "#b8743f"),
-    "telo": ("#8f2a12", "#d9451c", "#ff8a55"),
-})
 
 
 def cubo(d):
@@ -38,30 +33,6 @@ def cubo(d):
             d.cerchio(x, y, 0.8, "ottone", contorno=False)
     d.riga(f"M{-s + 2.4},{2 * s - 2.4} L{s - 2.4},{2 * s - 2.4}", COL["acciaio"][2], 0.5)
     return (-s - 1.6, -1.6, s + 1.6, 2 * s + 1.6)
-
-
-def tagliola_chiusa(d):
-    # scattata: le ganasce si chiudono in alto, i denti si incastrano
-    d.rect(-6, 0, 12, 2.2, "ferro", r=1.0)
-    for lato in (-1, 1):
-        d.path(f"M{lato * 5.4},1.4 Q{lato * 8.4},9.0 0,13.2 L0,11.0 Q{lato * 5.8},8.0 {lato * 3.6},1.4 Z", "acciaio")
-    for i in range(4):
-        y = 4.6 + i * 2.0
-        d.poli([(-0.2, y - 0.8), (1.4, y), (-0.2, y + 0.8)], "osso", contorno=False)
-        d.poli([(0.2, y + 0.2), (-1.4, y + 1.0), (0.2, y + 1.8)], "osso", contorno=False)
-    d.cerchio(0, 1.2, 1.0, "ottone")
-    return (-10.4, -1.6, 10.4, 15)
-
-
-def molla(d):
-    # la Molla: una tavola imbottita su una molla a spirale e una base di
-    # ferro, larga come nella simulazione (TRAMPOLINE.half_w 18)
-    d.rect(-14, 0, 28, 2.6, "ferro", r=1.2)
-    for i in range(4):
-        d.ellisse(0, 3.6 + i * 1.5, 5.6 - i * 0.3, 1.0, "ottone")
-    d.rect(-18, 8.6, 36, 3.6, "telo", r=1.8)
-    d.riga("M-15,11.2 L15,11.2", COL["telo"][2], 0.6)
-    return (-19.6, -1.6, 19.6, 13.8)
 
 
 def bolla(d):
@@ -102,10 +73,69 @@ def tagliola_ricalcata():
     print("attrezzo_tagliola (ricalcata)", w, h, "misura nel mondo", TAGLIOLA_LARGA, round(h / PX, 1))
 
 
+# la Molla larga e la tagliola chiusa di Codex (WB-068). Il triangolo verde sopra la
+# piastra si stacca e si gira di lato: è la freccia del colore della squadra che il
+# gioco specchia verso dove la Molla lancia (bianca col contorno nero, si tinge)
+MOLLA_RICALCO = os.path.join(RADICE, "art", "armi", "molla.png")
+CHIUSA_RICALCO = os.path.join(RADICE, "art", "armi", "tagliola_chiusa.png")
+MOLLA_LARGA = 39.2   # TRAMPOLINE.half_w 18, più il bordo
+FRECCIA_LARGA = 5.5  # nel gioco più grande che sul foglio, così si legge (ARROW_W di items.lua)
+CHIUSA_LARGA = 18
+
+
+def molla_ricalcata():
+    import numpy as np
+    from PIL import Image
+    im = Image.open(MOLLA_RICALCO).convert("RGBA")
+    a = np.array(im)
+    larghe = np.nonzero((a[..., 3] > 0).sum(1) > im.width * 0.5)[0]
+    taglio = int(larghe[0])  # la prima riga della piastra: sopra c'è solo il triangolo
+    corpo = a[taglio:].copy()
+    # quel che resta del verde sul bordo della piastra torna ottone
+    r, g, b = corpo[..., 0].astype(int), corpo[..., 1].astype(int), corpo[..., 2].astype(int)
+    corpo[(g > 140) & (r < 110) & (b < 110), :3] = (0xD9, 0xA4, 0x41)
+    # la freccia: il triangolo, chiuso sotto da un contorno nero spesso come gli altri
+    BASE = 16
+    freccia = a[:taglio + BASE].copy()
+    riga = np.nonzero(freccia[taglio - 1, :, 3] > 0)[0]
+    freccia[taglio:, :, 3] = 0
+    freccia[taglio:, riga.min():riga.max() + 1] = (0, 0, 0, 255)
+    r, g, b = freccia[..., 0].astype(int), freccia[..., 1].astype(int), freccia[..., 2].astype(int)
+    verde = (g > 140) & (r < 110) & (b < 110)
+    freccia[verde, :3] = 255
+    # il triangolo è attorno al verde (col suo contorno): fuori c'è solo qualche puntino
+    vy, vx = np.nonzero(verde)
+    m = 40
+    x0, x1 = max(vx.min() - m, 0), vx.max() + m
+    freccia = freccia[:, x0:x1]
+    ys, xs = np.nonzero(freccia[..., 3] > 0)
+    freccia = freccia[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    w = round(MOLLA_LARGA * PX)
+    k = w / im.width
+    h = round(corpo.shape[0] * k)
+    Image.fromarray(corpo, "RGBA").resize((w, h), Image.LANCZOS).save(os.path.join(OUT, "attrezzo_molla.png"),
+                                                                       optimize=True)
+    f = Image.fromarray(freccia, "RGBA").rotate(-90, expand=True)  # punta a destra
+    fw = round(FRECCIA_LARGA * PX * 2)
+    fh = round(fw * f.height / f.width)
+    assert fw <= f.width
+    f.resize((fw, fh), Image.LANCZOS).save(os.path.join(OUT, "attrezzo_molla_freccia.png"), optimize=True)
+    print("attrezzo_molla (ricalcata)", w, h, "misura nel mondo", MOLLA_LARGA, round(h / PX, 2),
+          "freccia", FRECCIA_LARGA, round(FRECCIA_LARGA * fh / fw, 2))
+
+
+def chiusa_ricalcata():
+    from PIL import Image
+    im = Image.open(CHIUSA_RICALCO).convert("RGBA")
+    w = round(CHIUSA_LARGA * PX)
+    h = round(w * im.height / im.width)
+    im.resize((w, h), Image.LANCZOS).save(os.path.join(OUT, "attrezzo_tagliola_chiusa.png"), optimize=True)
+    print("attrezzo_tagliola_chiusa (ricalcata)", w, h, "misura nel mondo", CHIUSA_LARGA, round(h / PX, 2))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for nome, fn, tinta in (("attrezzo_cubo", cubo, False),
-                            ("attrezzo_tagliola_chiusa", tagliola_chiusa, False), ("attrezzo_molla", molla, False),
                             ("attrezzo_bolla", bolla, False)):
         d = Disegno(col=COL)
         box = fn(d)
@@ -113,6 +143,8 @@ def main():
         rendi(d.svg(box, PX, tinta=tinta), w, h).save(os.path.join(OUT, nome + ".png"), optimize=True)
         print(nome, w, h, "misura nel mondo", round(box[2] - box[0], 1), round(box[3] - box[1], 1))
     tagliola_ricalcata()
+    molla_ricalcata()
+    chiusa_ricalcata()
     firme()
 
 

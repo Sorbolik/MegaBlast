@@ -166,7 +166,7 @@ end
 function M.new()
 	local c = { code = "", colore = ui.C.SQUADRA[1], accent = KC.HOT }
 	-- the backdrop (ui/kit.lua)
-	c.scene = kit.scene(devil_side.x(), devil_side.Y, { bg = "gioca_online" })
+	c.scene = kit.scene(devil_side.x(), devil_side.Y, { bg = "arena" })
 	build(c)
 	return c
 end

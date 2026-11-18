@@ -1,0 +1,16 @@
+Image 1 shows four sketches of the player's profile banner of our game. Image 2 shows approved coins of the same game and image 3 a button of the same game: copy their style exactly, a cartoon comic look with a thick slightly irregular black ink outline, flat colors with one flat highlight and one flat shadow, real thickness and relief, details carved into the surface. Image 4 shows the gold ring and the gold level seal we use today: keep their colors (gold #FFB703, orange #F26419) but draw them new and better.
+
+Draw on plain green (#00FF00) two separate pieces, well apart:
+1. PORTRAIT RING (about 600 px wide): a thick round ring of polished gold with real thickness, a raised outer rim and an inner bevel, four small dark iron rivets evenly spaced on it. The centre is a perfectly round flat very dark disc (#1A161D) taking about 72 percent of the width: it must be EMPTY, the game puts the player's face there. The ring is perfectly circular and the same thickness all around.
+2. LEVEL SEAL (about 240 px wide): a round thick gold coin like a wax seal, a raised rim, a flat smooth face in the middle with nothing on it (the game writes the level number there), a small notch or two on the rim so it reads as a seal. It will be placed on the lower right of the ring, so its outline must be clean and bold.
+No letters, no numbers, no face, no shadow on the ground, no glow outside the ink.
+
+Riferimenti allegati in ordine
+art/WB-075/riferimenti/R1_bozze_ABCD.png
+art/WB-075/riferimenti/R3_monete_approvate.png
+art/WB-075/riferimenti/R4_stile.png
+art/WB-075/riferimenti/R5_pezzi_oggi.png
+
+ImageGen integrato. Tentativi 1, selezionato il 1.
+Tela originale 1536×1024.
+Disco scuro vuoto e quattro rivetti. Sigillo separato con due tacche, più grande in proporzione rispetto alla scheda.

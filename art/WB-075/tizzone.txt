@@ -1,0 +1,16 @@
+Image 1 shows four sketches of the player's profile banner of our game: the third one from the top shows the experience as a thin black ink thread that is lit like an ember from the left up to the point where the player has arrived, with a small glowing ember at that point. Image 2 shows approved coins of the same game and image 3 a button of the same game: copy their style exactly, a cartoon comic look with a thick slightly irregular black ink outline, flat colors with one flat highlight and one flat shadow, real relief.
+
+Draw on plain green (#00FF00) three separate pieces, well apart:
+1. EMBER (about 260 px wide): a small glowing lump of burning coal, rounded and chunky, core white-yellow (#FFF3B0), body #FFB703, edges #F26419, a few dark cracks carved in it, thick black ink outline, with a short soft flame licking upward from it.
+2. LIT THREAD (about 1300 px long, about 28 px tall, perfectly straight): a thin ink-outlined rod of glowing ember metal, #F26419 with a thin #FFE08A line along the top, exactly the same all along its length.
+3. DARK THREAD (same size as piece 2, perfectly straight): the same rod cold and dark (#3A3340 with a thin #5A5263 line along the top), exactly the same all along its length.
+No letters, no numbers, no shadow on the ground, no glow outside the ink except a small warm halo around the ember.
+
+Riferimenti allegati in ordine
+art/WB-075/riferimenti/R1_bozze_ABCD.png
+art/WB-075/riferimenti/R3_monete_approvate.png
+art/WB-075/riferimenti/R4_stile.png
+
+ImageGen integrato. Tentativi 1, selezionato il 1.
+Foglio ridotto in proporzione e centrato su tela verde 1536×1024.
+Tizzone e due fili separati. Fili quasi rettilinei. Alone caldo sul verde intorno al tizzone, da gestire al ritaglio.

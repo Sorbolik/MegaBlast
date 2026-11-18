@@ -1,6 +1,6 @@
 # WB-068 · Oggetti: la Molla larga e bassa e la tagliola chiusa
 
-- **Stato:** APPROVATA (Claude, 15 nov: Sergio vuole gli oggetti nello stesso stile delle armi; reversibile)
+- **Stato:** IMPLEMENTATA · era APPROVATA (Claude, 15 nov: Sergio vuole gli oggetti nello stesso stile delle armi; reversibile)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `claude/project-thread-wfha2a` (eseguila da questo ramo: `git fetch origin claude/project-thread-wfha2a` e leggi la scheda e i riferimenti da lì; non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-068`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-068` senza chiedere conferma (il repository è privato).
@@ -53,3 +53,8 @@ Rendering rules, very strict, because every shape will be traced into vector lay
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+(18 nov) Scelto `molla_e_tagliola_1` (i denti della tagliola chiusa si incastrano meglio). Ricalcato (`art/armi/svg/`), tagliato in `art/armi/molla.png` e `tagliola_chiusa.png`, messo nel gioco da `tools/grafica/attrezzi.py`: la Molla è larga 39,2 come prima e bassa 9,8, la tagliola chiusa è larga 18.
+- Il triangolo verde (Sergio, 18 nov): si stacca dalla piastra, si gira di lato e il gioco lo specchia verso dove la Molla lancia, nel colore della squadra (`attrezzo_molla_freccia`, `client/battle/items.lua`). Prende il posto della freccetta arancio a codice. Mentre la Molla vola non c'è.
+- Tolti i disegni a vettori della Molla e della tagliola chiusa. Scenario `tools/simula/scenari/molla.txt`.
+

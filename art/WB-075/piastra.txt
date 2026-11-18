@@ -1,0 +1,14 @@
+Image 1 shows four sketches of the player's profile banner of our game: the second one from the top is a round portrait ring with ONE dark iron plate coming out from behind it, with the player's name and level on the top line and the experience bar under them. Image 2 is today's banner, which is messy: three frames inside each other, a lonely rivet on the right, nothing lines up. We want the opposite: ONE clean plate. Image 3 shows approved coins of the same game and image 4 a button of the same game: copy their style exactly, a cartoon comic look with a thick slightly irregular black ink outline, flat colors with one flat highlight and one flat shadow, real thickness and relief.
+
+Draw on plain green (#00FF00) one single long horizontal plate of dark wrought iron (#2E2833, top highlight #5A5263, bottom side #17131A), about 1400 px long and 250 px tall, with real thickness: a flat front face and a visible lower edge. The left end is simple and square (it goes behind the round portrait). The right end is cut slightly slanted with a soft rounded corner. NO rivets, NO knobs, NO inner frame, NO recess: only one plate with one outline. The middle part must be EXACTLY the same all along its length (no scratches, no bends) so the game can stretch it. One subtle forged hammer-mark texture only near the two ends is allowed.
+No letters, no numbers, no bar, no shadow on the ground, no glow outside the ink.
+
+Riferimenti allegati in ordine
+art/WB-075/riferimenti/R1_bozze_ABCD.png
+art/WB-075/riferimenti/R2_oggi.png
+art/WB-075/riferimenti/R3_monete_approvate.png
+art/WB-075/riferimenti/R4_stile.png
+
+ImageGen integrato. Tentativi 3, selezionato il 2.
+Foglio ridotto in proporzione e centrato su tela verde 1536×1024.
+Piastra unica, liscia al centro, priva di rivetti. Il bordo centrale resta leggermente ondulato.

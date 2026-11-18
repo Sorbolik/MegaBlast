@@ -242,7 +242,7 @@ end
 
 function M.new(name_list)
 	local b = { nomi = name_list, t = 0 }
-	b.scene = kit.scene(640, 420, { bg = "eventi" })
+	b.scene = kit.scene(640, 420, { bg = "stendardi" })
 	build(b)
 	return b
 end

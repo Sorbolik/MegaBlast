@@ -85,7 +85,6 @@ M.with_alpha = with_alpha
 local V = vmath.vector3()
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local CLEAR = vmath.vector4(0, 0, 0, 0)
-local card_in, piece_in    -- the entrances (below, with the motion)
 -- The thread: its height in Figma coordinates. Under it the band with the way
 -- back on the left and the screen's action on the right
 M.THREAD = 612
@@ -644,7 +643,6 @@ function M.action(g, label, x, y, w, h, opt)
 			gui.set_position(p.label, vec(at.x, at.y - (down and 4 or 0)))
 		end
 	end
-	piece_in(n, "action")
 	return p
 end
 
@@ -743,8 +741,6 @@ function M.header(list_of, label, accent, back_action, from)
 	local tr = M.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = tr.node
 	h.top_right = tr
-	piece_in(tl.node, "title")
-	if h.back then piece_in(h.back.node, "back") end
 	return h
 end
 
@@ -857,7 +853,6 @@ function M.card(g, x, y, w, h, color, opt)
 	if opt.sel then nine(n, "pannello_caldo", w + 12, h + 12, math.min(26, h * 0.34)) end
 	local parts = nine(n, "pannello", w, h, math.min(22, h * 0.3))
 	if opt.off then tint(parts, vmath.vector4(0.62, 0.62, 0.7, 0.8)) end
-	card_in(n)
 	return k
 end
 
@@ -902,7 +897,6 @@ function M.mode_card(g, x, y, w, h, kind, opt)
 	elseif f then
 		pic(name .. "_fregio", w / 2 + f.box[3] * s - fw / 2, h / 2 + f.box[2] * s - fh / 2, fw, fh, n)
 	end
-	card_in(n)
 	return k
 end
 
@@ -1024,6 +1018,8 @@ local S
 -- It covers the screen keeping its shape (never stretched: on a long screen
 -- it grows and loses a little at the top), its painted floor on the thread
 local BACKDROPS = require "ui.backdrops"
+-- the flat backdrops made in code (ui/flat_backdrops.lua): opt.bg is their name
+local FLAT = require "ui.flat_backdrops"
 local THREAD_Y = M.BAND
 
 -- the place of each chapter of the campaign (its id in sim/campaign.lua)
@@ -1031,11 +1027,9 @@ local PLACES = { addestramento = "cortile", girone_1 = "forgia" }
 local PLACE = "cortile"
 
 -- The painting a screen asks for: opt.bg true is the place reached, a name is
--- the screen's own painting (Sergio, 15 Nov: one for each screen, WB-053:
--- /paintings/backdrops/menu_<name>.jpg); false or nil: none
+-- the screen's flat backdrop (ui/flat_backdrops.lua, no painting); false or nil: none
 local function painting_of(on)
-	if type(on) == "string" and BACKDROPS["menu_" .. on] then return "menu_" .. on end
-	return on and PLACE or nil
+	return on == true and PLACE or nil
 end
 
 -- its texture, loaded if it isn't (each painting has its own: a copy of the
@@ -1058,8 +1052,23 @@ local function unload_painting(name)
 	end
 end
 
+-- the flat backdrop of the screen (nil: none), under the thread like the painting
+local function flat_backdrop(on)
+	local name = FLAT.has(on) and on or nil
+	if S.flat_name == name then return end
+	FLAT.drop(S.flat, S.flat_timer)
+	S.flat, S.flat_timer, S.flat_name = nil, nil, name
+	if not name then return end
+	S.flat, S.flat_timer = FLAT.make(name, S.clip or S.back, THREAD_Y, C.SOOT, true)
+	if S.clip then
+		local p = gui.get_position(S.flat)
+		gui.set_position(S.flat, vec(p.x, p.y - 360))
+	end
+end
+
 -- on: the screen's painting (false: only the soot, over a battle)
 local function backdrop(on)
+	flat_backdrop(on)
 	local name = painting_of(on)
 	if S.bg_name ~= name then
 		local old = S.bg_name
@@ -1075,6 +1084,7 @@ local function backdrop(on)
 	end
 	local shown = S.bg_name ~= nil
 	gui.set_enabled(S.bg, shown)
+	shown = shown or S.flat_name ~= nil
 	-- the two lights are in the painting already
 	gui.set_enabled(S.warm, not shown)
 	gui.set_enabled(S.cold, not shown)
@@ -1111,6 +1121,7 @@ local function scene_nodes()
 	gui.set_color(S.bg, VEIL)
 	gui.set_parent(S.bg, back.node)
 	gui.set_enabled(S.bg, false)
+	S.back = back.node
 	-- the two lights, each stuck to its corner
 	local warm = M.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	S.tops[#S.tops + 1] = warm.node
@@ -1159,6 +1170,12 @@ function M.scene_fit()
 	backdrop_fit()
 	if S.fit_w == w then return end
 	S.fit_w = w
+	-- a flat backdrop stuck to the real edges is made again
+	if S.flat_name and FLAT.follows_width(S.flat_name) then
+		local name = S.flat_name
+		flat_backdrop(nil)
+		flat_backdrop(name)
+	end
 	gui.set_size(S.seam, vec(w, 6))
 	gui.set_size(S.seam_ink, vec(w, 11))
 	run_glints(S.glints, w)
@@ -1236,15 +1253,19 @@ function M.scene_cut(on)
 		gui.set_clipping_mode(S.clip, gui.CLIPPING_MODE_STENCIL)
 		gui.set_clipping_visible(S.clip, false)
 		gui.set_parent(S.clip, parent)
-		local p = gui.get_position(S.bg)
-		gui.set_parent(S.bg, S.clip)
-		gui.set_position(S.bg, vec(p.x, p.y - 360))
+		for _, n in ipairs({ S.bg, S.flat }) do
+			local p = gui.get_position(n)
+			gui.set_parent(n, S.clip)
+			gui.set_position(n, vec(p.x, p.y - 360))
+		end
 		for _, q in ipairs(S.glints) do gui.set_enabled(q, false) end
 	elseif not on and S.clip then
 		gui.set_size(S.base, vec(1280 * screen.FULL, 720 * screen.FULL))
-		local p = gui.get_position(S.bg)
-		gui.set_parent(S.bg, gui.get_parent(S.clip))
-		gui.set_position(S.bg, vec(p.x, p.y + 360))
+		for _, n in ipairs({ S.bg, S.flat }) do
+			local p = gui.get_position(n)
+			gui.set_parent(n, gui.get_parent(S.clip))
+			gui.set_position(n, vec(p.x, p.y + 360))
+		end
 		gui.delete_node(S.clip)
 		S.clip = nil
 		for _, q in ipairs(S.glints) do gui.set_enabled(q, true) end
@@ -1268,7 +1289,15 @@ function M.copy_of(opt, live)
 	local out = { shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, with_alpha(C.SOOT, opt.dim or 1)) }
 	local name = not opt.dim and painting_of(opt.bg)
 	local id = name and load_painting(name)
-	if id then
+	if not opt.dim and FLAT.has(opt.bg) then
+		local back = empty(640, 0)
+		gui.set_yanchor(back, gui.ANCHOR_BOTTOM)
+		-- the flat backdrop of a copy always moves, on the same clock as the real
+		-- one, so nothing jumps when one takes the other's place (Sergio, 18 Nov);
+		-- it moves until it is deleted (its timer stops by itself)
+		gui.set_inherit_alpha(FLAT.make(opt.bg, back, THREAD_Y, C.SOOT, true), true)
+		out[#out + 1] = back
+	elseif id then
 		S.kept = name
 		local back = empty(640, 0)
 		gui.set_yanchor(back, gui.ANCHOR_BOTTOM)
@@ -1277,6 +1306,7 @@ function M.copy_of(opt, live)
 		gui.set_color(bg, VEIL)
 		gui.set_texture(bg, id)
 		gui.set_parent(bg, back)
+		gui.set_inherit_alpha(bg, true)
 		out[#out + 1] = back
 		out.painting = bg
 	elseif live then
@@ -1296,11 +1326,12 @@ function M.copy_of(opt, live)
 		local w = screen.width()
 		local low = empty(640, 0)
 		gui.set_yanchor(low, gui.ANCHOR_BOTTOM)
-		shape(nil, 0, THREAD_Y, w, 11, C.INK, low)
+		gui.set_inherit_alpha(shape(nil, 0, THREAD_Y, w, 11, C.INK, low), true)
 		local seam = gui.new_box_node(vec(0, THREAD_Y), vec(w, 6))
 		gui.set_texture(seam, "fucina")
 		gui.play_flipbook(seam, "filo")
 		gui.set_parent(seam, low)
+		gui.set_inherit_alpha(seam, true)
 		if live then
 			gui.animate(seam, "color", vmath.vector4(0.72, 0.72, 0.72, 1), gui.EASING_INOUTSINE, 1.6, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
 			local glints = {}
@@ -1315,12 +1346,44 @@ function M.copy_of(opt, live)
 	return out
 end
 
+-- Between two menus (ui/transition.lua, pieces): a still copy of the backdrop
+-- shown now, then (scene_still_fade, once the new screen is made) put just over
+-- the new backdrop, under the new screen, and faded out in t seconds
+function M.scene_still()
+	if not S or not S.owner then return {} end
+	local out = M.scene_copy(S.owner)
+	for _, n in ipairs(out) do gui.move_above(n, nil) end
+	return out
+end
+
+function M.scene_still_fade(out, t)
+	if #out == 0 then return end
+	local below = S.tops[#S.tops]
+	for _, n in ipairs(out) do
+		gui.move_above(n, below)
+		below = n
+		gui.animate(n, "color.w", 0, gui.EASING_OUTQUAD, t)
+	end
+	timer.delay(t, false, function() M.scene_copy_drop(out) end)
+end
+
 function M.scene_copy_drop(out)
 	for _, n in ipairs(out or {}) do gui.delete_node(n) end
 	local kept = S and S.kept
 	if kept then
 		S.kept = nil
 		unload_painting(kept)
+	end
+end
+
+-- The screen's backdrop changes (a screen with two views: the campaign's
+-- boards and its map of the circles)
+function M.scene_bg(s, bg)
+	if s.opt.bg == bg then return end
+	s.opt.bg = bg
+	if S and S.owner == s then
+		backdrop(not s.opt.dim and bg)
+		M.scene_fit()
 	end
 end
 
@@ -1361,58 +1424,12 @@ end
 
 -- ---------------------------------------------------------------- motion
 
--- While a screen is being made after a transition (M.entering: the
--- gui_script sets it around the change) its pieces arrive by themselves: the
--- title from the left, the cards from the right one after the other, the
--- action pops; quickly, so that a tap finds them in place.
--- M.wait: seconds before they move
-M.entering, M.wait = false, 0
-local auto = {}        -- node -> where it rests, for the pieces already sent in
-local stagger = 0
-
-function M.enter_begin(wait)
-	M.entering, M.wait, auto, stagger = true, wait or 0, {}, 0
-end
-
-function M.enter_end()
-	M.entering, M.wait = false, 0
-end
-
--- A piece arrives from (dx, dy) away, in `time` seconds after `delay`,
--- overshooting a little. node: any node; its resting position is the current one
-function M.arrive(node, dx, dy, delay, time)
-	local p = auto[node] or gui.get_position(node)
-	auto[node] = M.entering and p or nil
-	gui.cancel_animations(node, "position")
-	gui.set_position(node, vec(p.x + dx, p.y + dy))
-	gui.animate(node, "position", p, gui.EASING_OUTBACK, time or 0.32, (delay or 0) + M.wait)
-	return p
-end
-
 -- A piece pops: from small to its size, overshooting
 function M.pop(node, delay, time, from, done)
 	gui.cancel_animations(node, "scale")
 	local k = from or 0.86
 	gui.set_scale(node, vmath.vector3(k, k, 1))
-	gui.animate(node, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, time or 0.3, (delay or 0) + M.wait, done)
-end
-
--- a card of a screen being made: from the right, each a little later
-function card_in(node)
-	if not M.entering or stagger >= 8 then return end
-	M.arrive(node, 520, 0, stagger * 0.03, 0.28)
-	stagger = stagger + 1
-end
-
--- the title and the way back, from the left; the action pops (no sparks:
--- Sergio, 11 Nov, «sembrano fuochi d'artificio»; they are for the touch)
-function piece_in(node, kind)
-	if not M.entering then return end
-	if kind == "action" then
-		M.pop(node, 0.08, 0.3, 0.7)
-	else
-		M.arrive(node, -460, 0, kind == "back" and 0.05 or 0, 0.28)
-	end
+	gui.animate(node, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, time or 0.3, delay or 0, done)
 end
 
 -- ---------------------------------------------------------------- effects

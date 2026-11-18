@@ -124,7 +124,7 @@ end
 
 function M.new()
 	local c = { sel = "2v2" }
-	c.scene = kit.scene(640, 420, { bg = "gioca_online" })
+	c.scene = kit.scene(640, 420, { bg = "arena" })
 	build(c)
 	return c
 end

@@ -26,6 +26,15 @@ images {
   image: "/assets/fucina/barra_gelo_sx.png"
 }
 images {
+  image: "/assets/fucina/barra_stendardo_cx.png"
+}
+images {
+  image: "/assets/fucina/barra_stendardo_dx.png"
+}
+images {
+  image: "/assets/fucina/barra_stendardo_sx.png"
+}
+images {
   image: "/assets/fucina/barrato.png"
 }
 images {
@@ -132,42 +141,6 @@ images {
 }
 images {
   image: "/assets/fucina/bivio_piastra_spento_9.png"
-}
-images {
-  image: "/assets/fucina/bordo_allenamento_giu.png"
-}
-images {
-  image: "/assets/fucina/bordo_allenamento_mezzo.png"
-}
-images {
-  image: "/assets/fucina/bordo_allenamento_su.png"
-}
-images {
-  image: "/assets/fucina/bordo_armeria_giu.png"
-}
-images {
-  image: "/assets/fucina/bordo_armeria_mezzo.png"
-}
-images {
-  image: "/assets/fucina/bordo_armeria_su.png"
-}
-images {
-  image: "/assets/fucina/bordo_campagna_giu.png"
-}
-images {
-  image: "/assets/fucina/bordo_campagna_mezzo.png"
-}
-images {
-  image: "/assets/fucina/bordo_campagna_su.png"
-}
-images {
-  image: "/assets/fucina/bordo_eventi_giu.png"
-}
-images {
-  image: "/assets/fucina/bordo_eventi_mezzo.png"
-}
-images {
-  image: "/assets/fucina/bordo_eventi_su.png"
 }
 images {
   image: "/assets/fucina/brace.png"
@@ -363,15 +336,6 @@ images {
 }
 images {
   image: "/assets/fucina/ingranaggio.png"
-}
-images {
-  image: "/assets/fucina/lama_corpo.png"
-}
-images {
-  image: "/assets/fucina/lama_fuoco.png"
-}
-images {
-  image: "/assets/fucina/lama_gelo.png"
 }
 images {
   image: "/assets/fucina/linguetta.png"
@@ -981,6 +945,9 @@ images {
 }
 images {
   image: "/assets/fucina/stella_spenta.png"
+}
+images {
+  image: "/assets/fucina/stendardo.png"
 }
 images {
   image: "/assets/fucina/tacca.png"

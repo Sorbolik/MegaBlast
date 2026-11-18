@@ -486,7 +486,8 @@ return {
 		leave_queue_first = "esci dalla coda",
 		-- in the profile's round: the name, until the online accounts give one (placeholder)
 		player = "APPRENDISTA",
-		level = "LIV %d",
+		-- the level, alone in the banner's gold coin
+		level = "%d",
 		play_sub = "ONLINE",
 		training_sub = "CONTRO I BOT",
 		armory_sub = "IL FABBRO",
