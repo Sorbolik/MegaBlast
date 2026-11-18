@@ -147,6 +147,7 @@ end
 -- The pieces worn by the loadout a, each in its slot in the column x (tops at ys),
 -- with a line and a nail to where it sits on the devil. Tapping one: "posto:<slot>".
 -- sel: the slot chosen (lit). try: { set, slot } a piece tried on instead
+M.LABEL = "secondario_acceso"
 function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 	local k = h / 380
 	-- where each level sits, next to its piece, and the zone that opens it
@@ -162,16 +163,15 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 		-- only the piece chosen is lit (Sergio, 18 Nov)
 		if sel == sl.id then colors[cats[sl.id]] = vmath.vector4(1, 0.62, 0.12, 1) end
 		if level then
+			-- one label, shaped like a button: the type's symbol and the level
+			-- (Sergio, 18 Nov); on the outer side, never over the devil
 			local top = level >= equip.LIVELLO_MAX
-			-- the type's symbol on its tab, joined to the level (Sergio, 18 Nov)
-			if TYPE[sl.id] then
-				-- on the outer side, never over the devil (the cloak's is on its left)
-				local tx = sl.id == "cloak" and bx - 46 or bx + 14
-				kit.pic(g, "linguetta", tx, by - 16, 32, 32)
-				fit(g, TYPE[sl.id], tx + 5, by - 11, 22, 22)
-			end
-			kit.pic(g, top and "livello_oro" or "livello_ferro", bx - 17, by - 17, 34, 34)
-			kit.text(g, tostring(level), bx, by + 6, 16, top and KC.INK or KC.SAND, "middle")
+			local lw, lh = 96, 44
+			local lx = sl.id == "cloak" and bx + 17 - lw or bx - 17
+			kit.strip(g, M.LABEL, lx, by - lh / 2, lw, lh)
+			fit(g, TYPE[sl.id], lx + 16, by - 13, 26, 26)
+			kit.text(g, tostring(level), lx + 62, by + 7, 19, top and KC.HOT or KC.SAND, "middle")
+			kit.text(g, "›", lx + lw - 16, by + 7, 19, KC.MUTE, "middle")
 		end
 		local zx = sl.id == "cloak" and cx - 150 * k or cx - p[3] / 2 * k
 		kit.zone(g, s.buttons, zx, by - p[4] / 2 * k, p[3] * k, p[4] * k, "posto:" .. sl.id)
