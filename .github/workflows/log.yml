@@ -19,6 +19,10 @@ on:
         description: "Fino a quando (journalctl --until; vuoto = adesso)"
         type: string
         default: ""
+      prova:
+        description: "Prima prova POST /ricetta (dal VPS e da fuori) e mostra Caddyfile e log di Caddy"
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -42,4 +46,16 @@ jobs:
           [ -n "$A" ] && cmd="$cmd --until $(printf %q "$A")"
           [ -n "$TESTO" ] && cmd="$cmd | grep -F -- $(printf %q "$TESTO")"
           ssh -i "$RUNNER_TEMP/chiave" -o StrictHostKeyChecking=accept-new "root@$VPS_HOST" "$cmd | tail -n 2000" || echo "(nessuna riga)"
+          if [ "${{ inputs.prova }}" = true ]; then
+            echo "== da fuori (runner di GitHub) verso Caddy"
+            curl -sS -i -m 20 -X POST --data prova "http://$VPS_HOST/ricetta?p=prova-fuori&j=curl" | head -20 || true
+            ssh -i "$RUNNER_TEMP/chiave" "root@$VPS_HOST" 'echo "== dal VPS verso Caddy (porta 80)"
+          curl -sS -i -m 20 -X POST --data prova "http://49.13.44.34/ricetta?p=prova-vps&j=curl" | head -20
+          echo "== dal VPS direttamente al server (8080)"
+          curl -sS -i -m 20 -X POST --data prova "http://127.0.0.1:8080/ricetta?p=prova-8080&j=curl" | head -20
+          echo "== Caddyfile"; cat /etc/caddy/Caddyfile
+          echo "== versione del server"; ls -l /opt/megablast/megablast-server; systemctl status megablast --no-pager -n 0 | head -5
+          echo "== log di Caddy da oggi 06:00 UTC"; journalctl -u caddy --no-pager -o short-iso --since "today 06:00" | tail -n 50
+          echo "== righe del server con ricetta da oggi"; journalctl -u megablast --no-pager -o short-iso --since today | grep -i ricetta | tail -n 50' || true
+          fi
           rm -f "$RUNNER_TEMP/chiave"
