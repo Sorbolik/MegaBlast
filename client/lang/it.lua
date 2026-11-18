@@ -384,13 +384,16 @@ return {
 		grade = "GRADO %s · %s",
 		level_to = "LIVELLO %d › %d",
 		level_top = "LIVELLO %d · AL MASSIMO",
-		-- the next step: its level, the grade it opens
-		next_step = "PROSSIMO SCATTO: %d · GRADO %s, %s",
-		all_steps = "TUTTI GLI SCATTI FATTI",
-		-- the signature: how far it is lit (roman number) and its name; it is lit
-		-- with Ossidiana, a grade for each step done
-		sign = "firma %s: %s",
-		sign_off = "firma spenta: %s",
+		-- the signature (how far it is lit: the gems beside it; under it its name and
+		-- what it gives); it is lit with Ossidiana, a grade for each step done
+		sign = "firma",
+		sign_off = "firma spenta",
+		-- what the signature gives once the next step is lit: the step, the value
+		sign_next = "al %d: %d%%",
+		-- the same when the step is already done: lighting it gives that
+		sign_next_now = "accendila: %d%%",
+		-- the Ossidiana spent lighting it, jumping under the balance
+		sign_spent = "−%s",
 		light_sign = "ACCENDI LA FIRMA",
 		sign_cost = "%d ossidiana",
 		sign_needs = "dallo scatto %d",
@@ -419,14 +422,16 @@ return {
 		proof_first = "prima la prova",
 		-- (not POTENZIA: that is the tab already, Sergio 15 Nov)
 		upgrade = "+1 LIVELLO",
+		-- in the ZAINO: opens the piece's card, with +1 LIVELLO
+		upgrade_here = "POTENZIA",
 		missing = "mancano %s",
 		pick_ware = "tocca un pezzo",
 		in_wardrobe = "ce l'hai già",
 		buy = "COMPRA",
 		price_only = "%s SCAGLIE",
-		price_unit = "SCAGLIE",
+		-- the price of +1 LIVELLO, beside it: what it buys
+		price_for = "per il livello %d",
 		step_title = "SCATTO!",
-		step_new = "NUOVO",
 		-- the grade in roman numbers, its name
 		step_grade = "GRADO %s · %s",
 		step_look = "Aspetto nuovo, firma da rafforzare",
@@ -517,7 +522,8 @@ return {
 		-- under the piece chosen: level, grade and what it does
 		piece_line = "liv %d · grado %s %s",
 		wear = "INDOSSA",
-		worn = "ce l'hai addosso",
+		-- under POTENZIA: the level now and the next one
+		up_line = "liv %d › %d",
 		-- the Sigilli: the points still to spend (a flame each) and those used
 		free = "PUNTI LIBERI",
 		used = "%d / %d USATI",
