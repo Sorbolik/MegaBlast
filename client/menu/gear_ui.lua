@@ -22,6 +22,7 @@ local game = require "sim.game"
 local equip = require "sim.gear"
 local loadout = require "sim.loadout"
 local scoria = require "battle.scoria"
+local outline = require "menu.outline"
 local wallet = require "sim.wallet"
 local TA = require("lang.text").armory
 local T = require("lang.text").gear_ui
@@ -116,6 +117,7 @@ function M.devil(s, g, cx, feet, h)
 	scoria.update(s.figure, 0, s.st)
 	gui.set_parent(s.figure.root, pose.node)
 	scoria.set_enabled(s.figure, true)
+	s.outline = outline.new(s.figure, pose.node, scoria.player)
 	return pose
 end
 
@@ -123,25 +125,27 @@ end
 -- with a line and a nail to where it sits on the devil. Tapping one: "posto:<slot>".
 -- sel: the slot chosen (lit). try: { set, slot } a piece tried on instead
 function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
-	local P = body(cx, feet, h)
-	for i, sl in ipairs(equip.SLOTS) do
+	local k = h / 380
+	-- where each level sits, next to its piece, and the zone that opens it
+	local at = { mask = { 88, -318, 190, 120 }, chest = { 92, -205, 150, 110 }, cloak = { -128, -150, 90, 150 }, legs = { 118, -40, 230, 80 } }
+	local cats = { mask = "elmo", chest = "corazza", cloak = "mantello", legs = "stivali" }
+	local colors = {}
+	for _, sl in ipairs(equip.SLOTS) do
 		local set = a.gear[sl.id]
 		if try and try[2] == sl.id then set = try[1] end
 		local level = set and wallet.level(s.prof, set, sl.id)
-		local y = ys[i]
-		local px, py = P[sl.id][1], P[sl.id][2]
-		local sx, sy = x + size + 4, y + size / 2
-		kit.line(g, sx, sy, sx + 18, sy, 5, KC.INK)
-		kit.line(g, sx + 18, sy, px, py, 5, KC.INK)
-		local lit = sel == sl.id and KC.HOT or KC.SAND
-		kit.line(g, sx, sy, sx + 18, sy, 2, lit)
-		kit.line(g, sx + 18, sy, px, py, 2, lit)
-		kit.pic(g, "chiodo", px - 8, py - 8, 16, 16)
-		-- the label nearer its own slot than the one above (Sergio, 17 Nov)
-		kit.text(g, sl.name, x, y - 7, 18, KC.SAND, "start", 1)
-		M.slot(g, x, y, size, { set = set, slot = sl.id, level = level, sel = sel == sl.id })
-		kit.zone(g, s.buttons, x - 4, y - 24, size + 30, size + 28, "posto:" .. sl.id)
+		local p = at[sl.id]
+		local bx, by = cx + p[1] * k, feet + p[2] * k
+		colors[cats[sl.id]] = sel == sl.id and vmath.vector4(1, 0.62, 0.12, 1) or vmath.vector4(0.93, 0.86, 0.68, 1)
+		if level then
+			local top = level >= equip.LIVELLO_MAX
+			kit.pic(g, top and "livello_oro" or "livello_ferro", bx - 17, by - 17, 34, 34)
+			kit.text(g, tostring(level), bx, by + 6, 16, top and KC.INK or KC.SAND, "middle")
+		end
+		local zx = sl.id == "cloak" and cx - 150 * k or cx - p[3] / 2 * k
+		kit.zone(g, s.buttons, zx, by - p[4] / 2 * k, p[3] * k, p[4] * k, "posto:" .. sl.id)
 	end
+	if s.outline then outline.colors(s.outline, colors) end
 end
 
 -- the stats shown, in this order, and how each is written

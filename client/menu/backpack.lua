@@ -26,6 +26,7 @@ local scoria = require "battle.scoria"
 local profile = require "menu.profile"
 local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
+local outline = require "menu.outline"
 local bench = require "menu.bench"
 local T = require("lang.text").backpack
 local TG = require("lang.text").gear_ui
@@ -91,8 +92,8 @@ local function inventory(s)
 	local p = s.prof
 	local a = profile.active_loadout(p)
 	gear_ui.loadouts(s, s.left, 36, 96, p.is_active, "assetto", T.loadout)
-	gear_ui.devil(s, s.left, 250, 600, 360)
-	gear_ui.worn(s, s.left, a, 250, 600, 360, 36, { 208, 310, 412, 514 }, 68, s.slot)
+	gear_ui.devil(s, s.left, 215, 600, 395)
+	gear_ui.worn(s, s.left, a, 215, 600, 395, 36, { 208, 310, 412, 514 }, 68, s.slot)
 
 	-- the stats: with the piece chosen on, what changes; VEDI TUTTE opens all of them
 	-- in the middle, in place of the pieces
@@ -185,8 +186,8 @@ local function card(s)
 	local p = s.prof
 	local a = profile.active_loadout(p)
 	gear_ui.loadouts(s, s.left, 36, 96, p.is_active, "assetto", T.loadout)
-	gear_ui.devil(s, s.left, 250, 600, 360)
-	gear_ui.worn(s, s.left, a, 250, 600, 360, 36, { 208, 310, 412, 514 }, 68, s.sel[2])
+	gear_ui.devil(s, s.left, 215, 600, 395)
+	gear_ui.worn(s, s.left, a, 215, 600, 395, 36, { 208, 310, 412, 514 }, 68, s.sel[2])
 	bench.draw(s, s.mid, s.sel)
 	bench.footer(s, s.low2, s.right, s.sel)
 	-- the stats: what +1 LIVELLO changes (worn), or what wearing it changes
@@ -419,6 +420,7 @@ local function build(s)
 		s[k] = nil
 	end
 	s.buttons, s.figure, s.action = {}, nil, nil
+	s.outline = nil
 	local p = s.prof
 	local in_card = s.tab ~= "sigilli" and s.card and s.sel
 	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", in_card and T.title or common.home)
@@ -452,6 +454,7 @@ end
 
 function M.update(s, dt)
 	if s.figure then scoria.update(s.figure, dt, s.st) end
+	if s.outline then outline.update(s.outline) end
 	bench.update(s, dt)
 end
 
@@ -545,6 +548,7 @@ function M.on_input(s, action_id, action)
 end
 
 function M.destroy(s)
+	outline.off()
 	bench.delete(s)
 	kit.header_delete(s.head)
 	for _, k in ipairs(GROUPS) do

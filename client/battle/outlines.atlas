@@ -1,0 +1,108 @@
+images {
+  image: "/assets/sagome/cappuccio_vuoto_forgiato_testa.png"
+}
+images {
+  image: "/assets/sagome/cappuccio_vuoto_testa.png"
+}
+images {
+  image: "/assets/sagome/corazza_corvo_busto.png"
+}
+images {
+  image: "/assets/sagome/corazza_corvo_forgiato_busto.png"
+}
+images {
+  image: "/assets/sagome/corazza_fornace_busto.png"
+}
+images {
+  image: "/assets/sagome/corazza_fornace_forgiato_busto.png"
+}
+images {
+  image: "/assets/sagome/corazza_leviatano_busto.png"
+}
+images {
+  image: "/assets/sagome/corazza_leviatano_forgiato_busto.png"
+}
+images {
+  image: "/assets/sagome/corazza_vuoto_busto.png"
+}
+images {
+  image: "/assets/sagome/corazza_vuoto_forgiato_busto.png"
+}
+images {
+  image: "/assets/sagome/corna_apprendista_testa.png"
+}
+images {
+  image: "/assets/sagome/grembiule_fabbro_busto.png"
+}
+images {
+  image: "/assets/sagome/grembiule_fabbro_forgiato_busto.png"
+}
+images {
+  image: "/assets/sagome/grembiule_fabbro_forgiato_spallina_braccio_1.png"
+}
+images {
+  image: "/assets/sagome/grembiule_fabbro_forgiato_spallina_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/sagome/stivali_corvo_forgiato_gamba.png"
+}
+images {
+  image: "/assets/sagome/stivali_corvo_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/sagome/stivali_corvo_gamba.png"
+}
+images {
+  image: "/assets/sagome/stivali_corvo_gamba_dietro.png"
+}
+images {
+  image: "/assets/sagome/stivali_fabbro_forgiato_gamba.png"
+}
+images {
+  image: "/assets/sagome/stivali_fabbro_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/sagome/stivali_fabbro_gamba.png"
+}
+images {
+  image: "/assets/sagome/stivali_fabbro_gamba_dietro.png"
+}
+images {
+  image: "/assets/sagome/stivali_fornace_forgiato_gamba.png"
+}
+images {
+  image: "/assets/sagome/stivali_fornace_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/sagome/stivali_fornace_gamba.png"
+}
+images {
+  image: "/assets/sagome/stivali_fornace_gamba_dietro.png"
+}
+images {
+  image: "/assets/sagome/stivali_leviatano_forgiato_gamba.png"
+}
+images {
+  image: "/assets/sagome/stivali_leviatano_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/sagome/stivali_leviatano_gamba.png"
+}
+images {
+  image: "/assets/sagome/stivali_leviatano_gamba_dietro.png"
+}
+images {
+  image: "/assets/sagome/stivali_vuoto_forgiato_gamba.png"
+}
+images {
+  image: "/assets/sagome/stivali_vuoto_forgiato_gamba_dietro.png"
+}
+images {
+  image: "/assets/sagome/stivali_vuoto_gamba.png"
+}
+images {
+  image: "/assets/sagome/stivali_vuoto_gamba_dietro.png"
+}
+margin: 2
+extrude_borders: 2
+inner_padding: 0

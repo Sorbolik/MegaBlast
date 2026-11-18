@@ -23,6 +23,7 @@ local equip = require "sim.gear"
 local profile = require "menu.profile"
 local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
+local outline = require "menu.outline"
 local bench = require "menu.bench"
 local T = require("lang.text").armory
 local TG = require("lang.text").gear_ui
@@ -167,6 +168,7 @@ local function build(a)
 		a[k] = nil
 	end
 	a.buttons, a.figure, a.action = {}, nil, nil
+	a.outline = nil
 	local p = a.prof
 	a.head = kit.header(a.buttons, common.armory, KC.PURPLE, "indietro", a.from or common.home)
 	a.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
@@ -180,7 +182,7 @@ local function build(a)
 	a.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
 	local act = profile.active_loadout(p)
-	gear_ui.devil(a, a.left, 250, 600, 360)
+	gear_ui.devil(a, a.left, 215, 600, 395)
 	local try, focus, up
 	if a.tab == "bottega" then
 		local w = shop(a)
@@ -194,7 +196,7 @@ local function build(a)
 		local nxt = sel and wallet.next(p, sel[1], sel[2])
 		if nxt then up = { sel[1], sel[2], nxt.level } end
 	end
-	gear_ui.worn(a, a.left, act, 250, 600, 360, 36, { 130, 248, 366, 484 }, 72, focus, try)
+	gear_ui.worn(a, a.left, act, 215, 600, 395, 36, { 130, 248, 366, 484 }, 72, focus, try)
 	local a2
 	if try and act.gear[try[2]] ~= try[1] then
 		a2 = copy(act)
@@ -251,6 +253,7 @@ end
 
 function M.update(a, dt)
 	if a.figure then scoria.update(a.figure, dt, a.st) end
+	if a.outline then outline.update(a.outline) end
 	bench.update(a, dt)
 end
 
@@ -264,6 +267,7 @@ function M.on_input(a, action_id, action)
 end
 
 function M.destroy(a)
+	outline.off()
 	bench.delete(a)
 	kit.header_delete(a.head)
 	for _, k in ipairs(GROUPS) do
