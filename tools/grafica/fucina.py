@@ -386,17 +386,17 @@ MENU_INTERI = [
     ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
     # le caselle dei pezzi, dritte (WB-078, Sergio 18 nov: al posto di quelle di WB-044 in
     # ogni posto): la cornice, la linguetta del tipo in alto a sinistra col suo simbolo,
-    # la fascia INDOSSATO in basso
+    # la fascia INDOSSATO in basso; i simboli rifatti in WB-079 dalle icone dei nostri pezzi
     ("casella", "cornice", 324, "WB-078"),
     ("casella_scelta", "cornice_scelta", 324, "WB-078"),
     ("casella_vuota", "cornice_vuota", 324, "WB-078"),
     ("linguetta", "linguetta", 112, "WB-078"),
     ("fascia_indossato", "fascia_indossato", 64, "WB-078"),
-    ("tipo_elmo", "tipo_elmo", 80, "WB-078"),
-    ("tipo_corazza", "tipo_corazza", 80, "WB-078"),
-    ("tipo_mantello", "tipo_mantello", 80, "WB-078"),
-    ("tipo_stivali", "tipo_stivali", 80, "WB-078"),
-    ("tipo_guanti", "tipo_guanti", 80, "WB-078"),
+    ("tipo_elmo", "tipo_elmo", 80, "WB-079"),
+    ("tipo_corazza", "tipo_corazza", 80, "WB-079"),
+    ("tipo_mantello", "tipo_mantello", 80, "WB-079"),
+    ("tipo_stivali", "tipo_stivali", 80, "WB-079"),
+    ("tipo_guanti", "tipo_guanti", 80, "WB-079"),
     # livelli, segni (WB-044)
     ("chiodo", "chiodo", 40, "WB-044"),
     ("livello_ferro", "livello_ferro", 80, "WB-044"),

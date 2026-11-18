@@ -64,6 +64,13 @@ end
 
 -- BOTTEGA ---------------------------------------------------------------------------
 
+-- moves a text made at x = 0 to start at x
+local function shift(n, x)
+	local pos = gui.get_position(n)
+	pos.x = pos.x + x
+	gui.set_position(n, pos)
+end
+
 -- a ware w x h at (x, y): the piece in its slot frame (the same as in the ZAINO,
 -- WB-078: no family line, Sergio 18 Nov), under it the family and the price
 local function ware(a, x, y, w, h, set, slot, price, o)
@@ -78,14 +85,22 @@ local function ware(a, x, y, w, h, set, slot, price, o)
 	if o.owned then
 		kit.text(g, kit.upper(T.yours), x + w / 2, py + 18, 18, KC.MUTE, "middle")
 	elseif o.old then
-		local ow = kit.width(kit.text(g, coins.format(o.old), x + 14, py + 17, 16, KC.SAND))
+		-- old price, coin and new price as one group, centered under the frame
+		local on = kit.text(g, coins.format(o.old), 0, py + 17, 16, KC.SAND)
+		local nn = kit.text(g, coins.format(price), 0, py + 17, 18, KC.HOT)
+		local ow, nw = kit.width(on), kit.width(nn)
+		local left = x + (w - (ow + 10 + 24 + nw)) / 2
+		shift(on, left)
 		-- the stroke across it, as wide as the number (never deformed)
-		kit.pic(g, "barrato", x + 14 + ow / 2 - 16, py + 5, 32, 32 * 34 / 78)
-		kit.piece(g, "scaglia", x + w - 62, py + 10, 20)
-		kit.text(g, coins.format(price), x + w - 50, py + 17, 18, KC.HOT)
+		kit.pic(g, "barrato", left + ow / 2 - 16, py + 5, 32, 32 * 34 / 78)
+		kit.piece(g, "scaglia", left + ow + 20, py + 10, 20)
+		shift(nn, left + ow + 10 + 24)
 	else
-		kit.piece(g, "scaglia", x + w / 2 - 16, py + 10, 20)
-		kit.text(g, coins.format(price), x + w / 2 - 4, py + 17, 18, KC.SAND)
+		local nn = kit.text(g, coins.format(price), 0, py + 17, 18, KC.SAND)
+		local nw = kit.width(nn)
+		local left = x + (w - (24 + nw)) / 2
+		kit.piece(g, "scaglia", left + 10, py + 10, 20)
+		shift(nn, left + 24)
 	end
 	if o.badge then
 		kit.pic(g, "sconto", x + w - 66, y - 12, 80, 32)
