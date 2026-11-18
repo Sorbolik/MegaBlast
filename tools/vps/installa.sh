@@ -28,6 +28,8 @@ echo "== utente $UTENTE (senza accesso, senza root)"
 id "$UTENTE" >/dev/null 2>&1 || useradd --system --home-dir "$DATI" --shell /usr/sbin/nologin "$UTENTE"
 install -d -o root -g root -m 755 "$CASA" "$CASA/web"
 install -d -o "$UTENTE" -g "$UTENTE" -m 750 "$DATI"
+# le partite che arrivano dai telefoni, per l'allenamento dei bot (.github/workflows/partite.yml)
+install -d -o "$UTENTE" -g "$UTENTE" -m 750 "$DATI/partite"
 install -d -m 755 /etc/megablast
 
 # le impostazioni del server: si scrivono la prima volta, poi si cambiano a mano
@@ -56,7 +58,7 @@ User=$UTENTE
 Group=$UTENTE
 EnvironmentFile=$CONF
 WorkingDirectory=$DATI
-ExecStart=$CASA/megablast-server -addr 127.0.0.1:8080 -node \${NODO} -eventi "\${EVENTI}" -luajit /usr/bin/luajit
+ExecStart=$CASA/megablast-server -addr 127.0.0.1:8080 -node \${NODO} -eventi "\${EVENTI}" -luajit /usr/bin/luajit -partite $DATI/partite
 Restart=always
 RestartSec=2
 # Lo spegnimento aspetta la fine delle partite (main.go, al più 10 minuti).
