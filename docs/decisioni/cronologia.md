@@ -309,3 +309,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 18 nov | Online i pezzi si vedono addosso a ogni giocatore e contano: il server fa le statistiche del robot da Sigilli, pezzi e livello che il telefono dice di avere (si fida finché non ci sono i profili ospite). (Sergio) | architettura.md, questa PR |
 | 18 nov | Ricette delle partite lette come dati puri (mai caricate come codice), e ogni richiesta su /ricetta scritta nel log. | architettura.md, questa PR |
 | 18 nov | Il codice della versione (lo stesso della didascalia di Telegram) si vede nelle IMPOSTAZIONI; PROVA sugli APK di un ramo, LOCALE sulle build dall'editor. (Sergio) | interfaccia.md, questa PR |
+| 18 nov | Sergio: sì ai guanti come quinto pezzo. Scheda WB-070 per Codex (cinque famiglie, base e forgiata, addosso e icone); mestiere scelto da Claude: spinta dei colpi e Attacco. | progressione.md, WB-070 |
