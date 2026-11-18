@@ -140,7 +140,7 @@ end
 function M.new(p, c)
 	local s = { p = p, c = c }
 	controller.levette = profile.setting(p, "levette")
-	s.scene = kit.scene(200, 400, { halo = 300, accent = KC.STEEL, bg = "impostazioni" })
+	s.scene = kit.scene(200, 400, { halo = 300, accent = KC.STEEL, bg = "banco" })
 	-- which build this is, small on the bottom band at the right edge (Sergio, 18 Nov):
 	-- the commit the Actions write in the build settings (apk.yml, tools/web/build.sh),
 	-- none on a build made by hand in the editor

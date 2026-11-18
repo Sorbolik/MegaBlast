@@ -445,7 +445,7 @@ end
 function M.new(prof, tab, color)
 	local s = { prof = prof, tab = tab or "inventario", colore = color or ui.C.SQUADRA[1] }
 	s.draft = copy(profile.active_loadout(prof).tree or {})
-	s.back = kit.scene(250, 420, { accent = KC.PURPLE, bg = "zaino" })
+	s.back = kit.scene(250, 420, { accent = KC.PURPLE, bg = "camerino" })
 	build(s)
 	return s
 end

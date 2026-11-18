@@ -1,7 +1,8 @@
 -- The flat backdrops of the menus (Sergio, 18 Nov: the style of the first
 -- backgrounds of 5 Nov, flat dark shapes made in code, no painted image, no
 -- halo): the colonnade behind the campaign, the rings widening from the podium
--- behind the home. They end on the thread: under it the footer is plain dark.
+-- behind the home, the chasm behind the gironi, and the themes of 5 Nov behind
+-- the other menus. They end on the thread: under it the footer is plain dark.
 -- Coordinates: x from the middle of the 1280 frame, y from its bottom (the
 -- parent is stuck to the real bottom of the screen, like the thread)
 --
@@ -10,6 +11,7 @@
 --   (live false: a still copy, nothing moves)
 
 local screen = require "ui.screen"
+local ui = require "ui.ui"
 
 local M = {}
 
@@ -43,6 +45,100 @@ THEMES.colonnato = {
 			box(cx, 720 - 83, 186, 26, block, root)
 			box(cx, 720 - 575, 186, 30, block, root)
 		end
+	end,
+}
+
+-- The themes of 5 Nov (Sergio, 18 Nov: «gli sfondi li voglio tutti quelli
+-- della prima versione»), the same shapes and colors, one per screen in the
+-- color of its notch in the home; without their halos (they were on the
+-- floor, now under the thread)
+
+-- lines every step on both axes, every major-th one thicker in its color
+local function grid(root, step, major, line, major_line, thin, thick)
+	for k = -math.floor(HALF_W / step), math.floor(HALF_W / step) do
+		local big = k % major == 0
+		box(k * step, TOP / 2, big and thick or thin, TOP, big and major_line or line, root)
+	end
+	for k = -math.floor(360 / step), math.floor((TOP - 360) / step) do
+		local big = k % major == 0
+		box(0, 360 + k * step, HALF_W * 2, big and thick or thin, big and major_line or line, root)
+	end
+end
+
+-- ARMERIA: the wall of the Forge where the Smith hangs the pieces, riveted
+-- iron plates 320 x 240
+THEMES.fucina = {
+	base = c("1A1311"),
+	build = function(root)
+		local seam, rivet, shine = c("100B0A"), c("2A201C"), c("3A2C25")
+		for i = -1, 5 do box(0, 360 + i * 240 + 120, HALF_W * 2, 4, seam, root) end
+		for j = -4, 4 do box(j * 320, TOP / 2, 4, TOP, seam, root) end
+		for i = -1, 3 do
+			for j = -4, 4 do
+				ui.disc(j * 320, 360 + i * 240 + 120, 18, rivet, root)
+				ui.disc(j * 320 - 2, 360 + i * 240 + 122, 8, shine, root)
+			end
+		end
+	end,
+}
+
+-- ALLENAMENTO: the proving ground, a steel slate with the chalk grid and a
+-- target right of the middle
+THEMES.campo = {
+	base = c("141B24"),
+	build = function(root)
+		grid(root, 40, 4, c("1A2330"), c("1F2A39"), 2, 3)
+		local target = c("223042")
+		for _, d in ipairs({ 660, 480, 300, 120 }) do ui.ring_node(400, 300, d, 6, target, root) end
+		ui.disc(400, 300, 36, target, root)
+	end,
+}
+
+-- GIOCA ONLINE: the floor of the arena seen from above, rings rising from the
+-- bottom of the screen
+THEMES.arena = {
+	base = c("110F18"),
+	build = function(root)
+		local ring, ring_alt = c("1C1826"), c("17141F")
+		local i = 0
+		for r = 1300, 200, -110 do
+			ui.disc(0, -260, r * 2, i % 2 == 0 and ring or ring_alt, root)
+			i = i + 1
+		end
+	end,
+}
+
+-- EVENTI: the banners of the events hanging in the hall, wine red drapes 150
+-- wide with their folds and a gold thread
+THEMES.stendardi = {
+	base = c("1E0C10"),
+	build = function(root)
+		local drape, fold, thread = c("250F14"), c("16080B"), c("3A2414")
+		for k = -9, 9 do
+			local x = k * 150
+			if k % 2 == 0 then
+				box(x, TOP / 2, 150, TOP, drape, root)
+				box(x, TOP / 2, 2, TOP, thread, root)
+			end
+			box(x + 75, TOP / 2, 4, TOP, fold, root)
+		end
+	end,
+}
+
+-- IMPOSTAZIONI: the workbench of the controls, a blueprint grid
+THEMES.banco = {
+	base = c("13151A"),
+	build = function(root)
+		grid(root, 32, 4, c("181B21"), c("1E222A"), 1, 2)
+	end,
+}
+
+-- PROFILO and ZAINO: the devil's dressing room, velvet wallpaper with stripes
+THEMES.camerino = {
+	base = c("17101C"),
+	build = function(root)
+		local stripe = c("1C1423")
+		for k = -26, 26, 2 do box(k * 48, TOP / 2, 24, TOP, stripe, root) end
 	end,
 }
 

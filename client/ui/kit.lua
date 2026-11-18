@@ -1027,12 +1027,9 @@ local PLACES = { addestramento = "cortile", girone_1 = "forgia" }
 local PLACE = "cortile"
 
 -- The painting a screen asks for: opt.bg true is the place reached, a name is
--- the screen's own painting (Sergio, 15 Nov: one for each screen, WB-053:
--- /paintings/backdrops/menu_<name>.jpg); false or nil: none
+-- the screen's flat backdrop (ui/flat_backdrops.lua, no painting); false or nil: none
 local function painting_of(on)
-	if FLAT.has(on) then return nil end
-	if type(on) == "string" and BACKDROPS["menu_" .. on] then return "menu_" .. on end
-	return on and PLACE or nil
+	return on == true and PLACE or nil
 end
 
 -- its texture, loaded if it isn't (each painting has its own: a copy of the
