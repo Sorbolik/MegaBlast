@@ -1,6 +1,6 @@
 # WB-078 · Le cornici dei pezzi, il simbolo del tipo e il segno "indossato"
 
-- **Stato:** PROPOSTA (aspetta l'ok di Sergio)
+- **Stato:** APPROVATA (Sergio, 18 nov 15:56: «Approva»)
 - **Data:** 2026-11-18
 - **Ramo della scheda:** `claude/project-thread-rc20kg` (eseguila da questo ramo: `git fetch origin claude/project-thread-rc20kg`) · **Ramo delle immagini:** `design/WB-078`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-078` senza chiedere conferma (il repository è privato).
@@ -161,6 +161,8 @@ No arm, no studs, no text, no frame, no background shape, no gradient, no glow. 
 ---
 
 ## Decisione
+
+Approvata da Sergio il 18 nov alle 15:56 («Approva»).
 
 ## Consegna di Codex
 
