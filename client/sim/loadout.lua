@@ -152,18 +152,28 @@ function M.net_stats(eq, base)
 	return M.stats(base, net_loadout(eq), eq.lv, eq.liv, eq.sg)
 end
 
--- A bot as strong as the player in training (Sergio, 18 Nov: "equipaggiamenti
--- comparabili"): from what the player wears (eq, as net_clean takes it) the
--- same level, as many pieces at the same levels and signatures, but on
--- random slots and each of a different family, and as many Sigilli points
--- spread on random paths (a threshold at a time) with random powers. Pure
--- and deterministic: seed is the match's, nth the bot's robot, so the
--- server rebuilds the same one from the recipe (server/verify.lua). Returns
--- an eq like net_clean's (nil if the player's doesn't hold)
-function M.rival(eq, seed, nth)
-	local mine = M.net_clean(eq)
-	if not mine then return nil end
-	local r = rng.new((math.floor(seed or 1) % 1000003) * 64 + (nth or 1))
+-- How much a robot's stats are worth over the base, in one number: life,
+-- Attack and Defense a point every 100, the others their share over the base
+-- (the "less is better" ones the other way). It weighs the training's bots
+function M.power(st, base)
+	local sum = 0
+	for k, kind in pairs(equip.STATS) do
+		local v, b = st[k] or base[k], base[k]
+		if kind.points then
+			sum = sum + (v - b) / 100
+		elseif b and b ~= 0 then
+			sum = sum + (kind.less and (1 - v / b) or (v / b - 1))
+		end
+	end
+	return sum
+end
+
+-- One bot built from the player's eq (mine, cleaned) with the generator r: on
+-- the player's slots, at the same levels and signatures, each family swapped
+-- for another (the same one for all its pieces: who has a family pair, the
+-- bot has one too); the same Sigilli points, a threshold at a time on random
+-- paths, with random powers
+local function build(mine, r)
 	local function shuffle(list)
 		for i = #list, 2, -1 do
 			local j = r:next_int() % i + 1
@@ -171,20 +181,17 @@ function M.rival(eq, seed, nth)
 		end
 		return list
 	end
-	-- the pieces: the player's levels (with their signatures) on other slots and families
-	local worn = {}
-	for _, s in ipairs(equip.SLOTS) do
-		if mine.gear and mine.gear[s.id] then worn[#worn + 1] = { lv = mine.lv[s.id], sg = mine.sg[s.id] } end
-	end
-	local slots, families = {}, {}
-	for i, s in ipairs(equip.SLOTS) do slots[i] = s.id end
+	local families, swap, n = {}, {}, 0
 	for i, f in ipairs(equip.SETS) do families[i] = f.id end
-	shuffle(slots); shuffle(families); shuffle(worn)
+	shuffle(families)
 	local out = { liv = mine.liv, variant = "a", gear = {}, lv = {}, sg = {} }
-	for k, w in ipairs(worn) do
-		out.gear[slots[k]], out.lv[slots[k]], out.sg[slots[k]] = families[(k - 1) % #families + 1], w.lv, w.sg
+	for _, s in ipairs(equip.SLOTS) do
+		local f = mine.gear and mine.gear[s.id]
+		if f then
+			if not swap[f] then n = n + 1; swap[f] = families[n] end
+			out.gear[s.id], out.lv[s.id], out.sg[s.id] = swap[f], mine.lv[s.id], mine.sg[s.id]
+		end
 	end
-	-- the Sigilli: the same points, a threshold at a time on a path that has room
 	local left = math.min(skills.spent(mine.tree or {}), skills.points(mine.liv))
 	local tree = {}
 	while left > 0 do
@@ -194,14 +201,39 @@ function M.rival(eq, seed, nth)
 		end
 		if #open == 0 then break end
 		local path = open[r:next_int() % #open + 1]
-		local n = math.min(left, skills.STEP, skills.PATH_MAX - (tree[path] or 0))
-		tree[path], left = (tree[path] or 0) + n, left - n
+		local k = math.min(left, skills.STEP, skills.PATH_MAX - (tree[path] or 0))
+		tree[path], left = (tree[path] or 0) + k, left - k
 	end
 	for _, p in ipairs(skills.PATHS) do
 		for k = 1, skills.reached(tree, p.id) do skills.choose(tree, p.id, k, r:next_int() % 2 + 1) end
 	end
 	out.tree = tree
 	return M.net_clean(out)
+end
+
+-- A bot as strong as the player in training (Sergio, 18 Nov: "equipaggiamenti
+-- comparabili"): RIVAL_TRIES bots built from what the player wears (eq, as
+-- net_clean takes it; same level, slots, piece levels, signatures and
+-- Sigilli points, other families and paths), and of those the one whose
+-- power (M.power) is closest to the player's. Pure and deterministic: seed
+-- is the match's, nth the bot's robot, so the server rebuilds the same one
+-- from the recipe (server/verify.lua). Returns an eq like net_clean's (nil if
+-- the player's doesn't hold)
+M.RIVAL_TRIES = 12
+
+function M.rival(eq, seed, nth)
+	local mine = M.net_clean(eq)
+	if not mine then return nil end
+	local base = require("sim.game").base_stats()
+	local target = M.power(M.net_stats(mine, base), base)
+	local r = rng.new((math.floor(seed or 1) % 1000003) * 64 + (nth or 1))
+	local best, gap
+	for _ = 1, M.RIVAL_TRIES do
+		local c = build(mine, r)
+		local d = c and math.abs(M.power(M.net_stats(c, base), base) - target)
+		if d and (not gap or d < gap) then best, gap = c, d end
+	end
+	return best
 end
 
 return M

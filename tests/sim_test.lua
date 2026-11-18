@@ -2493,9 +2493,12 @@ do
 	local n, levels, fams = 0, {}, {}
 	for _, s in ipairs(require("sim.gear").SLOTS) do
 		local f = a.gear and a.gear[s.id]
-		if f then n, levels[#levels + 1] = n + 1, a.lv[s.id]; check(not fams[f], "rival: families differ"); fams[f] = true end
+		if f then n, levels[#levels + 1] = n + 1, a.lv[s.id]; fams[#fams + 1] = f end
 	end
 	table.sort(levels)
+	check(fams[1] ~= fams[2], "rival: two families stay two")
+	local pair = loadout.rival({ liv = 5, gear = { mask = "corvo", legs = "corvo" }, lv = { mask = 3, legs = 4 } }, 9, 2)
+	check(pair.gear.mask == pair.gear.legs and pair.lv.legs == 4, "rival: a family pair stays a pair, same slots")
 	check(n == 2 and levels[1] == 12 and levels[2] == 20 and a.liv == 30, "rival: as many pieces at the same levels")
 	local skills = require "sim.skills"
 	check(skills.spent(a.tree) == 22, "rival: as many Sigilli points")
