@@ -1037,3 +1037,41 @@ func TestRateLimit(t *testing.T) {
 		t.Fatalf("after a second: %d messages through, want %d", ok, msgRate)
 	}
 }
+
+// What a player wears (the greeting's "eq": Sigilli, pieces with levels and
+// signatures, level) makes the stats of their robot in the server's match,
+// and reaches everyone with start, checked; whoever sends nothing, or
+// something that can't be, plays with the base stats.
+func TestEquipStats(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	a := dial(t, ctx, url)
+	a.send(`{"t":"hello","v":9,"mode":"1v1","eq":{"liv":30,"gear":{"mask":"corvo","chest":"corvo","legs":"fornace","cloak":"leviatano"},` +
+		`"lv":{"mask":30,"chest":12,"legs":20,"cloak":5},"sg":{"mask":3,"chest":3},"tree":{"armor":15,"pick":{"armor":{"1":1,"3":2}}},"altro":"<x>"}}`)
+	a.waitFor(`"wait"`)
+	b := dial(t, ctx, url)
+	// more points than the level gives: not playable, the base stats
+	b.send(`{"t":"hello","v":9,"mode":"1v1","eq":{"liv":2,"tree":{"wings":25}}}`)
+	s := a.waitFor(`"start"`)
+	players, _ := json.Marshal(s["players"])
+	var ps []struct {
+		Eq map[string]any `json:"eq"`
+	}
+	if err := json.Unmarshal(players, &ps); err != nil || len(ps) != 2 {
+		t.Fatalf("players in start: %s", players)
+	}
+	if ps[0].Eq == nil || ps[0].Eq["altro"] != nil || ps[1].Eq != nil {
+		t.Fatalf("eq in start: %s", players)
+	}
+	// the signature of a piece at level 12 is lit one grade at most
+	if sg := ps[0].Eq["sg"].(map[string]any); sg["mask"] != 3.0 || sg["chest"] != 1.0 {
+		t.Fatalf("signatures: %v", sg)
+	}
+	st := a.waitFor(`"state"`)
+	robots := st["r"].([]any)
+	hp1, hp2 := robots[0].(map[string]any)["hp"].(float64), robots[1].(map[string]any)["hp"].(float64)
+	if hp1 <= 100 || hp2 != 100 {
+		t.Fatalf("life at the start: %v and %v, expected more than 100 and 100", hp1, hp2)
+	}
+}

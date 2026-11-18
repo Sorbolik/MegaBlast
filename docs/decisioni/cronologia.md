@@ -306,3 +306,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 17 nov | Server sul VPS Hetzner (Sergio): installazione e aggiornamento automatici a ogni merge, Caddy per il TLS, controllo di `/health`, prova di carico; l'APK trova il server nella variabile `SERVER_URL`. Scelte di Claude nel file dell'area. | architettura.md, questa PR |
 | 17 nov | Profili ospite sul server: piano approvato (scelte 1A, 2A, 3B, 4A, 5A); PR 1 misura se una partita del telefono torna uguale sul server. | architettura.md, questa PR |
 | 17 nov | Gioco web sul VPS per Gabri (Sergio): `http://49.13.44.34/`, ricostruito a ogni merge che tocca il client. Cloudflare Pages quando ci sarà il dominio. | architettura.md, questa PR |
+| 18 nov | Online i pezzi si vedono addosso a ogni giocatore e contano: il server fa le statistiche del robot da Sigilli, pezzi e livello che il telefono dice di avere (si fida finché non ci sono i profili ospite). (Sergio) | architettura.md, questa PR |

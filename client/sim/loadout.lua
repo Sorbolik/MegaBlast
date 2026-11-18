@@ -81,4 +81,74 @@ function M.valid(a, points)
 	return skills.valid(a.tree or {}, points)
 end
 
+-- Online (server/net.lua): what a player wears travels as
+-- eq = { tree, gear, variant, lv = levels of the worn pieces by slot, sg = their
+-- signatures lit by slot, liv = the player's level }, where the picks of the
+-- tree's thresholds are { wings = { ["2"] = 1 } } (a list with holes isn't JSON).
+-- net_clean checks one that arrived and returns a copy with only what counts
+-- (whole numbers and names: it travels again as it is), or nil if it can't be
+-- played; net_stats gives its stats, the same on the server and on every phone.
+local function whole(v, lo, hi)
+	return type(v) == "number" and v % 1 == 0 and v >= lo and v <= hi
+end
+
+local function net_loadout(eq)
+	local tree = {}
+	for k, v in pairs(eq.tree or {}) do
+		if k == "pick" then
+			tree.pick = {}
+			for path, list in pairs(v) do
+				local t = {}
+				for i, w in pairs(list) do t[tonumber(i) or i] = w end
+				tree.pick[path] = t
+			end
+		else
+			tree[k] = v
+		end
+	end
+	return { tree = tree, gear = eq.gear or {}, variant = eq.variant }
+end
+
+function M.net_clean(eq)
+	if type(eq) ~= "table" then return nil end
+	local out = { liv = type(eq.liv) == "number" and math.max(1, math.min(skills.LEVEL_MAX, math.floor(eq.liv))) or 1, variant = eq.variant == "b" and "b" or "a",
+		lv = {}, sg = {} }
+	if type(eq.gear) == "table" and next(eq.gear) then
+		out.gear = {}
+		for slot, set in pairs(eq.gear) do out.gear[slot] = set end
+	end
+	if type(eq.tree) == "table" and next(eq.tree) then
+		out.tree = {}
+		for k, v in pairs(eq.tree) do
+			if k ~= "pick" then
+				out.tree[k] = v
+			elseif type(v) == "table" then
+				local pick = {}
+				for path, list in pairs(v) do
+					if type(list) ~= "table" then return nil end
+					local t = {}
+					for i, w in pairs(list) do t[tostring(i)] = w end
+					if next(t) then pick[path] = t end
+				end
+				if next(pick) then out.tree.pick = pick end
+			else
+				return nil
+			end
+		end
+	end
+	for _, s in ipairs(equip.SLOTS) do
+		local l, sg = type(eq.lv) == "table" and eq.lv[s.id], type(eq.sg) == "table" and eq.sg[s.id]
+		out.lv[s.id] = whole(l, 1, equip.LIVELLO_MAX) and l or 1
+		-- a signature is lit as far as the piece's step (menu/wallet.lua, sign)
+		out.sg[s.id] = whole(sg, 0, #equip.SIGN_TIERS - 1) and math.min(sg, equip.tier(out.lv[s.id]) - 1) or 0
+	end
+	if not M.valid(net_loadout(out), skills.points(out.liv)) then return nil end
+	return out
+end
+
+-- eq: one that net_clean returned (here or on the server); base: game.base_stats()
+function M.net_stats(eq, base)
+	return M.stats(base, net_loadout(eq), eq.lv, eq.liv, eq.sg)
+end
+
 return M

@@ -151,4 +151,13 @@ function M.for_net(p)
 	return { liv = p.livello, bdg = #bdg > 0 and bdg or nil, pz = pz }
 end
 
+-- What whoever plays here wears, for the server: it works out the stats of
+-- their robot online (sim/loadout.lua, net_clean): the Sigilli, the pieces with
+-- their levels (lv) and signatures lit (sg), the player's level (liv)
+function M.equip_for_net(p)
+	local a = profile.active_loadout(p)
+	return require("sim.loadout").net_clean({ tree = a.tree, gear = a.gear, variant = a.variant, liv = p.livello,
+		lv = wallet.levels(p, a), sg = wallet.signs(p, a) })
+end
+
 return M
