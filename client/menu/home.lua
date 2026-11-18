@@ -64,9 +64,19 @@ local BANNER = {
 	ring = { 0.1335, 0.5045 }, groove = { 0.267, 0.759, 0.636 }, coin = { 0.833, 0.520 },
 	name_y = 56, name_size = 26, level_size = 24, fill_h = 9,
 }
--- the face in the ring: as wide as the ring's dark disc (0.676 of the banner's height),
--- so its team-coloured rim sits on the gold's inner edge
-local FACE_D = 0.676 * BANNER.h
+-- the head in the ring, without the team ring (Sergio, 18 Nov: «in home non hai mica una
+-- squadra»): bigger than the ring's dark disc (0.676 of the banner's height), it may
+-- stick out above and at the sides but its chin stays inside the disc, so it goes up
+-- by as much as it is wider than the disc
+local DISC_R = 0.676 * BANNER.h / 2
+local FACE_D = 88
+local FACE_UP = FACE_D / 2 - DISC_R - 2
+
+-- The face in the banner's ring (made again when the look changes)
+local function put_face(h)
+	if h.face then gui.delete_node(h.face) end
+	h.face = score.face(h.top_left.node, h.face_at[1], -(h.face_at[2] - FACE_UP), FACE_D, h.color, scoria.player, true)
+end
 
 -- the doors: x, y, width, piece, side, color of the writing, size of the name
 local DOORS = {
@@ -367,8 +377,7 @@ function M.profile(h, p)
 	gui.set_text(h.level, T.level:format(p.livello or 1))
 	local f = math.min(1, (p.xp or 0) / profile.xp_level(p.livello or 1))
 	kit.strip_width(h.xp, math.max(BANNER.fill_h, h.xp_w * f))
-	if h.face then gui.delete_node(h.face) end
-	h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], FACE_D, h.color, scoria.player)
+	put_face(h)
 	-- the first chapter with a mission still to win
 	local stars = p.stelle or {}
 	local chapter
@@ -408,10 +417,7 @@ function M.wear(h, p)
 	-- posed at once: made while the home is hidden, it would show up raw (the
 	-- weapon at its feet, the arms anyhow) under a door's passage
 	pose_now(h)
-	if h.face then
-		gui.delete_node(h.face)
-		h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], FACE_D, h.color, scoria.player)
-	end
+	if h.face then put_face(h) end
 end
 
 function M.queued(h, on)
