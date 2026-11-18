@@ -1187,6 +1187,8 @@ function M.scene(fx, fy, opt)
 	local s = { fx = fx, fy = fy, opt = opt or {} }
 	if s.opt.over then
 		s.copy = M.copy_of(s.opt, true)
+		-- its painting (nil without one), for a scene that moves it (ui/step_scene.lua)
+		s.painting = s.copy.painting
 		for _, n in ipairs(s.copy) do gui.move_above(n, nil) end
 		return s
 	end
@@ -1265,6 +1267,7 @@ function M.copy_of(opt, live)
 		gui.set_texture(bg, id)
 		gui.set_parent(bg, back)
 		out[#out + 1] = back
+		out.painting = bg
 	elseif live then
 		-- the two lights, each stuck to its corner (the painting has them already)
 		local warm = empty(0, 0)

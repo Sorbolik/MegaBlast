@@ -33,6 +33,7 @@ local TP = require("lang.text").pieces
 local M = {}
 
 local KC = kit.C
+local ingots = require "ui.ingots"
 -- the effects on the left of the panel, the signature on the right
 local RIGHT_COL = 312
 M.X, M.W = 430, 580
@@ -79,41 +80,7 @@ function M.notches(g, x, y, w, level, o)
 	return out
 end
 
--- The three ingots of a piece (Sergio, 18 Nov, proposal C): the thirty levels as
--- three ingots of ten notches, w wide from (x, y), h tall. The notches reached in
--- the color of the piece's grade, the next one to buy in ember; a full ingot glows
--- with the color of the grade it opened, and at its end the gem of the signature
--- grade that step lets you light (lit: bright; not yet: dark). Returns the thirty
--- notches and the three gems
-function M.ingots(g, x, y, w, h, level, lit)
-	local gap = h >= 24 and 10 or 5
-	local iw = (w - 2 * gap) / 3
-	local sk = math.max(2, math.floor(h * 0.16))
-	local pad = h >= 24 and 5 or 3
-	local gem_h = h - 2 * pad + 4
-	local tier = equip.tier(level)
-	local notches, gems = {}, {}
-	for k = 1, 3 do
-		local ix = x + (k - 1) * (iw + gap)
-		local full = level >= k * 10
-		kit.para(g, ix, y, iw, h, sk, KC.INK)
-		kit.para(g, ix + 3, y + 3, iw - 6, h - 6, sk, full and kit.with_alpha(ui.C.GRADI[k + 1], 0.3) or KC.CARD_BOTTOM)
-		-- ten notches, then room for the gem
-		local room = iw - 2 * pad - gem_h - 2
-		local pitch = room / 10
-		local nw = math.max(2, pitch * 0.66)
-		local nh = h - 2 * pad - 2
-		for i = 1, 10 do
-			local n = (k - 1) * 10 + i
-			local color = n <= level and ui.C.GRADI[tier] or (n == level + 1 and KC.HOT_BOTTOM or KC.LINE)
-			notches[n] = kit.para(g, ix + pad + sk / 2 + (i - 1) * pitch, y + pad + 1, nw, nh, math.max(1, math.floor(sk * 0.6)), color)
-		end
-		local gem = kit.piece(g, "gemma", ix + iw - pad - gem_h / 2, y + h / 2, gem_h)
-		if k > (lit or 0) then gui.set_color(gem, vmath.vector4(0.3, 0.3, 0.36, full and 0.85 or 0.6)) end
-		gems[k] = gem
-	end
-	return notches, gems
-end
+M.ingots = ingots.draw
 
 -- "+6%": a signature's value written as its description wants it
 local function sign_value(stat, grade)
@@ -254,7 +221,9 @@ function M.run(s, kind, sel)
 		if level then
 			sound.play("#scaglia")
 			if equip.tier(level) > before then
-				s.step = { gear_ui.slot_of(sel[2]).name, equip.BY_ID[sel[1]].name, level }
+				s.step = { slot_name = gear_ui.slot_of(sel[2]).name, set_name = equip.BY_ID[sel[1]].name, level = level,
+					lit = wallet.sign(p, sel[1], sel[2]), icon_before = gear_ui.icon(sel[1], sel[2], level - 1),
+					icon_after = gear_ui.icon(sel[1], sel[2], level), bg = s.back and s.back.opt.bg }
 			else
 				s.just = "level"
 			end
@@ -344,9 +313,11 @@ function M.after(s)
 	end
 	s.just = nil
 	if s.step then
-		s.scene = step_scene.new(s.step[1], s.step[2], s.step[3], function()
-			sound.play("#martello", { speed = 0.9 + 0.1 * math.random() })
-		end, s.colore)
+		-- the three blows: the hammer, higher each time
+		s.step.on_blow = function(i)
+			sound.play("#martello", { speed = 0.85 + 0.12 * i })
+		end
+		s.scene = step_scene.new(s.step)
 		s.step = nil
 	end
 end

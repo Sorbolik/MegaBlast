@@ -16,7 +16,7 @@
 # Servono numpy, scipy e Pillow.
 import os
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageChops, ImageDraw
 from scipy import ndimage as ndi
 
 QUI = os.path.dirname(os.path.abspath(__file__))
@@ -163,12 +163,44 @@ def fai_pezzi():
 
 
 def fai_secondario():
-    """WB-071 (Sergio, 18 nov): il pulsante secondario di ferro (foglio 2: acceso,
-    premuto, spento, in tre parti; l'incavo per l'icona nel capo sinistro)."""
-    stati = sorted(pezzi(senza_verde(os.path.join(ART, "WB-071", "secondario_2.png"))), key=lambda t: t[0])
-    acceso_h = stati[0][2].shape[0]
-    for stato, t in zip(("acceso", "premuto", "spento"), stati):
-        tre("secondario_" + stato, t[2], round(120 * t[2].shape[0] / acceso_h), 0.26)
+    """Il pulsante secondario (Sergio, 18 nov, «Ferro liscio» della pagina delle proposte:
+    quello di Codex di WB-071 sembrava un primario): ferro scuro piatto, contorno
+    d'inchiostro dritto, una luce piatta in alto e lo spessore sotto; nel capo sinistro
+    l'incavo tondo per l'icona. Disegnato qui in vettori (quattro volte piu' grande, poi
+    ridotto), in tre parti come gli altri pezzi lunghi. Premuto: la faccia scende e lo
+    spessore sparisce; spento: ferro freddo grigio-blu."""
+    S = 4                       # il disegno a quattro volte, ridotto: bordi lisci
+    W, FACE, R, INK = 520, 108, 30, 7
+    stati = {
+        # nome: (altezza in tutto, ferro, luce)
+        "acceso": (120, (0x3A, 0x33, 0x40), (0x50, 0x48, 0x5A)),
+        "premuto": (114, (0x33, 0x2D, 0x39), (0x44, 0x3D, 0x4C)),
+        "spento": (120, (0x4A, 0x55, 0x60), (0x5C, 0x67, 0x72)),
+    }
+    nero = (0x0A, 0x08, 0x0B, 255)
+    for stato, (h, ferro, luce) in stati.items():
+        im = Image.new("RGBA", (W * S, h * S), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        top = 0                 # la faccia in alto, sotto lo spessore (12, premuto 6)
+        # lo spessore: l'inchiostro sotto la faccia
+        d.rounded_rectangle((0, top * S + 8 * S, W * S - 1, h * S - 1), R * S, fill=nero)
+        # la faccia: contorno, ferro, la luce in alto (solo dentro il ferro)
+        d.rounded_rectangle((0, top * S, W * S - 1, (top + FACE) * S - 1), R * S, fill=nero)
+        dentro = (INK * S, (top + INK) * S, (W - INK) * S - 1, (top + FACE - INK) * S - 1)
+        d.rounded_rectangle(dentro, (R - INK) * S, fill=ferro + (255,))
+        maschera = Image.new("L", im.size, 0)
+        ImageDraw.Draw(maschera).rounded_rectangle(dentro, (R - INK) * S, fill=255)
+        banda = Image.new("L", im.size, 0)
+        ImageDraw.Draw(banda).rectangle((0, 0, W * S, (top + INK + (FACE - 2 * INK) * 0.34) * S), fill=255)
+        im.paste(Image.new("RGBA", im.size, luce + (255,)), (0, 0), ImageChops.multiply(maschera, banda))
+        # l'incavo dell'icona: dove kit.secondary mette l'icona (0.44 e 0.46 dell'altezza)
+        cx, cy, r = 0.44 * 120, top + 0.46 * 120, 40
+        d.ellipse(((cx - r) * S, (cy - r) * S, (cx + r) * S, (cy + r) * S), fill=nero)
+        d.ellipse(((cx - r + 5) * S, (cy - r + 5) * S, (cx + r - 5) * S, (cy + r - 5) * S), fill=(0x15, 0x12, 0x17, 255))
+        im = im.resize((W, h), Image.LANCZOS)
+        tre("secondario_" + stato, np.asarray(im), h, 0.26)
+    # le scritte dopo l'incavo, lontano dai bordi
+    SPAZI["secondario_acceso"] = (106, 14, 26, 24)
     # (le monete del foglio monete_* non sono piaciute a Sergio: si rifanno con WB-072)
 
 

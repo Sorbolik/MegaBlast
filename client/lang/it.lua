@@ -430,7 +430,6 @@ return {
 		-- the price of +1 LIVELLO, beside it: what it buys
 		price_for = "per il livello %d",
 		step_title = "SCATTO!",
-		step_new = "NUOVO",
 		-- the grade in roman numbers, its name
 		step_grade = "GRADO %s · %s",
 		step_look = "Aspetto nuovo, firma da rafforzare",
