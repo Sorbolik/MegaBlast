@@ -143,6 +143,50 @@ THEMES.stendardi = {
 	end,
 }
 
+-- SHOP (proposals, Sergio 18 Nov: the forge's wall went to the armory in the ZAINO)
+-- A · the Smith's shelves: dark wood planks with brackets, a row every 180
+THEMES.negozio_scaffali = {
+	base = c("17110D"),
+	build = function(root)
+		local plank, edge, bracket = c("21180F"), c("0F0A07"), c("2A1F14")
+		for i = -1, 9 do
+			local y = 60 + i * 180
+			box(0, y, HALF_W * 2, 22, plank, root)
+			box(0, y - 13, HALF_W * 2, 4, edge, root)
+			for j = -5, 5 do box(j * 260 + 130, y - 34, 14, 46, bracket, root) end
+		end
+	end,
+}
+
+-- B · the awning of the stall: wide stripes, two dark reds, with a seam
+THEMES.negozio_tendone = {
+	base = c("1A0E0E"),
+	build = function(root)
+		local stripe, seam = c("221212"), c("120909")
+		for k = -14, 14 do
+			local x = k * 96
+			if k % 2 == 0 then box(x, TOP / 2, 96, TOP, stripe, root) end
+			box(x - 48, TOP / 2, 3, TOP, seam, root)
+		end
+	end,
+}
+
+-- C · the counter seen from the front: wooden panels in frames, coins in a row
+THEMES.negozio_bancone = {
+	base = c("150F12"),
+	build = function(root)
+		local frame, panel, coin = c("1E161A"), c("191216"), c("2A1E17")
+		for i = -1, 6 do
+			for j = -6, 6 do
+				local x, y = j * 220, 140 + i * 200
+				box(x, y, 196, 176, frame, root)
+				box(x, y, 168, 148, panel, root)
+			end
+		end
+		for j = -12, 12 do ui.disc(j * 110 + 55, 660, 20, coin, root) end
+	end,
+}
+
 -- IMPOSTAZIONI: the workbench of the controls, a blueprint grid
 THEMES.banco = {
 	base = c("13151A"),
