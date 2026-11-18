@@ -56,8 +56,17 @@ local FEET = PED_TOP + 0.30 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
 local BAG = 46
--- the experience bar of the profile plate, full
-local PLATE_BAR = 231
+-- the profile's banner (WB-075): its height on screen, its width per unit of height,
+-- and where its parts are on the drawing, as fractions of its width and height:
+-- the ring's centre, the groove (from, to, middle) and the coin's centre
+local BANNER = {
+	h = 112, w_per_h = 805 / 224,
+	ring = { 0.1335, 0.5045 }, groove = { 0.267, 0.759, 0.636 }, coin = { 0.833, 0.520 },
+	name_y = 56, name_size = 26, level_size = 24, fill_h = 9,
+}
+-- the face in the ring: as wide as the ring's dark disc (0.676 of the banner's height),
+-- so its team-coloured rim sits on the gold's inner edge
+local FACE_D = 0.676 * BANNER.h
 
 -- the doors: x, y, width, piece, side, color of the writing, size of the name
 local DOORS = {
@@ -154,16 +163,22 @@ function M.new(color)
 	local tl = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = tl.node
 	h.top_left = tl
-	-- (Sergio, 17 Nov: bigger; the level stops before the shell's rivet)
-	local x, y = 22, 20
-	kit.strip(tl, "guscio", x + 41, y + 11, 388, 76)
-	kit.piece(tl, "tondo_oro", x + 49, y + 49, 98)
-	h.face_at = { x + 49, y + 49 }
-	h.who = kit.text(tl, T.player, x + 111, y + 46, 30, C.SAND)
-	h.level = kit.text(tl, "", x + 385, y + 45, 20, C.HOT, "end", 1)
-	kit.strip(tl, "riga_scura", x + 111, y + 57, 274, 19)
-	h.xp = kit.strip(tl, "barra_brace", x + 114, y + 60, 168, 13)
-	kit.zone(tl, h.buttons, x, y, 430, 98, "profilo")
+	-- one forged piece (WB-075, Sergio 18 Nov: «facciamo la d1»): the ring with the
+	-- face, the banner with the name, the groove of the experience and the coin of
+	-- the level, all measured on the drawing (BANNER)
+	local x, y = 22, 18
+	local bw = BANNER.h * BANNER.w_per_h
+	kit.pic(tl, "stendardo", x, y, bw, BANNER.h)
+	h.face_at = { x + bw * BANNER.ring[1], y + BANNER.h * BANNER.ring[2] }
+	h.who = kit.text(tl, T.player, x + bw * BANNER.groove[1], y + BANNER.name_y, BANNER.name_size, C.SAND)
+	local cx, cy = x + bw * BANNER.coin[1], y + BANNER.h * BANNER.coin[2]
+	-- the number's middle on the coin's middle (kit.text puts the baseline at y)
+	h.level = kit.text(tl, "", cx, cy + BANNER.level_size * 0.36, BANNER.level_size, C.SAND, "middle")
+	gui.set_outline(h.level, C.INK)     -- ivory on gold: the ink outline makes it read
+	h.xp_x, h.xp_w = x + bw * BANNER.groove[1] + 3, bw * (BANNER.groove[2] - BANNER.groove[1]) - 6
+	local fh = BANNER.fill_h
+	h.xp = kit.strip(tl, "barra_stendardo", h.xp_x, y + BANNER.h * BANNER.groove[3] - fh / 2, h.xp_w, fh)
+	kit.zone(tl, h.buttons, x, y, bw, BANNER.h, "profilo")
 
 	-- the doors at the sides of the apprentice, each with its shape
 	local left = kit.anchor(0, 360, gui.ANCHOR_LEFT)
@@ -351,9 +366,9 @@ function M.profile(h, p)
 	local profile = require "menu.profile"
 	gui.set_text(h.level, T.level:format(p.livello or 1))
 	local f = math.min(1, (p.xp or 0) / profile.xp_level(p.livello or 1))
-	kit.strip_width(h.xp, math.max(18, PLATE_BAR * f))
+	kit.strip_width(h.xp, math.max(BANNER.fill_h, h.xp_w * f))
 	if h.face then gui.delete_node(h.face) end
-	h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 82, h.color, scoria.player)
+	h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], FACE_D, h.color, scoria.player)
 	-- the first chapter with a mission still to win
 	local stars = p.stelle or {}
 	local chapter
@@ -395,7 +410,7 @@ function M.wear(h, p)
 	pose_now(h)
 	if h.face then
 		gui.delete_node(h.face)
-		h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], 82, h.color, scoria.player)
+		h.face = score.face(h.top_left.node, h.face_at[1], -h.face_at[2], FACE_D, h.color, scoria.player)
 	end
 end
 

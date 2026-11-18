@@ -1,6 +1,6 @@
 # WB-075 · Riquadro del profilo in home e barra dell'esperienza
 
-- **Stato:** APPROVATA (Sergio, 18 nov 13:58: «fammele vedere tutte con codex, voglio vedere l'anteprima finale»)
+- **Stato:** IMPLEMENTATA (Sergio, 18 nov 13:58: «fammele vedere tutte con codex, voglio vedere l'anteprima finale»)
 - **Data:** 2026-11-18
 - **Ramo della scheda:** `claude/project-thread-43o6uf` (Codex la esegue da qui: `git fetch origin claude/project-thread-43o6uf`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-075`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-075` senza chiedere conferma (il repository è privato).
@@ -131,3 +131,6 @@ ImageGen integrato con i prompt integrali e i riferimenti nell'ordine della sche
 Verificati i contorni scuri, i dischi del ritratto vuoti e l'assenza di scritte, numeri e volti. Nelle due varianti dello stendardo tutti e tre i tentativi hanno rappresentato la moneta nell'incavo. Ritaglio, allungamento nel gioco e composizione delle quattro anteprime da verificare.
 
 ## Resoconto di Claude
+
+- 18 nov: Sergio sceglie lo stendardo D1 («facciamo la d1, ma con il numero del livello centrato»; della punta della barra: «o metti bene la capocchia, oppure lasci senza, non ne capisco il senso»). Nel gioco `stendardo_1` intero (`stendardo`, 805×224, a schermo alto 112) e il riempimento dritto di `barra_2` senza la punta (`barra_stendardo`, capi corti, così con poca esperienza resta corta): li taglia `fai_stendardo` in `tools/grafica/fucina.py`. `client/menu/home.lua` mette faccia, nome, barra e numero nei punti misurati sul disegno (`BANNER`); il numero è al centro della moneta, avorio con il contorno d'inchiostro. Tolti dalla home guscio, tondo, riga scura e barra di brace (restano dove li usano altre schermate). Non usati: `anello`, `piastra`, `tizzone`, `barra_1`, `stendardo_2` (restano nel ramo). Simulazione OK (scenario `riquadro_profilo.txt`), `tutti.sh` OK. Foto: `docs/handoff/img/WB-075_bozza_e_gioco.jpg` (livello 50 e barra al 42% messi a mano solo per la foto).
+

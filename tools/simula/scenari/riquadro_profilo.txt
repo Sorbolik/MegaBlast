@@ -1,0 +1,7 @@
+# Il riquadro del profilo in home (WB-075, Sergio 18 nov: lo stendardo D1): anello con la
+# faccia, nome, barra dell'esperienza dritta senza capocchia, livello al centro della moneta.
+# Profilo di prova (livello 23) per vedere la barra a metà.
+imposta prova_vignette no
+imposta prova_profilo 1
+aspetta 4
+foto 01_home
