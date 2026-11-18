@@ -648,6 +648,55 @@ function M.action(g, label, x, y, w, h, opt)
 	return p
 end
 
+-- The secondary action (WB-071, Sergio 18 Nov: never the light plates for a
+-- button): a slab of dark iron, ember on its bottom left and frost on its top
+-- right, with a round socket on the left for the action's icon (a piece of the
+-- fucina atlas), its label in sand and under it a short line (the cost, why
+-- not). Three drawings like the main one: lit, pressed, off (cold grey iron).
+-- (x, y) its top left, w x h. opt: icon, sub, off. Returns the plate for M.button
+function M.secondary(g, label, x, y, w, h, opt)
+	opt = opt or {}
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local p = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+	local k = h / P.secondario_acceso.h
+	local looks = {}
+	for _, state in ipairs({ "acceso", "premuto", "spento" }) do
+		local name = "secondario_" .. state
+		local s = empty(0, 0, 0, 0, n)
+		local sh = P[name].h * k
+		gui.set_position(s, vec(0, (sh - h) / 2))
+		three(s, name, w, sh)
+		gui.set_enabled(s, state == (opt.off and "spento" or "acceso"))
+		looks[state] = s
+	end
+	-- the face: what moves down when pressed (the icon and the words)
+	p.face_node = empty(0, 0, 0, 0, n)
+	local f = { node = p.face_node, ox = cx, oy = cy }
+	if opt.icon then
+		local ic = M.piece(f, opt.icon, x + h * 0.44, y + h * 0.46, h * 0.56)
+		if opt.off then gui.set_color(ic, vmath.vector4(1, 1, 1, 0.45)) end
+	end
+	local box = room("secondario_acceso", cx, cy, w, h)
+	local tx = box and box.x0 or x + h
+	local ink = opt.off and with_alpha(C.SAND, 0.45) or C.SAND
+	local room_w = (box and box.x1 or x + w - 12) - tx
+	local lt = M.text(f, label, tx, opt.sub and y + h * 0.46 or y + h * 0.6, 20, ink, "start", 0.5)
+	if M.width(lt) > room_w then gui.set_scale(lt, gui.get_scale(lt) * (room_w / M.width(lt))) end
+	if opt.sub then
+		local st = M.text(f, opt.sub, tx, y + h * 0.78, 16, opt.off and with_alpha(C.MUTE, 0.7) or C.MUTE, "start", 0.5)
+		if M.width(st) > room_w then gui.set_scale(st, gui.get_scale(st) * (room_w / M.width(st))) end
+	end
+	if not opt.off then
+		p.on_press = function(down)
+			gui.set_enabled(looks.acceso, not down)
+			gui.set_enabled(looks.premuto, down)
+			gui.set_position(p.face_node, vec(0, down and -3 or 0))
+		end
+	end
+	return p
+end
+
 -- A plate goes down when pressed, and comes back
 function M.press(p, down)
 	local d = down and p.d * 0.75 or 0

@@ -79,6 +79,42 @@ function M.notches(g, x, y, w, level, o)
 	return out
 end
 
+-- The three ingots of a piece (Sergio, 18 Nov, proposal C): the thirty levels as
+-- three ingots of ten notches, w wide from (x, y), h tall. The notches reached in
+-- the color of the piece's grade, the next one to buy in ember; a full ingot glows
+-- with the color of the grade it opened, and at its end the gem of the signature
+-- grade that step lets you light (lit: bright; not yet: dark). Returns the thirty
+-- notches and the three gems
+function M.ingots(g, x, y, w, h, level, lit)
+	local gap = h >= 24 and 10 or 5
+	local iw = (w - 2 * gap) / 3
+	local sk = math.max(2, math.floor(h * 0.16))
+	local pad = h >= 24 and 5 or 3
+	local gem_h = h - 2 * pad + 4
+	local tier = equip.tier(level)
+	local notches, gems = {}, {}
+	for k = 1, 3 do
+		local ix = x + (k - 1) * (iw + gap)
+		local full = level >= k * 10
+		kit.para(g, ix, y, iw, h, sk, KC.INK)
+		kit.para(g, ix + 3, y + 3, iw - 6, h - 6, sk, full and kit.with_alpha(ui.C.GRADI[k + 1], 0.3) or KC.CARD_BOTTOM)
+		-- ten notches, then room for the gem
+		local room = iw - 2 * pad - gem_h - 2
+		local pitch = room / 10
+		local nw = math.max(2, pitch * 0.66)
+		local nh = h - 2 * pad - 2
+		for i = 1, 10 do
+			local n = (k - 1) * 10 + i
+			local color = n <= level and ui.C.GRADI[tier] or (n == level + 1 and KC.HOT_BOTTOM or KC.LINE)
+			notches[n] = kit.para(g, ix + pad + sk / 2 + (i - 1) * pitch, y + pad + 1, nw, nh, math.max(1, math.floor(sk * 0.6)), color)
+		end
+		local gem = kit.piece(g, "gemma", ix + iw - pad - gem_h / 2, y + h / 2, gem_h)
+		if k > (lit or 0) then gui.set_color(gem, vmath.vector4(0.3, 0.3, 0.36, full and 0.85 or 0.6)) end
+		gems[k] = gem
+	end
+	return notches, gems
+end
+
 -- "+6%": a signature's value written as its description wants it
 local function sign_value(stat, grade)
 	local sg = equip.SIGNS[stat]
@@ -106,12 +142,12 @@ function M.draw(s, g, sel)
 	kit.text(g, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), x + 202, 187, 20, ui.C.GRADI[tier], "start", 1)
 	local nxt = wallet.next(p, set, slot)
 	s.bench.title = kit.text(g, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), x + 202, 222, 23, KC.SAND)
-	-- the level: the thirty notches, as in the step's scene
-	s.bench.notches = M.notches(g, x + 204, 236, 346, level)
+	-- the level: three ingots of ten notches, the signature's gems at their ends
+	local lit = wallet.sign(p, set, slot)
+	s.bench.notches, s.bench.gems = M.ingots(g, x + 200, 238, 352, 32, level, lit)
 	s.bench.level = level
 
 	-- what it does now, and at the next level
-	local lit = wallet.sign(p, set, slot)
 	local now = equip.piece(set, slot, level, lit)
 	local after = nxt and equip.piece(set, slot, nxt.level, lit)
 	local y = 308
@@ -135,21 +171,25 @@ function M.draw(s, g, sel)
 		if e.row == "sign" then
 			local sg = equip.SIGNS[e.stat]
 			local on = lit > 0
-			-- FIRMA (or FIRMA SPENTA) with its three gems, then its name, then what it gives
-			local label = kit.text(g, kit.upper(on and T.sign or T.sign_off), rx, 322, 16, on and KC.HOT_TOP or KC.MUTE, "start", 1)
-			local gems = {}
-			for k = 1, 3 do
-				local gem = kit.piece(g, "gemma", rx + kit.width(label) + 18 + (k - 1) * 21, 316, 20)
-				if k > lit then gui.set_color(gem, vmath.vector4(0.35, 0.35, 0.4, 0.6)) end
-				gems[k] = gem
-			end
+			-- FIRMA (or FIRMA SPENTA), its name, what it gives now, and what it
+			-- gives at the next step (its gems sit at the ends of the ingots)
+			kit.text(g, kit.upper(on and T.sign or T.sign_off), rx, 322, 16, on and KC.HOT_TOP or KC.MUTE, "start", 1)
 			local title = fit(kit.text(g, kit.upper(sg.name), rx, 346, 20, on and KC.HOT_TOP or KC.SAND, "start", 0.5), rw)
-			s.bench.gems, s.bench.sign, s.bench.lit, s.bench.desc = gems, title, lit, {}
+			s.bench.sign, s.bench.lit, s.bench.desc = title, lit, {}
 			local value = sign_value(e.stat, math.max(1, lit))
 			local lines = kit.wrap(g, kit.upper(sg.desc:format(value)), 16, rw)
 			local ink = on and KC.SAND or KC.MUTE
-			for li = 1, math.min(4, #lines) do
+			local nxt_sign = lit < 3 and sg.desc:find("%%d") and (lit > 0)
+			local max_lines = nxt_sign and 3 or 4
+			for li = 1, math.min(max_lines, #lines) do
 				s.bench.desc[li] = fit(kit.text(g, lines[li], rx, 369 + (li - 1) * 19, 16, ink, "start"), rw)
+			end
+			if nxt_sign then
+				local ly = 369 + math.min(max_lines, #lines) * 19
+				local step = equip.TIER_LEVELS[lit + 1]
+				local line = level >= step and T.sign_next_now:format(sign_value(e.stat, lit + 1))
+					or T.sign_next:format(step, sign_value(e.stat, lit + 1))
+				fit(kit.text(g, kit.upper(line), rx, ly, 16, KC.HOT, "start"), rw)
 			end
 		end
 	end
@@ -180,12 +220,9 @@ function M.footer(s, low2, right, sel)
 	-- the signature is lit with Ossidiana, a grade for each step done (Sergio, 17 Nov)
 	local sn = wallet.sign_next(p, set, slot)
 	local can = sn and not sn.level and p.ossidiana >= sn.cost
-	local sb = kit.plate(low2, 430, 638, 260, 64, KC.HOT, { sk = 0, fill = KC.SAND })
-	kit.piece(low2, "gemma", 473, 669, 46)
-	kit.text(sb.g, T.light_sign, 502, 668, 22, can and KC.INK or kit.with_alpha(KC.INK, 0.45))
 	local note = not sn and T.sign_top or sn.level and T.sign_needs:format(sn.level)
 		or T.sign_cost:format(sn.cost)
-	kit.text(sb.g, kit.upper(note), 504, 690, 17, kit.with_alpha(KC.INK, 0.75), "start", 0.5)
+	local sb = kit.secondary(low2, T.light_sign, 430, 640, 270, 62, { icon = "gemma", sub = kit.upper(note), off = not can })
 	kit.button(s.buttons, sb, "firma", { spento = not can })
 
 	-- the price and +1 LIVELLO: the price stuck to the button, on its left, with

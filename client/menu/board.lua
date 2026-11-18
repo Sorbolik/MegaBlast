@@ -111,9 +111,7 @@ end
 
 local function calendar_button(b)
 	local g = b.rt
-	local p = kit.sand(g, 1040, 420, 216, 70, KC.HOT, { sk = 0 })
-	kit.piece(g, "ic_calendario", 1084, 455, 44)
-	kit.text(p.g, T.calendar, 1116, 464, 22, KC.INK)
+	local p = kit.secondary(g, T.calendar, 1040, 424, 216, 62, { icon = "ic_calendario" })
 	kit.button(b.buttons, p, "calendario")
 end
 

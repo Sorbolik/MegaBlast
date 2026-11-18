@@ -200,8 +200,7 @@ function M.new(gain, prof, top, buttons, parent)
 		local n = math.min(profile.LEVEL_MAX, gain.livello) - gain.level_before
 		local h = holder()
 		kit.text(h, kit.upper((n == 1 and T.seal_point or T.seal_points):format(n)), NAME_X, y + 32, 16, KC.SAND)
-		local go = kit.sand(h, AMOUNT_X - 159, y + 8, 150, 36, KC.HOT, { sk = 9, d = 4 })
-		kit.text(go.g, T.place_points, AMOUNT_X - 80, y + 32, 16, KC.INK, "middle")
+		local go = kit.secondary(h, T.place_points, AMOUNT_X - 178, y + 4, 172, 44, { icon = "punto_libero" })
 		kit.button(buttons, go, "sigilli")
 	elseif braci > 0 then
 		local h = holder()

@@ -899,6 +899,33 @@ images {
   image: "/assets/fucina/sconto.png"
 }
 images {
+  image: "/assets/fucina/secondario_acceso_cx.png"
+}
+images {
+  image: "/assets/fucina/secondario_acceso_dx.png"
+}
+images {
+  image: "/assets/fucina/secondario_acceso_sx.png"
+}
+images {
+  image: "/assets/fucina/secondario_premuto_cx.png"
+}
+images {
+  image: "/assets/fucina/secondario_premuto_dx.png"
+}
+images {
+  image: "/assets/fucina/secondario_premuto_sx.png"
+}
+images {
+  image: "/assets/fucina/secondario_spento_cx.png"
+}
+images {
+  image: "/assets/fucina/secondario_spento_dx.png"
+}
+images {
+  image: "/assets/fucina/secondario_spento_sx.png"
+}
+images {
   image: "/assets/fucina/segno_sale.png"
 }
 images {

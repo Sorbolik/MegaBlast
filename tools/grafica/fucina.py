@@ -162,6 +162,16 @@ def fai_pezzi():
         intero(nome, t[2], 120)
 
 
+def fai_secondario():
+    """WB-071 (Sergio, 18 nov): il pulsante secondario di ferro (foglio 2: acceso,
+    premuto, spento, in tre parti; l'incavo per l'icona nel capo sinistro)."""
+    stati = sorted(pezzi(senza_verde(os.path.join(ART, "WB-071", "secondario_2.png"))), key=lambda t: t[0])
+    acceso_h = stati[0][2].shape[0]
+    for stato, t in zip(("acceso", "premuto", "spento"), stati):
+        tre("secondario_" + stato, t[2], round(120 * t[2].shape[0] / acceso_h), 0.26)
+    # (le monete del foglio monete_* non sono piaciute a Sergio: si rifanno con WB-072)
+
+
 def griglia(percorso, per_riga, minimo=1500):
     """I pezzi di un foglio in ordine di lettura: righe dall'alto, in ogni riga da sinistra."""
     cs = sorted(pezzi(senza_verde(percorso), minimo), key=lambda t: t[0])
@@ -663,6 +673,7 @@ def fai_misure():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     fai_pezzi()
+    fai_secondario()
     fai_piccoli()
     fai_menu()
     fai_schede()

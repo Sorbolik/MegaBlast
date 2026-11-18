@@ -144,10 +144,8 @@ local function shop(a)
 	-- pay with a voucher, or with Scaglie
 	local w = a.ware
 	local usable = w and not wallet.owns(p, w[1], w[2]) and p.buoni > 0
-	local vb = kit.plate(a.low2, 430, 638, 260, 64, KC.HOT, { sk = 0, fill = KC.SAND })
-	kit.piece(a.low2, "buono", 473, 669, 46)
-	kit.text(vb.g, T.use_voucher, 502, 668, 22, usable and KC.INK or kit.with_alpha(KC.INK, 0.45))
-	kit.text(vb.g, kit.upper(T.you_have:format(p.buoni)), 504, 690, 17, kit.with_alpha(KC.INK, 0.75), "start", 0.5)
+	local vb = kit.secondary(a.low2, T.use_voucher, 430, 640, 270, 62,
+		{ icon = "buono", sub = kit.upper(T.you_have:format(p.buoni)), off = not usable })
 	kit.button(a.buttons, vb, "buono", { spento = not usable })
 	local price = w and wallet.price(p, w[2], w[3])
 	local ok = w and not wallet.owns(p, w[1], w[2]) and p.scaglie >= price

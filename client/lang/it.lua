@@ -388,6 +388,10 @@ return {
 		-- what it gives); it is lit with Ossidiana, a grade for each step done
 		sign = "firma",
 		sign_off = "firma spenta",
+		-- what the signature gives once the next step is lit: the step, the value
+		sign_next = "al %d: %d%%",
+		-- the same when the step is already done: lighting it gives that
+		sign_next_now = "accendila: %d%%",
 		light_sign = "ACCENDI LA FIRMA",
 		sign_cost = "%d ossidiana",
 		sign_needs = "dallo scatto %d",

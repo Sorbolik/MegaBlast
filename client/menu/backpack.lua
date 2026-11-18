@@ -155,7 +155,7 @@ local function inventory(s)
 				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
 			end
 		else
-			bench.notches(s.low, 222, 656, 186, level, { h = 16, labels = false })
+			bench.ingots(s.low, 220, 654, 192, 20, level, wallet.sign(p, set, slot))
 			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 422, 671, 17,
 				ui.C.GRADI[tier], "start", 0.5)
 			-- the effects on one line, or on two when they don't fit
@@ -169,11 +169,8 @@ local function inventory(s)
 		end
 		-- POTENZIA: the plate of the secondary actions (as ACCENDI LA FIRMA in the armory)
 		local nxt = wallet.next(p, set, slot)
-		local ub = kit.plate(s.right, UP_X, 640, UP_W, 60, KC.HOT, { sk = 0, fill = KC.SAND })
-		kit.piece(s.right, "scaglia", UP_X + 32, 670, 36)
-		kit.text(ub.g, TP.upgrade_here, UP_X + 58, 668, 22, KC.INK)
-		kit.text(ub.g, kit.upper(nxt and T.up_line:format(level, nxt.level) or TP.at_max), UP_X + 60, 689, 16,
-			kit.with_alpha(KC.INK, 0.75), "start", 0.5)
+		local ub = kit.secondary(s.right, TP.upgrade_here, UP_X, 640, UP_W, 62,
+			{ icon = "scaglia", sub = kit.upper(nxt and T.up_line:format(level, nxt.level) or TP.at_max) })
 		kit.button(s.buttons, ub, "scheda", {})
 		s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { size = 44, off = worn })
 		kit.button(s.buttons, s.action, "indossa", { main = true, spento = worn })
