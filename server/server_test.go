@@ -156,7 +156,7 @@ func TestEarnedTeleportsFirstTurn(t *testing.T) {
 // its releases only on its own turn, so the server lets them go itself.
 func TestTurnReleasesHeldKeys(t *testing.T) {
 	// two players away (p nil) who have all the time to come back
-	srv := &Server{cfg: Config{ReconnectTicks: 1 << 30}}
+	srv := &Server{cfg: Config{ReconnectTicks: 1 << 30, EmptyTicks: 1 << 30}}
 	p := testProc(t)
 	sim := newTestSimOn(t, p, 42, "pavimento")
 	r := &Room{srv: srv, id: sim.id, opened: true, ready: true, started: true, seats: []*seat{{team: 1}, {team: 2}}}
