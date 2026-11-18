@@ -105,7 +105,8 @@ end
 -- out over the border as the page fills the screen; the way back, the same.
 -- (not kit.anchor: it would count as one of the screen's nodes)
 M.EDGE_W = 64
-M.FADE_IN = 0.1
+-- forward, the band comes in from the border to the shield in this time
+M.ENTER = 0.1
 -- how much of the band lies on the page's edge (its ink), so the two are one
 M.FUSE = 0.06
 -- a door's band on this screen: how many middles, its scale and its width
@@ -138,8 +139,6 @@ local function band(id, x)
 	piece("su", top.h)
 	for _ = 1, n do piece("mezzo", mid.h) end
 	piece("giu", bottom.h)
-	gui.set_color(b, vmath.vector4(1, 1, 1, 0))
-	gui.animate(b, "color.w", 1, gui.EASING_OUTQUAD, M.FADE_IN)
 	return b
 end
 
@@ -191,7 +190,8 @@ local function measure(h, id)
 	d.line_x = d.side < 0 and screen.x1 + out or screen.x0 - out
 	-- the page starts with the band on the shield
 	d.p0 = d.edge_x - d.line_x
-	-- back, the page goes on until the band is out of this border too
+	-- where the band is just out of this border: forward it starts there, back
+	-- the page goes on until it is there
 	d.back = d.p0 + d.side * (EDGE + bw / 2)
 	-- off the line, out of the screen
 	d.off = -d.side * (d.w * 0.2 + 30)
@@ -213,10 +213,13 @@ function M.open(dp, h, id, change)
 		kit.scene_cut(true)
 		dp.line = band(id, d.line_x)
 		local page = join(alive(kit.tracked()), kit.scene_tops(), { dp.line })
-		shift(page, d.p0)
+		-- the band starts out of the screen, just past the border (Sergio, 18 Nov:
+		-- dragged in from the edge, never drawn all at once)
+		shift(page, d.back)
 		ride(d)
-		-- (a moment for the frame that made the screen, a long one)
-		timer.delay(0.03, false, function()
+		-- (a moment for the frame that made the screen, a long one) the band
+		-- comes in from the border up to the shield, then the button drags
+		timer.delay(0.03, false, function() slide(page, d.p0 - d.back, gui.EASING_OUTQUAD, M.ENTER, function()
 			-- 3. the button drags it across, and in the last stretch it goes out
 			-- over the screen's border with the line (Sergio, 15 Nov: it must not
 			-- come off the edge, «lo dovrebbe accompagnare fino alla fine»)
@@ -232,7 +235,7 @@ function M.open(dp, h, id, change)
 				unride(d)
 				dp.busy = false
 			end)
-		end)
+		end) end)
 	end)
 end
 
