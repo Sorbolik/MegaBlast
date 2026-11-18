@@ -52,4 +52,11 @@ Rendering rules, very strict, because every shape will be traced into vector lay
 
 ## Consegna di Codex
 
+- `art/WB-068/molla_e_tagliola_1.png` e `molla_e_tagliola_1.txt` · 3 tentativi, scelto il primo.
+- `art/WB-068/molla_e_tagliola_2.png` e `molla_e_tagliola_2.txt` · 3 tentativi, scelto il terzo.
+
+PNG originali da 1536×1024, generati con ImageGen, prompt integrale e riferimenti R1 e R2 nell'ordine indicato. Verificati contorno scuro spesso, assenza di scritte, separazione dei due oggetti, quattro molle in ferro e indicatore verde sulla Molla. Le due Molle misurano circa 1272×382 e 1364×409 px (rapporto 3,33:1 in entrambe). La piastra è leggermente più stretta della base.
+
+Le tagliole appaiono chiuse. La prima ha due file di denti più leggibili. In entrambe le ganasce si leggono come un arco unico e il punto d'incontro in alto resta poco definito. Misurano circa 590×295 e 566×301 px, più basse dei 450 px indicati. Il fondo magenta presenta leggere variazioni rispetto a #FF00FF e le sfumature producono colori fuori palette. Scontorno, ricalco e resa in gioco da verificare.
+
 ## Resoconto di Claude
