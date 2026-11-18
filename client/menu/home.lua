@@ -61,10 +61,10 @@ local PLATE_BAR = 231
 
 -- the doors: x, y, width, piece, side, color of the writing, size of the name
 local DOORS = {
-	campagna = { 22, 372, 396, "porta_campagna", -1, hex("2a1206"), 29 },
-	allenamento = { 22, 494, 376, "porta_allenamento", -1, hex("1d1a20"), 24 },
-	eventi = { 862, 372, 396, "porta_eventi", 1, hex("3a1a05"), 29 },
-	armeria = { 882, 494, 376, "porta_armeria", 1, hex("f4ece1"), 29 },
+	campagna = { 22, 354, 396, "porta_campagna", -1, hex("2a1206"), 29 },
+	allenamento = { 22, 476, 376, "porta_allenamento", -1, hex("1d1a20"), 24 },
+	eventi = { 862, 354, 396, "porta_eventi", 1, hex("3a1a05"), 29 },
+	armeria = { 882, 476, 376, "porta_armeria", 1, hex("f4ece1"), 29 },
 }
 
 local V = vmath.vector3()
@@ -114,7 +114,7 @@ end
 function M.new(color)
 	local h = { tops = {}, buttons = {}, doors = {}, door_by_id = {}, t = 0, colore = color, glint_at = 0.9 }
 
-	h.scene = kit.scene(640, 350, { bg = true })
+	h.scene = kit.scene(640, 350, { bg = "anelli" })
 
 	-- the middle: the pedestal, the apprentice on it and the backpack, all one button
 	local mid = kit.anchor(640, PED_BOTTOM, nil, gui.ANCHOR_BOTTOM)

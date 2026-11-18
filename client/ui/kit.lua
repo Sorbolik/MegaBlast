@@ -1018,6 +1018,8 @@ local S
 -- It covers the screen keeping its shape (never stretched: on a long screen
 -- it grows and loses a little at the top), its painted floor on the thread
 local BACKDROPS = require "ui.backdrops"
+-- the flat backdrops made in code (ui/flat_backdrops.lua): opt.bg is their name
+local FLAT = require "ui.flat_backdrops"
 local THREAD_Y = M.BAND
 
 -- the place of each chapter of the campaign (its id in sim/campaign.lua)
@@ -1028,6 +1030,7 @@ local PLACE = "cortile"
 -- the screen's own painting (Sergio, 15 Nov: one for each screen, WB-053:
 -- /paintings/backdrops/menu_<name>.jpg); false or nil: none
 local function painting_of(on)
+	if FLAT.has(on) then return nil end
 	if type(on) == "string" and BACKDROPS["menu_" .. on] then return "menu_" .. on end
 	return on and PLACE or nil
 end
@@ -1052,8 +1055,23 @@ local function unload_painting(name)
 	end
 end
 
+-- the flat backdrop of the screen (nil: none), under the thread like the painting
+local function flat_backdrop(on)
+	local name = FLAT.has(on) and on or nil
+	if S.flat_name == name then return end
+	FLAT.drop(S.flat, S.flat_timer)
+	S.flat, S.flat_timer, S.flat_name = nil, nil, name
+	if not name then return end
+	S.flat, S.flat_timer = FLAT.make(name, S.clip or S.back, THREAD_Y, C.SOOT, true)
+	if S.clip then
+		local p = gui.get_position(S.flat)
+		gui.set_position(S.flat, vec(p.x, p.y - 360))
+	end
+end
+
 -- on: the screen's painting (false: only the soot, over a battle)
 local function backdrop(on)
+	flat_backdrop(on)
 	local name = painting_of(on)
 	if S.bg_name ~= name then
 		local old = S.bg_name
@@ -1069,6 +1087,7 @@ local function backdrop(on)
 	end
 	local shown = S.bg_name ~= nil
 	gui.set_enabled(S.bg, shown)
+	shown = shown or S.flat_name ~= nil
 	-- the two lights are in the painting already
 	gui.set_enabled(S.warm, not shown)
 	gui.set_enabled(S.cold, not shown)
@@ -1105,6 +1124,7 @@ local function scene_nodes()
 	gui.set_color(S.bg, VEIL)
 	gui.set_parent(S.bg, back.node)
 	gui.set_enabled(S.bg, false)
+	S.back = back.node
 	-- the two lights, each stuck to its corner
 	local warm = M.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	S.tops[#S.tops + 1] = warm.node
@@ -1153,6 +1173,12 @@ function M.scene_fit()
 	backdrop_fit()
 	if S.fit_w == w then return end
 	S.fit_w = w
+	-- a flat backdrop stuck to the real edges is made again
+	if S.flat_name and FLAT.follows_width(S.flat_name) then
+		local name = S.flat_name
+		flat_backdrop(nil)
+		flat_backdrop(name)
+	end
 	gui.set_size(S.seam, vec(w, 6))
 	gui.set_size(S.seam_ink, vec(w, 11))
 	run_glints(S.glints, w)
@@ -1230,15 +1256,19 @@ function M.scene_cut(on)
 		gui.set_clipping_mode(S.clip, gui.CLIPPING_MODE_STENCIL)
 		gui.set_clipping_visible(S.clip, false)
 		gui.set_parent(S.clip, parent)
-		local p = gui.get_position(S.bg)
-		gui.set_parent(S.bg, S.clip)
-		gui.set_position(S.bg, vec(p.x, p.y - 360))
+		for _, n in ipairs({ S.bg, S.flat }) do
+			local p = gui.get_position(n)
+			gui.set_parent(n, S.clip)
+			gui.set_position(n, vec(p.x, p.y - 360))
+		end
 		for _, q in ipairs(S.glints) do gui.set_enabled(q, false) end
 	elseif not on and S.clip then
 		gui.set_size(S.base, vec(1280 * screen.FULL, 720 * screen.FULL))
-		local p = gui.get_position(S.bg)
-		gui.set_parent(S.bg, gui.get_parent(S.clip))
-		gui.set_position(S.bg, vec(p.x, p.y + 360))
+		for _, n in ipairs({ S.bg, S.flat }) do
+			local p = gui.get_position(n)
+			gui.set_parent(n, gui.get_parent(S.clip))
+			gui.set_position(n, vec(p.x, p.y + 360))
+		end
 		gui.delete_node(S.clip)
 		S.clip = nil
 		for _, q in ipairs(S.glints) do gui.set_enabled(q, true) end
@@ -1262,7 +1292,13 @@ function M.copy_of(opt, live)
 	local out = { shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, with_alpha(C.SOOT, opt.dim or 1)) }
 	local name = not opt.dim and painting_of(opt.bg)
 	local id = name and load_painting(name)
-	if id then
+	if not opt.dim and FLAT.has(opt.bg) then
+		local back = empty(640, 0)
+		gui.set_yanchor(back, gui.ANCHOR_BOTTOM)
+		-- a live copy moves until it is deleted (its timer stops by itself)
+		gui.set_inherit_alpha(FLAT.make(opt.bg, back, THREAD_Y, C.SOOT, live), true)
+		out[#out + 1] = back
+	elseif id then
 		S.kept = name
 		local back = empty(640, 0)
 		gui.set_yanchor(back, gui.ANCHOR_BOTTOM)
@@ -1338,6 +1374,17 @@ function M.scene_copy_drop(out)
 	if kept then
 		S.kept = nil
 		unload_painting(kept)
+	end
+end
+
+-- The screen's backdrop changes (a screen with two views: the campaign's
+-- boards and its map of the circles)
+function M.scene_bg(s, bg)
+	if s.opt.bg == bg then return end
+	s.opt.bg = bg
+	if S and S.owner == s then
+		backdrop(not s.opt.dim and bg)
+		M.scene_fit()
 	end
 end
 

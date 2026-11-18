@@ -464,6 +464,9 @@ local function build(c)
 	local on_map = map and c.scelta.view ~= "board"
 	-- the backdrop
 	kit.scene_focus(c.scene, on_map and 540 or 225, 360)
+	-- the colonnade behind the boards, the chasm behind the map of the circles
+	-- (Sergio, 18 Nov: flat backdrops, ui/flat_backdrops.lua)
+	kit.scene_bg(c.scene, on_map and "voragine" or "colonnato")
 	c.on_map = on_map
 	if on_map then return build_map(c) end
 	-- the frame (ui/kit.lua): CAMPAGNA written as the logo, the way back at the
@@ -526,7 +529,7 @@ function M.new(choice, stars, story, records)
 		end
 	end
 	-- the backdrop (ui/kit.lua)
-	c.scene = kit.scene(funnel_on(c) and choice.view ~= "board" and 540 or 225, 360, { bg = "campagna" })
+	c.scene = kit.scene(funnel_on(c) and choice.view ~= "board" and 540 or 225, 360, { bg = funnel_on(c) and choice.view ~= "board" and "voragine" or "colonnato" })
 	build(c)
 	return c
 end
