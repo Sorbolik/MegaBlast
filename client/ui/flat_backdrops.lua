@@ -1,7 +1,7 @@
 -- The flat backdrops of the menus (Sergio, 18 Nov: the style of the first
 -- backgrounds of 5 Nov, flat dark shapes made in code, no painted image, no
--- halo): the colonnade behind the campaign, the rings widening from the podium
--- behind the home, the chasm behind the gironi, and the themes of 5 Nov behind
+-- halo): the colonnade behind the campaign, the diamonds breathing behind the
+-- home, the chasm behind the gironi, and the themes of 5 Nov behind
 -- the other menus. They end on the thread: under it the footer is plain dark.
 -- Coordinates: x from the middle of the 1280 frame, y from its bottom (the
 -- parent is stuck to the real bottom of the screen, like the thread)
@@ -26,6 +26,9 @@ local function box(x, y, w, h, color, parent)
 	gui.set_inherit_alpha(n, true)
 	return n
 end
+
+-- the textures made or loaded once (by name)
+local textures = {}
 
 -- how far the shapes go: 2 frames each way (20:9, 4:3, foldables)
 local HALF_W, TOP = 1280, 720 * 2.5
@@ -142,44 +145,130 @@ THEMES.camerino = {
 	end,
 }
 
--- HOME: flat rings born under the podium, widening slowly like a wave
--- (Sergio, 18 Nov: «niente sfarfallamenti»). Every STEP_T seconds each ring has
--- grown to where the next one was and the colors move one ring out: on that
--- frame every ring goes back one place and takes the color its inner
--- neighbour had, so the picture is the same and the loop has no jump
-local GAP, STEP_T, RINGS = 220, 6, 26
-local CX, CY = 0, 160
-THEMES.anelli = {
-	base = c("110F18"),
-	build = function(root, live)
-		local colors = { c("1C1826"), c("17141F") }
-		local rings = {}
-		-- the biggest first (under), the smallest last (over)
-		for i = RINGS - 1, 0, -1 do
-			local n = gui.new_pie_node(vmath.vector3(CX, CY, 0), vmath.vector3(0, 0, 0))
-			gui.set_outer_bounds(n, gui.PIEBOUNDS_ELLIPSE)
-			gui.set_perimeter_vertices(n, 160)
-			gui.set_parent(n, root)
-			gui.set_inherit_alpha(n, true)
-			rings[i] = n
-		end
-		local size = vmath.vector3(0, 0, 0)
-		local function place(t)
-			local steps = math.floor(t / STEP_T)
-			local p = t / STEP_T - steps
-			for i = 0, RINGS - 1 do
-				size.x = GAP * (i + p)
-				size.y = size.x
-				gui.set_size(rings[i], size)
-				gui.set_color(rings[i], colors[(i + steps) % 2 + 1])
+-- HOME: diamonds breathing and embers rising (Sergio, 18 Nov: «rombi che
+-- respirano, ma molto più lenta», «dettagliali un po' di più», with embers).
+-- A grid of cut gems (light rim, body, facet, glint, shadow on the low sides)
+-- that swell and shrink in a slow wave from the podium, one every WAVE_T
+-- seconds, and small flat embers that rise from the floor, sway, turn and fade.
+-- Nothing random: the embers come from a fixed sequence
+local STEP, WAVE_T, EMBERS = 120, 25, 26
+-- the gem from point to point at scale 1 (a square 60 on a side, turned)
+local GEM_W = 85
+local CY = 160
+
+local function turned_box(x, y, w, h, deg, color, parent)
+	local n = box(x, y, w, h, color, parent)
+	gui.set_rotation(n, vmath.vector3(0, 0, deg))
+	return n
+end
+
+-- a fixed sequence of numbers from 0 to 1
+local function sequence(seed)
+	local x = seed
+	return function()
+		x = (x * 1103515245 + 12345) % 2147483648
+		return x / 2147483648
+	end
+end
+
+-- The gem, drawn once into a texture (one node a gem): in diamond coordinates
+-- (|u| + |v| = 1 is its edge, v up) the light rim, the body, the shadow on the
+-- two low sides, the facet a little up and the glint near the top corner. Each
+-- pixel is the mean of 4 x 4 samples, so the edges are smooth
+local GEM_PX = 96
+local GEM_LAYERS = {
+	{ "231E31", function(u, v, d) return d <= 1 end },
+	{ "1A1623", function(u, v, d) return d <= 0.83 end },
+	{ "15121D", function(u, v, d) return d <= 0.83 and d > 0.68 and v < 0 end },
+	{ "1F1A2B", function(u, v, d) return math.abs(u) + math.abs(v - 0.07) <= 0.5 end },
+	{ "2A2440", function(u, v, d) return math.abs(u) + math.abs(v - 0.45) <= 0.17 end },
+}
+
+local function gem_texture()
+	if textures.gem then return textures.gem end
+	local cols = {}
+	for i, l in ipairs(GEM_LAYERS) do cols[i] = { tonumber(l[1]:sub(1, 2), 16), tonumber(l[1]:sub(3, 4), 16), tonumber(l[1]:sub(5, 6), 16) } end
+	local px, n = {}, GEM_PX
+	for y = n - 1, 0, -1 do
+		for x = 0, n - 1 do
+			local r, g, b, a = 0, 0, 0, 0
+			for sy = 0, 3 do
+				for sx = 0, 3 do
+					local u = ((x + (sx + 0.5) / 4) / n) * 2 - 1
+					local v = ((y + (sy + 0.5) / 4) / n) * 2 - 1
+					local d = math.abs(u) + math.abs(v)
+					local top
+					for i, l in ipairs(GEM_LAYERS) do if l[2](u, v, d) then top = i end end
+					if top then
+						local c3 = cols[top]
+						r, g, b, a = r + c3[1], g + c3[2], b + c3[3], a + 1
+					end
+				end
+			end
+			if a > 0 then
+				px[#px + 1] = string.char(math.floor(r / a + 0.5), math.floor(g / a + 0.5), math.floor(b / a + 0.5), math.floor(a / 16 * 255 + 0.5))
+			else
+				px[#px + 1] = "\0\0\0\0"
 			end
 		end
-		-- a still copy stops where a live one would be at 3 s
-		place(3)
+	end
+	if gui.new_texture("gemma", n, n, "rgba", table.concat(px)) then textures.gem = "gemma" end
+	return textures.gem
+end
+
+THEMES.rombi = {
+	base = c("110F18"),
+	build = function(root, live)
+		local tex = gem_texture()
+		local gems = {}
+		-- only where the screen can show them: from the floor to the top of a 4:3
+		-- screen, as wide as a 20:9 one
+		for j = 0, 8 do
+			for i = -7, 7 do
+				local x, y = i * STEP + (j % 2) * STEP / 2, j * STEP
+				local n = gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(GEM_W, GEM_W, 0))
+				gui.set_texture(n, tex)
+				gui.set_parent(n, root)
+				gui.set_inherit_alpha(n, true)
+				gems[#gems + 1] = { n, math.sqrt(x * x + (y - CY) ^ 2) }
+			end
+		end
+		local r = sequence(7)
+		local warm = { c("7A3418"), c("9A4A1C"), c("6A2A20") }
+		local embers = {}
+		for i = 1, EMBERS do
+			local col = warm[i % 3 + 1]
+			embers[i] = { turned_box(0, 0, 10, 10, 45, col, root), x = -760 + r() * 1520, phase = r(),
+				period = 11 + r() * 8, sway = 20 + r() * 40, size = 8 + r() * 8, shift = r() * 6.28,
+				col = vmath.vector4(col) }
+		end
+		local v = vmath.vector3()
+		local function place(t)
+			local w = t * 2 * math.pi / WAVE_T
+			for _, g in ipairs(gems) do
+				v.x = (26 + 52 * (0.5 + 0.5 * math.sin(w - g[2] * 0.008))) / 60
+				v.y, v.z = v.x, 1
+				gui.set_scale(g[1], v)
+			end
+			for _, e in ipairs(embers) do
+				local p = (t / e.period + e.phase) % 1
+				v.x, v.y, v.z = e.x + math.sin(p * 7.54 + e.shift) * e.sway, 100 + p * 760, 0
+				gui.set_position(e[1], v)
+				v.x = e.size * (1 - 0.5 * p)
+				v.y = v.x
+				gui.set_size(e[1], v)
+				v.x, v.y, v.z = 0, 0, 45 + p * 240
+				gui.set_rotation(e[1], v)
+				e.col.w = math.min(1, math.sin(p * math.pi) * 1.6)
+				gui.set_color(e[1], e.col)
+			end
+		end
+		-- a still copy stops where a live one would be at 6 s
+		place(6)
 		if not live then return end
-		local t = 3
+		local t = 6
 		return function(dt)
-			t = (t + dt) % (STEP_T * 2)
+			t = t + dt
 			place(t)
 		end
 	end,
@@ -190,7 +279,6 @@ THEMES.anelli = {
 -- shapes (tools/grafica/voragine.py: the polygons have smooth edges there),
 -- stuck to the real left edge, and the same mirrored on the right
 local WALL_W, WALL_H = 300, 972
-local textures = {}
 
 local function texture(name)
 	if textures[name] then return textures[name] end

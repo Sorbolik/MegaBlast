@@ -1,7 +1,7 @@
-# Gli sfondi piatti dei menu (Sergio, 18 nov): gli anelli che si allargano dietro la
-# home, il colonnato dietro le bacheche della campagna, la voragine dietro la mappa
-# dei gironi e i temi del 5 novembre dietro gli altri menu. Due foto della home a 3 s
-# di distanza: gli anelli si sono allargati di mezzo anello, senza salti.
+# Gli sfondi piatti dei menu (Sergio, 18 nov): i rombi che respirano con le braci
+# dietro la home, il colonnato dietro le bacheche della campagna, la voragine dietro
+# la mappa dei gironi e i temi del 5 novembre dietro gli altri menu. Due foto della
+# home a 3 s di distanza: i rombi cambiano piano, le braci salgono.
 imposta prova_vignette no
 imposta prova_profilo 3
 aspetta 4.25
