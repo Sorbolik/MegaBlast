@@ -1,16 +1,53 @@
-# Gli sfondi piatti dei menu (Sergio, 18 nov): gli anelli che si allargano dietro la
-# home, il colonnato dietro le bacheche della campagna e la voragine dietro la mappa
-# dei gironi. Due foto della home a 3 s di distanza: gli anelli si sono allargati di
-# mezzo anello, senza salti.
+# Gli sfondi piatti dei menu (Sergio, 18 nov): il cielo del Limbo con le nuvole
+# dietro la home, il colonnato dietro le bacheche della campagna, la voragine dietro
+# la mappa dei gironi e i temi del 5 novembre dietro gli altri menu. Due foto della
+# home a 3 s di distanza: le stelle e le nuvole si sono spostate un poco; tornando
+# alla home dopo l'armeria il cielo è andato avanti, non è ripartito.
 imposta prova_vignette no
 imposta prova_profilo 3
 aspetta 4.25
 foto 01_home
 aspetta 3
 foto 02_home_dopo
-tocca_bordo 220 294 mezzo sinistra   # CAMPAGNA: la mappa dei gironi
+tocca_bordo 210 170 mezzo destra    # ARMERIA: le piastre rivettate
+aspetta 3.5
+foto 05_armeria
+tocca_bordo 72 60 basso sinistra    # HOME
+aspetta 3.5
+foto 05b_home_ritorno               # il cielo è andato avanti, non è ripartito
+tocca_centro 640 300                # l'apprendista: lo ZAINO, la carta a righe
+aspetta 3.5
+foto 06_zaino
+tocca_bordo 72 60 basso sinistra    # HOME
+aspetta 3.5
+tocca_bordo 220 170 mezzo sinistra  # ALLENAMENTO: la lavagna col bersaglio
+aspetta 3.5
+foto 07_allenamento
+tocca_bordo 72 60 basso sinistra    # HOME
+aspetta 3.5
+tocca_bordo 220 289 mezzo destra    # EVENTI: gli stendardi
+aspetta 3.5
+foto 08_eventi
+tocca_bordo 72 60 basso sinistra    # HOME
+aspetta 3.5
+tocca_bordo 230 56 basso destra     # GIOCA online: gli anelli dell'arena
+aspetta 3.5
+foto 09_gioca_online
+tocca_bordo 72 60 basso sinistra    # HOME
+aspetta 3.5
+tocca_bordo 200 70 alto sinistra   # il profilo: la carta a righe
+aspetta 3.5
+foto 10_profilo
+tocca_bordo 72 60 basso sinistra    # HOME
+aspetta 3.5
+tocca_bordo 74 54 basso sinistra    # la rotellina: le IMPOSTAZIONI, il banco
+aspetta 3.5
+foto 11_impostazioni
+tocca_bordo 72 60 basso sinistra    # HOME
+aspetta 3.5
+tocca_bordo 220 294 mezzo sinistra  # CAMPAGNA: la mappa dei gironi
 aspetta 3.5
 foto 03_gironi
-tocca_bordo 520 54 basso sinistra    # LA FORGIA: la sua bacheca
+tocca_bordo 520 54 basso sinistra   # LA FORGIA: la sua bacheca
 aspetta 1.5
 foto 04_forgia

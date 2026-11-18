@@ -29,6 +29,7 @@
 
 local game = require "sim.game"
 local scoria = require "battle.scoria"
+local clock = require "ui.clock"
 local score = require "battle.score"
 local ui = require "ui.ui"
 local kit = require "ui.kit"
@@ -133,7 +134,7 @@ end
 function M.new(color)
 	local h = { tops = {}, buttons = {}, doors = {}, door_by_id = {}, t = 0, colore = color, glint_at = 0.9 }
 
-	h.scene = kit.scene(640, 350, { bg = "anelli" })
+	h.scene = kit.scene(640, 350, { bg = "cielo" })
 
 	-- the middle: the pedestal, the apprentice on it and the backpack, all one button
 	local mid = kit.anchor(640, PED_BOTTOM, nil, gui.ANCHOR_BOTTOM)
@@ -160,6 +161,7 @@ function M.new(color)
 	gui.set_scale(body_shape, V)
 	h.body_shape = body_shape
 	h.corpo, h.look, h.color = scoria.new(color, scoria.player), scoria.player, color
+	clock.sync(h.corpo)
 	gui.set_parent(h.corpo.root, body_shape)
 	scoria.set_enabled(h.corpo, true)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
@@ -412,6 +414,7 @@ function M.wear(h, p)
 	local enabled = gui.is_enabled(h.corpo.root)
 	gui.delete_node(h.corpo.root)
 	h.corpo = scoria.new(h.color, scoria.player)
+	clock.sync(h.corpo, 1)
 	gui.set_parent(h.corpo.root, parent)
 	scoria.set_enabled(h.corpo, enabled)
 	-- posed at once: made while the home is hidden, it would show up raw (the

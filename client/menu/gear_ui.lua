@@ -22,6 +22,7 @@ local game = require "sim.game"
 local equip = require "sim.gear"
 local loadout = require "sim.loadout"
 local scoria = require "battle.scoria"
+local clock = require "ui.clock"
 local wallet = require "sim.wallet"
 local TA = require("lang.text").armory
 local T = require("lang.text").gear_ui
@@ -112,6 +113,7 @@ function M.devil(s, g, cx, feet, h)
 	local k = 338 * h / 380 / game.DISEGNO_H
 	gui.set_scale(pose.node, vmath.vector3(k, k, 1))
 	s.figure = scoria.new(s.colore, scoria.player)
+	clock.sync(s.figure)
 	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	scoria.update(s.figure, 0, s.st)
 	gui.set_parent(s.figure.root, pose.node)
