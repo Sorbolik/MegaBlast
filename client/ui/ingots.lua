@@ -34,7 +34,8 @@ end
 -- many signature slots are lit; born: a slot drawn before its step (the step's scene
 -- makes it grow). Returns { node, beads, next, tip, studs, gems, hot, lit_parts, set }:
 -- beads the small beads (nil where a slot is), studs the slots there, hot their
--- red-hot face (hidden), lit_parts the lit one's, next the next bead
+-- red-hot face (hidden), lit_parts the lit one's, next the next bead, seed the
+-- ember bead in the place of the slot about to be born
 function M.draw(g, x, y, w, h, level, lit, born)
 	local root = gui.new_box_node(vec(x - g.ox, g.oy - (y + h / 2)), vec(0, 0))
 	gui.set_visible(root, false)
@@ -64,6 +65,13 @@ function M.draw(g, x, y, w, h, level, lit, born)
 			bar.hot[s] = kit.piece(pg, "slot_rovente", 0, 0, d)
 			gui.set_enabled(bar.hot[s], false)
 			bar.studs[s] = stud
+			if born == s and level < i then
+				-- until it is born, the next bead (in ember) holds its place: the dot it grows from
+				local n = gui.new_box_node(vec(at[i], 0), vec(0, 0))
+				gui.set_visible(n, false)
+				gui.set_parent(n, root)
+				bar.seed = kit.piece({ node = n, ox = 0, oy = 0 }, "perla_prossima", 0, 0, b)
+			end
 		else
 			local n = gui.new_box_node(vec(at[i], 0), vec(0, 0))
 			gui.set_visible(n, false)

@@ -211,6 +211,7 @@ local function events(sc, t, quiet)
 			gui.set_enabled(stud, true)
 			gui.set_scale(stud, vmath.vector3(M.GROW[3], M.GROW[3], 1))
 			gui.set_enabled(sc.stud_hot, false)
+			if sc.bar.seed then gui.set_enabled(sc.bar.seed, false) end
 			gui.animate(stud, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, 0, function()
 				gui.animate(stud, "scale", vmath.vector3(1.15, 1.15, 1), gui.EASING_INOUTSINE, 0.5, 0.3, nil, gui.PLAYBACK_LOOP_PINGPONG)
 			end)
@@ -299,6 +300,7 @@ local function draw(sc, t)
 				end
 			end
 			gui.set_enabled(sc.stud, grow > 0)
+			if sc.bar.seed then gui.set_enabled(sc.bar.seed, grow <= 0) end
 			grow = grow * (1 + 0.08 * beat)
 			gui.set_scale(sc.stud, vmath.vector3(grow, grow, 1))
 			-- red-hot while it grows
