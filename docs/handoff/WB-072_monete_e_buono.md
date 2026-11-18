@@ -23,6 +23,8 @@ Il gioco le usa da 20 a 46 px: portafoglio, prezzi e pulsanti.
 | R2 | `art/WB-072/riferimenti/R2_monete_oggi.png` | le monete di oggi: la gemma azzurra sfaccettata e la moneta d'oro con la fiammella |
 | R3 | `art/WB-072/riferimenti/R3_stile.png` | un pulsante della home: lo stile della china |
 | R4 | `art/WB-072/riferimenti/R4_buono_oggi.png` | il buono del Fabbro di oggi, con la targhetta da togliere |
+| R5 | `art/WB-072/riferimenti/R5_primo_giro.png` | il foglio `monete_2` del primo giro: forme e colori approvati |
+| R6 | `art/WB-072/riferimenti/R6_fiamma_scavata.png` | la moneta d'oro di oggi: la fiammella sembra scavata dentro la moneta |
 
 ## Immagini da generare
 
@@ -30,7 +32,8 @@ Il prompt è completo e va usato così com'è. Allega i riferimenti nell'ordine:
 
 | Nome file | Cosa c'è | Riferimenti | Misura | Varianti |
 |---|---|---|---|---|
-| `monete` | Ossidiana, Scaglia e buono, uno accanto all'altro | R1, R2, R3, R4 | 1536×1024 | 3 |
+| `monete` | Ossidiana, Scaglia e buono, uno accanto all'altro (primo giro, fatto) | R1, R2, R3, R4 | 1536×1024 | 3 |
+| `scavate` | Scaglia e buono col disegno scavato (secondo giro) | R5, R6, R3 | 1536×1024 | 3 |
 
 Le varianti si chiamano `monete_1.png`, `monete_2.png` e `monete_3.png`, in `art/WB-072/`. Per ogni foglio Codex scrive un `.txt` con lo stesso nome: cosa ha fatto e cosa non è riuscito a rispettare.
 
@@ -46,6 +49,22 @@ Draw THREE separate icons in a row, well apart, same visual size and same thickn
 Each icon must read at 24 pixels: one bold full silhouette, no thin details. No letters, no numbers, no shadow on the ground, no glow outside the ink.
 ```
 
+### `scavate` (secondo giro)
+
+Sergio, 18 nov 11:17, sul primo giro: «va bene tutto, solo che mi piaceva il fatto che la
+fiammella nella moneta desse l'idea di essere scavata nella moneta», «e anche nel buono del
+fabbro voglio quell'effetto», «l'ossidiana va bene». Si rifanno solo Scaglia e buono; le varianti
+si chiamano `scavate_1.png` e così via, in `art/WB-072/`.
+
+```
+Image 1 is a sheet of three icons of our game: in the middle the SCAGLIA (a gold coin with eight uneven sides and a little flame) and on the right the VOUCHER OF THE BLACKSMITH (a round dark iron token with a hammer on an anvil). Their shapes, colors, outline and thickness are approved and must stay exactly the same. Image 2 is the gold coin we used before: its little flame looks CARVED INTO the coin, sunk below the surface, not stuck on top of it. Image 3 is a button of the same game and is the STYLE: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+
+Draw TWO separate icons side by side, well apart, same visual size, on plain green (#00FF00):
+1. SCAGLIA: exactly the middle icon of image 1 (same eight-sided gold coin, same rim, same thickness), but the flame is ENGRAVED into its face like in image 2: a hollow in the shape of the flame, sunk into the gold. Inside the hollow the flame in orange (#F26419 with a #FFB703 core), lower than the surface; along the upper left edge of the hollow a dark shadow band (#C77A06 and black ink), along the lower right edge a thin light band (#FFE08A), so the cut looks deep. No flame sticking out above the surface.
+2. VOUCHER OF THE BLACKSMITH: exactly the right icon of image 1 (same round dark iron token, same size and thickness), but the hammer on the anvil is ENGRAVED into the iron the same way: a hollow in the shape of the hammer and anvil, sunk into the face, with a dark shadow band (#1E1A22 and black ink) along its upper left edge and a thin light band (#5A5263) along its lower right edge; inside the hollow the hammer and anvil glow orange (#F26419 and #FFB703) like hot metal poured into a mold.
+Each icon must read at 24 pixels: one bold full silhouette, no thin details. No letters, no numbers, no shadow on the ground, no glow outside the ink.
+```
+
 ## Criteri di accettazione
 
 - [ ] contorno nero spesso, nessuna scritta, tre icone ben staccate sul verde
@@ -53,6 +72,7 @@ Each icon must read at 24 pixels: one bold full silhouette, no thin details. No 
 - [ ] la scaglia ha gli otto lati di prima, il rilievo e la fiammella dentro
 - [ ] il buono è un gettone di ferro senza cordino né targhetta, grande quanto le monete
 - [ ] tutte e tre si riconoscono a 24 px
+- [ ] secondo giro: fiammella e martello sembrano scavati dentro la moneta e il gettone, non appoggiati sopra
 
 ---
 
@@ -61,5 +81,7 @@ Each icon must read at 24 pixels: one bold full silhouette, no thin details. No 
 Sergio, 18 nov 10:40: «né l'ossidiano che ha prodotto, né le scaglie mi piacciono, mi piace l'idea della tridimensionalità dell'ossidiana "nuova", quella azzurra, ma vorrei il colore di quella vecchia, invece mi piace l'idea della fiammella dentro le scaglie nuove, ma la forma delle vecchie» e «sempre l'idea di tridimensionalità delle scaglie nuove». Poi: «rifacciamo anche i buoni del Fabbro, devono essere nello stesso concept e formato, senza la targhetta». Il testo è stato mostrato nella pagina delle proposte e approvato con «vai con i consigliati» (11:10). Numero assegnato dal coordinatore.
 
 ## Consegna di Codex
+
+- Primo giro: `monete_1.png`, `monete_2.png`, `monete_3.png` con i `.txt` (Codex, ramo `design/WB-072`). Sergio, 11:17: l'Ossidiana va bene; Scaglia e buono si rifanno col disegno scavato (secondo giro, `scavate`).
 
 ## Resoconto di Claude
