@@ -26,6 +26,14 @@ if [ -n "${INSTALLA:-}" ]; then
   remoto "DOMINIO='${DOMINIO:-}' EVENTI='${EVENTI:-}' NODO='${NODO:-}' bash /root/installa.sh"
 fi
 
+# le chiavi del bucket Cloudflare R2 per la copia notturna (segreti R2_* di GitHub):
+# vanno in /etc/megablast/r2.env passando dall'ingresso di ssh, mai sulla riga di comando
+if [ -n "${R2_ACCESS_KEY_ID:-}" ] && [ -n "${R2_SECRET_ACCESS_KEY:-}" ] && [ -n "${R2_ENDPOINT:-}" ] && [ -n "${R2_BUCKET:-}" ]; then
+  printf "R2_ACCESS_KEY_ID='%s'\nR2_SECRET_ACCESS_KEY='%s'\nR2_ENDPOINT='%s'\nR2_BUCKET='%s'\n" \
+    "$R2_ACCESS_KEY_ID" "$R2_SECRET_ACCESS_KEY" "$R2_ENDPOINT" "$R2_BUCKET" |
+    remoto 'install -m 600 /dev/stdin /etc/megablast/r2.env'
+fi
+
 case "$(remoto uname -m)" in
   x86_64) ARCH=amd64 ;;
   aarch64) ARCH=arm64 ;;

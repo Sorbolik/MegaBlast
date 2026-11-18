@@ -56,9 +56,10 @@ PAD = {"a": ("F1", "F1"), "b": ("F2", "F2"), "x": ("F3", "F3"), "y": ("F4", "F4"
        "sx_sinistra": ("F", "f"), "sx_destra": ("H", "h"), "sx_su": ("Y", "y"), "sx_giu": ("G", "g"),
        "dx_sinistra": ("J", "j"), "dx_destra": ("L", "l"), "dx_su": ("I", "i"), "dx_giu": ("K", "k")}
 # Righe del log del motore che non sono errori del gioco (nel container non c'è audio)
-# (gli eventi chiesti a un server che non c'è: il gioco lo sa e va avanti senza, main/events.lua)
+# (gli eventi e il profilo ospite chiesti a un server che non c'è: il gioco lo sa e va avanti
+# senza, main/events.lua e main/account.lua)
 IGNORA = re.compile(r"^(ERROR|WARNING):SOUND|^WARNING:(DLIB: Variable LANG|ENGINE: Failed to initialize sound)"
-                    r"|^ERROR:DLIB: HTTP request to '[^']*/eventi' failed")
+                    r"|^ERROR:DLIB: HTTP request to '[^']*/(eventi|profilo[^']*)' failed")
 # "SIMULA testo_piccolo": una scritta rimpicciolita sotto i 16 px (kit.check_small)
 ERRORE = re.compile(r"^(ERROR|FATAL):|Assertion|Segmentation fault|stack traceback|SIMULA testo_piccolo")
 
@@ -344,6 +345,8 @@ def avvia_server(g, modo, n, eventi=None, bot_dopo=None, pezzi=None):
             modo = e["id"] + "-" + e["da"][:10].replace("-", "")
     if bot_dopo:
         extra += ["-bot-dopo", bot_dopo]
+    # i profili ospite (server/accounts.go): un database nuovo per ogni scenario
+    extra += ["-profili", str(g.out / "profili.db")]
     # dopo server_ferma il log continua lo stesso file
     log = open(g.out / "server.txt", "a" if getattr(g, "server_fermato", False) else "w")
     g.server.append(subprocess.Popen([str(bin / "server"), "-addr", f"127.0.0.1:{PORTA_SERVER}", *extra],

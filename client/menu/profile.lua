@@ -201,8 +201,10 @@ function M.load_up()
 	return p
 end
 
+-- on_save(p): called after every save (game.gui_script: the copy for the server, main/account.lua)
 function M.save(p)
 	sys.save(file(), p)
+	if M.on_save then M.on_save(p) end
 end
 
 return M
