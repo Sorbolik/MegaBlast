@@ -55,6 +55,7 @@ type Server struct {
 	sessions sync.Map // token -> seatRef, for whoever reconnects
 	online   atomic.Int64
 	draining atomic.Bool
+	accounts *Accounts // guest profiles (accounts.go), nil without -profili
 }
 
 func NewServer(cfg Config) *Server {
@@ -79,6 +80,8 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", s.handleWS)
 	mux.HandleFunc("/ricetta", s.handleRecipe)
+	mux.HandleFunc("/profilo", s.handleProfile)
+	mux.HandleFunc("/profilo/", s.handleProfile)
 	// for the load balancer: 503 when the node is shutting down or full
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		if s.draining.Load() || max(s.sched.Load(), s.botSched.Load()) > 0.8 {
