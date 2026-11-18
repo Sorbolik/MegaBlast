@@ -17,6 +17,7 @@
 
 local ui = require "ui.ui"
 local kit = require "ui.kit"
+local screen = require "ui.screen"
 local P = require "ui.pieces"
 local game = require "sim.game"
 local equip = require "sim.gear"
@@ -148,6 +149,14 @@ end
 -- with a line and a nail to where it sits on the devil. Tapping one: "posto:<slot>".
 -- sel: the slot chosen (lit). try: { set, slot } a piece tried on instead
 M.LABEL = "secondario_acceso"
+
+-- moves a text made at x = 0 to start at x
+local function shift(n, x)
+	local pos = gui.get_position(n)
+	pos.x = pos.x + x
+	gui.set_position(n, pos)
+end
+
 function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 	local k = h / 380
 	-- where each level sits, next to its piece, and the zone that opens it
@@ -166,12 +175,19 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 			-- one label, shaped like a button: the type's symbol and the level
 			-- (Sergio, 18 Nov); on the outer side, never over the devil
 			local top = level >= equip.LIVELLO_MAX
-			local lw, lh = 96, 44
-			local lx = sl.id == "cloak" and bx + 17 - lw or bx - 17
-			kit.strip(g, M.LABEL, lx, by - lh / 2, lw, lh)
-			fit(g, TYPE[sl.id], lx + 16, by - 13, 26, 26)
-			kit.text(g, tostring(level), lx + 62, by + 7, 19, top and KC.HOT or KC.SAND, "middle")
-			kit.text(g, "›", lx + lw - 16, by + 7, 19, KC.MUTE, "middle")
+			-- symbol, number and arrow measured, then the label as wide as them
+			-- with even padding on both sides (Sergio, 18 Nov)
+			local lh, pad, sym, gap = 44, 16, 26, 8
+			local num = kit.text(g, tostring(level), 0, by + 7, 19, top and KC.HOT or KC.SAND)
+			local arrow = kit.text(g, "›", 0, by + 7, 19, KC.MUTE)
+			local nw, aw = kit.width(num), kit.width(arrow)
+			local lw = pad + sym + gap + nw + 6 + aw + pad
+			local lx = sl.id == "cloak" and math.max(screen.x0 + 12, bx + 17 - lw) or bx - 17
+			local plate = kit.strip(g, M.LABEL, lx, by - lh / 2, lw, lh)
+			gui.move_below(plate.node, num)
+			fit(g, TYPE[sl.id], lx + pad, by - sym / 2, sym, sym)
+			shift(num, lx + pad + sym + gap)
+			shift(arrow, lx + pad + sym + gap + nw + 6)
 		end
 		local zx = sl.id == "cloak" and cx - 150 * k or cx - p[3] / 2 * k
 		kit.zone(g, s.buttons, zx, by - p[4] / 2 * k, p[3] * k, p[4] * k, "posto:" .. sl.id)
