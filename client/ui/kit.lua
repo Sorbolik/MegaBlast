@@ -673,9 +673,15 @@ function M.secondary(g, label, x, y, w, h, opt)
 	-- the face: what moves down when pressed (the icon and the words)
 	p.face_node = empty(0, 0, 0, 0, n)
 	local f = { node = p.face_node, ox = cx, oy = cy }
+	-- the coin or icon sticks out of the left end, big and a little crooked, with
+	-- its flat ink shadow on the iron (Sergio, 18 Nov: «moneta che sporge»)
 	if opt.icon then
-		local ic = M.piece(f, opt.icon, x + h * 0.44, y + h * 0.46, h * 0.56)
-		if opt.off then gui.set_color(ic, vmath.vector4(1, 1, 1, 0.45)) end
+		local ix, iy, ih = x + h * 0.36, y + h * 0.44, h * 1.18
+		local sh = M.piece(f, opt.icon, ix + 3, iy + 4, ih)
+		gui.set_color(sh, C.INK)
+		local ic = M.piece(f, opt.icon, ix, iy, ih)
+		for _, n in ipairs({ sh, ic }) do gui.set_rotation(n, vmath.vector3(0, 0, 10)) end
+		if opt.off then gui.set_color(ic, vmath.vector4(0.45, 0.45, 0.5, 1)) end
 	end
 	local box = room("secondario_acceso", cx, cy, w, h)
 	local tx = box and box.x0 or x + h
@@ -684,7 +690,7 @@ function M.secondary(g, label, x, y, w, h, opt)
 	local lt = M.text(f, label, tx, opt.sub and y + h * 0.46 or y + h * 0.6, 20, ink, "start", 0.5)
 	if M.width(lt) > room_w then gui.set_scale(lt, gui.get_scale(lt) * (room_w / M.width(lt))) end
 	if opt.sub then
-		local st = M.text(f, opt.sub, tx, y + h * 0.78, 16, opt.off and with_alpha(C.MUTE, 0.7) or C.MUTE, "start", 0.5)
+		local st = M.text(f, opt.sub, tx, y + h * 0.78, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or C.MUTE, "start", 0.5)
 		if M.width(st) > room_w then gui.set_scale(st, gui.get_scale(st) * (room_w / M.width(st))) end
 	end
 	if not opt.off then
@@ -769,31 +775,36 @@ end
 -- tabs: { { label, ui_action }, ... }
 -- tag: the tabs next to the title (ZAINO, ARMERIA, PROFILO, EVENTI): no plate
 -- at all (Sergio, 18 Nov: the light plates looked like buttons and like
--- labels at once), only the words: the active one sand, a piece of the ember
--- thread under it, the others dim. Changing tab, the ember slides from the old
--- one to the new one
+-- labels at once), only the words: the active one red-hot gold over a glow,
+-- the others cold grey-ice. Changing tab, the glow slides from the old one to
+-- the new one
 local tab_line = {}
+local TAB_HOT, TAB_COLD = vmath.vector4(1, 0.76, 0.23, 1), vmath.vector4(0.56, 0.64, 0.7, 1)
 function M.tabs(g, list_of, x, y, tabs, active, accent, tag)
 	local h, cx = tag and 50 or 58, x
 	local key = tag and tabs[1] and tabs[1][2]
 	for i, tab in ipairs(tabs) do
 		local on = i == active
 		if tag then
-			-- each word in the room its plate had (the taps stay where they were)
-			local slot = #tab[1] * 13 + 64
+			-- each word in the room its plate had (the taps stay where they were); the
+			-- open one is red-hot metal, gold over a glow of ember, the others cold
+			-- grey-ice (Sergio, 18 Nov, proposal C · Scritta incandescente)
+			local slot = #tab[1] * 14 + 64
 			local mid = cx + slot / 2
-			local n = M.text(g, tab[1], mid, y + 34, 24, on and C.SAND or with_alpha(C.SAND, 0.5), "middle", 1)
-			local w = M.width(n)
 			if on then
-				local line = M.strip(g, "barra_brace", mid - w / 2 - 4, y + 42, w + 8, 10)
+				local glow = shape("alone", mid - g.ox, g.oy - (y + 26), #tab[1] * 22 + 80, 70, with_alpha(C.HOT_BOTTOM, 0.55), g.node)
+				gui.set_blend_mode(glow, gui.BLEND_ADD)
 				local last = tab_line[key]
 				if last and last ~= mid then
 					-- from where it was, across to the new one
-					local to = gui.get_position(line.node)
-					gui.set_position(line.node, to + vec(last - mid, 0))
-					gui.animate(line.node, "position", to, gui.EASING_OUTCUBIC, 0.22)
+					local to = gui.get_position(glow)
+					gui.set_position(glow, to + vec(last - mid, 0))
+					gui.animate(glow, "position", to, gui.EASING_OUTCUBIC, 0.22)
 				end
 				tab_line[key] = mid
+				M.text(g, tab[1], mid, y + 37, 30, TAB_HOT, "middle", 1)
+			else
+				M.text(g, tab[1], mid, y + 35, 22, TAB_COLD, "middle", 1)
 			end
 			M.zone(g, list_of, cx, y, slot, h, tab[2])
 			cx = cx + slot + 8 + (g.air and M.air(0.1) or 0)

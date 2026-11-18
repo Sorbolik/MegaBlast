@@ -67,12 +67,12 @@ Each icon must read at 24 pixels: one bold full silhouette, no thin details. No 
 
 ## Criteri di accettazione
 
-- [ ] contorno nero spesso, nessuna scritta, tre icone ben staccate sul verde
-- [ ] l'ossidiana ha la forma sfaccettata di oggi e i colori di prima (nera e viola, filo magenta)
-- [ ] la scaglia ha gli otto lati di prima, il rilievo e la fiammella dentro
-- [ ] il buono è un gettone di ferro senza cordino né targhetta, grande quanto le monete
-- [ ] tutte e tre si riconoscono a 24 px
-- [ ] secondo giro: fiammella e martello sembrano scavati dentro la moneta e il gettone, non appoggiati sopra
+- [x] contorno nero spesso, nessuna scritta, tre icone ben staccate sul verde
+- [x] l'ossidiana ha la forma sfaccettata di oggi e i colori di prima (nera e viola, filo magenta)
+- [x] la scaglia ha gli otto lati di prima, il rilievo e la fiammella dentro
+- [x] il buono è un gettone di ferro senza cordino né targhetta, grande quanto le monete
+- [x] tutte e tre si riconoscono a 24 px
+- [x] secondo giro: fiammella e martello sembrano scavati dentro la moneta e il gettone, non appoggiati sopra
 
 ---
 
@@ -84,4 +84,17 @@ Sergio, 18 nov 10:40: «né l'ossidiano che ha prodotto, né le scaglie mi piacc
 
 - Primo giro: `monete_1.png`, `monete_2.png`, `monete_3.png` con i `.txt` (Codex, ramo `design/WB-072`). Sergio, 11:17: l'Ossidiana va bene; Scaglia e buono si rifanno col disegno scavato (secondo giro, `scavate`).
 
+- Secondo giro: `art/WB-072/scavate_1.png`, `scavate_2.png` e `scavate_3.png`, con i tre `.txt` omonimi. Un tentativo per variante con ImageGen integrato, prompt integrale e riferimenti R5, R6, R3 in ordine.
+
+Verificati contorni spessi, separazione, assenza di scritte e riconoscibilità di fiammella, martello e incudine a 24 px. L'incisione è visibile a piena risoluzione dalla fascia scura sopra e dal bordo chiaro sotto. A 24 px la profondità si attenua, soprattutto sul buono. Le sagome riprendono R5 con piccole differenze di profilo e proporzioni. I fogli sono stati ridotti in proporzione e centrati su tela verde da 1536×1024. Il verde generato si discosta leggermente da #00FF00. Ritaglio e resa in gioco da verificare.
+
 ## Resoconto di Claude
+
+- 18 nov: Sergio approva le monete («mi piacciono le monete prodotte dalla wb72»). Nel gioco:
+  Ossidiana da `monete_2` (la sinistra), Scaglia e buono da `scavate_2` (scelta di Claude: la
+  fiammella e il martello più scavati, e reggono a 24 px). Le taglia `tools/grafica/fucina.py`
+  (`fai_monete`) nei pezzi `gemma`, `scaglia` e `buono`, alti uguali. Scartate `monete_1`,
+  `monete_3`, `scavate_1` e `scavate_3` (restano nel ramo come storia). Simulazione OK
+  (`zaino_scheda.txt`): portafoglio, prezzi e pulsanti secondari si leggono.
+- [x] tutti i criteri rispettati; a 24 px l'incisione del buono si attenua ma martello e incudine si riconoscono.
+

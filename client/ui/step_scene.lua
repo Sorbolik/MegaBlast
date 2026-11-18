@@ -6,13 +6,13 @@
 --
 --   0.00  the tap: the screen under it goes, the forge's painting dims
 --   0.45  the charge: the piece comes to the middle and grows slowly, under it its
---         three ingots (ui/ingots.lua), the step's notch empty and beating like a
---         heart faster and faster; embers rise, the painting comes closer and trembles
+--         bar of molten metal (ui/ingots.lua), the step's level empty and beating
+--         like a heart faster and faster; embers rise, the painting comes closer and trembles
 --   1.30, 1.70, 2.02  three blows, closer and harder: a short freeze, a shake, an
---         ember flash over the whole painting, sparks, the notch fills a third
---   2.15  held: silence, almost dark, the embers stop, only the notch white
+--         ember flash over the whole painting, sparks, the level fills a third
+--   2.15  held: silence, almost dark, the embers stop, only the level white
 --   2.75  the explosion: white flash, a shock ring, rays turning in the new grade's
---         color, the painting tinted with it, the notches take it in a wave;
+--         color, the painting tinted with it, the metal flows again in it;
 --         of the piece only its silhouette, black against the light
 --   3.23  the silhouette cools into the piece as it is now (the forged one at 20)
 --   3.25  SCATTO! falls from big and slams
@@ -45,7 +45,7 @@ local W, H = 1280, 720
 local KC = kit.C
 -- the piece in the middle (game coordinates) and its size
 local PX, PY, PS = 640, 400, 280
--- the ingots under it (Figma)
+-- the bar under it (Figma)
 local IX, IY, IW, IH = 340, 528, 600, 40
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
@@ -112,13 +112,20 @@ function M.new(o)
 	sc.hot_icon = kit.pic(pg, o.icon_after, PX - PS / 2, 720 - PY - PS / 2, PS, PS)
 	gui.set_blend_mode(sc.hot_icon, gui.BLEND_ADD)
 	gui.set_enabled(sc.hot_icon, false)
-	-- the three ingots, the step still to forge
+	-- the bar of the level, the step still to forge
 	sc.ingots = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_parent(sc.ingots, sc.root)
-	sc.notches, sc.gems, sc.frames = ingots.draw({ node = sc.ingots, ox = 0, oy = 720 }, IX, IY, IW, IH, level - 1, o.lit or 0)
-	sc.step = sc.notches[level]
-	gui.set_scale(sc.step.node, vec(1, 0.01))
-	kit.tint(sc.step.parts, KC.HOT)
+	sc.bar = ingots.draw({ node = sc.ingots, ox = 0, oy = 720 }, IX, IY, IW, IH, level - 1, o.lit or 0)
+	sc.step = sc.bar.next
+	sc.step_scale = gui.get_scale(sc.step)
+	sc.bar.next_fill(0)
+	gui.set_color(sc.step, KC.HOT)
+	local at = gui.get_position(sc.bar.node) + gui.get_position(sc.step)
+	-- the step is at a stud: the stud is what beats and glows hotter at each blow
+	sc.stud = sc.bar.studs[math.floor(level / 10)]
+	sc.stud_face = sc.bar.gems[math.floor(level / 10)]
+	if sc.stud then at = gui.get_position(sc.bar.node) + gui.get_position(sc.stud) end
+	sc.step_at = vec(at.x, at.y)
 	-- SCATTO! and what is new
 	sc.title = kit.text(g, T.step_title, 640, 118, 120, sc.color, "middle")
 	alpha(sc.title, 0)
@@ -183,7 +190,7 @@ local function events(sc, t, quiet)
 	local function once(id, at)
 		if t >= at and not sc.fired[id] then sc.fired[id] = true; return true end
 	end
-	local sx, sy = gui.get_position(sc.step.node).x, gui.get_position(sc.step.node).y
+	local sx, sy = sc.step_at.x, sc.step_at.y
 	for i, b in ipairs(M.BLOWS) do
 		if once("blow" .. i, b[1]) then
 			if not quiet and sc.o.on_blow then sc.o.on_blow(i) end
@@ -195,19 +202,15 @@ local function events(sc, t, quiet)
 		sparks(sc, PX, PY, 36, sc.color, 520, true)
 		gui.set_enabled(sc.icon_before, false)
 		gui.set_enabled(sc.icon_after, true)
-		-- the wave: the notches take the new grade's color, from the left
-		for i = 1, sc.level do
-			local n = sc.notches[i]
-			gui.animate(n.node, "scale", vec(1.5, 1.5), gui.EASING_OUTQUAD, 0.08, 0.06 + i * 0.022, function()
-				kit.tint(n.parts, sc.color)
-				gui.animate(n.node, "scale", vec(1, 1), gui.EASING_OUTBACK, 0.2)
-			end)
-		end
-		local k = math.floor(sc.level / 10)
-		if sc.frames[k] then kit.tint(sc.frames[k].parts, kit.with_alpha(sc.color, 0.3)) end
-		if sc.gems[k] then
-			gui.set_color(sc.gems[k], vmath.vector4(0.75, 0.75, 0.8, 1))
-			gui.animate(sc.gems[k], "scale", vmath.vector3(1.5, 1.5, 1), gui.EASING_INOUTSINE, 0.5, 0.6, nil, gui.PLAYBACK_LOOP_PINGPONG)
+		-- the wave: the metal flows again from the left, in the new grade's color
+		gui.set_enabled(sc.step, false)
+		sc.bar.set(0)
+		sc.bar.set(sc.level, sc.color, 0.45, 0.06)
+		local stud = sc.stud
+		if stud then
+			gui.set_scale(stud, vmath.vector3(1, 1, 1))
+			gui.set_color(sc.stud_face, ingots.STUD_OFF)
+			gui.animate(stud, "scale", vmath.vector3(1.35, 1.35, 1), gui.EASING_INOUTSINE, 0.5, 0.6, nil, gui.PLAYBACK_LOOP_PINGPONG)
 		end
 	end
 	if once("reveal", M.REVEAL) then
@@ -273,7 +276,7 @@ local function draw(sc, t)
 		gui.set_color(sc.icon_after, vmath.vector4(k, k, k, 1))
 		alpha(sc.hot_icon, t < M.REVEAL and 0 or math.exp(-(t - M.REVEAL) / 0.18))
 	end
-	-- the ingots: they come up; the step's notch beats, fills at each blow
+	-- the bar: it comes up; the step's level beats, fills at each blow
 	local na = eo(seg(t, M.CHARGE, 0.7))
 	gui.set_position(sc.ingots, vec(ox * 0.6, oy * 0.6 - (1 - na) * 40))
 	if t < M.BOOM then
@@ -286,8 +289,15 @@ local function draw(sc, t)
 		end
 		local sx = 1 + 0.25 * beat + (t > M.SUSPENSE and 0.25 + 0.15 * math.sin(t * 8) or 0)
 		for _, b in ipairs(M.BLOWS) do if t >= b[1] then sx = sx + 0.6 * math.exp(-(t - b[1]) / 0.08) end end
-		gui.set_scale(sc.step.node, vec(sx, math.max(0.08, fill) * sx))
-		if fill >= 1 then kit.tint(sc.step.parts, KC.SEAM) end
+		sc.bar.next_fill(fill)
+		local k = sc.step_scale.x
+		gui.set_scale(sc.step, vmath.vector3(k, k * (0.85 + 0.35 * (sx - 1)), 1))
+		gui.set_color(sc.step, fill >= 1 and KC.SEAM or KC.HOT)
+		if sc.stud then
+			gui.set_scale(sc.stud, vmath.vector3(sx, sx, 1))
+			local hot = { [0] = ingots.STUD_OFF, KC.HOT_BOTTOM, KC.HOT, KC.SEAM }
+			gui.set_color(sc.stud_face, hot[math.floor(fill * 3 + 0.5)])
+		end
 	end
 	-- SCATTO! falls and slams; the lines come in; CONTINUA rises
 	local tp = seg(t, M.TITLE, M.TITLE + 0.14)

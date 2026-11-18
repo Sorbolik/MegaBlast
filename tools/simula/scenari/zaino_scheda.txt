@@ -28,9 +28,13 @@ aspetta 0.4
 tocca_bordo 480 50 basso destra     # POTENZIA
 aspetta 0.6
 tocca_centro 560 50                # ACCENDI LA FIRMA (il secondo grado, 320 Ossidiana)
-aspetta 0.12
-foto 07_firma_colpo
-aspetta 0.8
+aspetta 0.3
+foto 07_firma_volo
+aspetta 0.3
+foto 07b_firma_ghiaccio
+aspetta 0.35
+foto 07c_firma_nome
+aspetta 1.0
 foto 08_firma_accesa
 tocca_bordo 70 340 alto sinistra    # la CORAZZA (Fornace, livello 19): la sua scheda
 aspetta 0.6

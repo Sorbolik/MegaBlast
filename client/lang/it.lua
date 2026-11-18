@@ -392,6 +392,8 @@ return {
 		sign_next = "al %d: %d%%",
 		-- the same when the step is already done: lighting it gives that
 		sign_next_now = "accendila: %d%%",
+		-- the Ossidiana spent lighting it, jumping under the balance
+		sign_spent = "−%s",
 		light_sign = "ACCENDI LA FIRMA",
 		sign_cost = "%d ossidiana",
 		sign_needs = "dallo scatto %d",

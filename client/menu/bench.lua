@@ -1,15 +1,15 @@
 -- The Smith's bench: the card of one piece, the same in the ARMERIA (POTENZIA)
 -- and in the ZAINO (a piece opened from the inventory: you upgrade it without
 -- leaving, Sergio 18 Nov). On an iron panel the piece, its name and grade, its
--- level as the thirty notches of the step's scene (ui/step_scene.lua: the big
--- ones at 10 20 30 in the color of the grade they open), what it does now and
+-- level as the bar of molten metal (ui/ingots.lua, the signature's studs at
+-- 10 20 30), what it does now and
 -- at the next level, its signature with what it really gives, the Proof; under
 -- it the other pieces of its slot. In the footer ACCENDI LA FIRMA, the price
--- and +1 LIVELLO. Buying a level fills its notch with a blow; a step opens the
+-- and +1 LIVELLO. Buying a level pours the metal one level on; a step opens the
 -- step's scene; lighting the signature makes it flare.
 --
 --   local bench = require "menu.bench"
---   bench.notches(g, x, y, w, level, o)           -- the thirty notches (o.h: the big ones' height)
+--   bench.ingots(g, x, y, w, h, level, lit)       -- the bar of the level (ui/ingots.lua)
 --   bench.draw(s, g, sel)                         -- the panel and the slot's other pieces
 --   bench.footer(s, low2, right, sel)             -- the signature's plate, the price, +1 LIVELLO
 --   bench.run(s, kind, sel) -> true               -- "potenzia" / "firma" (false: not the bench's)
@@ -27,6 +27,7 @@ local profile = require "menu.profile"
 local wallet = require "menu.wallet"
 local gear_ui = require "menu.gear_ui"
 local step_scene = require "ui.step_scene"
+local sign_light = require "ui.sign_light"
 local T = require("lang.text").armory
 local TP = require("lang.text").pieces
 
@@ -45,41 +46,6 @@ local function fit(n, max)
 	return n
 end
 
--- The thirty notches of a piece, w wide from (x, y) (the tops of the big ones):
--- the ones reached in the color of the piece's grade (as the step's scene leaves
--- them), the next one to buy in ember, the big ones still ahead in the color of
--- the grade they open, dimmed, with their level under them. Returns the notches
-function M.notches(g, x, y, w, level, o)
-	o = o or {}
-	local big_h = o.h or 26
-	local small_h = math.floor(big_h * 0.7)
-	local pitch = w / equip.LIVELLO_MAX
-	local nw = math.max(3, math.floor(pitch * 0.62))
-	local sk = math.max(2, math.floor(nw * 0.4))
-	local tier = equip.tier(level)
-	local out = {}
-	for i = 1, equip.LIVELLO_MAX do
-		local big = i % 10 == 0
-		local color
-		if i <= level then
-			color = ui.C.GRADI[tier]
-		elseif i == level + 1 then
-			color = KC.HOT
-		elseif big then
-			color = kit.with_alpha(ui.C.GRADI[equip.tier(i)], 0.45)
-		else
-			color = KC.LINE
-		end
-		local h = big and big_h or small_h
-		out[i] = kit.para(g, x + (i - 1) * pitch, y + (big_h - h) / 2, nw, h, sk, color)
-		if big and o.labels ~= false then
-			kit.text(g, tostring(i), x + (i - 1) * pitch + (nw + sk) / 2, y + big_h + 20, 16,
-				i <= level and ui.C.GRADI[tier] or KC.MUTE, "middle")
-		end
-	end
-	return out
-end
-
 M.ingots = ingots.draw
 
 -- "+6%": a signature's value written as its description wants it
@@ -93,7 +59,7 @@ function M.draw(s, g, sel)
 	local x, w = M.X, M.W
 	-- everything on one group, to bring it in as a whole
 	g = kit.group(g, x + w / 2, 340)
-	s.bench = { notches = {}, rows = {}, root = g.node }
+	s.bench = { rows = {}, root = g.node, card = { g = g, x = x, y = 100, w = w, h = 344 } }
 	kit.panel(kit.group(g, x + w / 2, 272).node, w, 344)
 	if not sel then
 		kit.text(g, kit.upper(T.nothing_here), x + w / 2, 260, 18, KC.MUTE, "middle", 1)
@@ -109,9 +75,10 @@ function M.draw(s, g, sel)
 	kit.text(g, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), x + 202, 187, 20, ui.C.GRADI[tier], "start", 1)
 	local nxt = wallet.next(p, set, slot)
 	s.bench.title = kit.text(g, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), x + 202, 222, 23, KC.SAND)
-	-- the level: three ingots of ten notches, the signature's gems at their ends
+	-- the level: the bar of molten metal, the signature's studs at 10, 20 and 30
 	local lit = wallet.sign(p, set, slot)
-	s.bench.notches, s.bench.gems = M.ingots(g, x + 200, 238, 352, 32, level, lit)
+	s.bench.bar = M.ingots(g, x + 200, 238, 352, 32, level, lit)
+	s.bench.gems = s.bench.bar.gems
 	s.bench.level = level
 
 	-- what it does now, and at the next level
@@ -139,10 +106,11 @@ function M.draw(s, g, sel)
 			local sg = equip.SIGNS[e.stat]
 			local on = lit > 0
 			-- FIRMA (or FIRMA SPENTA), its name, what it gives now, and what it
-			-- gives at the next step (its gems sit at the ends of the ingots)
+			-- gives at the next step (its studs sit on the bar)
 			kit.text(g, kit.upper(on and T.sign or T.sign_off), rx, 322, 16, on and KC.HOT_TOP or KC.MUTE, "start", 1)
 			local title = fit(kit.text(g, kit.upper(sg.name), rx, 346, 20, on and KC.HOT_TOP or KC.SAND, "start", 0.5), rw)
 			s.bench.sign, s.bench.lit, s.bench.desc = title, lit, {}
+			s.bench.stat = e.stat
 			local value = sign_value(e.stat, math.max(1, lit))
 			local lines = kit.wrap(g, kit.upper(sg.desc:format(value)), 16, rw)
 			local ink = on and KC.SAND or KC.MUTE
@@ -189,7 +157,7 @@ function M.footer(s, low2, right, sel)
 	local can = sn and not sn.level and p.ossidiana >= sn.cost
 	local note = not sn and T.sign_top or sn.level and T.sign_needs:format(sn.level)
 		or T.sign_cost:format(sn.cost)
-	local sb = kit.secondary(low2, T.light_sign, 430, 640, 270, 62, { icon = "gemma", sub = kit.upper(note), off = not can })
+	local sb = kit.secondary(low2, T.light_sign, 430, 640, 270, 62, { icon = "gemma", sub = kit.upper(note), sub_color = KC.OBSIDIAN, off = not can })
 	kit.button(s.buttons, sb, "firma", { spento = not can })
 
 	-- the price and +1 LIVELLO: the price stuck to the button, on its left, with
@@ -228,9 +196,12 @@ function M.run(s, kind, sel)
 				s.just = "level"
 			end
 		end
-	elseif wallet.light(p, sel[1], sel[2]) then
-		sound.play("#martello")
-		s.just = "sign"
+	else
+		local sn = wallet.sign_next(p, sel[1], sel[2])
+		if wallet.light(p, sel[1], sel[2]) then
+			sound.play("#martello")
+			s.just, s.sign_cost = "sign", sn and sn.cost
+		end
 	end
 	return true
 end
@@ -240,14 +211,6 @@ local function pop(n, k, t, delay)
 	local sc = gui.get_scale(n)
 	gui.set_scale(n, sc * k)
 	gui.animate(n, "scale", sc, gui.EASING_OUTBACK, t or 0.3, delay or 0)
-end
-
--- a short white flash on a notch, then its color
-local function flash(parts, color, delay)
-	kit.tint(parts, vmath.vector4(1, 1, 1, 1))
-	for _, n in ipairs(parts) do
-		gui.animate(n, "color", color, gui.EASING_OUTQUAD, 0.35, delay or 0)
-	end
 end
 
 -- n sparks out of a node, in color, d far (the blow of the hammer on the anvil)
@@ -269,17 +232,16 @@ function M.after(s)
 	if s.just == "level" and b and b.level then
 		-- the notch just bought comes down like a blow, white, then the grade's color;
 		-- the piece jumps; the numbers that grew flicker
-		local n = b.notches[b.level]
+		local bar = b.bar
 		local color = ui.C.GRADI[equip.tier(b.level)]
-		if n then
-			-- it falls from above, white hot, and cools to the grade's color
-			local at = gui.get_position(n.node)
-			gui.set_position(n.node, at + vmath.vector3(0, 40, 0))
-			gui.animate(n.node, "position", at, gui.EASING_INQUAD, 0.12, 0, function()
-				sparks(n.node, color, 8, 34)
-				pop(n.node, 1.7, 0.3)
+		if bar then
+			-- the metal flows from the level before, white hot, then cools to the grade's color
+			bar.set(b.level - 1)
+			bar.set(b.level, KC.SEAM, 0.22)
+			gui.animate(bar.fill, "color", color, gui.EASING_OUTQUAD, 0.35, 0.18, function()
+				sparks(bar.tip, color, 8, 34)
 			end)
-			flash(n.parts, color, 0.12)
+			pop(bar.next, 1.6, 0.3, 0.2)
 		end
 		-- the piece takes the blow: squashed, then back
 		if b.icon then
@@ -295,21 +257,13 @@ function M.after(s)
 		gui.set_scale(b.root, vmath.vector3(0.94, 0.94, 1))
 		gui.animate(b.root, "position", at, gui.EASING_OUTCUBIC, 0.22)
 		gui.animate(b.root, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.26)
-	elseif s.just == "sign" and b and b.gems then
-		-- the gem just lit bursts, the others answer; the signature's words light up
-		for k, gem in ipairs(b.gems) do
-			if k == b.lit then
-				sparks(gem, KC.ICE, 10, 40)
-				pop(gem, 2.4, 0.45)
-			else
-				pop(gem, 1.3, 0.3, 0.1)
-			end
-		end
-		if b.sign then pop(b.sign, 1.25, 0.35) end
-		for i, l in ipairs(b.desc or {}) do
-			gui.set_color(l, vmath.vector4(1, 1, 1, 1))
-			gui.animate(l, "color", KC.SAND, gui.EASING_OUTQUAD, 0.5, 0.05 * i)
-		end
+	elseif s.just == "sign" and b and b.bar and b.lit and b.lit > 0 then
+		-- the gem flies from the balance into its stud, ice (ui/sign_light.lua)
+		if s.light then sign_light.delete(s.light) end
+		s.light = sign_light.new({ bar = b.bar, lit = b.lit, wallet = s.wallet, cost = s.sign_cost,
+			icon = b.icon, name = b.sign, lines = b.desc, card = b.card,
+			from = b.lit > 1 and sign_value(b.stat, b.lit - 1) or 0, to = sign_value(b.stat, b.lit) })
+		s.light_bench = b
 	end
 	s.just = nil
 	if s.step then
@@ -323,6 +277,14 @@ function M.after(s)
 end
 
 function M.update(s, dt)
+	if s.light then
+		-- the screen made again under it: what was left of it goes
+		if s.light_bench ~= s.bench or not sign_light.update(s.light, dt) then
+			if s.light_bench == s.bench then sign_light.finish(s.light) end
+			sign_light.delete(s.light)
+			s.light = nil
+		end
+	end
 	if s.scene and not step_scene.update(s.scene, dt) then
 		step_scene.delete(s.scene)
 		s.scene = nil
@@ -339,6 +301,8 @@ end
 function M.delete(s)
 	if s.scene then step_scene.delete(s.scene) end
 	s.scene = nil
+	if s.light then sign_light.delete(s.light) end
+	s.light = nil
 end
 
 return M

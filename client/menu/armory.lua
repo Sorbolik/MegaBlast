@@ -145,7 +145,7 @@ local function shop(a)
 	local w = a.ware
 	local usable = w and not wallet.owns(p, w[1], w[2]) and p.buoni > 0
 	local vb = kit.secondary(a.low2, T.use_voucher, 430, 640, 270, 62,
-		{ icon = "buono", sub = kit.upper(T.you_have:format(p.buoni)), off = not usable })
+		{ icon = "buono", sub = kit.upper(T.you_have:format(p.buoni)), sub_color = KC.HOT_BOTTOM, off = not usable })
 	kit.button(a.buttons, vb, "buono", { spento = not usable })
 	local price = w and wallet.price(p, w[2], w[3])
 	local ok = w and not wallet.owns(p, w[1], w[2]) and p.scaglie >= price

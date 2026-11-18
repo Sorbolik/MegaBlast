@@ -158,15 +158,29 @@ def fai_pezzi():
     tre("piastrina_chiara", chiaro(su[0][2]), 120, 0.3)
     for nome, t in zip(["indietro", "brace", "fiamma"], su[1:]):
         intero(nome, t[2], 120)
-    for nome, t in zip(["brace_spenta", "lucchetto", "scaglia", "gemma"], giu):
+    # (la scaglia e la gemma di questo foglio sono state rifatte con WB-072: fai_monete)
+    for nome, t in zip(["brace_spenta", "lucchetto"], giu):
         intero(nome, t[2], 120)
+
+
+def fai_monete():
+    """Le monete e il buono del Fabbro di WB-072 (Sergio, 18 nov): l'Ossidiana del primo giro
+    (monete_2: la gemma sfaccettata nera e viola col filo magenta), la Scaglia e il buono del
+    secondo giro (scavate_2: fiammella e martello scavati dentro), tutti alti uguali."""
+    p = os.path.join(ART, "WB-072")
+    primo = sorted(pezzi(senza_verde(os.path.join(p, "monete_2.png"))), key=lambda t: t[1])
+    secondo = sorted(pezzi(senza_verde(os.path.join(p, "scavate_2.png"))), key=lambda t: t[1])
+    intero("gemma", primo[0][2], 120)
+    intero("scaglia", secondo[0][2], 120)
+    intero("buono", secondo[1][2], 120)
 
 
 def fai_secondario():
     """Il pulsante secondario (Sergio, 18 nov, «Ferro liscio» della pagina delle proposte:
     quello di Codex di WB-071 sembrava un primario): ferro scuro piatto, contorno
     d'inchiostro dritto, una luce piatta in alto e lo spessore sotto; nel capo sinistro
-    l'incavo tondo per l'icona. Disegnato qui in vettori (quattro volte piu' grande, poi
+    niente incavo: la moneta o l'icona sporge dal capo sinistro, grande e
+    un po' storta (Sergio, 18 nov, «moneta che sporge»). Disegnato qui in vettori (quattro volte piu' grande, poi
     ridotto), in tre parti come gli altri pezzi lunghi. Premuto: la faccia scende e lo
     spessore sparisce; spento: ferro freddo grigio-blu."""
     S = 4                       # il disegno a quattro volte, ridotto: bordi lisci
@@ -193,14 +207,10 @@ def fai_secondario():
         banda = Image.new("L", im.size, 0)
         ImageDraw.Draw(banda).rectangle((0, 0, W * S, (top + INK + (FACE - 2 * INK) * 0.34) * S), fill=255)
         im.paste(Image.new("RGBA", im.size, luce + (255,)), (0, 0), ImageChops.multiply(maschera, banda))
-        # l'incavo dell'icona: dove kit.secondary mette l'icona (0.44 e 0.46 dell'altezza)
-        cx, cy, r = 0.44 * 120, top + 0.46 * 120, 40
-        d.ellipse(((cx - r) * S, (cy - r) * S, (cx + r) * S, (cy + r) * S), fill=nero)
-        d.ellipse(((cx - r + 5) * S, (cy - r + 5) * S, (cx + r - 5) * S, (cy + r - 5) * S), fill=(0x15, 0x12, 0x17, 255))
         im = im.resize((W, h), Image.LANCZOS)
         tre("secondario_" + stato, np.asarray(im), h, 0.26)
-    # le scritte dopo l'incavo, lontano dai bordi
-    SPAZI["secondario_acceso"] = (106, 14, 26, 24)
+    # le scritte dopo la moneta, lontano dai bordi
+    SPAZI["secondario_acceso"] = (118, 14, 26, 24)
     # (le monete del foglio monete_* non sono piaciute a Sergio: si rifanno con WB-072)
 
 
@@ -381,7 +391,6 @@ MENU_INTERI = [
     ("ic_maglio", "ic_maglio", 140, "WB-047"),
     ("ic_notte", "ic_notte", 108, "WB-047"),
     ("barrato", "barrato", 34, "WB-047"),
-    ("buono", "buono", 128, "WB-043"),
 ]
 # dove si scrive sulle porte e su GIOCA: la striscia piena fra lo scudo (o il sigillo) e la
 # punta, misurata sul disegno a quell'altezza (margini sinistra, alto, destra, basso). Le
@@ -705,6 +714,7 @@ def fai_misure():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     fai_pezzi()
+    fai_monete()
     fai_secondario()
     fai_piccoli()
     fai_menu()
