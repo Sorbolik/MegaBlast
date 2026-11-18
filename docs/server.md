@@ -251,8 +251,9 @@ più di 5 s (`StandInTicks`; anche a turno già cominciato) lo gioca un bot col 
 robot, armi e pezzi, del grado dei bot della stanza o di quello della coda per quelle
 persone (`Room.standIn`, `N.stand_in`). Può tornare in qualsiasi momento: se rientra a metà
 del suo turno il bot lo finisce (nello stato `si`: il client lascia i comandi al bot e lo
-dice) e dal turno dopo i tasti sono di nuovo suoi. La stanza quindi non si chiude finché la
-partita dura, anche se le persone sono tutte assenti; chi esce con ESCI DALLA PARTITA
+dice) e dal turno dopo i tasti sono di nuovo suoi. La stanza resta aperta finché almeno una
+persona c'è; se sono tutte assenti da più di 60 s (`EmptyTicks`) si chiude (Sergio, 18 nov:
+i bot non la giocano fino alla fine per nessuno) e chi torna dopo trova il gettone scaduto; chi esce con ESCI DALLA PARTITA
 (`leave`) invece è fuori subito, come prima. Si può tornare anche durante la scelta
 dell'arma (il gettone arriva già col primo `draft`): lì dopo 20 s (`ReconnectTicks`) senza
 tornare il giocatore è fuori (`left`). Il client riprova da solo per tutta la partita con

@@ -641,11 +641,12 @@ func (r *Room) sendDraftAll(b *Batch) {
 // disconnected. During the draft, once the time to come back has passed the
 // player really leaves; in the match the seat is kept to the end and a bot
 // plays their turns meanwhile (standIn). The match goes on as long as at least
-// two teams have someone who didn't leave.
+// two teams have someone who didn't leave, and someone is there or has been
+// away for less than EmptyTicks.
 // Returns false if the match must be closed.
 func (r *Room) checkAway(b *Batch) bool {
 	teams := map[int]bool{}
-	people := 0
+	people, here := 0, false
 	for i, s := range r.seats {
 		if s.bot > 0 {
 			teams[s.team] = true
@@ -672,9 +673,17 @@ func (r *Room) checkAway(b *Batch) bool {
 		if !s.gone {
 			teams[s.team] = true
 			people++
+			// connected, or away for less than the time an empty room is kept
+			here = here || s.p != nil || s.away <= r.srv.cfg.EmptyTicks
 		}
 	}
-	// bots alone don't play for nobody
+	// bots alone don't play for nobody: neither when everyone left, nor when
+	// everyone has been away for a while (Sergio, 18 Nov: «falla chiudere quando
+	// escono tutti»; the bots that stand in would play to the end of the match)
+	if r.started && people > 0 && !here {
+		log.Printf("stanza %d: tutti assenti da più di %d s, si chiude", r.id, r.srv.cfg.EmptyTicks/tickRate)
+		return false
+	}
 	return len(teams) >= 2 && people > 0
 }
 

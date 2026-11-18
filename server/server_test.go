@@ -1075,3 +1075,41 @@ func TestEquipStats(t *testing.T) {
 		t.Fatalf("life at the start: %v and %v, expected more than 100 and 100", hp1, hp2)
 	}
 }
+
+// With every player away for longer than EmptyTicks the room closes (Sergio,
+// 18 Nov): the stand-in bots don't play the match to the end for nobody.
+// One player away keeps the room, and their seat.
+func TestEmptyRoomCloses(t *testing.T) {
+	url := testServer(t, func(c *Config) {
+		c.EmptyTicks = tickRate / 2
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	hello := `{"t":"hello","v":9,"mode":"1v1"}`
+	a := dial(t, ctx, url)
+	a.send(hello)
+	a.waitFor(`"wait"`)
+	b := dial(t, ctx, url)
+	b.send(hello)
+	sa := a.waitFor(`"start"`)
+	b.waitFor(`"start"`)
+	back := fmt.Sprintf(`{"t":"hello","v":9,"tok":%q}`, sa["tok"])
+	// only one away, well past the time: the room is still there
+	a.conn.CloseNow()
+	b.waitFor(`"away"`)
+	time.Sleep(1500 * time.Millisecond)
+	a = dial(t, ctx, url)
+	a.send(back)
+	if m := a.waitFor(`"start"`); m["resume"] != true {
+		t.Fatalf("unexpected resume: %v", m)
+	}
+	// both away: after the time the room is gone, the token too
+	a.conn.CloseNow()
+	b.conn.CloseNow()
+	time.Sleep(1500 * time.Millisecond)
+	a = dial(t, ctx, url)
+	a.send(back)
+	if m := a.waitFor(`"error"`); m["e"] != "expired" {
+		t.Fatalf("the empty room should be closed: %v", m)
+	}
+}
