@@ -1,7 +1,7 @@
 # Le transizioni delle porte (Sergio, 15 nov): la porta scivola al suo bordo e torna
 # indietro trascinandosi dentro la pagina, sfondo compreso, sopra la home ferma; il
 # bordo della pagina è la banda disegnata della porta (WB-049: fuoco, ferro, oro, ghiaccio)
-# con l'attacco a C dello scudo, che arrivata si dissolve; INDIETRO la porta la spinge fuori e si ferma al suo posto con un piccolo rimbalzo. Lo ZAINO cresce dall'apprendista.
+# con l'attacco a C dello scudo, attaccata fuori dalla pagina: esce dallo schermo con lei; INDIETRO la porta la spinge fuori e si ferma al suo posto con un piccolo rimbalzo. Lo ZAINO cresce dall'apprendista.
 # Gira anche con --schermo 1600x720 e 960x720.
 imposta prova_profilo 1
 

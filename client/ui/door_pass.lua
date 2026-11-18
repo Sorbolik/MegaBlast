@@ -3,11 +3,11 @@
 --          back, it drags the new screen in with it, backdrop and all, over
 --          the home that stays still under it (Sergio, 15 Nov: «vorrei
 --          semplicemente che si portasse l'altra pagina con sé»). The page's
---          edge is the band its door drew (WB-049), the button rides on it pulling
---          and goes out over the screen's border just as the band gets there,
---          then the band fades. Back: the button rides a new band pushing the
---          page out, the home under it; it stops on its place with a small
---          bounce, the page goes on to the edge and the band fades
+--          edge wears the band its door drew (WB-049), outside it; the button rides
+--          on it pulling and goes out over the screen's border with it. Back:
+--          the button rides a new band pushing the page out, the home under
+--          it; it stops on its place with a small bounce, the page and its
+--          band go on out of the screen
 --   zaino  the ZAINO grows out of the apprentice and goes back into it
 -- The new screen's top nodes are the ones kit.anchor and ui.root make while it
 -- is open (kit.track): the doors drag them, the ZAINO scales them.
@@ -100,10 +100,14 @@ end
 -- drew for it (WB-049, atlas fucina), down the whole screen, x its middle: the top,
 -- the middle repeated as many times as keep it about EDGE_W wide (never stretched),
 -- the bottom; on it, the C that holds the shield (its mouth toward the button).
--- It shows up with the drag, goes with it to the end, then fades out.
+-- One piece more beside the page (Sergio, 18 Nov: «non deve finire sopra né alla
+-- home né alla pagina»): stuck outside its edge, it comes in with the drag and goes
+-- out over the border as the page fills the screen; the way back, the same.
 -- (not kit.anchor: it would count as one of the screen's nodes)
 M.EDGE_W = 64
-M.FADE_IN, M.FADE_OUT = 0.1, 0.22
+M.FADE_IN = 0.1
+-- how much of the band lies on the page's edge (its ink), so the two are one
+M.FUSE = 0.06
 M.CLAMP = 1.3   -- the C's height, in door heights
 -- a door's band on this screen: how many middles, its scale and its width
 local function fit(id)
@@ -136,11 +140,11 @@ local function band(id, x, side, shield_y, shield_h)
 	piece("su", top.h)
 	for _ = 1, n do piece("mezzo", mid.h) end
 	piece("giu", bottom.h)
-	-- the C a bit taller than the shield, its back out on the page's side
+	-- the C a bit taller than the shield, its back flush with the band's page side
 	local c = P.attacco_scudo
 	local ch = shield_h * M.CLAMP
 	local cw = c.w * ch / c.h
-	local clamp = gui.new_box_node(vec(side * cw * 0.28, shield_y - 360), vec(cw, ch))
+	local clamp = gui.new_box_node(vec(-side * (cw - w) / 2, shield_y - 360), vec(cw, ch))
 	gui.set_texture(clamp, "fucina")
 	gui.play_flipbook(clamp, "attacco_scudo")
 	gui.set_scale(clamp, vmath.vector3(-side, 1, 1))
@@ -154,17 +158,6 @@ end
 local function drop_line(dp)
 	if dp.line then gui.delete_node(dp.line) end
 	dp.line = nil
-end
-
--- arrived, the band fades out where it is; the way back makes a new one
-local function leave_line(dp)
-	local n = dp.line
-	if not n then return end
-	dp.line = nil
-	gui.cancel_animations(n, "color.w")
-	gui.animate(n, "color.w", 0, gui.EASING_OUTQUAD, M.FADE_OUT, 0, function()
-		gui.delete_node(n)
-	end)
 end
 
 -- the button over everything while it drags: a top node just where its own is
@@ -203,12 +196,16 @@ local function measure(h, id)
 	d.dx = d.edge_x - (d.x + ox + shield * d.w)
 	d.node = d.p.node
 	d.rest = gui.get_position(d.node)
-	-- the band ends whole inside the other border; the C on the shield's height
+	-- the band beside the page's edge (the side toward the door), so it ends just
+	-- out of the other border; the C on the shield's height
 	local _, _, bw = fit(id)
-	d.line_x = d.side < 0 and screen.x1 - bw / 2 or screen.x0 + bw / 2
+	local out = bw * (0.5 - M.FUSE)
+	d.line_x = d.side < 0 and screen.x1 + out or screen.x0 - out
 	d.shield_y = 720 - d.cy
-	-- the page starts with its edge on the shield
+	-- the page starts with the band on the shield
 	d.p0 = d.edge_x - d.line_x
+	-- back, the page goes on until the band is out of this border too
+	d.back = d.p0 + d.side * (EDGE + bw / 2)
 	-- off the line, out of the screen
 	d.off = -d.side * (d.w * 0.2 + 30)
 	return d
@@ -242,9 +239,9 @@ function M.open(dp, h, id, change)
 				home_on(h, false)
 				kit.scene_cut(false)
 				kit.scene_copy_drop(still)
-				-- 4. the band fades after the button (Sergio, 17 Nov: left there it
+				-- 4. the band is out of the screen, gone (Sergio, 17 Nov: left there it
 				-- read as a defect); the button, out of sight, goes back home
-				leave_line(dp)
+				drop_line(dp)
 				unride(d)
 				dp.busy = false
 			end)
@@ -286,18 +283,18 @@ function M.close(dp, h, change)
 			unride(d)
 			dp.kind, dp.busy = nil, false
 		end
-		slide(join(page, tops, { dp.line }), d.p0, gui.EASING_INOUTCUBIC, M.ACROSS_BACK, function()
+		slide(join(page, tops, { dp.line }), d.back, gui.EASING_INOUTCUBIC, M.ACROSS_BACK, function()
 			-- (all in one frame: the backdrop back in its place under the home)
-			shift(tops, -d.p0)
+			shift(tops, -d.back)
 			kit.scene_cut(false)
 			change()
 			kit.scene_copy_drop(still)
-			leave_line(dp)
+			drop_line(dp)
 			done()
 		end)
-		-- the button rides the line just as far as its place
-		gui.animate(d.node, "position.x", d.rest.x + d.dx, gui.EASING_INOUTCUBIC, M.ACROSS_BACK)
-		timer.delay(M.ACROSS_BACK * reach(1 - d.dx / d.p0), false, function()
+		-- the button rides the band just as far as its place
+		gui.animate(d.node, "position.x", d.rest.x + d.dx - d.p0 + d.back, gui.EASING_INOUTCUBIC, M.ACROSS_BACK)
+		timer.delay(M.ACROSS_BACK * reach((d.p0 - d.dx) / d.back), false, function()
 			gui.cancel_animations(d.node, "position.x")
 			gui.animate(d.node, "position.x", d.rest.x + d.side * M.BOUNCE, gui.EASING_OUTQUAD, 0.10, 0, function()
 				gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTQUAD, 0.20, 0, done)
