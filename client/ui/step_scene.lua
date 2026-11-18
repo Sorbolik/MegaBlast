@@ -6,14 +6,13 @@
 --
 --   0.00  the tap: the screen under it goes, the forge's painting dims
 --   0.45  the charge: the piece comes to the middle and grows slowly, under it its
---         bar of molten metal (ui/ingots.lua), the step's level empty and beating
---         like a heart faster and faster; embers rise, the painting comes closer and trembles
+--         thirty beads (ui/ingots.lua), the step's slot not there yet; embers rise, the painting comes closer and trembles
 --   1.30, 1.70, 2.02  three blows, closer and harder: a short freeze, a shake, an
 --         ember flash over the whole painting, sparks, the level fills a third; the
 --         signature's slot, not there before, is born as a dot and grows, red-hot
 --   2.15  held: silence, almost dark, the embers stop, only the level white
 --   2.75  the explosion: white flash, a shock ring, rays turning in the new grade's
---         color, the painting tinted with it, the metal flows again in it, the
+--         color, the painting tinted with it, the beads take it in a wave, the
 --         slot opens all, empty;
 --         of the piece only its silhouette, black against the light
 --   3.23  the silhouette cools into the piece as it is now (the forged one at 20)
@@ -120,7 +119,7 @@ function M.new(o)
 	gui.set_parent(sc.ingots, sc.root)
 	sc.bar = ingots.draw({ node = sc.ingots, ox = 0, oy = 720 }, IX, IY, IW, IH, level - 1, o.lit or 0, math.floor(level / 10))
 	-- the step is the slot: the next level under it does not show
-	gui.set_enabled(sc.bar.next, false)
+	if sc.bar.next then gui.set_enabled(sc.bar.next, false) end
 	local at = gui.get_position(sc.bar.node)
 	-- the step's slot is not there yet: it is born at the first blow as a dot, grows
 	-- at each blow, glowing hotter, and opens at the explosion (Sergio, 18 Nov)
@@ -205,9 +204,8 @@ local function events(sc, t, quiet)
 		gui.set_enabled(sc.icon_before, false)
 		gui.set_enabled(sc.icon_after, true)
 		-- the wave: the metal flows again from the left, in the new grade's color
-		sc.bar.set(0)
+		sc.bar.set(sc.level - 1, KC.SEAM)
 		sc.bar.set(sc.level, sc.color, 0.45, 0.06)
-		gui.set_enabled(sc.bar.next, false)
 		local stud = sc.stud
 		if stud then
 			gui.set_enabled(stud, true)

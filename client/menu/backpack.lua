@@ -141,7 +141,7 @@ local function inventory(s)
 		local worn = a.gear[slot] == set
 		gear_ui.slot(s.low, 140, 630, 64, { set = set, slot = slot, worn = worn })
 		kit.zone(s.low, s.buttons, 134, 624, 76, 76, "scheda")
-		kit.text(s.low, gear_ui.name(set, slot), 220, 648, 26, KC.SAND)
+		local name = kit.text(s.low, gear_ui.name(set, slot), 220, 648, 26, KC.SAND)
 		local tier = equip.tier(level)
 		local effects = kit.upper(gear_ui.effects(set, slot, level))
 		-- the room of the lines: up to POTENZIA, which sits left of the action
@@ -155,9 +155,10 @@ local function inventory(s)
 				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
 			end
 		else
-			bench.ingots(s.low, 220, 654, 192, 20, level, wallet.sign(p, set, slot))
-			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 422, 671, 17,
+			-- the level and grade beside the name, the beads under it across the band
+			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 220 + kit.width(name) + 16, 646, 17,
 				ui.C.GRADI[tier], "start", 0.5)
+			bench.ingots(s.low, 220, 656, math.min(460, room), 20, level, wallet.sign(p, set, slot))
 			-- the effects on one line, or on two when they don't fit
 			local lines = effect_lines(s.low, effects, room)
 			local two = #lines > 1

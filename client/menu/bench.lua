@@ -1,15 +1,15 @@
 -- The Smith's bench: the card of one piece, the same in the ARMERIA (POTENZIA)
 -- and in the ZAINO (a piece opened from the inventory: you upgrade it without
 -- leaving, Sergio 18 Nov). On an iron panel the piece, its name and grade, its
--- level as the bar of molten metal (ui/ingots.lua, the signature's studs at
+-- level as thirty beads on a thread (ui/ingots.lua, the signature's slots at
 -- 10 20 30), what it does now and
 -- at the next level, its signature with what it really gives, the Proof; under
 -- it the other pieces of its slot. In the footer ACCENDI LA FIRMA, the price
--- and +1 LIVELLO. Buying a level pours the metal one level on; a step opens the
+-- and +1 LIVELLO. Buying a level fills its bead with a blow; a step opens the
 -- step's scene; lighting the signature makes it flare.
 --
 --   local bench = require "menu.bench"
---   bench.ingots(g, x, y, w, h, level, lit)       -- the bar of the level (ui/ingots.lua)
+--   bench.ingots(g, x, y, w, h, level, lit)       -- the beads of the level (ui/ingots.lua)
 --   bench.draw(s, g, sel)                         -- the panel and the slot's other pieces
 --   bench.footer(s, low2, right, sel)             -- the signature's plate, the price, +1 LIVELLO
 --   bench.run(s, kind, sel) -> true               -- "potenzia" / "firma" (false: not the bench's)
@@ -71,20 +71,21 @@ function M.draw(s, g, sel)
 	local ig = kit.group(g, x + 28 + 75, 128 + 75)
 	gear_ui.slot(ig, x + 28, 128, 150, { set = set, slot = slot })
 	s.bench.icon = ig.node
-	kit.text(g, gear_ui.name(set, slot), x + 200, 156, 32, KC.SAND)
-	kit.text(g, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), x + 202, 187, 20, ui.C.GRADI[tier], "start", 1)
+	kit.text(g, gear_ui.name(set, slot), x + 200, 170, 32, KC.SAND)
+	kit.text(g, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), x + 202, 203, 20, ui.C.GRADI[tier], "start", 1)
 	local nxt = wallet.next(p, set, slot)
-	s.bench.title = kit.text(g, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), x + 202, 222, 23, KC.SAND)
-	-- the level: the bar of molten metal, the signature's studs at 10, 20 and 30
+	s.bench.title = kit.text(g, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), x + 202, 242, 23, KC.SAND)
+	-- the level: thirty beads on a thread under the piece, the whole width of the
+	-- card, the signature's slots at 10, 20 and 30
 	local lit = wallet.sign(p, set, slot)
-	s.bench.bar = M.ingots(g, x + 200, 238, 352, 32, level, lit)
+	s.bench.bar = M.ingots(g, x + 28, 290, w - 56, 30, level, lit)
 	s.bench.gems = s.bench.bar.gems
 	s.bench.level = level
 
 	-- what it does now, and at the next level
 	local now = equip.piece(set, slot, level, lit)
 	local after = nxt and equip.piece(set, slot, nxt.level, lit)
-	local y = 308
+	local y = 330
 	for i, e in ipairs(now) do
 		if e.row ~= "sign" then
 			local col = e.good >= 0 and KC.MINT or KC.RED
@@ -93,7 +94,7 @@ function M.draw(s, g, sel)
 			if after and after[i] and after[i].good ~= e.good then
 				kit.text(g, "› " .. gear_ui.effect(after[i]):match("^(%S+)"), x + RIGHT_COL - 8, y + 17, 18, KC.HOT, "end")
 			end
-			y = y + 30
+			y = y + 28
 		end
 	end
 
@@ -107,8 +108,8 @@ function M.draw(s, g, sel)
 			local on = lit > 0
 			-- FIRMA (or FIRMA SPENTA), its name, what it gives now, and what it
 			-- gives at the next step (its studs sit on the bar)
-			kit.text(g, kit.upper(on and T.sign or T.sign_off), rx, 322, 16, on and KC.HOT_TOP or KC.MUTE, "start", 1)
-			local title = fit(kit.text(g, kit.upper(sg.name), rx, 346, 20, on and KC.HOT_TOP or KC.SAND, "start", 0.5), rw)
+			kit.text(g, kit.upper(on and T.sign or T.sign_off), rx, 344, 16, on and KC.HOT_TOP or KC.MUTE, "start", 1)
+			local title = fit(kit.text(g, kit.upper(sg.name), rx, 367, 20, on and KC.HOT_TOP or KC.SAND, "start", 0.5), rw)
 			s.bench.sign, s.bench.lit, s.bench.desc = title, lit, {}
 			s.bench.stat = e.stat
 			local value = sign_value(e.stat, math.max(1, lit))
@@ -117,10 +118,10 @@ function M.draw(s, g, sel)
 			local nxt_sign = lit < 3 and sg.desc:find("%%d") and (lit > 0)
 			local max_lines = nxt_sign and 3 or 4
 			for li = 1, math.min(max_lines, #lines) do
-				s.bench.desc[li] = fit(kit.text(g, lines[li], rx, 369 + (li - 1) * 19, 16, ink, "start"), rw)
+				s.bench.desc[li] = fit(kit.text(g, lines[li], rx, 388 + (li - 1) * 17, 16, ink, "start"), rw)
 			end
 			if nxt_sign then
-				local ly = 369 + math.min(max_lines, #lines) * 19
+				local ly = 388 + math.min(max_lines, #lines) * 17
 				local step = equip.TIER_LEVELS[lit + 1]
 				local line = level >= step and T.sign_next_now:format(sign_value(e.stat, lit + 1))
 					or T.sign_next:format(step, sign_value(e.stat, lit + 1))
@@ -130,7 +131,7 @@ function M.draw(s, g, sel)
 	end
 	-- the Proof, beside the level
 	if nxt and nxt.proof > 0 then
-		fit(kit.text(g, kit.upper(TP.proof:format(nxt.proof_done, nxt.proof)), x + w - 28, 222, 16,
+		fit(kit.text(g, kit.upper(TP.proof:format(nxt.proof_done, nxt.proof)), x + w - 28, 242, 16,
 			nxt.proof_done >= nxt.proof and KC.MINT or KC.STEEL, "end", 0.5), 200)
 	end
 
@@ -235,15 +236,16 @@ function M.after(s)
 		local bar = b.bar
 		local color = ui.C.GRADI[equip.tier(b.level)]
 		if bar then
-			-- the metal flows from the level before, white hot, then cools to the grade's color
-			bar.set(b.level - 1)
-			bar.set(b.level, KC.SEAM, 0.22)
-			gui.animate(bar.fill, "color", color, gui.EASING_OUTQUAD, 0.35, 0.18, function()
-				sparks(bar.tip, color, 8, 34)
-			end)
-			-- the next level lights up in ember
-			gui.set_color(bar.next, KC.SEAM)
-			gui.animate(bar.next, "color", kit.with_alpha(KC.HOT_BOTTOM, 0.55), gui.EASING_OUTQUAD, 0.5, 0.2)
+			-- the bead just bought: white hot with a blow, then the grade's color; the
+			-- next one lights up in ember (a slot is not a bead: the step's scene has it)
+			local n, f = bar.beads[b.level], bar.faces[b.level]
+			if n and f then
+				gui.set_color(f, KC.SEAM)
+				gui.animate(f, "color", color, gui.EASING_OUTQUAD, 0.4, 0.15)
+				pop(n, 2.2, 0.35)
+				sparks(n, color, 8, 34)
+			end
+			if bar.next then pop(bar.next, 1.6, 0.3, 0.2) end
 		end
 		-- the piece takes the blow: squashed, then back
 		if b.icon then
