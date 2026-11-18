@@ -40,7 +40,7 @@ local M = {}
 M.CHARGE, M.SUSPENSE, M.BOOM, M.REVEAL, M.TITLE = 0.45, 2.15, 2.75, 3.23, 3.25
 M.BLOWS = { { 1.30, 0.05, 0.42, 0.33 }, { 1.70, 0.07, 0.60, 0.50 }, { 2.02, 0.11, 0.80, 0.72 } } -- t, freeze, trauma, flash
 M.ROWS, M.GO = { 3.65, 3.80, 3.95 }, 4.20
-M.GROW = { 0.16, 0.42, 0.68 }  -- how big the step's slot is after each blow
+M.GROW = { 0.25, 0.5, 0.75 }  -- how far the step's slot has grown after each blow, from a bead to all
 M.HOLD = 7.0   -- it goes away by itself
 local ROMAN = { "I", "II", "III", "IV" }
 local W, H = 1280, 720
@@ -209,7 +209,8 @@ local function events(sc, t, quiet)
 		local stud = sc.stud
 		if stud then
 			gui.set_enabled(stud, true)
-			gui.set_scale(stud, vmath.vector3(M.GROW[3], M.GROW[3], 1))
+			local last = lerp(sc.bar.small, 1, M.GROW[3])
+			gui.set_scale(stud, vmath.vector3(last, last, 1))
 			gui.set_enabled(sc.stud_hot, false)
 			if sc.bar.seed then gui.set_enabled(sc.bar.seed, false) end
 			gui.animate(stud, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, 0, function()
@@ -290,13 +291,13 @@ local function draw(sc, t)
 			beat = math.max(0, math.sin(t * rate * math.pi)) ^ 6
 		end
 		if sc.stud then
-			-- nothing, a dot, bigger, almost all: each blow makes it grow with a kick
-			local grow = 0
+			-- it starts as big as the bead it takes the place of, and grows at each blow
+			local small, grow = sc.bar.small, 0
 			for i, b in ipairs(M.BLOWS) do
 				if t >= b[1] then
 					local from = M.GROW[i - 1] or 0
-					grow = lerp(from, M.GROW[i], eo(seg(t, b[1], b[1] + 0.12)))
-					if t < b[1] + 0.06 then grow = grow + 0.12 end
+					grow = lerp(small, 1, lerp(from, M.GROW[i], eo(seg(t, b[1], b[1] + 0.12))))
+					if t < b[1] + 0.06 then grow = grow + 0.06 end
 				end
 			end
 			gui.set_enabled(sc.stud, grow > 0)

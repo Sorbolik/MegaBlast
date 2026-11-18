@@ -40,10 +40,11 @@ function M.draw(g, x, y, w, h, level, lit, born)
 	local root = gui.new_box_node(vec(x - g.ox, g.oy - (y + h / 2)), vec(0, 0))
 	gui.set_visible(root, false)
 	gui.set_parent(root, g.node)
-	local bar = { node = root, level = level, beads = {}, kind = {} }
+	local bar = { node = root, level = level, beads = {} }
 	local d = h
 	local b = math.min(h * 0.46, (w - 3 * d - 29 * 3) / 27)
 	local gap = (w - 27 * b - 3 * d) / 29
+	bar.small = b / d   -- a bead's size against a slot's
 	local at, cx = {}, 0
 	for i = 1, M.LEVELS do
 		local size = i % 10 == 0 and d or b
