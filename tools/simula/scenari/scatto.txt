@@ -1,0 +1,24 @@
+# Lo SCATTO di un pezzo (livello 20 della corazza Fornace) e dopo: l'armeria deve
+# ritrovare il suo sfondo, la home il suo, e la porta dell'ARMERIA deve riaprirsi
+# intera (Sergio, 18 nov: dopo lo scatto sfondi neri e la porta ferma a metà).
+imposta prova_profilo 1
+
+aspetta 4
+tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
+aspetta 1.5
+tocca_bordo 72 280 alto sinistra    # CORAZZA (Fornace, livello 19, prova fatta)
+aspetta 0.8
+foto 01_corazza
+tocca_bordo 208 48 basso destra     # +1 LIVELLO: lo scatto al 20
+aspetta 1.2
+foto 02_scatto
+aspetta 3
+foto 03_armeria_dopo
+tocca_bordo 72 60 basso sinistra    # HOME
+aspetta 1.5
+foto 04_home_dopo
+tocca_bordo 210 170 mezzo destra    # di nuovo la porta ARMERIA
+aspetta 0.45
+foto 05_porta_a_meta
+aspetta 1.5
+foto 06_armeria_di_nuovo
