@@ -1,0 +1,52 @@
+# Partite registrate: copia dal VPS le ricette delle partite giocate sui
+# telefoni (server -partite, /var/lib/megablast/partite, docs/server.md) nel
+# ramo partite-registrate, cartella partite/. Sono il materiale per
+# l'allenamento dei bot (tools/arena): il PC e i thread le prendono con
+# git fetch origin partite-registrate. Ogni notte e a mano: Actions >
+# Partite registrate > Run workflow. Stessi segreto e variabile di
+# "Server sul VPS" (tools/vps/README.md). Il ramo cresce e basta: un commit
+# solo quando arrivano partite nuove.
+name: Partite registrate
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+concurrency:
+  group: partite
+permissions:
+  contents: write
+jobs:
+  partite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Ramo partite-registrate
+        run: |
+          R="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          mkdir -p "$RUNNER_TEMP/ramo" && cd "$RUNNER_TEMP/ramo"
+          git init -q -b partite-registrate
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch -q --depth 1 "$R" partite-registrate; then git checkout -q FETCH_HEAD -B partite-registrate; fi
+          mkdir -p partite
+      - name: Copia dal VPS
+        env:
+          CHIAVE: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
+        run: |
+          [ -n "$CHIAVE" ] && [ -n "$VPS_HOST" ] || { echo "manca VPS_SSH_KEY o VPS_HOST"; exit 1; }
+          install -m 600 /dev/null "$RUNNER_TEMP/chiave"
+          printf '%s\n' "$CHIAVE" > "$RUNNER_TEMP/chiave"
+          ssh -i "$RUNNER_TEMP/chiave" -o StrictHostKeyChecking=accept-new "root@$VPS_HOST" \
+            'cd /var/lib/megablast/partite 2>/dev/null && tar -cf - --no-recursion -- *.lua 2>/dev/null || true' \
+            | tar -xf - -C "$RUNNER_TEMP/ramo/partite" || true
+          rm -f "$RUNNER_TEMP/chiave"
+      - name: Commit
+        run: |
+          cd "$RUNNER_TEMP/ramo"
+          git add -A partite
+          if git diff --cached --quiet; then echo "nessuna partita nuova"; exit 0; fi
+          n=$(git diff --cached --name-only | wc -l)
+          git commit -q -m "Partite registrate: $n nuove"
+          git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" partite-registrate
+          echo "$n partite nuove, $(ls partite | wc -l) in tutto"
