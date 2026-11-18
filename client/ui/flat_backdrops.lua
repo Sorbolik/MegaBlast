@@ -28,6 +28,19 @@ local function box(x, y, w, h, color, parent)
 	return n
 end
 
+-- discs and rings that fade with the theme (kit.scene_bg crossfades two themes)
+local function disc(...)
+	local n = ui.disc(...)
+	gui.set_inherit_alpha(n, true)
+	return n
+end
+
+local function ring_node(...)
+	local n = ui.ring_node(...)
+	if n then gui.set_inherit_alpha(n, true) end
+	return n
+end
+
 -- the textures made or loaded once (by name), and the size of the loaded ones
 local textures, sizes = {}, {}
 
@@ -93,8 +106,8 @@ THEMES.fucina = {
 		for j = -4, 4 do box(j * 320, TOP / 2, 4, TOP, seam, root) end
 		for i = -1, 3 do
 			for j = -4, 4 do
-				ui.disc(j * 320, 360 + i * 240 + 120, 18, rivet, root)
-				ui.disc(j * 320 - 2, 360 + i * 240 + 122, 8, shine, root)
+				disc(j * 320, 360 + i * 240 + 120, 18, rivet, root)
+				disc(j * 320 - 2, 360 + i * 240 + 122, 8, shine, root)
 			end
 		end
 	end,
@@ -107,8 +120,8 @@ THEMES.campo = {
 	build = function(root)
 		grid(root, 40, 4, c("1A2330"), c("1F2A39"), 2, 3)
 		local target = c("223042")
-		for _, d in ipairs({ 660, 480, 300, 120 }) do ui.ring_node(400, 300, d, 6, target, root) end
-		ui.disc(400, 300, 36, target, root)
+		for _, d in ipairs({ 660, 480, 300, 120 }) do ring_node(400, 300, d, 6, target, root) end
+		disc(400, 300, 36, target, root)
 	end,
 }
 
@@ -120,7 +133,7 @@ THEMES.arena = {
 		local ring, ring_alt = c("1C1826"), c("17141F")
 		local i = 0
 		for r = 1300, 200, -110 do
-			ui.disc(0, -260, r * 2, i % 2 == 0 and ring or ring_alt, root)
+			disc(0, -260, r * 2, i % 2 == 0 and ring or ring_alt, root)
 			i = i + 1
 		end
 	end,
@@ -140,6 +153,23 @@ THEMES.stendardi = {
 			end
 			box(x + 75, TOP / 2, 4, TOP, fold, root)
 		end
+	end,
+}
+
+-- SHOP (Sergio 18 Nov: the forge's wall went to the armory in the ZAINO)
+-- the counter seen from the front: wooden panels in frames, coins in a row
+THEMES.negozio = {
+	base = c("150F12"),
+	build = function(root)
+		local frame, panel, coin = c("1E161A"), c("191216"), c("2A1E17")
+		for i = -1, 6 do
+			for j = -6, 6 do
+				local x, y = j * 220, 140 + i * 200
+				box(x, y, 196, 176, frame, root)
+				box(x, y, 168, 148, panel, root)
+			end
+		end
+		for j = -12, 12 do disc(j * 110 + 55, 660, 20, coin, root) end
 	end,
 }
 

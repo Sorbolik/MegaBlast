@@ -159,7 +159,20 @@ local function grid(s, g, items, a)
 end
 
 -- a drag inside the window moves the grid (and is not a tap on a piece)
+local WHEEL_UP, WHEEL_DOWN, WHEEL_STEP = hash("zoom_avanti"), hash("zoom_indietro"), 60
+
 local function grid_drag(s, action_id, action)
+	-- on a desktop the mouse wheel scrolls the grid, as in a browser
+	if (action_id == WHEEL_UP or action_id == WHEEL_DOWN) and s.grid and not s.card and not s.sheet
+		and s.tab ~= "sigilli" and (s.scroll_max or 0) > 0 then
+		if action.pressed then
+			local step = action_id == WHEEL_UP and -WHEEL_STEP or WHEEL_STEP
+			s.scroll = math.max(0, math.min(s.scroll_max, (s.scroll or 0) + step))
+			gui.set_position(s.grid.node, vmath.vector3(0, s.scroll, 0))
+			grid_fade(s)
+		end
+		return true
+	end
 	if action_id ~= ui.TOUCH or not s.grid or s.card or s.sheet or s.tab == "sigilli" then return false end
 	if action.pressed then
 		s.drag = nil
@@ -182,8 +195,8 @@ local function grid_drag(s, action_id, action)
 		s.buttons.held_down = nil
 	end
 	if d.moved then
-		-- (action.y here grows downward, like the Figma: the grid follows the finger)
-		s.scroll = math.max(0, math.min(s.scroll_max, d.from - dy))
+		-- the grid follows the finger (Sergio, 18 Nov: it went the other way)
+		s.scroll = math.max(0, math.min(s.scroll_max, d.from + dy))
 		gui.set_position(s.grid.node, vmath.vector3(0, s.scroll, 0))
 		grid_fade(s)
 	end
@@ -249,13 +262,11 @@ local function inventory(s)
 			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 220 + kit.width(name) + 16, 646, 17,
 				ui.C.GRADI[tier], "start", 0.5)
 			bench.ingots(s.low, 220, 656, math.min(460, room), 20, level, wallet.sign(p, set, slot))
-			-- the effects on one line, or on two when they don't fit
-			local lines = effect_lines(s.low, effects, room)
-			local two = #lines > 1
-			for i = 1, math.min(2, #lines) do
-				local n = kit.text(s.low, lines[i], 220, two and (674 + i * 18) or 697, kit.MIN_TEXT, KC.MUTE, "start", 0.5)
-				local wide = kit.width(n)
-				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
+			-- the rows on one line, or on two when they don't fit, coloured by kind
+			local lines, made = gear_ui.effect_row(s.low, 220, 688, set, slot, level, wallet.sign(p, set, slot), room, 22)
+			if lines == 1 then
+				-- (Sergio, 19 Nov: the bigger numbers wanted room under the beads)
+				for _, n in ipairs(made) do gui.set_position(n, gui.get_position(n) - vmath.vector3(0, 7, 0)) end
 			end
 		end
 		-- POTENZIA: the plate of the secondary actions (as ACCENDI LA FIRMA in the armory)
@@ -500,6 +511,132 @@ end
 
 -- Screen ----------------------------------------------------------------------------
 
+-- THE PASS INTO THE ARMERIA (Sergio, 18 Nov: the mock-up he liked, artifact
+-- DrdyDpUrGgYQW5uFNfJA6D, then «le catene falle partire da sotto la parola
+-- inventario», not over the card): a blade cuts INVENTARIO and SIGILLI, which
+-- stay cut, and from under INVENTARIO the sign ARMERIA (WB-080) comes down on
+-- its chains and swings
+local SIGN_X, SIGN_W = 362, 140
+-- the line under INVENTARIO the chains come out of: nothing of the sign above it
+local SIGN_TOP = 63
+local SPARK = vmath.vector4(1, 0.95, 0.69, 1)
+local V0 = vmath.vector3()
+
+local function moved(n, dx, dy)
+	local at = gui.get_position(n)
+	V0.x, V0.y, V0.z = at.x + dx, at.y + dy, at.z
+	return vmath.vector3(V0)
+end
+
+-- the sign hanging under INVENTARIO: a node at the chains' top (it turns around
+-- there), the board and ARMERIA written on its face. Made before the tags, so the
+-- word stays over it: it comes out from behind INVENTARIO
+local function sign(g)
+	local m_h = SIGN_W * 180 / 386
+	local hook = kit.group(g, SIGN_X, SIGN_TOP)
+	gui.set_inherit_alpha(hook.node, true)
+	local board = kit.pic(hook, "cartello_armeria", SIGN_X - SIGN_W / 2, SIGN_TOP, SIGN_W, m_h)
+	gui.set_inherit_alpha(board, true)
+	local word = kit.text(hook, common.armory, SIGN_X, SIGN_TOP + m_h * 0.79, 16, KC.HOT, "middle", 1)
+	gui.set_inherit_alpha(word, true)
+	return hook.node, m_h
+end
+
+-- the halves apart, as they stay once cut: the top a little up, the bottom down
+-- and turned, so the cut reads on both words
+local function open_halves(cut, t, delay)
+	for i, c in ipairs(cut) do
+		local d = delay + (i - 1) * 0.07
+		local top, bottom = moved(c.top, -2, 3), moved(c.bottom, 4, -7)
+		local turn = vmath.vector3(0, 0, kit.CUT_SLANT - 2.5)
+		if t == 0 then
+			gui.set_position(c.top, top)
+			gui.set_position(c.bottom, bottom)
+			gui.set_rotation(c.bottom, turn)
+		else
+			gui.animate(c.top, "position", top, gui.EASING_OUTBACK, t, d)
+			gui.animate(c.bottom, "position", bottom, gui.EASING_OUTBOUNCE, t + 0.15, d + 0.03)
+			gui.animate(c.bottom, "euler", turn, gui.EASING_OUTBACK, t + 0.15, d + 0.03)
+		end
+	end
+end
+
+-- a few sparks off the blade where it cuts a word: they fall and go out
+local function sparks(g, x, y, delay)
+	for k = 1, 6 do
+		local n = gui.new_box_node(vmath.vector3(x - g.ox + (k - 3.5) * 9, g.oy - y, 0), vmath.vector3(4, 4, 0))
+		gui.set_adjust_mode(n, gui.ADJUST_FIT)
+		gui.set_color(n, vmath.vector4(SPARK.x, SPARK.y, SPARK.z, 0))
+		gui.set_parent(n, g.node)
+		local to = moved(n, (k - 3.5) * 8, -(18 + (k % 3) * 10))
+		gui.animate(n, "color.w", 1, gui.EASING_LINEAR, 0.01, delay)
+		gui.animate(n, "position", to, gui.EASING_OUTQUAD, 0.35, delay)
+		gui.animate(n, "color", vmath.vector4(0.95, 0.39, 0.1, 0), gui.EASING_INQUAD, 0.35, delay, function() gui.delete_node(n) end)
+	end
+end
+
+-- the tags cut, the sign hanging; animate: the blade runs now (POTENZIA)
+local function armory_pass(s, cut, animate)
+	local g = s.head.top_left
+	local n, m_h = s.sign, s.sign_h
+	if not animate then
+		open_halves(cut, 0, 0)
+		return
+	end
+	-- the blade through the middle of every word: from left of the first to past the last
+	local a, b = cut[1], cut[#cut]
+	local k = (a.cut_y - b.cut_y) / (b.mid - a.mid)
+	local x0 = a.mid - 112
+	local len = (b.mid - x0 + 80) / math.cos(math.atan(k))
+	local y0 = a.cut_y + (a.mid - x0) * k
+	local speed = 0.2 / len
+	-- each word flashes white-hot as the blade goes through it, then goes cold
+	for i, c in ipairs(cut) do
+		local at = (c.mid - x0) * speed
+		for _, t in ipairs({ c.top_text, c.bottom_text }) do
+			gui.set_color(t, i == 1 and kit.TAB_HOT or kit.TAB_COLD)
+			gui.animate(t, "color", SPARK, gui.EASING_OUTQUAD, 0.05, at)
+			gui.animate(t, "color", kit.TAB_COLD, gui.EASING_OUTQUAD, 0.3, at + 0.05)
+		end
+		sparks(g, c.mid, c.cut_y + 4, at)
+	end
+	open_halves(cut, 0.3, (cut[1].mid - x0) * speed)
+	-- the blade: a white-hot line along the cut, quick, then gone
+	local blade = gui.new_box_node(vmath.vector3(x0 - g.ox, g.oy - y0, 0), vmath.vector3(0, 4, 0))
+	gui.set_adjust_mode(blade, gui.ADJUST_FIT)
+	gui.set_pivot(blade, gui.PIVOT_W)
+	gui.set_color(blade, SPARK)
+	gui.set_rotation(blade, vmath.vector3(0, 0, math.deg(math.atan(k))))
+	gui.set_parent(blade, g.node)
+	gui.animate(blade, "size.x", len, gui.EASING_LINEAR, 0.2)
+	gui.animate(blade, "size.y", 1, gui.EASING_INQUAD, 0.16, 0.2)
+	gui.animate(blade, "color.w", 0, gui.EASING_INQUAD, 0.16, 0.2, function() gui.delete_node(blade) end)
+	-- the sign comes out from under INVENTARIO, chains first, already swinging,
+	-- and settles on its chains; the word's bottom half takes the jolt
+	local drop = 0.32
+	local drop0 = drop
+	local rest = gui.get_position(n)
+	gui.set_position(n, moved(n, 0, m_h * 0.6))
+	gui.set_rotation(n, vmath.vector3(0, 0, -7))
+	gui.set_color(n, vmath.vector4(1, 1, 1, 0))
+	gui.animate(n, "color.w", 1, gui.EASING_OUTQUAD, 0.12, drop0)
+	gui.animate(n, "position", rest, gui.EASING_OUTBACK, 0.42, drop)
+	gui.animate(n, "euler.z", 0, gui.EASING_OUTELASTIC, 1.5, drop + 0.12)
+	local jolt = cut[1].bottom
+	gui.animate(jolt, "position.y", gui.get_position(jolt).y - 7 - 3, gui.EASING_OUTQUAD, 0.08, drop + 0.4, function()
+		gui.animate(jolt, "position.y", gui.get_position(jolt).y + 3, gui.EASING_OUTBACK, 0.25)
+	end)
+end
+
+-- back to the pieces: the sign goes back up behind the word and fades (a copy,
+-- over the screen rebuilt)
+local function sign_away(s)
+	local n, m_h = s.sign, s.sign_h
+	gui.animate(n, "position", moved(n, 0, m_h * 0.6), gui.EASING_INBACK, 0.3)
+	gui.animate(n, "euler.z", 5, gui.EASING_INQUAD, 0.3)
+	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.3, 0, function() gui.delete_node(n) end)
+end
+
 local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over" }
 
 local function build(s)
@@ -513,11 +650,21 @@ local function build(s)
 	s.outline = nil
 	local p = s.prof
 	local in_card = s.tab ~= "sigilli" and s.card and s.sel
-	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", common.home)
+	-- the ARMERIA has the forge's backdrop, the pieces the dressing room's: the
+	-- one comes in over the other when POTENZIA opens it or the arrow closes it
+	local passing = s.just == "open" or s.closing
+	if s.back then kit.scene_bg(s.back, in_card and "fucina" or "camerino", passing and 0.35 or nil) end
+	-- in the ARMERIA the arrow goes back to the pieces, and says so
+	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", in_card and kit.upper(T.title) or common.home)
 	s.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(s.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(s.wallet, p.buoni or 0)
+	local cut = in_card and {} or nil
+	-- the sign ARMERIA, under the tags (made first, so the word is over it)
+	s.sign, s.sign_h = nil, nil
+	if cut or s.closing then s.sign, s.sign_h = sign(s.head.top_left) end
 	kit.tabs(s.head.top_left, s.buttons, 300, 28, { { T.tab_inventory, "scheda:inventario" }, { T.tab_seals, "scheda:sigilli" } },
-		s.tab == "sigilli" and 2 or 1, KC.PURPLE, true)
+		s.tab == "sigilli" and 2 or 1, KC.PURPLE, true, cut)
+
 	-- the left column sticks to the left edge, the stats to the right one, the rest in the middle
 	s.left = kit.anchor(0, 0, gui.ANCHOR_LEFT)
 	s.mid = kit.anchor(0, 0)
@@ -532,6 +679,14 @@ local function build(s)
 	else
 		inventory(s)
 	end
+	if cut then
+		-- the chains hang from the base of INVENTARIO: the sign follows its bottom
+		-- half in everything, the cut, the turn and the last jolt (Sergio, 19 Nov)
+		gui.set_parent(s.sign, cut[1].bottom, true)
+		armory_pass(s, cut, s.just == "open")
+	end
+	if s.closing then sign_away(s) end
+	s.closing = nil
 end
 
 function M.new(prof, tab, color)
@@ -619,31 +774,24 @@ end
 
 -- the card goes away and the pieces come back from the left, where it goes out
 local function close_card(s)
-	s.card, s.sheet = nil, nil
+	s.card, s.sheet, s.closing = nil, nil, true
 	build(s)
 	local at = gui.get_position(s.mid.node)
 	gui.set_position(s.mid.node, at - vmath.vector3(70, 0, 0))
 	gui.animate(s.mid.node, "position", at, gui.EASING_OUTCUBIC, 0.22)
 end
 
--- The card of POTENZIA is a modal of the ZAINO (Sergio, 18 Nov): a touch anywhere
--- that is not one of its buttons closes it; the arrow leaves the ZAINO as always.
--- With the controller there is no "anywhere": its back button closes the card.
+-- POTENZIA opens the ARMERIA inside the ZAINO (Sergio, 18 Nov evening: the
+-- armory and the upgrade card were the same screen, so the armory is this one):
+-- the backdrop of the forge, and only the arrow or the tab INVENTARIO go back
+-- to the pieces (no more "touch anywhere to close")
 function M.on_input(s, action_id, action)
 	if bench.input(s, action_id, action) then return nil end
 	if grid_drag(s, action_id, action) then return nil end
 	local in_card = s.card and s.tab ~= "sigilli"
 	local ui_action = ui.touch(s.buttons, action_id, action)
-	if in_card and action_id == ui.TOUCH then
-		if action.pressed then
-			s.miss = not s.buttons.held_down
-		elseif action.released and s.miss then
-			s.miss = nil
-			close_card(s)
-			return nil
-		end
-	end
-	if ui_action == "indietro" and in_card and action_id == ui.PAD then
+	-- the arrow, or the tab INVENTARIO (still cut), go back to the pieces
+	if in_card and (ui_action == "indietro" or ui_action == "scheda:inventario") then
 		close_card(s)
 		return nil
 	end

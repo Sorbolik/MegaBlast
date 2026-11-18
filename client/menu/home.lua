@@ -84,7 +84,7 @@ local DOORS = {
 	campagna = { 22, 354, 396, "porta_campagna", -1, hex("2a1206"), 29 },
 	allenamento = { 22, 476, 376, "porta_allenamento", -1, hex("1d1a20"), 24 },
 	eventi = { 862, 354, 396, "porta_eventi", 1, hex("3a1a05"), 29 },
-	armeria = { 882, 476, 376, "porta_armeria", 1, hex("f4ece1"), 29 },
+	armeria = { 882, 476, 376, "porta_shop", 1, hex("f4ece1"), 29 },
 }
 
 local V = vmath.vector3()
@@ -201,7 +201,7 @@ function M.new(color)
 	h.training = door(h, left, "allenamento", common.training)
 	set_sub(h.training, T.training_sub)
 	h.events_door = door(h, right, "eventi", common.events)
-	h.armory = door(h, right, "armeria", common.armory)
+	h.armory = door(h, right, "armeria", common.shop)
 	set_sub(h.armory, T.armory_sub)
 
 	-- under the thread: GIOCA on the right, the wheel on the left

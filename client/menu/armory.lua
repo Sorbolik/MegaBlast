@@ -1,16 +1,11 @@
--- The ARMERIA (Figma "RIORGANIZZAZIONE MENU · 14 nov", Consigliata/4 and /5;
--- Sergio, 14 Nov): the Smith's place, from the home's door. Two tabs:
---   POTENZIA  the piece chosen (on the devil or among the others of its slot):
---             its grade, its level with the bar and the steps at 10 20 30, what
---             it does now and at the next level, the next step, the Proof; the
---             other pieces of that slot you own; the price and POTENZIA
---   BOTTEGA   the Smith's four offers (one per slot, among the pieces you don't
---             have, at the shop's price) and the ten pieces of the day (at the
---             full price); USA UN BUONO and COMPRA
--- On the left the devil with its pieces labeled, on the right the stats.
--- Rebuilt at every tap; buying a step shows its scene (ui/step_scene.lua).
+-- The SHOP (Sergio, 18 Nov: the ARMERIA went into the ZAINO, behind POTENZIA; the
+-- home's door is now the Smith's shop, WB-080): the Smith's four offers (one per
+-- slot, among the pieces you don't have, at the shop's price) and the ten pieces of
+-- the day (at the full price); USA UN BUONO and COMPRA.
+-- On the left the devil with its pieces labeled (the ware chosen tried on), on the
+-- right the stats. Rebuilt at every tap.
 --
---   local a = armeria.new(profile, tab)        -- tab: "potenzia" (default) or "bottega"
+--   local a = armeria.new(profile, from)
 --   armeria.update(a, dt)
 --   armeria.on_input(a, action_id, action) -> "indietro" or nil
 --   armeria.destroy(a)
@@ -24,7 +19,6 @@ local profile = require "menu.profile"
 local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
 local outline = require "menu.outline"
-local bench = require "menu.bench"
 local T = require("lang.text").armory
 local TG = require("lang.text").gear_ui
 local TP = require("lang.text").pieces
@@ -39,27 +33,6 @@ local function copy(t)
 	local o = {}
 	for k, v in pairs(t) do o[k] = copy(v) end
 	return o
-end
-
--- the piece chosen: { set, slot }; by default the one worn in the slot chosen
-local function chosen(a)
-	local g = profile.active_loadout(a.prof).gear
-	if a.sel and wallet.owns(a.prof, a.sel[1], a.sel[2]) then return a.sel end
-	local slot = a.slot or "mask"
-	if g[slot] then return { g[slot], slot } end
-	for _, f in ipairs(equip.SETS) do
-		if wallet.owns(a.prof, f.id, slot) then return { f.id, slot } end
-	end
-	return nil
-end
-
--- POTENZIA: the bench (menu/bench.lua), the same card the ZAINO opens --------------
-
-local function upgrade(a)
-	local sel = chosen(a)
-	bench.draw(a, a.mid, sel)
-	bench.footer(a, a.low2, a.right, sel)
-	return sel
 end
 
 -- BOTTEGA ---------------------------------------------------------------------------
@@ -181,11 +154,9 @@ local function build(a)
 	a.buttons, a.figure, a.action = {}, nil, nil
 	a.outline = nil
 	local p = a.prof
-	a.head = kit.header(a.buttons, common.armory, KC.PURPLE, "indietro", a.from or common.home)
+	a.head = kit.header(a.buttons, common.shop, KC.PURPLE, "indietro", a.from or common.home)
 	a.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(a.wallet, p.buoni or 0)
-	kit.tabs(a.head.top_left, a.buttons, 290, 28, { { T.tab_upgrade, "banco:potenzia" }, { T.tab_shop, "banco:bottega" } },
-		a.tab == "bottega" and 2 or 1, KC.PURPLE, true)
 	a.left = kit.anchor(0, 0, gui.ANCHOR_LEFT)
 	a.mid = kit.anchor(0, 0)
 	a.rt = kit.anchor(1280, 0, gui.ANCHOR_RIGHT)
@@ -194,28 +165,15 @@ local function build(a)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
 	local act = profile.active_loadout(p)
 	gear_ui.devil(a, a.left, 215, 600, 395)
-	local try, focus, up
-	if a.tab == "bottega" then
-		local w = shop(a)
-		-- the ware chosen: tried on the devil
-		if w then try, focus = { w[1], w[2] }, w[2] end
-	else
-		local sel = upgrade(a)
-		focus = sel and sel[2]
-		-- the piece one level up: the column says what +1 LIVELLO changes
-		-- (Sergio, 15 Nov 22:48: the stats wherever the gear changes)
-		local nxt = sel and wallet.next(p, sel[1], sel[2])
-		if nxt then up = { sel[1], sel[2], nxt.level } end
-	end
-	gear_ui.worn(a, a.left, act, 215, 600, 395, 36, { 130, 248, 366, 484 }, 72, focus, try)
+	local try, focus
+	local w = shop(a)
+	-- the ware chosen: tried on the devil
+	if w then try, focus = { w[1], w[2] }, w[2] end
+	gear_ui.worn(a, a.left, act, 215, 600, 395, 36, { 130, 248, 366, 484 }, 72, focus, try, true)
 	local a2
 	if try and act.gear[try[2]] ~= try[1] then
 		a2 = copy(act)
 		a2.gear[try[2]] = try[1]
-	elseif up and act.gear[up[2]] == up[1] then
-		a2 = copy(act)
-		a2.levels = wallet.levels(p, act)
-		a2.levels[up[2]] = up[3]
 	end
 	if a.sheet then
 		-- all the stats over the middle: the bench and the column are hidden (and their taps)
@@ -227,9 +185,9 @@ local function build(a)
 	end
 end
 
-function M.new(prof, tab, from)
-	local a = { prof = prof, tab = tab or "potenzia", colore = ui.C.SQUADRA[1], from = from }
-	a.back = kit.scene(250, 420, { accent = KC.PURPLE, bg = "fucina" })
+function M.new(prof, from)
+	local a = { prof = prof, colore = ui.C.SQUADRA[1], from = from }
+	a.back = kit.scene(250, 420, { accent = KC.PURPLE, bg = "negozio" })
 	build(a)
 	return a
 end
@@ -238,16 +196,8 @@ local function run_cmd(a, ui_action)
 	local kind, x = ui_action:match("^(%a+):?(.*)$")
 	local p = a.prof
 	local s1, s2 = x:match("^([^:]*):?(.*)$")
-	if kind == "banco" then
-		a.tab, a.sheet = x, nil
-	elseif kind == "foglio" then
+	if kind == "foglio" then
 		a.sheet = not a.sheet
-	elseif kind == "posto" then
-		a.slot, a.sel, a.sheet = x, nil, nil
-	elseif kind == "pezzo" then
-		a.sel, a.slot = { s1, s2 }, s2
-	elseif kind == "potenzia" or kind == "firma" then
-		bench.run(a, kind, chosen(a))
 	elseif kind == "merce" then
 		-- an offer is bought at the shop's price; the day's pieces at the full one
 		local offer = wallet.shop(p, wallet.today())[s2] == s1
@@ -259,18 +209,14 @@ local function run_cmd(a, ui_action)
 	end
 	profile.save(p)
 	build(a)
-	bench.after(a)
 end
 
 function M.update(a, dt)
 	if a.figure then scoria.update(a.figure, dt, a.st) end
 	if a.outline then outline.update(a.outline) end
-	bench.update(a, dt)
 end
 
 function M.on_input(a, action_id, action)
-	-- the step's scene: a tap skips it
-	if bench.input(a, action_id, action) then return nil end
 	local ui_action = ui.touch(a.buttons, action_id, action)
 	if ui_action == "indietro" then return "indietro" end
 	if ui_action then run_cmd(a, ui_action) end
@@ -279,7 +225,6 @@ end
 
 function M.destroy(a)
 	outline.off()
-	bench.delete(a)
 	kit.header_delete(a.head)
 	for _, k in ipairs(GROUPS) do
 		if a[k] then gui.delete_node(a[k].node) end

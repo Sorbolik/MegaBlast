@@ -76,6 +76,54 @@ function M.effect_parts(e, e2)
 	return (t:gsub("^%-", "−")), name
 end
 
+-- the colour of each kind of row (Sergio, 18 Nov): the main bonus, the second
+-- ones, the minus, the signature (its own colour, the Ossidiana's)
+M.ROW_COLOR = { main = kit.C.HOT, second = kit.C.STEEL, minus = kit.C.RED, sign = kit.C.PURPLE }
+
+-- A piece's rows on one or two lines from (x, y), at most room wide: each its
+-- number a bit bigger than its name, in the colour of its kind; the signature
+-- by its name (dim while it is off). Returns the lines used and the nodes
+function M.effect_row(g, x, y, set, slot, level, lit, room, line_h)
+	local items = {}
+	for _, e in ipairs(equip.piece(set, slot, level, lit)) do
+		local col = M.ROW_COLOR[e.row] or kit.C.SAND
+		if e.row == "sign" then
+			local off = (lit or 0) == 0
+			if off then col = kit.with_alpha(col, 0.55) end
+			items[#items + 1] = { nil, kit.upper(equip.SIGNS[e.stat].name), col, off_sign = off }
+		else
+			local v, name = M.effect_parts(e)
+			items[#items + 1] = { v, name, col }
+		end
+	end
+	local cx, line, made = x, 1, {}
+	for _, it in ipairs(items) do
+		local num = it[1] and kit.text(g, it[1], 0, 0, 20, it[3], "start")
+		local name = kit.text(g, it[2], 0, 0, kit.MIN_TEXT, it[3], "start", 0.5)
+		local nw = num and kit.width(num) + 5 or 0
+		local w = nw + kit.width(name)
+		local over = cx > x and cx + w > x + room
+		if over and it.off_sign then
+			-- the signature still off never takes a line of its own: it waits until there is room
+			gui.delete_node(name)
+			break
+		end
+		if over and line < 2 then cx, line = x, line + 1 end
+		local by = y + (line - 1) * (line_h or 22)
+		for _, n in ipairs({ num, name }) do
+			if n then
+				made[#made + 1] = n
+				local pos = gui.get_position(n)
+				pos.x = pos.x + (n == name and cx + nw or cx)
+				pos.y = pos.y - by
+				gui.set_position(n, pos)
+			end
+		end
+		cx = cx + w + 16
+	end
+	return line, made
+end
+
 -- the rows of a piece but its signature, in one line
 function M.effects(set, slot, level)
 	local t = {}
@@ -84,6 +132,15 @@ function M.effects(set, slot, level)
 	end
 	return table.concat(t, "  ")
 end
+
+-- the colour of each family's pieces (their main colour, measured on the icons
+-- and made a bit lighter): the type symbol of a piece is filled with it (Sergio, 18 Nov)
+local function hexc(h)
+	return vmath.vector4(tonumber(h:sub(1, 2), 16) / 255, tonumber(h:sub(3, 4), 16) / 255, tonumber(h:sub(5, 6), 16) / 255, 1)
+end
+-- the type symbol's colour: one per slot, the same whatever the family, like a label
+-- (Sergio, 18 Nov: «sempre uguale per tutte le armature, sempre uguale per tutte le scarpe»)
+M.TINT = { mask = hexc("f26419"), chest = hexc("9ec4e0"), cloak = hexc("b07ce8"), legs = hexc("5cdbb8"), gloves = hexc("ffb703") }
 
 -- the name of a slot in the type symbols (WB-078)
 local TYPE = { mask = "tipo_elmo", chest = "tipo_corazza", cloak = "tipo_mantello", legs = "tipo_stivali", gloves = "tipo_guanti" }
@@ -114,7 +171,8 @@ function M.slot(g, x, y, s, opt)
 	local tab = s * 0.34
 	if opt.slot and TYPE[opt.slot] then
 		keep(kit.pic(g, "linguetta", x - s * 0.05, y - s * 0.05, tab, tab))
-		keep(fit(g, TYPE[opt.slot], x - s * 0.05 + tab * 0.18, y - s * 0.05 + tab * 0.16, tab * 0.64, tab * 0.64))
+		local sym = keep(fit(g, TYPE[opt.slot], x - s * 0.05 + tab * 0.18, y - s * 0.05 + tab * 0.16, tab * 0.64, tab * 0.64))
+		gui.set_color(sym, M.TINT[opt.slot])
 	end
 	if not opt.set then return made end
 	if opt.level then
@@ -173,7 +231,7 @@ local function shift(n, x)
 	gui.set_position(n, pos)
 end
 
-function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
+function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try, bare)
 	local k = h / 380
 	-- where each level sits, next to its piece, and the zone that opens it
 	-- (Sergio, 18 Nov: helmet, armour and gloves on the right, the gloves by the
@@ -196,7 +254,8 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 		-- the devil. Symbol, number and arrow are measured, then the label is as
 		-- wide as them with even padding; all centered on the plate's face (2 px
 		-- above its middle: the shadow under it), the arrow sits 2 px lower
-		if TYPE[sl.id] then
+		-- bare: no labels (the SHOP, Sergio 18 Nov: «lì non vuoi potenziare niente»)
+		if TYPE[sl.id] and not bare then
 			local top = level and level >= equip.LIVELLO_MAX
 			local lh, pad, sym, gap = 44, 16, 26, 8
 			local cy = by - 2
@@ -212,9 +271,9 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 				gui.move_below(plate.node, num)
 				shift(num, lx + pad + sym + gap)
 				shift(arrow, lx + pad + sym + gap + nw + 6)
-			else
-				gui.set_color(icon, vmath.vector4(1, 1, 1, 0.45))
 			end
+			local tint = M.TINT[sl.id]
+			gui.set_color(icon, num and tint or vmath.vector4(tint.x, tint.y, tint.z, 0.45))
 			-- the label opens the place too
 			kit.zone(g, s.buttons, lx, by - lh / 2, lw, lh, "posto:" .. sl.id)
 		end
