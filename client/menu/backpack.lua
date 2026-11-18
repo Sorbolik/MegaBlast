@@ -141,7 +141,6 @@ local function inventory(s)
 		local level = wallet.level(p, set, slot)
 		local worn = a.gear[slot] == set
 		gear_ui.slot(s.low, 140, 630, 64, { set = set, slot = slot, worn = worn })
-		kit.zone(s.low, s.buttons, 134, 624, 76, 76, "scheda")
 		local name = kit.text(s.low, gear_ui.name(set, slot), 220, 648, 26, KC.SAND)
 		local tier = equip.tier(level)
 		local effects = kit.upper(gear_ui.effects(set, slot, level))
@@ -423,7 +422,7 @@ local function build(s)
 	s.outline = nil
 	local p = s.prof
 	local in_card = s.tab ~= "sigilli" and s.card and s.sel
-	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", in_card and T.title or common.home)
+	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", common.home)
 	s.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(s.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(s.wallet, p.buoni or 0)
 	kit.tabs(s.head.top_left, s.buttons, 300, 28, { { T.tab_inventory, "scheda:inventario" }, { T.tab_seals, "scheda:sigilli" } },
@@ -493,8 +492,7 @@ local function run_cmd(s, ui_action)
 	elseif kind == "famiglia" then
 		s.family = s.family ~= x and x or nil
 	elseif kind == "pezzo" then
-		-- tapped again, the piece chosen opens its card
-		if not s.card and s.sel and s.sel[1] == a and s.sel[2] == b then s.card, s.just = true, "open" end
+		-- only POTENZIA opens the card (Sergio, 18 Nov: not a second tap on the piece)
 		s.sel = { a, b }
 	elseif kind == "potenzia" or kind == "firma" then
 		bench.run(s, kind, s.sel)
@@ -529,17 +527,33 @@ local function run_cmd(s, ui_action)
 	bench.after(s)
 end
 
+-- the card goes away and the pieces come back from the left, where it goes out
+local function close_card(s)
+	s.card, s.sheet = nil, nil
+	build(s)
+	local at = gui.get_position(s.mid.node)
+	gui.set_position(s.mid.node, at - vmath.vector3(70, 0, 0))
+	gui.animate(s.mid.node, "position", at, gui.EASING_OUTCUBIC, 0.22)
+end
+
+-- The card of POTENZIA is a modal of the ZAINO (Sergio, 18 Nov): a touch anywhere
+-- that is not one of its buttons closes it; the arrow leaves the ZAINO as always.
+-- With the controller there is no "anywhere": its back button closes the card.
 function M.on_input(s, action_id, action)
 	if bench.input(s, action_id, action) then return nil end
+	local in_card = s.card and s.tab ~= "sigilli"
 	local ui_action = ui.touch(s.buttons, action_id, action)
-	-- from the card the arrow goes back to the pieces
-	if ui_action == "indietro" and s.card and s.tab ~= "sigilli" then
-		s.card, s.sheet = nil, nil
-		build(s)
-		-- the pieces come back from the left, where the card goes out
-		local at = gui.get_position(s.mid.node)
-		gui.set_position(s.mid.node, at - vmath.vector3(70, 0, 0))
-		gui.animate(s.mid.node, "position", at, gui.EASING_OUTCUBIC, 0.22)
+	if in_card and action_id == ui.TOUCH then
+		if action.pressed then
+			s.miss = not s.buttons.held_down
+		elseif action.released and s.miss then
+			s.miss = nil
+			close_card(s)
+			return nil
+		end
+	end
+	if ui_action == "indietro" and in_card and action_id == ui.PAD then
+		close_card(s)
 		return nil
 	end
 	if ui_action == "indietro" then return ui_action end
