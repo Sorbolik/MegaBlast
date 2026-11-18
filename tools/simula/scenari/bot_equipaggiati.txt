@@ -1,0 +1,33 @@
+# Allenamento contro i bot con un profilo che ha già giocato (livello 23, pezzi e
+# Sigilli): i bot hanno pezzi e Sigilli quanti il giocatore (sim/loadout.lua rival),
+# di famiglie diverse, si vedono nello schieramento (cartellini) e addosso in battaglia.
+imposta prova_profilo 1
+imposta prova_scelta 1
+
+aspetta 3
+tocca 220 172                      # ALLENAMENTO
+aspetta 1
+tocca 547 470                       # 1 CONTRO 1
+tocca 840 382                       # DIFFICILE
+aspetta 0.5
+tocca 1151 249                       # LA FOSSA DEL FABBRO
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # GIOCA
+aspetta_stato modo=scelta 5
+aspetta 0.5
+foto 01_schieramento               # il cartellino del bot: pezzi e livello
+tocca 640 360                       # alle armi
+aspetta 0.3
+tocca 559 410                       # primaria
+aspetta 0.3
+tocca 559 410                       # secondaria
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # PRONTO
+aspetta_stato modo=local turno=1 fase=aim 25
+aspetta 1
+foto 02_partita
+zoom 03_bot_da_vicino 4
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 20
+aspetta 0.3
+zoom 04_bot_di_turno 4

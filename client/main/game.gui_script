@@ -988,8 +988,8 @@ local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", ta
 	vignette = require "battle.vignette", favilla = require "battle.favilla", tale = require "ui.story",
 	-- the recipes of the matches played here go to the server, which checks them
 	recipe_check = require "main.recipe_check",
-	-- Scaglie and Ossidiana (menu/wallet.lua) and the campaign's chapters (a finished one gives Ossidiana)
-	wallet = require "menu.wallet", chapters = require("sim.campaign").CAPITOLI }
+	-- Scaglie and Ossidiana (sim/wallet.lua) and the campaign's chapters (a finished one gives Ossidiana)
+	wallet = require "sim.wallet", chapters = require("sim.campaign").CAPITOLI }
 
 -- The zoom (Sergio, 3 Nov, choice Z1; 4 Nov): one button, top right, that is
 -- both a switch and a slider. Inside it a small lens slides on a track with a
@@ -2298,6 +2298,9 @@ function CP.showcases(self, players, name_list, opt)
 			v = CP.vetrina.from_net(opt.rete[i], name_list[i], p.team, under)
 		elseif i == opt.me then
 			v = CP.vetrina.from_profile(self.profilo, name_list[i], p.team, under)
+		elseif p.bot and p.eq then
+			v = CP.vetrina.from_eq(p.eq, name_list[i], p.team, under)
+			v.bot = true
 		else
 			v = CP.vetrina.simple(name_list[i], p.team, under)
 			v.bot = (p.bot or p.dummy) and true or nil
@@ -2372,7 +2375,8 @@ function CP.begin(self, me, net, cluster, replay_ok)
 	for i, rb in ipairs(self.g.robots) do
 		local n = self.names[i]
 		name_list[i] = n:sub(-#TM.bot_suffix) == TM.bot_suffix and n:sub(1, -#TM.bot_suffix - 1) or n
-		players[i] = { team = rb.team, bot = self.bots[i] and true or nil, dummy = (opt[i] or {}).dummy, insegna = (opt[i] or {}).insegna }
+		players[i] = { team = rb.team, bot = self.bots[i] and true or nil, dummy = (opt[i] or {}).dummy, insegna = (opt[i] or {}).insegna,
+			eq = (opt[i] or {}).eq }
 	end
 	local v = self.vetrine
 	self.vetrine = nil
@@ -2389,6 +2393,15 @@ function CP.begin(self, me, net, cluster, replay_ok)
 			local gear, tiers = {}, {}
 			for _, pz in ipairs(v[i].bot and {} or v[i].pezzi or {}) do gear[pz.slot], tiers[pz.slot] = pz.set, pz.tier end
 			dress(self, i, i == me and scoria.player or scoria.look_of(gear, tiers))
+		end
+	elseif self.look == scoria.PERSONAGGIO then
+		-- the training's bots wear their pieces too (sim/loadout.lua rival)
+		for i in ipairs(self.g.robots) do
+			if self.bots[i] and (opt[i] or {}).eq then
+				local gear, tiers = {}, {}
+				for _, pz in ipairs(v[i].pezzi or {}) do gear[pz.slot], tiers[pz.slot] = pz.set, pz.tier end
+				dress(self, i, scoria.look_of(gear, tiers))
+			end
 		end
 	end
 	self.conta = me and CP.conta.new(self.g, me, name_list) or nil
@@ -2514,7 +2527,7 @@ function CP.record(self, res)
 	return pa.replay and pa.numero or nil
 end
 
--- Scaglie and Ossidiana of a match (menu/wallet.lua): the rows go to the
+-- Scaglie and Ossidiana of a match (sim/wallet.lua): the rows go to the
 -- podium's receipt. Online the full price; against bots and on the same
 -- phone half, and only the first ones of the day
 function CP.match_coins(self, r, stats_before, gain)
@@ -2668,11 +2681,22 @@ local function start_local(self, against)
 	-- [megablast] giocatori = 1v1, 2v2 or ffa (free-for-all), on the same phone (and online queue)
 	local modo = against and against.modo or config_string("megablast.giocatori", "1v1")
 	local opts = { players = {} }
+	local seed = os.time()
 	for i, p in ipairs(gconfig.MODES[modo]) do
 		-- against the bots the player is the first robot, the others are bots
 		opts.players[i] = { team = p.team, bot = (against and not against.stesso and i > 1) and against.livello or nil }
 	end
-	self.local_opts = opts
+	-- against the bots everyone wears as much as the player (Sergio, 18 Nov): the
+	-- player's eq and the bots' built from it with the match's seed, in the recipe
+	-- (sim/loadout.lua rival; the server builds them again, server/verify.lua)
+	local mine = against and not against.stesso and CP.vetrina.equip_for_net(self.profilo)
+	if mine then
+		opts.players[1].eq = mine
+		for i, p in ipairs(opts.players) do
+			if p.bot then p.eq = require("sim.loadout").rival(mine, seed, i) end
+		end
+	end
+	self.local_opts, self.local_seed = opts, seed
 	-- in the test scenarios the draft is there only with prova_scelta 1 (scenario scelta.txt)
 	if SIMULATE and config_int("megablast.prova_scelta", 0) == 0 then
 		start_local_match(self, nil)
@@ -2680,7 +2704,6 @@ local function start_local(self, against)
 	end
 	local name_list, palette = names_colors(opts.players)
 	self.mode = "scelta"
-	local seed = os.time()
 	local d = draft.new(seed, opts.players)
 	-- the bots pick at once: only whoever plays stays in the draft
 	for i, p in ipairs(opts.players) do
@@ -2694,7 +2717,7 @@ end
 start_local_match = function(self, picked)
 	local opts = self.local_opts
 	if picked then
-		for i, p in ipairs(picked) do p.bot = opts.players[i].bot end
+		for i, p in ipairs(picked) do p.bot, p.eq = opts.players[i].bot, opts.players[i].eq end
 		opts = { players = picked }
 	end
 	if SIMULATE then
@@ -2733,7 +2756,7 @@ start_local_match = function(self, picked)
 	-- ones unless asked (imposta prova_spawn_casuali 1), so the old scenarios stay put
 	opts.random_spawns = not SIMULATE or config_int("megablast.prova_spawn_casuali", 0) > 0
 	opts.intro = not SIMULATE and game.INTRO_TICKS or config_int("megablast.prova_conto", 0) > 0 and game.INTRO_TICKS or nil
-	new_match(self, os.time(), self.local_map or self.mappa, opts)
+	new_match(self, self.local_seed or os.time(), self.local_map or self.mappa, opts)
 	-- prova_durata N: the match lasts N seconds (scenari/podio.txt)
 	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0
 	if duration > 0 then

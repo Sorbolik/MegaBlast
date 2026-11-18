@@ -34,8 +34,11 @@ workflow **Gioco web sul VPS** a ogni merge su main che tocca il client.
 
 **Log da lontano**: il workflow **Log del server** (a mano, `log.yml`) stampa le
 righe di `journalctl -u megablast` che contengono un testo (di base `ricetta da`)
-da un momento (`-1h`, `today`, `2026-11-17 22:00`) a un altro: così lo leggono
-anche i thread di Claude, che non raggiungono il VPS.
+da un momento (`-1h`, `today`, `2026-11-18 06:00`) a un altro: così lo leggono
+anche i thread di Claude, che non raggiungono il VPS. Con "prova" fa anche un
+POST di prova a `/ricetta` (da fuori e dal VPS) e mostra il Caddyfile, gli errori
+di Caddy e le richieste a `/ricetta` del log di accesso di Caddy
+(`/var/log/caddy/megablast.log`, al più 5 file da 10 MB).
 
 Sul VPS: impostazioni in `/etc/megablast/server.env` (nodo, eventi), log con
 `journalctl -u megablast -f`, stato con `curl localhost:8080/stats`.

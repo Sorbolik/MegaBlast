@@ -32,6 +32,7 @@ func main() {
 	flag.DurationVar(&cfg.BotAfter, "bot-dopo", cfg.BotAfter, "dopo quanto i bot riempiono una coda normale (0 = mai)")
 	flag.StringVar(&LuaJIT, "luajit", LuaJIT, "l'eseguibile di LuaJIT che fa girare la simulazione (di solito nel PATH)")
 	flag.StringVar(&RecipeDir, "ricette", RecipeDir, "cartella dove tenere le ricette delle partite del telefono che non tornano uguali (vuoto = non tenerle)")
+	flag.StringVar(&MatchDir, "partite", MatchDir, "cartella dove tenere tutte le ricette che arrivano dai telefoni, per l'allenamento dei bot (vuoto = non tenerle)")
 	profile := flag.String("pprof", "", "indirizzo dei profili di Go, solo in locale (es. 127.0.0.1:6060; vuoto = spenti)")
 	flag.Parse()
 

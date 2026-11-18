@@ -28,6 +28,8 @@ echo "== utente $UTENTE (senza accesso, senza root)"
 id "$UTENTE" >/dev/null 2>&1 || useradd --system --home-dir "$DATI" --shell /usr/sbin/nologin "$UTENTE"
 install -d -o root -g root -m 755 "$CASA" "$CASA/web"
 install -d -o "$UTENTE" -g "$UTENTE" -m 750 "$DATI"
+# le partite che arrivano dai telefoni, per l'allenamento dei bot (.github/workflows/partite.yml)
+install -d -o "$UTENTE" -g "$UTENTE" -m 750 "$DATI/partite"
 install -d -m 755 /etc/megablast
 
 # le impostazioni del server: si scrivono la prima volta, poi si cambiano a mano
@@ -56,7 +58,7 @@ User=$UTENTE
 Group=$UTENTE
 EnvironmentFile=$CONF
 WorkingDirectory=$DATI
-ExecStart=$CASA/megablast-server -addr 127.0.0.1:8080 -node \${NODO} -eventi "\${EVENTI}" -luajit /usr/bin/luajit
+ExecStart=$CASA/megablast-server -addr 127.0.0.1:8080 -node \${NODO} -eventi "\${EVENTI}" -luajit /usr/bin/luajit -partite $DATI/partite
 Restart=always
 RestartSec=2
 # Lo spegnimento aspetta la fine delle partite (main.go, al più 10 minuti).
@@ -85,6 +87,13 @@ cat > /etc/caddy/Caddyfile <<CADDY
 # tools/vps/installa.sh: tutto al server di MegaBlast, WebSocket compresa
 $INDIRIZZO {
 	encode gzip
+	# ogni richiesta in /var/log/caddy/megablast.log (JSON), al più 5 file da 10 MB
+	log {
+		output file /var/log/caddy/megablast.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
 	# il server: WebSocket, controlli, calendario degli eventi, partite mandate (/ricetta)
 	# (un percorso nuovo del server va aggiunto qui)
 	@server path /ws /health /stats /eventi /ricetta

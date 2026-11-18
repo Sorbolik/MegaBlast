@@ -96,7 +96,7 @@ M.FORGED_TIER = 3
 local WEAR_ORDER = { "mask", "chest", "legs", "cloak" }
 
 -- The look of whoever wears gear ({ mask = family id, ... }) with those tiers
--- ({ mask = 1..4, ... }, menu/wallet.lua)
+-- ({ mask = 1..4, ... }, sim/wallet.lua)
 function M.look_of(gear, tiers)
 	local look = { M.PERSONAGGIO[1], M.PERSONAGGIO[2] }
 	for _, slot in ipairs(WEAR_ORDER) do
