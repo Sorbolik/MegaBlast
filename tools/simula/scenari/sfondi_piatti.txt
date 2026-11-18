@@ -1,0 +1,11 @@
+# Gli sfondi piatti dei menu (Sergio, 18 nov): gli anelli che si allargano dietro la
+# home e il colonnato dietro la campagna. Due foto della home a 3 s di distanza: gli
+# anelli si sono allargati di mezzo anello, senza salti.
+imposta prova_vignette no
+aspetta 4.25
+foto 01_home
+aspetta 3
+foto 02_home_dopo
+tocca 220 294                      # CAMPAGNA
+aspetta 3.5
+foto 03_campagna
