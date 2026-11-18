@@ -122,4 +122,19 @@ Approvata da Sergio il 18 nov alle 18:49.
 
 ## Consegna di Codex
 
+- `art/WB-079/tipo_elmo_1.png` e `tipo_elmo_1.txt` · 1 tentativo.
+- `art/WB-079/tipo_elmo_2.png` e `tipo_elmo_2.txt` · 1 tentativo.
+- `art/WB-079/tipo_corazza_1.png` e `tipo_corazza_1.txt` · 1 tentativo.
+- `art/WB-079/tipo_corazza_2.png` e `tipo_corazza_2.txt` · 1 tentativo.
+- `art/WB-079/tipo_mantello_1.png` e `tipo_mantello_1.txt` · 1 tentativo.
+- `art/WB-079/tipo_mantello_2.png` e `tipo_mantello_2.txt` · 1 tentativo.
+- `art/WB-079/tipo_stivali_1.png` e `tipo_stivali_1.txt` · 1 tentativo.
+- `art/WB-079/tipo_stivali_2.png` e `tipo_stivali_2.txt` · 1 tentativo.
+- `art/WB-079/tipo_guanti_1.png` e `tipo_guanti_1.txt` · 1 tentativo.
+- `art/WB-079/tipo_guanti_2.png` e `tipo_guanti_2.txt` · 1 tentativo.
+
+Generati con ImageGen integrato, prompt integrali e riferimenti nell'ordine indicato. I dieci PNG misurano 1024×1024 px. Ho centrato le sagome e le ho ridimensionate in proporzione per occupare circa l'80% della tela sul lato maggiore.
+
+Verificati a 20 px su ferro scuro il profilo delle due corna, le spalline della corazza, la forma del mantello al vento, la punta e la piastra dello stivale e il polsino del guanto. I segmenti piccoli sulle dita del guanto si comprimono a 20 px. Nessuna scritta o cornice. Magenta e campiture presentano lievi variazioni RGB, e lo spessore della china varia leggermente tra le varianti. Scontorno, ricalco e resa nello zaino e in armeria da verificare.
+
 ## Resoconto di Claude
