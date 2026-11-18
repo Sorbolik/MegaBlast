@@ -1,0 +1,13 @@
+Image 1 is an item icon of our game (ink thickness and flat coloring to match). Image 2 is a button of our game: take its clean look.
+
+Draw ONE small empty horizontal label band for a comic-style mobile game interface, seen perfectly from the front: the strip that lies across the BOTTOM of an inventory slot when the item is equipped (the game writes the word on it, do not write anything). Shape: a wide flat rectangle about four times as wide as tall, with the two TOP corners sharp and the two BOTTOM corners slightly rounded. All sides PERFECTLY STRAIGHT and parallel. Flat fill in warm gold (#F5C417) with one thin flat darker amber band along the bottom edge. Thick pure black outline of constant thickness, ruler-straight, never wobbly.
+
+Completely empty: no text, no letters, no check mark, no icon, no rivets, no texture, no gradient, no glow. Flat colors, at most four colors. Centered, filling about 85% of the image width, on a flat pure magenta #FF00FF background.
+
+Riferimenti allegati in ordine
+art/WB-078/riferimenti/R2_icona_stivali.png
+art/WB-078/riferimenti/R3_pulsante_secondario.png
+
+ImageGen integrato. Tentativi 3, selezionato il 3. Asset centrato su tela magenta 1024×1024.
+Fascia vuota, con angoli superiori netti e inferiori arrotondati. Rapporto 4,9:1, più largo del 4:1 indicato.
+Il magenta e le campiture presentano leggere variazioni nei valori RGB.

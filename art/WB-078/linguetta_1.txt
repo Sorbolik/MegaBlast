@@ -1,0 +1,13 @@
+Image 1 is an item icon of our game (ink thickness and flat coloring to match). Image 2 is a button of our game: take its quiet dark iron material and its clean look.
+
+Draw ONE small empty corner tab for a comic-style mobile game interface, seen perfectly from the front: the little plate that sits on the TOP-LEFT corner of an inventory slot and will hold a tiny symbol (the game adds the symbol, do not draw it). Shape: a square whose top-left corner is rounded with a big radius, whose bottom-right corner is rounded with a small radius, and whose other two corners are sharp. All sides PERFECTLY STRAIGHT. Flat dark iron fill (dark purple-grey, like image 2) with one thin flat lighter band along the top edge. Thick pure black outline of constant thickness, ruler-straight, never wobbly.
+
+Completely empty inside: no symbol, no icon, no text, no rivets, no texture, no gradient, no glow. Flat colors, at most four colors. Centered, filling about 70% of the image, on a flat pure magenta #FF00FF background.
+
+Riferimenti allegati in ordine
+art/WB-078/riferimenti/R2_icona_stivali.png
+art/WB-078/riferimenti/R3_pulsante_secondario.png
+
+ImageGen integrato. Tentativi 1, selezionato il 1. Asset centrato su tela magenta 1024×1024.
+Linguetta vuota con due angoli arrotondati di raggio diverso. La banda chiara è più larga di un filetto.
+Il magenta e le campiture presentano leggere variazioni nei valori RGB.

@@ -166,4 +166,31 @@ Approvata da Sergio il 18 nov alle 15:56 («Approva»).
 
 ## Consegna di Codex
 
+Venti PNG da 1024×1024 px su magenta, generati con ImageGen, prompt integrali e riferimenti nell'ordine indicato. Ho centrato e ridimensionato le sagome alla copertura indicata nella scheda. Per allineare l'ingombro delle cornici ho adattato separatamente larghezza e altezza a circa 900 px. Restano differenze nei raggi e nei contorni interni. Le fasce restano più larghe di 4:1 dopo tre tentativi per variante.
+
+| File | Tentativi | Tentativo scelto | Controlli e scostamenti |
+|---|---:|---:|---|
+| `art/WB-078/cornice_1.png` e `cornice_1.txt` | 1 | 1 | Cornice vuota senza chiodi o scritte. Ingombro esterno allineato a circa 900×900 px. Raggi degli angoli e bordi interni variano tra gli stati. |
+| `art/WB-078/cornice_2.png` e `cornice_2.txt` | 1 | 1 | Cornice vuota senza chiodi o scritte. Ingombro esterno allineato a circa 900×900 px. Raggi degli angoli e bordi interni variano tra gli stati. |
+| `art/WB-078/cornice_scelta_1.png` e `cornice_scelta_1.txt` | 1 | 1 | Cornice vuota senza chiodi o scritte. Ingombro esterno allineato a circa 900×900 px. Raggi degli angoli e bordi interni variano tra gli stati. |
+| `art/WB-078/cornice_scelta_2.png` e `cornice_scelta_2.txt` | 1 | 1 | Cornice vuota senza chiodi o scritte. Ingombro esterno allineato a circa 900×900 px. Raggi degli angoli e bordi interni variano tra gli stati. |
+| `art/WB-078/cornice_vuota_1.png` e `cornice_vuota_1.txt` | 1 | 1 | Cornice vuota senza chiodi o scritte. Ingombro esterno allineato a circa 900×900 px. Raggi degli angoli e bordi interni variano tra gli stati. |
+| `art/WB-078/cornice_vuota_2.png` e `cornice_vuota_2.txt` | 1 | 1 | Cornice vuota senza chiodi o scritte. Ingombro esterno allineato a circa 900×900 px. Raggi degli angoli e bordi interni variano tra gli stati. |
+| `art/WB-078/linguetta_1.png` e `linguetta_1.txt` | 1 | 1 | Linguetta vuota con due angoli arrotondati di raggio diverso. La banda chiara è più larga di un filetto. |
+| `art/WB-078/linguetta_2.png` e `linguetta_2.txt` | 1 | 1 | Linguetta vuota con due angoli arrotondati di raggio diverso. La banda chiara è più larga di un filetto. |
+| `art/WB-078/fascia_indossato_1.png` e `fascia_indossato_1.txt` | 3 | 3 | Fascia vuota, con angoli superiori netti e inferiori arrotondati. Rapporto 4,9:1, più largo del 4:1 indicato. |
+| `art/WB-078/fascia_indossato_2.png` e `fascia_indossato_2.txt` | 3 | 2 | Fascia vuota, con angoli superiori netti e inferiori arrotondati. Rapporto 5,1:1, più largo del 4:1 indicato. |
+| `art/WB-078/tipo_elmo_1.png` e `tipo_elmo_1.txt` | 1 | 1 | Sagoma singola color sabbia, riconoscibile a 20 px in anteprima. |
+| `art/WB-078/tipo_elmo_2.png` e `tipo_elmo_2.txt` | 2 | 2 | Sagoma singola color sabbia, riconoscibile a 20 px in anteprima. |
+| `art/WB-078/tipo_corazza_1.png` e `tipo_corazza_1.txt` | 1 | 1 | Sagoma singola color sabbia, riconoscibile a 20 px in anteprima. |
+| `art/WB-078/tipo_corazza_2.png` e `tipo_corazza_2.txt` | 1 | 1 | Sagoma singola color sabbia, riconoscibile a 20 px in anteprima. |
+| `art/WB-078/tipo_mantello_1.png` e `tipo_mantello_1.txt` | 1 | 1 | Sagoma singola color sabbia, riconoscibile a 20 px in anteprima. |
+| `art/WB-078/tipo_mantello_2.png` e `tipo_mantello_2.txt` | 1 | 1 | Sagoma singola color sabbia, riconoscibile a 20 px in anteprima. |
+| `art/WB-078/tipo_stivali_1.png` e `tipo_stivali_1.txt` | 1 | 1 | Sagoma singola color sabbia, riconoscibile a 20 px in anteprima. |
+| `art/WB-078/tipo_stivali_2.png` e `tipo_stivali_2.txt` | 1 | 1 | Sagoma singola color sabbia, riconoscibile a 20 px in anteprima. |
+| `art/WB-078/tipo_guanti_1.png` e `tipo_guanti_1.txt` | 1 | 1 | Sagoma singola color sabbia, riconoscibile a 20 px in anteprima. |
+| `art/WB-078/tipo_guanti_2.png` e `tipo_guanti_2.txt` | 1 | 1 | Sagoma singola color sabbia, riconoscibile a 20 px in anteprima. |
+
+Controllati assenza di scritte e chiodi, cornici senza icona, linguette e fasce libere, contorni scuri e leggibilità a 20 px dei cinque simboli su ferro scuro. I lati delle cornici appaiono regolari a vista. Magenta e campiture hanno leggere variazioni di colore, quindi i valori esatti #FF00FF, #000000 e il limite di colori pieni non sono certificati. Ritaglio, ricalco, sovrapposizione e resa in gioco da verificare.
+
 ## Resoconto di Claude
