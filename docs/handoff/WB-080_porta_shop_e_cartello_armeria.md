@@ -75,5 +75,16 @@ Thick black ink outline, cartoon comic style like image 2. Flat colors only, at 
 Approvata da Claude il 18 nov (reversibile: sono solo immagini), dopo il sì di Sergio all'animazione.
 
 ## Consegna di Codex
+Eseguita il 18 novembre 2026 sul ramo design/WB-080, derivato da origin/claude/project-thread-rc20kg (29fd0a0d).
 
+File in art/WB-080/ (ogni PNG accompagnato dal relativo TXT con prompt esatto e riferimenti in ordine):
+- porta_shop_1.png e porta_shop_2.png: 1774 x 887 px, tre proposte ciascuno.
+- cartello_armeria_1.png: 1122 x 1402 px, tre proposte.
+- cartello_armeria_2.png: 1024 x 1536 px, tre proposte.
+
+Generati tre tentativi per ciascuno dei quattro fogli (12 generazioni totali), sempre con prompt e riferimenti invariati. Selezionato il primo tentativo per le due porte, il terzo per i due cartelli. Consegnati i PNG originali, senza ritocco, ritaglio o ridimensionamento.
+
+Controllo visivo di tutti i tentativi: presenti tre proposte separate per foglio, corpi vuoti, medaglioni a destra e code a sinistra nelle porte; due catene collegate per ciascun cartello; contorni neri spessi, nessuna scritta e nessun elemento visibilmente troncato nelle versioni selezionate. Sfondo verde mantenuto come richiesto dalla scheda.
+
+Problemi rimasti dopo il limite dei tre tentativi: sfumature sulle superfici e palette oltre sei colori; dimensioni native diverse dai 1536 x 1024 richiesti; catene dei cartelli proporzionalmente piu lunghe del quarto di altezza indicato. Non certificata uniformita numerica dello sfondo a #00FF00, esattezza dei colori esadecimali o uguaglianza dimensionale dei pulsanti rispetto ai riferimenti. Criteri di accettazione non spuntati: serve revisione di Claude. Non eseguiti ricalco vettoriale, integrazione o prova nel gioco.
 ## Resoconto di Claude
