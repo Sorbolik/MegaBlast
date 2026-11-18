@@ -138,3 +138,5 @@ Generati con ImageGen integrato, prompt integrali e riferimenti nell'ordine indi
 Verificati a 20 px su ferro scuro il profilo delle due corna, le spalline della corazza, la forma del mantello al vento, la punta e la piastra dello stivale e il polsino del guanto. I segmenti piccoli sulle dita del guanto si comprimono a 20 px. Nessuna scritta o cornice. Magenta e campiture presentano lievi variazioni RGB, e lo spessore della china varia leggermente tra le varianti. Scontorno, ricalco e resa nello zaino e in armeria da verificare.
 
 ## Resoconto di Claude
+
+Consegna guardata il 18 nov: tenute le varianti 1 dei cinque simboli (elmo con le corna di tre quarti, corazza con gli spallacci, mantello, stivale corazzato, pugno col guanto), si leggono anche piccoli. Ritagliati in `art/WB-079/ritagli/`, montati da `tools/grafica/fucina.py` (`tipo_*`) nella linguetta delle cornici e nelle etichette dei pezzi sul diavoletto; tolti quelli di WB-078.

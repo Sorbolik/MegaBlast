@@ -194,3 +194,5 @@ Venti PNG da 1024×1024 px su magenta, generati con ImageGen, prompt integrali e
 Controllati assenza di scritte e chiodi, cornici senza icona, linguette e fasce libere, contorni scuri e leggibilità a 20 px dei cinque simboli su ferro scuro. I lati delle cornici appaiono regolari a vista. Magenta e campiture hanno leggere variazioni di colore, quindi i valori esatti #FF00FF, #000000 e il limite di colori pieni non sono certificati. Ritaglio, ricalco, sovrapposizione e resa in gioco da verificare.
 
 ## Resoconto di Claude
+
+Consegna guardata il 18 nov: tenute le varianti 1 di cornice, cornice scelta, cornice vuota, linguetta e fascia INDOSSATO (dritte e pulite, senza difetti visibili). Ritagliate dal magenta con lo smontaggio del colore (niente frangia) da `tools/grafica/fucina.py` e montate in `gear_ui.slot`, quindi in zaino, Potenzia, Bottega e cartellino del giocatore. I simboli del tipo di questa scheda sono stati sostituiti da WB-079 (Sergio: l'elmo «sembra uno stop»). Simulazione: scenari `zaino_griglia`, `zaino_scheda`, `armeria`.

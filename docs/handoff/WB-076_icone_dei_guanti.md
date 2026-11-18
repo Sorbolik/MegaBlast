@@ -176,3 +176,5 @@ Approvata da Sergio il 18 nov.
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Consegna guardata il 18 nov: le venti icone vanno bene (nota di Codex: il Corvo base ha gli artigli, voluto). Scelte: variante 1 per tutte tranne Fornace forgiata (2). Non ancora nel gioco: restano in `art/WB-076/` finché i guanti non diventano il quinto posto (il posto dell'etichetta sul diavoletto è già pronto vicino alla mano dietro).
