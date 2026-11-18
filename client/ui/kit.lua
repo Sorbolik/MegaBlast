@@ -1025,82 +1025,11 @@ local PLACES = { addestramento = "cortile", girone_1 = "forgia" }
 local PLACE = "cortile"
 
 -- The painting a screen asks for: opt.bg true is the place reached, a name is
--- the screen's own silhouettes (Sergio, 18 Nov: one for each screen, WB-073:
--- /paintings/backdrops/menu_<name>.png, the polished floor under them); false
--- or nil: none
+-- the screen's own painting (Sergio, 15 Nov: one for each screen, WB-053:
+-- /paintings/backdrops/menu_<name>.jpg); false or nil: none
 local function painting_of(on)
 	if type(on) == "string" and BACKDROPS["menu_" .. on] then return "menu_" .. on end
 	return on and PLACE or nil
-end
-
--- a light dark veil over every painting of a place, so it never steals the
--- scene (Sergio, 15 Nov: «solo una lieve opacizzazione»); never on the silhouettes
-local VEIL = vmath.vector4(0.8, 0.8, 0.8, 1)
-local WHITE = vmath.vector4(1, 1, 1, 1)
-
--- Behind the silhouettes (Sergio, 18 Nov, https://claude.ai/artifact/DCwXT2kmBrf535D67MBu4f):
--- the dark, the colour of the screen breathing in the middle (8 s), the banded
--- rays of the comic sky swaying a few degrees (40 s), the two lights breathing
--- one against the other (7 s); over them a few embers rising from the fire
--- corner and frost flakes falling from the ice one. All run by the engine
-local TINTS = {
-	home = C.HOT_BOTTOM, zaino = C.HOT_BOTTOM, campagna = C.HOT_BOTTOM, armeria = C.ICE,
-	eventi = C.HOT, allenamento = C.STEEL, gioca_online = C.OBSIDIAN, profilo = C.PURPLE,
-	impostazioni = C.STEEL,
-}
-local RAYS_A, BREATH_A = 0.06, 0.16
-local SWAY = 3.4
--- the lights: from their alpha to this part of it and back, in half a breath
-local BREATH_LOW, LIGHT_HALF = 0.64, 3.5
-
--- the same few motes everywhere, from a fixed seed: x, y from the corner, the
--- way they go in a second, how long one lives, when it starts, its size
-local function motes(parent, n, seed, ember)
-	local out = {}
-	local function rnd()
-		seed = (seed * 1103515245 + 12345) % 2147483648
-		return seed / 2147483648
-	end
-	for i = 1, n do
-		local x, y, vx, vy, life
-		if ember then
-			x, y, vx, vy, life = 40 + rnd() * 380, 0 + rnd() * 60, 6 + rnd() * 12, 14 + rnd() * 16, 9 + rnd() * 6
-		else
-			x, y, vx, vy, life = -40 - rnd() * 380, -rnd() * 80, -(4 + rnd() * 8), -(6 + rnd() * 8), 12 + rnd() * 6
-		end
-		local start, size = rnd() * life, (ember and 10 or 8) + rnd() * 10
-		local q = shape("alone", x, y, size, size, with_alpha(ember and hex("ff963c") or C.FROST, 0), parent)
-		gui.set_blend_mode(q, gui.BLEND_ADD)
-		gui.animate(q, "position", vec(x + vx * life, y + vy * life), gui.EASING_LINEAR, life, start, nil, gui.PLAYBACK_LOOP_FORWARD)
-		gui.animate(q, "color.w", ember and 0.75 or 0.5, gui.EASING_INOUTSINE, life / 2, start, nil, gui.PLAYBACK_LOOP_PINGPONG)
-		out[i] = q
-	end
-	return out
-end
-
--- the two lights breathe, one up while the other goes down
-local function breathe(warm, cold)
-	local w, c = gui.get_color(warm).w, gui.get_color(cold).w
-	gui.set_color(cold, with_alpha(C.ICE, c * BREATH_LOW))
-	gui.animate(warm, "color.w", w * BREATH_LOW, gui.EASING_INOUTSINE, LIGHT_HALF, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
-	gui.animate(cold, "color.w", c, gui.EASING_INOUTSINE, LIGHT_HALF, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
-end
-
--- the rays and the breath of the middle, under a node at the centre
-local function rays_nodes(parent, live)
-	local rays = shape("raggi", 0, 0, 3000, 3000, with_alpha(C.HOT_BOTTOM, RAYS_A), parent)
-	gui.set_blend_mode(rays, gui.BLEND_ADD)
-	local breath = shape("alone", 0, -30, 1120, 1120, with_alpha(C.HOT_BOTTOM, BREATH_A), parent)
-	gui.set_blend_mode(breath, gui.BLEND_ADD)
-	if live then
-		gui.set_euler(rays, vmath.vector3(0, 0, -SWAY))
-		gui.animate(rays, "euler.z", SWAY, gui.EASING_INOUTSINE, 20, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
-	end
-	return rays, breath
-end
-
-local function sagome(name)
-	return name and name:sub(1, 5) == "menu_"
 end
 
 -- its texture, loaded if it isn't (each painting has its own: a copy of the
@@ -1108,10 +1037,10 @@ end
 local function load_painting(name)
 	local id = "sfondo_" .. name
 	if S.loaded[name] then return id end
-	local data = sys.load_resource("/paintings/backdrops/" .. name .. (sagome(name) and ".png" or ".jpg"))
+	local data = sys.load_resource("/paintings/backdrops/" .. name .. ".jpg")
 	local img = data and image.load(data)
 	if img and gui.new_texture(id, img.width, img.height, img.type, img.buffer) then
-		S.loaded[name] = img.width / img.height
+		S.loaded[name] = true
 		return id
 	end
 end
@@ -1139,28 +1068,18 @@ local function backdrop(on)
 		unload_painting(old)
 	end
 	local shown = S.bg_name ~= nil
-	local sil = sagome(S.bg_name)
 	gui.set_enabled(S.bg, shown)
-	gui.set_color(S.bg, sil and WHITE or VEIL)
-	-- the two lights are in a painting of a place already; behind the
-	-- silhouettes they shine, with the rays and the embers
-	gui.set_enabled(S.warm, not shown or sil)
-	gui.set_enabled(S.cold, not shown or sil)
-	for _, n in ipairs(S.alive) do gui.set_enabled(n, sil) end
-	if sil then
-		local tint = TINTS[S.bg_name:sub(6)] or C.HOT_BOTTOM
-		gui.set_color(S.rays, with_alpha(tint, RAYS_A))
-		gui.set_color(S.breath, with_alpha(tint, BREATH_A))
-		gui.animate(S.breath, "color.w", BREATH_A * 0.5, gui.EASING_INOUTSINE, 4, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
-	end
+	-- the two lights are in the painting already
+	gui.set_enabled(S.warm, not shown)
+	gui.set_enabled(S.cold, not shown)
 end
 
 -- where the painting goes: it covers the real screen, whatever its shape: wide
 -- enough, tall enough above its floor, and a little more
 local function painting_box(name)
-	local f, aspect = BACKDROPS[name], S.loaded[name] or 16 / 9
-	local h = math.max(720 * 1.14, screen.width() * 1.02 / aspect, (screen.height() - THREAD_Y) / (1 - f) * 1.01)
-	return vec(h * aspect, h), vec(0, THREAD_Y - f * h + h / 2)
+	local f = BACKDROPS[name]
+	local h = math.max(720 * 1.14, screen.width() * 1.02 * 9 / 16, (screen.height() - THREAD_Y) / (1 - f) * 1.01)
+	return vec(h * 16 / 9, h), vec(0, THREAD_Y - f * h + h / 2)
 end
 
 local function backdrop_fit()
@@ -1170,17 +1089,23 @@ local function backdrop_fit()
 	gui.set_position(S.bg, at)
 end
 
+-- a light dark veil over every painting, so it never steals the scene
+-- (Sergio, 15 Nov: «solo una lieve opacizzazione»)
+local VEIL = vmath.vector4(0.8, 0.8, 0.8, 1)
+
 local function scene_nodes()
 	if S then return S end
 	S = { tops = {}, loaded = {} }
 	S.base = shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, C.SOOT)
 	S.tops[#S.tops + 1] = S.base
-	-- the rays and the breath of the middle (only behind the silhouettes)
-	local mid = M.anchor(640, 300)
-	S.tops[#S.tops + 1] = mid.node
-	local midh = empty(0, 0, 0, 0, mid.node)
-	S.rays, S.breath = rays_nodes(midh, true)
-	-- the two lights, each stuck to its corner, behind the painting
+	-- the painting, stuck to the real bottom like the thread
+	local back = M.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
+	S.tops[#S.tops + 1] = back.node
+	S.bg = gui.new_box_node(vec(0, 360), vec(1280, 720))
+	gui.set_color(S.bg, VEIL)
+	gui.set_parent(S.bg, back.node)
+	gui.set_enabled(S.bg, false)
+	-- the two lights, each stuck to its corner
 	local warm = M.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	S.tops[#S.tops + 1] = warm.node
 	S.warm = shape("alone", 60, 40, 1500, 1300, with_alpha(C.HOT_BOTTOM, 0.2), warm.node)
@@ -1189,28 +1114,6 @@ local function scene_nodes()
 	S.tops[#S.tops + 1] = cold.node
 	S.cold = shape("alone", -60, -40, 1500, 1300, with_alpha(C.ICE, 0.16), cold.node)
 	gui.set_blend_mode(S.cold, gui.BLEND_ADD)
-	breathe(S.warm, S.cold)
-	-- the painting, stuck to the real bottom like the thread
-	local back = M.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
-	S.tops[#S.tops + 1] = back.node
-	S.bg = gui.new_box_node(vec(0, 360), vec(1280, 720))
-	gui.set_color(S.bg, VEIL)
-	gui.set_parent(S.bg, back.node)
-	gui.set_enabled(S.bg, false)
-	-- the embers from the fire corner and the frost from the ice one, over it
-	local embers = M.anchor(0, 720 - THREAD_Y, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	S.tops[#S.tops + 1] = embers.node
-	local emberh = empty(0, 0, 0, 0, embers.node)
-	motes(emberh, 9, 7, true)
-	local frost = M.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
-	S.tops[#S.tops + 1] = frost.node
-	local frosth = empty(0, 0, 0, 0, frost.node)
-	motes(frosth, 6, 11, false)
-	-- what is only behind the silhouettes; what moves past the page's edge
-	-- while a door drags the screen in (M.scene_cut): behind and over the painting
-	S.alive = { mid.node, embers.node, frost.node }
-	S.behind = { midh, S.warm, S.cold }
-	S.over = { emberh, frosth }
 	-- the thread (stuck to the real bottom): ink behind, the color over it
 	local low = M.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
 	S.tops[#S.tops + 1] = low.node
@@ -1330,25 +1233,12 @@ function M.scene_cut(on)
 		local p = gui.get_position(S.bg)
 		gui.set_parent(S.bg, S.clip)
 		gui.set_position(S.bg, vec(p.x, p.y - 360))
-		-- the lights, the rays and the embers go in the cut too, where they are
-		S.homes = {}
-		for _, n in ipairs(S.behind) do
-			S.homes[n] = gui.get_parent(n)
-			gui.set_parent(n, S.clip, true)
-			gui.move_below(n, S.bg)
-		end
-		for _, n in ipairs(S.over) do
-			S.homes[n] = gui.get_parent(n)
-			gui.set_parent(n, S.clip, true)
-		end
 		for _, q in ipairs(S.glints) do gui.set_enabled(q, false) end
 	elseif not on and S.clip then
 		gui.set_size(S.base, vec(1280 * screen.FULL, 720 * screen.FULL))
 		local p = gui.get_position(S.bg)
 		gui.set_parent(S.bg, gui.get_parent(S.clip))
 		gui.set_position(S.bg, vec(p.x, p.y + 360))
-		for n, home in pairs(S.homes) do gui.set_parent(n, home, true) end
-		S.homes = nil
 		gui.delete_node(S.clip)
 		S.clip = nil
 		for _, q in ipairs(S.glints) do gui.set_enabled(q, true) end
@@ -1365,20 +1255,6 @@ function M.scene_copy(s)
 	return out
 end
 
--- the two lights, each stuck to its corner, still, at the end of out
-local function corner_lights(out)
-	local warm = empty(0, 0)
-	gui.set_xanchor(warm, gui.ANCHOR_LEFT)
-	gui.set_yanchor(warm, gui.ANCHOR_BOTTOM)
-	gui.set_blend_mode(shape("alone", 60, 40, 1500, 1300, with_alpha(C.HOT_BOTTOM, 0.2), warm), gui.BLEND_ADD)
-	local cold = empty(1280, 720)
-	gui.set_xanchor(cold, gui.ANCHOR_RIGHT)
-	gui.set_yanchor(cold, gui.ANCHOR_TOP)
-	gui.set_blend_mode(shape("alone", -60, -40, 1500, 1300, with_alpha(C.ICE, 0.16), cold), gui.BLEND_ADD)
-	out[#out + 1] = warm
-	out[#out + 1] = cold
-end
-
 -- The nodes of a copy of the backdrop for opt (M.scene's), in order from the
 -- lowest. live: it moves like the real one (the lights, the thread breathing
 -- and its glints), for a scene in front of a screen (opt.over)
@@ -1386,31 +1262,30 @@ function M.copy_of(opt, live)
 	local out = { shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, with_alpha(C.SOOT, opt.dim or 1)) }
 	local name = not opt.dim and painting_of(opt.bg)
 	local id = name and load_painting(name)
-	if id and sagome(name) then
-		-- behind the silhouettes: the rays and the two lights, still
-		local mid = empty(640, 420)
-		local tint = TINTS[name:sub(6)] or C.HOT_BOTTOM
-		local rays, breath = rays_nodes(mid, live)
-		gui.set_color(rays, with_alpha(tint, RAYS_A))
-		gui.set_color(breath, with_alpha(tint, BREATH_A))
-		out[#out + 1] = mid
-		corner_lights(out)
-	end
 	if id then
 		S.kept = name
 		local back = empty(640, 0)
 		gui.set_yanchor(back, gui.ANCHOR_BOTTOM)
 		local size, at = painting_box(name)
 		local bg = gui.new_box_node(at, size)
-		gui.set_color(bg, sagome(name) and WHITE or VEIL)
+		gui.set_color(bg, VEIL)
 		gui.set_texture(bg, id)
 		gui.set_parent(bg, back)
 		gui.set_inherit_alpha(bg, true)
 		out[#out + 1] = back
 		out.painting = bg
 	elseif live then
-		-- the two lights (a painting of a place has them already)
-		corner_lights(out)
+		-- the two lights, each stuck to its corner (the painting has them already)
+		local warm = empty(0, 0)
+		gui.set_xanchor(warm, gui.ANCHOR_LEFT)
+		gui.set_yanchor(warm, gui.ANCHOR_BOTTOM)
+		gui.set_blend_mode(shape("alone", 60, 40, 1500, 1300, with_alpha(C.HOT_BOTTOM, 0.2), warm), gui.BLEND_ADD)
+		local cold = empty(1280, 720)
+		gui.set_xanchor(cold, gui.ANCHOR_RIGHT)
+		gui.set_yanchor(cold, gui.ANCHOR_TOP)
+		gui.set_blend_mode(shape("alone", -60, -40, 1500, 1300, with_alpha(C.ICE, 0.16), cold), gui.BLEND_ADD)
+		out[#out + 1] = warm
+		out[#out + 1] = cold
 	end
 	if opt.seam ~= false then
 		local w = screen.width()
