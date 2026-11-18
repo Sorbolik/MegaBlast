@@ -71,14 +71,27 @@ LONTANO = ("sniper", "missile", "grenade", "shards", "eagle")
 GUSTI = {"vicino": VICINO, "lontano": LONTANO, "spinta": ("bellows",)}
 
 
-def dal_gioco(luajit):
-    """bot.PESI e config.SCORE di adesso."""
+def dal_gioco(luajit, grado=None):
+    """bot.PESI e config.SCORE di adesso; con grado, i geni del grado di bot.GRADES
+    come bot di riferimento (da battere al posto del bot di oggi)."""
     codice = ('package.path="client/?.lua;"..package.path local b=require"sim.bot" local C=require"sim.config" '
               'local function t(x) local o={} for k,v in pairs(x) do if type(v)=="number" then o[#o+1]=string.format("%q:%.17g",k,v) end end '
               'return "{"..table.concat(o,",").."}" end io.write([[{"pesi":]],t(b.PESI),[[,"score":]],t(C.SCORE),"}")')
     r = subprocess.run([luajit or shutil.which("luajit") or "luajit", "-e", codice], cwd=arena.REPO,
                        capture_output=True, text=True, check=True)
-    return json.loads(r.stdout)
+    gioco = json.loads(r.stdout)
+    if grado:
+        # i geni del grado: i pesi numerici, le armi e il punteggio come rapporti
+        codice = ('package.path="client/?.lua;"..package.path local b=require"sim.bot" local C=require"sim.config" '
+                  f'local p=b.GRADES[{int(grado)}].pesi or {{}} local a,s=p.armi or {{}},p.punteggio or C.SCORE '
+                  'local o={} for k,v in pairs(p) do if type(v)=="number" then o[#o+1]=string.format("%q:%.17g",k,v) end end '
+                  'o[#o+1]=string.format([["vicino":%.17g,"lontano":%.17g,"spinta":%.17g,"vuoto":%.17g,"uccisione":%.17g,"danno":%.17g]],'
+                  'a.punch or 1,a.sniper or 1,a.bellows or 1,s.env_kill/C.SCORE.env_kill,s.kill/C.SCORE.kill,s.damage/C.SCORE.damage) '
+                  'io.write("{",table.concat(o,","),"}")')
+        r = subprocess.run([luajit or shutil.which("luajit") or "luajit", "-e", codice], cwd=arena.REPO,
+                           capture_output=True, text=True, check=True)
+        gioco["riferimento"] = json.loads(r.stdout)
+    return gioco
 
 
 def a_u(g, x):
@@ -96,7 +109,13 @@ def da_u(g, u):
 
 
 def di_oggi(gioco):
-    return {g[0]: gioco["pesi"].get(g[0], 1.0) for g in GENI}
+    base = gioco.get("riferimento") or gioco["pesi"]
+    return {g[0]: base.get(g[0], 1.0) for g in GENI}
+
+
+def riferimento(gioco):
+    """I pesi del bot da battere: {} (il bot di oggi) o quelli del grado scelto."""
+    return pesi_bot(di_oggi(gioco), gioco) if gioco.get("riferimento") else {}
 
 
 def a_caso(rng):
@@ -205,12 +224,12 @@ def gioca(cartella, file_pesi, partite, da, args, assegna=None):
     return arena.leggi(arena.gioca(ns))
 
 
-def esame(radice, gen, campione, args):
+def esame(radice, gen, campione, args, rif={}):
     """Il campione contro il bot di oggi, a coppie (le stesse partite con i
     posti scambiati): in quante arriva più in alto lui."""
     cartella = radice / f"esame_{gen}"
     cartella.mkdir(parents=True, exist_ok=True)
-    file_pesi = scrivi_pesi(cartella, [{}, campione])
+    file_pesi = scrivi_pesi(cartella, [rif, campione])
     partite = gioca(cartella, file_pesi, args.esame_partite, 10 ** 8, args, assegna="turno")
     meglio = pari = 0
     for m in partite:
@@ -308,6 +327,7 @@ def main():
     ap.add_argument("--processi", type=int, default=None)
     ap.add_argument("--luajit")
     ap.add_argument("--seme", type=int, default=1)
+    ap.add_argument("--grado", type=int, help="numero del grado di bot.GRADES da battere al posto del bot di oggi")
     ap.add_argument("--nuova", action="store_true", help="ricomincia da zero (cancella la cartella)")
     ap.add_argument("--cartella", default=str(arena.REPO / "simulazione" / "arena" / "evolvi"))
     args = ap.parse_args()
@@ -323,7 +343,7 @@ def main():
             raise SystemExit("la cartella è di una corsa per stili, di prima degli specialisti: rilancia con --nuova")
         print(f"riprendo dalla generazione {stato['gen'] + 1}")
     else:
-        gioco = dal_gioco(args.luajit)
+        gioco = dal_gioco(args.luajit, args.grado)
         rng = random.Random(args.seme)
         oggi = di_oggi(gioco)
         # ogni specialista: il bot di oggi, metà vicino a lui e il resto a caso
@@ -342,7 +362,7 @@ def main():
         sp = stato["specialisti"]
         # individuo 1: il bot di oggi; poi le popolazioni degli specialisti, in fila
         chi = [(nome, k) for nome in NOMI for k in range(len(sp[nome]["pop"]))]
-        individui = [{}] + [pesi_bot(sp[n]["pop"][k], gioco) for n, k in chi]
+        individui = [riferimento(gioco)] + [pesi_bot(sp[n]["pop"][k], gioco) for n, k in chi]
         cartella = radice / f"generazione_{gen}"
         cartella.mkdir(parents=True, exist_ok=True)
         scrivi_pesi(cartella, individui)
@@ -398,7 +418,7 @@ def main():
             migliori = json.loads((radice / "migliori.json").read_text(encoding="utf-8")) if (radice / "migliori.json").exists() else {}
             for nome in NOMI:
                 s = sp[nome]
-                e = esame(radice, f"{gen}_{nome}", pesi_bot(s["campione"], gioco), args)
+                e = esame(radice, f"{gen}_{nome}", pesi_bot(s["campione"], gioco), args, riferimento(gioco))
                 e["gen"] = gen
                 e["geni"] = s["campione"]
                 prima = max((x["vince"] for x in s["esami"]), default=0)
