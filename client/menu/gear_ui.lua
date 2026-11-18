@@ -163,6 +163,13 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 		if sel == sl.id then colors[cats[sl.id]] = vmath.vector4(1, 0.62, 0.12, 1) end
 		if level then
 			local top = level >= equip.LIVELLO_MAX
+			-- the type's symbol on its tab, joined to the level (Sergio, 18 Nov)
+			if TYPE[sl.id] then
+				-- on the outer side, never over the devil (the cloak's is on its left)
+				local tx = sl.id == "cloak" and bx - 46 or bx + 14
+				kit.pic(g, "linguetta", tx, by - 16, 32, 32)
+				fit(g, TYPE[sl.id], tx + 5, by - 11, 22, 22)
+			end
 			kit.pic(g, top and "livello_oro" or "livello_ferro", bx - 17, by - 17, 34, 34)
 			kit.text(g, tostring(level), bx, by + 6, 16, top and KC.INK or KC.SAND, "middle")
 		end
