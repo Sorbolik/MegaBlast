@@ -1,0 +1,54 @@
+{
+ "nome": "guanti_leviatano_forgiato",
+ "categoria": "guanti",
+ "pezzi": {
+  "braccio_1": {
+   "img": "guanti_leviatano_forgiato_guanto_braccio_1",
+   "x": -4.5,
+   "y": -37.8,
+   "w": 46.6,
+   "h": 38.8,
+   "modo": "sopra"
+  },
+  "braccio": {
+   "img": "guanti_leviatano_forgiato_guanto_braccio_1",
+   "x": -5.2,
+   "y": -39.4,
+   "w": 51.7,
+   "h": 43.1,
+   "modo": "sopra"
+  },
+  "braccio_dietro_1": {
+   "img": "guanti_leviatano_forgiato_guanto_braccio_dietro_1",
+   "x": -5.1,
+   "y": -40.3,
+   "w": 45.7,
+   "h": 44.7,
+   "modo": "sopra"
+  },
+  "braccio_dietro": {
+   "img": "guanti_leviatano_forgiato_guanto_braccio_dietro_1",
+   "x": -5.0,
+   "y": -40.1,
+   "w": 45.2,
+   "h": 44.3,
+   "modo": "sopra"
+  },
+  "braccio_2": {
+   "img": "guanti_leviatano_forgiato_guanto_braccio_2",
+   "x": -2.3,
+   "y": -42.1,
+   "w": 35.5,
+   "h": 29.4,
+   "modo": "sopra"
+  },
+  "braccio_dietro_2": {
+   "img": "guanti_leviatano_forgiato_guanto_braccio_dietro_2",
+   "x": -2.6,
+   "y": -46.5,
+   "w": 37.3,
+   "h": 32.1,
+   "modo": "sopra"
+  }
+ }
+}

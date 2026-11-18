@@ -414,3 +414,22 @@ Alcuni pugni differiscono da R2 nelle linee delle dita. Le finiture forgiate di 
 `icone_guanti` è bloccata prima della generazione. La scheda prescrive 11 riferimenti separati (R4 e dieci fogli di pugni) e il generatore ne accetta al massimo cinque per richiesta.
 
 ## Resoconto di Claude
+
+18 nov. Guardati tutti i 25 fogli e la sagoma: nessuno scartato.
+
+- **Tenuti e montati:** per ogni famiglia `corpo_base` (Fabbro la **1**, non la 2 scelta da Codex:
+  nella 2 il cuoio della mano aperta è più scuro di quello del pugno e il ricalco lo macchiava;
+  Corvo 1, Fornace 1, Leviatano 2, Vuoto 2), `corpo_forgiata`, `pugni_base`, `pugni_forgiata`.
+  Ricette `tools/stampino/addosso/<famiglia>_guanti.json`, pelli `guanti_<famiglia>` e
+  `guanti_<famiglia>_forgiato` (categoria `guanti`: mano aperta e pugno, davanti e dietro).
+- **Strumento:** `addosso.py` taglia anche i guanti (quello che della mano resta scoperto sotto
+  il polsino diventa guanto) e con `--prova` salva ogni pezzo grande da solo.
+- **Verificato:** `tutti.sh` OK; scenari `guanti_<famiglia>.txt` e `guanti_<famiglia>_forgiato.txt`
+  (fermo e in corsa con l'arma in pugno): i guanti stanno sulle mani, non coprono le spalline e
+  l'arma resta impugnata bene.
+- **Non ancora nel gioco:** i guanti li indossa solo la prova (`imposta prova_guanti`); il quinto
+  posto (statistiche, firme, zaino, armeria) aspetta le scelte di Sergio.
+- **Icone:** Codex non le ha generate (troppi riferimenti). Provate ricavandole dai pugni
+  ritagliati: troppo grezze accanto alle icone degli altri pezzi, scartate. Serve una scheda
+  nuova con un'icona per richiesta.
+- **Sagoma vuota:** tenuta da parte, si ritaglia insieme alle icone.

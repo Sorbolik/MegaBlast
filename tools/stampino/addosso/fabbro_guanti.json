@@ -1,0 +1,44 @@
+{
+ "_": "Il Fabbro: i guanti addosso all'apprendista (WB-070), sulla mano aperta e sul pugno.",
+ "tavolozza": "tools/stampino/tavolozze/apprendista_fabbro.json",
+ "colori": [
+  "#8A4A1E",
+  "#783818",
+  "#5A2C14",
+  "#D2964E",
+  "#C07838",
+  "#D9A441",
+  "#F8C838",
+  "#F0A018",
+  "#00FFFF"
+ ],
+ "senza_corpo": [
+  "lingua",
+  "bocca",
+  "corna",
+  "corna_ombra",
+  "occhi",
+  "lenti",
+  "lenti_ombra",
+  "cuoio_scuro",
+  "rame"
+ ],
+ "senza_teste": [],
+ "riferimenti": {
+  "corpo": "art/WB-070/riferimenti/R1_corpo.png",
+  "pugni": "art/WB-070/riferimenti/R2_pugni.png"
+ },
+ "pelli": {
+  "guanti": "guanti_fabbro"
+ },
+ "forme": {
+  "": {
+   "corpo": "art/WB-070/fabbro_corpo_base_1.png",
+   "pugni": "art/WB-070/fabbro_pugni_base.png"
+  },
+  "_forgiato": {
+   "corpo": "art/WB-070/fabbro_corpo_forgiata.png",
+   "pugni": "art/WB-070/fabbro_pugni_forgiata.png"
+  }
+ }
+}

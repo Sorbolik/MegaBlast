@@ -1,0 +1,35 @@
+{
+ "_": "Il Leviatano: i guanti addosso all'apprendista (WB-070), sulla mano aperta e sul pugno.",
+ "tavolozza": "tools/stampino/tavolozze/apprendista_leviatano.json",
+ "colori": [
+  "#2E8478",
+  "#24685A",
+  "#90DCBC",
+  "#00FFFF"
+ ],
+ "senza_corpo": [
+  "lingua",
+  "bocca",
+  "corna",
+  "corna_ombra",
+  "occhi"
+ ],
+ "senza_teste": [],
+ "riferimenti": {
+  "corpo": "art/WB-070/riferimenti/R1_corpo.png",
+  "pugni": "art/WB-070/riferimenti/R2_pugni.png"
+ },
+ "pelli": {
+  "guanti": "guanti_leviatano"
+ },
+ "forme": {
+  "": {
+   "corpo": "art/WB-070/leviatano_corpo_base_2.png",
+   "pugni": "art/WB-070/leviatano_pugni_base.png"
+  },
+  "_forgiato": {
+   "corpo": "art/WB-070/leviatano_corpo_forgiata.png",
+   "pugni": "art/WB-070/leviatano_pugni_forgiata.png"
+  }
+ }
+}

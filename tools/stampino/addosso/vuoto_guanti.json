@@ -1,0 +1,34 @@
+{
+ "_": "Il Vuoto: i guanti addosso all'apprendista (WB-070), sulla mano aperta e sul pugno.",
+ "tavolozza": "tools/stampino/tavolozze/apprendista_vuoto.json",
+ "colori": [
+  "#2B2147",
+  "#1A1430",
+  "#00FFFF"
+ ],
+ "senza_corpo": [
+  "lingua",
+  "bocca",
+  "corna",
+  "corna_ombra",
+  "occhi"
+ ],
+ "senza_teste": [],
+ "riferimenti": {
+  "corpo": "art/WB-070/riferimenti/R1_corpo.png",
+  "pugni": "art/WB-070/riferimenti/R2_pugni.png"
+ },
+ "pelli": {
+  "guanti": "guanti_vuoto"
+ },
+ "forme": {
+  "": {
+   "corpo": "art/WB-070/vuoto_corpo_base_2.png",
+   "pugni": "art/WB-070/vuoto_pugni_base.png"
+  },
+  "_forgiato": {
+   "corpo": "art/WB-070/vuoto_corpo_forgiata.png",
+   "pugni": "art/WB-070/vuoto_pugni_forgiata.png"
+  }
+ }
+}

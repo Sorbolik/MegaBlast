@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Mette addosso all'apprendista i pezzi di una famiglia disegnati da Codex sui
 suoi fogli (WB-041, WB-042, WB-055): cuffia o cappuccio sulle teste, corazza,
-spalline e stivali sul foglio del corpo, spalline sulle braccia col pugno.
+spalline e stivali sul foglio del corpo, spalline sulle braccia col pugno; e i
+guanti (WB-070, ricette `<famiglia>_guanti.json`) sulle mani di tutte le braccia.
 
 Niente a occhio: ogni pezzo del gioco (`client/assets/skins/apprendista_nuovo_*.png`)
 si confronta con la sua sagoma sul foglio di riferimento (quello senza i pezzi) e
@@ -59,6 +60,11 @@ PEZZI = [
     ("braccio_dietro_1", "corpo", "corazza", "sopra", "spallina_braccio_dietro_1"),
     ("braccio_2", "pugni", "corazza", "sopra", "spallina_braccio_2"),
     ("braccio_dietro_2", "pugni", "corazza", "sopra", "spallina_braccio_dietro_2"),
+    # i guanti (WB-070): sulla mano e sul polso di ogni braccio, sotto le armi
+    ("braccio_1", "corpo", "guanti", "sopra", "guanto_braccio_1"),
+    ("braccio_dietro_1", "corpo", "guanti", "sopra", "guanto_braccio_dietro_1"),
+    ("braccio_2", "pugni", "guanti", "sopra", "guanto_braccio_2"),
+    ("braccio_dietro_2", "pugni", "guanti", "sopra", "guanto_braccio_dietro_2"),
     ("gamba_1", "corpo", "stivali", "sostituisce", "gamba"),
     ("gamba_dietro_1", "corpo", "stivali", "sostituisce", "gamba_dietro"),
 ]
@@ -231,7 +237,10 @@ class Foglio:
         self.cambiato = np.asarray(Image.fromarray(d).resize((w, h), Image.NEAREST))
 
 
-def taglia_pezzo(f, posto, modo, colori, prese):
+GRANDI = None      # con --prova: la cartella dove va anche ogni pezzo grande, da solo
+
+
+def taglia_pezzo(f, posto, modo, colori, prese, in_fondo=False):
     """Il pezzo del foglio che veste `posto`: immagine pronta e dove va."""
     G = np.asarray(Image.open(os.path.join(PELLI, f"{BASE}_{posto}.png")))
     alfa = G[..., 3] > 128
@@ -286,13 +295,33 @@ def taglia_pezzo(f, posto, modo, colori, prese):
             # e la spallina sta in cima: quello che del braccio resta scoperto più su del
             # suo orlo (colonna per colonna; dove non arriva, l'orlo della colonna più vicina)
             col = np.nonzero(tiene.any(0))[0]
-            if len(col):
+            if len(col) and in_fondo:
+                # un guanto sta in fondo: è del guanto quello che della mano resta
+                # scoperto più giù del suo polsino
+                orlo = np.argmax(tiene[:, col], axis=0)
+                # il polsino è dritto: ai lati, dove il guanto è tondo e scende, vale la
+                # sua riga prolungata (se no accanto al polsino resta una lama di mano)
+                n = len(col)
+                mezzo = slice(n // 4, max(n // 4 + 2, 3 * n // 4))
+                a, b = np.polyfit(col[mezzo], orlo[mezzo], 1)
+                riga = a * col + b + 2 * k
+                lati = np.ones(n, bool)
+                lati[mezzo] = False
+                orlo = np.where(lati, np.minimum(orlo, riga), orlo)
+                orlo = np.interp(np.arange(wk), col, orlo)
+                filo |= fuori & (np.arange(hk)[:, None] > orlo[None, :])
+            elif len(col):
                 orlo = hk - 1 - np.argmax(tiene[::-1, col], axis=0)
                 orlo = np.interp(np.arange(wk), col, orlo)
                 filo |= fuori & (np.arange(hk)[:, None] < orlo[None, :])
             v[filo] = (0, 0, 0, 255)
             tiene |= filo
     v[~tiene, 3] = 0
+    if GRANDI:
+        # il pezzo da solo com'è sul foglio, grande: da lì si fa la sua icona
+        ys_, xs_ = np.nonzero(v[..., 3] > 0)
+        Image.fromarray(np.clip(v[ys_.min():ys_.max() + 1, xs_.min():xs_.max() + 1], 0, 255).astype(np.uint8)).save(
+            os.path.join(GRANDI, f"{os.path.basename(f.svg_f)[:-4]}_{posto}.png"))
     assert (v[..., 3] > 128).sum() > 400 * k * k, f"{posto}: sul foglio non c'è nessun pezzo nuovo"
     im, dove = posa(v, s / k, s * x0 + ox, s * y0 + oy, G.shape[:2])
     print(f"  {posto}: combacia al {iou:.3f}, scala {s:.2f} (disegnato a {k:g}), {im.width}x{im.height}"
@@ -351,6 +380,8 @@ def main():
     lavoro = os.path.join(RADICE, "simulazione", "addosso", famiglia)
     os.makedirs(lavoro, exist_ok=True)
     dir_img = prova or PELLI
+    global GRANDI
+    GRANDI = prova
     dir_pelli = prova or os.path.join(QUI, "pelli")
     os.makedirs(dir_img, exist_ok=True)
     colori = np.array([[int(c[i:i + 2], 16) for i in (1, 3, 5)] for c in ric["colori"]])
@@ -358,7 +389,7 @@ def main():
     righe = []
     for suffisso, fogli in ric["forme"].items():
         print(f"{famiglia}{suffisso}:")
-        aperti, prese, pelli, riga = {}, set(), {}, []
+        aperti, prese_di, pelli, riga = {}, {}, {}, []
         for posto, quale, categoria, modo, nome in PEZZI:
             if quale not in fogli or categoria not in ric["pelli"]:
                 continue
@@ -366,7 +397,9 @@ def main():
                 senza = ric.get("senza_teste" if quale == "teste" else "senza_corpo", [])
                 aperti[quale] = Foglio(qui(fogli[quale]), qui(ric["riferimenti"][quale]),
                                        qui(ric["tavolozza"]), senza, lavoro)
-            im, dove = taglia_pezzo(aperti[quale], posto, modo, colori, prese)
+            # (ogni categoria prende le sue sagome: spalline e guanti stanno sullo stesso braccio)
+            im, dove = taglia_pezzo(aperti[quale], posto, modo, colori, prese_di.setdefault(categoria, set()),
+                                    categoria == "guanti")
             pelle = ric["pelli"][categoria] + suffisso
             img = f"{pelle}_{nome}"
             im.save(os.path.join(dir_img, img + ".png"))

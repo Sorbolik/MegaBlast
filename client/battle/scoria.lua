@@ -86,14 +86,18 @@ M.PERSONAGGIO = { "apprendista_nuovo", "corna_apprendista" }
 -- already drawn, the others leave everyone's character as it is. From
 -- FORGED_TIER (gold, level 20: Sergio, 14 Nov) a piece shows its forged form.
 M.FAMILY_SKINS = {
-	vuoto = { mask = "cappuccio_vuoto", chest = "corazza_vuoto", legs = "stivali_vuoto", cloak = "mantello_vuoto" },
-	fabbro = { mask = "cuffia_fabbro", chest = "grembiule_fabbro", legs = "stivali_fabbro", cloak = "mantello_fabbro" },
-	corvo = { mask = "maschera_corvo", chest = "corazza_corvo", legs = "stivali_corvo", cloak = "mantello_corvo" },
-	fornace = { mask = "elmo_fornace", chest = "corazza_fornace", legs = "stivali_fornace", cloak = "mantello_fornace" },
-	leviatano = { mask = "elmo_leviatano", chest = "corazza_leviatano", legs = "stivali_leviatano", cloak = "mantello_leviatano" },
+	vuoto = { mask = "cappuccio_vuoto", chest = "corazza_vuoto", legs = "stivali_vuoto", cloak = "mantello_vuoto", gloves = "guanti_vuoto" },
+	fabbro = { mask = "cuffia_fabbro", chest = "grembiule_fabbro", legs = "stivali_fabbro", cloak = "mantello_fabbro", gloves = "guanti_fabbro" },
+	corvo = { mask = "maschera_corvo", chest = "corazza_corvo", legs = "stivali_corvo", cloak = "mantello_corvo", gloves = "guanti_corvo" },
+	fornace = { mask = "elmo_fornace", chest = "corazza_fornace", legs = "stivali_fornace", cloak = "mantello_fornace", gloves = "guanti_fornace" },
+	leviatano = { mask = "elmo_leviatano", chest = "corazza_leviatano", legs = "stivali_leviatano", cloak = "mantello_leviatano", gloves = "guanti_leviatano" },
 }
 M.FORGED_TIER = 3
-local WEAR_ORDER = { "mask", "chest", "legs", "cloak" }
+local WEAR_ORDER = { "mask", "chest", "gloves", "legs", "cloak" }
+-- The gloves (WB-070) are drawn and cut but are not a slot of sim/gear.lua yet:
+-- only the scenarios wear them (imposta prova_guanti 1 base, 2 forged), on
+-- top of the family of prova_famiglia. { family, forged }
+M.test_gloves = nil
 
 -- The look of whoever wears gear ({ mask = family id, ... }) with those tiers
 -- ({ mask = 1..4, ... }, menu/wallet.lua)
@@ -105,6 +109,8 @@ function M.look_of(gear, tiers)
 		if name then
 			if ((tiers or {})[slot] or 1) >= M.FORGED_TIER then name = name .. "_forgiato" end
 			look[#look + 1] = name
+		elseif slot == "gloves" and M.test_gloves and gear then
+			look[#look + 1] = M.FAMILY_SKINS[M.test_gloves[1]].gloves .. (M.test_gloves[2] and "_forgiato" or "")
 		end
 	end
 	return look

@@ -530,6 +530,126 @@ images {
   image: "/assets/skins/grembiule_fabbro_spallina_braccio_dietro_2.png"
 }
 images {
+  image: "/assets/skins/guanti_corvo_forgiato_guanto_braccio_1.png"
+}
+images {
+  image: "/assets/skins/guanti_corvo_forgiato_guanto_braccio_2.png"
+}
+images {
+  image: "/assets/skins/guanti_corvo_forgiato_guanto_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/guanti_corvo_forgiato_guanto_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/guanti_corvo_guanto_braccio_1.png"
+}
+images {
+  image: "/assets/skins/guanti_corvo_guanto_braccio_2.png"
+}
+images {
+  image: "/assets/skins/guanti_corvo_guanto_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/guanti_corvo_guanto_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/guanti_fabbro_forgiato_guanto_braccio_1.png"
+}
+images {
+  image: "/assets/skins/guanti_fabbro_forgiato_guanto_braccio_2.png"
+}
+images {
+  image: "/assets/skins/guanti_fabbro_forgiato_guanto_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/guanti_fabbro_forgiato_guanto_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/guanti_fabbro_guanto_braccio_1.png"
+}
+images {
+  image: "/assets/skins/guanti_fabbro_guanto_braccio_2.png"
+}
+images {
+  image: "/assets/skins/guanti_fabbro_guanto_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/guanti_fabbro_guanto_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/guanti_fornace_forgiato_guanto_braccio_1.png"
+}
+images {
+  image: "/assets/skins/guanti_fornace_forgiato_guanto_braccio_2.png"
+}
+images {
+  image: "/assets/skins/guanti_fornace_forgiato_guanto_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/guanti_fornace_forgiato_guanto_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/guanti_fornace_guanto_braccio_1.png"
+}
+images {
+  image: "/assets/skins/guanti_fornace_guanto_braccio_2.png"
+}
+images {
+  image: "/assets/skins/guanti_fornace_guanto_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/guanti_fornace_guanto_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/guanti_leviatano_forgiato_guanto_braccio_1.png"
+}
+images {
+  image: "/assets/skins/guanti_leviatano_forgiato_guanto_braccio_2.png"
+}
+images {
+  image: "/assets/skins/guanti_leviatano_forgiato_guanto_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/guanti_leviatano_forgiato_guanto_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/guanti_leviatano_guanto_braccio_1.png"
+}
+images {
+  image: "/assets/skins/guanti_leviatano_guanto_braccio_2.png"
+}
+images {
+  image: "/assets/skins/guanti_leviatano_guanto_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/guanti_leviatano_guanto_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/guanti_vuoto_forgiato_guanto_braccio_1.png"
+}
+images {
+  image: "/assets/skins/guanti_vuoto_forgiato_guanto_braccio_2.png"
+}
+images {
+  image: "/assets/skins/guanti_vuoto_forgiato_guanto_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/guanti_vuoto_forgiato_guanto_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/guanti_vuoto_guanto_braccio_1.png"
+}
+images {
+  image: "/assets/skins/guanti_vuoto_guanto_braccio_2.png"
+}
+images {
+  image: "/assets/skins/guanti_vuoto_guanto_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/guanti_vuoto_guanto_braccio_dietro_2.png"
+}
+images {
   image: "/assets/skins/maschera_corvo_forgiato_testa.png"
 }
 images {
