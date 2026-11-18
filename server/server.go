@@ -115,6 +115,7 @@ type Player struct {
 	room      atomic.Pointer[seatRef] // the match they're playing, nil if not playing
 	closeOnce sync.Once
 	showcase  []byte    // the card as JSON, checked (showcaseJSON): level and badges
+	equip     []byte    // what they wear as a Lua value (equipLua), nil: the base stats
 	joined    time.Time // when they entered the queue (bots after BotAfter, lobby.go)
 	private   *Private  // the private room they are in before the match (private.go; under the lobby's lock)
 }
@@ -271,6 +272,7 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 		mode = modes["2v2"]
 	}
 	p.showcase = showcaseJSON(m.Showcase)
+	p.equip = equipLua(m.Equip)
 	// a private room (private.go): "nuova" opens one, a code joins it
 	if m.Private == "nuova" {
 		s.lobby.NewPrivate(p)

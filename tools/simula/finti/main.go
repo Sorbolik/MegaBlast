@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,14 +24,29 @@ func main() {
 	modo := flag.String("modo", "1v1", "coda in cui entrare")
 	n := flag.Int("n", 1, "quanti giocatori finti")
 	attesa := flag.Duration("attesa", time.Second, "attesa prima di entrare in coda (il giocatore vero entra per primo)")
+	pezzi := flag.String("pezzi", "", "famiglie dei pezzi che indossano i finti, a turno (per esempio fornace,leviatano)")
 	flag.Parse()
+	famiglie := []string{}
+	if *pezzi != "" {
+		famiglie = strings.Split(*pezzi, ",")
+	}
 	time.Sleep(*attesa)
 	var wg sync.WaitGroup
 	for i := 0; i < *n; i++ {
 		wg.Add(1)
+		// la vetrina del finto: i quattro pezzi di una famiglia (il secondo forgiato: livello 30)
+		vetrina := ""
+		if len(famiglie) > 0 {
+			f, liv := famiglie[i%len(famiglie)], 1+29*(i%2)
+			pz := fmt.Sprintf(`{"set":%q,"liv":%d}`, f, liv)
+			vetrina = fmt.Sprintf(`,"vetrina":{"liv":%d,"pz":[%s,%s,%s,%s]}`, 5+i, pz, pz, pz, pz)
+			// e quello che conta per le statistiche del robot (server/net.lua, equip_stats)
+			vetrina += fmt.Sprintf(`,"eq":{"liv":%d,"gear":{"mask":%q,"chest":%q,"legs":%q,"cloak":%q},"lv":{"mask":%d,"chest":%d,"legs":%d,"cloak":%d}}`,
+				5+i, f, f, f, f, liv, liv, liv, liv)
+		}
 		go func() {
 			defer wg.Done()
-			if err := gioca(*url, *modo); err != nil {
+			if err := gioca(*url, *modo, vetrina); err != nil {
 				log.Printf("finto: %v", err)
 			}
 		}()
@@ -39,7 +55,7 @@ func main() {
 	wg.Wait()
 }
 
-func gioca(url, modo string) error {
+func gioca(url, modo, vetrina string) error {
 	ctx := context.Background()
 	c, _, err := websocket.Dial(ctx, url, nil)
 	if err != nil {
@@ -48,7 +64,7 @@ func gioca(url, modo string) error {
 	defer c.CloseNow()
 	c.SetReadLimit(1 << 20)
 	manda := func(s string) { c.Write(ctx, websocket.MessageText, []byte(s)) }
-	manda(fmt.Sprintf(`{"t":"hello","v":9,"mode":%q}`, modo))
+	manda(fmt.Sprintf(`{"t":"hello","v":9,"mode":%q%s}`, modo, vetrina))
 	scelto, sparato, you := false, -1, 0
 	for {
 		_, data, err := c.Read(ctx)

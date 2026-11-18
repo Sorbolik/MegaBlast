@@ -806,8 +806,9 @@ local function new_match(self, seed, map, opts)
 		plate.set_enabled(self.robots[i].plate, false)
 	end
 	self.view = {}
-	-- whoever plays here wears the active loadout's pieces, offline and without
-	-- prova_pelli; the bots and the online players everyone's character
+	-- whoever plays here wears the active loadout's pieces (without prova_pelli);
+	-- the bots everyone's character. Online everyone starts so, then CP.begin
+	-- dresses each player with the pieces the server passed on
 	local online = self.mode == "scelta_online" or self.mode == "online"
 	local own = (self.look == scoria.PERSONAGGIO and not online) and scoria.player or self.look
 	for i, rb in ipairs(self.g.robots) do
@@ -1906,6 +1907,13 @@ local function on_server_message(self, m)
 		-- players: the robots' teams and their draft picks,
 		-- [{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},...]
 		-- regole: those of the queue's event (sim/rules.lua), as on the server
+		-- eq: what each player wears, checked by the server: the same stats as there
+		-- (sim/loadout.lua; the bots and whoever sent nothing have the base ones)
+		for _, p in ipairs(m.players) do
+			local L = require "sim.loadout"
+			local ok, eq = pcall(L.net_clean, p.eq)
+			if ok and eq then p.stats = L.net_stats(eq, game.base_stats()) end
+		end
 		local opts = { players = m.players, random_spawns = true, intro = game.INTRO_TICKS }
 		if type(m.regole) == "table" then opts = menu.regole.options(m.regole, opts or {}) end
 		new_match(self, m.seed, m.map, opts)
@@ -2015,13 +2023,13 @@ on_socket = function(self, conn, data)
 		elseif self.privata then
 			-- the private match (menu/private.lua): a new room or a code
 			send(self, { t = "hello", v = PROTOCOL, privata = self.privata,
-				vetrina = CP.vetrina.for_net(self.profilo) })
+				vetrina = CP.vetrina.for_net(self.profilo), eq = CP.vetrina.equip_for_net(self.profilo) })
 		else
 			CP.wait(self, TM.waiting)
 			-- the queue picked in GIOCA ONLINE (menu/queue.lua): 2v2, 1v1 or an event,
 			-- and the tag: level and badges (menu/showcase.lua)
 			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2",
-				vetrina = CP.vetrina.for_net(self.profilo) })
+				vetrina = CP.vetrina.for_net(self.profilo), eq = CP.vetrina.equip_for_net(self.profilo) })
 		end
 	elseif data.event == ws.EVENT_MESSAGE and conn == self.mute then
 		-- prova_muta: nothing arrives any more
@@ -2374,6 +2382,15 @@ function CP.begin(self, me, net, cluster, replay_ok)
 		CP.vetrina.with_stats(v[i], rb.stats)
 	end
 	self.match_showcases = v
+	-- online everyone sees the pieces each player wears (Sergio, 18 Nov): they
+	-- come with the showcases; the bots keep everyone's character
+	if net and self.look == scoria.PERSONAGGIO then
+		for i in ipairs(self.g.robots) do
+			local gear, tiers = {}, {}
+			for _, pz in ipairs(v[i].bot and {} or v[i].pezzi or {}) do gear[pz.slot], tiers[pz.slot] = pz.set, pz.tier end
+			dress(self, i, i == me and scoria.player or scoria.look_of(gear, tiers))
+		end
+	end
 	self.conta = me and CP.conta.new(self.g, me, name_list) or nil
 	self.cp_group, self.cp_replay = cluster, replay_ok
 end

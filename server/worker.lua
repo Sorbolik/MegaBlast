@@ -134,9 +134,10 @@ local EMPTY = {}
 
 local CMD = {}
 
--- open{r, seed, mode, rules, bots}: the room's weapon draft starts; secs: its time
+-- open{r, seed, mode, rules, bots, eq}: the room's weapon draft starts; secs: its time
+-- (eq: what each player wears, by seat: net.lua equip_stats)
 function CMD.open(c)
-	ROOMS[c.r] = { seed = c.seed, rules = c.rules, d = N.draft_new(c.seed, c.mode, c.rules, c.bots) }
+	ROOMS[c.r] = { seed = c.seed, rules = c.rules, d = N.draft_new(c.seed, c.mode, c.rules, c.bots, c.eq) }
 	answer({ secs = N.draft_seconds() })
 end
 

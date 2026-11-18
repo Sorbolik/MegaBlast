@@ -7,6 +7,7 @@ local config = require "sim.config"
 local draft = require "sim.draft"
 local rules = require "sim.rules"
 local bot = require "sim.bot"
+local loadout = require "sim.loadout"
 
 local N = {}
 
@@ -234,12 +235,28 @@ function N.draft_seconds()
 	return config.DRAFT_SECONDS + config.LINEUP_SECONDS
 end
 
+-- The stats a player enters the match with (Sergio, 18 Nov: online too pieces,
+-- Sigilli and level must count): eq is what their phone says they wear (client
+-- menu/showcase.lua, equip_for_net). The server has no profiles yet: it can't
+-- know whether it's true, only that it is possible (sim/loadout.lua, net_clean).
+-- Returns the stats and the checked eq (for the start message), or nil: the base stats.
+function N.equip_stats(eq)
+	local ok, clean = pcall(loadout.net_clean, eq)
+	if not ok or not clean then return nil end
+	local done, st = pcall(loadout.net_stats, clean, game.base_stats())
+	if not done then return nil end
+	return st, clean
+end
+
 -- bots: the grade (sim/bot.lua GRADES) of the robots that are bots, by robot;
--- they pick at once, like on the phone
-function N.draft_new(seed, mode, r, bots)
+-- they pick at once, like on the phone. eq: what each player wears, by robot
+-- (N.equip_stats); the bots have the base stats
+function N.draft_new(seed, mode, r, bots, eq)
 	local players = {}
 	for i, p in ipairs(config.MODES[mode]) do
-		players[i] = { team = p.team, bot = bots and bots[i] or nil }
+		local b = bots and bots[i] or nil
+		players[i] = { team = p.team, bot = b }
+		if not b and eq then players[i].stats, players[i].eq = N.equip_stats(eq[i]) end
 	end
 	local d = draft.new(seed, players, rules.weapons(r))
 	for i, p in ipairs(players) do
@@ -269,7 +286,7 @@ end
 
 function N.draft_finish(d)
 	local out = draft.finish(d)
-	for i, p in ipairs(d.players) do out[i].bot = p.bot end
+	for i, p in ipairs(d.players) do out[i].bot, out[i].eq = p.bot, p.eq end
 	return out
 end
 
@@ -282,12 +299,13 @@ function N.draft_state(d, i)
 	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = d.picks[i] or "", p2 = d.picks2[i] or "", rd = rd }
 end
 
--- The match players for the start message: team and draft picks, so the
--- client creates its copy of the match with the same weapons
+-- The match players for the start message: team, draft picks and what they wear
+-- (eq, checked: the client works out the same stats with sim/loadout.lua
+-- net_stats), so its copy of the match has the same weapons and the same robots
 function N.start_players(players)
 	local out = {}
 	for i, p in ipairs(players) do
-		out[i] = { team = p.team, pick = p.pick, secondary = p.secondary, bot = p.bot }
+		out[i] = { team = p.team, pick = p.pick, secondary = p.secondary, bot = p.bot, eq = p.eq }
 	end
 	return out
 end

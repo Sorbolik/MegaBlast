@@ -17,7 +17,7 @@ const (
 
 // Message from a client:
 //
-//	{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}
+//	{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]},"eq":{...}}
 //	                                    first message: protocol version, queue ("1v1",
 //	                                    "2v2", "ffa" or the id of an event with its queue, GET /eventi)
 //	                                    and card (level and badges, the others see them)
@@ -59,6 +59,26 @@ type clientMsg struct {
 	// with the greeting: level, badges and pieces worn of the card (menu/showcase.lua, for_net)
 	// (raw: a wrong card must not make the greeting fail)
 	Showcase json.RawMessage `json:"vetrina"`
+	// what the player wears, for the stats of their robot: Sigilli, pieces with
+	// levels and signatures, level (menu/showcase.lua equip_for_net; checked in
+	// the process: net.lua equip_stats)
+	Equip json.RawMessage `json:"eq"`
+}
+
+// equipMax: the longest "eq" of a greeting that is read (a full one is under 1 KB)
+const equipMax = 4096
+
+// equipLua writes the greeting's "eq" as a Lua value for the room's process;
+// nil if it's missing, too long or not an object: the base stats
+func equipLua(raw json.RawMessage) []byte {
+	if len(raw) < 2 || len(raw) > equipMax || raw[0] != '{' {
+		return nil
+	}
+	lua, err := luaFromJSON(raw)
+	if err != nil {
+		return nil
+	}
+	return lua
 }
 
 type showcaseMsg struct {
@@ -295,6 +315,12 @@ func (r *Room) open(b *Batch) {
 	for i, s := range r.seats {
 		if s.bot > 0 {
 			b.Raw("[" + strconv.Itoa(i+1) + "]=" + strconv.Itoa(s.bot) + ",")
+		}
+	}
+	b.Raw("},eq={")
+	for i, s := range r.seats {
+		if s.p != nil && s.p.equip != nil {
+			b.Raw("[" + strconv.Itoa(i+1) + "]=" + string(s.p.equip) + ",")
 		}
 	}
 	b.Raw("}").End()

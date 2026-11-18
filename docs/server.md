@@ -209,10 +209,14 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
    deve accettare.
 3. **Dati del client**: quello che il client passa a `game.new` o a
    `draft.new` solo in locale (assetto, profilo) online deve arrivare col
-   `hello` o restare fuori consapevolmente (oggi: le statistiche
-   dell'equipaggiamento, che arriveranno con la progressione sul server,
-   fase 1 della roadmap; del cartellino arrivano solo livello e badge, e il
-   cartellino online mostra le statistiche che valgono davvero, quelle di base).
+   `hello` o restare fuori consapevolmente. Dal 18 nov le statistiche
+   dell'equipaggiamento arrivano: il `hello` porta `eq` (Sigilli, pezzi con
+   livelli e firme, livello del giocatore), il server controlla che sia
+   giocabile (`sim/loadout.lua`, `net_clean`) e ne fa le statistiche del robot;
+   `start` lo rimanda a tutti (`players[i].eq`) e ogni telefono rifà gli stessi
+   conti. Il server non ha ancora i profili: si fida di quello che il telefono
+   dice di avere (Sergio: «per ora non mi importa»); coi profili ospite lo
+   leggerà dal suo database. I bot hanno le statistiche di base.
 4. **Prove**: un test in `server/server_test.go` per il comportamento nuovo e
    l'online nel simulatore (`tools/simula/scenari/scelta_online.txt`:
    server vero e giocatori finti).

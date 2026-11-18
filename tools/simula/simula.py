@@ -319,10 +319,11 @@ def calendario_prova(nome, out):
     return f, json.loads(testo)["eventi"]
 
 
-def avvia_server(g, modo, n, eventi=None, bot_dopo=None):
+def avvia_server(g, modo, n, eventi=None, bot_dopo=None, pezzi=None):
     """Il server vero e N giocatori finti (tools/simula/finti) nella coda modo.
     bot_dopo: dopo quanto i bot riempiono la coda (-bot-dopo del server, per
     esempio "6s"; senza, quello del server: 25 s).
+    pezzi: le famiglie dei pezzi che indossano i finti, a turno ("fornace,leviatano").
     Lo scenario deve dire al gioco dove sta: imposta server_url ws://127.0.0.1:8090/ws
     eventi: un calendario in scenari/ (calendario_prova); modo "evento:ID" è la
     coda di quell'evento (la sua prima volta, che lo scenario fa in corso)."""
@@ -352,6 +353,8 @@ def avvia_server(g, modo, n, eventi=None, bot_dopo=None):
         return
     # i finti entrano dopo un attimo: il giocatore vero, che entra subito, è il robot 1
     argomenti = ["-url", url, "-modo", modo, "-n", str(n), "-attesa", "3s"]
+    if pezzi:
+        argomenti += ["-pezzi", pezzi]
     g.server.append(subprocess.Popen([str(bin / "finti"), *argomenti], stdout=log, stderr=subprocess.STDOUT))
 
 
@@ -366,10 +369,10 @@ def comando(g, riga):
     elif c == "aspetta":
         g.attendi(num(0))
     elif c == "server":
-        # server MODO [N] [CALENDARIO] [bot_dopo=6s]
+        # server MODO [N] [CALENDARIO] [bot_dopo=6s] [pezzi=fornace,leviatano]
         chiavi = dict(x.split("=", 1) for x in a if "=" in x)
         a = [x for x in a if "=" not in x]
-        avvia_server(g, a[0], int(num(1, 1)), a[2] if len(a) > 2 else None, chiavi.get("bot_dopo"))
+        avvia_server(g, a[0], int(num(1, 1)), a[2] if len(a) > 2 else None, chiavi.get("bot_dopo"), chiavi.get("pezzi"))
     elif c == "server_ferma":
         # il server cade di colpo (e i finti con lui), senza salutare come
         # quando si aggiorna: poi "server MODO 0" lo riaccende
