@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 )
@@ -24,6 +25,9 @@ func TestRecipeCheck(t *testing.T) {
 			replay.after(r, g)
 		end
 		return replay.encode(r)`, &text)
+	// every recipe that arrives is kept for the bots' training, the bad ones too
+	MatchDir = t.TempDir()
+	defer func() { MatchDir = "" }()
 	url := "http" + strings.TrimPrefix(strings.TrimSuffix(testServer(t), "/ws"), "ws") + "/ricetta?p=prova&j=LuaJIT"
 	post := func(body string) RecipeCheck {
 		t.Helper()
@@ -47,5 +51,8 @@ func TestRecipeCheck(t *testing.T) {
 	}
 	if c := post("os.exit()"); c.Err == "" {
 		t.Fatalf("not a recipe: %+v", c)
+	}
+	if files, _ := os.ReadDir(MatchDir); len(files) != 3 || !strings.HasSuffix(files[0].Name(), "_prova.lua") {
+		t.Fatalf("the three recipes should be kept: %v", files)
 	}
 }

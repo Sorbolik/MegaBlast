@@ -350,7 +350,11 @@ processo `luajit` a parte (`server/verify.lua`, con la priorità più bassa, una
 ripensano (tornano anche i bot?), e scrive nel log ogni richiesta che arriva (anche quelle rifiutate: «arrivata, N byte», «rifiutata, …») e l'esito, per esempio
 «ricetta da Android SM-A525F (LuaJIT 2.1.0-beta3): fisica: torna, bot: torna, 21600 tick
 (360.0 s di partita), rigiocata in 180 + 1500 ms». Con `-ricette CARTELLA` tiene quelle che
-non tornano. Per ora non paga e non salva niente: misura se la stessa partita torna uguale
+non tornano; con `-partite CARTELLA` (sul VPS `/var/lib/megablast/partite`) tiene tutte quelle
+che arrivano, appena arrivano (anche se il server è occupato e risponde 503): sono le partite
+giocate dalle persone, materiale per l'allenamento dei bot. Il workflow «Partite registrate»
+(`.github/workflows/partite.yml`, ogni notte e a mano) le copia nel ramo `partite-registrate`,
+cartella `partite/`. Per ora non paga e non salva niente: misura se la stessa partita torna uguale
 sul telefono (ARM, o Lua normale nella build web) e sul server (x86). Le missioni della
 campagna non si mandano ancora: il loro copione cambia la partita fuori dalla ricetta.
 Scenario `tools/simula/scenari/ricetta_server.txt`.
