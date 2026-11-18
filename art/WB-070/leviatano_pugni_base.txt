@@ -1,0 +1,18 @@
+Prompt
+
+Image 1 is a sheet with two arms of our character with a closed fist, on flat magenta. Image 2 is another sheet of the same character where the two arms with an open hand wear gloves.
+
+Edit image 1 and return the SAME sheet: both arms exactly where they are, same size, same shapes. Change ONLY the fist and the wrist of each arm: put on each fist the SAME glove of image 2, closed into a fist: gloves of teal green #2F8F82 round fish scales, like the boots of image 2, with a cyan #19E6E6 band around the wrist. The glove covers the whole fist, fingers and thumb included, keeps the same finger lines of the fist of image 1 and ends at the wrist with its cuff. The forearm above the cuff, the upper arm and the shoulder stay bare red skin, unchanged. Do NOT add anything else: no sleeves, no shoulder pads.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Thick closed pure black #000000 outline, the same weight as the outline of the arms.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+
+1. art/WB-070/riferimenti/R2_pugni.png
+2. art/WB-070/leviatano_corpo_base_2.png
+
+Tentativi: 1.

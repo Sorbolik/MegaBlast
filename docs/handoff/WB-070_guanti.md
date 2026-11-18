@@ -396,4 +396,21 @@ Il codice del quinto posto (simulazione, zaino, armeria, cartellino) si fa dopo,
 
 ## Consegna di Codex
 
+Generati e controllati 26 PNG in `art/WB-070/`, ciascuno al primo tentativo e accompagnato dal `.txt` omonimo con prompt e riferimenti.
+
+- Fabbro: `fabbro_corpo_base_1`, `fabbro_corpo_base_2`, `fabbro_corpo_forgiata`, `fabbro_pugni_base`, `fabbro_pugni_forgiata`. Variante base scelta: **2**.
+- Corvo: `corvo_corpo_base_1`, `corvo_corpo_base_2`, `corvo_corpo_forgiata`, `corvo_pugni_base`, `corvo_pugni_forgiata`. Variante base scelta: **1**.
+- Fornace: `fornace_corpo_base_1`, `fornace_corpo_base_2`, `fornace_corpo_forgiata`, `fornace_pugni_base`, `fornace_pugni_forgiata`. Variante base scelta: **1**.
+- Leviatano: `leviatano_corpo_base_1`, `leviatano_corpo_base_2`, `leviatano_corpo_forgiata`, `leviatano_pugni_base`, `leviatano_pugni_forgiata`. Variante base scelta: **2**.
+- Vuoto: `vuoto_corpo_base_1`, `vuoto_corpo_base_2`, `vuoto_corpo_forgiata`, `vuoto_pugni_base`, `vuoto_pugni_forgiata`. Variante base scelta: **2**.
+- Slot vuoto: `sagoma_vuota_guanti`.
+
+Controllati disposizione dei pezzi, copertura dei guanti, pelle scoperta sopra i polsini, contorni, sfondo e assenza di scritte o tagli. I 25 fogli del personaggio sono 1536×1024. La sagoma quadrata è 1254×1254 rispetto ai 1024×1024 richiesti.
+
+Per le basi ho scelto la variante con l’errore RGB medio assoluto più basso rispetto a R1 sui pixel in primo piano fuori da mani e polsi. Tutte le varianti differiscono da R1 anche fuori da quelle zone. Lo sfondo appare magenta uniforme a vista. Nessun angolo in alto a sinistra campionato restituisce il valore esatto `#FF00FF`.
+
+Alcuni pugni differiscono da R2 nelle linee delle dita. Le finiture forgiate di Corvo e Leviatano modificano localmente la sagoma. Le piume del Corvo base sono poco marcate e le placche del Fornace base risultano semplificate. La compatibilità con le impugnature in gioco resta da verificare.
+
+`icone_guanti` è bloccata prima della generazione. La scheda prescrive 11 riferimenti separati (R4 e dieci fogli di pugni) e il generatore ne accetta al massimo cinque per richiesta.
+
 ## Resoconto di Claude
