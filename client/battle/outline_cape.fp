@@ -18,7 +18,7 @@ uniform fs_uniforms
     mediump vec4 c1;
 };
 
-const int N = 24;
+const int N = 16;
 
 void main()
 {

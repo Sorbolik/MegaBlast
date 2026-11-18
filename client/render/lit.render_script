@@ -210,6 +210,7 @@ local function silhouettes(self, state)
             render.delete_render_target(self.rt_i)
             render.delete_render_target(self.rt_d)
             render.delete_render_target(self.rt_e)
+            render.delete_render_target(self.rt_g)
         end
         local params = { [graphics.BUFFER_TYPE_COLOR0_BIT] = {
             format = graphics.TEXTURE_FORMAT_RGBA, width = w, height = h,
@@ -221,6 +222,7 @@ local function silhouettes(self, state)
         self.rt_i = render.render_target("sagome_i", params)
         self.rt_d = render.render_target("sagome_d", params)
         self.rt_e = render.render_target("sagome_e", params)
+        self.rt_g = render.render_target("sagome_g", params)
         self.rt_w, self.rt_h = w, h
     end
     render.set_view(vmath.matrix4())
@@ -258,6 +260,13 @@ local function silhouettes(self, state)
     render.clear(self.clear_black)
     self.pass.pass = vmath.vector4(0, 1, self.outline_close or 0, 0)
     render.enable_texture("sagome_src", self.rt_d, graphics.BUFFER_TYPE_COLOR0_BIT)
+    render.draw(self.predicates.sagoma_chiudi, options)
+    render.disable_texture("sagome_src")
+    -- the soft field of the glow, from what is seen of each place ("v")
+    render.set_render_target(self.rt_g)
+    render.clear(self.clear_black)
+    self.pass.pass = vmath.vector4(0, 2, self.outline_glow or 0, 0)
+    render.enable_texture("sagome_src", self.rt_v, graphics.BUFFER_TYPE_COLOR0_BIT)
     render.draw(self.predicates.sagoma_chiudi, options)
     render.disable_texture("sagome_src")
     render.enable_state(graphics.STATE_BLEND)
@@ -335,6 +344,7 @@ function update(self)
         render.enable_texture("sagome_v", self.rt_v, graphics.BUFFER_TYPE_COLOR0_BIT)
         render.enable_texture("sagome_c", self.rt_c, graphics.BUFFER_TYPE_COLOR0_BIT)
         render.enable_texture("sagome_i", self.rt_i, graphics.BUFFER_TYPE_COLOR0_BIT)
+        render.enable_texture("sagome_g", self.rt_g, graphics.BUFFER_TYPE_COLOR0_BIT)
     end
     render.draw(predicates.gui, camera_gui.options)
     if self.outline then
@@ -342,6 +352,7 @@ function update(self)
         render.disable_texture("sagome_v")
         render.disable_texture("sagome_c")
         render.disable_texture("sagome_i")
+        render.disable_texture("sagome_g")
     end
     render.draw(predicates.debug_text, camera_gui.options)
     render.disable_state(graphics.STATE_STENCIL_TEST)
@@ -372,6 +383,7 @@ function on_message(self, message_id, message)
         -- the window rectangle of the silhouettes (x, y, w, h), or nothing: off
         self.outline = message.rect
         self.outline_close = message.close
+        self.outline_glow = message.glow
     elseif message_id == MSG_USE_FIXED_PROJ then
         init_camera(camera, get_fixed_projection, message.near, message.far, message.zoom)
         update_camera(camera, state)
