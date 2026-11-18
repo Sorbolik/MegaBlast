@@ -8,13 +8,13 @@ aspetta 4
 tocca_centro 640 300               # l'apprendista: lo ZAINO
 aspetta 5
 foto 01_griglia
-trascina 700 470 700 220 3        # su: le righe sotto
+trascina 700 220 700 470 3        # il dito sale: le righe sotto (y del gioco verso l'alto)
 aspetta 3
 foto 02_scorsa
 tocca 560 340                      # un pezzo della griglia scorsa
 aspetta 3
 foto 03_scelto
-trascina 700 220 700 520 3        # giù: di nuovo in cima
+trascina 700 470 700 170 3        # il dito scende: di nuovo in cima
 aspetta 3
 foto 04_in_cima
 aspetta 4

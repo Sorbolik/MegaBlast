@@ -159,7 +159,20 @@ local function grid(s, g, items, a)
 end
 
 -- a drag inside the window moves the grid (and is not a tap on a piece)
+local WHEEL_UP, WHEEL_DOWN, WHEEL_STEP = hash("zoom_avanti"), hash("zoom_indietro"), 60
+
 local function grid_drag(s, action_id, action)
+	-- on a desktop the mouse wheel scrolls the grid, as in a browser
+	if (action_id == WHEEL_UP or action_id == WHEEL_DOWN) and s.grid and not s.card and not s.sheet
+		and s.tab ~= "sigilli" and (s.scroll_max or 0) > 0 then
+		if action.pressed then
+			local step = action_id == WHEEL_UP and -WHEEL_STEP or WHEEL_STEP
+			s.scroll = math.max(0, math.min(s.scroll_max, (s.scroll or 0) + step))
+			gui.set_position(s.grid.node, vmath.vector3(0, s.scroll, 0))
+			grid_fade(s)
+		end
+		return true
+	end
 	if action_id ~= ui.TOUCH or not s.grid or s.card or s.sheet or s.tab == "sigilli" then return false end
 	if action.pressed then
 		s.drag = nil
@@ -182,8 +195,8 @@ local function grid_drag(s, action_id, action)
 		s.buttons.held_down = nil
 	end
 	if d.moved then
-		-- (action.y here grows downward, like the Figma: the grid follows the finger)
-		s.scroll = math.max(0, math.min(s.scroll_max, d.from - dy))
+		-- the grid follows the finger (Sergio, 18 Nov: it went the other way)
+		s.scroll = math.max(0, math.min(s.scroll_max, d.from + dy))
 		gui.set_position(s.grid.node, vmath.vector3(0, s.scroll, 0))
 		grid_fade(s)
 	end
