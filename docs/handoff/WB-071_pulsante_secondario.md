@@ -1,4 +1,4 @@
-# WB-071 · Il pulsante secondario di ferro
+# WB-071 · Il pulsante secondario di ferro e le due monete
 
 - **Stato:** APPROVATA (Sergio, 18 nov 10:12, sulle targhe chiare usate come pulsanti: «non li vorrei usare per nulla, dobbiamo inventarci un'altra soluzione, una sorta di pulsante secondario»)
 - **Data:** 2026-11-18
@@ -35,6 +35,8 @@ tocca. Serve **un pulsante secondario** solo, uguale in ogni schermata, con i su
 | R1 | `art/WB-071/riferimenti/R1_targhe_chiare_oggi.png` | l'armeria di oggi: in basso al centro la targa chiara ACCENDI LA FIRMA, da sostituire; a destra la gemma +1 LIVELLO |
 | R2 | `art/WB-071/riferimenti/R2_primario.png` | la gemma, il pulsante primario: stessa famiglia, ma il secondario deve essere più quieto |
 | R3 | `art/WB-071/riferimenti/R3_porta_armeria.png` | un pulsante della home: lo stile della china e del ferro |
+| R4 | `art/WB-071/riferimenti/R4_monete_iniziali.png` | le due monete com'erano all'inizio (fatte in codice): la scaglia d'oro e l'ossidiana nera col filo magenta |
+| R5 | `art/WB-071/riferimenti/R5_scaglia_oggi.png` | la scaglia di oggi: va tenuta la fiammella dentro |
 
 ## Immagini da generare
 
@@ -44,6 +46,7 @@ Il prompt è completo e va usato così com'è. Allega i riferimenti nell'ordine 
 | Nome file | Cosa c'è | Riferimenti | Misura | Varianti |
 |---|---|---|---|---|
 | `secondario` | i tre stati, uno sotto l'altro | R1, R2, R3 | 1536×1024 | 3 |
+| `monete` | la Scaglia e l'Ossidiana, una accanto all'altra | R4, R5, R3 | 1536×1024 | 3 |
 
 Le varianti si chiamano `secondario_1.png` e così via, in `art/WB-071/`. Per ogni foglio Codex
 scrive un `.txt` con lo stesso nome: cosa ha fatto e cosa non è riuscito a rispettare.
@@ -62,6 +65,21 @@ Draw it THREE times on the sheet, one above the other, same size, with plenty of
 No letters, no numbers, no icons, no shadow on the ground, no glow outside the ink. Background plain green #00FF00 so it can be cut out.
 ```
 
+### `monete`
+
+Sergio, 18 nov 10:15: «le gemme hanno cambiato forma e colore, voglio tornare almeno al colore
+iniziale; anche le scaglie hanno cambiato tutto, così non sembrano più scaglie, però mi piace che
+abbiano la fiammella dentro». Il gioco le usa da 20 a 46 px (portafoglio, prezzi, pulsanti).
+
+```
+Image 1 shows the two currencies of our game as they were at the beginning: on the left the SCAGLIA, a gold flake shaped like a scale, and on the right the OSSIDIANA, a dark obsidian shard with a bright magenta rim. Image 2 is the gold coin we use today: it no longer looks like a scale, but the little flame inside it is good and must be kept. Image 3 is a button of the same game and is the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+
+Draw TWO separate icons side by side, well apart, same visual size, on plain green (#00FF00):
+1. SCAGLIA: a single thick dragon SCALE, unmistakably a scale: a rounded shield shape, wide and round at the top and coming to a soft point at the bottom, slightly curved like it was pulled off a dragon, with a raised rim. Gold (#FFB703) with a lighter top band (#FFE08A) and a darker bottom edge (#C77A06); in its middle a small orange flame (#F26419 with a #FFB703 core) like the one in image 2.
+2. OSSIDIANA: a sharp shard of black volcanic glass, taller than wide, with three or four flat cut faces in near-black purples (#1A1220, #2E2140, #4A3366) and a thin glowing magenta rim along its outline (#FF70D1), one thin pale pink highlight (#FFD6F2) on the top face, like the right icon of image 1 but drawn in the comic style of image 3.
+Each icon must read at 24 pixels: one bold silhouette, no thin details. No letters, no numbers, no shadow on the ground, no glow outside the ink.
+```
+
 ## Criteri di accettazione
 
 - [ ] contorno nero puro e spesso, nessuna scritta, nessuna icona nell'incavo
@@ -69,10 +87,16 @@ No letters, no numbers, no icons, no shadow on the ground, no glow outside the i
 - [ ] accanto alla gemma (R2) si legge come secondario: più scuro e più quieto
 - [ ] spento si distingue dall'acceso anche in bianco e nero
 - [ ] i tre stati hanno la stessa sagoma e la stessa grandezza (si sovrappongono)
+- [ ] la scaglia si riconosce come scaglia anche a 24 px, con la fiammella dentro
+- [ ] l'ossidiana ha il colore iniziale: nera e viola col filo magenta
 
 ---
 
 ## Decisione
+
+Sergio, 18 nov 10:15: le monete tornano almeno al colore iniziale (l'ossidiana nera col filo
+magenta), la scaglia torna a sembrare una scaglia e tiene la fiammella. Aggiunte a questa scheda
+per lanciarle insieme.
 
 Sergio, 18 nov 10:12: le targhe chiare non vanno più usate come pulsanti né come targhe. Claude ha
 scelto: ferro scuro con l'incavo per l'icona (il secondario dice l'azione con l'icona, il primario
