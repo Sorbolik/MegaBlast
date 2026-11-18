@@ -384,13 +384,10 @@ return {
 		grade = "GRADO %s · %s",
 		level_to = "LIVELLO %d › %d",
 		level_top = "LIVELLO %d · AL MASSIMO",
-		-- the next step: its level, the grade it opens
-		next_step = "PROSSIMO SCATTO: %d · GRADO %s, %s",
-		all_steps = "TUTTI GLI SCATTI FATTI",
-		-- the signature: how far it is lit (roman number) and its name; it is lit
-		-- with Ossidiana, a grade for each step done
-		sign = "firma %s: %s",
-		sign_off = "firma spenta: %s",
+		-- the signature and its name (how far it is lit: the gems beside it); it is
+		-- lit with Ossidiana, a grade for each step done
+		sign = "firma · %s",
+		sign_off = "firma spenta · %s",
 		light_sign = "ACCENDI LA FIRMA",
 		sign_cost = "%d ossidiana",
 		sign_needs = "dallo scatto %d",
@@ -419,6 +416,8 @@ return {
 		proof_first = "prima la prova",
 		-- (not POTENZIA: that is the tab already, Sergio 15 Nov)
 		upgrade = "+1 LIVELLO",
+		-- in the ZAINO: opens the piece's card, with +1 LIVELLO
+		upgrade_here = "POTENZIA",
 		missing = "mancano %s",
 		pick_ware = "tocca un pezzo",
 		in_wardrobe = "ce l'hai già",
@@ -517,7 +516,8 @@ return {
 		-- under the piece chosen: level, grade and what it does
 		piece_line = "liv %d · grado %s %s",
 		wear = "INDOSSA",
-		worn = "ce l'hai addosso",
+		-- under POTENZIA: the level now and the next one
+		up_line = "liv %d › %d",
 		-- the Sigilli: the points still to spend (a flame each) and those used
 		free = "PUNTI LIBERI",
 		used = "%d / %d USATI",
