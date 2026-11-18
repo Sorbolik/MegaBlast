@@ -1,6 +1,6 @@
 -- The flat backdrops of the menus (Sergio, 18 Nov: the style of the first
 -- backgrounds of 5 Nov, flat dark shapes made in code, no painted image, no
--- halo): the colonnade behind the campaign, the diamonds breathing behind the
+-- halo): the colonnade behind the campaign, the sky of the Limbo behind the
 -- home, the chasm behind the gironi, and the themes of 5 Nov behind
 -- the other menus. They end on the thread: under it the footer is plain dark.
 -- Coordinates: x from the middle of the 1280 frame, y from its bottom (the
@@ -11,6 +11,7 @@
 --   (live false: a still copy, nothing moves)
 
 local screen = require "ui.screen"
+local clock = require "ui.clock"
 local ui = require "ui.ui"
 
 local M = {}
@@ -27,8 +28,22 @@ local function box(x, y, w, h, color, parent)
 	return n
 end
 
--- the textures made or loaded once (by name)
-local textures = {}
+-- the textures made or loaded once (by name), and the size of the loaded ones
+local textures, sizes = {}, {}
+
+-- an image of /paintings/backdrops (png) as a texture: its id, width and height
+local function texture(name)
+	if not textures[name] then
+		local data = sys.load_resource("/paintings/backdrops/" .. name .. ".png")
+		-- the gui draws premultiplied colors: so must the image be
+		local img = data and image.load(data, { premultiply_alpha = true })
+		if img and gui.new_texture(name, img.width, img.height, img.type, img.buffer) then
+			textures[name], sizes[name] = name, { img.width, img.height }
+		end
+	end
+	local size = sizes[name]
+	return textures[name], size and size[1], size and size[2]
+end
 
 -- how far the shapes go: 2 frames each way (20:9, 4:3, foldables)
 local HALF_W, TOP = 1280, 720 * 2.5
@@ -145,22 +160,15 @@ THEMES.camerino = {
 	end,
 }
 
--- HOME: diamonds breathing and embers rising (Sergio, 18 Nov: «rombi che
--- respirano, ma molto più lenta», «dettagliali un po' di più», with embers).
--- A grid of cut gems (light rim, body, facet, glint, shadow on the low sides)
--- that swell and shrink in a slow wave from the podium, one every WAVE_T
--- seconds, and small flat embers that rise from the floor, sway, turn and fade.
--- Nothing random: the embers come from a fixed sequence
-local STEP, WAVE_T, EMBERS = 120, 25, 26
--- the gem from point to point at scale 1 (a square 60 on a side, turned)
-local GEM_W = 85
-local CY = 160
-
-local function turned_box(x, y, w, h, deg, color, parent)
-	local n = box(x, y, w, h, color, parent)
-	gui.set_rotation(n, vmath.vector3(0, 0, deg))
-	return n
-end
+-- HOME: the sky of the Limbo (Sergio, 18 Nov: «il cielo ci siamo»): small
+-- four-pointed stars twinkling and drifting left, a falling star every 7 s, and
+-- comic clouds (tools/grafica/cielo.py) passing now and then on two planes: the
+-- far ones small, darker and slow behind the stars, the near ones in front.
+-- Everything is a function of one clock that never restarts (ui/clock.lua): leaving
+-- the home and coming back, or a copy of the backdrop during a transition,
+-- shows the sky where it would have been («deve restare costante, senza
+-- resettarsi»). The clouds look random but come from a hash of their lane and
+-- of the turn, so they too are where the clock says
 
 -- a fixed sequence of numbers from 0 to 1
 local function sequence(seed)
@@ -171,105 +179,131 @@ local function sequence(seed)
 	end
 end
 
--- The gem, drawn once into a texture (one node a gem): in diamond coordinates
--- (|u| + |v| = 1 is its edge, v up) the light rim, the body, the shadow on the
--- two low sides, the facet a little up and the glint near the top corner. Each
--- pixel is the mean of 4 x 4 samples, so the edges are smooth
-local GEM_PX = 96
-local GEM_LAYERS = {
-	{ "231E31", function(u, v, d) return d <= 1 end },
-	{ "1A1623", function(u, v, d) return d <= 0.83 end },
-	{ "15121D", function(u, v, d) return d <= 0.83 and d > 0.68 and v < 0 end },
-	{ "1F1A2B", function(u, v, d) return math.abs(u) + math.abs(v - 0.07) <= 0.5 end },
-	{ "2A2440", function(u, v, d) return math.abs(u) + math.abs(v - 0.45) <= 0.17 end },
-}
+-- a number from 0 to 1 for (a, b, c), always the same
+local function hash(a, b, c)
+	local h = math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453
+	return h - math.floor(h)
+end
 
-local function gem_texture()
-	if textures.gem then return textures.gem end
-	local cols = {}
-	for i, l in ipairs(GEM_LAYERS) do cols[i] = { tonumber(l[1]:sub(1, 2), 16), tonumber(l[1]:sub(3, 4), 16), tonumber(l[1]:sub(5, 6), 16) } end
-	local px, n = {}, GEM_PX
-	for y = n - 1, 0, -1 do
-		for x = 0, n - 1 do
-			local r, g, b, a = 0, 0, 0, 0
-			for sy = 0, 3 do
-				for sx = 0, 3 do
-					local u = ((x + (sx + 0.5) / 4) / n) * 2 - 1
-					local v = ((y + (sy + 0.5) / 4) / n) * 2 - 1
-					local d = math.abs(u) + math.abs(v)
-					local top
-					for i, l in ipairs(GEM_LAYERS) do if l[2](u, v, d) then top = i end end
-					if top then
-						local c3 = cols[top]
-						r, g, b, a = r + c3[1], g + c3[2], b + c3[3], a + 1
+local function pic(id, w, h, parent, color)
+	local n = gui.new_box_node(vmath.vector3(0, -999, 0), vmath.vector3(w, h, 0))
+	gui.set_texture(n, id)
+	gui.set_parent(n, parent)
+	gui.set_inherit_alpha(n, true)
+	if color then gui.set_color(n, color) end
+	return n
+end
+
+local STARS, STAR_DRIFT, STREAK_T = 110, 6, 7
+-- the cloud lanes: { far, turn in seconds }; one cloud at a time on each, it
+-- waits a random while in its turn, then crosses at its own speed
+local SHIFTS = {}
+local LANES = { { false, 95 }, { false, 120 }, { false, 140 }, { true, 170 }, { true, 210 }, { true, 250 } }
+
+THEMES.cielo = {
+	base = c("0F0E1A"),
+	build = function(root, live)
+		local shapes = {}
+		for i = 1, 6 do
+			local id, w, h = texture("nuvola_" .. i)
+			-- drawn at twice the size they are shown at
+			if id then shapes[#shapes + 1] = { id, w / 2, h / 2 } end
+		end
+		local lanes = {}
+		-- the cloud of lane i in its turn: its shape, size, height, side, speed,
+		-- and when in the turn it starts and how long it takes to cross
+		local function crossing(i, l, turn, half)
+			local c = { shape = shapes[1 + math.floor(hash(i, turn, 2) * #shapes) % #shapes] }
+			c.k = l.far and 0.4 + hash(i, turn, 3) * 0.25 or 0.7 + hash(i, turn, 3) * 0.45
+			c.w = c.shape[2] * c.k
+			c.path = 2 * half + c.w + 20
+			local speed = l.far and 4 + hash(i, turn, 4) * 4 or 9 + hash(i, turn, 4) * 8
+			-- it waits at most what leaves it the time to cross in its turn
+			c.cross = math.min(c.path / speed, l.turn * 0.95)
+			c.start = hash(i, turn, 5) * (l.turn - c.cross)
+			c.y = 300 + hash(i, turn, 6) * 480
+			c.flip = hash(i, turn, 7) < 0.5 and -1 or 1
+			return c
+		end
+		local function lane(i)
+			local l = LANES[i]
+			local far = l[1]
+			lanes[i] = { far = far, turn = l[2] }
+			-- where each lane is in its turn, fixed for the whole game: the first
+			-- near and far ones are half way across when the home first shows
+			if not SHIFTS[i] then
+				SHIFTS[i] = hash(i, 0, 1) * l[2]
+				if shapes[1] and (i == 1 or i == 4) then
+					local c = crossing(i, lanes[i], 0, screen.width() / 2)
+					SHIFTS[i] = c.start + c.cross * (i == 1 and 0.55 or 0.3) - clock.now()
+				end
+			end
+			lanes[i].shift = SHIFTS[i]
+			if shapes[1] then
+				lanes[i].n = pic(shapes[1][1], shapes[1][2], shapes[1][3], root, far and vmath.vector4(0.72, 0.72, 0.78, 1) or nil)
+			end
+		end
+		-- the far clouds first, under the stars
+		for i = 1, #LANES do if LANES[i][1] then lane(i) end end
+		local star_id = texture("stella")
+		local r = sequence(9)
+		local stars = {}
+		local tints = { c("55497A"), c("3E3760"), c("6E5F96") }
+		for i = 1, STARS do
+			stars[i] = { star_id and pic(star_id, 1, 1, root, tints[i % 3 + 1]), x = -900 + r() * 1800, y = 140 + r() * 760,
+				s = 8 + r() * 18, ph = r() * 6.28, sp = 0.4 + r() * 0.8 }
+		end
+		local streak = box(0, -999, 140, 2, c("6A5E90"), root)
+		gui.set_rotation(streak, vmath.vector3(0, 0, -30))
+		local streak_col = c("6A5E90")
+		for i = 1, #LANES do if not LANES[i][1] then lane(i) end end
+		local v = vmath.vector3()
+		local away = vmath.vector3(0, -999, 0)
+		local function place(t)
+			local half = screen.width() / 2
+			for _, e in ipairs(stars) do
+				if e[1] then
+					local x = (e.x + 900 - t * STAR_DRIFT) % 1800 - 900
+					v.x, v.y, v.z = x, e.y, 0
+					gui.set_position(e[1], v)
+					local s = e.s * (0.6 + 0.4 * math.sin(t * e.sp + e.ph))
+					v.x, v.y = s, s
+					gui.set_size(e[1], v)
+				end
+			end
+			local q = (t % STREAK_T) / 1.2
+			if q <= 1 then
+				local k = math.floor(t / STREAK_T)
+				v.x, v.y, v.z = -500 + (k * 389) % 900 + q * 420, 800 - q * 240, 0
+				gui.set_position(streak, v)
+				streak_col.w = math.sin(q * math.pi)
+				gui.set_color(streak, streak_col)
+			else
+				gui.set_position(streak, away)
+			end
+			for i, l in ipairs(lanes) do
+				if l.n then
+					local turn = math.floor((t + l.shift) / l.turn)
+					local c = crossing(i, l, turn, half)
+					local p = ((t + l.shift) - turn * l.turn - c.start) / c.cross
+					if p < 0 or p > 1 then
+						gui.set_position(l.n, away)
+					else
+						gui.set_texture(l.n, c.shape[1])
+						v.x, v.y, v.z = c.shape[2], c.shape[3], 0
+						gui.set_size(l.n, v)
+						v.x, v.y, v.z = half + c.w / 2 + 10 - p * c.path, c.y, 0
+						gui.set_position(l.n, v)
+						v.x, v.y, v.z = c.flip * c.k, c.k, 1
+						gui.set_scale(l.n, v)
 					end
 				end
 			end
-			if a > 0 then
-				px[#px + 1] = string.char(math.floor(r / a + 0.5), math.floor(g / a + 0.5), math.floor(b / a + 0.5), math.floor(a / 16 * 255 + 0.5))
-			else
-				px[#px + 1] = "\0\0\0\0"
-			end
 		end
-	end
-	if gui.new_texture("gemma", n, n, "rgba", table.concat(px)) then textures.gem = "gemma" end
-	return textures.gem
-end
-
-THEMES.rombi = {
-	base = c("110F18"),
-	build = function(root, live)
-		local tex = gem_texture()
-		local gems = {}
-		-- only where the screen can show them: from the floor to the top of a 4:3
-		-- screen, as wide as a 20:9 one
-		for j = 0, 8 do
-			for i = -7, 7 do
-				local x, y = i * STEP + (j % 2) * STEP / 2, j * STEP
-				local n = gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(GEM_W, GEM_W, 0))
-				gui.set_texture(n, tex)
-				gui.set_parent(n, root)
-				gui.set_inherit_alpha(n, true)
-				gems[#gems + 1] = { n, math.sqrt(x * x + (y - CY) ^ 2) }
-			end
-		end
-		local r = sequence(7)
-		local warm = { c("7A3418"), c("9A4A1C"), c("6A2A20") }
-		local embers = {}
-		for i = 1, EMBERS do
-			local col = warm[i % 3 + 1]
-			embers[i] = { turned_box(0, 0, 10, 10, 45, col, root), x = -760 + r() * 1520, phase = r(),
-				period = 11 + r() * 8, sway = 20 + r() * 40, size = 8 + r() * 8, shift = r() * 6.28,
-				col = vmath.vector4(col) }
-		end
-		local v = vmath.vector3()
-		local function place(t)
-			local w = t * 2 * math.pi / WAVE_T
-			for _, g in ipairs(gems) do
-				v.x = (26 + 52 * (0.5 + 0.5 * math.sin(w - g[2] * 0.008))) / 60
-				v.y, v.z = v.x, 1
-				gui.set_scale(g[1], v)
-			end
-			for _, e in ipairs(embers) do
-				local p = (t / e.period + e.phase) % 1
-				v.x, v.y, v.z = e.x + math.sin(p * 7.54 + e.shift) * e.sway, 100 + p * 760, 0
-				gui.set_position(e[1], v)
-				v.x = e.size * (1 - 0.5 * p)
-				v.y = v.x
-				gui.set_size(e[1], v)
-				v.x, v.y, v.z = 0, 0, 45 + p * 240
-				gui.set_rotation(e[1], v)
-				e.col.w = math.min(1, math.sin(p * math.pi) * 1.6)
-				gui.set_color(e[1], e.col)
-			end
-		end
-		-- a still copy stops where a live one would be at 6 s
-		place(6)
+		place(clock.now())
 		if not live then return end
-		local t = 6
-		return function(dt)
-			t = t + dt
-			place(t)
+		return function()
+			place(clock.now())
 		end
 	end,
 }
@@ -279,16 +313,6 @@ THEMES.rombi = {
 -- shapes (tools/grafica/voragine.py: the polygons have smooth edges there),
 -- stuck to the real left edge, and the same mirrored on the right
 local WALL_W, WALL_H = 300, 972
-
-local function texture(name)
-	if textures[name] then return textures[name] end
-	local data = sys.load_resource("/paintings/backdrops/" .. name .. ".png")
-	local img = data and image.load(data)
-	if img and gui.new_texture(name, img.width, img.height, img.type, img.buffer) then
-		textures[name] = name
-	end
-	return textures[name]
-end
 
 THEMES.voragine = {
 	base = c("130E10"),

@@ -1292,8 +1292,10 @@ function M.copy_of(opt, live)
 	if not opt.dim and FLAT.has(opt.bg) then
 		local back = empty(640, 0)
 		gui.set_yanchor(back, gui.ANCHOR_BOTTOM)
-		-- a live copy moves until it is deleted (its timer stops by itself)
-		gui.set_inherit_alpha(FLAT.make(opt.bg, back, THREAD_Y, C.SOOT, live), true)
+		-- the flat backdrop of a copy always moves, on the same clock as the real
+		-- one, so nothing jumps when one takes the other's place (Sergio, 18 Nov);
+		-- it moves until it is deleted (its timer stops by itself)
+		gui.set_inherit_alpha(FLAT.make(opt.bg, back, THREAD_Y, C.SOOT, true), true)
 		out[#out + 1] = back
 	elseif id then
 		S.kept = name

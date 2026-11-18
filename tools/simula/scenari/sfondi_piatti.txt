@@ -1,7 +1,8 @@
-# Gli sfondi piatti dei menu (Sergio, 18 nov): i rombi che respirano con le braci
+# Gli sfondi piatti dei menu (Sergio, 18 nov): il cielo del Limbo con le nuvole
 # dietro la home, il colonnato dietro le bacheche della campagna, la voragine dietro
 # la mappa dei gironi e i temi del 5 novembre dietro gli altri menu. Due foto della
-# home a 3 s di distanza: i rombi cambiano piano, le braci salgono.
+# home a 3 s di distanza: le stelle e le nuvole si sono spostate un poco; tornando
+# alla home dopo l'armeria il cielo è andato avanti, non è ripartito.
 imposta prova_vignette no
 imposta prova_profilo 3
 aspetta 4.25
@@ -13,6 +14,7 @@ aspetta 3.5
 foto 05_armeria
 tocca_bordo 72 60 basso sinistra    # HOME
 aspetta 3.5
+foto 05b_home_ritorno               # il cielo è andato avanti, non è ripartito
 tocca_centro 640 300                # l'apprendista: lo ZAINO, la carta a righe
 aspetta 3.5
 foto 06_zaino

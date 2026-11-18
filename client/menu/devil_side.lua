@@ -12,6 +12,7 @@ local ui = require "ui.ui"
 local kit = require "ui.kit"
 local game = require "sim.game"
 local scoria = require "battle.scoria"
+local clock = require "ui.clock"
 
 local M = {}
 
@@ -37,6 +38,7 @@ function M.devil(s, line)
 	-- its feet on the thread
 	local pose = box(M.x() + kit.lean(), kit.BAND + 8, s.radice)
 	s.figure = scoria.new(s.colore, scoria.player)
+	clock.sync(s.figure)
 	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	scoria.update(s.figure, 0, s.st)
 	local k = 300 / game.DISEGNO_H
