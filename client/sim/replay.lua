@@ -310,9 +310,23 @@ local function parse(s)
 end
 
 function M.decode(s)
+	local r = M.read(s)
+	if r and type(r.input) == "table" and type(r.impronte) == "table" then return r end
+	return nil
+end
+
+-- Any data as the same text (the guest profile travels like this too,
+-- sim/profile.lua), and back: a table or nil. Same parser, never code.
+function M.write(v)
+	local out = {}
+	encode(v, out)
+	return table.concat(out)
+end
+
+function M.read(s)
 	if type(s) ~= "string" then return nil end
 	local ok, r = pcall(parse, s)
-	if ok and type(r) == "table" and type(r.input) == "table" and type(r.impronte) == "table" then return r end
+	if ok and type(r) == "table" then return r end
 	return nil
 end
 

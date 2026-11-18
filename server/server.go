@@ -26,6 +26,7 @@ type Config struct {
 	Workers        int
 	ReconnectTicks int // during the draft: how long to wait for someone who dropped before removing them
 	StandInTicks   int // in the match: away for longer than this when their turn comes, a bot plays it (the seat is kept to the end)
+	EmptyTicks     int // in the match: with every player away for longer than this the room closes
 	DraftTicks     int // if > 0 replaces config.DRAFT_SECONDS (for tests)
 	PingEvery      time.Duration
 	EventList      string        // event calendar (events.go): panel address or file, empty = no events
@@ -38,6 +39,7 @@ func DefaultConfig() Config {
 		Workers:        runtime.GOMAXPROCS(0),
 		ReconnectTicks: 20 * tickRate,
 		StandInTicks:   5 * tickRate,
+		EmptyTicks:     60 * tickRate,
 		PingEvery:      10 * time.Second,
 		BotAfter:       25 * time.Second,
 	}
@@ -55,6 +57,7 @@ type Server struct {
 	sessions sync.Map // token -> seatRef, for whoever reconnects
 	online   atomic.Int64
 	draining atomic.Bool
+	accounts *Accounts // guest profiles (accounts.go), nil without -profili
 }
 
 func NewServer(cfg Config) *Server {
@@ -79,6 +82,8 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", s.handleWS)
 	mux.HandleFunc("/ricetta", s.handleRecipe)
+	mux.HandleFunc("/profilo", s.handleProfile)
+	mux.HandleFunc("/profilo/", s.handleProfile)
 	// for the load balancer: 503 when the node is shutting down or full
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		if s.draining.Load() || max(s.sched.Load(), s.botSched.Load()) > 0.8 {

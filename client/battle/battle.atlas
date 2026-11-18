@@ -14,6 +14,9 @@ images {
   image: "/assets/fx/attrezzo_molla.png"
 }
 images {
+  image: "/assets/fx/attrezzo_molla_freccia.png"
+}
+images {
   image: "/assets/fx/attrezzo_tagliola.png"
 }
 images {

@@ -8,7 +8,10 @@ nome `megablast-1`). Due script:
   solo, aspetta la fine delle partite quando si spegne), Caddy davanti
   (WebSocket e TLS automatico col dominio), firewall con solo 22, 80 e 443, SSH
   solo con chiave, aggiornamenti di sicurezza automatici, copia dei dati ogni
-  notte in `/var/backups/megablast` (14 giorni).
+  notte in `/var/backups/megablast` (14 giorni), coi database SQLite (i profili
+  ospite, `megablast.db`) anche su Cloudflare R2 quando ci sono i segreti
+  `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT` e la variabile
+  `R2_BUCKET` (lì 30 giorni; `aggiorna.sh` scrive le chiavi in `/etc/megablast/r2.env`).
 - `web.sh root@IP [CHIAVE]` porta il gioco web (la build di `tools/web/build.sh`) in `/opt/megablast/web`.
 - `aggiorna.sh root@IP [CHIAVE]` compila il server per il processore del VPS
   (x86 o ARM), lo copia in `/opt/megablast`, riavvia il servizio e controlla

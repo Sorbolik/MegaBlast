@@ -988,6 +988,7 @@ local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", ta
 	vignette = require "battle.vignette", favilla = require "battle.favilla", tale = require "ui.story",
 	-- the recipes of the matches played here go to the server, which checks them
 	recipe_check = require "main.recipe_check",
+	account = require "main.account",
 	-- Scaglie and Ossidiana (sim/wallet.lua) and the campaign's chapters (a finished one gives Ossidiana)
 	wallet = require "sim.wallet", chapters = require("sim.campaign").CAPITOLI }
 
@@ -1251,16 +1252,30 @@ function CP.wait(self, txt)
 	menu.attesa.display(self.attesa, txt)
 end
 
--- The transitions (ui/transition.lua): the tent between menus, the iris
--- between menus and battle. The new menu's pieces arrive by themselves
--- (ui/kit.lua, enter_begin) while the tent leaves.
--- toward: 1 forward (the tent crosses from the left), -1 back
+-- The transitions (ui/transition.lua): between menus the pieces go to their
+-- edges and the new ones come in from theirs, the iris between menus and
+-- battle. The old pieces: the home's, or the top nodes of the screen the last
+-- passage made (or the one a door opened, ui/door_pass.lua).
+-- toward: 1 forward, -1 back (the same motion both ways)
 function CP.slide(self, toward, change)
-	menu.passaggio.temper(self.passaggio, function()
-		menu.kit.enter_begin(0)
+	local kit = menu.kit
+	local old = self.schermata == nil and self.home.tops or self.slide_tops or kit.tracked()
+	menu.passaggio.pieces(self.passaggio, function()
+		-- the new screen's top nodes (a door's screen keeps its own list too)
+		local outer = kit.tracking
+		kit.track_begin()
 		change()
-		menu.kit.enter_end()
-	end, toward)
+		local news = kit.tracked()
+		kit.track_end()
+		if outer then
+			for _, n in ipairs(news) do outer[#outer + 1] = n end
+			kit.tracking, ui.tracking = outer, outer
+		end
+		-- back to the home: it has its own entrance (menu/home.lua)
+		if self.schermata == nil then news = {} end
+		self.slide_tops = news
+		return news
+	end, old)
 end
 
 function CP.iris(self, change)
@@ -2505,6 +2520,13 @@ end
 
 -- End of match: the stats and the match into the profile, and its replay if
 -- it was played here. Returns the match number if it can be rewatched
+-- the guest profile on the server, in the shadow for now (main/account.lua):
+-- the identity and a copy at startup, a copy after the saves
+function CP.account_start(self)
+	CP.account.start(server_url(), self.profilo, profile.test)
+	profile.on_save = function(p) CP.account.saved(p, profile.test) end
+end
+
 function CP.record(self, res)
 	local c = self.conta
 	self.conta = nil
@@ -4732,6 +4754,7 @@ function init(self)
 	self.profilo = profile.load_up()
 	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2, config_int("megablast.prova_profilo", 0) == 3) end
 	if SIMULATE then profile.sample_void(self.profilo, config_int("megablast.prova_vuoto", 0), sys.get_config_string("megablast.prova_famiglia", "vuoto")) end
+	CP.account_start(self)
 	home.wear(self.home, self.profilo)
 	self.scelta = menu.pick.new(WEAPON_ICON, TM.draft_names, TM.draft_effects, self.comandi)
 
