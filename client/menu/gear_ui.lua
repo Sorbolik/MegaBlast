@@ -160,7 +160,11 @@ end
 function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 	local k = h / 380
 	-- where each level sits, next to its piece, and the zone that opens it
-	local at = { mask = { 88, -318, 190, 120 }, chest = { 92, -205, 150, 110 }, cloak = { -128, -150, 90, 150 }, legs = { 118, -40, 230, 80 } }
+	-- (Sergio, 18 Nov: helmet, armour and gloves on the right, the gloves by the
+	-- hand behind; cloak and boots on the left)
+	local at = { mask = { 88, -318, 190, 120 }, chest = { 92, -205, 150, 110 }, gloves = { 96, -120, 110, 80 },
+		cloak = { -128, -150, 90, 150 }, legs = { -118, -40, 230, 80 } }
+	local left = { cloak = true, legs = true }
 	local cats = { mask = "elmo", chest = "corazza", cloak = "mantello", legs = "stivali" }
 	local colors = {}
 	for _, sl in ipairs(equip.SLOTS) do
@@ -171,23 +175,29 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 		local bx, by = cx + p[1] * k, feet + p[2] * k
 		-- only the piece chosen is lit (Sergio, 18 Nov)
 		if sel == sl.id then colors[cats[sl.id]] = vmath.vector4(1, 0.62, 0.12, 1) end
-		if level then
-			-- one label, shaped like a button: the type's symbol and the level
-			-- (Sergio, 18 Nov); on the outer side, never over the devil
-			local top = level >= equip.LIVELLO_MAX
-			-- symbol, number and arrow measured, then the label as wide as them
-			-- with even padding on both sides (Sergio, 18 Nov)
+		-- one label, shaped like a button: the type's symbol and the level, or
+		-- a "+" on an empty place (Sergio, 18 Nov); on the outer side, never over
+		-- the devil. Symbol, number and arrow are measured, then the label is as
+		-- wide as them with even padding; all centered on the plate's face (2 px
+		-- above its middle: the shadow under it), the arrow sits 2 px lower
+		if TYPE[sl.id] then
+			local top = level and level >= equip.LIVELLO_MAX
 			local lh, pad, sym, gap = 44, 16, 26, 8
-			local num = kit.text(g, tostring(level), 0, by + 7, 19, top and KC.HOT or KC.SAND)
-			local arrow = kit.text(g, "›", 0, by + 7, 19, KC.MUTE)
+			local cy = by - 2
+			local num = kit.text(g, level and tostring(level) or "+", 0, cy + 7, 19,
+				top and KC.HOT or level and KC.SAND or KC.MUTE)
+			local arrow = kit.text(g, "›", 0, cy + 5, 19, KC.MUTE)
 			local nw, aw = kit.width(num), kit.width(arrow)
 			local lw = pad + sym + gap + nw + 6 + aw + pad
-			local lx = sl.id == "cloak" and math.max(screen.x0 + 12, bx + 17 - lw) or bx - 17
+			local lx = left[sl.id] and math.max(screen.x0 + 12, bx + 17 - lw) or bx - 17
 			local plate = kit.strip(g, M.LABEL, lx, by - lh / 2, lw, lh)
 			gui.move_below(plate.node, num)
-			fit(g, TYPE[sl.id], lx + pad, by - sym / 2, sym, sym)
+			local icon = fit(g, TYPE[sl.id], lx + pad, cy - sym / 2, sym, sym)
+			if not level then gui.set_color(icon, vmath.vector4(1, 1, 1, 0.45)) end
 			shift(num, lx + pad + sym + gap)
 			shift(arrow, lx + pad + sym + gap + nw + 6)
+			-- the label opens the place too
+			kit.zone(g, s.buttons, lx, by - lh / 2, lw, lh, "posto:" .. sl.id)
 		end
 		local zx = sl.id == "cloak" and cx - 150 * k or cx - p[3] / 2 * k
 		kit.zone(g, s.buttons, zx, by - p[4] / 2 * k, p[3] * k, p[4] * k, "posto:" .. sl.id)
