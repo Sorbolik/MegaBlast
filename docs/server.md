@@ -353,6 +353,9 @@ ripensano (tornano anche i bot?), e scrive nel log ogni richiesta che arriva (an
 non tornano. Per ora non paga e non salva niente: misura se la stessa partita torna uguale
 sul telefono (ARM, o Lua normale nella build web) e sul server (x86). Le missioni della
 campagna non si mandano ancora: il loro copione cambia la partita fuori dalla ricetta.
+In allenamento contro i bot la ricetta porta anche cosa indossa ognuno (`eq` dei giocatori,
+come online): le statistiche escono da lì (`replay.match`), e i bot il server se li
+ricostruisce dal seme e dall'`eq` del giocatore (`loadout.rival`), senza fidarsi del telefono.
 Scenario `tools/simula/scenari/ricetta_server.txt`.
 
 ## Sul VPS (17 nov)

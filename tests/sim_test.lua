@@ -2478,6 +2478,37 @@ do
 	check(fizzle and ka.x == x0 and not k.projectile, "terrain stops Giano without a swap")
 end
 
+-- Training's bots: as strong as the player (sim/loadout.lua rival), the same
+-- every time from the same seed, and the recipe plays them with those stats
+do
+	local loadout = require "sim.loadout"
+	local replay = require "sim.replay"
+	local mine = { liv = 30, variant = "a", gear = { mask = "corvo", chest = "fornace" },
+		lv = { mask = 20, chest = 12 }, sg = { mask = 1, chest = 1 },
+		tree = { wings = 12, forge = 10, pick = { wings = { ["1"] = 2, ["2"] = 1 }, forge = { ["1"] = 1, ["2"] = 2 } } } }
+	local a, b = loadout.rival(mine, 1234, 2), loadout.rival(mine, 1234, 2)
+	local c = loadout.rival(mine, 1235, 2)
+	check(a and b and replay.encode({ x = a }) == replay.encode({ x = b }), "rival: same seed, same bot")
+	check(c and replay.encode({ x = a }) ~= replay.encode({ x = c }), "rival: another seed, another bot")
+	local n, levels, fams = 0, {}, {}
+	for _, s in ipairs(require("sim.gear").SLOTS) do
+		local f = a.gear and a.gear[s.id]
+		if f then n, levels[#levels + 1] = n + 1, a.lv[s.id]; check(not fams[f], "rival: families differ"); fams[f] = true end
+	end
+	table.sort(levels)
+	check(n == 2 and levels[1] == 12 and levels[2] == 20 and a.liv == 30, "rival: as many pieces at the same levels")
+	local skills = require "sim.skills"
+	check(skills.spent(a.tree) == 22, "rival: as many Sigilli points")
+	local empty = loadout.rival({ liv = 1 }, 7, 2)
+	check(empty and not empty.gear and not empty.tree, "rival: a new player, a bare bot")
+	-- the recipe's players with eq play with the stats of their eq
+	local r = replay.new(99, "pavimento", { players = { { team = 1, eq = mine }, { team = 2, bot = "normale", eq = a } } })
+	local g = replay.match(r)
+	local base = game.base_stats()
+	check(g.robots[2].stats.attack == loadout.net_stats(a, base).attack and g.robots[1].max_hp == loadout.net_stats(loadout.net_clean(mine), base).max_hp,
+		"recipe: eq gives the stats")
+end
+
 if failures > 0 then
 	print(failures .. " tests failed")
 	os.exit(1)

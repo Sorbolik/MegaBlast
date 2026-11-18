@@ -9,6 +9,7 @@
 
 local skills = require "sim.skills"
 local equip = require "sim.gear"
+local rng = require "sim.rng"
 
 local M = {}
 
@@ -149,6 +150,58 @@ end
 -- eq: one that net_clean returned (here or on the server); base: game.base_stats()
 function M.net_stats(eq, base)
 	return M.stats(base, net_loadout(eq), eq.lv, eq.liv, eq.sg)
+end
+
+-- A bot as strong as the player in training (Sergio, 18 Nov: "equipaggiamenti
+-- comparabili"): from what the player wears (eq, as net_clean takes it) the
+-- same level, as many pieces at the same levels and signatures, but on
+-- random slots and each of a different family, and as many Sigilli points
+-- spread on random paths (a threshold at a time) with random powers. Pure
+-- and deterministic: seed is the match's, nth the bot's robot, so the
+-- server rebuilds the same one from the recipe (server/verify.lua). Returns
+-- an eq like net_clean's (nil if the player's doesn't hold)
+function M.rival(eq, seed, nth)
+	local mine = M.net_clean(eq)
+	if not mine then return nil end
+	local r = rng.new((math.floor(seed or 1) % 1000003) * 64 + (nth or 1))
+	local function shuffle(list)
+		for i = #list, 2, -1 do
+			local j = r:next_int() % i + 1
+			list[i], list[j] = list[j], list[i]
+		end
+		return list
+	end
+	-- the pieces: the player's levels (with their signatures) on other slots and families
+	local worn = {}
+	for _, s in ipairs(equip.SLOTS) do
+		if mine.gear and mine.gear[s.id] then worn[#worn + 1] = { lv = mine.lv[s.id], sg = mine.sg[s.id] } end
+	end
+	local slots, families = {}, {}
+	for i, s in ipairs(equip.SLOTS) do slots[i] = s.id end
+	for i, f in ipairs(equip.SETS) do families[i] = f.id end
+	shuffle(slots); shuffle(families); shuffle(worn)
+	local out = { liv = mine.liv, variant = "a", gear = {}, lv = {}, sg = {} }
+	for k, w in ipairs(worn) do
+		out.gear[slots[k]], out.lv[slots[k]], out.sg[slots[k]] = families[(k - 1) % #families + 1], w.lv, w.sg
+	end
+	-- the Sigilli: the same points, a threshold at a time on a path that has room
+	local left = math.min(skills.spent(mine.tree or {}), skills.points(mine.liv))
+	local tree = {}
+	while left > 0 do
+		local open = {}
+		for _, p in ipairs(skills.PATHS) do
+			if (tree[p.id] or 0) < skills.PATH_MAX then open[#open + 1] = p.id end
+		end
+		if #open == 0 then break end
+		local path = open[r:next_int() % #open + 1]
+		local n = math.min(left, skills.STEP, skills.PATH_MAX - (tree[path] or 0))
+		tree[path], left = (tree[path] or 0) + n, left - n
+	end
+	for _, p in ipairs(skills.PATHS) do
+		for k = 1, skills.reached(tree, p.id) do skills.choose(tree, p.id, k, r:next_int() % 2 + 1) end
+	end
+	out.tree = tree
+	return M.net_clean(out)
 end
 
 return M
