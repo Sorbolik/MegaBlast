@@ -355,6 +355,10 @@ return {
 		cancel = "%s ANNULLA",
 		change_remove = "%s CAMBIA IL TASTO, %s LO TOGLIE",
 		connect = "COLLEGA UN CONTROLLER PER CAMBIARE I TASTI",
+		-- the build's commit (%s, as in the Telegram caption); a branch's test APK, a local build
+		version = "VERSIONE %s",
+		version_test = "VERSIONE %s · PROVA, NON È MAIN",
+		version_local = "VERSIONE LOCALE",
 	},
 
 	-- menu/armory.lua: ARMERIA, gear sets and the skill tree
