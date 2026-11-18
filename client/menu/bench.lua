@@ -37,6 +37,11 @@ local KC = kit.C
 local ingots = require "ui.ingots"
 -- the effects on the left of the panel, the signature on the right
 local RIGHT_COL = 316
+-- the signature's texts in its own colour, the Ossidiana's violet (Sergio, 18 Nov)
+local SIGN_INK = KC.PURPLE
+local SIGN_TEXT = vmath.vector4(0.9, 0.84, 1, 1)
+local SIGN_OFF = vmath.vector4(0.6, 0.52, 0.72, 1)
+local SIGN_NAME_OFF = vmath.vector4(0.72, 0.62, 0.88, 1)
 M.X, M.W = 430, 580
 
 -- a text never wider than max (a long one shrinks)
@@ -112,13 +117,13 @@ function M.draw(s, g, sel)
 			local on = lit > 0
 			-- FIRMA (or FIRMA SPENTA), its name, what it gives now, and what it
 			-- gives at the next step (its studs sit on the bar)
-			kit.text(g, kit.upper(on and T.sign or T.sign_off), rx, 340, 16, on and KC.HOT_TOP or KC.MUTE, "start", 1)
-			local title = fit(kit.text(g, kit.upper(sg.name), rx, 362, 20, on and KC.HOT_TOP or KC.SAND, "start", 0.5), rw)
+			kit.text(g, kit.upper(on and T.sign or T.sign_off), rx, 340, 16, on and SIGN_INK or SIGN_OFF, "start", 1)
+			local title = fit(kit.text(g, kit.upper(sg.name), rx, 362, 20, on and SIGN_INK or SIGN_NAME_OFF, "start", 0.5), rw)
 			s.bench.sign, s.bench.lit, s.bench.desc = title, lit, {}
 			s.bench.stat = e.stat
 			local value = sign_value(e.stat, math.max(1, lit))
 			local lines = kit.wrap(g, kit.upper(sg.desc:format(value)), 16, rw)
-			local ink = on and KC.SAND or KC.MUTE
+			local ink = on and SIGN_TEXT or SIGN_OFF
 			local nxt_sign = lit < 3 and sg.desc:find("%%d") and (lit > 0)
 			local max_lines = nxt_sign and 3 or 4
 			for li = 1, math.min(max_lines, #lines) do
@@ -129,7 +134,7 @@ function M.draw(s, g, sel)
 				local step = equip.TIER_LEVELS[lit + 1]
 				local line = level >= step and T.sign_next_now:format(sign_value(e.stat, lit + 1))
 					or T.sign_next:format(step, sign_value(e.stat, lit + 1))
-				fit(kit.text(g, kit.upper(line), rx, ly, 16, KC.HOT, "start"), rw)
+				fit(kit.text(g, kit.upper(line), rx, ly, 16, KC.OBSIDIAN, "start"), rw)
 			end
 		end
 	end

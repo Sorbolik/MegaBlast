@@ -262,13 +262,10 @@ local function inventory(s)
 			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 220 + kit.width(name) + 16, 646, 17,
 				ui.C.GRADI[tier], "start", 0.5)
 			bench.ingots(s.low, 220, 656, math.min(460, room), 20, level, wallet.sign(p, set, slot))
-			-- the effects on one line, or on two when they don't fit
-			local lines = effect_lines(s.low, effects, room)
-			local two = #lines > 1
-			for i = 1, math.min(2, #lines) do
-				local n = kit.text(s.low, lines[i], 220, two and (674 + i * 18) or 697, kit.MIN_TEXT, KC.MUTE, "start", 0.5)
-				local wide = kit.width(n)
-				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
+			-- the rows on one line, or on two when they don't fit, coloured by kind
+			local lines, made = gear_ui.effect_row(s.low, 220, 688, set, slot, level, wallet.sign(p, set, slot), room, 22)
+			if lines == 1 then
+				for _, n in ipairs(made) do gui.set_position(n, gui.get_position(n) - vmath.vector3(0, 10, 0)) end
 			end
 		end
 		-- POTENZIA: the plate of the secondary actions (as ACCENDI LA FIRMA in the armory)
@@ -526,7 +523,10 @@ local function build(s)
 	s.outline = nil
 	local p = s.prof
 	local in_card = s.tab ~= "sigilli" and s.card and s.sel
-	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", common.home)
+	-- the ARMERIA has the forge's backdrop, the pieces the dressing room's
+	if s.back then kit.scene_bg(s.back, in_card and "fucina" or "camerino") end
+	-- in the ARMERIA the arrow goes back to the pieces, and says so
+	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", in_card and kit.upper(T.tab_inventory) or common.home)
 	s.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(s.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(s.wallet, p.buoni or 0)
 	kit.tabs(s.head.top_left, s.buttons, 300, 28, { { T.tab_inventory, "scheda:inventario" }, { T.tab_seals, "scheda:sigilli" } },
@@ -639,24 +639,16 @@ local function close_card(s)
 	gui.animate(s.mid.node, "position", at, gui.EASING_OUTCUBIC, 0.22)
 end
 
--- The card of POTENZIA is a modal of the ZAINO (Sergio, 18 Nov): a touch anywhere
--- that is not one of its buttons closes it; the arrow leaves the ZAINO as always.
--- With the controller there is no "anywhere": its back button closes the card.
+-- POTENZIA opens the ARMERIA inside the ZAINO (Sergio, 18 Nov evening: the
+-- armory and the upgrade card were the same screen, so the armory is this one):
+-- the backdrop of the forge, and only the arrow or the tab INVENTARIO go back
+-- to the pieces (no more "touch anywhere to close")
 function M.on_input(s, action_id, action)
 	if bench.input(s, action_id, action) then return nil end
 	if grid_drag(s, action_id, action) then return nil end
 	local in_card = s.card and s.tab ~= "sigilli"
 	local ui_action = ui.touch(s.buttons, action_id, action)
-	if in_card and action_id == ui.TOUCH then
-		if action.pressed then
-			s.miss = not s.buttons.held_down
-		elseif action.released and s.miss then
-			s.miss = nil
-			close_card(s)
-			return nil
-		end
-	end
-	if ui_action == "indietro" and in_card and action_id == ui.PAD then
+	if ui_action == "indietro" and in_card then
 		close_card(s)
 		return nil
 	end
