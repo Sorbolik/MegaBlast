@@ -64,19 +64,15 @@ end
 
 -- BOTTEGA ---------------------------------------------------------------------------
 
--- a ware w x h at (x, y): its picture, the family's line, slot and family, the price
+-- a ware w x h at (x, y): the piece in its slot frame (the same as in the ZAINO,
+-- WB-078: no family line, Sergio 18 Nov), under it the family and the price
 local function ware(a, x, y, w, h, set, slot, price, o)
 	local g = a.mid
-	-- the chosen one: the warm panel
-	kit.panel(kit.group(g, x + w / 2, y + h / 2).node, w, h, (o.hot or o.sel) and "pannello_caldo" or "pannello")
-	local isz = h * 0.46
-	kit.pic(g, gear_ui.icon(set, slot, 1), x + w / 2 - isz / 2, y + h * 0.05, isz, isz)
-	kit.rect(g, x + 14, y + h * 0.53, w - 28, 4, gear_ui.color(set))
-	if h >= 130 then
-		kit.text(g, gear_ui.slot_of(slot).name, x + w / 2, y + h * 0.57 + 16, 18, KC.SAND, "middle")
-		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + h * 0.57 + 34, 16, gear_ui.color(set), "middle")
-	else
-		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + h * 0.58 + 15, 17, gear_ui.color(set), "middle")
+	local named = h >= 130
+	local s = math.min(w, h - (named and 56 or 32))
+	gear_ui.slot(g, x + (w - s) / 2, y, s, { set = set, slot = slot, sel = o.sel })
+	if named then
+		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + s + 22, 17, KC.SAND, "middle")
 	end
 	local py = y + h - 28
 	if o.owned then

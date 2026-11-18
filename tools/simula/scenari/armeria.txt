@@ -5,21 +5,21 @@ imposta prova_profilo 1
 
 aspetta 4
 tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
-aspetta 1.5
+aspetta 4
 foto 01_potenzia
 tocca_bordo 543 53 alto sinistra    # BOTTEGA
-aspetta 0.8
+aspetta 3
 foto 02_bottega
 tocca_centro 485 311               # il primo pezzo del giorno
-aspetta 0.6
+aspetta 3
 foto 03_pezzo_scelto
 tocca_bordo 178 52 basso destra     # COMPRA
-aspetta 0.8
+aspetta 3
 foto 04_comprato
 # la firma si accende con l'Ossidiana (17 nov): l'elmo ha il primo grado, il secondo costa 320
 tocca_bordo 374 53 alto sinistra    # POTENZIA
-aspetta 0.8
+aspetta 3
 foto 05_firma_da_accendere
 tocca_centro 560 50                # ACCENDI LA FIRMA
-aspetta 0.8
+aspetta 3
 foto 06_firma_accesa

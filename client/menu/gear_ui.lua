@@ -34,12 +34,6 @@ M.ROMAN = { "I", "II", "III", "IV" }
 
 -- the name of a slot in the pictures' names (WB-043)
 M.ART = { mask = "elmo", chest = "corazza", cloak = "mantello", legs = "stivali" }
--- the families' colors (gear.SETS[].color)
-function M.color(set)
-	local f = equip.BY_ID[set]
-	return f and kit.hex(f.color) or KC.SAND
-end
-
 function M.slot_of(id)
 	for _, sl in ipairs(equip.SLOTS) do if sl.id == id then return sl end end
 	return equip.SLOTS[1]
