@@ -85,7 +85,6 @@ M.with_alpha = with_alpha
 local V = vmath.vector3()
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local CLEAR = vmath.vector4(0, 0, 0, 0)
-local card_in, piece_in    -- the entrances (below, with the motion)
 -- The thread: its height in Figma coordinates. Under it the band with the way
 -- back on the left and the screen's action on the right
 M.THREAD = 612
@@ -644,7 +643,6 @@ function M.action(g, label, x, y, w, h, opt)
 			gui.set_position(p.label, vec(at.x, at.y - (down and 4 or 0)))
 		end
 	end
-	piece_in(n, "action")
 	return p
 end
 
@@ -743,8 +741,6 @@ function M.header(list_of, label, accent, back_action, from)
 	local tr = M.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = tr.node
 	h.top_right = tr
-	piece_in(tl.node, "title")
-	if h.back then piece_in(h.back.node, "back") end
 	return h
 end
 
@@ -857,7 +853,6 @@ function M.card(g, x, y, w, h, color, opt)
 	if opt.sel then nine(n, "pannello_caldo", w + 12, h + 12, math.min(26, h * 0.34)) end
 	local parts = nine(n, "pannello", w, h, math.min(22, h * 0.3))
 	if opt.off then tint(parts, vmath.vector4(0.62, 0.62, 0.7, 0.8)) end
-	card_in(n)
 	return k
 end
 
@@ -902,7 +897,6 @@ function M.mode_card(g, x, y, w, h, kind, opt)
 	elseif f then
 		pic(name .. "_fregio", w / 2 + f.box[3] * s - fw / 2, h / 2 + f.box[2] * s - fh / 2, fw, fh, n)
 	end
-	card_in(n)
 	return k
 end
 
@@ -1277,6 +1271,7 @@ function M.copy_of(opt, live)
 		gui.set_color(bg, VEIL)
 		gui.set_texture(bg, id)
 		gui.set_parent(bg, back)
+		gui.set_inherit_alpha(bg, true)
 		out[#out + 1] = back
 		out.painting = bg
 	elseif live then
@@ -1296,11 +1291,12 @@ function M.copy_of(opt, live)
 		local w = screen.width()
 		local low = empty(640, 0)
 		gui.set_yanchor(low, gui.ANCHOR_BOTTOM)
-		shape(nil, 0, THREAD_Y, w, 11, C.INK, low)
+		gui.set_inherit_alpha(shape(nil, 0, THREAD_Y, w, 11, C.INK, low), true)
 		local seam = gui.new_box_node(vec(0, THREAD_Y), vec(w, 6))
 		gui.set_texture(seam, "fucina")
 		gui.play_flipbook(seam, "filo")
 		gui.set_parent(seam, low)
+		gui.set_inherit_alpha(seam, true)
 		if live then
 			gui.animate(seam, "color", vmath.vector4(0.72, 0.72, 0.72, 1), gui.EASING_INOUTSINE, 1.6, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
 			local glints = {}
@@ -1313,6 +1309,27 @@ function M.copy_of(opt, live)
 		out[#out + 1] = low
 	end
 	return out
+end
+
+-- Between two menus (ui/transition.lua, pieces): a still copy of the backdrop
+-- shown now, then (scene_still_fade, once the new screen is made) put just over
+-- the new backdrop, under the new screen, and faded out in t seconds
+function M.scene_still()
+	if not S or not S.owner then return {} end
+	local out = M.scene_copy(S.owner)
+	for _, n in ipairs(out) do gui.move_above(n, nil) end
+	return out
+end
+
+function M.scene_still_fade(out, t)
+	if #out == 0 then return end
+	local below = S.tops[#S.tops]
+	for _, n in ipairs(out) do
+		gui.move_above(n, below)
+		below = n
+		gui.animate(n, "color.w", 0, gui.EASING_OUTQUAD, t)
+	end
+	timer.delay(t, false, function() M.scene_copy_drop(out) end)
 end
 
 function M.scene_copy_drop(out)
@@ -1361,58 +1378,12 @@ end
 
 -- ---------------------------------------------------------------- motion
 
--- While a screen is being made after a transition (M.entering: the
--- gui_script sets it around the change) its pieces arrive by themselves: the
--- title from the left, the cards from the right one after the other, the
--- action pops; quickly, so that a tap finds them in place.
--- M.wait: seconds before they move
-M.entering, M.wait = false, 0
-local auto = {}        -- node -> where it rests, for the pieces already sent in
-local stagger = 0
-
-function M.enter_begin(wait)
-	M.entering, M.wait, auto, stagger = true, wait or 0, {}, 0
-end
-
-function M.enter_end()
-	M.entering, M.wait = false, 0
-end
-
--- A piece arrives from (dx, dy) away, in `time` seconds after `delay`,
--- overshooting a little. node: any node; its resting position is the current one
-function M.arrive(node, dx, dy, delay, time)
-	local p = auto[node] or gui.get_position(node)
-	auto[node] = M.entering and p or nil
-	gui.cancel_animations(node, "position")
-	gui.set_position(node, vec(p.x + dx, p.y + dy))
-	gui.animate(node, "position", p, gui.EASING_OUTBACK, time or 0.32, (delay or 0) + M.wait)
-	return p
-end
-
 -- A piece pops: from small to its size, overshooting
 function M.pop(node, delay, time, from, done)
 	gui.cancel_animations(node, "scale")
 	local k = from or 0.86
 	gui.set_scale(node, vmath.vector3(k, k, 1))
-	gui.animate(node, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, time or 0.3, (delay or 0) + M.wait, done)
-end
-
--- a card of a screen being made: from the right, each a little later
-function card_in(node)
-	if not M.entering or stagger >= 8 then return end
-	M.arrive(node, 520, 0, stagger * 0.03, 0.28)
-	stagger = stagger + 1
-end
-
--- the title and the way back, from the left; the action pops (no sparks:
--- Sergio, 11 Nov, «sembrano fuochi d'artificio»; they are for the touch)
-function piece_in(node, kind)
-	if not M.entering then return end
-	if kind == "action" then
-		M.pop(node, 0.08, 0.3, 0.7)
-	else
-		M.arrive(node, -460, 0, kind == "back" and 0.05 or 0, 0.28)
-	end
+	gui.animate(node, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, time or 0.3, delay or 0, done)
 end
 
 -- ---------------------------------------------------------------- effects

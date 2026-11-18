@@ -339,7 +339,7 @@ function M.show(h, without_veil, quiet)
 	h.is_visible = true
 	h.glint_at = h.t + 0.9
 	-- under the black veil nothing would be seen: the pieces wait for it
-	if not quiet then enter(h, without_veil and kit.wait or 0.2, false) end
+	if not quiet then enter(h, without_veil and 0 or 0.2, false) end
 	if without_veil then
 		gui.cancel_animations(h.veil, "color.w")
 		gui.set_enabled(h.veil, false)

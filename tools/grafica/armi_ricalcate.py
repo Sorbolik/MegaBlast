@@ -1,4 +1,4 @@
-# Ritaglia le armi, gli oggetti e gli effetti disegnati da Codex (WB-063...066) dai fogli già ricalcati a
+# Ritaglia le armi, gli oggetti e gli effetti disegnati da Codex (WB-063...066, WB-068) dai fogli già ricalcati a
 # vettori e le salva una per una in art/armi/<nome>.png (trasparenti, alla misura
 # del ricalco: il gioco le rimpicciolisce, non le ingrandisce mai).
 #
@@ -39,6 +39,7 @@ FOGLI = {
                         "shield", "uncino"],
     "oggetti_icone_1": ["hook_icona", "janus_icona", "teleport_icona", "parachute_icona",
                         "trampoline_icona", "trap_icona", "shield_icona"],
+    "molla_e_tagliola_1": ["molla", "tagliola_chiusa"],
     "effetti_1": ["fx_runa", "fx_stella", "fx_fendente", "fx_vento",
                   "fx_fumo", "fx_anello_fumo", "fx_risucchio", "fx_bolla",
                   "fx_guscio", "fx_coccio", "fx_gocce", "fx_coriandolo",

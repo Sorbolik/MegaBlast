@@ -1,0 +1,17 @@
+Image 1 shows two objects from our 2D comic game set in a cartoon hell (a spring pad and an open bear trap); image 2 shows the drawing style of the game. Draw two new objects with exactly the same materials, colours and style as image 1, side view, on one sheet:
+1. Top half of the sheet, centred: a WIDE and LOW spring pad, about 1200 px wide and only 400 px tall (three times wider than tall): a long flat wooden base at the bottom, three or four short dark-iron zig-zag springs side by side standing on it, and a long brass top plate resting on the springs, as wide as the base; a small team-green triangle in the middle of the top plate.
+2. Bottom half of the sheet, centred: the same bear trap of image 1 but SNAPPED SHUT, about 500 px wide and 450 px tall, seen from the side: the two half-moon iron jaws closed upward and meeting at the top, the light-iron teeth interlocked in the middle, the brass pivot at the bottom on a short dark-iron base.
+Rendering rules, very strict, because every shape will be traced into vector layers:
+- Same drawing style as image 2: thick closed pure black #000000 outline around every shape and between colour areas, chunky soft slightly asymmetric comic shapes.
+- FLAT COLORS ONLY: every area is one solid colour, plus at most one hard-edged shadow shape in the darker tone of the same material. No gradients, no textures, no soft shading, no glow halos, no blur, no sparkles, no motion lines.
+- Use ONLY these colours: dark iron #3B404B, iron #59606E, light iron #8F98A8; dark brass #A8761F, brass #D9A441; dark leather #4A3019, leather #6B4A2B, wood #8A5A33; team green #00FF00 with shadow #00B400 (only the triangle on the spring pad); white #FFFFFF; black #000000.
+- Background: flat pure magenta #FF00FF everywhere, no halo around the objects, no ground shadow. The two objects never touch each other.
+- No text, numbers, letters, labels, arrows or signatures.
+
+Riferimenti allegati in ordine
+R1 art/WB-068/riferimenti/R1_molla_e_tagliola_di_WB065.png
+R2 art/WB-068/riferimenti/R2_stile_colori_piatti.png
+
+ImageGen integrato, tre tentativi per variante. PNG originale da 1536×1024.
+Selezionato il primo tentativo: ha la dentatura contrapposta più leggibile. Molla 1272×382 px. Tagliola 590×295 px.
+La tagliola è chiusa, ma le due ganasce distinte che si incontrano in alto sono poco leggibili. Il magenta varia leggermente rispetto a #FF00FF; nelle superfici si vedono leggere sfumature fuori palette.
