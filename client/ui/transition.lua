@@ -7,10 +7,9 @@
 --           the map loads, then Favilla's flame (the entry's paper disc) flickers,
 --           swells and bursts into sparks, and the hole opens on the map from it
 --           (about 0.55 s after the load). A tap jumps to the burst
---   temper  between menus (Sergio, 12 Nov: «Tempra»): a slanted dark blade crosses
---           the screen in front of everything (240 + 300 ms), red-hot on its
---           leading edge and frozen, jagged, on the one behind (the pieces of
---           Codex, WB-051); under it the scene changes. From the other side when going back
+--   pieces  between menus (Sergio, 18 Nov, instead of the temper): the old pieces
+--           go back to their edges, the backdrop changes in a flash, the new
+--           pieces come in from their edges one after the other
 -- While a transition runs the game doesn't listen to taps (is_active).
 -- After the scene change the veil stays closed HOLD_FRAMES more frames: the change
 -- frame (paintings, mask, the new screen's nodes) is long, and often the one
@@ -22,7 +21,7 @@
 --   passaggio.iris(p, change)                      -- change(): the new scene
 --   passaggio.flame(p, change, done)               -- done(): the map is uncovered
 --   passaggio.skip(p)                              -- a tap during the flame
---   passaggio.temper(p, change, toward)            -- toward 1 forward, -1 back
+--   passaggio.pieces(p, change, old)               -- change() returns the new top nodes
 --   passaggio.is_active(p)
 
 local screen = require "ui.screen"
@@ -33,7 +32,6 @@ local M = {}
 
 local W, H = 1280, 720
 M.IRIS = 0.15           -- seconds to close, and to open again
-M.TENT_IN, M.TENT_OUT = 0.24, 0.3   -- the blade covers the screen, then leaves
 M.HOLD_FRAMES = 3       -- frames with the screen covered after the scene change
 -- the flame: it lights (from small, with a flicker), swells, bursts while the hole opens
 M.FLAME_IN, M.FLAME_SWELL, M.FLAME_OPEN = 0.16, 0.14, 0.24
@@ -41,7 +39,6 @@ M.FLAME_D = 140         -- the disc's diameter
 M.SPARKS = 10
 local FLAME_CARD = vmath.vector4(0.94, 0.9, 0.82, 1)
 local EMBER = vmath.vector4(1, 0.55, 0.16, 1)
-local SOOT = vmath.vector4(0.071, 0.063, 0.075, 1)      -- the colors of ui/kit.lua
 
 function M.new()
 	local n = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * screen.FULL, H * screen.FULL, 0))
@@ -68,7 +65,7 @@ local function flame_nodes(p)
 	return f
 end
 
--- (while the tent leaves, the new screen is there and listens already)
+-- (while the new pieces come in, the new screen is there and listens already)
 function M.is_active(p)
 	return p.n ~= nil and not p.leaving
 end
@@ -76,7 +73,6 @@ end
 -- on top of everything, even of the nodes created just now
 local function over_it(p)
 	gui.move_above(p.nodo, nil)
-	if p.tent and gui.is_enabled(p.tent.nodo) then gui.move_above(p.tent.nodo, nil) end
 end
 
 local function begin(p, r, g, a)
@@ -196,75 +192,91 @@ function M.skip(p)
 	if p.on_skip then p.on_skip() end
 end
 
-local TENT_W = 2100     -- covers the widest screen, slanted
-local P = require "ui.pieces"
--- the blade's nodes, made the first time it is used: the pieces drawn by Codex
--- (WB-051, atlas fucina) repeated down its whole height: the iron body, the
--- red-hot edge in front, the frozen one behind
-local function tent_nodes(p)
-	if p.tent then return p.tent end
-	local t = {}
-	t.nodo = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(0, 0, 0))
-	gui.set_visible(t.nodo, false)
-	gui.set_adjust_mode(t.nodo, gui.ADJUST_FIT)
-	local tall = H * 2.2
-	-- a column of a piece, w wide (its drawing's shape kept), its middle at x
-	local function column(name, x, w)
-		local m = P[name]
-		local h = w * m.h / m.w
-		local y = -tall / 2
-		while y < tall / 2 do
-			local n = gui.new_box_node(vmath.vector3(x, y + h / 2, 0), vmath.vector3(w, h + 1, 0))
-			gui.set_texture(n, "fucina")
-			gui.play_flipbook(n, name)
-			gui.set_parent(n, t.nodo)
-			y = y + h
-		end
-	end
-	local half = TENT_W / 2
-	-- the body: soot under it (no seam can show), its pieces side by side
-	local soot = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(TENT_W, tall, 0))
-	gui.set_color(soot, SOOT)
-	gui.set_parent(soot, t.nodo)
-	local bw = 90
-	local x = -half + bw / 2
-	while x - bw / 2 < half do
-		column("lama_corpo", math.min(x, half - bw / 2), bw)
-		x = x + bw
-	end
-	column("lama_fuoco", half + 16, 40)
-	column("lama_gelo", -half - 14, 36)
-	gui.set_rotation(t.nodo, vmath.vector3(0, 0, -14))
-	gui.set_enabled(t.nodo, false)
-	p.tent = t
-	return t
+-- Between two menus (Sergio, 18 Nov, proposal 2 of
+-- https://claude.ai/artifact/AhCahtSiA6MHKeQXHP7bmf, instead of the temper):
+-- nothing crosses the screen. The old screen's pieces go back to their edges,
+-- the backdrop changes in a flash, the new screen's pieces come in from their
+-- edges one after the other (the top, the left, the right, the middle, the
+-- bottom). A piece is a top node of the screen (kit.anchor, ui.root): its
+-- anchor, or where it is, says its edge.
+--   old         the old screen's top nodes (they are put back where they were)
+--   change()    makes the new screen and returns its top nodes
+M.OUT, M.FADE, M.IN, M.STAGGER = 0.16, 0.14, 0.30, 0.045
+-- how far a piece starts from its place, toward its edge
+local AWAY = { top = { 0, 170 }, bottom = { 0, -190 }, left = { -380, 0 }, right = { 380, 0 }, middle = { 0, -50 } }
+local ORDER = { top = 0, left = 1, right = 2, middle = 3, bottom = 4 }
+
+local function edge_of(n)
+	local p = gui.get_position(n)
+	local xa, ya = gui.get_xanchor(n), gui.get_yanchor(n)
+	if ya == gui.ANCHOR_TOP or p.y > 640 then return "top" end
+	if ya == gui.ANCHOR_BOTTOM or p.y < 90 then return "bottom" end
+	if xa == gui.ANCHOR_LEFT or p.x < 400 then return "left" end
+	if xa == gui.ANCHOR_RIGHT or p.x > 880 then return "right" end
+	return "middle"
 end
 
--- Between two menus: the blade crosses the screen, and behind it the scene
--- changes. toward 1: from left to right; -1 (going back): the other way,
--- mirrored, so that the fire always goes first
-function M.temper(p, change, toward)
-	toward = toward or 1
-	local t = tent_nodes(p)
+local function alive(list)
+	local out = {}
+	for _, n in ipairs(list or {}) do
+		if pcall(gui.get_position, n) then out[#out + 1] = n end
+	end
+	return out
+end
+
+function M.pieces(p, change, old)
+	local kit = require "ui.kit"
 	begin(p, 0, 1, 0)
-	gui.set_enabled(t.nodo, true)
-	gui.move_above(t.nodo, nil)
-	gui.cancel_animations(t.nodo, "position.x")
-	gui.set_scale(t.nodo, vmath.vector3(toward, 1, 1))
-	local pos = gui.get_position(t.nodo)
-	local far = TENT_W / 2 + screen.width() / 2 + 300
-	pos.x = W / 2 - toward * far
-	gui.set_position(t.nodo, pos)
-	gui.animate(t.nodo, "position.x", W / 2, gui.EASING_INSINE, M.TENT_IN, 0, function()
-		covered(p, change, function()
-			local k = p.n
+	local k = p.n
+	-- 1. the old pieces go to their edges, fast
+	old = alive(old)
+	local rest = {}
+	for i, n in ipairs(old) do
+		local e = edge_of(n)
+		local a = AWAY[e]
+		rest[i] = gui.get_position(n)
+		gui.cancel_animations(n, "position")
+		gui.animate(n, "position", rest[i] + vmath.vector3(a[1], a[2], 0), gui.EASING_INQUAD, M.OUT)
+	end
+	timer.delay(M.OUT * 0.7, false, function()
+		if p.n ~= k then return end
+		-- (put back where they were: the home's stay, hidden)
+		for i, n in ipairs(alive(old)) do
+			gui.cancel_animations(n, "position")
+			if rest[i] then gui.set_position(n, rest[i]) end
+		end
+		-- 2. a still copy of the old backdrop over the new one fades out
+		local still = kit.scene_still()
+		local news = alive(change())
+		kit.scene_still_fade(still, M.FADE)
+		-- 3. the new pieces, at their edges, come in one after the other (two frames
+		-- later: the frame that made the screen is long, the motion would skip)
+		local from = {}
+		for i, n in ipairs(news) do
+			local e = edge_of(n)
+			local a = AWAY[e]
+			local at = gui.get_position(n)
+			from[i] = { at = at, e = e }
+			gui.cancel_animations(n, "position")
+			gui.set_position(n, at + vmath.vector3(a[1], a[2], 0))
+			if e == "middle" then gui.set_scale(n, vmath.vector3(0.94, 0.94, 1)) end
+		end
+		over_it(p)
+		timer.delay(0, false, function() timer.delay(0, false, function()
+			if p.n ~= k then return end
 			p.leaving = true
-			gui.animate(t.nodo, "position.x", W / 2 + toward * far, gui.EASING_OUTSINE, M.TENT_OUT, 0, function()
-				gui.set_enabled(t.nodo, false)
-				-- (unless another transition started meanwhile: that one ends it)
+			local last = 0
+			for i, n in ipairs(alive(news)) do
+				local f = from[i]
+				local d = ORDER[f.e] * M.STAGGER
+				last = math.max(last, d)
+				gui.animate(n, "position", f.at, gui.EASING_OUTBACK, M.IN, d)
+				if f.e == "middle" then gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, M.IN, d) end
+			end
+			timer.delay(last + M.IN, false, function()
 				if p.n == k then end_of(p) end
 			end)
-		end)
+		end) end)
 	end)
 end
 

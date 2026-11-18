@@ -468,13 +468,6 @@ def fai_menu():
     intero("spunta_verde", verde(ritaglio("WB-044", "spunta")), 56)
     for nome, f, h, c, d in MENU_TRE:
         tre(nome, ritaglio(d, f), h, c)
-    # la lama della tempra (WB-051): corpo, bordo rovente e bordo gelato, che si
-    # ripetono in alto (e il corpo anche in largo); larghi il doppio di come si vedono
-    for nome, w in (("lama_corpo", 180), ("lama_fuoco", 80), ("lama_gelo", 72)):
-        im = Image.fromarray(ritaglio("WB-051", nome + "_1"), "RGBA")
-        im = im.resize((w, round(im.size[1] * w / im.size[0])), Image.LANCZOS)
-        salva(im, nome)
-        MISURE[nome] = im.size
     # il pulsante primario dei menu: la gemma di brace di WB-054 (E, Sergio 15 nov),
     # acceso, premuto e spento, in tre parti (si allunga solo il mezzo). Alti come nel
     # disegno rispetto all'acceso: il premuto e' piu' basso apposta. PRIMARIO=tizzone,
@@ -641,25 +634,6 @@ def fai_record():
         MISURE["record_" + nome] = (LATO_RECORD, LATO_RECORD)
 
 
-# i bordi della pagina trascinata dalle porte della home (WB-049, variante 1; Sergio 18 nov:
-# al posto della linea arancione): per ogni porta la cima, il mezzo che si ripete e il fondo.
-# Il mezzo va da una riga all'altra che si somigliano di piu', cosi' ripetuto non ha giunte.
-# Larghi il doppio di come si vedono (circa 64)
-BORDI = {"campagna": (215, 580), "allenamento": (275, 567), "eventi": (282, 490), "armeria": (248, 596)}
-LARGO_BORDO = 128
-
-
-def fai_bordi():
-    for porta, (a, b) in BORDI.items():
-        im = Image.fromarray(ritaglio("WB-049", "banda_%s_1" % porta), "RGBA")
-        k = LARGO_BORDO / im.size[0]
-        im = im.resize((LARGO_BORDO, round(im.size[1] * k)), Image.LANCZOS)
-        a, b = round(a * k), round(b * k)
-        for parte, (y0, y1) in (("su", (0, a)), ("mezzo", (a, b)), ("giu", (b, im.size[1]))):
-            salva(im.crop((0, y0, LARGO_BORDO, y1)), "bordo_%s_%s" % (porta, parte))
-            MISURE["bordo_%s_%s" % (porta, parte)] = (LARGO_BORDO, y1 - y0)
-
-
 def fai_atlante():
     nomi = sorted(f for f in os.listdir(OUT) if f.endswith(".png"))
     with open(os.path.join(RADICE, "client", "ui", "fucina.atlas"), "w") as f:
@@ -691,7 +665,6 @@ if __name__ == "__main__":
     fai_fette()
     fai_sfondi()
     fai_filo()
-    fai_bordi()
     fai_misure()
     fai_atlante()
     print("OK")
