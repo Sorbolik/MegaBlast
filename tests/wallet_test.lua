@@ -1,9 +1,9 @@
--- Scaglie and Ossidiana (menu/wallet.lua): earnings, the pieces' levels, the
+-- Scaglie and Ossidiana (sim/wallet.lua): earnings, the pieces' levels, the
 -- Proof of the steps and the Smith's hand. From the root:
 --   luajit tests/wallet_test.lua
 package.path = "client/?.lua;" .. package.path
 
-local wallet = require "menu.wallet"
+local wallet = require "sim.wallet"
 local equip = require "sim.gear"
 
 local failures = 0
