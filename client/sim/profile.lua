@@ -14,6 +14,7 @@ local skills = require "sim.skills"
 local loadout = require "sim.loadout"
 local milestones = require "sim.milestones"
 local wallet = require "sim.wallet"
+local equip = require "sim.gear"
 
 local M = {}
 
@@ -333,6 +334,157 @@ function M.upgrade(p)
 	end
 	p.livello = math.min(p.livello, M.LEVEL_MAX)
 	return p
+end
+
+-- Guest profiles (plan of 17 Nov, choice 1A): the progress a phone already
+-- has goes to the server once, cut to these caps. Only what the server keeps
+-- comes along (the last matches, their replays and the settings stay on the
+-- phone); everything is checked like data from outside: what doesn't fit
+-- the rules is dropped, the rest stays.
+M.IMPORT = { level = 30, scaglie = 20000, ossidiana = 200, piece = 20, vouchers = 10 }
+
+local function whole(v, lo, hi)
+	return type(v) == "number" and v % 1 == 0 and v >= lo and v <= hi
+end
+
+local function name_ok(k)
+	return type(k) == "string" and #k <= 40 and k:match("^[%w_]+$") ~= nil
+end
+
+-- a plain copy of a Sigilli tree (numbers and the picks), nil if it isn't one
+local function tree_copy(t)
+	if type(t) ~= "table" then return nil end
+	local out = {}
+	for k, v in pairs(t) do
+		if k == "pick" and type(v) == "table" then
+			out.pick = {}
+			for path, list in pairs(v) do
+				if type(list) ~= "table" then return nil end
+				local l = {}
+				for i, w in pairs(list) do l[i] = w end
+				out.pick[path] = l
+			end
+		elseif type(v) == "number" then
+			out[k] = v
+		else
+			return nil
+		end
+	end
+	return out
+end
+
+function M.import(src)
+	local p = M.new()
+	if type(src) ~= "table" then return p end
+	local cap = M.IMPORT
+	p.livello = whole(src.livello, 1, math.huge) and math.min(src.livello, cap.level) or 1
+	if type(src.xp) == "number" and src.xp >= 0 then
+		p.xp = math.min(math.floor(src.xp), M.xp_level(p.livello) - 1)
+	end
+	if p.livello >= M.LEVEL_MAX and whole(src.braci, 0, 1e6) then p.braci = src.braci end
+	p.scaglie = whole(src.scaglie, 0, math.huge) and math.min(src.scaglie, cap.scaglie) or 0
+	p.ossidiana = whole(src.ossidiana, 0, math.huge) and math.min(src.ossidiana, cap.ossidiana) or 0
+	p.buoni = whole(src.buoni, 0, math.huge) and math.min(src.buoni, cap.vouchers) or 0
+	-- the pieces: owned, levels (at most cap.piece), signatures within their step, the Proof
+	for _, f in ipairs(equip.SETS) do
+		for _, sl in ipairs(equip.SLOTS) do
+			local k = wallet.key(f.id, sl.id)
+			if type(src.posseduti) == "table" and src.posseduti[k] == true then p.posseduti[k] = true end
+			local l = type(src.pezzi) == "table" and src.pezzi[k]
+			if whole(l, 1, math.huge) then p.pezzi[k] = math.min(l, cap.piece) end
+			local sg = type(src.firme) == "table" and src.firme[k]
+			if whole(sg, 0, #equip.SIGN_COSTS) then
+				p.firme[k] = math.min(sg, equip.tier(p.pezzi[k] or 1) - 1)
+			end
+			local pr = type(src.prova) == "table" and src.prova[k]
+			if whole(pr, 0, 100) then p.prova[k] = pr end
+		end
+	end
+	if type(src.regali) == "table" then
+		for k, v in pairs(src.regali) do
+			if v == true and name_ok(k) then p.regali[k] = true end
+		end
+	end
+	for _, k in ipairs({ "giorno", "bot_giorno" }) do
+		if type(src[k]) == "string" and src[k]:match("^%d%d%d%d%-%d%d%-%d%d$") then p[k] = src[k] end
+	end
+	if whole(src.bot_partite, 0, wallet.BOTS_DAY) then p.bot_partite = src.bot_partite end
+	-- the campaign: stars and records of the levels that exist
+	local levels = {}
+	for _, cap_ in ipairs(require("sim.campaign").CAPITOLI) do
+		for _, l in ipairs(cap_.missioni) do levels[l.id] = true end
+	end
+	for id in pairs(levels) do
+		local st = type(src.stelle) == "table" and src.stelle[id]
+		if type(st) == "table" then p.stelle[id] = { st[1] == true, st[2] == true, st[3] == true } end
+		local rec = type(src.point_records) == "table" and src.point_records[id]
+		if type(rec) == "number" and rec >= 0 and rec < 1e6 then p.point_records[id] = math.floor(rec) end
+		local f = type(src.failed_ones) == "table" and src.failed_ones[id]
+		if whole(f, 0, 1000) then p.failed_ones[id] = f end
+	end
+	local weapons = require("sim.game").WEAPONS
+	if type(src.armi) == "table" then
+		for w, v in pairs(src.armi) do
+			if v == true and weapons[w] then p.armi[w] = true end
+		end
+	end
+	if type(src.storia) == "table" then
+		for ch, v in pairs(src.storia) do
+			if v == true and name_ok(ch) then p.storia[ch] = true end
+		end
+	end
+	-- the stats: whole numbers of the known entries, the damage per weapon
+	local known = {}
+	for _, st in ipairs(milestones.WHITELIST) do known[st.id] = true end
+	for _, k in ipairs(milestones.OTHERS) do known[k] = true end
+	known.vinte = true
+	if type(src.statistiche) == "table" then
+		for g, vals in pairs(src.statistiche) do
+			if name_ok(g) and g ~= "tutte" and type(vals) == "table" then
+				local out = {}
+				for k, v in pairs(vals) do
+					if known[k] and whole(v, 0, 1e9) then out[k] = v end
+				end
+				if type(vals.armi) == "table" then
+					out.armi = {}
+					for w, n in pairs(vals.armi) do
+						if weapons[w] and whole(n, 0, 1e9) then out.armi[w] = n end
+					end
+				end
+				p.statistiche[g] = out
+			end
+		end
+	end
+	if whole(src.serie, 0, 1e6) then p.serie = src.serie end
+	if whole(src.numero, 0, 1e9) then p.numero = src.numero end
+	if type(src.badge) == "table" then
+		for _, id in ipairs(src.badge) do
+			local st = milestones.BY_ID[id]
+			if st and st.thresholds and #p.badge < milestones.SHOWN then p.badge[#p.badge + 1] = id end
+		end
+	end
+	-- the loadouts: Sigilli within the points of the imported level, only owned pieces
+	local points = skills.points(p.livello)
+	for i = 1, loadout.LOADOUTS do
+		local a = type(src.loadouts) == "table" and src.loadouts[i]
+		if type(a) == "table" then
+			local l = p.loadouts[i]
+			local tree = tree_copy(a.tree)
+			if tree and skills.valid(tree, points) then l.tree = tree end
+			if a.variant == "b" then l.variant = "b" end
+			if type(a.gear) == "table" then
+				for _, sl in ipairs(equip.SLOTS) do
+					local set = a.gear[sl.id]
+					if type(set) == "string" and equip.BY_ID[set] then l.gear[sl.id] = set end
+				end
+			end
+		end
+	end
+	for _, k in ipairs({ "is_active", "seal_active" }) do
+		if whole(src[k], 1, loadout.LOADOUTS) and loadout.open(src[k], p.livello) then p[k] = src[k] end
+	end
+	-- the worn pieces must be owned, the gifts already earned are given
+	return M.upgrade(p)
 end
 
 return M

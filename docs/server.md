@@ -372,6 +372,47 @@ condivisa, e `TestProfileRules` (`server/profile_test.go`) controlla che sul ser
 facciano gli stessi conti del telefono. Il telefono tiene in `client/menu/profile.lua`
 solo salvataggio, impostazioni e profili di prova.
 
+## Profili ospite «in ombra» (18 nov)
+
+Passo 3 del piano dei profili ospite (https://claude.ai/artifact/UTmrfNCuWCLBgDtuG8PTbU,
+`server/accounts.go`). Con `-profili FILE` (sul VPS `/var/lib/megablast/megablast.db`) il
+server tiene i profili in SQLite (driver in Go puro, niente cgo): tabella `giocatori` (numero,
+impronta della chiave, nome, profilo, `rev`, la copia del telefono) e tabella `registro` (ogni
+nascita, import e copia che cambia i numeri, con livello, Scaglie, Ossidiana, pezzi e stelle).
+Il profilo viaggia e sta nel database come il testo delle ricette (`client/sim/replay.lua`,
+`write`/`read`: solo dati, mai codice).
+
+| Richiesta | Cosa manda il telefono | Cosa risponde |
+|---|---|---|
+| `POST /profilo/nuovo?p=<telefono>` | il suo profilo (o niente) | `{id, chiave, nome, rev, profilo}` |
+| `POST /profilo` | intestazione `Authorization: Profilo <id>.<chiave>` | `{id, nome, rev, profilo}` |
+| `POST /profilo/copia?p=<telefono>` | la stessa intestazione e il suo profilo | `{ok}` |
+
+- **Identità**: numero e chiave casuale lunga (48 cifre esadecimali); il server tiene solo
+  l'impronta SHA-256 della chiave. La chiave passa nell'intestazione, mai nell'indirizzo (Caddy
+  scrive gli indirizzi nel suo log). Al massimo 10 profili nuovi all'ora dallo stesso indirizzo.
+- **Import** (scelta 1A): il profilo del telefono entra una volta sola, alla nascita, tagliato
+  ai tetti (`client/sim/profile.lua`, `import`: livello 30, 20.000 Scaglie, 200 Ossidiana,
+  pezzi al 20, 10 buoni) e controllato come un dato da fuori: pezzi, livelli, armi e statistiche
+  che non esistono si tolgono, i Sigilli devono stare nei punti del livello, si indossano solo
+  i pezzi posseduti. Restano sul telefono le ultime partite, i replay e le impostazioni. Il
+  nome è a caso («Diavoletto 4821», scelta 5A).
+- **In ombra**: per ora vale il profilo del telefono (`client/main/account.lua`). Alla prima
+  apertura con la rete chiede l'identità (file `identita` accanto al profilo), poi manda una
+  copia a ogni avvio e dopo i salvataggi (al massimo ogni 30 s). Il server tiene la sua (quella
+  dell'import) e l'ultima copia; nel log «profili: 12 nato da …, importato: livello 23, …» e
+  «profili: copia di 12 da …: livello 24, …» quando i numeri cambiano. I profili di prova
+  (FINE GIOCO, RISORSE) non vanno mai sul server.
+- **Copie**: la copia notturna del VPS (`megablast-copia`, 4:30) prende anche il database
+  (`sqlite3 .backup`) e, se ci sono i segreti `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+  `R2_ENDPOINT` e la variabile `R2_BUCKET` di GitHub, la manda su Cloudflare R2 (scelta 3B,
+  `rclone`), dove resta 30 giorni.
+- Prove: `TestGuestProfiles` (`server/accounts_test.go`), `tests/guest_test.lua`; nel simulatore
+  il server parte sempre con un database nuovo (`simulazione/profili.db`).
+
+Il protocollo resta 9: sono richieste nuove, il gioco online non cambia. Col passo 4 il server
+diventa il padrone del profilo (protocollo 10).
+
 ## Sul VPS (17 nov)
 
 Il server pubblico gira su un VPS Hetzner Cloud (Ubuntu 24.04, Germania,
