@@ -6,13 +6,17 @@
 -- rifatto con un bot nuovo, se il bot ha imparato.
 --
 --   luajit tools/arena/turni_umani.lua [--grado 10] [--semi 3] [--pesi pesi.lua]
---          [--uscita simulazione/arena/umani] RICETTA...
+--          [--uscita simulazione/arena/umani] [--esempi umani.jsonl] RICETTA...
 --
 -- RICETTA: il testo di replay.encode (.lua, dal server) o il JSON di
 -- ricevi_partite.py (.json). --pesi: un file che restituisce i pesi del bot
 -- (bot.PESI, solo i campi che cambiano) sopra quelli del grado. --semi: quante
 -- volte il bot prova ogni turno (con semi diversi: la sua mira ha del rumore).
--- Esce turni.jsonl (una riga per turno) e confronto.md.
+-- Esce turni.jsonl (una riga per turno) e confronto.md. Con --esempi scrive
+-- anche gli esempi per impara.py (--umane), come arena.lua --impara: per ogni
+-- fine turno di ogni robot delle partite vere le caratteristiche della
+-- posizione e quanto ha reso la sua squadra fino a fine partita, una riga
+-- per partita. Con --semi 0 niente confronto, solo esempi (veloce).
 
 package.path = "client/?.lua;" .. package.path
 
@@ -108,6 +112,15 @@ local function turni_umani(r)
 	local g, bots = replay.match(r)
 	local l = replay.reader(r)
 	local out, cur = {}, nil
+	-- esempi per impara.py, come in arena.lua
+	local esempi, inizio = {}, nil
+	local function fine_turno()
+		if inizio then
+			local x = bot.caratteristiche({ id = inizio.chi }, inizio.ref, g, {})
+			for j = 1, #x do x[j] = math.floor(x[j] * 10000 + 0.5) / 10000 end
+			esempi[#esempi + 1] = { c = inizio.chi, x = x, m = inizio.m }
+		end
+	end
 	local function chiudi()
 		if cur then
 			cur.fatto = margine(g, g.robots[cur.chi].team) - cur.m0
@@ -127,6 +140,8 @@ local function turni_umani(r)
 				cur.uccisioni = cur.uccisioni + 1
 			elseif e.type == "turn" then
 				chiudi()
+				fine_turno()
+				inizio = { chi = e.robot, ref = bot.world(g), m = margine(g, g.robots[e.robot].team) }
 				if umani[e.robot] then
 					cur = { t = g.tick, chi = e.robot, m0 = margine(g, g.robots[e.robot].team),
 						hp0 = g.robots[e.robot].hp, mosse = {}, uccisioni = 0 }
@@ -135,7 +150,12 @@ local function turni_umani(r)
 		end
 	end
 	chiudi()
-	return out, g
+	fine_turno()
+	for _, x in ipairs(esempi) do
+		x.y = (margine(g, g.robots[x.c].team) - x.m) / 100
+		x.m = x.m / 100
+	end
+	return out, esempi
 end
 
 -- Il bot gioca il turno al posto della persona, dallo stesso momento
@@ -170,7 +190,7 @@ local function json(v)
 	elseif t == "string" then
 		return string.format("%q", v)
 	elseif t == "number" then
-		return v == math.floor(v) and string.format("%d", v) or string.format("%.2f", v)
+		return v == math.floor(v) and string.format("%d", v) or string.format("%.6g", v)
 	end
 	return tostring(v)
 end
@@ -178,6 +198,7 @@ end
 os.execute('mkdir -p "' .. opt.uscita .. '"')
 local righe = assert(io.open(opt.uscita .. "/turni.jsonl", "w"))
 local tutti = {}
+local file_esempi = opt.esempi and assert(io.open(opt.esempi, "w"))
 for _, path in ipairs(files) do
 	local ok, r = pcall(leggi, path)
 	if not ok then
@@ -185,8 +206,9 @@ for _, path in ipairs(files) do
 	elseif not replay.verify(r) then
 		io.stderr:write(path .. ": la ricetta non torna uguale con questo codice, saltata\n")
 	else
-		local turni = turni_umani(r)
-		for _, t in ipairs(turni) do
+		local turni, esempi = turni_umani(r)
+		if file_esempi then file_esempi:write(json({ partita = path:match("[^/\\]+$"), esempi = esempi }), "\n") end
+		for _, t in ipairs(opt.semi > 0 and turni or {}) do
 			local somma, vita, firme = 0, 0, {}
 			for s = 1, opt.semi do
 				local m, v, f = prova_bot(r, t, s)
@@ -203,6 +225,7 @@ for _, path in ipairs(files) do
 	end
 end
 righe:close()
+if file_esempi then file_esempi:close() end
 
 -- Il confronto: in totale e per firma delle mosse della persona
 local n, tot_p, tot_b, meglio, peggio = #tutti, 0, 0, 0, 0
