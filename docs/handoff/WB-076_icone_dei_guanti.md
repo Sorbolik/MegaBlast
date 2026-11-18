@@ -1,6 +1,6 @@
 # WB-076 · Le icone dei guanti
 
-- **Stato:** PROPOSTA (bozza: aspetta il sì di Sergio)
+- **Stato:** APPROVATA (Sergio, 18 nov: «okok, approvo»)
 - **Data:** 2026-11-18
 - **Ramo della scheda:** `claude/project-thread-rc20kg` (eseguila da questo ramo: `git fetch origin claude/project-thread-rc20kg`) · **Ramo delle immagini:** `design/WB-076`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-076` senza chiedere conferma (il repository è privato).
@@ -171,7 +171,7 @@ Centered, filling about 80% of a square image, on a flat pure magenta #FF00FF ba
 
 ## Decisione
 
-(aspetta Sergio)
+Approvata da Sergio il 18 nov.
 
 ## Consegna di Codex
 
