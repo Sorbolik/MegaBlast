@@ -19,7 +19,6 @@ return {
 	menu_profilo = 0.140,
 	menu_eventi = 0.141,
 	menu_gioca_online = 0.141,
-	menu_campagna = 0.139,
 	menu_allenamento = 0.138,
 	menu_impostazioni = 0.137,
 }

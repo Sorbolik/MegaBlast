@@ -1173,6 +1173,12 @@ function M.scene_fit()
 	backdrop_fit()
 	if S.fit_w == w then return end
 	S.fit_w = w
+	-- a flat backdrop stuck to the real edges is made again
+	if S.flat_name and FLAT.follows_width(S.flat_name) then
+		local name = S.flat_name
+		flat_backdrop(nil)
+		flat_backdrop(name)
+	end
 	gui.set_size(S.seam, vec(w, 6))
 	gui.set_size(S.seam_ink, vec(w, 11))
 	run_glints(S.glints, w)

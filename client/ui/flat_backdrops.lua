@@ -9,6 +9,8 @@
 --   if flat.has(name) then local root = flat.make(name, parent, thread_y, live) end
 --   (live false: a still copy, nothing moves)
 
+local screen = require "ui.screen"
+
 local M = {}
 
 local function c(h)
@@ -86,6 +88,48 @@ THEMES.anelli = {
 		end
 	end,
 }
+
+-- CAMPAGNA DEI GIRONI: the two walls of the chasm, flat jagged rock at the
+-- sides, the middle empty and dark (bozza G3). The wall is an image of flat
+-- shapes (tools/grafica/voragine.py: the polygons have smooth edges there),
+-- stuck to the real left edge, and the same mirrored on the right
+local WALL_W, WALL_H = 300, 972
+local textures = {}
+
+local function texture(name)
+	if textures[name] then return textures[name] end
+	local data = sys.load_resource("/paintings/backdrops/" .. name .. ".png")
+	local img = data and image.load(data)
+	if img and gui.new_texture(name, img.width, img.height, img.type, img.buffer) then
+		textures[name] = name
+	end
+	return textures[name]
+end
+
+THEMES.voragine = {
+	base = c("130E10"),
+	build = function(root)
+		local id = texture("piatto_voragine")
+		if not id then return end
+		local half = screen.width() / 2
+		-- from the thread up, 360 above the frame for the tall screens
+		local y = 720 - 612 + WALL_H / 2
+		for _, side in ipairs({ -1, 1 }) do
+			local n = gui.new_box_node(vmath.vector3(side * (half - WALL_W / 2), y, 0), vmath.vector3(WALL_W, WALL_H, 0))
+			gui.set_texture(n, id)
+			gui.set_scale(n, vmath.vector3(-side, 1, 1))
+			gui.set_parent(n, root)
+			gui.set_inherit_alpha(n, true)
+		end
+	end,
+	-- it sticks to the real edges: made again when the screen's width changes
+	wide = true,
+}
+
+-- whether the theme must be made again when the screen's width changes
+function M.follows_width(name)
+	return THEMES[name] ~= nil and THEMES[name].wide == true
+end
 
 function M.has(name)
 	return type(name) == "string" and THEMES[name] ~= nil
