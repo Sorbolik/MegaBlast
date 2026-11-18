@@ -62,11 +62,15 @@ local function image(nome, w, h, parent)
 end
 
 -- Trap: the open jaw trap lying on the ground (tools/grafica/attrezzi.py),
--- (drawn by Codex, WB-065), its brass pivot lit in the team colour; springboard: the Molla, a padded
--- board on a spring, flat, with a chevron pointing the way it launches
+-- (drawn by Codex, WB-065), its brass pivot lit in the team colour; springboard: the Molla
+-- (WB-068), a wide brass plate on four springs, with the team's triangle pointing the
+-- way it launches
 local TRAP_W, TRAP_H, TRAP_DY = 24, 16.3, 7.6
-local MOLLA_W, MOLLA_H, MOLLA_DY = 39.2, 15.4, 6.1
-local SNAP_W, SNAP_H, SNAP_DY = 20.8, 16.6, 6.7
+local MOLLA_W, MOLLA_H, MOLLA_DY = 39.2, 9.83, 4.9
+-- the team-coloured triangle on the Molla's plate, turned on its side: it points
+-- where the Molla launches (WB-068)
+local ARROW_W, ARROW_H = 5.5, 9.42
+local SNAP_W, SNAP_H, SNAP_DY = 18, 9.17, 4.6
 local SNAPS = 2
 
 local function trap_name(parent)
@@ -77,12 +81,7 @@ end
 
 local function springboard(parent)
 	local n = image("attrezzo_molla", MOLLA_W, MOLLA_H, parent)
-	local arrow = gui_node(0, 0, AMBER, n)
-	for k, z in ipairs({ 40, -40 }) do
-		local s = gui_node(7, 2, AMBER, arrow)
-		pos(s, 0, k == 1 and 2 or -2)
-		gui.set_euler(s, vmath.vector3(0, 0, -z))
-	end
+	local arrow = image("attrezzo_molla_freccia", ARROW_W, ARROW_H, n)
 	return n, arrow
 end
 
@@ -248,11 +247,14 @@ function M.update(o, g, view, clock)
 				pos(p.root, it.x, it.y + TRAP_DY)
 			else
 				pos(p.root, it.x, it.y + MOLLA_DY)
-				-- the chevron points where it launches (none while in flight)
+				-- the triangle points where it launches (none while in flight), in the team colour
 				local d = it.flying and 0 or (it.dir or 0)
 				o.size.x, o.size.y, o.size.z = d < 0 and -1 or 1, 1, 1
 				gui.set_scale(p.arrow, o.size)
-				pos(p.arrow, d * MOLLA_W * 0.32, MOLLA_H * 0.5 + 4)
+				pos(p.arrow, 0, (MOLLA_H + ARROW_H) * 0.5 - 0.6)
+				local c = o.colori[it.team] or AMBER
+				o.col.x, o.col.y, o.col.z, o.col.w = c.x, c.y, c.z, 1
+				gui.set_color(p.arrow, o.col)
 				gui.set_enabled(p.arrow, d ~= 0)
 			end
 		end
