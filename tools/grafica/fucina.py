@@ -337,7 +337,7 @@ def fai_fette():
 LUOGHI = ["cortile", "forgia", "limbo", "lussuria", "gola", "avarizia", "ira", "eresia", "violenza", "frode", "tradimento"]
 
 
-SCHERMATE = ["zaino", "armeria", "profilo", "eventi", "gioca_online", "campagna", "allenamento", "impostazioni"]
+SCHERMATE = ["zaino", "armeria", "profilo", "eventi", "gioca_online", "allenamento", "impostazioni"]
 
 
 def fai_sfondi():
