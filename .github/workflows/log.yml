@@ -1,0 +1,45 @@
+# Log del server sul VPS: stampa le righe di journalctl -u megablast che
+# contengono un testo, in un intervallo di tempo. Serve ai thread di Claude, che
+# non raggiungono il VPS: Actions > Log del server > Run workflow (o
+# workflow_dispatch con gli input "testo" e "da"), poi si legge il log della corsa.
+# Stessi segreto e variabile di "Server sul VPS" (tools/vps/README.md).
+name: Log del server
+on:
+  workflow_dispatch:
+    inputs:
+      testo:
+        description: "Righe che contengono questo testo (vuoto = tutte)"
+        type: string
+        default: "ricetta da"
+      da:
+        description: "Da quando, come lo capisce journalctl --since (es. -1h, -30min, 2026-11-17 22:00, today)"
+        type: string
+        default: "-1h"
+      a:
+        description: "Fino a quando (journalctl --until; vuoto = adesso)"
+        type: string
+        default: ""
+permissions:
+  contents: read
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Leggi il log
+        env:
+          CHIAVE: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
+          TESTO: ${{ inputs.testo }}
+          DA: ${{ inputs.da }}
+          A: ${{ inputs.a }}
+        run: |
+          [ -n "$CHIAVE" ] && [ -n "$VPS_HOST" ] || { echo "manca VPS_SSH_KEY o VPS_HOST"; exit 1; }
+          install -m 600 /dev/null "$RUNNER_TEMP/chiave"
+          printf '%s\n' "$CHIAVE" > "$RUNNER_TEMP/chiave"
+          # gli input passano al VPS già quotati: nessun testo diventa un comando
+          cmd="journalctl -u megablast --no-pager -o short-iso --since $(printf %q "$DA")"
+          [ -n "$A" ] && cmd="$cmd --until $(printf %q "$A")"
+          [ -n "$TESTO" ] && cmd="$cmd | grep -F -- $(printf %q "$TESTO")"
+          ssh -i "$RUNNER_TEMP/chiave" -o StrictHostKeyChecking=accept-new "root@$VPS_HOST" "$cmd | tail -n 2000" || echo "(nessuna riga)"
+          rm -f "$RUNNER_TEMP/chiave"

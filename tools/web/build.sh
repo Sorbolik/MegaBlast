@@ -4,6 +4,7 @@
 # megablast.html è la pagina, il resto sono i file del motore e dell'archivio.
 # Senza estensione WebSocket (si compila sul build server di Defold, che dal cloud
 # non si raggiunge): l'online passa dalla WebSocket del browser (client/main/ws_browser.lua).
+# La stessa build la serve anche il VPS (tools/vps/web.sh, workflow "Gioco web sul VPS").
 set -euo pipefail
 QUI="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$QUI/../.." && pwd)"
@@ -17,6 +18,8 @@ trap 'rm -rf "$TMP"' EXIT
 # e senza le estensioni native del client (client/vibra): si compila una copia
 python3 "$REPO/tools/simula/senza_estensioni.py" "$REPO/simulazione/web_client"
 printf "[project]\ndependencies#0 =\n\n[native_extension]\napp_manifest =\n" > "$TMP/web.ini"
+# SERVER_URL=ws://… : il server di questa build (quella sul VPS); senza, quello di game.project
+[ -n "${SERVER_URL:-}" ] && printf "\n[megablast]\nserver_url = %s\n" "$SERVER_URL" >> "$TMP/web.ini"
 "$JAVA" -jar "$CACHE/bob.jar" --root "$REPO/simulazione/web_client" --output build/web/default --settings "$TMP/web.ini" \
 	--platform wasm-web --architectures wasm-web --variant release --archive --texture-compression true \
 	--bundle-output "$TMP/bundle" build bundle > "$TMP/build.txt" 2>&1 || { tail -40 "$TMP/build.txt"; exit 1; }

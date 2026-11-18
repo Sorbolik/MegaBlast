@@ -17,7 +17,9 @@ cd "$(dirname "$0")/../.."
 remoto() { ssh "${SSH_OPZ[@]}" "$DOVE" "$@"; }
 
 # la prima volta (niente servizio sul VPS) l'installazione si fa da sola
+# e anche quando installa.sh è cambiato dall'ultima volta
 remoto 'test -f /etc/systemd/system/megablast.service' || INSTALLA=1
+[ "$(remoto 'cat /etc/megablast/installa.sha 2>/dev/null' || true)" = "$(sha256sum tools/vps/installa.sh | cut -d' ' -f1)" ] || INSTALLA=1
 if [ -n "${INSTALLA:-}" ]; then
   echo "== installa.sh sul VPS"
   scp "${SSH_OPZ[@]}" tools/vps/installa.sh "$DOVE:/root/installa.sh"
