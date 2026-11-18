@@ -62,4 +62,12 @@ Sergio, 18 nov 10:40: «né l'ossidiano che ha prodotto, né le scaglie mi piacc
 
 ## Consegna di Codex
 
+- `art/WB-072/monete_1.png` e `monete_1.txt` · 1 tentativo.
+- `art/WB-072/monete_2.png` e `monete_2.txt` · 1 tentativo.
+- `art/WB-072/monete_3.png` e `monete_3.txt` · 2 tentativi. Il primo foglio aveva un lato della Scaglia poco definito.
+
+Generati con ImageGen integrato, prompt integrale e riferimenti R1–R4 in ordine. I fogli originali sono stati ridotti in proporzione e centrati su tela verde da 1536×1024. Il verde generato è vicino a #00FF00, con lievi variazioni.
+
+Verificati contorni spessi, separazione, assenza di testo, sfaccettatura viola e nera con bordo magenta, Scaglia poligonale con fiammella e rilievo, gettone con martello e incudine senza cordino o targhetta. Le tre icone si riconoscono a 24 px in anteprima. Gli angoli della Scaglia sono arrotondati e nella variante 2 uno dei lati è meno evidente. Ritaglio e resa in gioco da verificare.
+
 ## Resoconto di Claude
