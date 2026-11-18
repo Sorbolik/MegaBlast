@@ -169,7 +169,7 @@ local function build(a)
 	local w = shop(a)
 	-- the ware chosen: tried on the devil
 	if w then try, focus = { w[1], w[2] }, w[2] end
-	gear_ui.worn(a, a.left, act, 215, 600, 395, 36, { 130, 248, 366, 484 }, 72, focus, try)
+	gear_ui.worn(a, a.left, act, 215, 600, 395, 36, { 130, 248, 366, 484 }, 72, focus, try, true)
 	local a2
 	if try and act.gear[try[2]] ~= try[1] then
 		a2 = copy(act)

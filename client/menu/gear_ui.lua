@@ -224,7 +224,7 @@ local function shift(n, x)
 	gui.set_position(n, pos)
 end
 
-function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
+function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try, bare)
 	local k = h / 380
 	-- where each level sits, next to its piece, and the zone that opens it
 	-- (Sergio, 18 Nov: helmet, armour and gloves on the right, the gloves by the
@@ -247,7 +247,8 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try)
 		-- the devil. Symbol, number and arrow are measured, then the label is as
 		-- wide as them with even padding; all centered on the plate's face (2 px
 		-- above its middle: the shadow under it), the arrow sits 2 px lower
-		if TYPE[sl.id] then
+		-- bare: no labels (the SHOP, Sergio 18 Nov: «lì non vuoi potenziare niente»)
+		if TYPE[sl.id] and not bare then
 			local top = level and level >= equip.LIVELLO_MAX
 			local lh, pad, sym, gap = 44, 16, 26, 8
 			local cy = by - 2
