@@ -175,4 +175,31 @@ Approvata da Sergio il 18 nov.
 
 ## Consegna di Codex
 
+Venti PNG da 1024×1024 px su magenta, con i prompt integrali e i due riferimenti nell'ordine indicato. Ho centrato e ridimensionato in proporzione ciascuna coppia per occupare circa l'80% della tela nella dimensione maggiore.
+
+| File | Tentativi | Tentativo scelto | Controlli e scostamenti |
+|---|---:|---:|---|
+| `art/WB-076/ic_fabbro_guanti_base_1.png` e `ic_fabbro_guanti_base_1.txt` | 1 | 1 | Cuoio marrone e finiture chiare. Posizione e proporzioni delle borchie e degli inserti sono reinterpretate. |
+| `art/WB-076/ic_fabbro_guanti_base_2.png` e `ic_fabbro_guanti_base_2.txt` | 1 | 1 | Cuoio marrone e finiture chiare. Posizione e proporzioni delle borchie e degli inserti sono reinterpretate. |
+| `art/WB-076/ic_fabbro_guanti_forgiato_1.png` e `ic_fabbro_guanti_forgiato_1.txt` | 1 | 1 | Cuoio marrone e finiture chiare. Posizione e proporzioni delle borchie e degli inserti sono reinterpretate. |
+| `art/WB-076/ic_fabbro_guanti_forgiato_2.png` e `ic_fabbro_guanti_forgiato_2.txt` | 1 | 1 | Cuoio marrone e finiture chiare. Posizione e proporzioni delle borchie e degli inserti sono reinterpretate. |
+| `art/WB-076/ic_corvo_guanti_base_1.png` e `ic_corvo_guanti_base_1.txt` | 3 | 3 | Tessuto blu-grigio e anello ciano. Restano artigli ripresi dagli stivali. |
+| `art/WB-076/ic_corvo_guanti_base_2.png` e `ic_corvo_guanti_base_2.txt` | 3 | 1 | Tessuto blu-grigio e anello ciano. Restano artigli ripresi dagli stivali. |
+| `art/WB-076/ic_corvo_guanti_forgiato_1.png` e `ic_corvo_guanti_forgiato_1.txt` | 2 | 1 | Anelli ciano e inserti viola al polso. Le punte delle dita sono più marcate rispetto al riferimento dei pugni. |
+| `art/WB-076/ic_corvo_guanti_forgiato_2.png` e `ic_corvo_guanti_forgiato_2.txt` | 2 | 2 | Anelli ciano e inserti viola al polso. Le punte delle dita sono più marcate rispetto al riferimento dei pugni. |
+| `art/WB-076/ic_fornace_guanti_base_1.png` e `ic_fornace_guanti_base_1.txt` | 1 | 1 | Ferro grigio e polsini ciano. I dettagli delle piastre sono semplificati. |
+| `art/WB-076/ic_fornace_guanti_base_2.png` e `ic_fornace_guanti_base_2.txt` | 1 | 1 | Ferro grigio e polsini ciano. I dettagli delle piastre sono semplificati. |
+| `art/WB-076/ic_fornace_guanti_forgiato_1.png` e `ic_fornace_guanti_forgiato_1.txt` | 1 | 1 | Ferro grigio e polsini ciano. I dettagli delle piastre sono semplificati. |
+| `art/WB-076/ic_fornace_guanti_forgiato_2.png` e `ic_fornace_guanti_forgiato_2.txt` | 1 | 1 | Ferro grigio e polsini ciano. I dettagli delle piastre sono semplificati. |
+| `art/WB-076/ic_leviatano_guanti_base_1.png` e `ic_leviatano_guanti_base_1.txt` | 1 | 1 | Scaglie verde acqua e polsini ciano. Scaglie e pinne, dove previste, sono stilizzate. |
+| `art/WB-076/ic_leviatano_guanti_base_2.png` e `ic_leviatano_guanti_base_2.txt` | 1 | 1 | Scaglie verde acqua e polsini ciano. Scaglie e pinne, dove previste, sono stilizzate. |
+| `art/WB-076/ic_leviatano_guanti_forgiato_1.png` e `ic_leviatano_guanti_forgiato_1.txt` | 1 | 1 | Scaglie verde acqua e polsini ciano. Scaglie e pinne, dove previste, sono stilizzate. |
+| `art/WB-076/ic_leviatano_guanti_forgiato_2.png` e `ic_leviatano_guanti_forgiato_2.txt` | 1 | 1 | Scaglie verde acqua e polsini ciano. Scaglie e pinne, dove previste, sono stilizzate. |
+| `art/WB-076/ic_vuoto_guanti_base_1.png` e `ic_vuoto_guanti_base_1.txt` | 1 | 1 | Bende viola e polsini ciano. Bende ed eventuale occhio sono resi in forma semplificata. |
+| `art/WB-076/ic_vuoto_guanti_base_2.png` e `ic_vuoto_guanti_base_2.txt` | 1 | 1 | Bende viola e polsini ciano. Bende ed eventuale occhio sono resi in forma semplificata. |
+| `art/WB-076/ic_vuoto_guanti_forgiato_1.png` e `ic_vuoto_guanti_forgiato_1.txt` | 1 | 1 | Bende viola e polsini ciano. Bende ed eventuale occhio sono resi in forma semplificata. |
+| `art/WB-076/ic_vuoto_guanti_forgiato_2.png` e `ic_vuoto_guanti_forgiato_2.txt` | 1 | 1 | Bende viola e polsini ciano. Bende ed eventuale occhio sono resi in forma semplificata. |
+
+Verificati un paio di guanti per icona, polsini in basso, assenza di pelle rossa, braccia, scritte e ombre a terra, contorni scuri spessi e distinzione fra base e forgiata per le cinque famiglie. I dettagli riprendono i fogli dei pugni con variazioni di posizione e proporzioni. Le punte del Corvo base rimangono anche dopo tre tentativi. Il magenta si discosta leggermente da #FF00FF e sono presenti variazioni leggere nelle campiture. Ritaglio, ricalco e resa nello zaino e in armeria da verificare.
+
 ## Resoconto di Claude
