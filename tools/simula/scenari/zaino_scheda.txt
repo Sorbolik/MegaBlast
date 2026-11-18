@@ -1,6 +1,6 @@
 # Lo ZAINO e la scheda del pezzo (18 nov): toccando un pezzo indossato a sinistra
 # diventa il pezzo scelto (in basso le sue tacche e cosa fa), POTENZIA apre la
-# scheda dell'armeria nello zaino, +1 LIVELLO riempie la tacca, la freccia torna ai pezzi.
+# scheda dell'armeria nello zaino, +1 LIVELLO riempie la tacca, un tocco fuori dai tasti torna ai pezzi.
 # Gira anche con --schermo 1600x720 e 960x720.
 imposta prova_profilo 1
 
@@ -20,7 +20,7 @@ aspetta 0.1
 foto 04_tacca_colpo
 aspetta 0.6
 foto 05_livello_fatto
-tocca_bordo 72 60 basso sinistra    # la freccia: di nuovo i pezzi
+tocca_centro 640 330                # un tocco fuori dai tasti: di nuovo i pezzi
 aspetta 0.6
 foto 06_di_nuovo_pezzi
 tocca_bordo 70 240 alto sinistra    # di nuovo l'elmo
@@ -45,7 +45,7 @@ aspetta 1.0
 foto 10_scatto
 aspetta 3
 foto 11_dopo_scatto
-tocca_bordo 72 60 basso sinistra    # la freccia: i pezzi
+tocca_centro 640 330                # un tocco fuori dai tasti: i pezzi
 aspetta 0.6
 tocca_bordo 580 53 alto sinistra    # SIGILLI: la scheda in alto senza targhetta
 aspetta 0.1

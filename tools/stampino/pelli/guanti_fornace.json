@@ -1,0 +1,54 @@
+{
+ "nome": "guanti_fornace",
+ "categoria": "guanti",
+ "pezzi": {
+  "braccio_1": {
+   "img": "guanti_fornace_guanto_braccio_1",
+   "x": 0.2,
+   "y": -40.2,
+   "w": 37.2,
+   "h": 36.6,
+   "modo": "sopra"
+  },
+  "braccio": {
+   "img": "guanti_fornace_guanto_braccio_1",
+   "x": -0.0,
+   "y": -42.0,
+   "w": 41.3,
+   "h": 40.6,
+   "modo": "sopra"
+  },
+  "braccio_dietro_1": {
+   "img": "guanti_fornace_guanto_braccio_dietro_1",
+   "x": 1.5,
+   "y": -42.0,
+   "w": 32.5,
+   "h": 41.2,
+   "modo": "sopra"
+  },
+  "braccio_dietro": {
+   "img": "guanti_fornace_guanto_braccio_dietro_1",
+   "x": 1.5,
+   "y": -41.9,
+   "w": 32.2,
+   "h": 40.8,
+   "modo": "sopra"
+  },
+  "braccio_2": {
+   "img": "guanti_fornace_guanto_braccio_2",
+   "x": 1.4,
+   "y": -42.7,
+   "w": 28.1,
+   "h": 28.1,
+   "modo": "sopra"
+  },
+  "braccio_dietro_2": {
+   "img": "guanti_fornace_guanto_braccio_dietro_2",
+   "x": 1.5,
+   "y": -46.9,
+   "w": 29.2,
+   "h": 31.4,
+   "modo": "sopra"
+  }
+ }
+}

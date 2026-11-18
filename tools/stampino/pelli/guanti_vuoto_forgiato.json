@@ -1,0 +1,54 @@
+{
+ "nome": "guanti_vuoto_forgiato",
+ "categoria": "guanti",
+ "pezzi": {
+  "braccio_1": {
+   "img": "guanti_vuoto_forgiato_guanto_braccio_1",
+   "x": 0.8,
+   "y": -36.1,
+   "w": 35.9,
+   "h": 42.8,
+   "modo": "sopra"
+  },
+  "braccio": {
+   "img": "guanti_vuoto_forgiato_guanto_braccio_1",
+   "x": 0.7,
+   "y": -37.5,
+   "w": 39.9,
+   "h": 47.5,
+   "modo": "sopra"
+  },
+  "braccio_dietro_1": {
+   "img": "guanti_vuoto_forgiato_guanto_braccio_dietro_1",
+   "x": 1.2,
+   "y": -39.1,
+   "w": 33.0,
+   "h": 46.9,
+   "modo": "sopra"
+  },
+  "braccio_dietro": {
+   "img": "guanti_vuoto_forgiato_guanto_braccio_dietro_1",
+   "x": 1.2,
+   "y": -39.0,
+   "w": 32.7,
+   "h": 46.5,
+   "modo": "sopra"
+  },
+  "braccio_2": {
+   "img": "guanti_vuoto_forgiato_guanto_braccio_2",
+   "x": 1.4,
+   "y": -41.8,
+   "w": 28.1,
+   "h": 29.9,
+   "modo": "sopra"
+  },
+  "braccio_dietro_2": {
+   "img": "guanti_vuoto_forgiato_guanto_braccio_dietro_2",
+   "x": 1.5,
+   "y": -45.4,
+   "w": 29.2,
+   "h": 34.4,
+   "modo": "sopra"
+  }
+ }
+}

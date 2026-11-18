@@ -16,6 +16,10 @@ textures {
   texture: "/battle/devil.atlas"
 }
 textures {
+  name: "sagome"
+  texture: "/battle/outlines.atlas"
+}
+textures {
   name: "ui"
   texture: "/ui/ui.atlas"
 }
@@ -57,6 +61,38 @@ materials {
 materials {
   name: "pezzi_luce"
   material: "/battle/pieces_lit.material"
+}
+materials {
+  name: "sagoma_0"
+  material: "/battle/silhouette_0.material"
+}
+materials {
+  name: "sagoma_1"
+  material: "/battle/silhouette_1.material"
+}
+materials {
+  name: "sagoma_2"
+  material: "/battle/silhouette_2.material"
+}
+materials {
+  name: "sagoma_3"
+  material: "/battle/silhouette_3.material"
+}
+materials {
+  name: "sagoma_4"
+  material: "/battle/silhouette_4.material"
+}
+materials {
+  name: "sagoma_chiudi"
+  material: "/battle/silhouette_close.material"
+}
+materials {
+  name: "contorno"
+  material: "/battle/outline.material"
+}
+materials {
+  name: "contorno_mantello"
+  material: "/battle/outline_cape.material"
 }
 materials {
   name: "forgia"

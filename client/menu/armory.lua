@@ -23,6 +23,7 @@ local equip = require "sim.gear"
 local profile = require "menu.profile"
 local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
+local outline = require "menu.outline"
 local bench = require "menu.bench"
 local T = require("lang.text").armory
 local TG = require("lang.text").gear_ui
@@ -63,32 +64,43 @@ end
 
 -- BOTTEGA ---------------------------------------------------------------------------
 
--- a ware w x h at (x, y): its picture, the family's line, slot and family, the price
+-- moves a text made at x = 0 to start at x
+local function shift(n, x)
+	local pos = gui.get_position(n)
+	pos.x = pos.x + x
+	gui.set_position(n, pos)
+end
+
+-- a ware w x h at (x, y): the piece in its slot frame (the same as in the ZAINO,
+-- WB-078: no family line, Sergio 18 Nov), under it the family and the price
 local function ware(a, x, y, w, h, set, slot, price, o)
 	local g = a.mid
-	-- the chosen one: the warm panel
-	kit.panel(kit.group(g, x + w / 2, y + h / 2).node, w, h, (o.hot or o.sel) and "pannello_caldo" or "pannello")
-	local isz = h * 0.46
-	kit.pic(g, gear_ui.icon(set, slot, 1), x + w / 2 - isz / 2, y + h * 0.05, isz, isz)
-	kit.rect(g, x + 14, y + h * 0.53, w - 28, 4, gear_ui.color(set))
-	if h >= 130 then
-		kit.text(g, gear_ui.slot_of(slot).name, x + w / 2, y + h * 0.57 + 16, 18, KC.SAND, "middle")
-		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + h * 0.57 + 34, 16, gear_ui.color(set), "middle")
-	else
-		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + h * 0.58 + 15, 17, gear_ui.color(set), "middle")
+	local named = h >= 130
+	local s = math.min(w, h - (named and 56 or 32))
+	gear_ui.slot(g, x + (w - s) / 2, y, s, { set = set, slot = slot, sel = o.sel })
+	if named then
+		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + s + 22, 17, KC.SAND, "middle")
 	end
 	local py = y + h - 28
 	if o.owned then
 		kit.text(g, kit.upper(T.yours), x + w / 2, py + 18, 18, KC.MUTE, "middle")
 	elseif o.old then
-		local ow = kit.width(kit.text(g, coins.format(o.old), x + 14, py + 17, 16, KC.SAND))
+		-- old price, coin and new price as one group, centered under the frame
+		local on = kit.text(g, coins.format(o.old), 0, py + 17, 16, KC.SAND)
+		local nn = kit.text(g, coins.format(price), 0, py + 17, 18, KC.HOT)
+		local ow, nw = kit.width(on), kit.width(nn)
+		local left = x + (w - (ow + 10 + 24 + nw)) / 2
+		shift(on, left)
 		-- the stroke across it, as wide as the number (never deformed)
-		kit.pic(g, "barrato", x + 14 + ow / 2 - 16, py + 5, 32, 32 * 34 / 78)
-		kit.piece(g, "scaglia", x + w - 62, py + 10, 20)
-		kit.text(g, coins.format(price), x + w - 50, py + 17, 18, KC.HOT)
+		kit.pic(g, "barrato", left + ow / 2 - 16, py + 5, 32, 32 * 34 / 78)
+		kit.piece(g, "scaglia", left + ow + 20, py + 10, 20)
+		shift(nn, left + ow + 10 + 24)
 	else
-		kit.piece(g, "scaglia", x + w / 2 - 16, py + 10, 20)
-		kit.text(g, coins.format(price), x + w / 2 - 4, py + 17, 18, KC.SAND)
+		local nn = kit.text(g, coins.format(price), 0, py + 17, 18, KC.SAND)
+		local nw = kit.width(nn)
+		local left = x + (w - (24 + nw)) / 2
+		kit.piece(g, "scaglia", left + 10, py + 10, 20)
+		shift(nn, left + 24)
 	end
 	if o.badge then
 		kit.pic(g, "sconto", x + w - 66, y - 12, 80, 32)
@@ -167,6 +179,7 @@ local function build(a)
 		a[k] = nil
 	end
 	a.buttons, a.figure, a.action = {}, nil, nil
+	a.outline = nil
 	local p = a.prof
 	a.head = kit.header(a.buttons, common.armory, KC.PURPLE, "indietro", a.from or common.home)
 	a.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
@@ -180,7 +193,7 @@ local function build(a)
 	a.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
 	local act = profile.active_loadout(p)
-	gear_ui.devil(a, a.left, 250, 600, 360)
+	gear_ui.devil(a, a.left, 215, 600, 395)
 	local try, focus, up
 	if a.tab == "bottega" then
 		local w = shop(a)
@@ -194,7 +207,7 @@ local function build(a)
 		local nxt = sel and wallet.next(p, sel[1], sel[2])
 		if nxt then up = { sel[1], sel[2], nxt.level } end
 	end
-	gear_ui.worn(a, a.left, act, 250, 600, 360, 36, { 130, 248, 366, 484 }, 72, focus, try)
+	gear_ui.worn(a, a.left, act, 215, 600, 395, 36, { 130, 248, 366, 484 }, 72, focus, try)
 	local a2
 	if try and act.gear[try[2]] ~= try[1] then
 		a2 = copy(act)
@@ -251,6 +264,7 @@ end
 
 function M.update(a, dt)
 	if a.figure then scoria.update(a.figure, dt, a.st) end
+	if a.outline then outline.update(a.outline) end
 	bench.update(a, dt)
 end
 
@@ -264,6 +278,7 @@ function M.on_input(a, action_id, action)
 end
 
 function M.destroy(a)
+	outline.off()
 	bench.delete(a)
 	kit.header_delete(a.head)
 	for _, k in ipairs(GROUPS) do

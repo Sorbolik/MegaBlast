@@ -1,0 +1,68 @@
+name: "contorno"
+tags: "gui"
+vertex_program: "/builtins/materials/gui.vp"
+fragment_program: "/battle/outline.fp"
+vertex_space: VERTEX_SPACE_WORLD
+vertex_constants {
+  name: "view_proj"
+  type: CONSTANT_TYPE_VIEWPROJ
+}
+fragment_constants {
+  name: "rect"
+  type: CONSTANT_TYPE_USER
+  value { x: 0.0 y: 0.0 z: 1.0 w: 1.0 }
+}
+fragment_constants {
+  name: "width"
+  type: CONSTANT_TYPE_USER
+  value { x: 4.0 y: 8.0 z: 0.3 w: 0.0 }
+}
+fragment_constants {
+  name: "c1"
+  type: CONSTANT_TYPE_USER
+  value { x: 0.0 y: 0.0 z: 0.0 w: 0.0 }
+}
+fragment_constants {
+  name: "c2"
+  type: CONSTANT_TYPE_USER
+  value { x: 0.0 y: 0.0 z: 0.0 w: 0.0 }
+}
+fragment_constants {
+  name: "c3"
+  type: CONSTANT_TYPE_USER
+  value { x: 0.0 y: 0.0 z: 0.0 w: 0.0 }
+}
+fragment_constants {
+  name: "c4"
+  type: CONSTANT_TYPE_USER
+  value { x: 0.0 y: 0.0 z: 0.0 w: 0.0 }
+}
+samplers {
+  name: "sagome_u"
+  wrap_u: WRAP_MODE_CLAMP_TO_EDGE
+  wrap_v: WRAP_MODE_CLAMP_TO_EDGE
+  filter_min: FILTER_MODE_MIN_LINEAR
+  filter_mag: FILTER_MODE_MAG_LINEAR
+}
+samplers {
+  name: "sagome_v"
+  wrap_u: WRAP_MODE_CLAMP_TO_EDGE
+  wrap_v: WRAP_MODE_CLAMP_TO_EDGE
+  filter_min: FILTER_MODE_MIN_LINEAR
+  filter_mag: FILTER_MODE_MAG_LINEAR
+}
+samplers {
+  name: "sagome_i"
+  wrap_u: WRAP_MODE_CLAMP_TO_EDGE
+  wrap_v: WRAP_MODE_CLAMP_TO_EDGE
+  filter_min: FILTER_MODE_MIN_LINEAR
+  filter_mag: FILTER_MODE_MAG_LINEAR
+}
+samplers {
+  name: "sagome_g"
+  wrap_u: WRAP_MODE_CLAMP_TO_EDGE
+  wrap_v: WRAP_MODE_CLAMP_TO_EDGE
+  filter_min: FILTER_MODE_MIN_LINEAR
+  filter_mag: FILTER_MODE_MAG_LINEAR
+}
+max_page_count: 0

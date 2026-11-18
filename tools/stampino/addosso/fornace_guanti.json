@@ -1,0 +1,35 @@
+{
+ "_": "La Fornace: i guanti addosso all'apprendista (WB-070), sulla mano aperta e sul pugno.",
+ "tavolozza": "tools/stampino/tavolozze/apprendista_fornace.json",
+ "colori": [
+  "#686868",
+  "#484848",
+  "#F88408",
+  "#00FFFF"
+ ],
+ "senza_corpo": [
+  "lingua",
+  "bocca",
+  "corna",
+  "corna_ombra",
+  "occhi"
+ ],
+ "senza_teste": [],
+ "riferimenti": {
+  "corpo": "art/WB-070/riferimenti/R1_corpo.png",
+  "pugni": "art/WB-070/riferimenti/R2_pugni.png"
+ },
+ "pelli": {
+  "guanti": "guanti_fornace"
+ },
+ "forme": {
+  "": {
+   "corpo": "art/WB-070/fornace_corpo_base_1.png",
+   "pugni": "art/WB-070/fornace_pugni_base.png"
+  },
+  "_forgiato": {
+   "corpo": "art/WB-070/fornace_corpo_forgiata.png",
+   "pugni": "art/WB-070/fornace_pugni_forgiata.png"
+  }
+ }
+}

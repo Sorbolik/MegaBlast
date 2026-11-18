@@ -167,6 +167,9 @@ images {
   image: "/assets/fucina/corona.png"
 }
 images {
+  image: "/assets/fucina/fascia_indossato.png"
+}
+images {
   image: "/assets/fucina/fiamma.png"
 }
 images {
@@ -333,6 +336,9 @@ images {
 }
 images {
   image: "/assets/fucina/ingranaggio.png"
+}
+images {
+  image: "/assets/fucina/linguetta.png"
 }
 images {
   image: "/assets/fucina/livello_ferro.png"
@@ -932,9 +938,6 @@ images {
   image: "/assets/fucina/slot_vuoto.png"
 }
 images {
-  image: "/assets/fucina/spunta.png"
-}
-images {
   image: "/assets/fucina/spunta_verde.png"
 }
 images {
@@ -963,6 +966,21 @@ images {
 }
 images {
   image: "/assets/fucina/tasto_piu_spento.png"
+}
+images {
+  image: "/assets/fucina/tipo_corazza.png"
+}
+images {
+  image: "/assets/fucina/tipo_elmo.png"
+}
+images {
+  image: "/assets/fucina/tipo_guanti.png"
+}
+images {
+  image: "/assets/fucina/tipo_mantello.png"
+}
+images {
+  image: "/assets/fucina/tipo_stivali.png"
 }
 images {
   image: "/assets/fucina/tondo_ferro.png"

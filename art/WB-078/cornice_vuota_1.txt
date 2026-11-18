@@ -1,0 +1,14 @@
+Image 1 shows the inventory slots of our game as they are today: they must be REPLACED because their sides are wobbly and uneven. Image 2 is an item icon of our game (ink thickness and flat coloring to match). Image 3 is a button of our game: take its clean look.
+
+Draw ONE empty square inventory slot frame for a comic-style mobile game, seen perfectly from the front: the slot with NOTHING in it, quieter than a normal slot. A square with rounded corners, all four corners identical, all four sides PERFECTLY STRAIGHT and parallel, perfectly symmetric. A thin cold grey-violet rim (#4A4352) about 4% of the side wide, one flat color. Inside the rim a flat, empty, dark panel (#1E1A24) with rounded corners. Thick pure black outline of constant thickness outside the rim and between rim and panel, ruler-straight, never wobbly, never hand-shaken.
+
+No rivets, no screws, no nails, no scratches, no texture, no gradient, no glow, no icon inside, no text. Flat colors, at most four colors. Centered, filling about 88% of the image, on a flat pure magenta #FF00FF background.
+
+Riferimenti allegati in ordine
+art/WB-078/riferimenti/R1_caselle_oggi.png
+art/WB-078/riferimenti/R2_icona_stivali.png
+art/WB-078/riferimenti/R3_pulsante_secondario.png
+
+ImageGen integrato. Tentativi 1, selezionato il 1. Asset centrato su tela magenta 1024×1024.
+Cornice vuota senza chiodi o scritte. Ingombro esterno allineato a circa 900×900 px. Raggi degli angoli e bordi interni variano tra gli stati.
+Il magenta e le campiture presentano leggere variazioni nei valori RGB.

@@ -1,0 +1,13 @@
+Prompt
+
+Image 1 is an inventory icon of our game. Draw the EMPTY SLOT silhouette for gloves, for a square inventory cell: a pair of plain gloves side by side, fingers up, cuffs down, slightly tilted, as ONE flat shape in mid grey #5A5A64 with a thick closed darker grey #3A3A42 outline and one line between the two gloves; no details, no colors, no highlights. Centered, filling about 70% of the image.
+
+- FLAT COLORS ONLY, no gradients, no textures, no glow.
+- Background: flat pure magenta #FF00FF everywhere, with no halo.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+
+1. art/WB-070/riferimenti/R4_icona_esempio.png
+
+Tentativi: 1.

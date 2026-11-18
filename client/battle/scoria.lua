@@ -74,6 +74,7 @@ local FLAME = require "battle.flame"
 local CLOTH = require "battle.cloth"
 local LIGHTS = require "battle.lights"
 local EYELIDS = require "battle.eyelids"
+local OUTLINES = require "battle.outlines"
 -- the cape drawings loaded (the battle gui lives as long as the game)
 local made_capes = {}
 
@@ -86,14 +87,18 @@ M.PERSONAGGIO = { "apprendista_nuovo", "corna_apprendista" }
 -- already drawn, the others leave everyone's character as it is. From
 -- FORGED_TIER (gold, level 20: Sergio, 14 Nov) a piece shows its forged form.
 M.FAMILY_SKINS = {
-	vuoto = { mask = "cappuccio_vuoto", chest = "corazza_vuoto", legs = "stivali_vuoto", cloak = "mantello_vuoto" },
-	fabbro = { mask = "cuffia_fabbro", chest = "grembiule_fabbro", legs = "stivali_fabbro", cloak = "mantello_fabbro" },
-	corvo = { mask = "maschera_corvo", chest = "corazza_corvo", legs = "stivali_corvo", cloak = "mantello_corvo" },
-	fornace = { mask = "elmo_fornace", chest = "corazza_fornace", legs = "stivali_fornace", cloak = "mantello_fornace" },
-	leviatano = { mask = "elmo_leviatano", chest = "corazza_leviatano", legs = "stivali_leviatano", cloak = "mantello_leviatano" },
+	vuoto = { mask = "cappuccio_vuoto", chest = "corazza_vuoto", legs = "stivali_vuoto", cloak = "mantello_vuoto", gloves = "guanti_vuoto" },
+	fabbro = { mask = "cuffia_fabbro", chest = "grembiule_fabbro", legs = "stivali_fabbro", cloak = "mantello_fabbro", gloves = "guanti_fabbro" },
+	corvo = { mask = "maschera_corvo", chest = "corazza_corvo", legs = "stivali_corvo", cloak = "mantello_corvo", gloves = "guanti_corvo" },
+	fornace = { mask = "elmo_fornace", chest = "corazza_fornace", legs = "stivali_fornace", cloak = "mantello_fornace", gloves = "guanti_fornace" },
+	leviatano = { mask = "elmo_leviatano", chest = "corazza_leviatano", legs = "stivali_leviatano", cloak = "mantello_leviatano", gloves = "guanti_leviatano" },
 }
 M.FORGED_TIER = 3
-local WEAR_ORDER = { "mask", "chest", "legs", "cloak" }
+local WEAR_ORDER = { "mask", "chest", "gloves", "legs", "cloak" }
+-- The gloves (WB-070) are drawn and cut but are not a slot of sim/gear.lua yet:
+-- only the scenarios wear them (imposta prova_guanti 1 base, 2 forged), on
+-- top of the family of prova_famiglia. { family, forged }
+M.test_gloves = nil
 
 -- The look of whoever wears gear ({ mask = family id, ... }) with those tiers
 -- ({ mask = 1..4, ... }, sim/wallet.lua)
@@ -105,6 +110,8 @@ function M.look_of(gear, tiers)
 		if name then
 			if ((tiers or {})[slot] or 1) >= M.FORGED_TIER then name = name .. "_forgiato" end
 			look[#look + 1] = name
+		elseif slot == "gloves" and M.test_gloves and gear then
+			look[#look + 1] = M.FAMILY_SKINS[M.test_gloves[1]].gloves .. (M.test_gloves[2] and "_forgiato" or "")
 		end
 	end
 	return look
@@ -220,7 +227,10 @@ local function size(node, w, h)
 	gui.set_size(node, V)
 end
 
+-- the nodes of the devil being made, in the order they are made (M.mirror)
+local track
 local function setup(n, parent, color)
+	if track then track[#track + 1] = n end
 	if gui.set_inherit_alpha then gui.set_inherit_alpha(n, true) end
 	if parent then gui.set_parent(n, parent) end
 	if color then gui.set_color(n, color) end
@@ -256,12 +266,34 @@ local function live(s, n, p, x, y, k)
 	if not key then return false end
 	local ox, oy, w, h = FLAME.frame(p.img, p)
 	gui.set_texture(n, key)
-	gui.set_material(n, "fiamma")
+	gui.set_material(n, s.shadow and "sagoma_0" or "fiamma")
 	pos(n, x + ox * k, y + oy * k)
 	size(n, w * k, h * k)
 	if not s.fire[n] then s.fire_nodes[#s.fire_nodes + 1] = n end
 	s.fire[n] = p.img
 	return true
+end
+-- The silhouette devil of the menus (M.new with shadow, menu/outline.lua): never
+-- seen, drawn apart with the sagoma materials. A piece of a place of the gear
+-- writes its place, the rest of the body only covers. A piece drawn with the skin
+-- (a boot with its leg) or with a hole has its silhouette image on top
+-- (battle/outlines.lua): then the drawing itself covers, or is of the place.
+local PLACE = { elmo = 1, corna = 1, corazza = 2, stivali = 3, guanti = 4 }
+local OUTLINE_HASH = {}
+for name in pairs(OUTLINES) do OUTLINE_HASH[hash(name)] = true end
+local function silhouette(s, parent, n, p)
+	local place = PLACE[p.cat or ""]
+	if not place then return end
+	local own = OUTLINES[p.img]
+	gui.set_material(n, (own and p.mode == "replace") and "sagoma_0" or "sagoma_" .. place)
+	-- the twin follows its piece (M.mirror); made now, it is drawn right above it
+	local t = gui.new_box_node(gui.get_position(n), gui.get_size(n))
+	gui.set_parent(t, parent)
+	gui.set_texture(t, "sagome")
+	gui.set_material(t, "sagoma_" .. place)
+	if own then gui.play_flipbook(t, p.img) end
+	gui.set_enabled(t, own ~= nil)
+	s.twins[n] = t
 end
 local function piece(s, parent, p, k, flash_fx, d)
 	d = d or IDLE
@@ -283,6 +315,7 @@ local function piece(s, parent, p, k, flash_fx, d)
 	else
 		gui.set_material(n, s.mat_tint)
 	end
+	if s.shadow then silhouette(s, parent, n, p) end
 	return n
 end
 
@@ -324,7 +357,7 @@ local function dress(look)
 			end
 			if per[c] and per[c].cape then cape = per[c].cape end
 			if pz then
-				for spot, p in pairs(pz) do put(spot, p) end
+				for spot, p in pairs(pz) do p.cat = c; put(spot, p) end
 				for i = 2, #FACES do
 					if pz.testa and not pz[FACES[i]] then put(FACES[i], pz.testa) end
 				end
@@ -397,9 +430,9 @@ local function make_cape(s, k)
 	s.cape_side = side * k
 	local n = box(s.forma, cp.at[1] * k, cp.at[2] * k, side * k, side * k)
 	gui.set_texture(n, key)
-	gui.set_material(n, "mantello")
+	gui.set_material(n, s.shadow and "sagoma_0" or "mantello")
 	if s.lit then gui.set(n, "ambient", LIGHTS.AMBIENT) end
-	gui.set(n, "frame", vmath.vector4(left / W, top / H, W / side, H / side))
+	if not s.shadow then gui.set(n, "frame", vmath.vector4(left / W, top / H, W / side, H / side)) end
 	s.mantello = n
 	-- the chain: as long as the drawing below where it is attached
 	local length = (H - top) * 0.96 * k
@@ -484,6 +517,37 @@ local function levels(s, l)
 	for i = 1, #LEVELS do above(LEVELS[i]) end
 end
 
+-- The silhouette devil takes the pose of the real one: every node, made in the
+-- same order, copies place, turn, size, image and whether it shows; the layers too.
+local EMPTY = hash("")
+function M.mirror(shadow, s)
+	levels(shadow, s.z_order)
+	local seen = shadow.seen or {}
+	shadow.seen = seen
+	for i = 1, #s.nodes do
+		local a, b = s.nodes[i], shadow.nodes[i]
+		gui.set_position(b, gui.get_position(a))
+		gui.set_rotation(b, gui.get_rotation(a))
+		gui.set_scale(b, gui.get_scale(a))
+		gui.set_size(b, gui.get_size(a))
+		gui.set_enabled(b, gui.is_enabled(a))
+		local f = gui.get_flipbook(a)
+		local t = shadow.twins[b]
+		if f ~= EMPTY and f ~= seen[i] then
+			seen[i] = f
+			gui.play_flipbook(b, f)
+			if t then
+				gui.set_enabled(t, OUTLINE_HASH[f] == true)
+				if OUTLINE_HASH[f] then gui.play_flipbook(t, f) end
+			end
+		end
+		if t then
+			gui.set_position(t, gui.get_position(a))
+			gui.set_size(t, gui.get_size(a))
+		end
+	end
+end
+
 local function weapon_figure(s, parent, img, x, y, w, h)
 	local n = box(parent, x, y, w, h)
 	gui.set_texture(n, "armi")
@@ -546,7 +610,7 @@ local ANIMAZIONI_PERSONAGGIO = {
 
 -- lit: a devil of the battle, that takes its lights (battle/lights.lua: the
 -- lit materials and the cape's ambient); the figures of the menus and cards don't
-function M.new(color, look, weapon_only, lit)
+function M.new(color, look, weapon_only, lit, shadow)
 	local H = game.DISEGNO_H
 	-- three quarters of the height wide, like the starting capsule (sim/body.lua)
 	local Wd = H * 0.75
@@ -569,7 +633,10 @@ function M.new(color, look, weapon_only, lit)
 		-- this frame's pose from the clips and the angles (radians) of the hanging
 		-- arms and legs, which chase it
 		posa = pose.new(), braccia = { 0, 0 }, gambe = { 0, 0 },
-		lit = lit, mat_tint = lit and "pezzi_luce" or "pezzi", mat_flash = lit and "lampo_luce" or "lampo" }
+		shadow = shadow, nodes = {}, twins = {},
+		lit = lit, mat_tint = shadow and "sagoma_0" or lit and "pezzi_luce" or "pezzi",
+		mat_flash = shadow and "sagoma_0" or lit and "lampo_luce" or "lampo" }
+	track = s.nodes
 	s.strati, s.tail_shape, s.cape = dress(look)
 	s.root = joint(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
@@ -677,6 +744,7 @@ function M.new(color, look, weapon_only, lit)
 	s.z_order = LEVELS
 	M.set_weapon(s, weapon_only or "missile")
 
+	track = nil
 	M.set_color(s, color, true)
 	M.reset(s)
 	return s

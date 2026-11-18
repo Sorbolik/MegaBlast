@@ -9,6 +9,7 @@ local MSG_USE_STRETCH_PROJ =    hash("use_stretch_projection")
 local MSG_USE_FIXED_PROJ =      hash("use_fixed_projection")
 local MSG_USE_FIXED_FIT_PROJ =  hash("use_fixed_fit_projection")
 local MSG_LIGHTS =              hash("lights")
+local MSG_OUTLINE =             hash("outline")
 
 local DEFAULT_NEAR = -1
 local DEFAULT_FAR =   1
@@ -157,7 +158,7 @@ local function reset_camera_world(state)
 end
 
 function init(self)
-    self.predicates = create_predicates("tile", "gui", "particle", "model", "debug_text")
+    self.predicates = create_predicates("tile", "gui", "particle", "model", "debug_text", "sagoma", "sagoma_mantello", "sagoma_chiudi")
 
     -- default is stretch projection. copy from builtins and change for different projection
     -- or send a message to the render script to change projection:
@@ -185,6 +186,106 @@ function init(self)
     for i = 0, 5 do self.lights["light" .. i] = vmath.vector4(0, 0, 1, 0) end
     self.lights.light_ambient = vmath.vector4(1, 1, 1, 1)
     camera_gui.options.constants = self.lights
+    -- the lit contour of the worn pieces (menu/outline.lua): where it is, if it is on
+    self.lights.rect = vmath.vector4(0, 0, 1, 1)
+    self.pass = render.constant_buffer()
+    self.pass.pass = vmath.vector4(0, 0, 0, 0)
+    self.clear_black = { [graphics.BUFFER_TYPE_COLOR0_BIT] = vmath.vector4(0, 0, 0, 0) }
+end
+
+-- The silhouettes for the lit contour of the worn pieces (menu/outline.lua,
+-- battle/silhouette.fp, battle/outline.fp): the silhouette devil (materials with
+-- the tag sagoma) drawn into two images as big as its rectangle of the window:
+-- "u" where each place's pieces are (added up), "v" what is in front (in order),
+-- "i" where its black line is, "c" the cape.
+-- The contour's node reads them in the gui (samplers sagome_u, sagome_v).
+local function silhouettes(self, state)
+    local o = self.outline
+    local w, h = math.max(1, math.floor(o.z + 0.5)), math.max(1, math.floor(o.w + 0.5))
+    if not self.rt_u or self.rt_w ~= w or self.rt_h ~= h then
+        if self.rt_u then
+            render.delete_render_target(self.rt_u)
+            render.delete_render_target(self.rt_v)
+            render.delete_render_target(self.rt_c)
+            render.delete_render_target(self.rt_i)
+            render.delete_render_target(self.rt_d)
+            render.delete_render_target(self.rt_e)
+            render.delete_render_target(self.rt_g)
+        end
+        local params = { [graphics.BUFFER_TYPE_COLOR0_BIT] = {
+            format = graphics.TEXTURE_FORMAT_RGBA, width = w, height = h,
+            min_filter = graphics.TEXTURE_FILTER_LINEAR, mag_filter = graphics.TEXTURE_FILTER_LINEAR,
+            u_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE, v_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE } }
+        self.rt_u = render.render_target("sagome_u", params)
+        self.rt_v = render.render_target("sagome_v", params)
+        self.rt_c = render.render_target("sagome_c", params)
+        self.rt_i = render.render_target("sagome_i", params)
+        self.rt_d = render.render_target("sagome_d", params)
+        self.rt_e = render.render_target("sagome_e", params)
+        self.rt_g = render.render_target("sagome_g", params)
+        self.rt_w, self.rt_h = w, h
+    end
+    render.set_view(vmath.matrix4())
+    render.set_projection(vmath.matrix4_orthographic(o.x, o.x + w, o.y, o.y + h, -1, 1))
+    render.set_viewport(0, 0, w, h)
+    render.set_depth_mask(false)
+    render.disable_state(graphics.STATE_DEPTH_TEST)
+    render.disable_state(graphics.STATE_STENCIL_TEST)
+    render.enable_state(graphics.STATE_BLEND)
+    local options = { constants = self.pass }
+
+    render.set_render_target(self.rt_u)
+    render.clear(self.clear_black)
+    render.set_blend_func(graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE)
+    self.pass.pass = vmath.vector4(0, 0, 0, 0)
+    render.draw(self.predicates.sagoma, options)
+
+    render.set_render_target(self.rt_v)
+    render.clear(self.clear_black)
+    render.set_blend_func(graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+    self.pass.pass = vmath.vector4(1, 0, 0, 0)
+    render.draw(self.predicates.sagoma, options)
+
+    -- the slits of "u" closed (battle/silhouette_close.fp): grown into "d", shrunk
+    -- back into "e", which is what the contour reads
+    render.disable_state(graphics.STATE_BLEND)
+    self.pass.rect = vmath.vector4(0, 0, w, h)
+    render.set_render_target(self.rt_d)
+    render.clear(self.clear_black)
+    self.pass.pass = vmath.vector4(0, 0, self.outline_close or 0, 0)
+    render.enable_texture("sagome_src", self.rt_u, graphics.BUFFER_TYPE_COLOR0_BIT)
+    render.draw(self.predicates.sagoma_chiudi, options)
+    render.disable_texture("sagome_src")
+    render.set_render_target(self.rt_e)
+    render.clear(self.clear_black)
+    self.pass.pass = vmath.vector4(0, 1, self.outline_close or 0, 0)
+    render.enable_texture("sagome_src", self.rt_d, graphics.BUFFER_TYPE_COLOR0_BIT)
+    render.draw(self.predicates.sagoma_chiudi, options)
+    render.disable_texture("sagome_src")
+    -- the soft field of the glow, from what is seen of each place ("v")
+    render.set_render_target(self.rt_g)
+    render.clear(self.clear_black)
+    self.pass.pass = vmath.vector4(0, 2, self.outline_glow or 0, 0)
+    render.enable_texture("sagome_src", self.rt_v, graphics.BUFFER_TYPE_COLOR0_BIT)
+    render.draw(self.predicates.sagoma_chiudi, options)
+    render.disable_texture("sagome_src")
+    render.enable_state(graphics.STATE_BLEND)
+    render.set_blend_func(graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+
+    -- where the black line of what is in front is
+    render.set_render_target(self.rt_i)
+    render.clear(self.clear_black)
+    self.pass.pass = vmath.vector4(2, 0, 0, 0)
+    render.draw(self.predicates.sagoma, options)
+
+    -- the cape alone, as the game draws it (its material has this tag too)
+    render.set_render_target(self.rt_c)
+    render.clear(self.clear_black)
+    render.draw(self.predicates.sagoma_mantello, self.state.cameras.camera_gui.options)
+
+    render.set_render_target(render.RENDER_TARGET_DEFAULT)
+    render.disable_state(graphics.STATE_BLEND)
+    self.lights.rect = vmath.vector4(o.x, o.y, w, h)
 end
 
 function update(self)
@@ -196,6 +297,7 @@ function update(self)
     end
 
     local predicates = self.predicates
+    if self.outline then silhouettes(self, state) end
     -- clear screen buffers
     --
     -- turn on depth_mask before `render.clear()` to clear it as well
@@ -237,7 +339,21 @@ function update(self)
     render.set_projection(camera_gui.proj)
 
     render.enable_state(graphics.STATE_STENCIL_TEST)
+    if self.outline then
+        render.enable_texture("sagome_u", self.rt_e, graphics.BUFFER_TYPE_COLOR0_BIT)
+        render.enable_texture("sagome_v", self.rt_v, graphics.BUFFER_TYPE_COLOR0_BIT)
+        render.enable_texture("sagome_c", self.rt_c, graphics.BUFFER_TYPE_COLOR0_BIT)
+        render.enable_texture("sagome_i", self.rt_i, graphics.BUFFER_TYPE_COLOR0_BIT)
+        render.enable_texture("sagome_g", self.rt_g, graphics.BUFFER_TYPE_COLOR0_BIT)
+    end
     render.draw(predicates.gui, camera_gui.options)
+    if self.outline then
+        render.disable_texture("sagome_u")
+        render.disable_texture("sagome_v")
+        render.disable_texture("sagome_c")
+        render.disable_texture("sagome_i")
+        render.disable_texture("sagome_g")
+    end
     render.draw(predicates.debug_text, camera_gui.options)
     render.disable_state(graphics.STATE_STENCIL_TEST)
     render.disable_state(graphics.STATE_BLEND)
@@ -263,6 +379,11 @@ function on_message(self, message_id, message)
     elseif message_id == MSG_LIGHTS then
         for i = 0, 5 do self.lights["light" .. i] = message["l" .. i] end
         self.lights.light_ambient = message.ambient
+    elseif message_id == MSG_OUTLINE then
+        -- the window rectangle of the silhouettes (x, y, w, h), or nothing: off
+        self.outline = message.rect
+        self.outline_close = message.close
+        self.outline_glow = message.glow
     elseif message_id == MSG_USE_FIXED_PROJ then
         init_camera(camera, get_fixed_projection, message.near, message.far, message.zoom)
         update_camera(camera, state)

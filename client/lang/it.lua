@@ -509,6 +509,8 @@ return {
 		back_to_pieces = "TORNA AI PEZZI",
 		-- a loadout still closed: from which level
 		loadout_locked = "DAL LIV %d",
+		-- the band at the bottom of the slot of a piece you wear
+		worn = "INDOSSATO",
 	},
 
 	-- menu/backpack.lua: the ZAINO (from the apprentice), INVENTARIO and SIGILLI

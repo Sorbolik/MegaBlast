@@ -1,5 +1,6 @@
 name: "mantello"
 tags: "gui"
+tags: "sagoma_mantello"
 vertex_program: "/builtins/materials/gui.vp"
 fragment_program: "/battle/cape.fp"
 vertex_space: VERTEX_SPACE_WORLD

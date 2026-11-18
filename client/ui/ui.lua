@@ -363,7 +363,9 @@ M.MEDAL = c(0.55, 0.81, 0.94)
 local function under(list_of, x, y)
 	for i = #list_of, 1, -1 do
 		local b = list_of[i]
-		if not b.spento and gui.is_enabled(b.nodo, true) and gui.pick_node(b.nodo, x, y) then return b end
+		-- b.inside: a button in a window that scrolls counts only inside it
+		if not b.spento and gui.is_enabled(b.nodo, true) and gui.pick_node(b.nodo, x, y)
+			and (not b.inside or gui.pick_node(b.inside, x, y)) then return b end
 	end
 end
 

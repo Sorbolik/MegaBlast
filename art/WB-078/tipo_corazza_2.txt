@@ -1,0 +1,12 @@
+Image 1 is an item icon of our game: match its thick pure black outline and flat coloring.
+
+Draw ONE tiny category symbol for a comic-style mobile game interface: a CHEST ARMOUR, a simple breastplate seen from the front (neck opening on top, two short shoulder caps, narrower at the waist) and nothing else. It must read at 20 pixels: one bold simple silhouette, no small details. Fill: one flat light sand color (#EAD9B0) with one flat slightly darker shadow tone on one side. Thick pure black outline of constant thickness, clean and smooth.
+
+No arms, no body inside, no emblem, no text, no frame, no background shape, no gradient, no glow. At most four colors. Centered, filling about 75% of the image, on a flat pure magenta #FF00FF background.
+
+Riferimenti allegati in ordine
+art/WB-078/riferimenti/R2_icona_stivali.png
+
+ImageGen integrato. Tentativi 1, selezionato il 1. Asset centrato su tela magenta 1024×1024.
+Sagoma singola color sabbia, riconoscibile a 20 px in anteprima.
+Il magenta e le campiture presentano leggere variazioni nei valori RGB.

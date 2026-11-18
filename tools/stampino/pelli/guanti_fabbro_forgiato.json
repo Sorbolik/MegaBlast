@@ -1,0 +1,54 @@
+{
+ "nome": "guanti_fabbro_forgiato",
+ "categoria": "guanti",
+ "pezzi": {
+  "braccio_1": {
+   "img": "guanti_fabbro_forgiato_guanto_braccio_1",
+   "x": -0.6,
+   "y": -36.0,
+   "w": 38.7,
+   "h": 42.6,
+   "modo": "sopra"
+  },
+  "braccio": {
+   "img": "guanti_fabbro_forgiato_guanto_braccio_1",
+   "x": -0.9,
+   "y": -37.3,
+   "w": 43.0,
+   "h": 47.2,
+   "modo": "sopra"
+  },
+  "braccio_dietro_1": {
+   "img": "guanti_fabbro_forgiato_guanto_braccio_dietro_1",
+   "x": 2.0,
+   "y": -39.0,
+   "w": 33.5,
+   "h": 47.7,
+   "modo": "sopra"
+  },
+  "braccio_dietro": {
+   "img": "guanti_fabbro_forgiato_guanto_braccio_dietro_1",
+   "x": 2.0,
+   "y": -38.9,
+   "w": 33.2,
+   "h": 47.2,
+   "modo": "sopra"
+  },
+  "braccio_2": {
+   "img": "guanti_fabbro_forgiato_guanto_braccio_2",
+   "x": 1.4,
+   "y": -43.2,
+   "w": 28.1,
+   "h": 27.1,
+   "modo": "sopra"
+  },
+  "braccio_dietro_2": {
+   "img": "guanti_fabbro_forgiato_guanto_braccio_dietro_2",
+   "x": 1.6,
+   "y": -47.5,
+   "w": 29.4,
+   "h": 30.1,
+   "modo": "sopra"
+  }
+ }
+}

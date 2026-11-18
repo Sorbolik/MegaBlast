@@ -1,0 +1,54 @@
+{
+ "nome": "guanti_leviatano",
+ "categoria": "guanti",
+ "pezzi": {
+  "braccio_1": {
+   "img": "guanti_leviatano_guanto_braccio_1",
+   "x": 0.7,
+   "y": -37.8,
+   "w": 35.7,
+   "h": 38.8,
+   "modo": "sopra"
+  },
+  "braccio": {
+   "img": "guanti_leviatano_guanto_braccio_1",
+   "x": 0.5,
+   "y": -39.4,
+   "w": 39.6,
+   "h": 43.1,
+   "modo": "sopra"
+  },
+  "braccio_dietro_1": {
+   "img": "guanti_leviatano_guanto_braccio_dietro_1",
+   "x": 1.5,
+   "y": -39.9,
+   "w": 32.5,
+   "h": 45.4,
+   "modo": "sopra"
+  },
+  "braccio_dietro": {
+   "img": "guanti_leviatano_guanto_braccio_dietro_1",
+   "x": 1.5,
+   "y": -39.7,
+   "w": 32.2,
+   "h": 45.0,
+   "modo": "sopra"
+  },
+  "braccio_2": {
+   "img": "guanti_leviatano_guanto_braccio_2",
+   "x": 1.4,
+   "y": -42.6,
+   "w": 28.1,
+   "h": 28.4,
+   "modo": "sopra"
+  },
+  "braccio_dietro_2": {
+   "img": "guanti_leviatano_guanto_braccio_dietro_2",
+   "x": 1.5,
+   "y": -46.4,
+   "w": 29.2,
+   "h": 32.4,
+   "modo": "sopra"
+  }
+ }
+}
