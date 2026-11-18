@@ -1,7 +1,4 @@
 images {
-  image: "/assets/fucina/attacco_scudo.png"
-}
-images {
   image: "/assets/fucina/barra_brace_cx.png"
 }
 images {

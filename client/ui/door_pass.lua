@@ -99,7 +99,7 @@ end
 -- The page's edge (Sergio, 18 Nov: instead of the orange line): the band its door
 -- drew for it (WB-049, atlas fucina), down the whole screen, x its middle: the top,
 -- the middle repeated as many times as keep it about EDGE_W wide (never stretched),
--- the bottom; on it, the C that holds the shield (its mouth toward the button).
+-- the bottom.
 -- One piece more beside the page (Sergio, 18 Nov: «non deve finire sopra né alla
 -- home né alla pagina»): stuck outside its edge, it comes in with the drag and goes
 -- out over the border as the page fills the screen; the way back, the same.
@@ -108,7 +108,6 @@ M.EDGE_W = 64
 M.FADE_IN = 0.1
 -- how much of the band lies on the page's edge (its ink), so the two are one
 M.FUSE = 0.06
-M.CLAMP = 1.3   -- the C's height, in door heights
 -- a door's band on this screen: how many middles, its scale and its width
 local function fit(id)
 	local P = kit.PIECES
@@ -123,8 +122,7 @@ local function fit(id)
 	return n, k, top.w * k, top, mid, bottom, tall
 end
 
-local function band(id, x, side, shield_y, shield_h)
-	local P = kit.PIECES
+local function band(id, x)
 	local n, k, w, top, mid, bottom, tall = fit(id)
 	local b = gui.new_box_node(vec(x, 360), vec(0, 0))
 	gui.set_visible(b, false)
@@ -140,16 +138,6 @@ local function band(id, x, side, shield_y, shield_h)
 	piece("su", top.h)
 	for _ = 1, n do piece("mezzo", mid.h) end
 	piece("giu", bottom.h)
-	-- the C a bit taller than the shield, its back flush with the band's page side
-	local c = P.attacco_scudo
-	local ch = shield_h * M.CLAMP
-	local cw = c.w * ch / c.h
-	local clamp = gui.new_box_node(vec(-side * (cw - w) / 2, shield_y - 360), vec(cw, ch))
-	gui.set_texture(clamp, "fucina")
-	gui.play_flipbook(clamp, "attacco_scudo")
-	gui.set_scale(clamp, vmath.vector3(-side, 1, 1))
-	gui.set_parent(clamp, b)
-	gui.set_inherit_alpha(clamp, true)
 	gui.set_color(b, vmath.vector4(1, 1, 1, 0))
 	gui.animate(b, "color.w", 1, gui.EASING_OUTQUAD, M.FADE_IN)
 	return b
@@ -197,11 +185,10 @@ local function measure(h, id)
 	d.node = d.p.node
 	d.rest = gui.get_position(d.node)
 	-- the band beside the page's edge (the side toward the door), so it ends just
-	-- out of the other border; the C on the shield's height
+	-- out of the other border
 	local _, _, bw = fit(id)
 	local out = bw * (0.5 - M.FUSE)
 	d.line_x = d.side < 0 and screen.x1 + out or screen.x0 - out
-	d.shield_y = 720 - d.cy
 	-- the page starts with the band on the shield
 	d.p0 = d.edge_x - d.line_x
 	-- back, the page goes on until the band is out of this border too
@@ -224,7 +211,7 @@ function M.open(dp, h, id, change)
 		dp.kind, dp.door = "door", id
 		home_on(h, true)
 		kit.scene_cut(true)
-		dp.line = band(id, d.line_x, d.side, d.shield_y, d.h)
+		dp.line = band(id, d.line_x)
 		local page = join(alive(kit.tracked()), kit.scene_tops(), { dp.line })
 		shift(page, d.p0)
 		ride(d)
@@ -267,7 +254,7 @@ function M.close(dp, h, change)
 	local still = kit.scene_copy(h.scene)
 	home_on(h, true)
 	kit.scene_cut(true)
-	if not dp.line then dp.line = band(dp.door, d.line_x, d.side, d.shield_y, d.h) end
+	if not dp.line then dp.line = band(dp.door, d.line_x) end
 	ride(d)
 	gui.set_position(d.node, vec(d.rest.x + d.dx - d.p0 + d.off, d.rest.y))
 	-- (out of an animation's callback: started there, some animations of the

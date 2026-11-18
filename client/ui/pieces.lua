@@ -2,7 +2,6 @@
 -- fucina atlas (w, h and, for the pieces in three or nine parts, the cap c;
 -- box: the margins left, top, right, bottom of the room to write in).
 return {
-	attacco_scudo = { w = 148, h = 230 },
 	barra_brace = { w = 378, h = 44, c = 38 },
 	barra_chiara = { w = 378, h = 44, c = 38 },
 	barra_gelo = { w = 382, h = 44, c = 38 },

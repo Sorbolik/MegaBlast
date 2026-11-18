@@ -644,7 +644,7 @@ def fai_record():
 # i bordi della pagina trascinata dalle porte della home (WB-049, variante 1; Sergio 18 nov:
 # al posto della linea arancione): per ogni porta la cima, il mezzo che si ripete e il fondo.
 # Il mezzo va da una riga all'altra che si somigliano di piu', cosi' ripetuto non ha giunte.
-# Larghi il doppio di come si vedono (circa 64); e l'attacco a C dello scudo
+# Larghi il doppio di come si vedono (circa 64)
 BORDI = {"campagna": (215, 580), "allenamento": (275, 567), "eventi": (282, 490), "armeria": (248, 596)}
 LARGO_BORDO = 128
 
@@ -658,11 +658,6 @@ def fai_bordi():
         for parte, (y0, y1) in (("su", (0, a)), ("mezzo", (a, b)), ("giu", (b, im.size[1]))):
             salva(im.crop((0, y0, LARGO_BORDO, y1)), "bordo_%s_%s" % (porta, parte))
             MISURE["bordo_%s_%s" % (porta, parte)] = (LARGO_BORDO, y1 - y0)
-    im = Image.fromarray(ritaglio("WB-049", "attacco_scudo_1"), "RGBA")
-    w = round(LARGO_BORDO * im.size[0] / 200)
-    im = im.resize((w, round(im.size[1] * w / im.size[0])), Image.LANCZOS)
-    salva(im, "attacco_scudo")
-    MISURE["attacco_scudo"] = im.size
 
 
 def fai_atlante():
