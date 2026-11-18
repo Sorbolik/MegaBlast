@@ -152,6 +152,9 @@ images {
   image: "/assets/fucina/buono.png"
 }
 images {
+  image: "/assets/fucina/cartello_armeria.png"
+}
+images {
   image: "/assets/fucina/casella.png"
 }
 images {
@@ -569,13 +572,13 @@ images {
   image: "/assets/fucina/porta_allenamento.png"
 }
 images {
-  image: "/assets/fucina/porta_armeria.png"
-}
-images {
   image: "/assets/fucina/porta_campagna.png"
 }
 images {
   image: "/assets/fucina/porta_eventi.png"
+}
+images {
+  image: "/assets/fucina/porta_shop.png"
 }
 images {
   image: "/assets/fucina/primario_acceso_cx.png"

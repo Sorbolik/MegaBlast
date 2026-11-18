@@ -1,0 +1,15 @@
+Image 1 is a screen of our game: at the top there are two tab titles, INVENTORY and SEALS, cut through by a blade; from the cut a small sign drops down on two short chains and says ARMOURY. The sign in image 1 is only a placeholder: draw the real one. Image 2 shows the ink style and the dark iron colors of our buttons.
+
+Draw THREE proposals for this hanging sign, one under the other with flat green space between them. Each is ONE piece: two short chains on top (each about a quarter of the sign's height, ending in a small ring that will hook to the cut line), and under them a wide sign about four times wider than tall, with a plain, even, empty face (the game writes ARMOURY on it in glowing gold letters, so leave it empty and dark).
+1. FORGED IRON PLATE: dark iron (#2B2530, lighter #4A4550) with a thin ember rim (#F26419) and four round rivets in the corners;
+2. ANVIL PLATE: dark iron face shaped like the top of an anvil, the horn pointing left, small hammer marks only along the border;
+3. WOODEN SHOP SIGN WITH IRON BANDS: dark wood (#3A2A22) held by two iron bands (#4A4550) at the ends, a thin ember edge (#F26419) on the bottom.
+The sign must read on a dark purple background and must look like the same world as image 2.
+
+Thick black ink outline, cartoon comic style like image 2. Flat colors only, at most six per sign, no detail thinner than the outline, so it can be traced into vectors. No texture, no soft gradients, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00) around every sign.
+
+Riferimenti (ordine di invio):
+art/WB-080/riferimenti/R4_armeria_nello_zaino.png
+art/WB-080/riferimenti/R2_porta_armeria.png
+
+Tre tentativi con prompt e riferimenti invariati. Selezionato tentativo 3. PNG originale senza ritocchi. Persistono sfumature e palette superiore a sei colori; dimensioni native diverse da 1536x1024. Verifica nel gioco e ricalco vettoriale non eseguiti.

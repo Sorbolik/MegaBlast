@@ -1,6 +1,6 @@
 # WB-080 · Porta SHOP della home e cartello ARMERIA
 
-- **Stato:** APPROVATA (Sergio, 18 nov 21:37: «mi piace l'animazione [...] fammi la scheda»; 21:38: «e il tasto dello shop?»)
+- **Stato:** IMPLEMENTATA (prima: APPROVATA (Sergio, 18 nov 21:37: «mi piace l'animazione [...] fammi la scheda»; 21:38: «e il tasto dello shop?»))
 - **Data:** 2026-11-18
 - **Ramo della scheda:** `claude/project-thread-rc20kg` (Codex la esegue da lì, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-080`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-080` senza chiedere conferma (il repository è privato).
@@ -75,5 +75,22 @@ Thick black ink outline, cartoon comic style like image 2. Flat colors only, at 
 Approvata da Claude il 18 nov (reversibile: sono solo immagini), dopo il sì di Sergio all'animazione.
 
 ## Consegna di Codex
+Eseguita il 18 novembre 2026 sul ramo design/WB-080, derivato da origin/claude/project-thread-rc20kg (29fd0a0d).
 
+File in art/WB-080/ (ogni PNG accompagnato dal relativo TXT con prompt esatto e riferimenti in ordine):
+- porta_shop_1.png e porta_shop_2.png: 1774 x 887 px, tre proposte ciascuno.
+- cartello_armeria_1.png: 1122 x 1402 px, tre proposte.
+- cartello_armeria_2.png: 1024 x 1536 px, tre proposte.
+
+Generati tre tentativi per ciascuno dei quattro fogli (12 generazioni totali), sempre con prompt e riferimenti invariati. Selezionato il primo tentativo per le due porte, il terzo per i due cartelli. Consegnati i PNG originali, senza ritocco, ritaglio o ridimensionamento.
+
+Controllo visivo di tutti i tentativi: presenti tre proposte separate per foglio, corpi vuoti, medaglioni a destra e code a sinistra nelle porte; due catene collegate per ciascun cartello; contorni neri spessi, nessuna scritta e nessun elemento visibilmente troncato nelle versioni selezionate. Sfondo verde mantenuto come richiesto dalla scheda.
+
+Problemi rimasti dopo il limite dei tre tentativi: sfumature sulle superfici e palette oltre sei colori; dimensioni native diverse dai 1536 x 1024 richiesti; catene dei cartelli proporzionalmente piu lunghe del quarto di altezza indicato. Non certificata uniformita numerica dello sfondo a #00FF00, esattezza dei colori esadecimali o uguaglianza dimensionale dei pulsanti rispetto ai riferimenti. Criteri di accettazione non spuntati: serve revisione di Claude. Non eseguiti ricalco vettoriale, integrazione o prova nel gioco.
 ## Resoconto di Claude
+
+18 nov, 22:30. Sergio ha scelto la porta 3 del foglio 2 (il banco col tendone) e il cartello 3 del foglio 1 (legno con le fasce di ferro).
+- Ritagli in `art/WB-080/ritagli/`: la porta separata dalla seconda al punto più stretto (i due medaglioni si toccavano solo col contorno), accorciata di 198 px nel mezzo liscio (taglio sulle due colonne più simili, nessuno scalino) per avere le proporzioni di ARMERIA; il cartello intero, catene comprese.
+- `tools/grafica/fucina.py`: `porta_shop` (alta 226, spazio della scritta misurato) al posto di `porta_armeria`, `cartello_armeria` (alto 180). Via `client/assets/fucina/porta_armeria.png`.
+- Nel gioco: porta SHOP in home, cartello che scende dal taglio delle schede nello zaino. Simulazione OK, foto controllate (home, armeria nello zaino, animazione fotogramma per fotogramma, shop).
+- Difetti: sfumature leggere sulle superfici come nelle altre porte; nessuno visibile alla misura del gioco.

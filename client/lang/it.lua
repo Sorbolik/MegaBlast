@@ -23,6 +23,8 @@ return {
 		bot = "BOT",
 		training = "ALLENAMENTO",
 		armory = "ARMERIA",
+		-- the Smith's shop, the home's door that was ARMERIA (18 Nov)
+		shop = "SHOP",
 		stats = "STATISTICHE",
 		replay = "RIVEDI",
 	},
@@ -361,7 +363,7 @@ return {
 		version_local = "VERSIONE LOCALE",
 	},
 
-	-- menu/armory.lua: ARMERIA, gear sets and the skill tree
+	-- menu/armory.lua (the SHOP) and menu/bench.lua (the ARMERIA in the ZAINO)
 	armory = {
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
@@ -375,9 +377,6 @@ return {
 		yes = "sì",
 		no = "no",
 		seconds = "%.1f s",
-		-- the tabs: POTENZIA and BOTTEGA
-		tab_upgrade = "POTENZIA",
-		tab_shop = "BOTTEGA",
 		-- POTENZIA: no piece in the chosen slot
 		nothing_here = "niente qui: prendilo in bottega",
 		-- grade in roman numbers, its name
@@ -402,7 +401,7 @@ return {
 		others = "I TUOI %s",
 		-- the slots in the plural
 		plural = { mask = "ELMI", chest = "CORAZZE", cloak = "MANTELLI", legs = "STIVALI" },
-		-- BOTTEGA
+		-- the SHOP
 		yours = "tuo",
 		offers = "OFFERTE DEL FABBRO",
 		-- the time until midnight

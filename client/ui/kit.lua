@@ -776,7 +776,35 @@ end
 -- the new one
 local tab_line = {}
 local TAB_HOT, TAB_COLD = vmath.vector4(1, 0.76, 0.23, 1), vmath.vector4(0.56, 0.64, 0.7, 1)
-function M.tabs(g, list_of, x, y, tabs, active, accent, tag)
+M.TAB_HOT, M.TAB_COLD = TAB_HOT, TAB_COLD
+
+-- the slant of the blade's cut across the tags (degrees, up to the right)
+M.CUT_SLANT = 1.6
+local CUT_K = math.tan(math.rad(M.CUT_SLANT))
+
+-- one side of a cut word: a stencil as wide as the word, its edge on the cut
+-- line, with a copy of the text inside (kept where it was on the screen)
+local function cut_half(g, text, mid, cut_y, w, up, size, color)
+	local clip = gui.new_box_node(vec(mid - g.ox, g.oy - (cut_y + (up and -50 or 50))), vec(w, 100))
+	gui.set_adjust_mode(clip, gui.ADJUST_FIT)
+	gui.set_clipping_mode(clip, gui.CLIPPING_MODE_STENCIL)
+	gui.set_clipping_visible(clip, false)
+	gui.set_parent(clip, g.node)
+	gui.set_rotation(clip, vec(0, 0, M.CUT_SLANT))
+	-- the text where it was, turned back by as much as the stencil is turned
+	local n = M.text(g, text[1], text[2], text[3], size, color, "middle", 1)
+	local d = gui.get_position(n) - gui.get_position(clip)
+	local a = -math.rad(M.CUT_SLANT)
+	gui.set_parent(n, clip)
+	gui.set_position(n, vec(d.x * math.cos(a) - d.y * math.sin(a), d.x * math.sin(a) + d.y * math.cos(a)))
+	gui.set_rotation(n, vec(0, 0, -M.CUT_SLANT))
+	return clip, n
+end
+
+-- cut: a table, when the tags are cut through by the blade (the ARMERIA in the
+-- ZAINO, Sergio 18 Nov): every word cold, in two halves along one slanted line
+-- that starts at x; cut[i] = { top, bottom, top_text, bottom_text, mid }
+function M.tabs(g, list_of, x, y, tabs, active, accent, tag, cut)
 	local h, cx = tag and 50 or 58, x
 	local key = tag and tabs[1] and tabs[1][2]
 	for i, tab in ipairs(tabs) do
@@ -787,7 +815,14 @@ function M.tabs(g, list_of, x, y, tabs, active, accent, tag)
 			-- grey-ice (Sergio, 18 Nov, proposal C · Scritta incandescente)
 			local slot = #tab[1] * 14 + 64
 			local mid = cx + slot / 2
-			if on then
+			if cut then
+				local size, base = on and 30 or 22, y + (on and 37 or 35)
+				local cut_y = base - size * 0.36 - (mid - x) * CUT_K
+				local text = { tab[1], mid, base }
+				local top, tt = cut_half(g, text, mid, cut_y, slot + 40, true, size, TAB_COLD)
+				local bottom, bt = cut_half(g, text, mid, cut_y, slot + 40, false, size, TAB_COLD)
+				cut[i] = { top = top, bottom = bottom, top_text = tt, bottom_text = bt, mid = mid, cut_y = cut_y }
+			elseif on then
 				local glow = shape("alone", mid - g.ox, g.oy - (y + 26), #tab[1] * 22 + 80, 70, with_alpha(C.HOT_BOTTOM, 0.55), g.node)
 				gui.set_blend_mode(glow, gui.BLEND_ADD)
 				local last = tab_line[key]
@@ -1053,10 +1088,20 @@ local function unload_painting(name)
 end
 
 -- the flat backdrop of the screen (nil: none), under the thread like the painting
-local function flat_backdrop(on)
+-- fade: seconds for the new theme to come in over the old one (the ARMERIA in the ZAINO)
+local function flat_backdrop(on, fade)
 	local name = FLAT.has(on) and on or nil
 	if S.flat_name == name then return end
-	FLAT.drop(S.flat, S.flat_timer)
+	-- one going away from a crossfade before: gone now
+	if S.fading then
+		FLAT.drop(S.fading[1], S.fading[2])
+		S.fading = nil
+	end
+	local old, old_timer = S.flat, S.flat_timer
+	if not (fade and old and name) then
+		FLAT.drop(old, old_timer)
+		old = nil
+	end
 	S.flat, S.flat_timer, S.flat_name = nil, nil, name
 	if not name then return end
 	S.flat, S.flat_timer = FLAT.make(name, S.clip or S.back, THREAD_Y, C.SOOT, true)
@@ -1064,11 +1109,23 @@ local function flat_backdrop(on)
 		local p = gui.get_position(S.flat)
 		gui.set_position(S.flat, vec(p.x, p.y - 360))
 	end
+	if old then
+		-- made after the old one, so over it: it comes in, then the old one goes
+		local going = { old, old_timer }
+		S.fading = going
+		gui.set_color(S.flat, vmath.vector4(1, 1, 1, 0))
+		gui.animate(S.flat, "color.w", 1, gui.EASING_OUTQUAD, fade, 0, function()
+			if S.fading == going then
+				FLAT.drop(old, old_timer)
+				S.fading = nil
+			end
+		end)
+	end
 end
 
 -- on: the screen's painting (false: only the soot, over a battle)
-local function backdrop(on)
-	flat_backdrop(on)
+local function backdrop(on, fade)
+	flat_backdrop(on, fade)
 	local name = painting_of(on)
 	if S.bg_name ~= name then
 		local old = S.bg_name
@@ -1378,11 +1435,12 @@ end
 
 -- The screen's backdrop changes (a screen with two views: the campaign's
 -- boards and its map of the circles)
-function M.scene_bg(s, bg)
+-- fade: seconds of a crossfade from the old flat backdrop (nil: at once)
+function M.scene_bg(s, bg, fade)
 	if s.opt.bg == bg then return end
 	s.opt.bg = bg
 	if S and S.owner == s then
-		backdrop(not s.opt.dim and bg)
+		backdrop(not s.opt.dim and bg, fade)
 		M.scene_fit()
 	end
 end

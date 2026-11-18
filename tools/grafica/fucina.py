@@ -380,7 +380,9 @@ MENU_INTERI = [
     # lo striscione EVENTI: il nastro con la piega di WB-061 (Sergio, 15 nov; fra tre
     # idee), accorciato nel mezzo liscio per avere l'ingombro di quello di WB-046
     ("porta_eventi", "porta_eventi_piega", 236, "WB-061"),
-    ("porta_armeria", "porta_armeria_dx", 226, "WB-046"),
+    # lo SHOP al posto di ARMERIA (WB-080, Sergio 18 nov: il banco col tendone), accorciato
+    # nel mezzo liscio per avere l'ingombro della porta di ARMERIA di WB-046
+    ("porta_shop", "porta_shop", 226, "WB-080"),
     ("gioca_sigillo", "gioca_sigillo", 166, "WB-046"),
     ("pedana", "pedana_griglia_1", 266, "WB-050"),
     ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
@@ -413,6 +415,8 @@ MENU_INTERI = [
     ("ic_maglio", "ic_maglio", 140, "WB-047"),
     ("ic_notte", "ic_notte", 108, "WB-047"),
     ("barrato", "barrato", 34, "WB-047"),
+    # il cartello ARMERIA che scende dal taglio delle schede dello zaino (WB-080)
+    ("cartello_armeria", "cartello_armeria", 180, "WB-080"),
 ]
 # dove si scrive sulle porte e su GIOCA: la striscia piena fra lo scudo (o il sigillo) e la
 # punta, misurata sul disegno a quell'altezza (margini sinistra, alto, destra, basso). Le
@@ -421,7 +425,7 @@ SPAZI_MISURATI = {
     "porta_campagna": (240, 50, 189, 51),
     "porta_allenamento": (225, 44, 166, 37),
     "porta_eventi": (185, 52, 252, 58),   # (a destra 12 px dal medaglione, come ARMERIA)
-    "porta_armeria": (120, 50, 225, 56),
+    "porta_shop": (214, 52, 240, 58),
     "gioca_sigillo": (180, 28, 149, 48),
 }
 # dove si scrive sul pulsante primario (la gemma di WB-054): la faccia piena davanti, senza
