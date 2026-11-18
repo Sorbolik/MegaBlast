@@ -141,6 +141,14 @@ function M.new(p, c)
 	local s = { p = p, c = c }
 	controller.levette = profile.setting(p, "levette")
 	s.scene = kit.scene(200, 400, { halo = 300, accent = KC.STEEL, bg = "impostazioni" })
+	-- which build this is, small on the bottom band at the right edge (Sergio, 18 Nov):
+	-- the commit the Actions write in the build settings (apk.yml, tools/web/build.sh),
+	-- none on a build made by hand in the editor
+	s.version = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
+	local version = sys.get_config_string("megablast.version", "")
+	kit.text(s.version, version == "" and T.version_local
+		or (sys.get_config_int("megablast.test", 0) == 1 and T.version_test or T.version):format(version),
+		1280 - 40, 713, 16, KC.MUTE, "end", 1)
 	build(s)
 	return s
 end
@@ -196,6 +204,7 @@ end
 function M.destroy(s)
 	kit.header_delete(s.head)
 	gui.delete_node(s.radice)
+	gui.delete_node(s.version.node)
 	kit.scene_drop(s.scene)
 end
 

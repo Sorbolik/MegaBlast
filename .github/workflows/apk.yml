@@ -51,12 +51,14 @@ jobs:
           SERVER_URL: ${{ inputs.server_url || vars.SERVER_URL }}
           VARIANTE: ${{ inputs.log && 'debug' || 'release' }}
           API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          RAMO: ${{ github.ref_name }}
         run: |
           curl -fsSL --retry 4 -o "$RUNNER_TEMP/bob.jar" https://github.com/defold/defold/releases/download/1.14.0/bob.jar
           echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/chiave.keystore"
           printf '%s' "$KEYSTORE_PASS" > "$RUNNER_TEMP/chiave.pass"
-          : > "$RUNNER_TEMP/apk.ini"
-          [ -n "$SERVER_URL" ] && printf '[megablast]\nserver_url = %s\n' "$SERVER_URL" > "$RUNNER_TEMP/apk.ini"
+          # il codice della versione (come nella didascalia) si vede nelle IMPOSTAZIONI del gioco
+          printf '[megablast]\nversion = %s\ntest = %s\n' "$(git log -1 --format=%h)" "$([ "$RAMO" = main ] && echo 0 || echo 1)" > "$RUNNER_TEMP/apk.ini"
+          [ -n "$SERVER_URL" ] && printf 'server_url = %s\n' "$SERVER_URL" >> "$RUNNER_TEMP/apk.ini"
           java -jar "$RUNNER_TEMP/bob.jar" --root client --settings "$RUNNER_TEMP/apk.ini" \
             --platform arm64-android --architectures arm64-android --strip-executable \
             --bundle-format apk --variant "$VARIANTE" --archive --texture-compression true \
