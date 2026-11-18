@@ -78,6 +78,12 @@ do
 		check(not replay.verify(back), "recipe text: a shot aimed a little differently doesn't hold")
 	end
 	check(replay.decode("os.exit()") == nil and replay.decode("{}") == nil, "recipe text: only a recipe table is read")
+	-- pure data: nothing in the text runs (the server reads what anyone sends)
+	local tricks = { '("x"):rep(1e9)', "(function() while true do end end)()", '{["input"]={},["impronte"]={},["a"]=os}',
+		'{["input"]={},["impronte"]={}} os.exit()', string.rep("{", 100) .. string.rep("}", 100) }
+	local none = true
+	for _, t in ipairs(tricks) do none = none and replay.decode(t) == nil end
+	check(none, "recipe text: code, globals and too deep tables are refused")
 end
 
 -- 2 vs 2 and free-for-all, on the other map

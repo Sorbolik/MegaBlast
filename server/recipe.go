@@ -108,23 +108,29 @@ func yesNo(ok bool, tick int) string {
 // handleRecipe: POST /ricetta?p=<platform>&j=<Lua or LuaJIT version>, body =
 // the recipe's text. Answers verify.lua's JSON.
 func (s *Server) handleRecipe(w http.ResponseWriter, r *http.Request) {
+	who := clean(r.URL.Query().Get("p")) + " (" + clean(r.URL.Query().Get("j")) + ")"
+	// every request goes into the log, the refused ones too: so it shows
+	// whether the phone's recipe arrives at all
 	if r.Method != http.MethodPost {
+		log.Printf("ricetta da %s: rifiutata, %s invece di POST", who, r.Method)
 		http.Error(w, "solo POST", http.StatusMethodNotAllowed)
 		return
 	}
 	text, err := io.ReadAll(http.MaxBytesReader(w, r.Body, recipeMax))
 	if err != nil {
+		log.Printf("ricetta da %s: rifiutata, non letta: %v", who, err)
 		http.Error(w, "ricetta troppo grande", http.StatusRequestEntityTooLarge)
 		return
 	}
+	log.Printf("ricetta da %s: arrivata, %d byte", who, len(text))
 	select {
 	case recipeSlot <- struct{}{}:
 	default:
+		log.Printf("ricetta da %s: rifiutata, il server ne sta già rigiocando un'altra", who)
 		http.Error(w, "occupato", http.StatusServiceUnavailable)
 		return
 	}
 	defer func() { <-recipeSlot }()
-	who := clean(r.URL.Query().Get("p")) + " (" + clean(r.URL.Query().Get("j")) + ")"
 	c, err := checkRecipe(r.Context(), text)
 	if err != nil {
 		log.Printf("ricetta da %s: non controllata: %v", who, err)
