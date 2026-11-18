@@ -75,9 +75,29 @@ local function over_it(p)
 	gui.move_above(p.nodo, nil)
 end
 
+-- where each new piece belongs while it waits to come in or is coming in: a
+-- transition that starts meanwhile puts it back there, not where it was caught
+local PLACE = setmetatable({}, { __mode = "k" })
+-- (far out of the screen: a piece waits there for its turn)
+local WAITING = vmath.vector3(0, -100000, 0)
+
+local function settle()
+	for n, at in pairs(PLACE) do
+		if pcall(gui.get_position, n) then
+			gui.cancel_animations(n, "position")
+			gui.cancel_animations(n, "scale")
+			gui.set_position(n, at)
+			gui.set_scale(n, vmath.vector3(1, 1, 1))
+		end
+		PLACE[n] = nil
+	end
+end
+
 local function begin(p, r, g, a)
 	p.n = (p.n or 0) + 1
 	p.leaving = nil
+	-- the pieces still coming in go to their place at once
+	settle()
 	-- a new transition starts from an uncovered screen (even if one was waiting)
 	frames.covered = false
 	local c = p.colore
@@ -207,6 +227,9 @@ local AWAY = { top = { 0, 170 }, bottom = { 0, -190 }, left = { -380, 0 }, right
 local ORDER = { top = 0, left = 1, right = 2, middle = 3, bottom = 4 }
 
 local function edge_of(n)
+	-- a screen's root (ui.root) holds its whole content, drawn in the middle
+	-- (it sits at the bottom corner: it would come from the bottom, last)
+	if ui.ROOTS[n] then return "middle" end
 	local p = gui.get_position(n)
 	local xa, ya = gui.get_xanchor(n), gui.get_yanchor(n)
 	if ya == gui.ANCHOR_TOP or p.y > 640 then return "top" end
@@ -249,29 +272,48 @@ function M.pieces(p, change, old)
 		local still = kit.scene_still()
 		local news = alive(change())
 		kit.scene_still_fade(still, M.FADE)
-		-- 3. the new pieces, at their edges, come in one after the other (two frames
-		-- later: the frame that made the screen is long, the motion would skip)
+		-- 3. the new pieces come in from their edges one after the other (two frames
+		-- later: the frame that made the screen is long, the motion would skip).
+		-- Until its turn a piece waits out of the screen: standing still in sight,
+		-- off its place, and then leaving, it looked like a stutter (Sergio, 18 Nov:
+		-- the settings' whole content, its root, waited 190 px low for 0.2 s)
 		local from = {}
 		for i, n in ipairs(news) do
-			local e = edge_of(n)
-			local a = AWAY[e]
 			local at = gui.get_position(n)
-			from[i] = { at = at, e = e }
+			from[i] = { at = at, e = edge_of(n), n = n }
+			PLACE[n] = at
 			gui.cancel_animations(n, "position")
-			gui.set_position(n, at + vmath.vector3(a[1], a[2], 0))
-			if e == "middle" then gui.set_scale(n, vmath.vector3(0.94, 0.94, 1)) end
+			gui.set_position(n, WAITING)
 		end
 		over_it(p)
+		local function come_in(f)
+			if p.n ~= k or not pcall(gui.get_position, f.n) then return end
+			local a = AWAY[f.e]
+			gui.set_position(f.n, f.at + vmath.vector3(a[1], a[2], 0))
+			gui.animate(f.n, "position", f.at, gui.EASING_OUTBACK, M.IN, 0, function()
+				if PLACE[f.n] == f.at then PLACE[f.n] = nil end
+			end)
+			-- (a root grows from its corner: it only moves)
+			if f.e == "middle" and not ui.ROOTS[f.n] then
+				gui.set_scale(f.n, vmath.vector3(0.94, 0.94, 1))
+				gui.animate(f.n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, M.IN)
+			end
+		end
 		timer.delay(0, false, function() timer.delay(0, false, function()
 			if p.n ~= k then return end
 			p.leaving = true
+			-- one after the other in ORDER, counting only the edges the screen has
+			-- (a screen with just the top, its root and the bottom doesn't wait for
+			-- sides it doesn't have)
+			local has, rank = {}, {}
+			for _, f in ipairs(from) do has[ORDER[f.e]] = true end
+			local r = 0
+			for o = 0, 4 do if has[o] then rank[o], r = r, r + 1 end end
 			local last = 0
-			for i, n in ipairs(alive(news)) do
-				local f = from[i]
-				local d = ORDER[f.e] * M.STAGGER
+			for _, f in ipairs(from) do
+				local d = rank[ORDER[f.e]] * M.STAGGER
 				last = math.max(last, d)
-				gui.animate(n, "position", f.at, gui.EASING_OUTBACK, M.IN, d)
-				if f.e == "middle" then gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, M.IN, d) end
+				if d == 0 then come_in(f) else timer.delay(d, false, function() come_in(f) end) end
 			end
 			timer.delay(last + M.IN, false, function()
 				if p.n == k then end_of(p) end
