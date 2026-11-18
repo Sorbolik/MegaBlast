@@ -461,6 +461,15 @@ images {
   image: "/assets/fucina/pedana.png"
 }
 images {
+  image: "/assets/fucina/perla_piena.png"
+}
+images {
+  image: "/assets/fucina/perla_prossima.png"
+}
+images {
+  image: "/assets/fucina/perla_vuota.png"
+}
+images {
   image: "/assets/fucina/piastra_calda_cx.png"
 }
 images {
@@ -912,6 +921,15 @@ images {
 }
 images {
   image: "/assets/fucina/segno_scende.png"
+}
+images {
+  image: "/assets/fucina/slot_acceso.png"
+}
+images {
+  image: "/assets/fucina/slot_rovente.png"
+}
+images {
+  image: "/assets/fucina/slot_vuoto.png"
 }
 images {
   image: "/assets/fucina/spunta.png"

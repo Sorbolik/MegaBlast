@@ -175,6 +175,20 @@ def fai_monete():
     intero("buono", secondo[1][2], 120)
 
 
+def fai_perle():
+    """Le perle del livello e lo slot della firma di WB-074 (Sergio, 18 nov: il modo ufficiale
+    di mostrare gli upgrade). Dal foglio perle_2: sopra le tre perline (vuota, piena grigia che
+    il gioco colora del grado, prossima in brace), sotto i tre slot (vuoto, acceso, rovente)."""
+    tutti = pezzi(senza_verde(os.path.join(ART, "WB-074", "perle_2.png")))
+    ymid = np.mean([t[0] for t in tutti])
+    su = sorted([t for t in tutti if t[0] < ymid], key=lambda t: t[1])
+    giu = sorted([t for t in tutti if t[0] >= ymid], key=lambda t: t[1])
+    for nome, t in zip(["perla_vuota", "perla_piena", "perla_prossima"], su):
+        intero(nome, t[2], 64)
+    for nome, t in zip(["slot_vuoto", "slot_acceso", "slot_rovente"], giu):
+        intero(nome, t[2], 128)
+
+
 def fai_secondario():
     """Il pulsante secondario (Sergio, 18 nov, «Ferro liscio» della pagina delle proposte:
     quello di Codex di WB-071 sembrava un primario): ferro scuro piatto, contorno
@@ -714,6 +728,7 @@ if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     fai_pezzi()
     fai_monete()
+    fai_perle()
     fai_secondario()
     fai_piccoli()
     fai_menu()

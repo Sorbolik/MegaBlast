@@ -66,12 +66,6 @@ function M.new(o)
 	sl.to = gui.get_screen_position(stud)
 	-- the stud is dark until the gem arrives
 	for _, n in ipairs(sl.lit) do gui.set_enabled(n, false) end
-	sl.face = o.bar.gems[o.lit]
-	if sl.face then
-		gui.set_enabled(sl.face, true)
-		sl.face_color = gui.get_color(sl.face)
-		gui.set_color(sl.face, require("ui.ingots").STUD_OFF)
-	end
 	-- the balance flashes, −cost under it
 	local w = o.wallet
 	if w and w.icons and w.icons.ossidiana then
@@ -182,7 +176,6 @@ function M.update(sl, dt)
 		gui.set_enabled(sl.gem, false)
 		gui.set_enabled(sl.glow, false)
 		for _, n in ipairs(sl.lit) do gui.set_enabled(n, true) end
-		if sl.face then gui.set_color(sl.face, sl.face_color) end
 		pop(sl.o.bar.studs[sl.o.lit], 2.2, 0.45)
 		chips(sl, sl.to, 12, 70, FROST)
 		chips(sl, sl.to, 6, 40, KC.OBSIDIAN)
@@ -248,7 +241,6 @@ function M.finish(sl)
 	sl.t = M.END
 	M.update(sl, 0)
 	for _, n in ipairs(sl.lit) do gui.set_enabled(n, true) end
-	if sl.face then gui.set_color(sl.face, sl.face_color) end
 	if sl.name_text then
 		gui.set_text(sl.o.name, sl.name_text)
 		gui.set_color(sl.o.name, sl.name_color)

@@ -62,4 +62,14 @@ Sergio, 18 nov 12:18 sullo slot disegnato a codice: «mi sembra fatto da un bamb
 
 ## Consegna di Codex
 
+- `art/WB-074/perle_1.png` e `perle_1.txt` · 1 tentativo.
+- `art/WB-074/perle_2.png` e `perle_2.txt` · 1 tentativo.
+- `art/WB-074/perle_3.png` e `perle_3.txt` · 1 tentativo.
+
+ImageGen integrato con il prompt integrale e i riferimenti R1–R3 in ordine. I fogli sono stati ridotti in proporzione e centrati su una tela verde da 1536×1024 per avvicinare le larghezze delle icone a 140 e 300 px. Le icone della stessa fila presentano piccole variazioni di sagoma e misura. Il verde generato presenta lievi scostamenti da #00FF00 e alcune superfici hanno sfumature leggere.
+
+Verificati sei elementi separati per foglio, contorno scuro spesso, ordine richiesto, assenza di scritte e filo, perlina piena grigia a vista e Ossidiana con bordo magenta nello slot acceso. Le perline si distinguono a 16 px, gli slot a 32 px. Lo scavo è visibile per contrasto fra bordo e fondo. Ritaglio, colorazione per grado e resa nel gioco da verificare.
+
 ## Resoconto di Claude
+
+- 18 nov: nel gioco il foglio `perle_2` (scelta di Claude: lo scavo a gemma più netto dei tre). Lo taglia `fai_perle` in `tools/grafica/fucina.py` nei pezzi `perla_vuota`, `perla_piena` (grigia, il gioco la colora del grado), `perla_prossima`, `slot_vuoto`, `slot_acceso` e `slot_rovente`; li usa `client/ui/ingots.lua` (scheda, zaino, scatto, accendi la firma). Ogni slot ha il suo posto nella fila, le perline non ci vanno sotto (Sergio, 13:14). `perle_1` e `perle_3` restano solo nel ramo `design/WB-074`. Simulazione OK (`zaino_scheda.txt`, `scatto.txt`).

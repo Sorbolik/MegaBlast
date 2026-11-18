@@ -124,7 +124,7 @@ function M.new(o)
 	-- the step's slot is not there yet: it is born at the first blow as a dot, grows
 	-- at each blow, glowing hotter, and opens at the explosion (Sergio, 18 Nov)
 	sc.stud = sc.bar.studs[math.floor(level / 10)]
-	sc.stud_face = sc.bar.gems[math.floor(level / 10)]
+	sc.stud_hot = sc.bar.hot[math.floor(level / 10)]
 	if sc.stud then at = gui.get_position(sc.bar.node) + gui.get_position(sc.stud) end
 	sc.step_at = vec(at.x, at.y)
 	-- SCATTO! and what is new
@@ -210,7 +210,7 @@ local function events(sc, t, quiet)
 		if stud then
 			gui.set_enabled(stud, true)
 			gui.set_scale(stud, vmath.vector3(M.GROW[3], M.GROW[3], 1))
-			gui.set_color(sc.stud_face, ingots.STUD_OFF)
+			gui.set_enabled(sc.stud_hot, false)
 			gui.animate(stud, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, 0, function()
 				gui.animate(stud, "scale", vmath.vector3(1.15, 1.15, 1), gui.EASING_INOUTSINE, 0.5, 0.3, nil, gui.PLAYBACK_LOOP_PINGPONG)
 			end)
@@ -283,8 +283,6 @@ local function draw(sc, t)
 	local na = eo(seg(t, M.CHARGE, 0.7))
 	gui.set_position(sc.ingots, vec(ox * 0.6, oy * 0.6 - (1 - na) * 40))
 	if t < M.BOOM then
-		local fill = 0
-		for i, b in ipairs(M.BLOWS) do if t >= b[1] then fill = i / 3 end end
 		local beat = 0
 		if t > M.CHARGE then
 			local rate = lerp(1.6, 4.5, seg(t, M.CHARGE, M.SUSPENSE))
@@ -303,8 +301,8 @@ local function draw(sc, t)
 			gui.set_enabled(sc.stud, grow > 0)
 			grow = grow * (1 + 0.08 * beat)
 			gui.set_scale(sc.stud, vmath.vector3(grow, grow, 1))
-			local hot = { [0] = ingots.STUD_OFF, KC.HOT_BOTTOM, KC.HOT, KC.SEAM }
-			gui.set_color(sc.stud_face, hot[math.floor(fill * 3 + 0.5)])
+			-- red-hot while it grows
+			gui.set_enabled(sc.stud_hot, true)
 		end
 	end
 	-- SCATTO! falls and slams; the lines come in; CONTINUA rises

@@ -238,7 +238,8 @@ function M.after(s)
 		if bar then
 			-- the bead just bought: white hot with a blow, then the grade's color; the
 			-- next one lights up in ember (a slot is not a bead: the step's scene has it)
-			local n, f = bar.beads[b.level], bar.faces[b.level]
+			local n = bar.beads[b.level]
+			local f = n
 			if n and f then
 				gui.set_color(f, KC.SEAM)
 				gui.animate(f, "color", color, gui.EASING_OUTQUAD, 0.4, 0.15)
