@@ -926,7 +926,8 @@ end
 -- screen), and at the bottom the thread, ember on the left and frost on the
 -- right, with a spark running along it now and then. opt: bg (the screen's
 -- painting of the place reached: true), seam (false: no thread), dim (0..1: how
--- much the world behind is covered; the screens over a battle just ended).
+-- much the world behind is covered; the screens over a battle just ended), over
+-- (a scene in front of a screen that stays: its own copy, M.scene).
 -- There is ONE backdrop for every menu: kit.scene returns the screen's hold
 -- on it; kit.scene_drop(s) when the screen goes away
 local S
@@ -1054,6 +1055,16 @@ local function scene_nodes()
 	return S
 end
 
+-- the two glints along a thread w wide, one from each side, without stopping
+local function run_glints(glints, w)
+	for i, q in ipairs(glints) do
+		local from = (i == 1 and -1 or 1) * (w / 2 + 130)
+		gui.cancel_animations(q, "position.x")
+		gui.set_position(q, vec(from, THREAD_Y))
+		gui.animate(q, "position.x", -from, gui.EASING_INOUTSINE, 4.2, (i - 1) * 2.1, nil, gui.PLAYBACK_LOOP_FORWARD)
+	end
+end
+
 -- The thread runs between the real edges of the screen: call it when the
 -- screen is shown (the proportions may have changed)
 function M.scene_fit()
@@ -1064,12 +1075,7 @@ function M.scene_fit()
 	S.fit_w = w
 	gui.set_size(S.seam, vec(w, 6))
 	gui.set_size(S.seam_ink, vec(w, 11))
-	for i, q in ipairs(S.glints) do
-		local from = (i == 1 and -1 or 1) * (w / 2 + 130)
-		gui.cancel_animations(q, "position.x")
-		gui.set_position(q, vec(from, THREAD_Y))
-		gui.animate(q, "position.x", -from, gui.EASING_INOUTSINE, 4.2, (i - 1) * 2.1, nil, gui.PLAYBACK_LOOP_FORWARD)
-	end
+	run_glints(S.glints, w)
 end
 
 -- the backdrop takes the screen's place
@@ -1095,9 +1101,20 @@ end
 
 -- The screen's backdrop, above everything made so far (what the screen
 -- creates next goes over it). fx, fy: where the screen's subject is
+-- opt.over: a scene in front of a screen that stays (the step of a piece, a
+-- mission's postcard) gets its own copy of the backdrop, above everything, and
+-- leaves the real one to the screen under it: taken and dropped, the screen
+-- under it would stay without its backdrop, and the doors of the home would
+-- drag it disabled (an animation doesn't run on a disabled node) and leave it
+-- off its place (18 Nov)
 function M.scene(fx, fy, opt)
 	scene_nodes()
 	local s = { fx = fx, fy = fy, opt = opt or {} }
+	if s.opt.over then
+		s.copy = M.copy_of(s.opt, true)
+		for _, n in ipairs(s.copy) do gui.move_above(n, nil) end
+		return s
+	end
 	for _, n in ipairs(S.tops) do gui.move_above(n, nil) end
 	claim(s)
 	return s
@@ -1151,7 +1168,15 @@ end
 -- real one is dragged over it). Returns it, for M.scene_copy_drop
 function M.scene_copy(s)
 	if not S then return {} end
-	local opt = s.opt
+	local out = M.copy_of(s.opt)
+	for i = #out, 1, -1 do gui.move_below(out[i], nil) end
+	return out
+end
+
+-- The nodes of a copy of the backdrop for opt (M.scene's), in order from the
+-- lowest. live: it moves like the real one (the lights, the thread breathing
+-- and its glints), for a scene in front of a screen (opt.over)
+function M.copy_of(opt, live)
 	local out = { shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, with_alpha(C.SOOT, opt.dim or 1)) }
 	local name = not opt.dim and painting_of(opt.bg)
 	local id = name and load_painting(name)
@@ -1165,18 +1190,39 @@ function M.scene_copy(s)
 		gui.set_texture(bg, id)
 		gui.set_parent(bg, back)
 		out[#out + 1] = back
+	elseif live then
+		-- the two lights, each stuck to its corner (the painting has them already)
+		local warm = empty(0, 0)
+		gui.set_xanchor(warm, gui.ANCHOR_LEFT)
+		gui.set_yanchor(warm, gui.ANCHOR_BOTTOM)
+		gui.set_blend_mode(shape("alone", 60, 40, 1500, 1300, with_alpha(C.HOT_BOTTOM, 0.2), warm), gui.BLEND_ADD)
+		local cold = empty(1280, 720)
+		gui.set_xanchor(cold, gui.ANCHOR_RIGHT)
+		gui.set_yanchor(cold, gui.ANCHOR_TOP)
+		gui.set_blend_mode(shape("alone", -60, -40, 1500, 1300, with_alpha(C.ICE, 0.16), cold), gui.BLEND_ADD)
+		out[#out + 1] = warm
+		out[#out + 1] = cold
 	end
 	if opt.seam ~= false then
+		local w = screen.width()
 		local low = empty(640, 0)
 		gui.set_yanchor(low, gui.ANCHOR_BOTTOM)
-		shape(nil, 0, THREAD_Y, screen.width(), 11, C.INK, low)
-		local seam = gui.new_box_node(vec(0, THREAD_Y), vec(screen.width(), 6))
+		shape(nil, 0, THREAD_Y, w, 11, C.INK, low)
+		local seam = gui.new_box_node(vec(0, THREAD_Y), vec(w, 6))
 		gui.set_texture(seam, "fucina")
 		gui.play_flipbook(seam, "filo")
 		gui.set_parent(seam, low)
+		if live then
+			gui.animate(seam, "color", vmath.vector4(0.72, 0.72, 0.72, 1), gui.EASING_INOUTSINE, 1.6, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
+			local glints = {}
+			for i, c in ipairs({ C.SEAM, C.FROST }) do
+				glints[i] = shape("alone", 0, THREAD_Y, 260, 30, with_alpha(c, 0.95), low)
+				gui.set_blend_mode(glints[i], gui.BLEND_ADD)
+			end
+			run_glints(glints, w)
+		end
 		out[#out + 1] = low
 	end
-	for i = #out, 1, -1 do gui.move_below(out[i], nil) end
 	return out
 end
 
@@ -1195,12 +1241,21 @@ function M.scene_focus(s, fx, fy)
 end
 
 function M.scene_drop(s)
+	if s.copy then
+		for _, n in ipairs(s.copy) do gui.delete_node(n) end
+		s.copy = nil
+		return
+	end
 	if not S or S.owner ~= s then return end
 	S.owner = nil
 	for _, n in ipairs(S.tops) do gui.set_enabled(n, false) end
 end
 
 function M.scene_show(s, on)
+	if s.copy then
+		for _, n in ipairs(s.copy) do gui.set_enabled(n, on) end
+		return
+	end
 	if on then claim(s) else M.scene_drop(s) end
 end
 

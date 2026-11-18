@@ -56,7 +56,7 @@ function M.open(id, titolo, from, tipo, line, o)
 	p.back = top(gui.new_box_node(vec(640, 360), vec(1280 * 4, 720 * 4)))
 	gui.set_color(p.back, vmath.vector4(KC.INK.x, KC.INK.y, KC.INK.z, 0))
 	gui.animate(p.back, "color.w", 1, gui.EASING_OUTQUAD, M.ZOOM)
-	p.scene = kit.scene(390, 330, { halo = 460 })
+	p.scene = kit.scene(390, 330, { over = true })
 	-- everything but the plate: it comes in when the zoom is over
 	p.radice = top(gui.new_box_node(vec(0, 0), vec(0, 0)))
 	gui.set_visible(p.radice, false)
