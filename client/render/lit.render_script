@@ -158,7 +158,7 @@ local function reset_camera_world(state)
 end
 
 function init(self)
-    self.predicates = create_predicates("tile", "gui", "particle", "model", "debug_text", "sagoma", "sagoma_mantello")
+    self.predicates = create_predicates("tile", "gui", "particle", "model", "debug_text", "sagoma", "sagoma_mantello", "sagoma_chiudi")
 
     -- default is stretch projection. copy from builtins and change for different projection
     -- or send a message to the render script to change projection:
@@ -197,7 +197,7 @@ end
 -- battle/silhouette.fp, battle/outline.fp): the silhouette devil (materials with
 -- the tag sagoma) drawn into two images as big as its rectangle of the window:
 -- "u" where each place's pieces are (added up), "v" what is in front (in order),
--- "c" the cape.
+-- "i" where its black line is, "c" the cape.
 -- The contour's node reads them in the gui (samplers sagome_u, sagome_v).
 local function silhouettes(self, state)
     local o = self.outline
@@ -207,6 +207,9 @@ local function silhouettes(self, state)
             render.delete_render_target(self.rt_u)
             render.delete_render_target(self.rt_v)
             render.delete_render_target(self.rt_c)
+            render.delete_render_target(self.rt_i)
+            render.delete_render_target(self.rt_d)
+            render.delete_render_target(self.rt_e)
         end
         local params = { [graphics.BUFFER_TYPE_COLOR0_BIT] = {
             format = graphics.TEXTURE_FORMAT_RGBA, width = w, height = h,
@@ -215,6 +218,9 @@ local function silhouettes(self, state)
         self.rt_u = render.render_target("sagome_u", params)
         self.rt_v = render.render_target("sagome_v", params)
         self.rt_c = render.render_target("sagome_c", params)
+        self.rt_i = render.render_target("sagome_i", params)
+        self.rt_d = render.render_target("sagome_d", params)
+        self.rt_e = render.render_target("sagome_e", params)
         self.rt_w, self.rt_h = w, h
     end
     render.set_view(vmath.matrix4())
@@ -236,6 +242,31 @@ local function silhouettes(self, state)
     render.clear(self.clear_black)
     render.set_blend_func(graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
     self.pass.pass = vmath.vector4(1, 0, 0, 0)
+    render.draw(self.predicates.sagoma, options)
+
+    -- the slits of "u" closed (battle/silhouette_close.fp): grown into "d", shrunk
+    -- back into "e", which is what the contour reads
+    render.disable_state(graphics.STATE_BLEND)
+    self.pass.rect = vmath.vector4(0, 0, w, h)
+    render.set_render_target(self.rt_d)
+    render.clear(self.clear_black)
+    self.pass.pass = vmath.vector4(0, 0, self.outline_close or 0, 0)
+    render.enable_texture("sagome_src", self.rt_u, graphics.BUFFER_TYPE_COLOR0_BIT)
+    render.draw(self.predicates.sagoma_chiudi, options)
+    render.disable_texture("sagome_src")
+    render.set_render_target(self.rt_e)
+    render.clear(self.clear_black)
+    self.pass.pass = vmath.vector4(0, 1, self.outline_close or 0, 0)
+    render.enable_texture("sagome_src", self.rt_d, graphics.BUFFER_TYPE_COLOR0_BIT)
+    render.draw(self.predicates.sagoma_chiudi, options)
+    render.disable_texture("sagome_src")
+    render.enable_state(graphics.STATE_BLEND)
+    render.set_blend_func(graphics.BLEND_FACTOR_ONE, graphics.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+
+    -- where the black line of what is in front is
+    render.set_render_target(self.rt_i)
+    render.clear(self.clear_black)
+    self.pass.pass = vmath.vector4(2, 0, 0, 0)
     render.draw(self.predicates.sagoma, options)
 
     -- the cape alone, as the game draws it (its material has this tag too)
@@ -300,15 +331,17 @@ function update(self)
 
     render.enable_state(graphics.STATE_STENCIL_TEST)
     if self.outline then
-        render.enable_texture("sagome_u", self.rt_u, graphics.BUFFER_TYPE_COLOR0_BIT)
+        render.enable_texture("sagome_u", self.rt_e, graphics.BUFFER_TYPE_COLOR0_BIT)
         render.enable_texture("sagome_v", self.rt_v, graphics.BUFFER_TYPE_COLOR0_BIT)
         render.enable_texture("sagome_c", self.rt_c, graphics.BUFFER_TYPE_COLOR0_BIT)
+        render.enable_texture("sagome_i", self.rt_i, graphics.BUFFER_TYPE_COLOR0_BIT)
     end
     render.draw(predicates.gui, camera_gui.options)
     if self.outline then
         render.disable_texture("sagome_u")
         render.disable_texture("sagome_v")
         render.disable_texture("sagome_c")
+        render.disable_texture("sagome_i")
     end
     render.draw(predicates.debug_text, camera_gui.options)
     render.disable_state(graphics.STATE_STENCIL_TEST)
@@ -338,6 +371,7 @@ function on_message(self, message_id, message)
     elseif message_id == MSG_OUTLINE then
         -- the window rectangle of the silhouettes (x, y, w, h), or nothing: off
         self.outline = message.rect
+        self.outline_close = message.close
     elseif message_id == MSG_USE_FIXED_PROJ then
         init_camera(camera, get_fixed_projection, message.near, message.far, message.zoom)
         update_camera(camera, state)

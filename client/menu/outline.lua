@@ -23,8 +23,11 @@ local NONE = vmath.vector4(0, 0, 0, 0)
 -- the rectangle around the devil, in its own units from the feet: half the
 -- width, below, above (tail, cape and horns inside)
 local HALF, BELOW, ABOVE = 1.35, 0.25, 2.3
--- the line's width, in devil heights
-local WIDTH = 0.013
+-- the line's width, in devil heights: the least, and the most where the drawing's
+-- black line is wider
+local WIDTH, WIDTH_INK = 0.0115, 0.032
+-- two pieces of a place nearer than twice this are one shape (devil heights)
+local CLOSE = 0.016
 
 function M.new(figure, pose, look)
 	local o = { figure = figure }
@@ -54,6 +57,12 @@ function M.new(figure, pose, look)
 		gui.move_above(o.cape, figure.mantello)
 		table.insert(figure.level_nodes.mantello, o.cape)
 	end
+	-- the node that closes the slits of the silhouettes: drawn only into their
+	-- image, over all of it
+	o.closer = gui.new_box_node(vmath.vector3(0, (ABOVE - BELOW) / 2 * h, 0),
+		vmath.vector3(4 * HALF * h, 2 * (ABOVE + BELOW) * h, 0))
+	gui.set_parent(o.closer, pose)
+	gui.set_material(o.closer, "sagoma_chiudi")
 	o.h = h
 	M.colors(o, {})
 	M.update(o)
@@ -74,8 +83,8 @@ function M.update(o)
 	local w, h = math.ceil(b.x) - x, math.ceil(b.y) - y
 	if x ~= o.x or y ~= o.y or w ~= o.w or h ~= o.hh then
 		o.x, o.y, o.w, o.hh = x, y, w, h
-		msg.post("@render:", "outline", { rect = vmath.vector4(x, y, w, h) })
-		local width = vmath.vector4(WIDTH * h / (ABOVE + BELOW), 0, 0, 0)
+		msg.post("@render:", "outline", { rect = vmath.vector4(x, y, w, h), close = CLOSE * h / (ABOVE + BELOW) })
+		local width = vmath.vector4(WIDTH * h / (ABOVE + BELOW), WIDTH_INK * h / (ABOVE + BELOW), 0, 0)
 		gui.set(o.node, "width", width)
 		if o.cape then gui.set(o.cape, "width", width) end
 	end

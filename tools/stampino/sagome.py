@@ -82,6 +82,11 @@ def sagoma(im, modo):
         rgb = a[..., :3]
         tratto = pieno & (rgb.max(-1) < 40)
         pelle = pieno & ~tratto & di_pelle(rgb, tratto)
+        # un granello rossiccio sul bordo sfumato del tratto non è pelle
+        lab, n = ndimage.label(pelle)
+        if n:
+            aree = ndimage.sum(pelle, lab, range(1, n + 1))
+            pelle = np.isin(lab, np.nonzero(aree >= 60)[0] + 1)
         pezzo = pieno & ~tratto & ~pelle
         # i granelli (un bordo sfumato fra pelle e tratto) non sono del pezzo
         lab, n = ndimage.label(pezzo)
@@ -89,19 +94,29 @@ def sagoma(im, modo):
             aree = ndimage.sum(pezzo, lab, range(1, n + 1))
             pezzo = np.isin(lab, np.nonzero(aree >= 60)[0] + 1)
         # il tratto nero attorno al pezzo è suo (anche l'orlo sulla pelle)
-        vicino = ndimage.distance_transform_edt(~pezzo) <= TRATTO + 2
+        dal_pezzo = ndimage.distance_transform_edt(~pezzo)
+        dalla_pelle = ndimage.distance_transform_edt(~pelle)
+        vicino = dal_pezzo <= TRATTO + 2
         m = pezzo | (tratto & vicino) | (pieno & ~pelle & ~tratto & vicino)
+        # dove il bordo del pezzo è anche il bordo del corpo il tratto è più largo:
+        # è del pezzo fin dove il pezzo è più vicino della pelle
+        m |= tratto & (dal_pezzo < dalla_pelle) & (dal_pezzo <= 3 * TRATTO)
+        # e il tratto che continua da lì lontano dalla pelle (la punta di una pinna)
+        lontano = dalla_pelle > TRATTO + 4
+        m = ndimage.binary_propagation(m, mask=m | (tratto & lontano))
         m = ndimage.binary_fill_holes(m)
         # ma non il moncone del tratto della pelle che parte dall'orlo (il bordo della
         # gamba sopra lo stivale): è sottile quanto il tratto e sta accanto alla pelle
-        aperto = ndimage.binary_opening(m, disco(TRATTO // 2 + 2))
-        accanto = ndimage.distance_transform_edt(~pelle) <= TRATTO + 4
+        aperto = ndimage.binary_opening(m, disco(TRATTO // 2 + 1))
+        accanto = dalla_pelle <= TRATTO + 4
         m &= ~(~aperto & accanto & ~pezzo)
         # tolti i monconi, restano solo le parti attaccate al pezzo
         lab, n = ndimage.label(m)
         if n:
             m = np.isin(lab, np.unique(lab[pezzo & m]))
         m = ndimage.binary_fill_holes(m)
+        # il bordo sfumato del tratto verso la pelle (scuro, rossiccio) resta col tratto
+        m |= ndimage.binary_dilation(m, iterations=2) & pieno & (rgb.max(-1) < 135)
     else:
         m = ndimage.binary_fill_holes(pieno)
         if (m & ~pieno).sum() < 40:

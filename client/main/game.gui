@@ -83,6 +83,10 @@ materials {
   material: "/battle/silhouette_4.material"
 }
 materials {
+  name: "sagoma_chiudi"
+  material: "/battle/silhouette_close.material"
+}
+materials {
   name: "contorno"
   material: "/battle/outline.material"
 }
