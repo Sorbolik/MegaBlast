@@ -204,15 +204,105 @@ function M.encode(r)
 	return table.concat(out)
 end
 
--- The recipe back from M.encode's text, or nil. The text runs with no
--- globals at all, so it can only build tables (whoever sends a loop gets
--- stopped by the server's timeout).
+-- The recipe back from M.encode's text, or nil. The text is read as pure
+-- data by a small parser (never loaded as Lua: whoever sends it can't run
+-- anything on the server): tables, strings in %q form, numbers, true, false.
+local MAX_DEPTH = 32
+local ESCAPES = { n = "\n", ["\n"] = "\n", r = "\r", t = "\t", ['"'] = '"', ["\\"] = "\\" }
+
+local function parse(s)
+	local pos = 1
+	local function skip()
+		pos = s:find("[^ \t\r\n]", pos) or #s + 1
+	end
+	local value
+	local function text()
+		local out = {}
+		pos = pos + 1
+		while true do
+			local j = s:find('[\\"]', pos)
+			if not j then error("recipe: string not closed") end
+			out[#out + 1] = s:sub(pos, j - 1)
+			pos = j
+			if s:sub(pos, pos) == '"' then
+				pos = pos + 1
+				return table.concat(out)
+			end
+			local d = s:sub(pos + 1, pos + 1)
+			local digits = s:match("^%d%d?%d?", pos + 1)
+			if digits then
+				local n = tonumber(digits)
+				if n > 255 then error("recipe: bad escape") end
+				out[#out + 1] = string.char(n)
+				pos = pos + 1 + #digits
+			elseif ESCAPES[d] then
+				out[#out + 1] = ESCAPES[d]
+				pos = pos + 2
+			else
+				error("recipe: bad escape")
+			end
+		end
+	end
+	local function tbl(depth)
+		if depth > MAX_DEPTH then error("recipe: too deep") end
+		local t, n = {}, 0
+		pos = pos + 1
+		while true do
+			skip()
+			local c = s:sub(pos, pos)
+			if c == "}" then
+				pos = pos + 1
+				return t
+			end
+			if c == "[" then
+				pos = pos + 1
+				skip()
+				local k = value(depth + 1)
+				if type(k) ~= "string" and type(k) ~= "number" then error("recipe: bad key") end
+				skip()
+				if s:sub(pos, pos) ~= "]" then error("recipe: ] expected") end
+				pos = pos + 1
+				skip()
+				if s:sub(pos, pos) ~= "=" then error("recipe: = expected") end
+				pos = pos + 1
+				skip()
+				t[k] = value(depth + 1)
+			else
+				n = n + 1
+				t[n] = value(depth + 1)
+			end
+			skip()
+			if s:sub(pos, pos) == "," then pos = pos + 1 end
+		end
+	end
+	value = function(depth)
+		skip()
+		local c = s:sub(pos, pos)
+		if c == "{" then return tbl(depth) end
+		if c == '"' then return text() end
+		if s:sub(pos, pos + 3) == "true" then
+			pos = pos + 4
+			return true
+		end
+		if s:sub(pos, pos + 4) == "false" then
+			pos = pos + 5
+			return false
+		end
+		local num = s:match("^[-+]?[%d%.]+[eE]?[-+]?%d*", pos)
+		local v = num and tonumber(num)
+		if not v or v ~= v or v == math.huge or v == -math.huge then error("recipe: bad value") end
+		pos = pos + #num
+		return v
+	end
+	local r = value(0)
+	skip()
+	if pos <= #s then error("recipe: text after the recipe") end
+	return r
+end
+
 function M.decode(s)
 	if type(s) ~= "string" then return nil end
-	local f = loadstring("return " .. s, "=ricetta")
-	if not f then return nil end
-	setfenv(f, {})
-	local ok, r = pcall(f)
+	local ok, r = pcall(parse, s)
 	if ok and type(r) == "table" and type(r.input) == "table" and type(r.impronte) == "table" then return r end
 	return nil
 end
