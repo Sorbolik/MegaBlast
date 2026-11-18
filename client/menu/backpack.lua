@@ -518,7 +518,7 @@ end
 -- its chains and swings
 local SIGN_X, SIGN_W = 362, 140
 -- the line under INVENTARIO the chains come out of: nothing of the sign above it
-local SIGN_TOP = 71
+local SIGN_TOP = 63
 local SPARK = vmath.vector4(1, 0.95, 0.69, 1)
 local V0 = vmath.vector3()
 
@@ -679,7 +679,12 @@ local function build(s)
 	else
 		inventory(s)
 	end
-	if cut then armory_pass(s, cut, s.just == "open") end
+	if cut then
+		-- the chains hang from the base of INVENTARIO: the sign follows its bottom
+		-- half in everything, the cut, the turn and the last jolt (Sergio, 19 Nov)
+		gui.set_parent(s.sign, cut[1].bottom, true)
+		armory_pass(s, cut, s.just == "open")
+	end
 	if s.closing then sign_away(s) end
 	s.closing = nil
 end
