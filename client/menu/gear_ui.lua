@@ -22,7 +22,7 @@ local game = require "sim.game"
 local equip = require "sim.gear"
 local loadout = require "sim.loadout"
 local scoria = require "battle.scoria"
-local wallet = require "menu.wallet"
+local wallet = require "sim.wallet"
 local TA = require("lang.text").armory
 local T = require("lang.text").gear_ui
 
@@ -306,11 +306,14 @@ function M.stats(s, g, x, y, w, a, a2, o)
 	local head = big and 50 or 34
 	local name_size, value_size = big and 19 or 16, big and 22 or 18
 	local rows_h = (big and M.STAT_ROWS or math.max(#order, o.empty and 1 or 0)) * rh
-	local tall = head + rows_h + ((o.legend and not big) and 52 or 0)
+	-- o.fixed: the panel as tall as that many rows, whatever it shows (what hangs
+	-- under it never moves)
+	local box_h = o.fixed and math.max(rows_h, o.fixed * rh) or rows_h
+	local tall = head + box_h + ((o.legend and not big) and 52 or 0)
 	kit.panel(kit.group(g, x + w / 2, y + tall / 2).node, w + 2 * M.STAT_PAD, tall + 2 * M.STAT_PAD)
 	if o.title ~= false then kit.text(g, T.stats, x, y + 18, 22, KC.HOT, "start", 1) end
 	if o.legend then
-		if big then M.legend(g, x + w - 210, y - 2, 220) else M.legend(g, x, y + head + rows_h + 8, w) end
+		if big then M.legend(g, x + w - 210, y - 2, 220) else M.legend(g, x, y + head + box_h + 8, w) end
 	end
 	if o.empty and #order == 0 then
 		kit.text(g, kit.upper(o.empty), x, y + head + 19, 16, KC.MUTE, "start", 0.5)
@@ -371,7 +374,6 @@ end
 -- at most M.SHORT_ROWS; under it VEDI TUTTE opens all of them in one screen
 -- (M.sheet, "foglio"). The same column on every screen where the gear changes
 -- (Sergio, 15 Nov 22:48)
-M.SEE_ALL_Y = 540
 function M.stats_short(s, g, x, y, w, a, a2)
 	local p = s.prof
 	local base = game.base_stats()
@@ -381,12 +383,19 @@ function M.stats_short(s, g, x, y, w, a, a2)
 	for _, st in ipairs(M.STATS) do
 		if ref[st[1]] ~= now[st[1]] and #rows < M.SHORT_ROWS then rows[#rows + 1] = st end
 	end
-	M.stats(s, g, x, y, w, a, a2, { rows = rows, empty = a2 and T.no_change or T.all_base, legend = true })
-	-- always in the same place, at the bottom of the column (Sergio, 17 Nov: a
-	-- button never moves with how many rows there are)
-	local top = M.SEE_ALL_Y
-	local b = kit.card(g, x - M.STAT_PAD, top, w + 2 * M.STAT_PAD, 56, KC.ROSE)
-	kit.text(b.g, T.see_all, x + w / 2, top + 36, 20, KC.SAND, "middle", 0.5)
+	local tall = M.stats(s, g, x, y, w, a, a2, { rows = rows, empty = a2 and T.no_change or T.all_base, legend = true, fixed = M.SHORT_ROWS })
+	-- VEDI TUTTE hangs from the panel like a tag, on two straps (Sergio, 18 Nov:
+	-- apart from it, it wasn't clear it was about the stats); the panel is always
+	-- as tall, so it never moves (Sergio, 17 Nov)
+	local bottom = y + tall + M.STAT_PAD
+	local tw, th = math.min(w, 170), 46
+	local tx, ty = x + (w - tw) / 2, bottom + 12
+	for _, sx in ipairs({ tx + 26, tx + tw - 26 }) do
+		local strap = ui.sagoma("forma", sx - g.ox, g.oy - (bottom + 6), 9, 26, KC.INK, g.node)
+		gui.set_slice9(strap, vmath.vector4(3, 3, 3, 3))
+	end
+	local b = kit.card(g, tx, ty, tw, th, KC.ROSE)
+	kit.text(b.g, T.see_all, x + w / 2, ty + 30, 18, KC.SAND, "middle", 0.5)
 	kit.button(s.buttons, b, "foglio")
 end
 

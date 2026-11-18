@@ -24,8 +24,9 @@ local equip = require "sim.gear"
 local skills = require "sim.skills"
 local scoria = require "battle.scoria"
 local profile = require "menu.profile"
-local wallet = require "menu.wallet"
+local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
+local bench = require "menu.bench"
 local T = require("lang.text").backpack
 local TG = require("lang.text").gear_ui
 local TP = require("lang.text").pieces
@@ -35,7 +36,8 @@ local M = {}
 
 local KC = kit.C
 -- how wide the lines of the piece chosen are, in the band: they stop before the action
-local LINE_ROOM = 680
+-- POTENZIA in the band: left of the action (Figma x of the right side)
+local UP_X, UP_W = 700, 200
 -- the paths of the Sigilli: their color (Figma: movement ice, defense mint, arsenal ember)
 local PATH_COLOR = { wings = KC.STEEL, armor = KC.MINT, forge = KC.HOT_BOTTOM }
 
@@ -130,19 +132,22 @@ local function inventory(s)
 		gear_ui.stats_short(s, s.rt, 1040, 106, 210, a, a2)
 	end
 
-	-- the piece chosen, at the bottom, and INDOSSA
+	-- the piece chosen, at the bottom: its name, its level as the notches of the
+	-- bench, its effects; POTENZIA opens its card here (the bench of the armory,
+	-- Sergio 18 Nov: you upgrade without leaving the ZAINO), then INDOSSA
 	if s.sel then
 		local set, slot = s.sel[1], s.sel[2]
 		local level = wallet.level(p, set, slot)
-		gear_ui.slot(s.low, 140, 630, 64, { set = set, slot = slot })
-		-- its name, then its grade and its effects on two short lines that stop
-		-- before the action and its line (Sergio, 17 Nov); in the queue, before
-		-- the pill, the effects alone on two lines (the grade is on the slot's corner)
-		kit.text(s.low, gear_ui.name(set, slot), 220, 648, 26, KC.SAND)
+		local worn = a.gear[slot] == set
+		gear_ui.slot(s.low, 140, 630, 64, { set = set, slot = slot, worn = worn })
+		kit.zone(s.low, s.buttons, 134, 624, 76, 76, "scheda")
+		local name = kit.text(s.low, gear_ui.name(set, slot), 220, 648, 26, KC.SAND)
 		local tier = equip.tier(level)
 		local effects = kit.upper(gear_ui.effects(set, slot, level))
+		-- the room of the lines: up to POTENZIA, which sits left of the action
+		local room = screen.width() - (1280 - UP_X) - 14 - 220
+		if kit.in_queue then room = math.min(room, kit.PILL_X0 - 16 - (220 + screen.x0)) end
 		if kit.in_queue then
-			local room = kit.PILL_X0 - 16 - (220 + screen.x0)
 			local lines = effect_lines(s.low, effects, room)
 			for i = 1, math.min(2, #lines) do
 				local n = kit.text(s.low, lines[i], 220, 650 + i * 22, kit.MIN_TEXT, KC.MUTE, "start", 0.5)
@@ -150,13 +155,58 @@ local function inventory(s)
 				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
 			end
 		else
-			local grade = kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier]))
-			kit.foot_text(s.low, grade, 220, 672, 18, KC.MUTE, LINE_ROOM, 0.5)
-			kit.foot_text(s.low, effects, 220, 696, 18, KC.MUTE, LINE_ROOM, 0.5)
+			-- the level and grade beside the name, the beads under it across the band
+			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 220 + kit.width(name) + 16, 646, 17,
+				ui.C.GRADI[tier], "start", 0.5)
+			bench.ingots(s.low, 220, 656, math.min(460, room), 20, level, wallet.sign(p, set, slot))
+			-- the effects on one line, or on two when they don't fit
+			local lines = effect_lines(s.low, effects, room)
+			local two = #lines > 1
+			for i = 1, math.min(2, #lines) do
+				local n = kit.text(s.low, lines[i], 220, two and (674 + i * 18) or 697, kit.MIN_TEXT, KC.MUTE, "start", 0.5)
+				local wide = kit.width(n)
+				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
+			end
 		end
-		local worn = a.gear[slot] == set
-		s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { size = 44, off = worn, sub = worn and kit.upper(T.worn) or nil })
+		-- POTENZIA: the plate of the secondary actions (as ACCENDI LA FIRMA in the armory)
+		local nxt = wallet.next(p, set, slot)
+		local ub = kit.secondary(s.right, TP.upgrade_here, UP_X, 640, UP_W, 62,
+			{ icon = "scaglia", sub_color = KC.HOT, sub = kit.upper(nxt and T.up_line:format(level, nxt.level) or TP.at_max) })
+		kit.button(s.buttons, ub, "scheda", {})
+		s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { size = 44, off = worn })
 		kit.button(s.buttons, s.action, "indossa", { main = true, spento = worn })
+	end
+end
+
+-- The card of the piece chosen: the armory's bench in the middle, the pieces
+-- worn on the left, on the right the stats with +1 LIVELLO; the footer of the
+-- bench (ACCENDI LA FIRMA, the price, +1 LIVELLO). The arrow goes back to the pieces
+local function card(s)
+	local p = s.prof
+	local a = profile.active_loadout(p)
+	gear_ui.loadouts(s, s.left, 36, 96, p.is_active, "assetto", T.loadout)
+	gear_ui.devil(s, s.left, 250, 600, 360)
+	gear_ui.worn(s, s.left, a, 250, 600, 360, 36, { 208, 310, 412, 514 }, 68, s.sel[2])
+	bench.draw(s, s.mid, s.sel)
+	bench.footer(s, s.low2, s.right, s.sel)
+	-- the stats: what +1 LIVELLO changes (worn), or what wearing it changes
+	local set, slot = s.sel[1], s.sel[2]
+	local nxt = wallet.next(p, set, slot)
+	local a2
+	if a.gear[slot] ~= set then
+		a2 = copy(a)
+		a2.gear[slot] = set
+	elseif nxt then
+		a2 = copy(a)
+		a2.levels = wallet.levels(p, a)
+		a2.levels[slot] = nxt.level
+	end
+	if s.sheet then
+		gui.set_enabled(s.mid.node, false)
+		s.over = kit.anchor(0, 0)
+		gear_ui.sheet(s, s.over, a, a2, TG.back_to_pieces)
+	else
+		gear_ui.stats_short(s, s.rt, 1040, 106, 210, a, a2)
 	end
 end
 
@@ -360,14 +410,18 @@ end
 
 -- Screen ----------------------------------------------------------------------------
 
+local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over" }
+
 local function build(s)
 	if s.head then kit.header_delete(s.head) end
-	for _, k in ipairs({ "left", "mid", "rt", "right", "low" }) do
+	for _, k in ipairs(GROUPS) do
 		if s[k] then gui.delete_node(s[k].node) end
+		s[k] = nil
 	end
 	s.buttons, s.figure, s.action = {}, nil, nil
 	local p = s.prof
-	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", common.home)
+	local in_card = s.tab ~= "sigilli" and s.card and s.sel
+	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", in_card and T.title or common.home)
 	s.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(s.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(s.wallet, p.buoni or 0)
 	kit.tabs(s.head.top_left, s.buttons, 300, 28, { { T.tab_inventory, "scheda:inventario" }, { T.tab_seals, "scheda:sigilli" } },
@@ -378,8 +432,11 @@ local function build(s)
 	s.rt = kit.anchor(1280, 0, gui.ANCHOR_RIGHT)
 	s.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	s.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
+	s.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
 	if s.tab == "sigilli" then
 		seals_tab(s)
+	elseif in_card then
+		card(s)
 	else
 		inventory(s)
 	end
@@ -388,13 +445,14 @@ end
 function M.new(prof, tab, color)
 	local s = { prof = prof, tab = tab or "inventario", colore = color or ui.C.SQUADRA[1] }
 	s.draft = copy(profile.active_loadout(prof).tree or {})
-	s.scene = kit.scene(250, 420, { accent = KC.PURPLE, bg = "zaino" })
+	s.back = kit.scene(250, 420, { accent = KC.PURPLE, bg = "zaino" })
 	build(s)
 	return s
 end
 
 function M.update(s, dt)
 	if s.figure then scoria.update(s.figure, dt, s.st) end
+	bench.update(s, dt)
 end
 
 -- what you wear shows at once on the apprentice here (and in every menu after)
@@ -407,8 +465,11 @@ local function run_cmd(s, ui_action)
 	local kind, x = ui_action:match("^(%a+):?(.*)$")
 	local p = s.prof
 	local a, b = x:match("^([^:]*):?(.*)$")
-	if kind == "scheda" then
-		s.tab, s.sheet = x, nil
+	if kind == "scheda" and x == "" then
+		-- the card of the piece chosen
+		s.card, s.sheet, s.just = true, nil, "open"
+	elseif kind == "scheda" then
+		s.tab, s.sheet, s.card = x, nil, nil
 		s.draft = copy(profile.active_loadout(p).tree or {})
 	elseif kind == "assetto" then
 		p.is_active = tonumber(x)
@@ -421,12 +482,19 @@ local function run_cmd(s, ui_action)
 	elseif kind == "filtro" then
 		s.slot = x ~= "" and x or nil
 	elseif kind == "posto" then
-		s.slot = s.slot ~= x and x or nil
-		s.sheet = nil
+		-- a piece worn, on the left: it is the piece chosen (its lines at the
+		-- bottom), the grid shows its slot; in the card, its card
+		s.slot, s.sheet = x, nil
+		local set = profile.active_loadout(p).gear[x]
+		if set then s.sel = { set, x } end
 	elseif kind == "famiglia" then
 		s.family = s.family ~= x and x or nil
 	elseif kind == "pezzo" then
+		-- tapped again, the piece chosen opens its card
+		if not s.card and s.sel and s.sel[1] == a and s.sel[2] == b then s.card, s.just = true, "open" end
 		s.sel = { a, b }
+	elseif kind == "potenzia" or kind == "firma" then
+		bench.run(s, kind, s.sel)
 	elseif kind == "indossa" and s.sel then
 		profile.active_loadout(p).gear[s.sel[2]] = s.sel[1]
 		profile.save(p)
@@ -453,22 +521,36 @@ local function run_cmd(s, ui_action)
 		for key, v in pairs(copy(s.draft)) do live[key] = v end
 		profile.save(p)
 	end
+	profile.save(p)
 	build(s)
+	bench.after(s)
 end
 
 function M.on_input(s, action_id, action)
+	if bench.input(s, action_id, action) then return nil end
 	local ui_action = ui.touch(s.buttons, action_id, action)
+	-- from the card the arrow goes back to the pieces
+	if ui_action == "indietro" and s.card and s.tab ~= "sigilli" then
+		s.card, s.sheet = nil, nil
+		build(s)
+		-- the pieces come back from the left, where the card goes out
+		local at = gui.get_position(s.mid.node)
+		gui.set_position(s.mid.node, at - vmath.vector3(70, 0, 0))
+		gui.animate(s.mid.node, "position", at, gui.EASING_OUTCUBIC, 0.22)
+		return nil
+	end
 	if ui_action == "indietro" then return ui_action end
 	if ui_action then return run_cmd(s, ui_action) end
 	return nil
 end
 
 function M.destroy(s)
+	bench.delete(s)
 	kit.header_delete(s.head)
-	for _, k in ipairs({ "left", "mid", "rt", "right", "low" }) do
+	for _, k in ipairs(GROUPS) do
 		if s[k] then gui.delete_node(s[k].node) end
 	end
-	kit.scene_drop(s.scene)
+	kit.scene_drop(s.back)
 end
 
 return M

@@ -326,24 +326,6 @@ images {
   image: "/assets/fucina/ingranaggio.png"
 }
 images {
-  image: "/assets/fucina/linguetta_chiara_cx.png"
-}
-images {
-  image: "/assets/fucina/linguetta_chiara_dx.png"
-}
-images {
-  image: "/assets/fucina/linguetta_chiara_sx.png"
-}
-images {
-  image: "/assets/fucina/linguetta_cx.png"
-}
-images {
-  image: "/assets/fucina/linguetta_dx.png"
-}
-images {
-  image: "/assets/fucina/linguetta_sx.png"
-}
-images {
   image: "/assets/fucina/livello_ferro.png"
 }
 images {
@@ -468,6 +450,15 @@ images {
 }
 images {
   image: "/assets/fucina/pedana.png"
+}
+images {
+  image: "/assets/fucina/perla_piena.png"
+}
+images {
+  image: "/assets/fucina/perla_prossima.png"
+}
+images {
+  image: "/assets/fucina/perla_vuota.png"
 }
 images {
   image: "/assets/fucina/piastra_calda_cx.png"
@@ -890,10 +881,46 @@ images {
   image: "/assets/fucina/sconto.png"
 }
 images {
+  image: "/assets/fucina/secondario_acceso_cx.png"
+}
+images {
+  image: "/assets/fucina/secondario_acceso_dx.png"
+}
+images {
+  image: "/assets/fucina/secondario_acceso_sx.png"
+}
+images {
+  image: "/assets/fucina/secondario_premuto_cx.png"
+}
+images {
+  image: "/assets/fucina/secondario_premuto_dx.png"
+}
+images {
+  image: "/assets/fucina/secondario_premuto_sx.png"
+}
+images {
+  image: "/assets/fucina/secondario_spento_cx.png"
+}
+images {
+  image: "/assets/fucina/secondario_spento_dx.png"
+}
+images {
+  image: "/assets/fucina/secondario_spento_sx.png"
+}
+images {
   image: "/assets/fucina/segno_sale.png"
 }
 images {
   image: "/assets/fucina/segno_scende.png"
+}
+images {
+  image: "/assets/fucina/slot_acceso.png"
+}
+images {
+  image: "/assets/fucina/slot_rovente.png"
+}
+images {
+  image: "/assets/fucina/slot_vuoto.png"
 }
 images {
   image: "/assets/fucina/spunta.png"

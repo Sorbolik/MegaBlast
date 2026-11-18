@@ -362,6 +362,15 @@ come online): le statistiche escono da lì (`replay.match`), e i bot il server s
 ricostruisce dal seme e dall'`eq` del giocatore (`loadout.rival`), senza fidarsi del telefono.
 Scenario `tools/simula/scenari/ricetta_server.txt`.
 
+Risultato (18 nov): sei partite di allenamento di Sergio, cinque dal telefono (Android,
+LuaJIT 2.1) e una dal browser (Lua 5.1), tutte uguali sul server, fisica e bot. Per i
+passi dopo il server ha anche le regole del profilo: portafoglio (`client/sim/wallet.lua`),
+traguardi (`client/sim/milestones.lua`) e profilo (`client/sim/profile.lua`: esperienza,
+livelli, missioni, statistiche, `upgrade` per i salvataggi vecchi) stanno nella parte
+condivisa, e `TestProfileRules` (`server/profile_test.go`) controlla che sul server
+facciano gli stessi conti del telefono. Il telefono tiene in `client/menu/profile.lua`
+solo salvataggio, impostazioni e profili di prova.
+
 ## Sul VPS (17 nov)
 
 Il server pubblico gira su un VPS Hetzner Cloud (Ubuntu 24.04, Germania,

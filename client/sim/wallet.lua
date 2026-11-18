@@ -2,8 +2,9 @@
 -- Ossidiana" https://claude.ai/artifact/S8PhASdh61MoRdK2QFLXXM, all choices A).
 -- Scaglie (soft) are earned playing and buy the pieces' levels; Ossidiana
 -- (hard) is rare and will buy only looks and tournament entries, never levels
--- or Scaglie. Pure Lua, on the profile of the phone (menu/profile.lua) until
--- the progression goes on the server; tested in tests/wallet_test.lua.
+-- or Scaglie. Pure Lua, in the shared rules (sim/) so that the server can run
+-- the same sums as the phone (guest profiles, plan of 17 Nov); the profile
+-- is sim/profile.lua; tested in tests/wallet_test.lua.
 --
 -- The profile's fields (added by M.init, so old saves keep working):
 --   scaglie, ossidiana: the balance
@@ -17,7 +18,7 @@
 --   bot_giorno, bot_partite: the day and the paid matches against bots
 
 local equip = require "sim.gear"
-local milestones = require "menu.milestones"
+local milestones = require "sim.milestones"
 
 local M = {}
 

@@ -87,6 +87,13 @@ cat > /etc/caddy/Caddyfile <<CADDY
 # tools/vps/installa.sh: tutto al server di MegaBlast, WebSocket compresa
 $INDIRIZZO {
 	encode gzip
+	# ogni richiesta in /var/log/caddy/megablast.log (JSON), al più 5 file da 10 MB
+	log {
+		output file /var/log/caddy/megablast.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
 	# il server: WebSocket, controlli, calendario degli eventi, partite mandate (/ricetta)
 	# (un percorso nuovo del server va aggiunto qui)
 	@server path /ws /health /stats /eventi /ricetta

@@ -139,7 +139,7 @@ check(g3:fingerprint() == g2:fingerprint(), "replay: replaying the keys reaches 
 
 -- The end-game test profile (Sergio, 14 Nov): everything at the top
 do
-	local wallet = require "menu.wallet"
+	local wallet = require "sim.wallet"
 	local p = profile.endgame(profile.new())
 	local all_max = true
 	for _, f in ipairs(equip.SETS) do
