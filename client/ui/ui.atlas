@@ -8,6 +8,9 @@ images {
   image: "/assets/ui/alone.png"
 }
 images {
+  image: "/assets/ui/raggi.png"
+}
+images {
   image: "/assets/ui/stella.png"
 }
 images {

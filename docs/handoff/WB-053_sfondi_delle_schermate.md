@@ -1,6 +1,6 @@
 # WB-053 · Uno sfondo per ogni schermata dei menu
 
-- **Stato:** CONSEGNATA E INTEGRATA (era APPROVATA) (Sergio, 15 nov: «dobbiamo trovare degli sfondi adatti ad ogni schermata, facciamoli fare a codex»; 10:17: «ok le suggerite», le proposte su https://claude.ai/artifact/3XLwcgQ67H9jBacc16g2JD)
+- **Stato:** SUPERATA da WB-073 (18 nov: le sagome; i dipinti sono stati tolti dal gioco e da `art/`) (era CONSEGNATA E INTEGRATA) (Sergio, 15 nov: «dobbiamo trovare degli sfondi adatti ad ogni schermata, facciamoli fare a codex»; 10:17: «ok le suggerite», le proposte su https://claude.ai/artifact/3XLwcgQ67H9jBacc16g2JD)
 - **Data:** 2026-11-15
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-053`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-053` senza chiedere conferma (il repository è privato).
