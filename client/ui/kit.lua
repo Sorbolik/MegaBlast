@@ -718,22 +718,48 @@ end
 
 -- TABS: small plates in a row; the active one is light.
 -- tabs: { { label, ui_action }, ... }
--- tag: the tabs of the menus of 14 Nov (Figma, RIORGANIZZAZIONE MENU): the
--- little tabs (linguetta) 50 tall next to the title, instead of the plates
+-- tag: the tabs next to the title (ZAINO, ARMERIA, PROFILO, EVENTI): no plate
+-- at all (Sergio, 18 Nov: the light plates looked like buttons and like
+-- labels at once), only the words: the active one sand, a piece of the ember
+-- thread under it, the others dim. Changing tab, the ember slides from the old
+-- one to the new one
+local tab_line = {}
 function M.tabs(g, list_of, x, y, tabs, active, accent, tag)
 	local h, cx = tag and 50 or 58, x
+	local key = tag and tabs[1] and tabs[1][2]
 	for i, tab in ipairs(tabs) do
-		local w = tag and (#tab[1] * 13 + 64) or (#tab[1] * 16 + 64)
 		local on = i == active
-		local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
-		local name = tag and (on and "linguetta_chiara" or "linguetta") or (on and "piastrina_chiara" or "piastrina")
-		three(n, name, w, h)
-		local box = room(name, cx + w / 2, y + h / 2, w, h)
-		local size = tag and 21 or 24
-		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + size * 0.37, size,
-			on and C.INK or M.with_alpha(C.SAND, 0.85), "middle", 0.5)
-		list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
-		cx = cx + w + 8 + (g.air and M.air(0.1) or 0)
+		if tag then
+			-- each word in the room its plate had (the taps stay where they were)
+			local slot = #tab[1] * 13 + 64
+			local mid = cx + slot / 2
+			local n = M.text(g, tab[1], mid, y + 34, 24, on and C.SAND or with_alpha(C.SAND, 0.5), "middle", 1)
+			local w = M.width(n)
+			if on then
+				local line = M.strip(g, "barra_brace", mid - w / 2 - 4, y + 42, w + 8, 10)
+				local last = tab_line[key]
+				if last and last ~= mid then
+					-- from where it was, across to the new one
+					local to = gui.get_position(line.node)
+					gui.set_position(line.node, to + vec(last - mid, 0))
+					gui.animate(line.node, "position", to, gui.EASING_OUTCUBIC, 0.22)
+				end
+				tab_line[key] = mid
+			end
+			M.zone(g, list_of, cx, y, slot, h, tab[2])
+			cx = cx + slot + 8 + (g.air and M.air(0.1) or 0)
+		else
+			local w = #tab[1] * 16 + 64
+			local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
+			local name = on and "piastrina_chiara" or "piastrina"
+			three(n, name, w, h)
+			local box = room(name, cx + w / 2, y + h / 2, w, h)
+			local size = 24
+			M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + size * 0.37, size,
+				on and C.INK or M.with_alpha(C.SAND, 0.85), "middle", 0.5)
+			list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
+			cx = cx + w + 8 + (g.air and M.air(0.1) or 0)
+		end
 	end
 	return cx
 end

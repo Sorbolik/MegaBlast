@@ -309,3 +309,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 18 nov | Online i pezzi si vedono addosso a ogni giocatore e contano: il server fa le statistiche del robot da Sigilli, pezzi e livello che il telefono dice di avere (si fida finché non ci sono i profili ospite). (Sergio) | architettura.md, questa PR |
 | 18 nov | Ricette delle partite lette come dati puri (mai caricate come codice), e ogni richiesta su /ricetta scritta nel log. | architettura.md, questa PR |
 | 18 nov | Il codice della versione (lo stesso della didascalia di Telegram) si vede nelle IMPOSTAZIONI; PROVA sugli APK di un ramo, LOCALE sulle build dall'editor. (Sergio) | interfaccia.md, questa PR |
+| 18 nov | Una sola scheda del pezzo (tacche dello scatto, cosa dà la firma, prezzo accanto a +1 LIVELLO) anche nello zaino, che ora potenzia senza uscire; schede in alto senza targhetta; WB-071 per pulsante secondario e monete. (Sergio) | interfaccia.md, questa PR |

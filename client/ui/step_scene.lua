@@ -76,6 +76,13 @@ function M.new(slot_name, set_name, level, on_blow, color)
 	for i = 1, equip.LIVELLO_MAX do
 		local big = i % 10 == 0
 		sc.notches[i] = kit.para(g, 70 + (i - 1) * 10, big and 222 or 226, 7, big and 26 or 18, 3, i <= level and before or KC.LINE)
+		-- the notches done fill up one by one while the devil rises, the last one
+		-- (the step) waits for the third blow
+		if i <= level then
+			local n = sc.notches[i].node
+			gui.set_scale(n, vec(1, 0.01))
+			gui.animate(n, "scale", vec(1, i == level and 1.6 or 1), gui.EASING_OUTBACK, 0.16, M.DARK + (i - 1) * 0.3 / level)
+		end
 	end
 	-- what is new, on the right: it comes in after the third blow
 	sc.label = kit.text(g, T.step_new, 890, 236, 16, KC.HOT_TOP, "start", 1.5)
@@ -130,6 +137,10 @@ local function blow(sc)
 		gui.set_color(sc.flash, vmath.vector4(1, 1, 1, 0.85))
 		gui.animate(sc.flash, "color.w", 0, gui.EASING_OUTQUAD, 0.08)
 		for i = 1, sc.level do kit.tint(sc.notches[i].parts, ui.C.GRADI[sc.tier]) end
+		local last = sc.notches[sc.level].node
+		gui.cancel_animations(last, "scale")
+		gui.set_scale(last, vec(1.6, 1.6))
+		gui.animate(last, "scale", vec(1, 1), gui.EASING_OUTBACK, 0.3)
 		local k = sc.k
 		gui.cancel_animations(sc.piece, "scale")
 		gui.set_scale(sc.piece, vmath.vector3(k * 1.12, k * 1.12, 1))

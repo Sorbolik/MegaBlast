@@ -105,7 +105,7 @@ function M.draw(s, g, sel)
 	kit.text(g, gear_ui.name(set, slot), x + 200, 156, 32, KC.SAND)
 	kit.text(g, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), x + 202, 187, 20, ui.C.GRADI[tier], "start", 1)
 	local nxt = wallet.next(p, set, slot)
-	kit.text(g, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), x + 202, 222, 23, KC.SAND)
+	s.bench.title = kit.text(g, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), x + 202, 222, 23, KC.SAND)
 	-- the level: the thirty notches, as in the step's scene
 	s.bench.notches = M.notches(g, x + 204, 236, 346, level)
 	s.bench.level = level
@@ -135,26 +135,28 @@ function M.draw(s, g, sel)
 		if e.row == "sign" then
 			local sg = equip.SIGNS[e.stat]
 			local on = lit > 0
-			local title = kit.text(g, kit.upper(on and T.sign:format(sg.name) or T.sign_off:format(sg.name)), rx, 326, 18,
-				on and KC.HOT_TOP or KC.SAND, "start", 0.5)
-			fit(title, rw - 66)
+			-- FIRMA (or FIRMA SPENTA) with its three gems, then its name, then what it gives
+			local label = kit.text(g, kit.upper(on and T.sign or T.sign_off), rx, 322, 16, on and KC.HOT_TOP or KC.MUTE, "start", 1)
 			local gems = {}
 			for k = 1, 3 do
-				local gem = kit.piece(g, "gemma", x + w - 28 - (3 - k) * 21 - 9, 319, 20)
+				local gem = kit.piece(g, "gemma", rx + kit.width(label) + 18 + (k - 1) * 21, 316, 20)
 				if k > lit then gui.set_color(gem, vmath.vector4(0.35, 0.35, 0.4, 0.6)) end
 				gems[k] = gem
 			end
-			s.bench.gems, s.bench.sign = gems, title
+			local title = fit(kit.text(g, kit.upper(sg.name), rx, 346, 20, on and KC.HOT_TOP or KC.SAND, "start", 0.5), rw)
+			s.bench.gems, s.bench.sign, s.bench.lit, s.bench.desc = gems, title, lit, {}
 			local value = sign_value(e.stat, math.max(1, lit))
 			local lines = kit.wrap(g, kit.upper(sg.desc:format(value)), 16, rw)
 			local ink = on and KC.SAND or KC.MUTE
 			for li = 1, math.min(4, #lines) do
-				fit(kit.text(g, lines[li], rx, 350 + (li - 1) * 19, 16, ink, "start"), rw)
+				s.bench.desc[li] = fit(kit.text(g, lines[li], rx, 369 + (li - 1) * 19, 16, ink, "start"), rw)
 			end
 		end
 	end
+	-- the Proof, beside the level
 	if nxt and nxt.proof > 0 then
-		fit(kit.text(g, kit.upper(TP.proof:format(nxt.proof_done, nxt.proof)), rx, 430, 16, KC.STEEL, "start", 0.5), rw)
+		fit(kit.text(g, kit.upper(TP.proof:format(nxt.proof_done, nxt.proof)), x + w - 28, 222, 16,
+			nxt.proof_done >= nxt.proof and KC.MINT or KC.STEEL, "end", 0.5), 200)
 	end
 
 	-- the other pieces of that slot you have
@@ -186,16 +188,19 @@ function M.footer(s, low2, right, sel)
 	kit.text(sb.g, kit.upper(note), 504, 690, 17, kit.with_alpha(KC.INK, 0.75), "start", 0.5)
 	kit.button(s.buttons, sb, "firma", { spento = not can })
 
-	-- the price and +1 LIVELLO
+	-- the price and +1 LIVELLO: the price stuck to the button, on its left, with
+	-- what it buys under it (Sergio, 18 Nov: alone in the middle it said nothing);
+	-- why it can't be done, in place of that line
 	local nxt = wallet.next(p, set, slot)
 	if nxt then
 		local ok = nxt.proof_done >= nxt.proof and p.scaglie >= nxt.cost
-		kit.piece(low2, "scaglia", 717, 657, 34)
-		kit.text(low2, coins.format(nxt.cost), 740, 666, 28, nxt.cost < (nxt.full_cost or nxt.cost) and KC.MINT or KC.SAND)
-		kit.text(low2, TP.price_unit, 741, 690, 16, KC.MUTE, "start", 1)
+		local px = 910
+		local num = kit.text(right, coins.format(nxt.cost), px, 668, 28, nxt.cost < (nxt.full_cost or nxt.cost) and KC.MINT or KC.SAND, "end")
+		kit.piece(right, "scaglia", px - kit.width(num) - 22, 658, 34)
 		local why = nxt.proof_done < nxt.proof and TP.proof_first or p.scaglie < nxt.cost
 			and TP.missing:format(coins.format(nxt.cost - p.scaglie)) or nil
-		s.action = kit.action(right, TP.upgrade, 948, 628, 308, 80, { size = 44, off = not ok, sub = why and kit.upper(why) or nil })
+		kit.text(right, kit.upper(why or TP.price_for:format(nxt.level)), px, 692, 16, why and KC.RED or KC.MUTE, "end", 0.5)
+		s.action = kit.action(right, TP.upgrade, 948, 628, 308, 80, { size = 44, off = not ok })
 		kit.button(s.buttons, s.action, "potenzia", { main = true, spento = not ok })
 	else
 		s.action = kit.action(right, TP.upgrade, 948, 628, 308, 80, { size = 44, off = true, sub = kit.upper(TP.at_max) })
@@ -239,6 +244,19 @@ local function flash(parts, color, delay)
 	end
 end
 
+-- n sparks out of a node, in color, d far (the blow of the hammer on the anvil)
+local function sparks(node, color, n, d)
+	local parent, at = gui.get_parent(node), gui.get_position(node)
+	for i = 1, n do
+		local a = (i - 0.5) * 2 * math.pi / n + 0.3
+		local sp = ui.sagoma("forma", at.x + math.cos(a) * 6, at.y + math.sin(a) * 6, 12, 4, color, parent)
+		gui.set_slice9(sp, vmath.vector4(2, 2, 2, 2))
+		gui.set_rotation(sp, vmath.vector3(0, 0, math.deg(a)))
+		gui.animate(sp, "position", at + vmath.vector3(math.cos(a) * d, math.sin(a) * d, 0), gui.EASING_OUTQUAD, 0.3)
+		gui.animate(sp, "color.w", 0, gui.EASING_INQUAD, 0.3, 0, function() gui.delete_node(sp) end)
+	end
+end
+
 -- after the screen is rebuilt: what just happened shows
 function M.after(s)
 	local b = s.bench
@@ -246,12 +264,24 @@ function M.after(s)
 		-- the notch just bought comes down like a blow, white, then the grade's color;
 		-- the piece jumps; the numbers that grew flicker
 		local n = b.notches[b.level]
+		local color = ui.C.GRADI[equip.tier(b.level)]
 		if n then
-			pop(n.node, 1.9, 0.32)
-			flash(n.parts, ui.C.GRADI[equip.tier(b.level)], 0.06)
+			-- it falls from above, white hot, and cools to the grade's color
+			local at = gui.get_position(n.node)
+			gui.set_position(n.node, at + vmath.vector3(0, 40, 0))
+			gui.animate(n.node, "position", at, gui.EASING_INQUAD, 0.12, 0, function()
+				sparks(n.node, color, 8, 34)
+				pop(n.node, 1.7, 0.3)
+			end)
+			flash(n.parts, color, 0.12)
 		end
-		if b.icon then pop(b.icon, 1.1, 0.28) end
-		for i, r in ipairs(b.rows) do pop(r, 1.15, 0.25, 0.04 * i) end
+		-- the piece takes the blow: squashed, then back
+		if b.icon then
+			gui.set_scale(b.icon, vmath.vector3(1.12, 0.88, 1))
+			gui.animate(b.icon, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTELASTIC, 0.5, 0.12)
+		end
+		if b.title then pop(b.title, 1.15, 0.3, 0.12) end
+		for i, r in ipairs(b.rows) do pop(r, 1.15, 0.25, 0.12 + 0.05 * i) end
 	elseif s.just == "open" and b and b.root then
 		-- the card comes in from the right, over where the pieces were
 		local at = gui.get_position(b.root)
@@ -260,8 +290,20 @@ function M.after(s)
 		gui.animate(b.root, "position", at, gui.EASING_OUTCUBIC, 0.22)
 		gui.animate(b.root, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.26)
 	elseif s.just == "sign" and b and b.gems then
-		for _, gem in ipairs(b.gems) do pop(gem, 1.8, 0.35) end
-		if b.sign then pop(b.sign, 1.2, 0.3) end
+		-- the gem just lit bursts, the others answer; the signature's words light up
+		for k, gem in ipairs(b.gems) do
+			if k == b.lit then
+				sparks(gem, KC.ICE, 10, 40)
+				pop(gem, 2.4, 0.45)
+			else
+				pop(gem, 1.3, 0.3, 0.1)
+			end
+		end
+		if b.sign then pop(b.sign, 1.25, 0.35) end
+		for i, l in ipairs(b.desc or {}) do
+			gui.set_color(l, vmath.vector4(1, 1, 1, 1))
+			gui.animate(l, "color", KC.SAND, gui.EASING_OUTQUAD, 0.5, 0.05 * i)
+		end
 	end
 	s.just = nil
 	if s.step then

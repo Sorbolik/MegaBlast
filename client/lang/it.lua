@@ -384,10 +384,10 @@ return {
 		grade = "GRADO %s · %s",
 		level_to = "LIVELLO %d › %d",
 		level_top = "LIVELLO %d · AL MASSIMO",
-		-- the signature and its name (how far it is lit: the gems beside it); it is
-		-- lit with Ossidiana, a grade for each step done
-		sign = "firma · %s",
-		sign_off = "firma spenta · %s",
+		-- the signature (how far it is lit: the gems beside it; under it its name and
+		-- what it gives); it is lit with Ossidiana, a grade for each step done
+		sign = "firma",
+		sign_off = "firma spenta",
 		light_sign = "ACCENDI LA FIRMA",
 		sign_cost = "%d ossidiana",
 		sign_needs = "dallo scatto %d",
@@ -423,7 +423,8 @@ return {
 		in_wardrobe = "ce l'hai già",
 		buy = "COMPRA",
 		price_only = "%s SCAGLIE",
-		price_unit = "SCAGLIE",
+		-- the price of +1 LIVELLO, beside it: what it buys
+		price_for = "per il livello %d",
 		step_title = "SCATTO!",
 		step_new = "NUOVO",
 		-- the grade in roman numbers, its name

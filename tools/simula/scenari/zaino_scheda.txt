@@ -23,3 +23,28 @@ foto 05_livello_fatto
 tocca_bordo 72 60 basso sinistra    # la freccia: di nuovo i pezzi
 aspetta 0.6
 foto 06_di_nuovo_pezzi
+tocca_bordo 70 240 alto sinistra    # di nuovo l'elmo
+aspetta 0.4
+tocca_bordo 480 50 basso destra     # POTENZIA
+aspetta 0.6
+tocca_centro 560 50                # ACCENDI LA FIRMA (il secondo grado, 320 Ossidiana)
+aspetta 0.12
+foto 07_firma_colpo
+aspetta 0.8
+foto 08_firma_accesa
+tocca_bordo 70 340 alto sinistra    # la CORAZZA (Fornace, livello 19): la sua scheda
+aspetta 0.6
+tocca_bordo 208 48 basso destra     # +1 LIVELLO: lo scatto al 20
+aspetta 0.5
+foto 09_scatto_tacche
+aspetta 1.0
+foto 10_scatto
+aspetta 3
+foto 11_dopo_scatto
+tocca_bordo 72 60 basso sinistra    # la freccia: i pezzi
+aspetta 0.6
+tocca_bordo 580 53 alto sinistra    # SIGILLI: la scheda in alto senza targhetta
+aspetta 0.1
+foto 12_schede_scorre
+aspetta 0.6
+foto 13_sigilli

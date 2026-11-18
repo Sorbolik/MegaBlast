@@ -155,10 +155,17 @@ local function inventory(s)
 				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
 			end
 		else
-			bench.notches(s.low, 222, 659, 186, level, { h = 16, labels = false })
-			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 422, 674, 17,
+			bench.notches(s.low, 222, 656, 186, level, { h = 16, labels = false })
+			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 422, 671, 17,
 				ui.C.GRADI[tier], "start", 0.5)
-			kit.foot_text(s.low, effects, 220, 698, 17, KC.MUTE, room, 0.5)
+			-- the effects on one line, or on two when they don't fit
+			local lines = effect_lines(s.low, effects, room)
+			local two = #lines > 1
+			for i = 1, math.min(2, #lines) do
+				local n = kit.text(s.low, lines[i], 220, two and (674 + i * 18) or 697, kit.MIN_TEXT, KC.MUTE, "start", 0.5)
+				local wide = kit.width(n)
+				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
+			end
 		end
 		-- POTENZIA: the plate of the secondary actions (as ACCENDI LA FIRMA in the armory)
 		local nxt = wallet.next(p, set, slot)
@@ -528,6 +535,10 @@ function M.on_input(s, action_id, action)
 	if ui_action == "indietro" and s.card and s.tab ~= "sigilli" then
 		s.card, s.sheet = nil, nil
 		build(s)
+		-- the pieces come back from the left, where the card goes out
+		local at = gui.get_position(s.mid.node)
+		gui.set_position(s.mid.node, at - vmath.vector3(70, 0, 0))
+		gui.animate(s.mid.node, "position", at, gui.EASING_OUTCUBIC, 0.22)
 		return nil
 	end
 	if ui_action == "indietro" then return ui_action end
