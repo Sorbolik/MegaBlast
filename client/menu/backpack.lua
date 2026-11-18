@@ -266,7 +266,7 @@ local function inventory(s)
 			local lines, made = gear_ui.effect_row(s.low, 220, 688, set, slot, level, wallet.sign(p, set, slot), room, 22)
 			if lines == 1 then
 				-- (Sergio, 19 Nov: the bigger numbers wanted room under the beads)
-				for _, n in ipairs(made) do gui.set_position(n, gui.get_position(n) - vmath.vector3(0, 1, 0)) end
+				for _, n in ipairs(made) do gui.set_position(n, gui.get_position(n) - vmath.vector3(0, 12, 0)) end
 			end
 		end
 		-- POTENZIA: the plate of the secondary actions (as ACCENDI LA FIRMA in the armory)

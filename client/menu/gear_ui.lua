@@ -88,8 +88,9 @@ function M.effect_row(g, x, y, set, slot, level, lit, room, line_h)
 	for _, e in ipairs(equip.piece(set, slot, level, lit)) do
 		local col = M.ROW_COLOR[e.row] or kit.C.SAND
 		if e.row == "sign" then
-			if (lit or 0) == 0 then col = kit.with_alpha(col, 0.55) end
-			items[#items + 1] = { nil, kit.upper(equip.SIGNS[e.stat].name), col }
+			local off = (lit or 0) == 0
+			if off then col = kit.with_alpha(col, 0.55) end
+			items[#items + 1] = { nil, kit.upper(equip.SIGNS[e.stat].name), col, off_sign = off }
 		else
 			local v, name = M.effect_parts(e)
 			items[#items + 1] = { v, name, col }
@@ -101,7 +102,13 @@ function M.effect_row(g, x, y, set, slot, level, lit, room, line_h)
 		local name = kit.text(g, it[2], 0, 0, kit.MIN_TEXT, it[3], "start", 0.5)
 		local nw = num and kit.width(num) + 5 or 0
 		local w = nw + kit.width(name)
-		if cx > x and cx + w > x + room and line < 2 then cx, line = x, line + 1 end
+		local over = cx > x and cx + w > x + room
+		if over and it.off_sign then
+			-- the signature still off never takes a line of its own: it waits until there is room
+			gui.delete_node(name)
+			break
+		end
+		if over and line < 2 then cx, line = x, line + 1 end
 		local by = y + (line - 1) * (line_h or 22)
 		for _, n in ipairs({ num, name }) do
 			if n then
