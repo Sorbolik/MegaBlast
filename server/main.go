@@ -32,6 +32,8 @@ func main() {
 	flag.DurationVar(&cfg.BotAfter, "bot-dopo", cfg.BotAfter, "dopo quanto i bot riempiono una coda normale (0 = mai)")
 	flag.StringVar(&LuaJIT, "luajit", LuaJIT, "l'eseguibile di LuaJIT che fa girare la simulazione (di solito nel PATH)")
 	flag.StringVar(&RecipeDir, "ricette", RecipeDir, "cartella dove tenere le ricette delle partite del telefono che non tornano uguali (vuoto = non tenerle)")
+	flag.StringVar(&MatchDir, "partite", MatchDir, "cartella dove tenere tutte le ricette che arrivano dai telefoni, per l'allenamento dei bot (vuoto = non tenerle)")
+	flag.StringVar(&ProfileDB, "profili", ProfileDB, "file del database dei profili ospite (SQLite; vuoto = profili spenti)")
 	profile := flag.String("pprof", "", "indirizzo dei profili di Go, solo in locale (es. 127.0.0.1:6060; vuoto = spenti)")
 	flag.Parse()
 
@@ -53,6 +55,15 @@ func main() {
 		log.Fatalf("manca LuaJIT (%s): installalo o passa -luajit PERCORSO", LuaJIT)
 	}
 	srv := NewServer(cfg)
+	if ProfileDB != "" {
+		acc, err := OpenAccounts(ProfileDB)
+		if err != nil {
+			log.Fatalf("profili: database %s non aperto: %v", ProfileDB, err)
+		}
+		defer acc.Close()
+		srv.accounts = acc
+		log.Printf("profili ospite in %s", ProfileDB)
+	}
 	hs := &http.Server{Addr: *addr, Handler: srv.Handler()}
 	go func() {
 		log.Printf("MegaBlast server %s in ascolto su %s (WebSocket su /ws, %d worker)", cfg.Node, *addr, cfg.Workers)

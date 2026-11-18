@@ -65,13 +65,13 @@ function M.wallet(scaglie, ossidiana, parent, x, y)
 	w.border = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(w.border, false)
 	gui.set_parent(w.border, w.root)
-	w.room = {}
+	w.room, w.icons = {}, {}
 	-- (Sergio, 17 Nov: bigger; the three plates end at 1260, 12 apart)
 	for _, o in ipairs({ { "scaglia", 876, 146 }, { "ossidiana", 1034, 114 } }) do
 		local kind, x, wide = o[1], o[2], o[3]
 		local p = kit.plate(g, x, PLATE_Y, wide, PLATE_H, kit.C.ROSE, { sk = 0 })
 		w.at[kind] = vec(x + 16 - g.ox, 0)
-		M.icon(kind, x + 16 - g.ox, 0, 40, w.root)
+		w.icons[kind] = M.icon(kind, x + 16 - g.ox, 0, 40, w.root)
 		local box = { x0 = x + 42, x1 = p.box.x1, y0 = p.box.y0, y1 = p.box.y1 }
 		w.room[kind] = box.x1 - box.x0
 		w.text[kind] = kit.text({ node = p.g.node, ox = p.g.ox, oy = p.g.oy, box = box }, "", x + 42, TEXT_Y, TEXT, kit.C.SAND)

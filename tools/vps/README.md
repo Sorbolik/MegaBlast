@@ -8,7 +8,10 @@ nome `megablast-1`). Due script:
   solo, aspetta la fine delle partite quando si spegne), Caddy davanti
   (WebSocket e TLS automatico col dominio), firewall con solo 22, 80 e 443, SSH
   solo con chiave, aggiornamenti di sicurezza automatici, copia dei dati ogni
-  notte in `/var/backups/megablast` (14 giorni).
+  notte in `/var/backups/megablast` (14 giorni), coi database SQLite (i profili
+  ospite, `megablast.db`) anche su Cloudflare R2 quando ci sono i segreti
+  `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT` e la variabile
+  `R2_BUCKET` (lì 30 giorni; `aggiorna.sh` scrive le chiavi in `/etc/megablast/r2.env`).
 - `web.sh root@IP [CHIAVE]` porta il gioco web (la build di `tools/web/build.sh`) in `/opt/megablast/web`.
 - `aggiorna.sh root@IP [CHIAVE]` compila il server per il processore del VPS
   (x86 o ARM), lo copia in `/opt/megablast`, riavvia il servizio e controlla
@@ -34,8 +37,11 @@ workflow **Gioco web sul VPS** a ogni merge su main che tocca il client.
 
 **Log da lontano**: il workflow **Log del server** (a mano, `log.yml`) stampa le
 righe di `journalctl -u megablast` che contengono un testo (di base `ricetta da`)
-da un momento (`-1h`, `today`, `2026-11-17 22:00`) a un altro: così lo leggono
-anche i thread di Claude, che non raggiungono il VPS.
+da un momento (`-1h`, `today`, `2026-11-18 06:00`) a un altro: così lo leggono
+anche i thread di Claude, che non raggiungono il VPS. Con "prova" fa anche un
+POST di prova a `/ricetta` (da fuori e dal VPS) e mostra il Caddyfile, gli errori
+di Caddy e le richieste a `/ricetta` del log di accesso di Caddy
+(`/var/log/caddy/megablast.log`, al più 5 file da 10 MB).
 
 Sul VPS: impostazioni in `/etc/megablast/server.env` (nodo, eventi), log con
 `journalctl -u megablast -f`, stato con `curl localhost:8080/stats`.

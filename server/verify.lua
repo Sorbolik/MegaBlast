@@ -23,6 +23,20 @@ if not r then
 end
 local last = r.impronte[#r.impronte]
 
+-- training against the bots: the bots wear what the server builds from the
+-- player's eq and the seed (sim/loadout.lua, rival), not what the phone says
+local players = type(r.opzioni) == "table" and type(r.opzioni.players) == "table" and r.opzioni.players or {}
+local mine = type(players[1]) == "table" and players[1].eq
+if mine then
+	local loadout = require "sim.loadout"
+	for i, p in ipairs(players) do
+		if i > 1 and type(p) == "table" and p.bot then
+			local ok, eq = pcall(loadout.rival, mine, r.seme, i)
+			p.eq = ok and eq or nil
+		end
+	end
+end
+
 local function run(rethink)
 	local t0 = os.clock()
 	local ok, res, tick = pcall(replay.verify, r, nil, rethink)

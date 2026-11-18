@@ -16,7 +16,7 @@
 # Servono numpy, scipy e Pillow.
 import os
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageChops, ImageDraw
 from scipy import ndimage as ndi
 
 QUI = os.path.dirname(os.path.abspath(__file__))
@@ -158,8 +158,74 @@ def fai_pezzi():
     tre("piastrina_chiara", chiaro(su[0][2]), 120, 0.3)
     for nome, t in zip(["indietro", "brace", "fiamma"], su[1:]):
         intero(nome, t[2], 120)
-    for nome, t in zip(["brace_spenta", "lucchetto", "scaglia", "gemma"], giu):
+    # (la scaglia e la gemma di questo foglio sono state rifatte con WB-072: fai_monete)
+    for nome, t in zip(["brace_spenta", "lucchetto"], giu):
         intero(nome, t[2], 120)
+
+
+def fai_monete():
+    """Le monete e il buono del Fabbro di WB-072 (Sergio, 18 nov): l'Ossidiana del primo giro
+    (monete_2: la gemma sfaccettata nera e viola col filo magenta), la Scaglia e il buono del
+    secondo giro (scavate_2: fiammella e martello scavati dentro), tutti alti uguali."""
+    p = os.path.join(ART, "WB-072")
+    primo = sorted(pezzi(senza_verde(os.path.join(p, "monete_2.png"))), key=lambda t: t[1])
+    secondo = sorted(pezzi(senza_verde(os.path.join(p, "scavate_2.png"))), key=lambda t: t[1])
+    intero("gemma", primo[0][2], 120)
+    intero("scaglia", secondo[0][2], 120)
+    intero("buono", secondo[1][2], 120)
+
+
+def fai_perle():
+    """Le perle del livello e lo slot della firma di WB-074 (Sergio, 18 nov: il modo ufficiale
+    di mostrare gli upgrade). Dal foglio perle_2: sopra le tre perline (vuota, piena grigia che
+    il gioco colora del grado, prossima in brace), sotto i tre slot (vuoto, acceso, rovente)."""
+    tutti = pezzi(senza_verde(os.path.join(ART, "WB-074", "perle_2.png")))
+    ymid = np.mean([t[0] for t in tutti])
+    su = sorted([t for t in tutti if t[0] < ymid], key=lambda t: t[1])
+    giu = sorted([t for t in tutti if t[0] >= ymid], key=lambda t: t[1])
+    for nome, t in zip(["perla_vuota", "perla_piena", "perla_prossima"], su):
+        intero(nome, t[2], 64)
+    for nome, t in zip(["slot_vuoto", "slot_acceso", "slot_rovente"], giu):
+        intero(nome, t[2], 128)
+
+
+def fai_secondario():
+    """Il pulsante secondario (Sergio, 18 nov, «Ferro liscio» della pagina delle proposte:
+    quello di Codex di WB-071 sembrava un primario): ferro scuro piatto, contorno
+    d'inchiostro dritto, una luce piatta in alto e lo spessore sotto; nel capo sinistro
+    niente incavo: la moneta o l'icona sporge dal capo sinistro, grande e
+    un po' storta (Sergio, 18 nov, «moneta che sporge»). Disegnato qui in vettori (quattro volte piu' grande, poi
+    ridotto), in tre parti come gli altri pezzi lunghi. Premuto: la faccia scende e lo
+    spessore sparisce; spento: ferro freddo grigio-blu."""
+    S = 4                       # il disegno a quattro volte, ridotto: bordi lisci
+    W, FACE, R, INK = 520, 108, 30, 7
+    stati = {
+        # nome: (altezza in tutto, ferro, luce)
+        "acceso": (120, (0x3A, 0x33, 0x40), (0x50, 0x48, 0x5A)),
+        "premuto": (114, (0x33, 0x2D, 0x39), (0x44, 0x3D, 0x4C)),
+        "spento": (120, (0x4A, 0x55, 0x60), (0x5C, 0x67, 0x72)),
+    }
+    nero = (0x0A, 0x08, 0x0B, 255)
+    for stato, (h, ferro, luce) in stati.items():
+        im = Image.new("RGBA", (W * S, h * S), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        top = 0                 # la faccia in alto, sotto lo spessore (12, premuto 6)
+        # lo spessore: l'inchiostro sotto la faccia
+        d.rounded_rectangle((0, top * S + 8 * S, W * S - 1, h * S - 1), R * S, fill=nero)
+        # la faccia: contorno, ferro, la luce in alto (solo dentro il ferro)
+        d.rounded_rectangle((0, top * S, W * S - 1, (top + FACE) * S - 1), R * S, fill=nero)
+        dentro = (INK * S, (top + INK) * S, (W - INK) * S - 1, (top + FACE - INK) * S - 1)
+        d.rounded_rectangle(dentro, (R - INK) * S, fill=ferro + (255,))
+        maschera = Image.new("L", im.size, 0)
+        ImageDraw.Draw(maschera).rounded_rectangle(dentro, (R - INK) * S, fill=255)
+        banda = Image.new("L", im.size, 0)
+        ImageDraw.Draw(banda).rectangle((0, 0, W * S, (top + INK + (FACE - 2 * INK) * 0.34) * S), fill=255)
+        im.paste(Image.new("RGBA", im.size, luce + (255,)), (0, 0), ImageChops.multiply(maschera, banda))
+        im = im.resize((W, h), Image.LANCZOS)
+        tre("secondario_" + stato, np.asarray(im), h, 0.26)
+    # le scritte dopo la moneta, lontano dai bordi
+    SPAZI["secondario_acceso"] = (118, 14, 26, 24)
+    # (le monete del foglio monete_* non sono piaciute a Sergio: si rifanno con WB-072)
 
 
 def griglia(percorso, per_riga, minimo=1500):
@@ -199,8 +265,7 @@ def fai_piccoli():
     tondi = griglia(os.path.join(p, "pezzo_tondi_1.png"), [2, 2])
     for nome, a in zip(["tondo_ferro", "tondo_oro"], tondi):
         intero(nome, a, 200)
-    tre("linguetta", tondi[3], 120, 0.3)
-    tre("linguetta_chiara", chiaro(tondi[3]), 120, 0.3)
+    # (la linguetta e la linguetta chiara non si usano piu': le linguette dei menu sono solo scritte)
 
 
 def chiaro(arr):
@@ -339,7 +404,6 @@ MENU_INTERI = [
     ("ic_maglio", "ic_maglio", 140, "WB-047"),
     ("ic_notte", "ic_notte", 108, "WB-047"),
     ("barrato", "barrato", 34, "WB-047"),
-    ("buono", "buono", 128, "WB-043"),
 ]
 # dove si scrive sulle porte e su GIOCA: la striscia piena fra lo scudo (o il sigillo) e la
 # punta, misurata sul disegno a quell'altezza (margini sinistra, alto, destra, basso). Le
@@ -641,6 +705,25 @@ def fai_record():
         MISURE["record_" + nome] = (LATO_RECORD, LATO_RECORD)
 
 
+# i bordi della pagina trascinata dalle porte della home (WB-049, variante 1; Sergio 18 nov:
+# al posto della linea arancione): per ogni porta la cima, il mezzo che si ripete e il fondo.
+# Il mezzo va da una riga all'altra che si somigliano di piu', cosi' ripetuto non ha giunte.
+# Larghi il doppio di come si vedono (circa 64)
+BORDI = {"campagna": (215, 580), "allenamento": (275, 567), "eventi": (282, 490), "armeria": (248, 596)}
+LARGO_BORDO = 128
+
+
+def fai_bordi():
+    for porta, (a, b) in BORDI.items():
+        im = Image.fromarray(ritaglio("WB-049", "banda_%s_1" % porta), "RGBA")
+        k = LARGO_BORDO / im.size[0]
+        im = im.resize((LARGO_BORDO, round(im.size[1] * k)), Image.LANCZOS)
+        a, b = round(a * k), round(b * k)
+        for parte, (y0, y1) in (("su", (0, a)), ("mezzo", (a, b)), ("giu", (b, im.size[1]))):
+            salva(im.crop((0, y0, LARGO_BORDO, y1)), "bordo_%s_%s" % (porta, parte))
+            MISURE["bordo_%s_%s" % (porta, parte)] = (LARGO_BORDO, y1 - y0)
+
+
 def fai_atlante():
     nomi = sorted(f for f in os.listdir(OUT) if f.endswith(".png"))
     with open(os.path.join(RADICE, "client", "ui", "fucina.atlas"), "w") as f:
@@ -663,6 +746,9 @@ def fai_misure():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     fai_pezzi()
+    fai_monete()
+    fai_perle()
+    fai_secondario()
     fai_piccoli()
     fai_menu()
     fai_schede()
@@ -672,6 +758,7 @@ if __name__ == "__main__":
     fai_fette()
     fai_sfondi()
     fai_filo()
+    fai_bordi()
     fai_misure()
     fai_atlante()
     print("OK")

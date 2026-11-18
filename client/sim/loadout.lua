@@ -9,6 +9,7 @@
 
 local skills = require "sim.skills"
 local equip = require "sim.gear"
+local rng = require "sim.rng"
 
 local M = {}
 
@@ -139,7 +140,7 @@ function M.net_clean(eq)
 	for _, s in ipairs(equip.SLOTS) do
 		local l, sg = type(eq.lv) == "table" and eq.lv[s.id], type(eq.sg) == "table" and eq.sg[s.id]
 		out.lv[s.id] = whole(l, 1, equip.LIVELLO_MAX) and l or 1
-		-- a signature is lit as far as the piece's step (menu/wallet.lua, sign)
+		-- a signature is lit as far as the piece's step (sim/wallet.lua, sign)
 		out.sg[s.id] = whole(sg, 0, #equip.SIGN_TIERS - 1) and math.min(sg, equip.tier(out.lv[s.id]) - 1) or 0
 	end
 	if not M.valid(net_loadout(out), skills.points(out.liv)) then return nil end
@@ -149,6 +150,90 @@ end
 -- eq: one that net_clean returned (here or on the server); base: game.base_stats()
 function M.net_stats(eq, base)
 	return M.stats(base, net_loadout(eq), eq.lv, eq.liv, eq.sg)
+end
+
+-- How much a robot's stats are worth over the base, in one number: life,
+-- Attack and Defense a point every 100, the others their share over the base
+-- (the "less is better" ones the other way). It weighs the training's bots
+function M.power(st, base)
+	local sum = 0
+	for k, kind in pairs(equip.STATS) do
+		local v, b = st[k] or base[k], base[k]
+		if kind.points then
+			sum = sum + (v - b) / 100
+		elseif b and b ~= 0 then
+			sum = sum + (kind.less and (1 - v / b) or (v / b - 1))
+		end
+	end
+	return sum
+end
+
+-- One bot built from the player's eq (mine, cleaned) with the generator r: on
+-- the player's slots, at the same levels and signatures, each family swapped
+-- for another (the same one for all its pieces: who has a family pair, the
+-- bot has one too); the same Sigilli points, a threshold at a time on random
+-- paths, with random powers
+local function build(mine, r)
+	local function shuffle(list)
+		for i = #list, 2, -1 do
+			local j = r:next_int() % i + 1
+			list[i], list[j] = list[j], list[i]
+		end
+		return list
+	end
+	local families, swap, n = {}, {}, 0
+	for i, f in ipairs(equip.SETS) do families[i] = f.id end
+	shuffle(families)
+	local out = { liv = mine.liv, variant = "a", gear = {}, lv = {}, sg = {} }
+	for _, s in ipairs(equip.SLOTS) do
+		local f = mine.gear and mine.gear[s.id]
+		if f then
+			if not swap[f] then n = n + 1; swap[f] = families[n] end
+			out.gear[s.id], out.lv[s.id], out.sg[s.id] = swap[f], mine.lv[s.id], mine.sg[s.id]
+		end
+	end
+	local left = math.min(skills.spent(mine.tree or {}), skills.points(mine.liv))
+	local tree = {}
+	while left > 0 do
+		local open = {}
+		for _, p in ipairs(skills.PATHS) do
+			if (tree[p.id] or 0) < skills.PATH_MAX then open[#open + 1] = p.id end
+		end
+		if #open == 0 then break end
+		local path = open[r:next_int() % #open + 1]
+		local k = math.min(left, skills.STEP, skills.PATH_MAX - (tree[path] or 0))
+		tree[path], left = (tree[path] or 0) + k, left - k
+	end
+	for _, p in ipairs(skills.PATHS) do
+		for k = 1, skills.reached(tree, p.id) do skills.choose(tree, p.id, k, r:next_int() % 2 + 1) end
+	end
+	out.tree = tree
+	return M.net_clean(out)
+end
+
+-- A bot as strong as the player in training (Sergio, 18 Nov: "equipaggiamenti
+-- comparabili"): RIVAL_TRIES bots built from what the player wears (eq, as
+-- net_clean takes it; same level, slots, piece levels, signatures and
+-- Sigilli points, other families and paths), and of those the one whose
+-- power (M.power) is closest to the player's. Pure and deterministic: seed
+-- is the match's, nth the bot's robot, so the server rebuilds the same one
+-- from the recipe (server/verify.lua). Returns an eq like net_clean's (nil if
+-- the player's doesn't hold)
+M.RIVAL_TRIES = 12
+
+function M.rival(eq, seed, nth)
+	local mine = M.net_clean(eq)
+	if not mine then return nil end
+	local base = require("sim.game").base_stats()
+	local target = M.power(M.net_stats(mine, base), base)
+	local r = rng.new((math.floor(seed or 1) % 1000003) * 64 + (nth or 1))
+	local best, gap
+	for _ = 1, M.RIVAL_TRIES do
+		local c = build(mine, r)
+		local d = c and math.abs(M.power(M.net_stats(c, base), base) - target)
+		if d and (not gap or d < gap) then best, gap = c, d end
+	end
+	return best
 end
 
 return M

@@ -18,6 +18,7 @@
 
 local game = require "sim.game"
 local bot = require "sim.bot"
+local loadout = require "sim.loadout"
 
 local M = {}
 
@@ -39,7 +40,15 @@ end
 
 -- The recipe's match and bots, at the start
 function M.match(r)
-	local g = game.new(r.seme, r.mappa, copy(r.opzioni))
+	local opts = copy(r.opzioni)
+	-- a player with eq (what they wear, sim/loadout.lua: the training's bots and
+	-- whoever plays against them) plays with the stats that come out of it, the
+	-- same here, on the server and in the replays
+	for _, p in ipairs(opts.players or {}) do
+		local clean = p.eq and loadout.net_clean(p.eq)
+		if clean then p.stats = loadout.net_stats(clean, game.base_stats()) end
+	end
+	local g = game.new(r.seme, r.mappa, opts)
 	-- durata: the match shortened by hand (in scenarios, prova_durata)
 	if r.durata then g.match_left = r.durata end
 	local bots = {}
@@ -301,9 +310,23 @@ local function parse(s)
 end
 
 function M.decode(s)
+	local r = M.read(s)
+	if r and type(r.input) == "table" and type(r.impronte) == "table" then return r end
+	return nil
+end
+
+-- Any data as the same text (the guest profile travels like this too,
+-- sim/profile.lua), and back: a table or nil. Same parser, never code.
+function M.write(v)
+	local out = {}
+	encode(v, out)
+	return table.concat(out)
+end
+
+function M.read(s)
 	if type(s) ~= "string" then return nil end
 	local ok, r = pcall(parse, s)
-	if ok and type(r) == "table" and type(r.input) == "table" and type(r.impronte) == "table" then return r end
+	if ok and type(r) == "table" then return r end
 	return nil
 end
 

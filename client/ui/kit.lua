@@ -648,6 +648,61 @@ function M.action(g, label, x, y, w, h, opt)
 	return p
 end
 
+-- The secondary action (WB-071, Sergio 18 Nov: never the light plates for a
+-- button): a slab of dark iron, ember on its bottom left and frost on its top
+-- right, with a round socket on the left for the action's icon (a piece of the
+-- fucina atlas), its label in sand and under it a short line (the cost, why
+-- not). Three drawings like the main one: lit, pressed, off (cold grey iron).
+-- (x, y) its top left, w x h. opt: icon, sub, off. Returns the plate for M.button
+function M.secondary(g, label, x, y, w, h, opt)
+	opt = opt or {}
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local p = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+	local k = h / P.secondario_acceso.h
+	local looks = {}
+	for _, state in ipairs({ "acceso", "premuto", "spento" }) do
+		local name = "secondario_" .. state
+		local s = empty(0, 0, 0, 0, n)
+		local sh = P[name].h * k
+		gui.set_position(s, vec(0, (sh - h) / 2))
+		three(s, name, w, sh)
+		gui.set_enabled(s, state == (opt.off and "spento" or "acceso"))
+		looks[state] = s
+	end
+	-- the face: what moves down when pressed (the icon and the words)
+	p.face_node = empty(0, 0, 0, 0, n)
+	local f = { node = p.face_node, ox = cx, oy = cy }
+	-- the coin or icon sticks out of the left end, big and a little crooked, with
+	-- its flat ink shadow on the iron (Sergio, 18 Nov: «moneta che sporge»)
+	if opt.icon then
+		local ix, iy, ih = x + h * 0.36, y + h * 0.44, h * 1.18
+		local sh = M.piece(f, opt.icon, ix + 3, iy + 4, ih)
+		gui.set_color(sh, C.INK)
+		local ic = M.piece(f, opt.icon, ix, iy, ih)
+		for _, n in ipairs({ sh, ic }) do gui.set_rotation(n, vmath.vector3(0, 0, 10)) end
+		if opt.off then gui.set_color(ic, vmath.vector4(0.45, 0.45, 0.5, 1)) end
+	end
+	local box = room("secondario_acceso", cx, cy, w, h)
+	local tx = box and box.x0 or x + h
+	local ink = opt.off and with_alpha(C.SAND, 0.45) or C.SAND
+	local room_w = (box and box.x1 or x + w - 12) - tx
+	local lt = M.text(f, label, tx, opt.sub and y + h * 0.46 or y + h * 0.6, 20, ink, "start", 0.5)
+	if M.width(lt) > room_w then gui.set_scale(lt, gui.get_scale(lt) * (room_w / M.width(lt))) end
+	if opt.sub then
+		local st = M.text(f, opt.sub, tx, y + h * 0.78, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or C.MUTE, "start", 0.5)
+		if M.width(st) > room_w then gui.set_scale(st, gui.get_scale(st) * (room_w / M.width(st))) end
+	end
+	if not opt.off then
+		p.on_press = function(down)
+			gui.set_enabled(looks.acceso, not down)
+			gui.set_enabled(looks.premuto, down)
+			gui.set_position(p.face_node, vec(0, down and -3 or 0))
+		end
+	end
+	return p
+end
+
 -- A plate goes down when pressed, and comes back
 function M.press(p, down)
 	local d = down and p.d * 0.75 or 0
@@ -718,22 +773,53 @@ end
 
 -- TABS: small plates in a row; the active one is light.
 -- tabs: { { label, ui_action }, ... }
--- tag: the tabs of the menus of 14 Nov (Figma, RIORGANIZZAZIONE MENU): the
--- little tabs (linguetta) 50 tall next to the title, instead of the plates
+-- tag: the tabs next to the title (ZAINO, ARMERIA, PROFILO, EVENTI): no plate
+-- at all (Sergio, 18 Nov: the light plates looked like buttons and like
+-- labels at once), only the words: the active one red-hot gold over a glow,
+-- the others cold grey-ice. Changing tab, the glow slides from the old one to
+-- the new one
+local tab_line = {}
+local TAB_HOT, TAB_COLD = vmath.vector4(1, 0.76, 0.23, 1), vmath.vector4(0.56, 0.64, 0.7, 1)
 function M.tabs(g, list_of, x, y, tabs, active, accent, tag)
 	local h, cx = tag and 50 or 58, x
+	local key = tag and tabs[1] and tabs[1][2]
 	for i, tab in ipairs(tabs) do
-		local w = tag and (#tab[1] * 13 + 64) or (#tab[1] * 16 + 64)
 		local on = i == active
-		local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
-		local name = tag and (on and "linguetta_chiara" or "linguetta") or (on and "piastrina_chiara" or "piastrina")
-		three(n, name, w, h)
-		local box = room(name, cx + w / 2, y + h / 2, w, h)
-		local size = tag and 21 or 24
-		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + size * 0.37, size,
-			on and C.INK or M.with_alpha(C.SAND, 0.85), "middle", 0.5)
-		list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
-		cx = cx + w + 8 + (g.air and M.air(0.1) or 0)
+		if tag then
+			-- each word in the room its plate had (the taps stay where they were); the
+			-- open one is red-hot metal, gold over a glow of ember, the others cold
+			-- grey-ice (Sergio, 18 Nov, proposal C · Scritta incandescente)
+			local slot = #tab[1] * 14 + 64
+			local mid = cx + slot / 2
+			if on then
+				local glow = shape("alone", mid - g.ox, g.oy - (y + 26), #tab[1] * 22 + 80, 70, with_alpha(C.HOT_BOTTOM, 0.55), g.node)
+				gui.set_blend_mode(glow, gui.BLEND_ADD)
+				local last = tab_line[key]
+				if last and last ~= mid then
+					-- from where it was, across to the new one
+					local to = gui.get_position(glow)
+					gui.set_position(glow, to + vec(last - mid, 0))
+					gui.animate(glow, "position", to, gui.EASING_OUTCUBIC, 0.22)
+				end
+				tab_line[key] = mid
+				M.text(g, tab[1], mid, y + 37, 30, TAB_HOT, "middle", 1)
+			else
+				M.text(g, tab[1], mid, y + 35, 22, TAB_COLD, "middle", 1)
+			end
+			M.zone(g, list_of, cx, y, slot, h, tab[2])
+			cx = cx + slot + 8 + (g.air and M.air(0.1) or 0)
+		else
+			local w = #tab[1] * 16 + 64
+			local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
+			local name = on and "piastrina_chiara" or "piastrina"
+			three(n, name, w, h)
+			local box = room(name, cx + w / 2, y + h / 2, w, h)
+			local size = 24
+			M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + size * 0.37, size,
+				on and C.INK or M.with_alpha(C.SAND, 0.85), "middle", 0.5)
+			list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
+			cx = cx + w + 8 + (g.air and M.air(0.1) or 0)
+		end
 	end
 	return cx
 end
@@ -926,7 +1012,8 @@ end
 -- screen), and at the bottom the thread, ember on the left and frost on the
 -- right, with a spark running along it now and then. opt: bg (the screen's
 -- painting of the place reached: true), seam (false: no thread), dim (0..1: how
--- much the world behind is covered; the screens over a battle just ended).
+-- much the world behind is covered; the screens over a battle just ended), over
+-- (a scene in front of a screen that stays: its own copy, M.scene).
 -- There is ONE backdrop for every menu: kit.scene returns the screen's hold
 -- on it; kit.scene_drop(s) when the screen goes away
 local S
@@ -1054,6 +1141,16 @@ local function scene_nodes()
 	return S
 end
 
+-- the two glints along a thread w wide, one from each side, without stopping
+local function run_glints(glints, w)
+	for i, q in ipairs(glints) do
+		local from = (i == 1 and -1 or 1) * (w / 2 + 130)
+		gui.cancel_animations(q, "position.x")
+		gui.set_position(q, vec(from, THREAD_Y))
+		gui.animate(q, "position.x", -from, gui.EASING_INOUTSINE, 4.2, (i - 1) * 2.1, nil, gui.PLAYBACK_LOOP_FORWARD)
+	end
+end
+
 -- The thread runs between the real edges of the screen: call it when the
 -- screen is shown (the proportions may have changed)
 function M.scene_fit()
@@ -1064,12 +1161,7 @@ function M.scene_fit()
 	S.fit_w = w
 	gui.set_size(S.seam, vec(w, 6))
 	gui.set_size(S.seam_ink, vec(w, 11))
-	for i, q in ipairs(S.glints) do
-		local from = (i == 1 and -1 or 1) * (w / 2 + 130)
-		gui.cancel_animations(q, "position.x")
-		gui.set_position(q, vec(from, THREAD_Y))
-		gui.animate(q, "position.x", -from, gui.EASING_INOUTSINE, 4.2, (i - 1) * 2.1, nil, gui.PLAYBACK_LOOP_FORWARD)
-	end
+	run_glints(S.glints, w)
 end
 
 -- the backdrop takes the screen's place
@@ -1095,9 +1187,22 @@ end
 
 -- The screen's backdrop, above everything made so far (what the screen
 -- creates next goes over it). fx, fy: where the screen's subject is
+-- opt.over: a scene in front of a screen that stays (the step of a piece, a
+-- mission's postcard) gets its own copy of the backdrop, above everything, and
+-- leaves the real one to the screen under it: taken and dropped, the screen
+-- under it would stay without its backdrop, and the doors of the home would
+-- drag it disabled (an animation doesn't run on a disabled node) and leave it
+-- off its place (18 Nov)
 function M.scene(fx, fy, opt)
 	scene_nodes()
 	local s = { fx = fx, fy = fy, opt = opt or {} }
+	if s.opt.over then
+		s.copy = M.copy_of(s.opt, true)
+		-- its painting (nil without one), for a scene that moves it (ui/step_scene.lua)
+		s.painting = s.copy.painting
+		for _, n in ipairs(s.copy) do gui.move_above(n, nil) end
+		return s
+	end
 	for _, n in ipairs(S.tops) do gui.move_above(n, nil) end
 	claim(s)
 	return s
@@ -1151,7 +1256,15 @@ end
 -- real one is dragged over it). Returns it, for M.scene_copy_drop
 function M.scene_copy(s)
 	if not S then return {} end
-	local opt = s.opt
+	local out = M.copy_of(s.opt)
+	for i = #out, 1, -1 do gui.move_below(out[i], nil) end
+	return out
+end
+
+-- The nodes of a copy of the backdrop for opt (M.scene's), in order from the
+-- lowest. live: it moves like the real one (the lights, the thread breathing
+-- and its glints), for a scene in front of a screen (opt.over)
+function M.copy_of(opt, live)
 	local out = { shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, with_alpha(C.SOOT, opt.dim or 1)) }
 	local name = not opt.dim and painting_of(opt.bg)
 	local id = name and load_painting(name)
@@ -1165,18 +1278,40 @@ function M.scene_copy(s)
 		gui.set_texture(bg, id)
 		gui.set_parent(bg, back)
 		out[#out + 1] = back
+		out.painting = bg
+	elseif live then
+		-- the two lights, each stuck to its corner (the painting has them already)
+		local warm = empty(0, 0)
+		gui.set_xanchor(warm, gui.ANCHOR_LEFT)
+		gui.set_yanchor(warm, gui.ANCHOR_BOTTOM)
+		gui.set_blend_mode(shape("alone", 60, 40, 1500, 1300, with_alpha(C.HOT_BOTTOM, 0.2), warm), gui.BLEND_ADD)
+		local cold = empty(1280, 720)
+		gui.set_xanchor(cold, gui.ANCHOR_RIGHT)
+		gui.set_yanchor(cold, gui.ANCHOR_TOP)
+		gui.set_blend_mode(shape("alone", -60, -40, 1500, 1300, with_alpha(C.ICE, 0.16), cold), gui.BLEND_ADD)
+		out[#out + 1] = warm
+		out[#out + 1] = cold
 	end
 	if opt.seam ~= false then
+		local w = screen.width()
 		local low = empty(640, 0)
 		gui.set_yanchor(low, gui.ANCHOR_BOTTOM)
-		shape(nil, 0, THREAD_Y, screen.width(), 11, C.INK, low)
-		local seam = gui.new_box_node(vec(0, THREAD_Y), vec(screen.width(), 6))
+		shape(nil, 0, THREAD_Y, w, 11, C.INK, low)
+		local seam = gui.new_box_node(vec(0, THREAD_Y), vec(w, 6))
 		gui.set_texture(seam, "fucina")
 		gui.play_flipbook(seam, "filo")
 		gui.set_parent(seam, low)
+		if live then
+			gui.animate(seam, "color", vmath.vector4(0.72, 0.72, 0.72, 1), gui.EASING_INOUTSINE, 1.6, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
+			local glints = {}
+			for i, c in ipairs({ C.SEAM, C.FROST }) do
+				glints[i] = shape("alone", 0, THREAD_Y, 260, 30, with_alpha(c, 0.95), low)
+				gui.set_blend_mode(glints[i], gui.BLEND_ADD)
+			end
+			run_glints(glints, w)
+		end
 		out[#out + 1] = low
 	end
-	for i = #out, 1, -1 do gui.move_below(out[i], nil) end
 	return out
 end
 
@@ -1195,12 +1330,21 @@ function M.scene_focus(s, fx, fy)
 end
 
 function M.scene_drop(s)
+	if s.copy then
+		for _, n in ipairs(s.copy) do gui.delete_node(n) end
+		s.copy = nil
+		return
+	end
 	if not S or S.owner ~= s then return end
 	S.owner = nil
 	for _, n in ipairs(S.tops) do gui.set_enabled(n, false) end
 end
 
 function M.scene_show(s, on)
+	if s.copy then
+		for _, n in ipairs(s.copy) do gui.set_enabled(n, on) end
+		return
+	end
 	if on then claim(s) else M.scene_drop(s) end
 end
 

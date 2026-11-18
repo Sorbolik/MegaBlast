@@ -56,6 +56,8 @@ jobs:
           curl -fsSL --retry 4 -o "$RUNNER_TEMP/bob.jar" https://github.com/defold/defold/releases/download/1.14.0/bob.jar
           echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/chiave.keystore"
           printf '%s' "$KEYSTORE_PASS" > "$RUNNER_TEMP/chiave.pass"
+          # impronta pubblica del certificato (serve al client Android di «Accedi con Google»)
+          keytool -list -v -keystore "$RUNNER_TEMP/chiave.keystore" -storepass "$KEYSTORE_PASS" 2>/dev/null | grep -E 'SHA1:|SHA256:' | sort -u || true
           # il codice della versione (come nella didascalia) si vede nelle IMPOSTAZIONI del gioco
           printf '[megablast]\nversion = %s\ntest = %s\n' "$(git log -1 --format=%h)" "$([ "$RAMO" = main ] && echo 0 || echo 1)" > "$RUNNER_TEMP/apk.ini"
           [ -n "$SERVER_URL" ] && printf 'server_url = %s\n' "$SERVER_URL" >> "$RUNNER_TEMP/apk.ini"

@@ -335,7 +335,7 @@ function M.hide(h)
 	h.is_visible = false
 end
 
--- The balance in the wallet (menu/wallet.lua)
+-- The balance in the wallet (sim/wallet.lua)
 function M.wallet(h, scaglie, ossidiana, buoni)
 	coins.set(h.wallet, scaglie, ossidiana)
 	coins.vouchers(h.wallet, buoni or 0)

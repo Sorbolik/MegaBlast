@@ -259,6 +259,37 @@ function CMD.rules_valid(c)
 	answer({ msg = N.rules_valid(c.rules, c.normal) })
 end
 
+-- Guest profiles (server/accounts.go): the profile travels and is stored as
+-- the recipes' text (sim/replay.lua, write and read: pure data, never code).
+-- profile_new{name, text}: a new profile, from the phone's progress when text
+-- is there (sim/profile.lua, import: cut to the caps); profile_summary{text}:
+-- a few numbers of a profile, for the log and the register.
+local profile_rules = require "sim.profile"
+local replay_text = require "sim.replay"
+
+local function summary(p)
+	local pieces = 0
+	for _ in pairs(p.posseduti or {}) do pieces = pieces + 1 end
+	return { livello = p.livello, xp = p.xp, scaglie = p.scaglie, ossidiana = p.ossidiana, pezzi = pieces,
+		stelle = profile_rules.total_stars(p) }
+end
+
+function CMD.profile_new(c)
+	local src = c.text and c.text ~= "" and replay_text.read(c.text)
+	if c.text and c.text ~= "" and not src then error("profilo illeggibile") end
+	local p = src and profile_rules.import(src) or profile_rules.new()
+	p.nome = c.name
+	local s = summary(p)
+	s.profilo = replay_text.write(p)
+	answer(s)
+end
+
+function CMD.profile_summary(c)
+	local p = replay_text.read(c.text)
+	if not p then error("profilo illeggibile") end
+	answer(summary(p))
+end
+
 -- eval{code}: runs code (with N among the globals) and answers what it
 -- returns as head (tests and checks of the server, never from the players)
 local env = setmetatable({ N = N }, { __index = _G })

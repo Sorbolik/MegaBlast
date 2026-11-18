@@ -245,7 +245,7 @@ gu = profile.match_end(p, { points = 0, second = true })
 check(#gu.lines == 2 and gu.lines[2].key == "second", "second in free for all")
 -- against bots: half the experience, and only the first matches of the day
 do
-	local wallet = require "menu.wallet"
+	local wallet = require "sim.wallet"
 	local q = profile.new()
 	local full = profile.match_end(profile.new(), { points = 148, won = true, mvp = true }).xp
 	local half = profile.match_end(q, { points = 148, won = true, mvp = true, bots = true }, "2026-11-17")
