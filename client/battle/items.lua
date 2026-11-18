@@ -68,7 +68,7 @@ end
 local TRAP_W, TRAP_H, TRAP_DY = 24, 16.3, 7.6
 local MOLLA_W, MOLLA_H, MOLLA_DY = 39.2, 9.83, 4.9
 -- the team-coloured triangle on the Molla's plate, turned on its side: it points
--- where the Molla launches (WB-068)
+-- where the Molla launches and sits on that end of the plate (WB-068)
 local ARROW_W, ARROW_H = 5.5, 9.42
 local SNAP_W, SNAP_H, SNAP_DY = 18, 9.17, 4.6
 local SNAPS = 2
@@ -251,7 +251,8 @@ function M.update(o, g, view, clock)
 				local d = it.flying and 0 or (it.dir or 0)
 				o.size.x, o.size.y, o.size.z = d < 0 and -1 or 1, 1, 1
 				gui.set_scale(p.arrow, o.size)
-				pos(p.arrow, 0, (MOLLA_H + ARROW_H) * 0.5 - 0.6)
+				-- on the plate's end on that side: in the middle the robot standing on it hides it
+				pos(p.arrow, d * (MOLLA_W - ARROW_W) * 0.5 - d * 1.2, (MOLLA_H + ARROW_H) * 0.5 - 0.6)
 				local c = o.colori[it.team] or AMBER
 				o.col.x, o.col.y, o.col.z, o.col.w = c.x, c.y, c.z, 1
 				gui.set_color(p.arrow, o.col)
