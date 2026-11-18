@@ -88,8 +88,10 @@ function M.draw(g, x, y, w, h, level, lit, born)
 	local x0, iw = border + inset, w - 2 * (border + inset)
 	pill(root, 0, 0, w, h, KC.INK)
 	pill(root, border, 0, w - 2 * border, ih, TRACK)
-	-- the next level, under the fill
-	bar.next = pill(root, x0, 0, iw / M.LEVELS, fh, kit.with_alpha(KC.HOT_BOTTOM, 0.55))
+	-- the next level: the fill one level longer in ember, under it (only its end shows,
+	-- the same rounded end as the metal)
+	local lw = iw / M.LEVELS
+	bar.next = pill(root, x0, 0, lw, fh, kit.with_alpha(KC.HOT_BOTTOM, 0.55))
 	local fill, k = pill(root, x0, 0, 0, fh, ui.C.GRADI[equip.tier(math.max(1, level))])
 	bar.fill = fill
 	-- its light on top, its shadow below
@@ -102,8 +104,9 @@ function M.draw(g, x, y, w, h, level, lit, born)
 	local mw = h >= 24 and 3 or 2
 	for i = 1, M.LEVELS - 1 do
 		if i % 10 ~= 0 then
-			local m = ui.sagoma("forma", x0 + iw * i / M.LEVELS, 0, mw, fh - 2, kit.with_alpha(KC.INK, 0.5), root)
-			gui.set_slice9(m, vmath.vector4(1, 1, 1, 1))
+			-- (a plain box: a 9-slice this thin draws each mark a little differently)
+			local mx = math.floor(x0 + iw * i / M.LEVELS + 0.5)
+			ui.sagoma(nil, mx, 0, mw, fh - 4, kit.with_alpha(KC.INK, 0.5), root)
 		end
 	end
 	-- the signature's slots at 10, 20 and 30 (Sergio, 18 Nov, B · Incavo a gemma): a
@@ -145,13 +148,13 @@ function M.draw(g, x, y, w, h, level, lit, born)
 			gui.set_position(bar.tip, tip)
 		end
 		gui.set_enabled(bar.next, lv < M.LEVELS)
-		gui.set_position(bar.next, vec(x0 + math.max(0, fw - 3), 0))
+		if time and time > 0 then
+			gui.animate(bar.next, "size.x", math.max(fw + lw, fh) / k, gui.EASING_OUTCUBIC, time, delay or 0)
+		else
+			width(bar.next, k, fw + lw, fh)
+		end
 	end
 
-	-- how much of the next level is filled (0..1): the step's scene fills it at each blow
-	function bar.next_fill(p)
-		width(bar.next, k, iw / M.LEVELS * p + 3, fh)
-	end
 
 	bar.set(level)
 	return bar

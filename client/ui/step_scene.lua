@@ -119,11 +119,9 @@ function M.new(o)
 	sc.ingots = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_parent(sc.ingots, sc.root)
 	sc.bar = ingots.draw({ node = sc.ingots, ox = 0, oy = 720 }, IX, IY, IW, IH, level - 1, o.lit or 0, math.floor(level / 10))
-	sc.step = sc.bar.next
-	sc.step_scale = gui.get_scale(sc.step)
-	sc.bar.next_fill(0)
-	gui.set_color(sc.step, KC.HOT)
-	local at = gui.get_position(sc.bar.node) + gui.get_position(sc.step)
+	-- the step is the slot: the next level under it does not show
+	gui.set_enabled(sc.bar.next, false)
+	local at = gui.get_position(sc.bar.node)
 	-- the step's slot is not there yet: it is born at the first blow as a dot, grows
 	-- at each blow, glowing hotter, and opens at the explosion (Sergio, 18 Nov)
 	sc.stud = sc.bar.studs[math.floor(level / 10)]
@@ -198,7 +196,7 @@ local function events(sc, t, quiet)
 	for i, b in ipairs(M.BLOWS) do
 		if once("blow" .. i, b[1]) then
 			if not quiet and sc.o.on_blow then sc.o.on_blow(i) end
-			sparks(sc, sx, sy + 20, ({ 10, 16, 26 })[i], KC.HOT, 120 + 50 * i)
+			sparks(sc, sx, sy, ({ 10, 16, 26 })[i], KC.HOT, 120 + 50 * i)
 		end
 	end
 	if once("boom", M.BOOM) then
@@ -207,9 +205,9 @@ local function events(sc, t, quiet)
 		gui.set_enabled(sc.icon_before, false)
 		gui.set_enabled(sc.icon_after, true)
 		-- the wave: the metal flows again from the left, in the new grade's color
-		gui.set_enabled(sc.step, false)
 		sc.bar.set(0)
 		sc.bar.set(sc.level, sc.color, 0.45, 0.06)
+		gui.set_enabled(sc.bar.next, false)
 		local stud = sc.stud
 		if stud then
 			gui.set_enabled(stud, true)
@@ -283,7 +281,7 @@ local function draw(sc, t)
 		gui.set_color(sc.icon_after, vmath.vector4(k, k, k, 1))
 		alpha(sc.hot_icon, t < M.REVEAL and 0 or math.exp(-(t - M.REVEAL) / 0.18))
 	end
-	-- the bar: it comes up; the step's level beats, fills at each blow
+	-- the bar: it comes up; the step's slot grows at each blow
 	local na = eo(seg(t, M.CHARGE, 0.7))
 	gui.set_position(sc.ingots, vec(ox * 0.6, oy * 0.6 - (1 - na) * 40))
 	if t < M.BOOM then
@@ -294,12 +292,6 @@ local function draw(sc, t)
 			local rate = lerp(1.6, 4.5, seg(t, M.CHARGE, M.SUSPENSE))
 			beat = math.max(0, math.sin(t * rate * math.pi)) ^ 6
 		end
-		local sx = 1 + 0.25 * beat + (t > M.SUSPENSE and 0.25 + 0.15 * math.sin(t * 8) or 0)
-		for _, b in ipairs(M.BLOWS) do if t >= b[1] then sx = sx + 0.6 * math.exp(-(t - b[1]) / 0.08) end end
-		sc.bar.next_fill(fill)
-		local k = sc.step_scale.x
-		gui.set_scale(sc.step, vmath.vector3(k, k * (0.85 + 0.35 * (sx - 1)), 1))
-		gui.set_color(sc.step, fill >= 1 and KC.SEAM or KC.HOT)
 		if sc.stud then
 			-- nothing, a dot, bigger, almost all: each blow makes it grow with a kick
 			local grow = 0

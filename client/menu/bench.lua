@@ -241,7 +241,9 @@ function M.after(s)
 			gui.animate(bar.fill, "color", color, gui.EASING_OUTQUAD, 0.35, 0.18, function()
 				sparks(bar.tip, color, 8, 34)
 			end)
-			pop(bar.next, 1.6, 0.3, 0.2)
+			-- the next level lights up in ember
+			gui.set_color(bar.next, KC.SEAM)
+			gui.animate(bar.next, "color", kit.with_alpha(KC.HOT_BOTTOM, 0.55), gui.EASING_OUTQUAD, 0.5, 0.2)
 		end
 		-- the piece takes the blow: squashed, then back
 		if b.icon then
