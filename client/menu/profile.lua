@@ -48,7 +48,7 @@ end
 -- Only in the scenarios (imposta prova_profilo 1, scenari/scheda.txt): a
 -- profile that has already played, to see pieces, powers, badges, stats and
 -- the campaign's stars
-function M.sample(p, near_level_up, campaign_done)
+function M.sample(p, near_level_up, campaign_done, all_pieces)
 	p.livello, p.xp = 23, near_level_up and M.xp_level(23) - 20 or 410
 	local a = p.loadouts[p.is_active]
 	a.gear = { mask = "corvo", chest = "fornace", cloak = "corvo", legs = "leviatano" }
@@ -56,6 +56,12 @@ function M.sample(p, near_level_up, campaign_done)
 	p.pezzi.corvo_mask, p.pezzi.fornace_chest, p.pezzi.corvo_cloak, p.pezzi.leviatano_legs = 24, 19, 9, 30
 	for _, k in ipairs({ "corvo_mask", "fornace_chest", "corvo_cloak", "leviatano_legs", "fabbro_legs", "vuoto_mask" }) do
 		p.posseduti[k] = true
+	end
+	-- prova_profilo 4: every piece, to see the grid of the ZAINO scroll (scenari/zaino_griglia.txt)
+	if all_pieces then
+		for _, f in ipairs(require("sim.gear").SETS) do
+			for _, sl in ipairs(require("sim.gear").SLOTS) do p.posseduti[f.id .. "_" .. sl.id] = true end
+		end
 	end
 	p.buoni = 2
 	p.prova.corvo_cloak, p.prova.fornace_chest = 2, 5

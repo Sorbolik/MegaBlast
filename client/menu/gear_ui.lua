@@ -12,12 +12,12 @@
 --   gear_ui.sheet(s, g, a, a2, back)                    -- all the stats, big, in the middle
 --   gear_ui.loadouts(s, g, x, y, active, prefix, label) -- the three loadouts
 --   gear_ui.chips(s, g, x, y, list, active)             -- a row of filters
---   gear_ui.families(s, g, cx, y, active)               -- the families: dots with their names
 --   gear_ui.effects(set, slot, level)                   -- "+4% IN ARIA  −2% VITA"
 --   gear_ui.devil(s, g, cx, feet, h)                    -- the apprentice, s.figure
 
 local ui = require "ui.ui"
 local kit = require "ui.kit"
+local P = require "ui.pieces"
 local game = require "sim.game"
 local equip = require "sim.gear"
 local loadout = require "sim.loadout"
@@ -75,28 +75,57 @@ function M.effects(set, slot, level)
 	return table.concat(t, "  ")
 end
 
--- A square slot s wide at the Figma point (x, y): the frame (gold when chosen),
--- the family's line, the piece's picture, its level in the corner and the tick
--- when it is worn. Without a set: the empty frame with the slot's shadow
+-- the name of a slot in the type symbols (WB-078)
+local TYPE = { mask = "tipo_elmo", chest = "tipo_corazza", cloak = "tipo_mantello", legs = "tipo_stivali", gloves = "tipo_guanti" }
+
+-- a picture inside the box (x, y, w, h), as large as it fits and centered: never stretched
+local function fit(g, name, x, y, w, h)
+	local m = P[name]
+	local k = math.min(w / m.w, h / m.h)
+	return kit.pic(g, name, x + (w - m.w * k) / 2, y + (h - m.h * k) / 2, m.w * k, m.h * k)
+end
+
+-- A square slot s wide at the Figma point (x, y), with the straight frames of WB-078
+-- (Sergio, 18 Nov): the frame (lit when chosen), the piece's picture in the middle, on
+-- the top left corner the tab with the symbol of its type, its level on the top right,
+-- and the band INDOSSATO at the bottom when it is worn. Without a set: the empty frame
+-- with the shadow of the slot and its type. Everything grows with s. Returns its nodes
 function M.slot(g, x, y, s, opt)
 	opt = opt or {}
+	local made = {}
+	local function keep(n) made[#made + 1] = n return n end
 	local frame = opt.sel and "casella_scelta" or opt.set and "casella" or "casella_vuota"
-	kit.pic(g, frame, x - s * 0.04, y - s * 0.04, s * 1.08, s * 1.08)
-	if not opt.set then
-		if opt.slot then kit.pic(g, "vuoto_" .. M.ART[opt.slot], x + s * 0.14, y + s * 0.12, s * 0.72, s * 0.72) end
-		return
+	keep(kit.pic(g, frame, x - s * 0.04, y - s * 0.04, s * 1.08, s * 1.08))
+	if opt.set then
+		keep(fit(g, M.icon(opt.set, opt.slot, opt.level), x + s * 0.12, y + s * 0.12, s * 0.76, s * 0.76))
+	elseif opt.slot and M.ART[opt.slot] then
+		keep(fit(g, "vuoto_" .. M.ART[opt.slot], x + s * 0.16, y + s * 0.16, s * 0.68, s * 0.68))
 	end
-	local line = kit.rect(g, x + s * 0.18, y + s - 12, s * 0.64, 5, M.color(opt.set))
-	kit.pic(g, M.icon(opt.set, opt.slot, opt.level), x + s * 0.1, y + s * 0.07, s * 0.8, s * 0.8)
+	local tab = s * 0.34
+	if opt.slot and TYPE[opt.slot] then
+		keep(kit.pic(g, "linguetta", x - s * 0.05, y - s * 0.05, tab, tab))
+		keep(fit(g, TYPE[opt.slot], x - s * 0.05 + tab * 0.18, y - s * 0.05 + tab * 0.16, tab * 0.64, tab * 0.64))
+	end
+	if not opt.set then return made end
 	if opt.level then
 		local top = opt.level >= equip.LIVELLO_MAX
-		-- (a smaller round on a small slot, not to hide the piece)
-		local d = s < 52 and 30 or 38
-		kit.pic(g, top and "livello_oro" or "livello_ferro", x + s - d + 10, y - 10, d, d)
-		kit.text(g, tostring(opt.level), x + s - d / 2 + 10, y + d / 2 - 4, 16, top and KC.INK or KC.SAND, "middle")
+		local d = math.max(30, s * 0.34)
+		keep(kit.pic(g, top and "livello_oro" or "livello_ferro", x + s - d + d * 0.25, y - d * 0.25, d, d))
+		local fs = math.max(16, d * 0.45)
+		keep(kit.text(g, tostring(opt.level), x + s - d / 2 + d * 0.25, y + d * 0.25 + fs * 0.37, fs,
+			top and KC.INK or KC.SAND, "middle"))
 	end
-	if opt.worn then kit.pic(g, "spunta", x + 3, y + 3, 26, 26) end
-	return line
+	if opt.worn then
+		local bw = s * 0.94
+		local bh = bw * P.fascia_indossato.h / P.fascia_indossato.w
+		local by = y + s - bh - s * 0.03
+		keep(kit.pic(g, "fascia_indossato", x + s * 0.03, by, bw, bh))
+		local fs = math.max(16, s * 0.15)
+		local n = keep(kit.text(g, T.worn, x + s / 2, by + bh / 2 + fs * 0.37, fs, KC.INK, "middle"))
+		local w = kit.width(n)
+		if w > bw * 0.9 then gui.set_scale(n, gui.get_scale(n) * (bw * 0.9 / w)) end
+	end
+	return made
 end
 
 -- where the pieces sit on the devil (feet at (cx, feet), h tall)
@@ -451,31 +480,6 @@ function M.chips(s, g, x, y, list, active)
 		cx = cx + w + 8
 	end
 	return cx
-end
-
--- The families as dots of their color with their name (Sergio, 17 Nov: a dot
--- alone says nothing), one row centered on cx: tapping one shows only its
--- pieces ("famiglia:<id>"), again all of them; the chosen one has a ring
-local FAMILY_DOT, FAMILY_GAP, FAMILY_AIR = 34, 6, 16
-function M.families(s, g, cx, y, active)
-	local names, total = {}, -FAMILY_AIR
-	for i, f in ipairs(equip.SETS) do
-		names[i] = kit.text(g, f.name, 0, y + 30, 16, active == f.id and KC.HOT or KC.SAND, "start", 0.3)
-		total = total + FAMILY_DOT + FAMILY_GAP + kit.width(names[i]) + FAMILY_AIR
-	end
-	local x = cx - total / 2
-	for i, f in ipairs(equip.SETS) do
-		local w = FAMILY_DOT + FAMILY_GAP + kit.width(names[i])
-		local dx, dy = x + FAMILY_DOT / 2, y + 24
-		if active == f.id then kit.dot(g, dx, dy, 44, KC.HOT) end
-		kit.dot(g, dx, dy, FAMILY_DOT, KC.INK)
-		kit.dot(g, dx, dy, 28, kit.hex(f.color))
-		local pos = gui.get_position(names[i])
-		pos.x = x + FAMILY_DOT + FAMILY_GAP - g.ox
-		gui.set_position(names[i], pos)
-		kit.zone(g, s.buttons, x - FAMILY_AIR / 2, dy - 30, w + FAMILY_AIR, 60, "famiglia:" .. f.id)
-		x = x + w + FAMILY_AIR
-	end
 end
 
 return M

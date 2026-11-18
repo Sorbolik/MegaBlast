@@ -384,14 +384,23 @@ MENU_INTERI = [
     ("gioca_sigillo", "gioca_sigillo", 166, "WB-046"),
     ("pedana", "pedana_griglia_1", 266, "WB-050"),
     ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
-    # caselle, livelli, segni (WB-044)
-    ("casella", "casella", 324, "WB-044"),
-    ("casella_scelta", "casella_scelta", 324, "WB-044"),
-    ("casella_vuota", "casella_vuota", 324, "WB-044"),
+    # le caselle dei pezzi, dritte (WB-078, Sergio 18 nov: al posto di quelle di WB-044 in
+    # ogni posto): la cornice, la linguetta del tipo in alto a sinistra col suo simbolo,
+    # la fascia INDOSSATO in basso
+    ("casella", "cornice", 324, "WB-078"),
+    ("casella_scelta", "cornice_scelta", 324, "WB-078"),
+    ("casella_vuota", "cornice_vuota", 324, "WB-078"),
+    ("linguetta", "linguetta", 112, "WB-078"),
+    ("fascia_indossato", "fascia_indossato", 64, "WB-078"),
+    ("tipo_elmo", "tipo_elmo", 80, "WB-078"),
+    ("tipo_corazza", "tipo_corazza", 80, "WB-078"),
+    ("tipo_mantello", "tipo_mantello", 80, "WB-078"),
+    ("tipo_stivali", "tipo_stivali", 80, "WB-078"),
+    ("tipo_guanti", "tipo_guanti", 80, "WB-078"),
+    # livelli, segni (WB-044)
     ("chiodo", "chiodo", 40, "WB-044"),
     ("livello_ferro", "livello_ferro", 80, "WB-044"),
     ("livello_oro", "livello_oro", 80, "WB-044"),
-    ("spunta", "spunta", 56, "WB-044"),
     ("sconto", "sconto", 64, "WB-044"),
     ("podio_1", "podio_1", 420, "WB-044"),
     ("podio_2", "podio_2", 352, "WB-044"),

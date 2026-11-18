@@ -2,7 +2,8 @@
 -- Sergio, 14 Nov): it opens from the apprentice in the home. Two tabs:
 --   INVENTARIO  on the left the loadouts of the pieces and the apprentice with
 --               its four pieces labeled on it; in the middle every piece you
---               own as a slot, filtered by slot and by family; on the right the
+--               own as a slot (four in a row, big, the grid scrolls), filtered by
+--               slot; on the right the
 --               stats (with "a → b" for the piece chosen); at the bottom the
 --               piece chosen and INDOSSA
 --   SIGILLI     the loadouts of the Sigilli (apart from the pieces'), the three
@@ -61,7 +62,7 @@ local function owned(s)
 	local out = {}
 	for _, f in ipairs(equip.SETS) do
 		for _, sl in ipairs(equip.SLOTS) do
-			if wallet.owns(s.prof, f.id, sl.id) and (not s.slot or s.slot == sl.id) and (not s.family or s.family == f.id) then
+			if wallet.owns(s.prof, f.id, sl.id) and (not s.slot or s.slot == sl.id) then
 				out[#out + 1] = { f.id, sl.id }
 			end
 		end
@@ -88,6 +89,107 @@ local function effect_lines(g, effects, room)
 	return lines
 end
 
+-- The grid of the pieces in a window (VIEW, Figma), moved by s.scroll: the slots are
+-- cut at its edges (stencil) and their zones work only inside it
+local VIEW = { x = 418, y = 160, w = 612, h = 400 }
+local CELL, GAP, ROW = 124, 26, 154
+local GRID_X, GRID_Y = 432, 172
+
+local function grid_height(n)
+	return math.ceil(n / 4) * ROW - (ROW - CELL) + 24
+end
+
+-- the rows that leave the window at the top or the bottom fade out (the grid goes on)
+local function grid_fade(s)
+	for _, c in ipairs(s.cells or {}) do
+		local top = c.y - (s.scroll or 0)
+		local a = 1
+		if top + CELL > VIEW.y + VIEW.h then a = math.max(0.15, math.min(1, (VIEW.y + VIEW.h - top) / CELL)) end
+		if top < VIEW.y then a = math.max(0.15, math.min(1, (top + CELL - VIEW.y) / CELL)) end
+		gui.set_alpha(c.g.node, a)
+	end
+	if s.thumb then
+		local max = s.scroll_max or 0
+		local len = VIEW.h * VIEW.h / (VIEW.h + max)
+		local y0 = VIEW.y + (max > 0 and (s.scroll / max) * (VIEW.h - len) or 0)
+		gui.set_position(s.thumb.node, vmath.vector3(0, -(y0 - VIEW.y), 0))
+	end
+end
+
+local function grid(s, g, items, a)
+	local p = s.prof
+	local clip = gui.new_box_node(vmath.vector3(VIEW.x + VIEW.w / 2 - g.ox, g.oy - (VIEW.y + VIEW.h / 2), 0),
+		vmath.vector3(VIEW.w, VIEW.h, 0))
+	gui.set_parent(clip, g.node)
+	gui.set_clipping_mode(clip, gui.CLIPPING_MODE_STENCIL)
+	gui.set_clipping_visible(clip, false)
+	gui.set_adjust_mode(clip, gui.ADJUST_FIT)
+	local view = { node = clip, ox = VIEW.x + VIEW.w / 2, oy = VIEW.y + VIEW.h / 2 }
+	s.view_clip = clip
+	s.scroll_max = math.max(0, GRID_Y - VIEW.y + grid_height(#items) - VIEW.h)
+	s.scroll = math.max(0, math.min(s.scroll or 0, s.scroll_max))
+	s.grid = kit.group(view, view.ox, view.oy)
+	gui.set_position(s.grid.node, vmath.vector3(0, s.scroll, 0))
+	s.cells = {}
+	for i, it in ipairs(items) do
+		local c, r = (i - 1) % 4, math.floor((i - 1) / 4)
+		local x, y = GRID_X + c * (CELL + GAP), GRID_Y + r * ROW
+		local set, slot = it[1], it[2]
+		local cg = kit.group(s.grid, x, y)
+		local made = gear_ui.slot(cg, x, y, CELL, { set = set, slot = slot, level = wallet.level(p, set, slot),
+			worn = a.gear[slot] == set, sel = s.sel and s.sel[1] == set and s.sel[2] == slot })
+		for _, n in ipairs(made) do gui.set_inherit_alpha(n, true) end
+		local b = kit.zone(cg, s.buttons, x - 8, y - 8, CELL + 16, CELL + 16, "pezzo:" .. set .. ":" .. slot)
+		b.inside = clip
+		s.cells[#s.cells + 1] = { g = cg, y = y }
+	end
+	if #items == 0 then
+		kit.text(g, kit.upper(T.nothing), VIEW.x + VIEW.w / 2, 300, 18, KC.MUTE, "middle", 1)
+	end
+	-- a thin track on the right of the window, when there is more than it shows
+	s.thumb = nil
+	if s.scroll_max > 0 then
+		local tx = VIEW.x + VIEW.w - 8
+		kit.line(g, tx, VIEW.y + 12, tx, VIEW.y + VIEW.h - 12, 6, KC.INK)
+		local len = VIEW.h * VIEW.h / (VIEW.h + s.scroll_max)
+		s.thumb = kit.group(g, 0, 0)
+		kit.line(s.thumb, tx, VIEW.y + 12, tx, VIEW.y + math.max(24, len) - 12, 6, KC.STEEL)
+	end
+	grid_fade(s)
+end
+
+-- a drag inside the window moves the grid (and is not a tap on a piece)
+local function grid_drag(s, action_id, action)
+	if action_id ~= ui.TOUCH or not s.grid or s.card or s.sheet or s.tab == "sigilli" then return false end
+	if action.pressed then
+		s.drag = nil
+		if s.scroll_max and s.scroll_max > 0 and gui.pick_node(s.view_clip, action.x, action.y) then
+			s.drag = { y = action.y, from = s.scroll, moved = false }
+		end
+		return false
+	end
+	local d = s.drag
+	if not d then return false end
+	if action.released then
+		s.drag = nil
+		return d.moved
+	end
+	local dy = action.y - d.y
+	if not d.moved and math.abs(dy) > 10 then
+		d.moved = true
+		local b = s.buttons.held_down
+		if b then gui.set_scale(b.nodo, vmath.vector3(1, 1, 1)) end
+		s.buttons.held_down = nil
+	end
+	if d.moved then
+		-- (action.y here grows downward, like the Figma: the grid follows the finger)
+		s.scroll = math.max(0, math.min(s.scroll_max, d.from - dy))
+		gui.set_position(s.grid.node, vmath.vector3(0, s.scroll, 0))
+		grid_fade(s)
+	end
+	return d.moved
+end
+
 local function inventory(s)
 	local p = s.prof
 	local a = profile.active_loadout(p)
@@ -108,28 +210,16 @@ local function inventory(s)
 	if s.sheet then
 		gear_ui.sheet(s, g, a, a2, TG.back_to_pieces)
 	else
-		-- the filters: the slot, then the families
+		-- the filters: the slot
 		local list = { { T.all, "filtro:" } }
 		for _, sl in ipairs(equip.SLOTS) do list[#list + 1] = { sl.name, "filtro:" .. sl.id } end
 		local active = 1
 		for i, sl in ipairs(equip.SLOTS) do if s.slot == sl.id then active = i + 1 end end
 		gear_ui.chips(s, g, 430, 100, list, active)
 
-		-- the pieces, six in a row
-		for i, it in ipairs(items) do
-			if i > 24 then break end
-			local c, r = (i - 1) % 6, math.floor((i - 1) / 6)
-			local x, y = 430 + c * 100, 164 + r * 100
-			local set, slot = it[1], it[2]
-			gear_ui.slot(g, x, y, 86, { set = set, slot = slot, level = wallet.level(p, set, slot),
-				worn = a.gear[slot] == set, sel = s.sel and s.sel[1] == set and s.sel[2] == slot })
-			kit.zone(g, s.buttons, x - 6, y - 10, 98, 104, "pezzo:" .. set .. ":" .. slot)
-		end
-		if #items == 0 then
-			kit.text(g, kit.upper(T.nothing), 730, 300, 18, KC.MUTE, "middle", 1)
-		end
-		-- under the pieces the families, each dot with its name
-		gear_ui.families(s, g, 723, 558, s.family)
+		-- the pieces, four in a row and big (Sergio, 18 Nov: «non facciamo tutto
+		-- striminzito»): with many of them the grid scrolls, the row cut at the bottom fades
+		grid(s, g, items, a)
 		gear_ui.stats_short(s, s.rt, 1040, 106, 210, a, a2)
 	end
 
@@ -140,7 +230,7 @@ local function inventory(s)
 		local set, slot = s.sel[1], s.sel[2]
 		local level = wallet.level(p, set, slot)
 		local worn = a.gear[slot] == set
-		gear_ui.slot(s.low, 140, 630, 64, { set = set, slot = slot, worn = worn })
+		gear_ui.slot(s.low, 140, 630, 64, { set = set, slot = slot })
 		local name = kit.text(s.low, gear_ui.name(set, slot), 220, 648, 26, KC.SAND)
 		local tier = equip.tier(level)
 		local effects = kit.upper(gear_ui.effects(set, slot, level))
@@ -414,6 +504,7 @@ local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over" }
 
 local function build(s)
 	if s.head then kit.header_delete(s.head) end
+	s.grid, s.cells, s.thumb, s.view_clip, s.drag = nil, nil, nil, nil, nil
 	for _, k in ipairs(GROUPS) do
 		if s[k] then gui.delete_node(s[k].node) end
 		s[k] = nil
@@ -483,14 +574,13 @@ local function run_cmd(s, ui_action)
 		s.draft = copy(profile.active_loadout(p).tree or {})
 	elseif kind == "filtro" then
 		s.slot = x ~= "" and x or nil
+		s.scroll = 0
 	elseif kind == "posto" then
 		-- a piece worn, on the left: it is the piece chosen (its lines at the
 		-- bottom), the grid shows its slot; in the card, its card
 		s.slot, s.sheet = x, nil
 		local set = profile.active_loadout(p).gear[x]
 		if set then s.sel = { set, x } end
-	elseif kind == "famiglia" then
-		s.family = s.family ~= x and x or nil
 	elseif kind == "pezzo" then
 		-- only POTENZIA opens the card (Sergio, 18 Nov: not a second tap on the piece)
 		s.sel = { a, b }
@@ -541,6 +631,7 @@ end
 -- With the controller there is no "anywhere": its back button closes the card.
 function M.on_input(s, action_id, action)
 	if bench.input(s, action_id, action) then return nil end
+	if grid_drag(s, action_id, action) then return nil end
 	local in_card = s.card and s.tab ~= "sigilli"
 	local ui_action = ui.touch(s.buttons, action_id, action)
 	if in_card and action_id == ui.TOUCH then

@@ -1,0 +1,21 @@
+# La griglia dei pezzi dello ZAINO (18 nov): cornici dritte di WB-078, il simbolo del
+# tipo in alto a sinistra, INDOSSATO sui pezzi addosso, quattro per riga e grandi;
+# con tanti pezzi la griglia scorre (la riga tagliata in basso sfuma). Niente filtro
+# delle famiglie. Gira anche con --schermo 1600x720 e 960x720.
+imposta prova_profilo 4
+
+aspetta 4
+tocca_centro 640 300               # l'apprendista: lo ZAINO
+aspetta 5
+foto 01_griglia
+trascina 700 470 700 220 3        # su: le righe sotto
+aspetta 3
+foto 02_scorsa
+tocca 560 340                      # un pezzo della griglia scorsa
+aspetta 3
+foto 03_scelto
+trascina 700 220 700 520 3        # giù: di nuovo in cima
+aspetta 3
+foto 04_in_cima
+aspetta 4
+foto 05_fermo
