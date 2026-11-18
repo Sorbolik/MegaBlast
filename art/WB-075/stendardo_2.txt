@@ -1,0 +1,16 @@
+Image 1 shows four sketches of the player's profile banner of our game: the fourth one from the top (at the bottom) is a round gold portrait ring with a dark iron banner with a swallowtail end coming out of it, the experience bar carved into the banner and the level in a gold coin near the swallowtail. We want this as ONE single forged piece: ring and banner are made together, nothing laid on top of anything else. Image 2 shows approved coins of the same game and image 3 a button of the same game: copy their style exactly, a cartoon comic look with a thick slightly irregular black ink outline, flat colors with one flat highlight and one flat shadow, real thickness and relief, details carved into the surface. Image 4 shows the gold ring and gold level seal used today: keep their gold colors (#FFB703, #F26419).
+
+Draw on plain green (#00FF00), well apart:
+1. THE BANNER, one piece about 1450 px long and 330 px tall: on the left a thick polished gold ring (about 330 px wide) with a raised rim and four small dark rivets, its centre a perfectly round flat EMPTY very dark disc (#1A161D, about 72 percent of the ring): the game puts the face there. From the right side of the ring a dark wrought iron banner (#2E2833, highlight #5A5263, side #17131A) runs to the right, vertically centred on the ring and about 55 percent of its height, joined to the ring as if forged together (the ring overlaps the banner's start, with one shared ink outline, no gap). The banner ends with a swallowtail cut. Carved into the banner: a long straight horizontal groove in its lower half (the game puts the experience fill in it), very dark inside (#1A161D) with a shadow band along its top inner edge, starting about 30 px after the ring and ending about 70 px before a round socket; near the swallowtail a round socket carved into the iron for the level coin. The upper half of the banner stays flat and empty (the game writes the name there). The banner between ring and socket must be EXACTLY the same all along its length.
+2. LEVEL COIN (about 210 px wide, so it fits the socket): a round thick gold coin, raised rim, flat smooth empty face (the game writes the number).
+No letters, no numbers, no face, no shadow on the ground, no glow outside the ink.
+
+Riferimenti allegati in ordine
+art/WB-075/riferimenti/R1_bozze_ABCD.png
+art/WB-075/riferimenti/R3_monete_approvate.png
+art/WB-075/riferimenti/R4_stile.png
+art/WB-075/riferimenti/R5_pezzi_oggi.png
+
+ImageGen integrato. Tentativi 3, selezionato il 2.
+Foglio ridotto in proporzione e centrato su tela verde 1536×1024.
+Incavo XP e coda di rondine visibili. La moneta è già nell'incavo e manca come pezzo separato. Bordo centrale con lievi variazioni.

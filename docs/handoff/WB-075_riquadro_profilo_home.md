@@ -116,4 +116,18 @@ Sergio, 18 nov 13:34 sul riquadro di oggi: «tutta scomposta, non lineare, ci so
 
 ## Consegna di Codex
 
+ImageGen integrato con i prompt integrali e i riferimenti nell'ordine della scheda. Sette PNG da 1536×1024 su verde. I fogli nativi più larghi sono stati ridotti in proporzione e centrati. Il verde generato varia leggermente rispetto a #00FF00 e alcune superfici hanno leggere sfumature.
+
+| Foglio e prompt | Tentativi | Tentativo scelto | Verifica visiva |
+|---|---:|---:|---|
+| `art/WB-075/barra_1.png` e `barra_1.txt` | 1 | 1 | Incavo, riempimento e punta destra separati. Incavo e riempimento quasi rettilinei ma di lunghezza e spessore diversi da quelli indicati. |
+| `art/WB-075/barra_2.png` e `barra_2.txt` | 2 | 2 | Incavo e riempimento rettilinei a vista, punta destra separata. Incavo e riempimento hanno lunghezze leggermente diverse e sono più spessi del previsto. |
+| `art/WB-075/anello.png` e `anello.txt` | 1 | 1 | Disco scuro vuoto e quattro rivetti. Sigillo separato con due tacche, più grande in proporzione rispetto alla scheda. |
+| `art/WB-075/piastra.png` e `piastra.txt` | 3 | 2 | Piastra unica, liscia al centro, priva di rivetti. Il bordo centrale resta leggermente ondulato. |
+| `art/WB-075/tizzone.png` e `tizzone.txt` | 1 | 1 | Tizzone e due fili separati. Fili quasi rettilinei. Alone caldo sul verde intorno al tizzone, da gestire al ritaglio. |
+| `art/WB-075/stendardo_1.png` e `stendardo_1.txt` | 3 | 3 | Incavo XP e coda di rondine visibili. La moneta è già nell'incavo e manca come pezzo separato. Bordo centrale con lievi variazioni. |
+| `art/WB-075/stendardo_2.png` e `stendardo_2.txt` | 3 | 2 | Incavo XP e coda di rondine visibili. La moneta è già nell'incavo e manca come pezzo separato. Bordo centrale con lievi variazioni. |
+
+Verificati i contorni scuri, i dischi del ritratto vuoti e l'assenza di scritte, numeri e volti. Nelle due varianti dello stendardo tutti e tre i tentativi hanno rappresentato la moneta nell'incavo. Ritaglio, allungamento nel gioco e composizione delle quattro anteprime da verificare.
+
 ## Resoconto di Claude
