@@ -114,7 +114,7 @@ end
 function M.new(color)
 	local h = { tops = {}, buttons = {}, doors = {}, door_by_id = {}, t = 0, colore = color, glint_at = 0.9 }
 
-	h.scene = kit.scene(640, 350, { bg = "home" })
+	h.scene = kit.scene(640, 350, { bg = true })
 
 	-- the middle: the pedestal, the apprentice on it and the backpack, all one button
 	local mid = kit.anchor(640, PED_BOTTOM, nil, gui.ANCHOR_BOTTOM)
