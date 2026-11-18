@@ -20,7 +20,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 echo "== pacchetti"
 apt-get update -q
-apt-get install -y -q --no-install-recommends luajit caddy ufw sqlite3 curl ca-certificates unattended-upgrades
+apt-get install -y -q --no-install-recommends luajit caddy ufw sqlite3 rclone curl ca-certificates unattended-upgrades
 echo "sistema: $(. /etc/os-release; echo "$PRETTY_NAME"), processore $(uname -m)"
 apt-get -y -q upgrade
 
@@ -58,7 +58,7 @@ User=$UTENTE
 Group=$UTENTE
 EnvironmentFile=$CONF
 WorkingDirectory=$DATI
-ExecStart=$CASA/megablast-server -addr 127.0.0.1:8080 -node \${NODO} -eventi "\${EVENTI}" -luajit /usr/bin/luajit -partite $DATI/partite
+ExecStart=$CASA/megablast-server -addr 127.0.0.1:8080 -node \${NODO} -eventi "\${EVENTI}" -luajit /usr/bin/luajit -partite $DATI/partite -profili $DATI/megablast.db
 Restart=always
 RestartSec=2
 # Lo spegnimento aspetta la fine delle partite (main.go, al più 10 minuti).
@@ -96,7 +96,7 @@ $INDIRIZZO {
 	}
 	# il server: WebSocket, controlli, calendario degli eventi, partite mandate (/ricetta)
 	# (un percorso nuovo del server va aggiunto qui)
-	@server path /ws /health /stats /eventi /ricetta
+	@server path /ws /health /stats /eventi /ricetta /profilo /profilo/*
 	reverse_proxy @server 127.0.0.1:8080
 	# il resto è il gioco web (tools/vps/web.sh; index.html = megablast.html)
 	root * $CASA/web
@@ -149,6 +149,18 @@ for db in $(find . -name '*.db'); do
 done
 cp /etc/megablast/server.env "$dest/"
 find /var/backups/megablast -mindepth 1 -maxdepth 1 -type d -mtime +14 -exec rm -rf {} +
+# i database anche fuori dal VPS, su Cloudflare R2 (scelta 3B dei profili ospite),
+# se c'è /etc/megablast/r2.env (lo scrive aggiorna.sh dai segreti R2_* di GitHub);
+# lì restano 30 giorni
+if [ -f /etc/megablast/r2.env ]; then
+  . /etc/megablast/r2.env
+  export RCLONE_CONFIG_R2_TYPE=s3 RCLONE_CONFIG_R2_PROVIDER=Cloudflare RCLONE_CONFIG_R2_ACL=private
+  export RCLONE_CONFIG_R2_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID" RCLONE_CONFIG_R2_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
+  export RCLONE_CONFIG_R2_ENDPOINT="$R2_ENDPOINT"
+  rclone copy "$dest" "r2:$R2_BUCKET/$quando" --include '*.db' --s3-no-check-bucket
+  rclone delete "r2:$R2_BUCKET" --min-age 30d --s3-no-check-bucket || true
+  echo "copia su R2: $R2_BUCKET/$quando"
+fi
 COPIA
 chmod 755 /usr/local/sbin/megablast-copia
 cat > /etc/systemd/system/megablast-copia.service <<UNIT
