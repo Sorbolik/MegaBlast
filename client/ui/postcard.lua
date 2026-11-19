@@ -1,7 +1,7 @@
 -- The mission's postcard (Sergio, 4 Nov; 6 Nov: the miniature of the map
 -- instead of a painting, and kept, it is needed going from one mission
 -- straight to the next): before a campaign mission the miniature of its map
--- opens in front of the menu on a leaning light plate, with the label of its
+-- opens in front of the menu on a leaning iron plate over the colonnade, with the label of its
 -- kind (the first time you meet that kind, also the line that says what it
 -- is), the mission's name at the top, its stars with what each one takes, and
 -- GIOCA. It is only a zoom on the card you tapped: the map is not loaded yet,
@@ -32,7 +32,7 @@ local M = {}
 local KC = kit.C
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
--- the light plate and the picture in it (the picture leans like the plate)
+-- the iron plate and the picture in it (the picture leans like the plate)
 M.POST = { x = 70, y = 116, w = 640, h = 380, sk = 26, pic_w = 612, pic_h = 356, pic_sk = 24 }
 local P = M.POST
 -- the middle of the plate: the zoom turns around it
@@ -56,7 +56,7 @@ function M.open(id, titolo, from, tipo, line, o)
 	p.back = top(gui.new_box_node(vec(640, 360), vec(1280 * 4, 720 * 4)))
 	gui.set_color(p.back, vmath.vector4(KC.INK.x, KC.INK.y, KC.INK.z, 0))
 	gui.animate(p.back, "color.w", 1, gui.EASING_OUTQUAD, M.ZOOM)
-	p.scene = kit.scene(390, 330, { over = true })
+	p.scene = kit.scene(390, 330, { over = true, bg = "colonnato" })
 	-- everything but the plate: it comes in when the zoom is over
 	p.radice = top(gui.new_box_node(vec(0, 0), vec(0, 0)))
 	gui.set_visible(p.radice, false)
@@ -92,7 +92,7 @@ function M.open(id, titolo, from, tipo, line, o)
 	p.card = top(gui.new_box_node(vec(CX, 720 - CY), vec(0, 0)))
 	gui.set_visible(p.card, false)
 	local cg = { node = p.card, ox = CX, oy = CY }
-	local plate = kit.plate(cg, P.x, P.y, P.w, P.h, KC.HOT, { sk = P.sk, fill = KC.SAND, d = 12 })
+	local plate = kit.plate(cg, P.x, P.y, P.w, P.h, KC.HOT, { sk = P.sk, d = 12 })
 	p.paper = plate.node
 	kit.picture(p.card, tex, P.pic_w, P.pic_h, P.pic_sk)
 	types.label(tipo, -P.pic_w / 2 + 14, P.pic_h / 2 - 34, 40, p.card)

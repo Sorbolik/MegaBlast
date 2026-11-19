@@ -1,5 +1,5 @@
--- The story's comic (ui/story.lua): one panel at a time on a leaning light
--- plate over a dark backdrop (ui/kit.lua, Figma coordinates), each panel with
+-- The story's comic (ui/story.lua): one panel at a time on a leaning iron
+-- plate over the campaign's colonnade (ui/kit.lua, Figma coordinates), each panel with
 -- its own shape (wide or square), and its lines one balloon at a time in the
 -- calm corner of the panel. AVANTI (or A) goes on; SALTA only when you have
 -- already read it (Sergio, 4 Nov: the first time the story is watched whole).
@@ -60,7 +60,7 @@ local function show_picture(s, pg)
 	local w = math.min(PIC_MAX_W, math.floor(PIC_H * ratio + 0.5))
 	s.pic_w = w
 	local pw, ph = w + 2 * MARGIN, PIC_H + 2 * MARGIN - 4
-	kit.plate(s.g, CX - (pw + 30) / 2, CY - ph / 2, pw, ph, KC.HOT, { sk = 30, fill = KC.SAND, d = 14 })
+	kit.plate(s.g, CX - (pw + 30) / 2, CY - ph / 2, pw, ph, KC.HOT, { sk = 30, d = 14 })
 	kit.picture(s.sheet, tex, w, PIC_H, PIC_SK, ratio)
 	s.balloon = nil
 	kit.pop(s.sheet, 0, 0.22, 0.96)
@@ -119,8 +119,8 @@ end
 
 function M.new(pages, can_skip)
 	local s = { pages = pages, page = 1, line = 1, buttons = {}, dots = {} }
-	s.fondo = gui.new_box_node(vec(640, 360), vec(1280 * 4, 720 * 4))
-	gui.set_color(s.fondo, KC.INK)
+	-- behind it the campaign's colonnade, the screen it comes from (Sergio, 19 Nov)
+	s.fondo = kit.copy_of({ bg = "colonnato" }, true)
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.radice, false)
 	local g = { node = s.radice, ox = 0, oy = 720 }
@@ -174,7 +174,7 @@ function M.destroy(s)
 	gui.delete_node(s.radice)
 	gui.delete_node(s.low.node)
 	gui.delete_node(s.right.node)
-	gui.delete_node(s.fondo)
+	for _, n in ipairs(s.fondo) do gui.delete_node(n) end
 end
 
 return M
