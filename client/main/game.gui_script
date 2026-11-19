@@ -1644,7 +1644,8 @@ local function open_podium(self)
 	local giocatori, me = {}, self.online_end and self.me or nil
 	for i in ipairs(self.g.robots) do
 		local nome = (self.online_end and i == self.me) and common.you or self.names[i]
-		giocatori[i] = { nome = nome, colore = self.colors[i] }
+		-- the pieces each one wore in the match
+		giocatori[i] = { nome = nome, colore = self.colors[i], look = self.robots[i].look }
 	end
 	local my_own = me or 1
 	local mine = res.ranking[1]
