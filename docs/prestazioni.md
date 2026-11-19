@@ -406,6 +406,32 @@ chiave: si installa sopra; dopo le prove si rimette quello normale.
    col CONTATORE FPS acceso (IMPOSTAZIONI): ogni scatto è una riga
    `SCATTO 23.0 ms (normale 8.3, lua 0.6 ms) causa: ...`.
 
+## Dipinti HD per i PC (19 nov)
+
+Con lo zoom vicino (camera a 2,2) un'unità del mondo occupa 2,2 × (altezza dello
+schermo / 720) pixel veri. Il terreno a densità 2 ha 1,78 pixel per unità: su un
+telefono 1080p era ingrandito 1,85 volte, sul PC di Sergio (2560 × 1600) 2,75, su
+un 4K 3,7. Era la sfocatura che Sergio sentiva sul desktop.
+
+Ora c'è la **densità 3** (il doppio della 2, `DENSITA_HD` in
+`tools/grafica/mappe_dipinte.py`, `--hd` per rifare solo quella): terreno
+6840 × 3240, piani dello sfondo fino a 8192 di lato. Sta in `client/paintings_hd`
+(29 MB a tavolozza) e la usano solo Windows, Mac e Linux con lo schermo alto almeno
+1400 pixel (`battle/terrain.script`); senza la cartella si torna alla 2. L'APK e la
+build web non la portano (`custom_resources` riscritto in `apk.yml` e
+`tools/web/build.sh`). Memoria video in più su un PC: circa 100 MB. Scenario
+`tools/simula/scenari/nitidezza.txt` (con `--scala 2`).
+
+Scartate nella stessa ricerca: più thread (Lua usa 0,5-0,8 ms a frame, il resto è
+la GPU; suono e caricamento delle texture sono già su thread a parte), MSAA (le
+immagini e il bordo del terreno sono già morbidi, costerebbe GPU senza vedersi),
+Vulkan su Android (driver peggiori sui telefoni economici), ASTC (vedi sopra), mipmap
+dell'interfaccia (il manuale di Defold avverte che con lo slice-9 rimpicciolito danno
+artefatti, e i telefoni non mostrano difetti oggi). Da tenere per dopo: DirectX 12 su
+Windows (Defold 1.14, con OpenGL di riserva) per i portatili con grafica integrata,
+Metal per una build nativa iPhone. 120 Hz sui telefoni: il contatore di Sergio dice
+già 120 FPS.
+
 ## Opzioni scartate e perché
 
 - **Solo il dt del motore** per misurare: dipende da come il motore lo
