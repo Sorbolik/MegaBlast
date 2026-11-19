@@ -9,7 +9,7 @@
 --
 -- Use (from the gui_script):
 --   local p = podio.new(results, giocatori, me, gain, prof, numero)
---     results: the sim's g:results(); giocatori[robot] = { nome, colore, vetrina }
+--     results: the sim's g:results(); giocatori[robot] = { nome, colore, vetrina, look (the pieces worn) }
 --     me: the robot of whoever plays on this phone online (nil locally)
 --     gain: profile.match_end(...) of whoever plays on this phone, or nil; prof: the profile
 --     numero: the match in the profile, if it has the replay (there is RIVEDI)
@@ -96,7 +96,7 @@ local function stair(p, block, i, count, x, w, h, per_robot, mvp, team_mode)
 		local sc = tall / game.DISEGNO_H
 		gui.set_scale(pose, vmath.vector3(sc, sc, 1))
 		gui.animate(pose, "position.y", land, gui.EASING_INQUAD, 0.3, delay + M.RISE * 0.7)
-		local s = scoria.new(g.colore, scoria.PERSONAGGIO)
+		local s = scoria.new(g.colore, g.look or scoria.PERSONAGGIO)
 		gui.set_parent(s.root, pose)
 		scoria.set_enabled(s, true)
 		p.figure[#p.figure + 1] = { s = s, posa = pose,

@@ -1,0 +1,24 @@
+# Podio con i pezzi addosso: chi gioca indossa i cinque pezzi del Corvo e sul
+# podio li ha ancora, come in partita. Partita da 3 secondi, un colpo a testa.
+imposta prova_vuoto 1
+imposta prova_famiglia corvo
+imposta prova_durata 3
+
+aspetta 3
+tocca 220 172                      # ALLENAMENTO
+aspetta 3
+tocca 770 548                      # STESSO TELEFONO
+aspetta 1
+tocca_bordo 175 52 basso destra    # GIOCA
+aspetta_stato turno=1 fase=aim 12
+aspetta 1
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_stato turno=1 fase=aim 40
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_evento over 60
+aspetta 4
+foto podio_indossato
