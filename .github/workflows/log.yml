@@ -19,6 +19,10 @@ on:
         description: "Fino a quando (journalctl --until; vuoto = adesso)"
         type: string
         default: ""
+      accessi:
+        description: "Mostra anche le richieste del log di accesso di Caddy che contengono questo testo (es. /profilo; vuoto = no)"
+        type: string
+        default: ""
       prova:
         description: "Prova anche POST /ricetta (dal VPS e da fuori) e mostra Caddyfile, errori di Caddy e richieste a /ricetta"
         type: boolean
@@ -37,6 +41,7 @@ jobs:
           TESTO: ${{ inputs.testo }}
           DA: ${{ inputs.da }}
           A: ${{ inputs.a }}
+          ACCESSI: ${{ inputs.accessi }}
         run: |
           [ -n "$CHIAVE" ] && [ -n "$VPS_HOST" ] || { echo "manca VPS_SSH_KEY o VPS_HOST"; exit 1; }
           install -m 600 /dev/null "$RUNNER_TEMP/chiave"
@@ -58,5 +63,9 @@ jobs:
           echo "== errori di Caddy da oggi"; journalctl -u caddy --no-pager -o short-iso --since today | tail -n 50
           echo "== richieste a /ricetta (log di accesso di Caddy)"; cat /var/log/caddy/megablast*.log 2>/dev/null | grep -F "\"/ricetta" | tail -n 50
           echo "== righe del server con ricetta da oggi"; journalctl -u megablast --no-pager -o short-iso --since today | grep -i ricetta | tail -n 50' || true
+          fi
+          if [ -n "$ACCESSI" ]; then
+            echo "== log di accesso di Caddy con $ACCESSI"
+            ssh -i "$RUNNER_TEMP/chiave" "root@$VPS_HOST" "cat /var/log/caddy/megablast*.log 2>/dev/null | grep -F -- $(printf %q "$ACCESSI") | tail -n 100" || echo "(nessuna riga)"
           fi
           rm -f "$RUNNER_TEMP/chiave"

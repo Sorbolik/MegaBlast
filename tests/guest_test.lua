@@ -74,5 +74,20 @@ check(big.statistiche["2v2"].danno == nil and big.statistiche["2v2"].colpi == ni
 check(big.is_active == 3 and #big.badge == 1, "the active loadout open at level 30, only badges that exist")
 check(profile.import("x").livello == 1 and profile.import(nil).scaglie == 0, "something that isn't a profile: a new one")
 
+-- started on a test profile, then back on the real one: the next save asks for the identity
+do
+	local asked = {}
+	http = { request = function(url) asked[#asked + 1] = url end }
+	sys = { get_save_file = function() return "/nonexistent/identita" end, load = function() error("none") end,
+		get_sys_info = function() return {} end }
+	account.start("ws://host/ws", profile.new(), "prova")
+	check(#asked == 0, "test profile: nothing goes to the server")
+	account.saved(profile.new(), "prova")
+	check(#asked == 0, "test profile: not even after a save")
+	account.saved(profile.new(), false)
+	check(#asked == 1 and asked[1]:find("^http://host/profilo/nuovo"), "back on the real one: the save asks for the identity")
+	http, sys = nil, nil
+end
+
 print(failures == 0 and "OK" or (failures .. " FAIL"))
 os.exit(failures == 0 and 0 or 1)

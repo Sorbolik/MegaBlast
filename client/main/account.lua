@@ -64,8 +64,11 @@ end
 -- At startup: the identity if missing (with the import of the progress), else a copy.
 -- test: the profile in use is a test one (nothing goes to the server)
 function M.start(ws_url, p, test)
-	if not http or not ws_url or test then return end
+	if not http or not ws_url then return end
+	-- the address stays even with a test profile: back on the real one, the
+	-- next save asks for the identity (M.saved)
 	state.url = ws_url
+	if test then return end
 	if M.identity() then
 		send_copy(p)
 		return
