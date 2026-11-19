@@ -514,12 +514,13 @@ end
 
 -- THE PASS INTO THE ARMERIA (Sergio, 18 Nov: the mock-up he liked, artifact
 -- DrdyDpUrGgYQW5uFNfJA6D, then «le catene falle partire da sotto la parola
--- inventario», not over the card): a blade cuts INVENTARIO and SIGILLI, which
--- stay cut, and from under INVENTARIO the sign ARMERIA (WB-080) comes down on
--- its chains and swings
-local SIGN_X, SIGN_W = 362, 140
--- the line under INVENTARIO the chains come out of: nothing of the sign above it
-local SIGN_TOP = 63
+-- inventario», not over the card): a blade cuts INVENTARIO, which stays cut, and
+-- from under it the sign ARMERIA (WB-080) comes down on its chains and swings.
+-- SIGILLI stays whole, and the sign is a little bigger, centered under the word
+-- (Sergio, 19 Nov)
+local TABS_X, SIGN_W = 300, 170
+-- where the chains come out, behind the bottom of INVENTARIO: the board clears the card's badge
+local SIGN_TOP = 46
 local SPARK = vmath.vector4(1, 0.95, 0.69, 1)
 local V0 = vmath.vector3()
 
@@ -533,12 +534,14 @@ end
 -- there), the board and ARMERIA written on its face. Made before the tags, so the
 -- word stays over it: it comes out from behind INVENTARIO
 local function sign(g)
+	-- the middle of INVENTARIO, as kit.tabs puts it
+	local SIGN_X = TABS_X + (#T.tab_inventory * 14 + 64) / 2
 	local m_h = SIGN_W * 180 / 386
 	local hook = kit.group(g, SIGN_X, SIGN_TOP)
 	gui.set_inherit_alpha(hook.node, true)
 	local board = kit.pic(hook, "cartello_armeria", SIGN_X - SIGN_W / 2, SIGN_TOP, SIGN_W, m_h)
 	gui.set_inherit_alpha(board, true)
-	local word = kit.text(hook, common.armory, SIGN_X, SIGN_TOP + m_h * 0.79, 16, KC.HOT, "middle", 1)
+	local word = kit.text(hook, common.armory, SIGN_X, SIGN_TOP + m_h * 0.79, 19, KC.HOT, "middle", 1)
 	gui.set_inherit_alpha(word, true)
 	return hook.node, m_h
 end
@@ -586,7 +589,7 @@ local function armory_pass(s, cut, animate)
 	end
 	-- the blade through the middle of every word: from left of the first to past the last
 	local a, b = cut[1], cut[#cut]
-	local k = (a.cut_y - b.cut_y) / (b.mid - a.mid)
+	local k = a == b and math.tan(math.rad(kit.CUT_SLANT)) or (a.cut_y - b.cut_y) / (b.mid - a.mid)
 	local x0 = a.mid - 112
 	local len = (b.mid - x0 + 80) / math.cos(math.atan(k))
 	local y0 = a.cut_y + (a.mid - x0) * k
@@ -663,7 +666,7 @@ local function build(s)
 	-- the sign ARMERIA, under the tags (made first, so the word is over it)
 	s.sign, s.sign_h = nil, nil
 	if cut or s.closing then s.sign, s.sign_h = sign(s.head.top_left) end
-	kit.tabs(s.head.top_left, s.buttons, 300, 28, { { T.tab_inventory, "scheda:inventario" }, { T.tab_seals, "scheda:sigilli" } },
+	kit.tabs(s.head.top_left, s.buttons, TABS_X, 28, { { T.tab_inventory, "scheda:inventario" }, { T.tab_seals, "scheda:sigilli" } },
 		s.tab == "sigilli" and 2 or 1, KC.PURPLE, true, cut)
 
 	-- the left column sticks to the left edge, the stats to the right one, the rest in the middle
@@ -684,6 +687,8 @@ local function build(s)
 		-- the chains hang from the base of INVENTARIO: the sign follows its bottom
 		-- half in everything, the cut, the turn and the last jolt (Sergio, 19 Nov)
 		gui.set_parent(s.sign, cut[1].bottom, true)
+		-- centered under the word it hangs over the card's corner: in front of it
+		gui.move_above(s.head.top_left.node, s.mid.node)
 		armory_pass(s, cut, s.just == "open")
 	end
 	if s.closing then sign_away(s) end
@@ -742,6 +747,9 @@ local function run_cmd(s, ui_action)
 		s.sel = { a, b }
 	elseif kind == "potenzia" or kind == "firma" then
 		bench.run(s, kind, s.sel)
+		-- a worn piece that reaches gold changes look on the apprentice at once
+		-- (Sergio, 19 Nov: you had to take it off and on again)
+		dress(p)
 	elseif kind == "indossa" and s.sel then
 		profile.active_loadout(p).gear[s.sel[2]] = s.sel[1]
 		profile.save(p)

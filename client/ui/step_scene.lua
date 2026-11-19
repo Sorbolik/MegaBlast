@@ -4,24 +4,28 @@
 -- with the same times), with one change: only the piece, not the devil, and at
 -- the explosion only its silhouette for a moment, then the piece as it is now.
 --
+-- On 19 Nov Sergio asked it two seconds slower, in the suspense: a longer
+-- charge, more air between the blows, a longer held silence; and the sounds of
+-- that page (tools/suoni/scatto.py).
+--
 --   0.00  the tap: the screen under it goes, the forge's painting dims
---   0.45  the charge: the piece comes to the middle and grows slowly, under it its
+--   0.70  the charge: the piece comes to the middle and grows slowly, under it its
 --         thirty beads (ui/ingots.lua), the step's slot not there yet; embers rise, the painting comes closer and trembles
---   1.30, 1.70, 2.02  three blows, closer and harder: a short freeze, a shake, an
+--   1.85, 2.65, 3.40  three blows, closer and harder: a short freeze, a shake, an
 --         ember flash over the whole painting, sparks, the level fills a third; the
 --         signature's slot, not there before, is born as a dot and grows, red-hot
---   2.15  held: silence, almost dark, the embers stop, only the level white
---   2.75  the explosion: white flash, a shock ring, rays turning in the new grade's
+--   3.55  held: silence, almost dark, the embers stop, only the level white
+--   4.75  the explosion: white flash, a shock ring, rays turning in the new grade's
 --         color, the painting tinted with it, the beads take it in a wave, the
 --         slot opens all, empty;
 --         of the piece only its silhouette, black against the light
---   3.23  the silhouette cools into the piece as it is now (the forged one at 20)
---   3.25  SCATTO! falls from big and slams
---   3.65  what is new comes in, one line at a time; 4.20 CONTINUA rises
+--   5.23  the silhouette cools into the piece as it is now (the forged one at 20)
+--   5.25  SCATTO! falls from big and slams
+--   5.65  what is new comes in, one line at a time; 6.20 CONTINUA rises
 --
 --   local scene = require "ui.step_scene"
 --   local sc = scene.new({ slot_name =, set_name =, level =, lit =, icon_before =,
---     icon_after =, bg =, on_blow = function(i) end })
+--     icon_after =, bg = })
 --   scene.update(sc, dt) -> true while it runs
 --   scene.skip(sc)  -- a tap: to the reveal, then away
 --   scene.delete(sc)
@@ -37,11 +41,11 @@ local go_on = require("lang.text").podium.go_on
 local M = {}
 
 -- the beats (seconds)
-M.CHARGE, M.SUSPENSE, M.BOOM, M.REVEAL, M.TITLE = 0.45, 2.15, 2.75, 3.23, 3.25
-M.BLOWS = { { 1.30, 0.05, 0.42, 0.33 }, { 1.70, 0.07, 0.60, 0.50 }, { 2.02, 0.11, 0.80, 0.72 } } -- t, freeze, trauma, flash
-M.ROWS, M.GO = { 3.65, 3.80, 3.95 }, 4.20
+M.CHARGE, M.SUSPENSE, M.BOOM, M.REVEAL, M.TITLE = 0.70, 3.55, 4.75, 5.23, 5.25
+M.BLOWS = { { 1.85, 0.05, 0.42, 0.33 }, { 2.65, 0.07, 0.60, 0.50 }, { 3.40, 0.11, 0.80, 0.72 } } -- t, freeze, trauma, flash
+M.ROWS, M.GO = { 5.65, 5.80, 5.95 }, 6.20
 M.GROW = { 0.25, 0.5, 0.75 }  -- how far the step's slot has grown after each blow, from a bead to all
-M.HOLD = 7.0   -- it goes away by itself
+M.HOLD = 9.0   -- it goes away by itself
 local ROMAN = { "I", "II", "III", "IV" }
 local W, H = 1280, 720
 local KC = kit.C
@@ -192,14 +196,15 @@ local function events(sc, t, quiet)
 		if t >= at and not sc.fired[id] then sc.fired[id] = true; return true end
 	end
 	local sx, sy = sc.step_at.x, sc.step_at.y
+	if once("charge", 0) and not quiet then sound.play("#scatto_carica") end
 	for i, b in ipairs(M.BLOWS) do
 		if once("blow" .. i, b[1]) then
-			if not quiet and sc.o.on_blow then sc.o.on_blow(i) end
+			if not quiet then sound.play("#scatto_colpo" .. i) end
 			sparks(sc, sx, sy, ({ 10, 16, 26 })[i], KC.HOT, 120 + 50 * i)
 		end
 	end
 	if once("boom", M.BOOM) then
-		if not quiet then sound.play("#boom", { gain = 1, speed = 0.8 }) end
+		if not quiet then sound.play("#scatto_boom") end
 		sparks(sc, PX, PY, 36, sc.color, 520, true)
 		gui.set_enabled(sc.icon_before, false)
 		gui.set_enabled(sc.icon_after, true)
@@ -222,9 +227,10 @@ local function events(sc, t, quiet)
 		gui.set_enabled(sc.hot_icon, true)
 		sparks(sc, PX, PY, 14, KC.SEAM, 260, true)
 	end
-	if once("title", M.TITLE + 0.14) and not quiet then sound.play("#martello", { speed = 0.7 }) end
+	if once("title", M.TITLE + 0.14) and not quiet then sound.play("#scatto_titolo") end
 	for i, at in ipairs(M.ROWS) do
-		if once("row" .. i, at) and not quiet then sound.play("#scaglia", { speed = 1 + 0.15 * i }) end
+		-- 660, 880, 1100 Hz as on the page
+		if once("row" .. i, at) and not quiet then sound.play("#scatto_riga", { speed = 1 + (i - 1) / 3 }) end
 	end
 end
 
@@ -264,7 +270,7 @@ local function draw(sc, t)
 	local glow = t < M.SUSPENSE and 0.25 * seg(t, M.CHARGE, M.SUSPENSE) or (t < M.BOOM and 0.12 or lerp(1, 0.45, seg(t, M.BOOM, M.REVEAL + 0.6)))
 	gui.set_color(sc.glow, kit.with_alpha(t >= M.BOOM and sc.color or KC.HOT_BOTTOM, glow))
 	-- the piece: to the middle, it grows, takes the blows; at the explosion only its silhouette
-	local ds = lerp(0.85, 1.05, eo(seg(t, M.CHARGE, 1.25)))
+	local ds = lerp(0.85, 1.05, eo(seg(t, M.CHARGE, M.CHARGE + 0.8)))
 	for _, b in ipairs(M.BLOWS) do
 		if t >= b[1] then ds = ds - (t < b[1] + b[2] and 0.08 or 0.08 * math.exp(-(t - b[1] - b[2]) / 0.09)) end
 	end
@@ -282,7 +288,7 @@ local function draw(sc, t)
 		alpha(sc.hot_icon, t < M.REVEAL and 0 or math.exp(-(t - M.REVEAL) / 0.18))
 	end
 	-- the bar: it comes up; the step's slot grows at each blow
-	local na = eo(seg(t, M.CHARGE, 0.7))
+	local na = eo(seg(t, M.CHARGE, M.CHARGE + 0.25))
 	gui.set_position(sc.ingots, vec(ox * 0.6, oy * 0.6 - (1 - na) * 40))
 	if t < M.BOOM then
 		local beat = 0
@@ -347,6 +353,8 @@ end
 -- a tap: straight to the end of the reveal; there, away
 function M.skip(sc)
 	if sc.t < M.GO + 0.35 then
+		-- the charge's hum would go on over the reveal
+		if sc.t < M.SUSPENSE then sound.stop("#scatto_carica") end
 		sc.t = M.GO + 0.35
 		sc.quiet = true
 		events(sc, sc.t, true)

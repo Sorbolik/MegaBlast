@@ -1,0 +1,4 @@
+sound: "/assets/sounds/scatto_colpo2.ogg"
+looping: 0
+group: "master"
+gain: 0.9

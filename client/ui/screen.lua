@@ -38,6 +38,17 @@ function M.from_touch(x, y)
 	return M.W / 2 + (x - M.W / 2) * M.kx, M.H / 2 + (y - M.H / 2) * M.ky
 end
 
+-- Where a node is, in game coordinates (those of a node without parent).
+-- gui.get_screen_position gives window pixels: on a phone (2712 x 1220) they
+-- are not the game's 1280 x 720, and an effect put there flies off the screen.
+function M.node_pos(node)
+	local p = gui.get_screen_position(node)
+	local w, h = window.get_size()
+	if w <= 0 or h <= 0 then return p end
+	local u = math.min(w / M.W, h / M.H)
+	return vmath.vector3(M.W / 2 + (p.x - w / 2) / u, M.H / 2 + (p.y - h / 2) / u, 0)
+end
+
 function M.on_touch(x, y)
 	return M.W / 2 + (x - M.W / 2) / M.kx, M.H / 2 + (y - M.H / 2) / M.ky
 end

@@ -20,6 +20,7 @@
 local ui = require "ui.ui"
 local kit = require "ui.kit"
 local coins = require "ui.coins"
+local screen = require "ui.screen"
 local T = require("lang.text").armory
 
 local M = {}
@@ -63,13 +64,13 @@ function M.new(o)
 	local sl = { o = o, t = 0, nodes = {}, fired = {} }
 	local stud = o.bar.studs[o.lit]
 	sl.lit = o.bar.lit_parts[o.lit] or {}
-	sl.to = gui.get_screen_position(stud)
+	sl.to = screen.node_pos(stud)
 	-- the stud is dark until the gem arrives
 	for _, n in ipairs(sl.lit) do gui.set_enabled(n, false) end
 	-- the balance flashes, −cost under it
 	local w = o.wallet
 	if w and w.icons and w.icons.ossidiana then
-		sl.from = gui.get_screen_position(w.icons.ossidiana)
+		sl.from = screen.node_pos(w.icons.ossidiana)
 		local tx = w.text.ossidiana
 		gui.set_color(tx, KC.OBSIDIAN)
 		gui.animate(tx, "color", KC.SAND, gui.EASING_OUTQUAD, 0.5, 0.15)
