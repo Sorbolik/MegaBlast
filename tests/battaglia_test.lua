@@ -53,10 +53,14 @@ gui = {
 resource = { get_text_metrics = function(_, txt) return { width = 20 * #txt, height = 40 } end }
 
 local game = require "sim.game"
--- the pivots moved in the editor (battle/pivots.lua) are Sergio's data and
--- change: here the mechanics are tested with still pivots, and the tests that
--- move them set their own
-package.loaded["battle.pivots"] = {}
+-- each character's animations, pivots and grips (battle/characters.lua); the
+-- tests use everyone's character (scoria.PERSONAGGIO)
+local CH = require "battle.characters"
+local ORIGINAL_PIVOTS = CH.apprendista_nuovo.pivots
+-- the pivots moved in the editor (battle/characters/<name>/pivots.lua) are
+-- Sergio's data and change: here the mechanics are tested with still pivots,
+-- and the tests that move them set their own
+CH.apprendista_nuovo.pivots = {}
 local scoria = require "battle.scoria"
 local camera = require "battle.camera"
 local plate = require "battle.plate"
@@ -102,8 +106,8 @@ local st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = t
 for _ = 1, 60 do scoria.update(s, 1 / 60, st) end
 check(everything_done(), "at rest: finite values")
 
--- grip, pivot and shoulder of each weapon (battle/grips.lua)
-local GRIPS = require "battle.grips"
+-- grip, pivot and shoulder of each weapon (battle/characters/<name>/grips.lua)
+local GRIPS = CH.apprendista_nuovo.grips
 local D0 = require "battle.devil"
 -- whoever grips the weapon (the clip says who) holds it: the little hand sits
 -- on the grip, the arm points toward the grip (it reaches it only if the grip
@@ -204,10 +208,10 @@ scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "new match: the body comes back")
 check(math.abs(game.DISEGNO_H - s.h) < 1e-9, "the body is as tall as the drawing (DISEGNO_H)")
 
--- Poses (battle/pose.lua) and clips (battle/animations.lua) --------------
+-- Poses (battle/pose.lua) and clips (battle/characters/<name>/animations.lua) --------------
 
 local pose = require "battle.pose"
-local A = require "battle.animations"
+local A = CH.apprendista_nuovo.animations
 local function near(a, b) return math.abs(a - b) < 1e-6 end
 local clip = { duration = 1, loop = true, tracks = { testa = { 0, 0, 0, 0.5, 1, 1, 0.75, 2, 2 } },
 	face = { 0.2, "testa_felice", 0.6, "testa_ko" } }
@@ -245,20 +249,38 @@ for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute"
 	"scende_arma", "mira" }) do
 	check(A[nome] ~= nil, "animations: there is the clip " .. nome)
 end
-local A_fav = require "battle.animations_favilla"
+local A_fav = CH.favilla.animations
 for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute", "colpito", "vittoria",
 	"sconfitta", "naso", "sbadiglio", "guarda_coda", "fermo_arma", "corsa_arma", "aria_arma", "sale_arma",
 	"scende_arma", "mira" }) do
 	check(A_fav[nome] ~= nil, "favilla animations: there is the clip " .. nome)
 end
+-- each character its own animations, pivots and grips: changing one never
+-- changes another; whoever wears no character is everyone's
+local rig_new = scoria.new(vec(1, 0.2, 0.3, 1))
 local rig_ap = scoria.new(vec(1, 0.2, 0.3, 1), { "apprendista" })
 local rig_fav = scoria.new(vec(0.5, 0.8, 0.9, 1), { "favilla" })
-check(rig_ap.personaggio == "apprendista" and rig_ap.A == A, "scoria: apprendista uses default animations")
-check(rig_fav.personaggio == "favilla" and rig_fav.A == A_fav, "scoria: favilla uses character-specific animations")
+check(rig_new.personaggio == scoria.PERSONAGGIO[1] and rig_new.A == A, "scoria: without a character, everyone's (apprendista_nuovo)")
+check(rig_ap.personaggio == "apprendista" and rig_ap.A == CH.apprendista.animations and rig_ap.grips == CH.apprendista.grips,
+	"scoria: the old apprentice uses its own animations and grips")
+check(rig_fav.personaggio == "favilla" and rig_fav.A == A_fav and rig_fav.grips == CH.favilla.grips,
+	"scoria: favilla uses her own animations and grips")
+local shared = false
+for _, a in ipairs({ "apprendista_nuovo", "apprendista", "favilla" }) do
+	for _, b in ipairs({ "apprendista_nuovo", "apprendista", "favilla" }) do
+		for _, f in ipairs({ "animations", "pivots", "grips" }) do
+			if a ~= b and CH[a][f] == CH[b][f] then shared = true end
+		end
+	end
+end
+check(not shared, "characters: nobody shares animations, pivots or grips with another")
+check(require("sim.body")[scoria.PERSONAGGIO[1]] ~= nil and require("sim.body").active == scoria.PERSONAGGIO[1],
+	"the game's hitbox is everyone's character's (sim/body.lua active)")
+check(ORIGINAL_PIVOTS ~= nil, "the new apprentice has its pivots")
 
 -- the pieces' forward-back and up-down moves
 do
-	local A2 = require "battle.animations"
+	local A2 = CH.apprendista_nuovo.animations
 	local old_f = A2.fermo
 	A2.fermo = { duration = 1, loop = true, tracks = { testa_x = { 0, 10, 0 }, braccio_d_y = { 0, -8, 0 }, coda_x = { 0, 5, 0 } } }
 	local v = scoria.new(vec(1, 0.2, 0.3, 1))
@@ -273,11 +295,11 @@ do
 	A2.fermo = old_f
 end
 
--- the pivots moved in the editor (battle/pivots.lua): the joint moves, the
+-- the pivots moved in the editor (battle/characters/<name>/pivots.lua): the joint moves, the
 -- pieces the opposite way, so at rest they stay where they are
 do
 	local D = require "battle.devil"
-	package.loaded["battle.pivots"] = { braccio = { 3, -2 }, testa = { 1, 4 } }
+	CH.apprendista_nuovo.pivots = { braccio = { 3, -2 }, testa = { 1, 4 } }
 	package.loaded["battle.scoria"] = nil
 	local sc2 = require "battle.scoria"
 	local v = sc2.new(vec(1, 0.2, 0.3, 1))
@@ -294,7 +316,7 @@ do
 		"pivots: the arm turns around the moved pivot and at rest stays where it was")
 	check(head and math.abs(head.pos.y - (D.pieces.testa.y - 4) * k) < 1e-6,
 		"pivots: the head stays where it was")
-	package.loaded["battle.pivots"] = {}
+	CH.apprendista_nuovo.pivots = {}
 	package.loaded["battle.scoria"] = nil
 	scoria = require "battle.scoria"
 end
@@ -303,7 +325,7 @@ end
 -- they are, the torso turns around its pivot
 do
 	local function pieces_of(pivots)
-		package.loaded["battle.pivots"] = pivots
+		CH.apprendista_nuovo.pivots = pivots
 		package.loaded["battle.scoria"] = nil
 		local sc2 = require "battle.scoria"
 		local from_pt = #nodes
@@ -317,7 +339,7 @@ do
 		return v, found_ones
 	end
 	-- at rest: a still clip, so a turned torso in the real fermo doesn't count
-	local A2 = require "battle.animations"
+	local A2 = CH.apprendista_nuovo.animations
 	local old_fermo = A2.fermo
 	A2.fermo = { duration = 1, loop = true, tracks = {} }
 	local v0, p0 = pieces_of({})
@@ -334,7 +356,7 @@ do
 	local PT = D0.points
 	local gx, gy = world(v1.forma, (PT.bacino[1] + 3 + v1.posa.busto_x) * v1.k, (PT.bacino[2] + 20 + v1.posa.busto_y) * v1.k)
 	check(math.abs(px - gx) < 1e-6 and math.abs(py - gy) < 1e-6, "pivots: the torso turns around its pivot")
-	package.loaded["battle.pivots"] = {}
+	CH.apprendista_nuovo.pivots = {}
 	package.loaded["battle.scoria"] = nil
 	scoria = require "battle.scoria"
 end
@@ -342,7 +364,7 @@ end
 -- the front arm's pivot moved: the weapon stays in the hand (with an aim that
 -- moves nothing and the front arm gripping)
 do
-	local A2 = require "battle.animations"
+	local A2 = CH.apprendista_nuovo.animations
 	local old_f = A2.mira_missile
 	A2.mira_missile = { duration = 1, loop = true, tracks = {} }
 	-- a grip as far from the shoulder as the arm is long (the real one is moved
@@ -350,7 +372,7 @@ do
 	local real_grip = GRIPS.missile
 	-- (the arm grows with the body, CORPO, the weapon doesn't: 36, 120 for CORPO 1.65)
 	GRIPS.missile = { grip = { 2.4, -4 }, pivot = { -6.9, -4 }, shoulder = { 36, 120 } }
-	package.loaded["battle.pivots"] = { braccio = { 3, -2 } }
+	CH.apprendista_nuovo.pivots = { braccio = { 3, -2 } }
 	package.loaded["battle.scoria"] = nil
 	local sc2 = require "battle.scoria"
 	local v = sc2.new(vec(1, 0.2, 0.3, 1))
@@ -364,14 +386,14 @@ do
 	check(math.abs(gx - hx) < 0.5 and math.abs(gy - hy) < 0.5 and px ~= gx, "pivots: with the arm's pivot moved the weapon stays in the hand")
 	A2.mira_missile = old_f
 	GRIPS.missile = real_grip
-	package.loaded["battle.pivots"] = {}
+	CH.apprendista_nuovo.pivots = {}
 	package.loaded["battle.scoria"] = nil
 	scoria = require "battle.scoria"
 end
 
 -- the pieces the clips show and remove, and the clips with the weapon in hand
 do
-	local A2 = require "battle.animations"
+	local A2 = CH.apprendista_nuovo.animations
 	local old_fs = { fermo = A2.fermo, fermo_arma = A2.fermo_arma, fermo_arma_missile = A2.fermo_arma_missile }
 	A2.fermo_arma_missile = nil
 	A2.fermo = { duration = 1, loop = true, tracks = { mostra_braccio_a = { 0, 0, 2 }, mostra_manina_a = { 0, 1, 2 },
@@ -415,7 +437,7 @@ end
 
 -- the clips for one weapon only (fermo_arma_mallet) and each weapon's grips
 do
-	local A2 = require "battle.animations"
+	local A2 = CH.apprendista_nuovo.animations
 	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }
 	local function turn_around(nome)
 		package.loaded["battle.scoria"] = nil
@@ -446,10 +468,11 @@ do
 	A2.fermo_arma_sword = nil
 	package.loaded["battle.scoria"] = nil
 	scoria = require "battle.scoria"
-	local PR = require "battle.grips"
-	for nome in pairs(require("battle.weapons").weapons) do
-		local g = PR[nome]
-		check(g ~= nil and #g.grip == 2 and #g.pivot == 2 and #g.shoulder == 2, nome .. ": has grip, pivot and shoulder")
+	for who, data in pairs(CH) do
+		for nome in pairs(require("battle.weapons").weapons) do
+			local g = data.grips[nome]
+			check(g ~= nil and #g.grip == 2 and #g.pivot == 2 and #g.shoulder == 2, who .. ", " .. nome .. ": has grip, pivot and shoulder")
+		end
 	end
 
 	-- the clip picks who grips the weapon; the weapon turns around the pivot,
@@ -465,7 +488,7 @@ do
 		sc.update(v, 0, st2)
 		return v
 	end
-	local g = PR.sword
+	local g = CH.apprendista_nuovo.grips.sword
 	local function neighbors(ax, ay, bx, by) return math.abs(ax - bx) < 0.3 and math.abs(ay - by) < 0.3 end
 	local function pivot(v) return world(v.armi.sword, g.pivot[1], g.pivot[2]) end
 	local v1 = try_it({ arma = { 0, 0.3, 2 } }, "manina_d")

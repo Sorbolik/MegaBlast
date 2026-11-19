@@ -3,15 +3,16 @@
 
 Mette dentro tools/animazioni/editor.html i pezzi veri del diavoletto
 (client/assets/devil/*.png), i perni (client/battle/devil.lua), le
-pelli disegnate sullo stampino (client/battle/skins.lua), le
-animazioni di adesso (client/battle/animations.lua), l'altezza del disegno
-(client/sim/game.lua), le hitbox (client/sim/body.lua), i perni spostati
-(client/battle/pivots.lua), le armi in mano (client/battle/weapons.lua, immagini
-in client/assets/weapons) con le loro impugnature (client/battle/grips.lua),
+pelli disegnate sullo stampino (client/battle/skins.lua), per ogni personaggio
+(client/battle/characters.lua) le sue animazioni, i suoi perni spostati e le sue
+impugnature (client/battle/characters/<nome>/animations.lua, pivots.lua,
+grips.lua) e le sue hitbox (client/sim/body.lua), l'altezza del disegno
+(client/sim/game.lua), le armi in mano (client/battle/weapons.lua, immagini
+in client/assets/weapons),
 la taratura del mantello (client/battle/cape_tuning.lua, immagini in client/assets/capes)
 e i colori delle squadre (client/ui/ui.lua), e scrive
 simulazione/animazioni/editor.html: si apre col doppio clic (Chrome o Edge
-salvano direttamente in client/battle/animations.lua) e si pubblica com'è
+salvano direttamente nei file del gioco) e si pubblica com'è
 come Artifact di claude.ai.
 
     python3 tools/animazioni/prepara.py
@@ -86,19 +87,27 @@ def main():
     passo = {k: float(re.search(r"%s = ([0-9.]+) \* M\.U" % k, game).group(1)) * u for k in ("walk_speed", "jump_height")}
     squadre = re.search(r"SQUADRA = \{(.*)\}", leggi("client/ui/ui.lua")).group(1)
     colori = [[float(x) for x in c.split(",")] for c in re.findall(r"c\(([^)]*)\)", squadre)]
+    # ogni personaggio coi suoi file: cambiarne uno non cambia gli altri
+    nomi_p = re.findall(r"^\t(\w+) = \{$", leggi("client/battle/characters.lua"), re.M)
+    personaggi = {n: {
+        "animazioni": leggi("client/battle/characters/%s/animations.lua" % n),
+        "perni": leggi("client/battle/characters/%s/pivots.lua" % n),
+        "impugnature": leggi("client/battle/characters/%s/grips.lua" % n),
+    } for n in nomi_p}
+    corpo = leggi("client/sim/body.lua")
+    attivo = re.search(r'active = "(\w+)"', corpo).group(1)
+    assert attivo == personaggio[0] and attivo in personaggi, "le hitbox del gioco sono del personaggio di tutti"
     dati = {
         "diavoletto": diavoletto,
-        "animazioni": leggi("client/battle/animations.lua"),
-        "animazioni_favilla": leggi("client/battle/animations_favilla.lua"),
+        "personaggi": personaggi,
+        "attivo": attivo,
         "pelli": pelli,
-        "perni": leggi("client/battle/pivots.lua"),
         "armi": armi,
-        "impugnature": leggi("client/battle/grips.lua"),
         "armi_riposo": riposo,
         "personaggio": personaggio,
         "immagini": immagini,
         "disegno_h": misura["REF_H"] * misura["CORPO"],
-        "corpo": leggi("client/sim/body.lua"),
+        "corpo": corpo,
         "squadre": colori,
         "mantello": leggi("client/battle/cape_tuning.lua"),
         "cape_fp": shader_web(leggi("client/battle/cape.fp")),

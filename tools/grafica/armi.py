@@ -30,7 +30,8 @@ RADICE = os.path.join(QUI, "..", "..")
 OUT = os.path.join(RADICE, "client", "assets", "weapons")
 LUA = os.path.join(RADICE, "client", "battle", "weapons.lua")
 ATLAS = os.path.join(RADICE, "client", "battle", "weapons.atlas")
-PRESE = os.path.join(RADICE, "client", "battle", "grips.lua")
+# le impugnature del personaggio di tutti (per l'anteprima)
+PRESE = os.path.join(RADICE, "client", "battle", "characters", "apprendista_nuovo", "grips.lua")
 ANTEPRIMA = os.path.join(RADICE, "simulazione", "foto", "armi_anteprima.png")
 RICALCO = os.path.join(RADICE, "art", "armi")
 
@@ -47,7 +48,7 @@ from vettori import BORDO, COL, Disegno, rendi  # noqa: E402
 PUNTA_RAMPINO = 15.2
 
 # Le armi in mano: la scatola (x0, y0, x1, y1) nel mondo. x verso dove si mira, y in
-# su. Il punto dove la mano le tiene non è qui: lo dice client/battle/grips.lua, fatto
+# su. Il punto dove la mano le tiene non è qui: lo dice client/battle/characters/<personaggio>/grips.lua, fatto
 # nell'editor delle animazioni (l'anteprima lo legge per disegnare il pugno).
 ARMI = {
     "missile": (-11.5, -8, 16.5, 6.5),
@@ -226,7 +227,7 @@ def main():
     lua = ["-- Made by tools/grafica/armi.py, do not edit by hand.",
            "-- The weapons in world units (shots from their center), x forward and",
            "-- y up. For each one: image (tint: the parts in the team color), center",
-           "-- (x, y) and size (w, h). Where the hand holds them: battle/grips.lua.",
+           "-- (x, y) and size (w, h). Where the hand holds them: battle/characters/<name>/grips.lua.",
            "return {", "\tweapons = {"]
     foglio = []
     prese = impugnature()
@@ -277,7 +278,7 @@ def main():
 
 
 def impugnature():
-    # battle/grips.lua: nome = { grip = { x, y }, ... }, la presa
+    # grips.lua: nome = { grip = { x, y }, ... }, la presa
     with open(PRESE) as f:
         return {n: [(float(x), float(y))] for n, x, y in
                 re.findall(r"^\s*(\w+)\s*=\s*\{\s*grip\s*=\s*\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}", f.read(), re.M)}

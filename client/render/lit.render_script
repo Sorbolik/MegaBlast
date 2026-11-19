@@ -202,7 +202,18 @@ end
 local function silhouettes(self, state)
     local o = self.outline
     local w, h = math.max(1, math.floor(o.z + 0.5)), math.max(1, math.floor(o.w + 0.5))
-    if not self.rt_u or self.rt_w ~= w or self.rt_h ~= h then
+    -- The images are made only when they must grow, never smaller: the devil's
+    -- rectangle changes by a pixel as it slides (a door, the pieces coming in)
+    -- and shrinks and grows with the ZAINO, and seven images made again in a
+    -- frame were a stutter every frame (Sergio, 19 Nov). They are made as big as
+    -- the devil at rest (room, menu/outline.lua) or as needed, a little more, and
+    -- the passes draw only the rectangle's corner of them: the materials read them
+    -- through rect, which is the images' size
+    local rw, rh = math.max(self.rt_w or 0, self.room_w or 0), math.max(self.rt_h or 0, self.room_h or 0)
+    -- (past them: a quarter more, so an overshoot doesn't make them again every frame)
+    if w > rw then rw = math.ceil(w * 1.25) end
+    if h > rh then rh = math.ceil(h * 1.25) end
+    if not self.rt_u or rw ~= self.rt_w or rh ~= self.rt_h then
         if self.rt_u then
             render.delete_render_target(self.rt_u)
             render.delete_render_target(self.rt_v)
@@ -213,7 +224,7 @@ local function silhouettes(self, state)
             render.delete_render_target(self.rt_g)
         end
         local params = { [graphics.BUFFER_TYPE_COLOR0_BIT] = {
-            format = graphics.TEXTURE_FORMAT_RGBA, width = w, height = h,
+            format = graphics.TEXTURE_FORMAT_RGBA, width = rw, height = rh,
             min_filter = graphics.TEXTURE_FILTER_LINEAR, mag_filter = graphics.TEXTURE_FILTER_LINEAR,
             u_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE, v_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE } }
         self.rt_u = render.render_target("sagome_u", params)
@@ -223,8 +234,11 @@ local function silhouettes(self, state)
         self.rt_d = render.render_target("sagome_d", params)
         self.rt_e = render.render_target("sagome_e", params)
         self.rt_g = render.render_target("sagome_g", params)
-        self.rt_w, self.rt_h = w, h
+        self.rt_w, self.rt_h = rw, rh
     end
+    -- the passes draw the rectangle w x h in the images' corner (the clears
+    -- clear all of them: nothing old stays past it)
+    local iw, ih = self.rt_w, self.rt_h
     render.set_view(vmath.matrix4())
     render.set_projection(vmath.matrix4_orthographic(o.x, o.x + w, o.y, o.y + h, -1, 1))
     render.set_viewport(0, 0, w, h)
@@ -249,7 +263,7 @@ local function silhouettes(self, state)
     -- the slits of "u" closed (battle/silhouette_close.fp): grown into "d", shrunk
     -- back into "e", which is what the contour reads
     render.disable_state(graphics.STATE_BLEND)
-    self.pass.rect = vmath.vector4(0, 0, w, h)
+    self.pass.rect = vmath.vector4(0, 0, iw, ih)
     render.set_render_target(self.rt_d)
     render.clear(self.clear_black)
     self.pass.pass = vmath.vector4(0, 0, self.outline_close or 0, 0)
@@ -285,7 +299,7 @@ local function silhouettes(self, state)
 
     render.set_render_target(render.RENDER_TARGET_DEFAULT)
     render.disable_state(graphics.STATE_BLEND)
-    self.lights.rect = vmath.vector4(o.x, o.y, w, h)
+    self.lights.rect = vmath.vector4(o.x, o.y, iw, ih)
 end
 
 function update(self)
@@ -382,6 +396,7 @@ function on_message(self, message_id, message)
     elseif message_id == MSG_OUTLINE then
         -- the window rectangle of the silhouettes (x, y, w, h), or nothing: off
         self.outline = message.rect
+        self.room_w, self.room_h = message.room_w, message.room_h
         self.outline_close = message.close
         self.outline_glow = message.glow
     elseif message_id == MSG_USE_FIXED_PROJ then

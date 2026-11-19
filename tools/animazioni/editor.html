@@ -9,7 +9,7 @@
   non ha i dati; tools/animazioni/prepara.py ci mette pezzi, perni e
   animazioni e scrive simulazione/animazioni/editor.html. Disegna il diavoletto
   come battle/scoria.lua (stessi giunti, stesso ordine) e campiona le clip
-  come battle/pose.lua; salva battle/animations.lua nello stesso formato.
+  come battle/pose.lua; salva battle/characters/<personaggio>/animations.lua nello stesso formato.
 -->
 <style>
 /* banco di lavoro alto quanto la finestra, niente scorrimento della pagina: clip a sinistra,
@@ -169,6 +169,18 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<button id="specchia" title="Specchia il pezzo che hai cliccato sul palco (tasto F): attorno al suo perno. Lo trovi anche in Strumenti, Ritocca i pezzi">specchia</button>
 			<button id="zoom-via" title="Zoom: la rotellina sul palco ingrandisce dove sta il mouse (sui pezzi in SVG resta nitido); questo torna alla misura di partenza">zoom 1:1</button>
 		</div>
+		<div class="barra" id="barra-copia" title="Ogni personaggio ha animazioni, perni, impugnature e hitbox solo suoi: cambiarne uno non cambia gli altri. Da qui copi da un altro personaggio su quello su cui lavori, solo quello che scegli">
+			<label>copia da <select id="cd-da"></select></label>
+			<label><select id="cd-cosa">
+				<option value="clip">questa clip</option>
+				<option value="clips">tutte le clip</option>
+				<option value="perni">i perni</option>
+				<option value="impugnature">le impugnature</option>
+				<option value="hitbox">le hitbox</option>
+				<option value="tutto">tutto (clip, perni, impugnature, hitbox)</option>
+			</select></label>
+			<button id="cd-incolla">Incolla</button>
+		</div>
 		<div id="secchio" title="Trascina un pezzo sul palco per metterlo in scena dove vuoi (da questo momento della clip); trascinalo dal palco qui per toglierlo"></div>
 		<div class="scena">
 			<canvas id="palco"></canvas>
@@ -207,15 +219,15 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 		</div>
 		<details id="fisica">
 		<summary>Impugnature, hitbox e perni<span id="fisica-stato"></span></summary>
-		<div class="barra" id="barra-prese" hidden title="Presa, perno e spalla di ogni arma (client/battle/grips.lua): valgono per tutte le clip con quell'arma">
+		<div class="barra" id="barra-prese" hidden title="Presa, perno e spalla di ogni arma (client/battle/characters/<personaggio>/grips.lua): valgono per tutte le clip del personaggio con quell'arma">
 			<label style="color: var(--presa)"><input type="checkbox" id="vedi-prese" checked> presa e perno</label>
 			<span style="color: var(--tenue)">cerchio blu: presa · croce: perno (anche Alt sull'arma)</span>
 			<span id="pr-stato"></span>
 			<span class="spazio"></span>
 			<button id="pr-gioco" title="Le impugnature di adesso del gioco">Come nel gioco</button>
-			<button id="pr-salva" title="Salva grips.lua (va in client/battle/)">Salva grips.lua</button>
+			<button id="pr-salva" title="Salva grips.lua (va in client/battle/characters/<personaggio>/)">Salva grips.lua</button>
 		</div>
-		<div class="barra" title="Le hitbox sono fisica (client/sim/body.lua): cambiano il gioco per tutti, anche online, non il disegno">
+		<div class="barra" title="Le hitbox sono fisica (client/sim/body.lua, una riga per personaggio): quelle del personaggio di tutti cambiano il gioco per tutti, anche online, non il disegno">
 			<label style="color: var(--hitbox)"><input type="checkbox" id="vedi-cammina" checked> camminare</label>
 			<label>largo <input type="number" class="hb" id="hb-largo" step="0.1" min="4"></label>
 			<label>alto <input type="number" class="hb" id="hb-alto" step="0.1" min="4"></label>
@@ -223,16 +235,17 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label>raggio <input type="number" class="hb" id="hb-raggio" step="0.1" min="2"></label>
 			<label>centro <input type="number" class="hb" id="hb-centro" step="0.1" min="0"></label>
 			<span id="hb-stato"></span>
+			<span id="hb-nota" style="color: var(--tenue)"></span>
 			<span class="spazio"></span>
 			<button id="hb-gioco" title="Le hitbox di adesso del gioco">Come nel gioco</button>
-			<button id="hb-salva" title="Salva corpo.lua (va in client/sim/)">Salva corpo.lua</button>
+			<button id="hb-salva" title="Salva body.lua (va in client/sim/): cambia solo la riga del personaggio">Salva body.lua</button>
 		</div>
 		<div class="barra" title="Il punto attorno a cui gira il pezzo: con Trascina: perno lo sposti, il pezzo da fermo resta dov'è">
 			<label>perni dei pezzi (con Trascina: perno)</label>
 			<span id="pn-stato"></span>
 			<span class="spazio"></span>
 			<button id="pn-gioco" title="I perni di adesso del gioco">Come nel gioco</button>
-			<button id="pn-salva" title="Salva pivots.lua (va in client/battle/)">Salva pivots.lua</button>
+			<button id="pn-salva" title="Salva pivots.lua (va in client/battle/characters/<personaggio>/)">Salva pivots.lua</button>
 		</div>
 		</details>
 	</section>
@@ -410,28 +423,48 @@ const P = D.pezzi, PT = D.punti;
 const K = DATI.disegno_h / D.altezza; // pixel del mondo per unità del disegno
 const LARGO = D.altezza * 0.75; // largo come in battle/scoria.lua, per l'ombra
 
-// Le hitbox (sim/body.lua), in pixel del mondo dai piedi: la capsula per
-// camminare e il cerchio dei colpi
-const CORPO_GIOCO = leggiDati(DATI.corpo, CAMPI.corpo);
-let hb = JSON.parse(JSON.stringify(CORPO_GIOCO));
-// corpo.lua com'è, coi numeri nuovi (i commenti restano)
-function corpoInLua(c) {
-	const n = (v) => String(Math.round(v * 100) / 100);
-	return DATI.corpo
-		.replace(/(cammina|walk) = \{[^}]*\}/, `walk = { width = ${n(c.cammina.largo)}, height = ${n(c.cammina.alto)} }`)
-		.replace(/(colpi|hit) = \{[^}]*\}/, `hit = { radius = ${n(c.colpi.raggio)}, center = ${n(c.colpi.centro)} }`);
+// I personaggi: ognuno ha le sue animazioni, i suoi perni, le sue impugnature
+// (client/battle/characters/<nome>/) e le sue hitbox (una riga di sim/body.lua).
+// Cambiarne uno non cambia mai gli altri; si copia da uno all'altro solo con
+// "Copia da" (Sergio, 19 nov). Il gioco usa quelli del personaggio di tutti
+// (DATI.attivo, scoria.PERSONAGGIO).
+const PERSONAGGI = DATI.personaggi;
+let pers = DATI.attivo; // il personaggio su cui lavori adesso
+// il testo di un file del personaggio (animazioni, perni, impugnature); uno
+// nuovo, senza file, parte da quelli del personaggio di tutti
+const testoDi = (p, tipo) => (PERSONAGGI[p] ? PERSONAGGI[p][tipo] : PERSONAGGI[DATI.attivo][tipo].split(DATI.attivo).join(p));
+// le bozze nel browser: una per personaggio e per tipo
+const chiaveBozza = (tipo, p = pers) => `megablast-${tipo}@${p}`;
+function leggiBozza(tipo, p) { try { return localStorage.getItem(chiaveBozza(tipo, p)); } catch (e) { return null; } }
+function scriviBozza(tipo, testo) {
+	try { if (testo === null) localStorage.removeItem(chiaveBozza(tipo)); else localStorage.setItem(chiaveBozza(tipo), testo); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
 }
-const CORPO_DEL_GIOCO = corpoInLua(CORPO_GIOCO);
+const copia = (v) => JSON.parse(JSON.stringify(v));
+
+// Le hitbox (sim/body.lua), in pixel del mondo dai piedi: la capsula per
+// camminare e il cerchio dei colpi, per personaggio
+const CORPI = leggiDati(DATI.corpo, CAMPI.corpo);
+const corpoDi = (p) => CORPI[p] || CORPI[DATI.attivo];
+let CORPO_GIOCO = corpoDi(pers);
+let hb = copia(CORPO_GIOCO);
+// body.lua com'è, coi numeri nuovi solo nella riga del personaggio (le altre e i commenti restano)
+function corpoInLua(c, p = pers) {
+	const n = (v) => String(Math.round(v * 100) / 100);
+	const riga = `\t${p} = { walk = { width = ${n(c.cammina.largo)}, height = ${n(c.cammina.alto)} }, hit = { radius = ${n(c.colpi.raggio)}, center = ${n(c.colpi.centro)} } },`;
+	const re = new RegExp(`^\\t${p} = \\{.*\\},?$`, "m");
+	return re.test(DATI.corpo) ? DATI.corpo.replace(re, riga) : DATI.corpo.replace(/\}\s*$/, riga + "\n}\n");
+}
+let CORPO_DEL_GIOCO = corpoInLua(CORPO_GIOCO);
 let corpoSalvato = CORPO_DEL_GIOCO;
 
-// I perni spostati (battle/pivots.lua), come li usa battle/scoria.lua: per
+// I perni spostati (battle/characters/<personaggio>/pivots.lua), come li usa battle/scoria.lua: per
 // posto, di quanto si sposta il giunto; i pezzi del posto al contrario
 // (coda: la radice; pugno: le due manine)
 const POSTI_PERNO = ["busto", "testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala", "coda", "pugno"];
 const PERNABILI = { busto: "busto", testa: "testa", braccio_a: "braccio", braccio_d: "braccio_dietro", gamba_a: "gamba", gamba_d: "gamba_dietro",
 	ala: "ala", coda: "coda", manina_a: "pugno", manina_d: "pugno" };
-const PERNI_GIOCO = Object.assign({}, leggiLua(DATI.perni));
-let pn = JSON.parse(JSON.stringify(PERNI_GIOCO));
+let PERNI_GIOCO = Object.assign({}, leggiLua(testoDi(pers, "perni")));
+let pn = copia(PERNI_GIOCO);
 const sposto = (posto) => pn[posto] || [0, 0];
 function J(posto) {
 	const b = { testa: PT.collo, braccio: PT.spalle, braccio_dietro: [-PT.spalle[0], PT.spalle[1]], gamba: PT.anche,
@@ -442,9 +475,9 @@ function J(posto) {
 function perniInLua(p) {
 	const n = (v) => String(Math.round(v * 10) / 10);
 	const righe = POSTI_PERNO.filter((k) => p[k] && (p[k][0] || p[k][1])).map((k) => `\t${k} = { ${n(p[k][0])}, ${n(p[k][1])} },\n`);
-	return DATI.perni.replace(/return \{[\s\S]*$/, "return {\n" + righe.join("") + "}\n");
+	return testoDi(pers, "perni").replace(/return \{[\s\S]*$/, "return {\n" + righe.join("") + "}\n");
 }
-const PERNI_DEL_GIOCO = perniInLua(PERNI_GIOCO);
+let PERNI_DEL_GIOCO = perniInLua(PERNI_GIOCO);
 let perniSalvati = PERNI_DEL_GIOCO;
 
 // Le pelli (battle/skins.lua), come le veste battle/scoria.lua: per posto i
@@ -742,46 +775,9 @@ function posaNeutra() { const p = { viso: null, pesoViso: 0 }; for (const c of C
 
 // ---------------------------------------------------------------------------
 // Lo stato dell'editor
-const DEL_GIOCO_MAP = {
-	apprendista: DATI.animazioni,
-	favilla: DATI.animazioni_favilla || DATI.animazioni,
-};
-const SALVATO_MAP = {
-	apprendista: DEL_GIOCO_MAP.apprendista,
-	favilla: DEL_GIOCO_MAP.favilla,
-};
-const CLIPS_MAP = {};
-
-function personaggioAttivo() {
-	return (typeof addosso !== "undefined" && addosso && addosso.personaggio === "favilla") ? "favilla" : "apprendista";
-}
-function fileAnimazioniAttivo() {
-	return personaggioAttivo() === "favilla" ? "animations_favilla.lua" : "animations.lua";
-}
-function endpointAnimazioniAttivo() {
-	return personaggioAttivo() === "favilla" ? "animazioni_favilla" : "animazioni";
-}
-function animazioniOriginaliDelGioco() {
-	return DEL_GIOCO_MAP[personaggioAttivo()];
-}
-// la bozza nel browser è una per personaggio ("megablast-animazioni-<p>"); la chiave
-// vecchia senza personaggio vale per l'apprendista
-function caricaBozzaPersonaggio(p) {
-	const def = DEL_GIOCO_MAP[p] || DATI.animazioni;
-	try {
-		const bozza = localStorage.getItem("megablast-animazioni-" + p) || (p === "apprendista" ? localStorage.getItem("megablast-animazioni") : null);
-		if (bozza && bozza.trim() && bozza.trim() !== def.trim()) {
-			return { clips: clipDaLua(bozza), bozza: true };
-		}
-	} catch (e) {}
-	return { clips: clipDaLua(def), bozza: false };
-}
-
-let clips = clipDaLua(DATI.animazioni);
-const DEL_GIOCO = clipInLua(clips);
+let clips = clipDaLua(testoDi(pers, "animazioni"));
+let DEL_GIOCO = clipInLua(clips);
 let salvato = DEL_GIOCO;
-CLIPS_MAP.apprendista = clips;
-SALVATO_MAP.apprendista = salvato;
 
 let nome = "fermo";
 let tempo = 0; // tempo dentro la clip
@@ -802,43 +798,112 @@ function messaggio(t) {
 	m.textContent = t; m.classList.add("si");
 	clearTimeout(messaggio.t); messaggio.t = setTimeout(() => m.classList.remove("si"), 2600);
 }
-function memorizza() {
-	const p = personaggioAttivo();
-	const lua = clipInLua(clips);
-	try {
-		localStorage.setItem("megablast-animazioni-" + p, lua);
-		if (p === "apprendista") localStorage.removeItem("megablast-animazioni");
-	} catch (e) { /* senza memoria del browser si lavora lo stesso */ }
-}
-function cambiaPersonaggio(da, a) {
-	if (da === a) return;
-	CLIPS_MAP[da] = clips;
-	SALVATO_MAP[da] = salvato;
-	memorizza();
+function memorizza() { scriviBozza("animazioni", clipInLua(clips)); }
 
-	if (CLIPS_MAP[a]) {
-		clips = CLIPS_MAP[a];
-		salvato = SALVATO_MAP[a] || DEL_GIOCO_MAP[a];
-	} else {
-		const res = caricaBozzaPersonaggio(a);
-		clips = res.clips;
-		salvato = DEL_GIOCO_MAP[a];
-		CLIPS_MAP[a] = clips;
-		SALVATO_MAP[a] = salvato;
-		if (res.bozza) {
-			$("avviso-testo").textContent = "Ho riaperto il lavoro su " + a + " che avevi lasciato in questo browser.";
-			$("avviso").classList.add("si");
-		} else {
-			$("avviso").classList.remove("si");
-		}
-	}
-	if (!clips[nome]) nome = Object.keys(clips)[0];
+// Il lavoro di ogni personaggio (anche quello non salvato, con il suo Annulla):
+// si cambia personaggio e si ritrova com'era
+const STATO = {};
+// quello che c'è nel gioco per il personaggio p
+function giocoDi(p) {
+	pers = p;
+	DEL_GIOCO = clipInLua(clipDaLua(testoDi(p, "animazioni")));
+	PERNI_GIOCO = Object.assign({}, leggiLua(testoDi(p, "perni")));
+	PERNI_DEL_GIOCO = perniInLua(PERNI_GIOCO);
+	PRESE_GIOCO = leggiDati(testoDi(p, "impugnature"), CAMPI.impugnature);
+	PRESE_DEL_GIOCO = preseInLua(copiaPrese(PRESE_GIOCO));
+	CORPO_GIOCO = corpoDi(p);
+	CORPO_DEL_GIOCO = corpoInLua(CORPO_GIOCO);
+}
+// lo stato di p: quello lasciato qui, se no le bozze del browser, se no il gioco
+// (va chiamata dopo giocoDi(p)). bozze: quali bozze ha ripreso
+function statoDi(p) {
+	if (STATO[p]) return STATO[p];
+	const st = { clips: clipDaLua(DEL_GIOCO), salvato: DEL_GIOCO, pn: copia(PERNI_GIOCO), perniSalvati: PERNI_DEL_GIOCO,
+		pr: copiaPrese(PRESE_GIOCO), preseSalvate: PRESE_DEL_GIOCO, hb: copia(CORPO_GIOCO), corpoSalvato: CORPO_DEL_GIOCO,
+		indietro: [], avanti: [], bozze: [] };
+	try {
+		const a = leggiBozza("animazioni", p);
+		if (a && a.trim() && a.trim() !== DEL_GIOCO.trim()) { st.clips = clipDaLua(a); st.bozze.push("animazioni"); }
+		const n = leggiBozza("perni", p);
+		if (n && perniInLua(JSON.parse(n)) !== PERNI_DEL_GIOCO) { st.pn = JSON.parse(n); st.bozze.push("perni"); }
+		const i = leggiBozza("impugnature", p);
+		if (i && preseInLua(copiaPrese(JSON.parse(i))) !== PRESE_DEL_GIOCO) { st.pr = copiaPrese(JSON.parse(i)); st.bozze.push("impugnature"); }
+		const c = leggiBozza("corpo", p);
+		if (c) { const v = JSON.parse(c); if (v.cammina && v.colpi && corpoInLua(v) !== CORPO_DEL_GIOCO) { st.hb = v; st.bozze.push("hitbox"); } }
+	} catch (e) { /* bozza rotta: si parte dal gioco */ }
+	STATO[p] = st;
+	return st;
+}
+// mette da parte il lavoro del personaggio di adesso
+function esci() {
+	STATO[pers] = { clips, salvato, pn, perniSalvati, pr, preseSalvate, hb, corpoSalvato, indietro: indietro.slice(), avanti: avanti.slice(), bozze: [] };
+}
+// passa al personaggio p
+function entra(p) {
+	giocoDi(p);
+	const st = statoDi(p);
+	({ clips, salvato, pn, perniSalvati, pr, preseSalvate, hb, corpoSalvato } = st);
+	indietro.length = 0; indietro.push(...st.indietro);
+	avanti.length = 0; avanti.push(...st.avanti);
+	if (st.bozze.length) {
+		$("avviso-testo").textContent = `Ho riaperto il lavoro su ${p} che avevi lasciato in questo browser (${st.bozze.join(", ")}).`;
+		$("avviso").classList.add("si");
+	} else $("avviso").classList.remove("si");
+	st.bozze = [];
+	if (!clips[nome]) nome = clips.fermo ? "fermo" : Object.keys(clips)[0];
 	chiaveScelta = null;
 	scelte = [];
-	indietro.length = 0;
-	avanti.length = 0;
-	costruisciClip();
-	messaggio("Passato ad animazioni di " + a + " (" + fileAnimazioniAttivo() + ")");
+}
+// tutte le bozze del personaggio di adesso
+function salvaBozze() {
+	memorizza();
+	scriviBozza("perni", perniInLua(pn) === PERNI_DEL_GIOCO ? null : JSON.stringify(pn));
+	scriviBozza("impugnature", preseInLua(pr) === PRESE_DEL_GIOCO ? null : JSON.stringify(pr));
+	scriviBozza("corpo", corpoInLua(hb) === CORPO_DEL_GIOCO ? null : JSON.stringify(hb));
+}
+// "Copia da": da un altro personaggio su quello di adesso, solo quello che scegli
+function nomiPersonaggi() {
+	return [...new Set([...Object.keys(PERSONAGGI), ...Object.keys(PL.pelli).filter((n) => PL.pelli[n].categoria === "personaggio")])].sort();
+}
+function costruisciCopia() {
+	const sel = $("cd-da");
+	sel.innerHTML = "";
+	for (const n of nomiPersonaggi()) sel.add(new Option(n, n));
+	sel.value = Object.keys(PERSONAGGI).find((n) => n !== pers) || "";
+}
+function copiaDa(da, cosa) {
+	if (!da || da === pers) { messaggio("Scegli un altro personaggio da cui copiare."); return; }
+	// il lavoro di da com'è adesso: lasciato qui, o le sue bozze, o il gioco
+	const io = pers;
+	esci();
+	giocoDi(da);
+	const src = statoDi(da);
+	entra(io);
+	const tutto = cosa === "tutto", fatte = [];
+	if (cosa === "clip") {
+		if (!src.clips[nome]) { messaggio(`${da} non ha la clip ${nome}.`); return; }
+		prima(); clips[nome] = copia(src.clips[nome]); fatte.push("la clip " + nome);
+	}
+	if (cosa === "clips" || tutto) {
+		prima(); clips = copia(src.clips);
+		if (!clips[nome]) nome = clips.fermo ? "fermo" : Object.keys(clips)[0];
+		fatte.push("tutte le clip");
+	}
+	if (cosa === "perni" || tutto) { pn = copia(src.pn); fatte.push("i perni"); }
+	if (cosa === "impugnature" || tutto) { pr = copiaPrese(copia(src.pr)); fatte.push("le impugnature"); }
+	if (cosa === "hitbox" || tutto) { hb = copia(src.hb); fatte.push("le hitbox"); }
+	chiaveScelta = null; scelte = [];
+	salvaBozze();
+	costruisciClip(); aggiorna();
+	messaggio(`Copiate da ${da} su ${pers}: ${fatte.join(", ")}. Gli altri personaggi non cambiano. Annulla torna indietro sulle clip; perni, impugnature e hitbox hanno "Come nel gioco".`);
+}
+$("cd-incolla").onclick = () => copiaDa($("cd-da").value, $("cd-cosa").value);
+function scegliPersonaggio(p) {
+	if (p === pers) return;
+	esci();
+	entra(p);
+	costruisciClip(); aggiorna();
+	messaggio(`Adesso lavori su ${p}: animazioni, perni, impugnature e hitbox solo sue.` + (PERSONAGGI[p] ? "" : " È nuovo: parte da quelle di " + DATI.attivo + "."));
 }
 // prima di ogni modifica: per annullare
 function prima() {
@@ -971,10 +1036,10 @@ const MANO = { a: manoFerma("braccio", PT.spalle[0]), d: manoFerma("braccio_diet
 const verso = (l) => { const j = J(l === "a" ? "braccio" : "braccio_dietro"); return Math.atan2(MANO[l][1] - j[1], MANO[l][0] - j[0]); };
 // di quanto è girata l'arma a riposo attorno al perno, 0 verso avanti
 const RIPOSO = DATI.armi_riposo;
-// Presa, perno e spalla di ogni arma (battle/grips.lua): presa e perno
+// Presa, perno e spalla di ogni arma (battle/characters/<personaggio>/grips.lua): presa e perno
 // in pixel del mondo dall'origine dell'arma, la spalla in unità del disegno.
 // Le bozze di prima (un punto o due) non valgono più: si riparte dal gioco
-const PRESE_GIOCO = leggiDati(DATI.impugnature, CAMPI.impugnature);
+let PRESE_GIOCO = leggiDati(testoDi(pers, "impugnature"), CAMPI.impugnature);
 const punto2 = (m) => Array.isArray(m) && m.length === 2 && m.every((x) => typeof x === "number");
 const copiaPrese = (p) => {
 	const o = {};
@@ -989,12 +1054,12 @@ function preseInLua(p) {
 	const n = (v) => String(Math.round(v * 10) / 10);
 	const xy = (m) => `{ ${n(m[0])}, ${n(m[1])} }`;
 	const righe = Object.keys(DA).map((k) => `\t${k} = { grip = ${xy(p[k].presa)}, pivot = ${xy(p[k].perno)}, shoulder = ${xy(p[k].spalla)}${Math.abs(p[k].scala - 1) > 0.005 ? `, scale = ${String(Math.round(p[k].scala * 100) / 100)}` : ""} },\n`);
-	return DATI.impugnature.replace(/return \{[\s\S]*$/, "return {\n" + righe.join("") + "}\n");
+	return testoDi(pers, "impugnature").replace(/return \{[\s\S]*$/, "return {\n" + righe.join("") + "}\n");
 }
-const PRESE_DEL_GIOCO = preseInLua(pr);
+let PRESE_DEL_GIOCO = preseInLua(pr);
 let preseSalvate = PRESE_DEL_GIOCO;
 function cambiaPrese() {
-	try { localStorage.setItem("megablast-impugnature", preseInLua(pr)); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
+	scriviBozza("impugnature", preseInLua(pr) === PRESE_DEL_GIOCO ? null : JSON.stringify(pr));
 	aggiorna();
 }
 // la grandezza dell'arma scelta (1 = com'è), per tutte le sue clip
@@ -1390,7 +1455,7 @@ function spostaPerno(px, py) {
 	const [a0, b0] = punto(inv, presa.px, presa.py), [a1, b1] = punto(inv, px, py);
 	const t = (v) => Math.round(v * 10) / 10;
 	pn[presa.perno] = [t(presa.d0[0] + a1 - a0), t(presa.d0[1] + b1 - b0)];
-	try { localStorage.setItem("megablast-perni", perniInLua(pn)); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
+	scriviBozza("perni", perniInLua(pn) === PERNI_DEL_GIOCO ? null : JSON.stringify(pn));
 	aggiorna();
 }
 // il perno dell'arma va nel punto (pixel del canvas): si sposta sull'arma e
@@ -1416,7 +1481,7 @@ function cambiaCorpo(id, v) {
 	else if (id === "alto") c.cammina.alto = Math.max(c.cammina.largo, Math.min(150, t));
 	else if (id === "raggio") c.colpi.raggio = Math.max(2, Math.min(80, t));
 	else if (id === "centro") c.colpi.centro = Math.max(0, Math.min(150, t));
-	try { localStorage.setItem("megablast-corpo", corpoInLua(hb)); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
+	scriviBozza("corpo", corpoInLua(hb) === CORPO_DEL_GIOCO ? null : JSON.stringify(hb));
 	aggiorna();
 }
 palco.addEventListener("pointerdown", (e) => {
@@ -2039,9 +2104,10 @@ function aggiorna() {
 	$("annulla").disabled = !indietro.length;
 	$("rifai").disabled = !avanti.length;
 	const modificato = clipInLua(clips) !== salvato;
-	const fNome = fileAnimazioniAttivo();
-	$("salva").title = `Salva ${fNome} (Ctrl+S)`;
-	$("salva").textContent = modificato ? `Salva ${fNome} •` : `Salva ${fNome}`;
+	$("salva").title = `Salva le animazioni di ${pers}: client/battle/characters/${pers}/animations.lua (Ctrl+S)`;
+	$("salva").textContent = modificato ? `Salva animazioni di ${pers} •` : `Salva animazioni di ${pers}`;
+	$("cd-incolla").textContent = `Incolla su ${pers}`;
+	$("hb-nota").textContent = pers === DATI.attivo ? "" : `(in gioco valgono quelle di ${DATI.attivo})`;
 	if (!suona) disegna(0);
 	disegnaTempo();
 	aggiornaSecchio();
@@ -2131,9 +2197,9 @@ $("variante").onclick = () => {
 };
 $("pr-gioco").onclick = () => {
 	pr = copiaPrese(PRESE_GIOCO);
-	try { localStorage.removeItem("megablast-impugnature"); } catch (e) { /* niente memoria del browser */ }
+	scriviBozza("impugnature", null);
 	aggiorna();
-	messaggio("Impugnature come nel gioco.");
+	messaggio(`Impugnature di ${pers} come nel gioco.`);
 };
 // la mira della clip mira (solo anteprima: nel gioco la dà chi gioca)
 function mettiMira(a) {
@@ -2145,10 +2211,10 @@ function mettiMira(a) {
 $("mira").oninput = () => mettiMira(+$("mira").value * Math.PI / 180);
 ["largo", "alto", "raggio", "centro"].forEach((id) => { $("hb-" + id).onchange = () => cambiaCorpo(id, parseFloat($("hb-" + id).value)); });
 $("hb-gioco").onclick = () => {
-	hb = JSON.parse(JSON.stringify(CORPO_GIOCO));
-	try { localStorage.removeItem("megablast-corpo"); } catch (e) { /* niente memoria del browser */ }
+	hb = copia(CORPO_GIOCO);
+	scriviBozza("corpo", null);
 	aggiorna();
-	messaggio("Hitbox come nel gioco.");
+	messaggio(`Hitbox di ${pers} come nel gioco.`);
 };
 $("sposta").onclick = () => {
 	modo = { ruota: "sposta", sposta: "perno", perno: "ruota" }[modo];
@@ -2157,10 +2223,10 @@ $("sposta").onclick = () => {
 	aggiorna();
 };
 $("pn-gioco").onclick = () => {
-	pn = JSON.parse(JSON.stringify(PERNI_GIOCO));
-	try { localStorage.removeItem("megablast-perni"); } catch (e) { /* niente memoria del browser */ }
+	pn = copia(PERNI_GIOCO);
+	scriviBozza("perni", null);
 	aggiorna();
-	messaggio("Perni come nel gioco.");
+	messaggio(`Perni di ${pers} come nel gioco.`);
 };
 
 $("durata").onchange = () => {
@@ -2312,34 +2378,34 @@ async function scrivi(testo, nomeFile, cartella, f) {
 	messaggio(`Scaricato ${nomeFile}: mettilo in ${cartella}.`);
 	return true;
 }
-const fileAnimazioni = {}, fileAnimazioniFavilla = {}, fileCorpo = {}, filePerni = {}, filePrese = {};
+// i file scelti sul PC, uno per personaggio e per tipo
+const filePc = {};
+const fileDi = (tipo) => filePc[pers + "/" + tipo] || (filePc[pers + "/" + tipo] = {});
+const cartellaDi = (p) => `client/battle/characters/${p}/`;
 async function salva() {
-	const file = fileAnimazioniAttivo();
-	const fObj = personaggioAttivo() === "favilla" ? fileAnimazioniFavilla : fileAnimazioni;
 	const testo = clipInLua(clips);
-	if (await scrivi(testo, file, "client/battle/", fObj)) {
+	if (await scrivi(testo, "animations.lua", cartellaDi(pers), fileDi("animazioni"))) {
 		salvato = testo;
-		SALVATO_MAP[personaggioAttivo()] = testo;
 		aggiorna();
 	}
 }
 $("salva").onclick = salva;
 $("pn-salva").onclick = async () => {
 	const testo = perniInLua(pn);
-	if (await scrivi(testo, "pivots.lua", "client/battle/", filePerni)) { perniSalvati = testo; aggiorna(); }
+	if (await scrivi(testo, "pivots.lua", cartellaDi(pers), fileDi("perni"))) { perniSalvati = testo; aggiorna(); }
 };
 $("pr-salva").onclick = async () => {
 	const testo = preseInLua(pr);
-	if (await scrivi(testo, "grips.lua", "client/battle/", filePrese)) { preseSalvate = testo; aggiorna(); }
+	if (await scrivi(testo, "grips.lua", cartellaDi(pers), fileDi("impugnature"))) { preseSalvate = testo; aggiorna(); }
 };
 $("hb-salva").onclick = async () => {
 	const testo = corpoInLua(hb);
-	if (await scrivi(testo, "corpo.lua", "client/sim/", fileCorpo)) { corpoSalvato = testo; aggiorna(); }
+	if (await scrivi(testo, "body.lua", "client/sim/", fileDi("corpo"))) { corpoSalvato = testo; aggiorna(); }
 };
 $("copia").onclick = async () => {
-	const file = fileAnimazioniAttivo();
+	const file = cartellaDi(pers) + "animations.lua";
 	const testo = clipInLua(clips);
-	try { await navigator.clipboard.writeText(testo); messaggio("Copiato: incollalo in client/battle/" + file + " o in chat."); }
+	try { await navigator.clipboard.writeText(testo); messaggio("Copiato: incollalo in " + file + " o in chat."); }
 	catch (e) {
 		const ta = document.createElement("textarea");
 		ta.value = testo; document.body.appendChild(ta); ta.select();
@@ -2363,7 +2429,8 @@ $("file").onchange = async () => {
 	$("file").value = "";
 };
 // "Manda a Claude" (quello in alto manda tutto quello che è cambiato): su claude.ai nel database della pagina (documenti
-// animazioni/ultima, animazioni_favilla/ultima, corpo/ultima, perni/ultima, impugnature/ultima,
+// animazioni_<personaggio>/ultima, perni_<personaggio>/ultima, impugnature_<personaggio>/ultima,
+// corpo_<personaggio>/ultima (tutto body.lua, cambiata solo la sua riga),
 // ritocchi/ultima, mantello/ultima; le richieste
 // degli strumenti in richieste/<nome>); su Cloudflare
 // (tools/animazioni/cloudflare) nel ramo editor-ultima di GitHub, con la
@@ -2385,19 +2452,17 @@ async function mandaCloudflare(corpo) {
 $("claude").onclick = async () => {
 	try {
 		const quando = new Date().toISOString();
-		const p = personaggioAttivo();
-		const endp = endpointAnimazioniAttivo();
-		const fNome = fileAnimazioniAttivo();
-		await manda(endp, clipInLua(clips), quando);
+		// solo il personaggio su cui lavori: gli altri restano come sono
+		const p = pers;
+		await manda("animazioni_" + p, clipInLua(clips), quando);
 		salvato = clipInLua(clips);
-		SALVATO_MAP[p] = salvato;
-		// le hitbox solo se cambiate: sono fisica, cambiano il gioco per tutti
+		// le hitbox solo se cambiate: sono fisica (quelle del personaggio di tutti cambiano il gioco per tutti)
 		const cl = corpoInLua(hb);
-		if (cl !== CORPO_DEL_GIOCO) { await manda("corpo", cl, quando); corpoSalvato = cl; }
+		if (cl !== CORPO_DEL_GIOCO) { await manda("corpo_" + p, cl, quando); corpoSalvato = cl; }
 		const pl = perniInLua(pn);
-		if (pl !== PERNI_DEL_GIOCO) { await manda("perni", pl, quando); perniSalvati = pl; }
+		if (pl !== PERNI_DEL_GIOCO) { await manda("perni_" + p, pl, quando); perniSalvati = pl; }
 		const prl = preseInLua(pr);
-		if (prl !== PRESE_DEL_GIOCO) { await manda("impugnature", prl, quando); preseSalvate = prl; }
+		if (prl !== PRESE_DEL_GIOCO) { await manda("impugnature_" + p, prl, quando); preseSalvate = prl; }
 		// un solo pulsante manda tutto: anche i ritocchi dei pezzi e il mantello,
 		// se ci sono, così il gioco diventa uguale a quello che si vede qui
 		const conRitocchi = Object.keys(ritocchi).length > 0;
@@ -2408,17 +2473,16 @@ $("claude").onclick = async () => {
 		aggiorna();
 		const anche = [cl !== CORPO_DEL_GIOCO && "hitbox", pl !== PERNI_DEL_GIOCO && "perni", prl !== PRESE_DEL_GIOCO && "impugnature",
 			conRitocchi && "ritocchi dei pezzi", conMantello && "mantello"].filter(Boolean);
-		messaggio("Mandate le animazioni (" + fNome + ")" + (anche.length ? " con " + anche.join(", ").replace(/, ([^,]*)$/, " e $1") : "") + ": di' a Claude di prenderle dall'editor.");
+		messaggio("Mandate le animazioni di " + p + (anche.length ? " con " + anche.join(", ").replace(/, ([^,]*)$/, " e $1") : "") + ": di' a Claude di prenderle dall'editor.");
 	} catch (e) { messaggio("Non sono riuscito a mandarle: " + ((e && e.message) || "errore") + ". Usa Copia il testo."); }
 };
 $("ripristina").onclick = () => {
 	prima();
-	const def = animazioniOriginaliDelGioco();
-	clips = clipDaLua(def);
+	clips = clipDaLua(DEL_GIOCO);
 	chiaveScelta = null;
 	$("avviso").classList.remove("si");
 	costruisciClip(); dopo();
-	messaggio("Tornate le animazioni del gioco per " + personaggioAttivo() + " (Annulla per riprendere le tue).");
+	messaggio("Tornate le animazioni del gioco per " + pers + " (Annulla per riprendere le tue).");
 };
 
 // ---------------------------------------------------------------------------
@@ -2833,6 +2897,19 @@ function mostraRitocco() {
 	const n = Object.keys(ritocchi).length;
 	$("rt-stato").textContent = n ? `${n} pezzi ritoccati` : "nessun ritocco";
 }
+// La bozza dei ritocchi ricorda anche il pezzo com'era quando l'hai ritoccato:
+// quando il ritocco arriva nel gioco (taglia.py --ritocchi cambia skins.lua) il
+// pezzo cambia e il ritocco non si rimette una seconda volta sopra
+function baseRitocco(k) {
+	const [pelle, posto] = k.split("/"), pl = PL.pelli[pelle];
+	if (!pl) return null;
+	return JSON.stringify(posto === "coda" ? [pl.coda, pl.coda_radice || null] : pl.pezzi[posto] || null);
+}
+function memorizzaRitocchi() {
+	const base = {};
+	for (const k of Object.keys(ritocchi)) base[k] = baseRitocco(k);
+	try { localStorage.setItem("megablast-ritocchi", JSON.stringify({ v: 2, ritocchi, base })); } catch (e) { /* niente memoria del browser */ }
+}
 function ritocca() {
 	const k = $("rt-pezzo").value;
 	if (!k) return;
@@ -2847,7 +2924,7 @@ function ritocca() {
 		if (qui.sp) v.sp = true;
 		if (v.dx || v.dy || v.s !== 1 || v.img || v.sp) ritocchi[g] = v; else delete ritocchi[g];
 	}
-	try { localStorage.setItem("megablast-ritocchi", JSON.stringify(ritocchi)); } catch (e) { /* niente memoria del browser */ }
+	memorizzaRitocchi();
 	vesti(); mostraRitocco(); costruisciSecchio(); aggiorna();
 }
 ["rt-x", "rt-y", "rt-s"].forEach((id) => { $(id).oninput = ritocca; });
@@ -2893,32 +2970,16 @@ $("rt-manda").onclick = async () => {
 };
 
 // ---------------------------------------------------------------------------
-// Partenza: il lavoro non salvato di prima, se c'è
+// Partenza. Le bozze di prima del 19 nov non dicevano di che personaggio erano
+// (perni, impugnature e hitbox valevano per tutti, le animazioni dei due
+// apprendisti erano una sola): non si riprendono più, così non si mischiano.
+// Le animazioni di Favilla erano già sue: passano alla bozza nuova.
 try {
-	const res = caricaBozzaPersonaggio("apprendista");
-	if (res.bozza) {
-		clips = res.clips;
-		CLIPS_MAP.apprendista = clips;
-		$("avviso-testo").textContent = "Ho riaperto il lavoro che avevi lasciato in questo browser.";
-		$("avviso").classList.add("si");
-	}
+	const fav = localStorage.getItem("megablast-animazioni-favilla");
+	if (fav && !localStorage.getItem(chiaveBozza("animazioni", "favilla"))) localStorage.setItem(chiaveBozza("animazioni", "favilla"), fav);
+	for (const k of ["megablast-animazioni", "megablast-animazioni-apprendista", "megablast-animazioni-apprendista_nuovo", "megablast-animazioni-favilla",
+		"megablast-perni", "megablast-impugnature", "megablast-corpo"]) localStorage.removeItem(k);
 } catch (e) { /* niente memoria del browser */ }
-// le hitbox cambiate e non ancora nel gioco
-try {
-	const bozza = localStorage.getItem("megablast-corpo");
-	if (bozza && bozza !== CORPO_DEL_GIOCO) {
-		const c = leggiDati(bozza, CAMPI.corpo);
-		if (c.cammina && c.colpi) hb = c;
-	}
-} catch (e) { /* niente memoria del browser o bozza rotta */ }
-try {
-	const bozza = localStorage.getItem("megablast-perni");
-	if (bozza && bozza !== PERNI_DEL_GIOCO) pn = leggiLua(bozza);
-} catch (e) { /* niente memoria del browser o bozza rotta */ }
-try {
-	const bozza = localStorage.getItem("megablast-impugnature");
-	if (bozza && bozza !== PRESE_DEL_GIOCO) pr = copiaPrese(leggiDati(bozza, CAMPI.impugnature));
-} catch (e) { /* niente memoria del browser o bozza rotta */ }
 // una scelta per categoria, solo per quelle che hanno pelli
 for (const c of [...PL.sostituisce, ...PL.sopra]) {
 	const nomi = Object.keys(PL.pelli).filter((n) => PL.pelli[n].categoria === c).sort();
@@ -2926,16 +2987,11 @@ for (const c of [...PL.sostituisce, ...PL.sopra]) {
 	const l = document.createElement("label");
 	l.textContent = c + " ";
 	const sel = document.createElement("select");
-	for (const n of ["", ...nomi]) sel.add(new Option(n || "—", n));
+	// un personaggio c'è sempre: è di lui che si fanno le animazioni
+	for (const n of c === "personaggio" ? nomi : ["", ...nomi]) sel.add(new Option(n || "—", n));
 	sel.onchange = () => {
-		const vecchioP = addosso["personaggio"] || "apprendista";
 		if (sel.value) addosso[c] = sel.value; else delete addosso[c];
-		if (c === "personaggio") {
-			const nuovoP = addosso["personaggio"] || "apprendista";
-			if (nuovoP !== vecchioP) {
-				cambiaPersonaggio(vecchioP, nuovoP);
-			}
-		}
+		if (c === "personaggio") scegliPersonaggio(sel.value);
 		vesti(); pezziRitocco(); costruisciSecchio(); aggiorna();
 	};
 	l.appendChild(sel);
@@ -2944,10 +3000,15 @@ for (const c of [...PL.sostituisce, ...PL.sopra]) {
 	const gioco = DATI.personaggio.find((n) => nomi.includes(n));
 	if (gioco) { sel.value = gioco; addosso[c] = gioco; }
 }
+costruisciCopia();
+entra(addosso.personaggio || DATI.attivo);
 vesti();
 try {
-	const bozza = localStorage.getItem("megablast-ritocchi");
-	if (bozza) { ritocchi = JSON.parse(bozza); vesti(); }
+	const bozza = JSON.parse(localStorage.getItem("megablast-ritocchi") || "null");
+	// solo i ritocchi sui pezzi ancora com'erano (quelli di prima del 19 nov non lo dicevano: già nel gioco)
+	if (bozza && bozza.v === 2) for (const k of Object.keys(bozza.ritocchi)) if (bozza.base[k] === baseRitocco(k)) ritocchi[k] = bozza.ritocchi[k];
+	if (bozza && (bozza.v !== 2 || Object.keys(ritocchi).length !== Object.keys(bozza.ritocchi).length)) memorizzaRitocchi();
+	vesti();
 } catch (e) { /* niente memoria del browser o bozza rotta */ }
 costruisciClip();
 costruisciCanali();
