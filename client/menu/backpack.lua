@@ -225,7 +225,8 @@ local function inventory(s)
 	else
 		-- the filters: the slot
 		local list = { { T.all, "filtro:" } }
-		for _, sl in ipairs(equip.SLOTS) do list[#list + 1] = { sl.name, "filtro:" .. sl.id } end
+		-- the slots as the symbols of their type (Sergio, 19 Nov: six words didn't fit)
+		for _, sl in ipairs(equip.SLOTS) do list[#list + 1] = { sl.name, "filtro:" .. sl.id, slot = sl.id } end
 		local active = 1
 		for i, sl in ipairs(equip.SLOTS) do if s.slot == sl.id then active = i + 1 end end
 		gear_ui.chips(s, g, 430, 100, list, active, 500)
