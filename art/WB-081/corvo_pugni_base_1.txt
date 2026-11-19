@@ -1,0 +1,18 @@
+Image 1 is a sheet with two arms of our character with a closed fist, on flat magenta. Image 2 is another sheet of the same character where the two arms with an open hand wear gloves. Image 3 is the same fists wearing the gloves of another set: use it ONLY as an example of how a glove follows the closed fingers (the finger rolls stay round and whole, separated by clean lines); do not copy its materials.
+
+Edit image 1 and return the SAME sheet: both arms exactly where they are, same size, same shapes. Change ONLY the fist and the wrist of each arm: put on each fist the SAME glove of image 2, closed into a fist: snug gloves of dark slate #3A4252 with a lighter slate #5A6478 shadow-free top, with clearly drawn overlapping feather shapes on the BACK of the hand only (three or four rounded feathers, like the feathers of the chest piece of image 2), and a thin cyan #19E6E6 trim around the wrist. NO claws, NO talons, NO pointed tips and NO black marks on the fingers: every finger is a whole rounded glove finger, as thick as the bare finger it covers, its tip round and closed by the outline. Every finger and the thumb are clearly separated by one clean black line, like the fingers of the bare hand. The glove covers the whole fist, fingers and thumb included, keeps the same finger lines of the fist of image 1 (four round finger rolls and the thumb over them) and ends at the wrist with its cuff. Nothing sticks out below or in front of the fist. The forearm above the cuff, the upper arm and the shoulder stay bare red skin, unchanged. Do NOT add anything else: no sleeves, no shoulder pads.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Thick closed pure black #000000 outline, the same weight as the outline of the arms.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti allegati, in ordine:
+art/WB-070/riferimenti/R2_pugni.png
+art/WB-081/corvo_corpo_base_2.png
+art/WB-070/fabbro_pugni_base.png
+
+Strumento: ImageGen integrato. Tentativi: 1. Selezionato tentativo 1. PNG originale senza ritocchi o ridimensionamento.
+Scelta per le immagini successive: corvo_pugni_base_1.png, per separazione pulita delle dita e piume leggibili.
+Limiti: il generatore non mantiene identita pixel per pixel, colori numericamente esatti o assenza totale di sfumature. Le icone sono native 1254x1254 anziche 1024x1024. Vedere Consegna di Codex per le difformita.

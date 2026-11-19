@@ -1,0 +1,13 @@
+Image 1 is an inventory icon of our game: the boots of the Crow armour set, BASIC form, drawn alone, big, slightly tilted, flat colors with one flat shadow tone, thick pure black outline. Image 2 is a sheet with the two arms of our character with the fists closed, wearing the BASIC Crow gloves (dark slate with feathers on the back of the hand and a cyan trim at the wrist).
+
+Draw ONE inventory icon in exactly the style of image 1: the PAIR OF GLOVES of image 2 alone, without arms and without hands inside, as two empty gloves side by side, slightly overlapping, open with the fingers up and slightly curled, cuffs down, slightly tilted like the boots of image 1. Show the BACK of the gloves so the feathers read clearly: three or four big rounded overlapping feathers on each back, in the lighter slate #5A6478 over the dark slate #3A4252, each with its black outline. Fingers whole and rounded, no claws, no pointed tips. The cyan #19E6E6 trim at each cuff. Same outline thickness and same amount of detail as image 1: bold, simple and readable when small.
+
+Centered, filling about 80% of a square image, on a flat pure magenta #FF00FF background. No text, no frame, no ground shadow, no glow, no gradient, no red skin.
+
+Riferimenti allegati, in ordine:
+art/WB-076/riferimenti/R_corvo_base_icona.png
+art/WB-081/corvo_pugni_base_1.png
+
+Strumento: ImageGen integrato. Tentativi: 3. Selezionato tentativo 3. PNG originale senza ritocchi o ridimensionamento.
+
+Limiti: il generatore non mantiene identita pixel per pixel, colori numericamente esatti o assenza totale di sfumature. Le icone sono native 1254x1254 anziche 1024x1024. Vedere Consegna di Codex per le difformita.
