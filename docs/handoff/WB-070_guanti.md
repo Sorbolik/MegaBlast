@@ -427,7 +427,7 @@ Alcuni pugni differiscono da R2 nelle linee delle dita. Le finiture forgiate di 
 - **Verificato:** `tutti.sh` OK; scenari `guanti_<famiglia>.txt` e `guanti_<famiglia>_forgiato.txt`
   (fermo e in corsa con l'arma in pugno): i guanti stanno sulle mani, non coprono le spalline e
   l'arma resta impugnata bene.
-- **Non ancora nel gioco:** i guanti li indossa solo la prova (`imposta prova_guanti`); il quinto
+- **Nel gioco dal 19 nov** (quinto posto, PR dei guanti); prima li indossava solo la prova (`imposta prova_guanti`, tolta); il quinto
   posto (statistiche, firme, zaino, armeria) aspetta le scelte di Sergio.
 - **Icone:** Codex non le ha generate (troppi riferimenti). Provate ricavandole dai pugni
   ritagliati: troppo grezze accanto alle icone degli altri pezzi, scartate. Serve una scheda

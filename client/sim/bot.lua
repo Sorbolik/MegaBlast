@@ -747,7 +747,7 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 				end
 			elseif wpn == "bellows" then
 				-- the gust: straight or slightly up, to lift it off the ground towards the void
-				if dist < C.BELLOWS.range then
+				if dist < game.bellows_range(me) then
 					add(wpn, straight, 1, "tutto")
 					add(wpn, straight + (dx < 0 and -0.35 or 0.35), 1, "tutto")
 				end

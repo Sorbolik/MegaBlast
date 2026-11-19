@@ -95,10 +95,6 @@ M.FAMILY_SKINS = {
 }
 M.FORGED_TIER = 3
 local WEAR_ORDER = { "mask", "chest", "gloves", "legs", "cloak" }
--- The gloves (WB-070) are drawn and cut but are not a slot of sim/gear.lua yet:
--- only the scenarios wear them (imposta prova_guanti 1 base, 2 forged), on
--- top of the family of prova_famiglia. { family, forged }
-M.test_gloves = nil
 
 -- The look of whoever wears gear ({ mask = family id, ... }) with those tiers
 -- ({ mask = 1..4, ... }, sim/wallet.lua)
@@ -110,8 +106,6 @@ function M.look_of(gear, tiers)
 		if name then
 			if ((tiers or {})[slot] or 1) >= M.FORGED_TIER then name = name .. "_forgiato" end
 			look[#look + 1] = name
-		elseif slot == "gloves" and M.test_gloves and gear then
-			look[#look + 1] = M.FAMILY_SKINS[M.test_gloves[1]].gloves .. (M.test_gloves[2] and "_forgiato" or "")
 		end
 	end
 	return look

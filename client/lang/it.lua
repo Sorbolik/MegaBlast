@@ -400,7 +400,7 @@ return {
 		-- the other pieces of the slot (the slot in uppercase)
 		others = "I TUOI %s",
 		-- the slots in the plural
-		plural = { mask = "ELMI", chest = "CORAZZE", cloak = "MANTELLI", legs = "STIVALI" },
+		plural = { mask = "ELMI", chest = "CORAZZE", cloak = "MANTELLI", legs = "STIVALI", gloves = "GUANTI" },
 		-- the SHOP
 		yours = "tuo",
 		offers = "OFFERTE DEL FABBRO",

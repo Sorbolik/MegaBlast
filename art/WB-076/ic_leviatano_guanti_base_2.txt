@@ -1,0 +1,14 @@
+Image 1 is an inventory icon of our game: the boots of the Leviathan armour set, BASIC form, drawn alone, big, slightly tilted, flat colors with one flat shadow tone, thick pure black outline. Image 2 is a sheet with the two arms of our character with the fists closed, wearing the BASIC Leviathan gloves (teal sea-green scales with a cyan ring at the wrist).
+
+Draw ONE inventory icon in exactly the style of image 1: the PAIR OF GLOVES of image 2 alone, without arms and without hands inside, as two empty gloves side by side, slightly overlapping, fingers up and slightly curled, cuffs down, slightly tilted like the boots of image 1. The gloves have exactly the materials, colors and details of the gloves in image 2 (cuff, rings, studs, plates, scales, fins, eye: whatever image 2 shows, nothing more). Same outline thickness and same amount of detail as image 1.
+
+Centered, filling about 80% of a square image, on a flat pure magenta #FF00FF background. No text, no frame, no ground shadow, no glow, no gradient, no red skin.
+
+Riferimenti allegati in ordine
+Image 1 art/WB-076/riferimenti/R_leviatano_base_icona.png
+Image 2 art/WB-070/leviatano_pugni_base.png
+
+ImageGen integrato. Tentativi 1, selezionato il 1.
+Sagoma centrata e ridotta in proporzione al margine previsto, PNG 1024×1024.
+Scaglie verde acqua e polsini ciano. Scaglie e pinne, dove previste, sono stilizzate.
+Il magenta e le campiture presentano lievi variazioni RGB.

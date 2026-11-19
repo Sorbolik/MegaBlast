@@ -67,7 +67,7 @@ check(wallet.chapters_done(q, chapters) == 1, "chapters: done when every mission
 p = wallet.init({})
 p.scaglie = 10000
 for _ = 2, 9 do wallet.upgrade(p, "corvo", "mask") end
-check(wallet.level(p, "corvo", "mask") == 9 and p.scaglie == 10000 - 1000, "levels 2..9 cost 1,000")
+check(wallet.level(p, "corvo", "mask") == 9 and p.scaglie == 10000 - 800, "levels 2..9 cost 800")
 local lv, why = wallet.upgrade(p, "corvo", "mask")
 check(lv == nil and why == "proof", "the step 10 waits for the Proof")
 local a = { gear = { mask = "corvo", chest = "fornace" } }
@@ -80,12 +80,12 @@ p.scaglie = 0
 check(select(2, wallet.upgrade(p, "corvo", "mask")) == "scaglie", "without Scaglie nothing is bought")
 p.pezzi.corvo_mask = equip.LIVELLO_MAX
 check(select(2, wallet.upgrade(p, "corvo", "mask")) == "max", "at 30 there is nothing more")
-local n = wallet.next(p, "vuoto", "mask")
-check(n.cost == 40 and n.full_cost == 55, "the Smith's hand: other helmets cost 30% less")
-check(wallet.next(p, "vuoto", "chest").cost == 55, "only in the same slot")
+local n = wallet.next(p, "corvo", "chest")
+check(n.cost == 30 and n.full_cost == 44, "the Smith's hand: the other Corvo pieces cost 30% less")
+check(wallet.next(p, "vuoto", "mask").cost == 44, "only in the same family")
 local whole = 0
 for l = 2, equip.LIVELLO_MAX do whole = whole + equip.cost(l) end
-check(whole == 40000 and equip.cost(10) + 1000 == 2200, "a piece at 30 costs 40,000 Scaglie, the first step 2,200")
+check(whole == 32000 and equip.cost(10) + 800 == 1760, "a piece at 30 costs 32,000 Scaglie, the first step 1,760")
 
 -- Signatures: lit with Ossidiana, one grade per step of the piece ------------------
 p = wallet.init({})
@@ -114,7 +114,7 @@ check(not wallet.owns(p, "fabbro", "legs") and p.buoni == 0, "a new player owns 
 local today = wallet.shop(p, "2026-11-11")
 local four = 0
 for _, s in ipairs(equip.SLOTS) do if today[s.id] then four = four + 1 end end
-check(four == 4, "the BOTTEGA: four pieces of the day, one per slot")
+check(four == #equip.SLOTS, "the BOTTEGA: a piece of the day per slot")
 local same = wallet.shop(p, "2026-11-11")
 check(same.mask == today.mask and same.legs == today.legs, "the same pieces all day")
 local differ = false
@@ -122,19 +122,21 @@ for d = 12, 20 do differ = differ or wallet.shop(p, "2026-11-" .. d).mask ~= tod
 check(differ, "other days, other pieces")
 check(select(2, wallet.buy(p, today.mask, "mask", "2026-11-11")) == "scaglie", "without Scaglie nothing is bought")
 p.scaglie = 10000
-check(wallet.buy(p, today.mask, "mask", "2026-11-11") and wallet.owns(p, today.mask, "mask") and p.scaglie == 6000,
-	"bought in the BOTTEGA for 4,000")
+check(wallet.buy(p, today.mask, "mask", "2026-11-11") and wallet.owns(p, today.mask, "mask") and p.scaglie == 6800,
+	"bought in the BOTTEGA for 3,200")
 check(wallet.shop(p, "2026-11-11").mask ~= today.mask, "a piece owned leaves the BOTTEGA")
 local other
 for _, f in ipairs(equip.SETS) do
 	if not other and not wallet.owns(p, f.id, "mask") and wallet.shop(p, "2026-11-11").mask ~= f.id then other = f.id end
 end
 check(select(2, wallet.buy(p, other, "mask", "2026-11-11")) == "shop", "the BOTTEGA sells only the pieces of the day")
-check(wallet.buy(p, other, "mask") and p.scaglie == 0, "a piece of the day costs 6,000")
+check(wallet.buy(p, other, "mask") and p.scaglie == 2000, "a piece of the catalogue costs 4,800")
 check(select(2, wallet.buy(p, other, "mask")) == "owned", "a piece is bought once")
 p.pezzi[other .. "_mask"] = equip.LIVELLO_MAX
-check(wallet.price(p, "mask", true) == 2800 and wallet.price(p, "mask") == 4200 and wallet.price(p, "chest") == 6000,
-	"the Smith's hand lowers the prices of that slot")
+local third
+for _, f in ipairs(equip.SETS) do if not third and f.id ~= other then third = f.id end end
+check(wallet.price(p, other, "chest", true) == 2240 and wallet.price(p, other, "gloves") == 3360
+	and wallet.price(p, third, "mask") == 4800, "the Smith's hand lowers the prices of that family")
 check(select(2, wallet.use_voucher(p, "fornace", "chest")) == "voucher", "no voucher, no free piece")
 -- gifts: once each
 p.stelle = { battaglia_forgia = { true } }

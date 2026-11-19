@@ -356,6 +356,7 @@ C.STATS = {
 	sig_first = 0, sig_thorns = 0, sig_stomp = 0, sig_air_fire = 0,
 	sig_fury = 0, sig_first_guard = 0, sig_rooted = 0, sig_ballast = 0,
 	sig_ambush = 0, sig_blink_guard = 0, sig_blink_run = 0, sig_far_orb = 0,
+	sig_bellows = 0, sig_dive = 0, sig_scorch = 0, sig_grip = 0, sig_void_push = 0,
 }
 -- Signatures: how much higher than its target the Dall'alto attacker must be,
 -- the life under which Furia hits harder, the Pestone's reach and push

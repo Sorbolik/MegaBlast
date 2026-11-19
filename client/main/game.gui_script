@@ -4754,9 +4754,6 @@ function init(self)
 	self.profilo = profile.load_up()
 	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2, config_int("megablast.prova_profilo", 0) == 3, config_int("megablast.prova_profilo", 0) == 4) end
 	if SIMULATE then profile.sample_void(self.profilo, config_int("megablast.prova_vuoto", 0), sys.get_config_string("megablast.prova_famiglia", "vuoto")) end
-	if SIMULATE and config_int("megablast.prova_guanti", 0) > 0 then
-		scoria.test_gloves = { sys.get_config_string("megablast.prova_famiglia", "vuoto"), config_int("megablast.prova_guanti", 0) == 2 }
-	end
 	CP.account_start(self)
 	home.wear(self.home, self.profilo)
 	self.scelta = menu.pick.new(WEAPON_ICON, TM.draft_names, TM.draft_effects, self.comandi)

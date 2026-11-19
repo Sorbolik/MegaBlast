@@ -26,10 +26,11 @@ local GIOCATORI = {
 	{ nome = "medio", vince = 0.5, punti = 90, migliore = 0.25, premi = 0 },
 }
 
--- i tempi decisi da Sergio (17 nov), in ore del giocatore forte: { da, a }
+-- i tempi decisi da Sergio (17 nov), in ore del giocatore forte: { da, a }; coi
+-- guanti (19 nov) un pezzo costa il 20% in meno, cinque pezzi nel tempo di quattro
 local TEMPI = {
 	primo_scatto = { 3, 8 },
-	pezzo = { 80, 120 },
+	pezzo = { 64, 96 },
 	livello_max = { 200, 280 },
 }
 

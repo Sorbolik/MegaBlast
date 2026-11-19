@@ -73,10 +73,11 @@ M.key = key
 
 -- Pieces are bought and gifted, never earned in the campaign's order
 -- (Sergio, 11 Nov, page "I Pezzi della Forgia", choices 22A-25A): the
--- BOTTEGA has four pieces of the day (one per slot, among those you don't
--- own), the CATALOGO always has all of them for more; the Smith's hand
--- lowers both. Ossidiana never buys pieces.
-M.PRICE_SHOP, M.PRICE_CATALOG = 4000, 6000
+-- BOTTEGA has a piece of the day per slot (among those you don't own), the
+-- CATALOGO always has all of them for more; the Smith's hand lowers both.
+-- Ossidiana never buys pieces. 20% lower since the gloves (Sergio, 19 Nov:
+-- five pieces in the time of four).
+M.PRICE_SHOP, M.PRICE_CATALOG = 3200, 4800
 
 -- the Smith's vouchers and the gifts (choice 23A; fewer since 17 Nov, a
 -- piece is worth much more now): the Battle of the Forge gives the Smith's
@@ -143,10 +144,10 @@ function M.day(today)
 end
 
 -- price of a piece: in the BOTTEGA (shop = true) or in the CATALOGO, with
--- the Smith's hand when a piece of that slot is at 30
-function M.price(p, slot, shop)
+-- the Smith's hand when a piece of that family is at 30
+function M.price(p, set, slot, shop)
 	local c = shop and M.PRICE_SHOP or M.PRICE_CATALOG
-	if M.smith_hand(p, slot) then c = math.floor(c * equip.SMITH_HAND / 5 + 0.5) * 5 end
+	if M.smith_hand(p, set) then c = math.floor(c * equip.SMITH_HAND / 5 + 0.5) * 5 end
 	return c
 end
 
@@ -156,7 +157,7 @@ function M.buy(p, set, slot, shop)
 	if not equip.BY_ID[set] then return nil, "shop" end
 	if M.owns(p, set, slot) then return nil, "owned" end
 	if shop and M.shop(p, shop)[slot] ~= set then return nil, "shop" end
-	local c = M.price(p, slot, shop ~= nil)
+	local c = M.price(p, set, slot, shop ~= nil)
 	if p.scaglie < c then return nil, "scaglie" end
 	p.scaglie = p.scaglie - c
 	give(p, set, slot)
@@ -257,10 +258,10 @@ function M.signs(p, a)
 	return t
 end
 
--- the Smith's hand: a piece of that slot already at the top
-function M.smith_hand(p, slot)
-	for _, s in ipairs(equip.SETS) do
-		if M.level(p, s.id, slot) >= equip.LIVELLO_MAX then return true end
+-- the Smith's hand: a piece of that family already at the top
+function M.smith_hand(p, set)
+	for _, s in ipairs(equip.SLOTS) do
+		if M.level(p, set, s.id) >= equip.LIVELLO_MAX then return true end
 	end
 	return false
 end
@@ -270,7 +271,7 @@ end
 function M.next(p, set, slot)
 	local l = M.level(p, set, slot) + 1
 	if l > equip.LIVELLO_MAX then return nil end
-	local hand = M.smith_hand(p, slot)
+	local hand = M.smith_hand(p, set)
 	return { level = l, cost = equip.cost(l, hand), full_cost = equip.cost(l), proof = equip.proof(l),
 		proof_done = math.min(equip.proof(l), p.prova[key(set, slot)] or 0) }
 end

@@ -811,15 +811,15 @@ func TestShowcases(t *testing.T) {
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
 	// an empty Lua table arrives as an object: the greeting still counts
-	// the pieces worn: four places, wrong names and levels out of range don't pass
+	// the pieces worn: five places, wrong names and levels out of range don't pass
 	b.send(`{"t":"hello","v":9,"mode":"1v1","vetrina":{"liv":100000,"bdg":{},"pz":[{"set":"corvo","liv":24},` +
-		`{"set":"<b>","liv":3},{"set":"fornace","liv":900},{"set":"","liv":0},{"set":"vuoto","liv":5}]}}`)
+		`{"set":"<b>","liv":3},{"set":"fornace","liv":900},{"set":"","liv":0},{"set":"vuoto","liv":5},{"set":"fabbro","liv":7}]}}`)
 	showcases := func(m map[string]any) string {
 		j, _ := json.Marshal(m["vetrine"])
 		return string(j)
 	}
 	want := `[{"bdg":[{"grado":2,"id":"mira"},{"grado":4,"id":"globi"},{"grado":1,"id":"casse"}],"liv":12},{"bdg":[],"liv":999,` +
-		`"pz":[{"liv":24,"set":"corvo"},{"liv":0,"set":""},{"liv":30,"set":"fornace"},{"liv":0,"set":""}]}]`
+		`"pz":[{"liv":24,"set":"corvo"},{"liv":0,"set":""},{"liv":30,"set":"fornace"},{"liv":0,"set":""},{"liv":5,"set":"vuoto"}]}]`
 	if d := b.waitFor(`"draft"`); showcases(d) != want {
 		t.Fatalf("cards in the draft: %s, expected %s", showcases(d), want)
 	}

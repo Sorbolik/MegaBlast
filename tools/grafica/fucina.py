@@ -566,6 +566,11 @@ def fai_menu():
                 intero("ic_%s_%s_%s" % (f, p, g), ritaglio("WB-043", "ic_%s_%s_%s" % (f, p, g)), 240)
     for p in POSTI:
         intero("vuoto_" + p, ritaglio("WB-043", "vuoto_" + p), 240)
+    # i guanti, quinto posto (WB-076, Sergio 19 nov); la sagoma vuota da WB-070
+    for f in FAMIGLIE:
+        for g in ("base", "forgiato"):
+            intero("ic_%s_guanti_%s" % (f, g), ritaglio("WB-076", "ic_%s_guanti_%s" % (f, g)), 240)
+    intero("vuoto_guanti", ritaglio("WB-076", "vuoto_guanti"), 240)
 
 
 def trasparente(percorso):
