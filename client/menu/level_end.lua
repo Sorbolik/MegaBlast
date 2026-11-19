@@ -15,6 +15,7 @@
 --     avanti: there is a next level; sound(v): the tick, v = speed (pitch);
 --     gain: profile.missione's experience and coins (the receipt on the right, ui/receipt.lua), prof: the profile;
 --     coin(kind, i): the sound of a coin landing in the wallet pill; xp(i, n, level_up): a spark landing in the bar
+--   fine_livello.verdict(f, v)  -- the server's word on the gains (ui/receipt.lua)
 --   fine_livello.update(f, dt)
 --   fine_livello.on_input(f, action_id, action) -> "riprova", "avanti", "indietro", "sigilli" or nil
 --   fine_livello.destroy(f)
@@ -128,6 +129,11 @@ end
 
 -- the stars taken light up one at a time: they grow past their size and come
 -- back, the halo lights up and settles
+-- the server's word on the gains (ui/receipt.lua verdict)
+function M.verdict(f, v)
+	if f.receipt then receipt.verdict(f.receipt, v) end
+end
+
 function M.update(f, dt)
 	f.t = f.t + dt
 	scoria.update(f.figure, dt, f.st)

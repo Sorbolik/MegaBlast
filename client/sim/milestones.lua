@@ -1,7 +1,7 @@
 -- Player stats and their badges (docs/roadmap.md, "Statistiche, obiettivi e
 -- badge"; character sheet, Sergio 31 Oct). Pure Lua, in the shared rules so
 -- the server counts them like the phone: the profile counts them at the end
--- of the match (sim/profile.lua, menu/tally.lua), the STATISTICHE
+-- of the match (sim/profile.lua, sim/tally.lua), the STATISTICHE
 -- tab shows them (menu/profile_tabs.lua), the tag carries the badges
 -- (ui/tag_card.lua).
 --

@@ -60,7 +60,7 @@ local TW, TH = game.GRID_W, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Protocol version, equal to protocolVersion in server/server.go
-local PROTOCOL = 9
+local PROTOCOL = 10
 -- If the connection drops in a match we retry for a while (the server keeps
 -- the seat for 20 seconds)
 -- for the whole match (ten minutes): the server keeps our seat to the end and
@@ -984,13 +984,11 @@ end
 -- The character sheet (Sergio, 31 Oct) in a single table: tags, lineup,
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
-local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", tag = require "ui.tag_card",
+local CP = { conta = require "sim.tally", vetrina = require "menu.showcase", tag = require "ui.tag_card",
 	vignette = require "battle.vignette", favilla = require "battle.favilla", tale = require "ui.story",
 	-- the recipes of the matches played here go to the server, which checks them
 	recipe_check = require "main.recipe_check",
-	account = require "main.account",
-	-- Scaglie and Ossidiana (sim/wallet.lua) and the campaign's chapters (a finished one gives Ossidiana)
-	wallet = require "sim.wallet", chapters = require("sim.campaign").CAPITOLI }
+	account = require "main.account" }
 
 -- The zoom (Sergio, 3 Nov, choice Z1; 4 Nov): one button, top right, that is
 -- both a switch and a slider. Inside it a small lens slides on a track with a
@@ -1656,16 +1654,32 @@ local function open_podium(self)
 	local mvp = awards.mvp(res.ranking)
 	local won = nil
 	if res.winner then won = res.winner == mine.team end
+	-- against bots or on the same phone half, like the training (sim/progress.lua)
 	local r = { points = mine.points, won = won, second = res.mode == "ffa" and mine.place == 2,
-		mvp = mvp == my_own, awards = per_robot[my_own] }
-	local stats_before = profile.statistics(self.profilo, "tutte")
-	-- against bots or on the same phone: half, like the training
-	r.bots = not self.online_end
-	local gain = profile.match_end(self.profilo, r, CP.wallet.today())
-	profile.save(self.profilo)
-	-- the stats and the match into the profile (also saves the replay)
-	local number = CP.record(self, res)
-	gain.coins = CP.match_coins(self, r, stats_before, gain)
+		mvp = mvp == my_own, awards = per_robot[my_own], online = self.online_end or nil }
+	-- experience, Scaglie, Ossidiana and stats (also on the server), then the
+	-- match into the phone's list (with the replay)
+	local c = CP.tally_end(self, res)
+	local gain
+	if self.online_end then
+		-- online the server counts it and sends what it gave (CP "premio"); if
+		-- it hasn't arrived yet (or there is no profile on the server) the same
+		-- sums here, only on the phone: the server's profile comes back anyway
+		gain = self.online_gain or profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c) }, true)
+		CP.expect(self, nil)
+		if self.online_gain then
+			self.verdict = "ok"
+		elseif CP.account.key(profile.test ~= false) then
+			-- its prize still on the way (CP "premio")
+			self.verdict, self.verdict_online = "wait", true
+		end
+		self.online_gain = nil
+	else
+		local _, n
+		gain, _, n = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
+		CP.expect(self, n)
+	end
+	local number = CP.record(self, c)
 	for i, g in ipairs(giocatori) do g.vetrina = self.match_showcases and self.match_showcases[i] end
 	show_message(self, "", true)
 	set_controls_visible(self, false)
@@ -1677,6 +1691,7 @@ local function open_podium(self)
 	self.schermata.obj.xp = CP.xp_sound
 	self.mode = "schermata"
 	if self.pill then menu.pill.raise(self.pill) end
+	CP.verdict(self, self.verdict)
 end
 
 local function open_screen(self, mod, ...)
@@ -1957,6 +1972,15 @@ local function on_server_message(self, m)
 		self.net_events[#self.net_events + 1] = m
 		-- the server closes right after the end: not a drop (see DISCONNECTED)
 		if m.type == "over" then self.net_over = true end
+	elseif m.t == "premio" then
+		-- what the server gave our profile for the match (server/room.go prizes):
+		-- the podium shows it, and the profile comes back from the server
+		self.online_gain = m.g
+		if self.verdict_online then
+			self.verdict_online = nil
+			CP.verdict(self, "ok")
+		end
+		CP.account.refresh()
 	elseif m.t == "away" then
 		show_message(self, TM.opponent_away, true)
 	elseif m.t == "back" and m.robot ~= self.me then
@@ -2038,14 +2062,13 @@ on_socket = function(self, conn, data)
 			self.net_notes = nil
 		elseif self.privata then
 			-- the private match (menu/private.lua): a new room or a code
-			send(self, { t = "hello", v = PROTOCOL, privata = self.privata,
-				vetrina = CP.vetrina.for_net(self.profilo), eq = CP.vetrina.equip_for_net(self.profilo) })
+			send(self, { t = "hello", v = PROTOCOL, privata = self.privata, profilo = CP.account.key(profile.test ~= false) })
 		else
 			CP.wait(self, TM.waiting)
 			-- the queue picked in GIOCA ONLINE (menu/queue.lua): 2v2, 1v1 or an event,
-			-- and the tag: level and badges (menu/showcase.lua)
-			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2",
-				vetrina = CP.vetrina.for_net(self.profilo), eq = CP.vetrina.equip_for_net(self.profilo) })
+			-- and the guest profile: the server takes the tag and the pieces from
+			-- its own, and gives it the prizes (main/account.lua)
+			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2", profilo = CP.account.key(profile.test ~= false) })
 		end
 	elseif data.event == ws.EVENT_MESSAGE and conn == self.mute then
 		-- prova_muta: nothing arrives any more
@@ -2298,7 +2321,7 @@ end
 -- Character sheet (Sergio, 31 Oct) ---------------------------------------------
 -- The tags (ui/tag_card.lua) before the weapon draft (the lineup), during
 -- it (the strip at the top) and in the match by tapping the plate; at the end
--- of the match the stats and the match into the profile (menu/tally.lua,
+-- of the match the stats and the match into the profile (sim/tally.lua,
 -- profilo.registra) and the replay of those played here (sim/replay.lua).
 
 -- The players' showcases (menu/showcase.lua): whoever plays here with their
@@ -2420,7 +2443,7 @@ function CP.begin(self, me, net, cluster, replay_ok)
 			end
 		end
 	end
-	self.conta = me and CP.conta.new(self.g, me, name_list) or nil
+	self.conta = me and CP.conta.new(self.g, me, name_list, require("lang.text").tally) or nil
 	self.cp_group, self.cp_replay = cluster, replay_ok
 end
 
@@ -2519,22 +2542,80 @@ function CP.file_replay(number)
 	return sys.get_save_file("megablast", "replay_" .. profile.replay_place(number))
 end
 
--- End of match: the stats and the match into the profile, and its replay if
--- it was played here. Returns the match number if it can be rewatched
--- the guest profile on the server, in the shadow for now (main/account.lua):
--- the identity and a copy at startup, a copy after the saves
+-- The guest profile on the server, which owns the progress (main/account.lua):
+-- at startup the identity or the server's profile, every action to the
+-- server; the Armeria spends only with the network. The test profiles stay
+-- on the phone
 function CP.account_start(self)
-	CP.account.start(server_url(), self.profilo, profile.test)
-	profile.on_save = function(p) CP.account.saved(p, profile.test) end
+	local function is_test() return profile.test ~= false end
+	-- (in the simulator the Armeria spends, unless imposta prova_senza_rete 1,
+	-- and the profile stays on the phone, unless imposta prova_identita 1: the
+	-- scenarios' sample profiles would come back cut to the import's caps)
+	local offline = SIMULATE and config_int("megablast.prova_senza_rete", 0) == 1
+	profile.can_spend = function()
+		if SIMULATE then return not offline end
+		return is_test() or CP.account.online()
+	end
+	if SIMULATE and config_int("megablast.prova_identita", 0) == 0 then return end
+	CP.account.on_result = function(n, paid)
+		if n ~= self.verdict_n then return end
+		self.verdict_n = nil
+		CP.verdict(self, paid and "ok" or "bad")
+	end
+	CP.account.start(server_url(), self.profilo, is_test, profile.save)
+	profile.on_act = CP.account.send
 end
 
-function CP.record(self, res)
+-- The gains on screen wait for the server's word (ui/receipt.lua verdict,
+-- Sergio, 19 Nov: proposal A): n the number of their action (nil: nothing
+-- goes to the server, no word)
+function CP.expect(self, n)
+	self.verdict_n, self.verdict, self.verdict_online = n, n and "wait" or nil, nil
+end
+
+-- The server's word ("wait", "ok", "bad") on the screen that shows the gains
+function CP.verdict(self, v)
+	self.verdict = v
+	local s = self.schermata
+	if v and s and s.mod.verdict then s.mod.verdict(s.obj, v) end
+end
+
+-- The player touched the controls in a mission (sim/missions.lua touch): into
+-- the recipe too, the server replays it (sim/judge.lua)
+function CP.touch(self, what)
+	if not self.missione then return end
+	missions.touch(self.missione, what)
+	if self.ricetta and self.g then replay.touch(self.ricetta, self.g, what) end
+end
+
+-- The recipe of the match played here, closed where it stops, as text: it
+-- goes to the server with what the player did (sim/progress.lua), the server
+-- replays it before paying (sim/judge.lua)
+function CP.recipe_text(self)
+	replay.close(self.ricetta, self.g)
+	local ok, text = pcall(replay.encode, self.ricetta)
+	return ok and text or nil
+end
+
+-- The match's summary (sim/tally.lua finish), nil if it wasn't counted
+function CP.tally_end(self, res)
 	local c = self.conta
 	self.conta = nil
 	if not c or not res then return nil end
-	local r = CP.conta.finish(c, self.g, res, { gruppo = self.cp_group or res.mode, mappa = self.g.map,
+	return CP.conta.finish(c, self.g, res, { gruppo = self.cp_group or res.mode, mappa = self.g.map,
 		quando = os.time(), giocatori = self.match_showcases })
-	local pa = profile.record(self.profilo, r)
+end
+
+-- what of the summary goes into the stats (sim/progress.lua)
+function CP.stats_of(r)
+	return r and { gruppo = r.gruppo, valori = r.valori, armi = r.armi, won = r.won } or nil
+end
+
+-- The match (summary r of CP.tally_end) into the phone's list, with its replay
+-- if it was played here. Returns the match number if it can be rewatched
+function CP.record(self, r)
+	if not r then return nil end
+	local pa = profile.keep_match(self.profilo, r.partita)
 	-- a training match played on this phone: the server checks the recipe (the
 	-- campaign's missions not yet: their script changes the match outside the
 	-- recipe, so they will need replaying with the missions, PR 5 of the plan)
@@ -2548,22 +2629,6 @@ function CP.record(self, res)
 	end
 	profile.save(self.profilo)
 	return pa.replay and pa.numero or nil
-end
-
--- Scaglie and Ossidiana of a match (sim/wallet.lua): the rows go to the
--- podium's receipt. Online the full price; against bots and on the same
--- phone half, and only the first ones of the day
-function CP.match_coins(self, r, stats_before, gain)
-	local W = CP.wallet
-	local p = self.profilo
-	local rows, won = W.match(p, r, W.today())
-	local obs = W.obsidian(stats_before, profile.statistics(p, "tutte"), gain.level_before, gain.livello)
-	for _, row in ipairs(won) do table.insert(obs, 1, row) end
-	W.apply(p, rows)
-	W.apply(p, obs)
-	local gifts = W.gifts(p, profile.statistics(p, "tutte"), p.livello)
-	profile.save(p)
-	return { rows = rows, obsidian = obs, gifts = gifts }
 end
 
 -- a coin landing in the wallet pill: a semitone higher at each Scaglia, the
@@ -2581,26 +2646,6 @@ function CP.xp_sound(i, n, level_up)
 	else
 		sound.play("#xp", { speed = 2 ^ ((i - 1) / 12) })
 	end
-end
-
--- Scaglie of a mission done, from its experience lines (profile.mission): the
--- first time or a replay, the new stars; chapters: the chapters done before
-function CP.mission_coins(self, gain, chapters)
-	local W = CP.wallet
-	local p = self.profilo
-	local first, new = false, 0
-	for _, l in ipairs(gain.lines) do
-		if l.key == "done" then first = true end
-		if l.key == "stars" then new = l.n end
-	end
-	local rows, obs = W.mission(first, new, gain.record)
-	-- Ossidiana: the new stars, every 5 levels of the devil, a chapter finished
-	for _, row in ipairs(W.obsidian({}, {}, gain.level_before, gain.livello)) do obs[#obs + 1] = row end
-	if W.chapters_done(p, CP.chapters) > chapters then obs[#obs + 1] = W.chapter()[1] end
-	W.apply(p, rows)
-	W.apply(p, obs)
-	local gifts = W.gifts(p, profile.statistics(p, "tutte"), p.livello)
-	return { rows = rows, obsidian = obs, gifts = gifts }
 end
 
 -- Can the match with number numero be rewatched?
@@ -2712,7 +2757,7 @@ local function start_local(self, against)
 	-- against the bots everyone wears as much as the player (Sergio, 18 Nov): the
 	-- player's eq and the bots' built from it with the match's seed, in the recipe
 	-- (sim/loadout.lua rival; the server builds them again, server/verify.lua)
-	local mine = against and not against.stesso and CP.vetrina.equip_for_net(self.profilo)
+	local mine = against and not against.stesso and profile.equip(self.profilo)
 	if mine then
 		opts.players[1].eq = mine
 		for i, p in ipairs(opts.players) do
@@ -2895,7 +2940,10 @@ local function start_mission(self, id, picks)
 	-- your pieces, Sigilli and level count in the campaign (from the Forgia on)
 	local my_own = profile.active_loadout(self.profilo)
 	local own = profile.stats(self.profilo, my_own, game.base_stats())
-	new_match(self, missions.match(r, os.time(), picks, profile.help(self.profilo, id), own))
+	local help = profile.help(self.profilo, id)
+	new_match(self, missions.match(r, os.time(), picks, help, own))
+	-- the server builds the mission's match again from these (sim/judge.lua)
+	self.ricetta.missione = { id = id, picks = picks, help = help or nil }
 	-- prova_durata N also in the missions' battles (scenari/podio_forgia.txt)
 	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0
 	if duration > 0 then
@@ -3079,10 +3127,13 @@ local function mission_update(self, dt)
 	end
 	if r.esito == "fatta" and not r.was_saved then
 		r.was_saved = true
-		local chapters = CP.wallet.chapters_done(self.profilo, CP.chapters)
-		self.mission_gain = profile.mission(self.profilo, r.l.id, missions.stars(r), missions.points(r))
-		self.mission_gain.coins = CP.mission_coins(self, self.mission_gain, chapters)
-		profile.save(self.profilo)
+		-- a battle really finished goes into the stats too (lessons don't)
+		local c = self.g.phase == "over" and CP.tally_end(self, self.g:results()) or nil
+		self.mission_tally = c
+		local _, n
+		self.mission_gain, _, n = profile.act(self.profilo, { k = "missione", id = r.l.id, stars = missions.stars(r),
+			made = missions.points(r), conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
+		CP.expect(self, n)
 		if not r.l.guidata then
 			-- a moment to see the shot, then (or at the first tap) the stars
 			show_message(self, TM.mission_done, true)
@@ -3095,6 +3146,10 @@ local function mission_update(self, dt)
 		profile.failed(self.profilo, r.l.id)
 		profile.save(self.profilo)
 		if self.g.phase == "over" then
+			-- a battle lost: its stats count all the same
+			local c = CP.tally_end(self, self.g:results())
+			self.mission_tally = c
+			profile.act(self.profilo, { k = "statistiche", id = r.l.id, conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
 			show_message(self, TM.mission_retry, true)
 			self.mode = "ended"
 			set_controls_visible(self, false)
@@ -3111,8 +3166,9 @@ local function open_level_end(self)
 	local r = self.missione
 	self.end_t, self.missione = nil, nil
 	self.missione_finita = r.l.id
-	-- battles (really finished) go into the stats, lessons don't
-	if self.g.phase == "over" then CP.record(self, self.g:results()) else self.conta = nil end
+	-- battles (really finished) into the phone's list of matches, lessons don't
+	CP.record(self, self.mission_tally)
+	self.mission_tally, self.conta = nil, nil
 	show_message(self, "", true)
 	score.goal(self.punti, nil)
 	self.vign:quiet()
@@ -3129,6 +3185,7 @@ local function open_level_end(self)
 		avanti = won and (missions.after(r.l.id) ~= nil),
 		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo, coin = CP.coin_sound, xp = CP.xp_sound,
 	}, function(v) sound.play("#punto", { speed = v }) end)
+	if won then CP.verdict(self, self.verdict) end
 	self.mission_gain = nil
 end
 
@@ -3389,10 +3446,10 @@ CP.vibrate = vibrate_touch -- for the blocks above it (the zoom)
 
 local function move_pad_drag(self, x, y)
 	local nx, ny = pad_drag(self.move_pad, x, y)
-	if math.abs(nx) > 0.3 then missions.touch(self.missione, "cammina") end
+	if math.abs(nx) > 0.3 then CP.touch(self, "cammina") end
 	if sticks.move(self.move_st, nx, ny) then
 		self.jump_pressed = true
-		missions.touch(self.missione, "salta")
+		CP.touch(self, "salta")
 		-- the thumb just entered the jump arc: a micro-vibration
 		vibrate_touch()
 	end
@@ -5069,7 +5126,7 @@ end
 local function choose_slot(self, w)
 	-- the hidden teleport (lessons that don't talk about orbs) doesn't respond
 	if w == "teleport" and not self.tele_sees then return end
-	missions.touch(self.missione, w)
+	CP.touch(self, w)
 	local g = self.g
 	local why = my_turn(self) and g.phase == "aim" and hud.reason(g, w)
 	if why then
@@ -5112,7 +5169,7 @@ local function cancel_pad_aim(self)
 	self.pointers[self.aim_pad.id] = "cancelled"
 	aim_pad_drop(self)
 	show_message(self, TM.aim_cancelled)
-	missions.touch(self.missione, "annulla")
+	CP.touch(self, "annulla")
 end
 
 -- ESCI DALLA PARTITA: online the server knows at once (the seat isn't kept,
@@ -5232,7 +5289,7 @@ local function pointer_down(self, id, px, py)
 		return
 	end
 	-- in the lessons time starts when you touch the controls
-	if self.missione then missions.touch(self.missione) end
+	if self.missione then CP.touch(self) end
 	-- on the phone bringing the stick back to zero is awkward: while aiming, a
 	-- tap on the right half of the screen cancels the aim (and does nothing
 	-- else); the left half stays with the walking hand
@@ -5242,7 +5299,7 @@ local function pointer_down(self, id, px, py)
 		return
 	end
 	if hud.swap_press(self.scambio, px, py) then
-		missions.touch(self.missione, "baratto")
+		CP.touch(self, "baratto")
 		self.fire = { angle = 0, power = 0, weapon = "swap" }
 	elseif gui.pick_node(self.btn_zoom, px, py) then
 		self.pointers[id] = "zoom"
@@ -5260,14 +5317,14 @@ local function pointer_down(self, id, px, py)
 			-- with something to throw (at the start of the first lesson you have no weapons)
 			and self.g:can_use(self.tele_armed and "teleport" or self.weapon) then
 			self.pointers[id] = "pad_aim"
-			missions.touch(self.missione, "mira")
+			CP.touch(self, "mira")
 			pad_press(self.aim_pad, id, x, y)
 			aim_pad_drag(self, x, y)
 		end
 	elseif my_turn(self) and self.g:can_use(self.tele_armed and "teleport" or self.weapon) then
 		-- on the computer you aim from the robot with the mouse
 		self.pointers[id] = "aim"
-		missions.touch(self.missione, "mira")
+		CP.touch(self, "mira")
 		self.aiming = true
 		aim_from(self, x, y, true)
 	end
@@ -5311,7 +5368,7 @@ local function pointer_up(self, id, x, y)
 				weapon = self.tele_armed and "teleport" or self.weapon }
 			self.tele_armed = false
 		elseif self.aim_dist <= CANCEL_R then
-			missions.touch(self.missione, "annulla")
+			CP.touch(self, "annulla")
 		end
 		self.aiming = false
 	end
@@ -5427,7 +5484,7 @@ function PAD.aim(self)
 	-- power is how far you press the SPARA button, and releasing it fires the shot
 	local trigger = PAD.setting(self, "potenza") == "grilletto"
 	if st.active then
-		if not previous then missions.touch(self.missione, "mira") end
+		if not previous then CP.touch(self, "mira") end
 		self.pad_aim, self.aiming = true, true
 		self.aim_target = st.angle
 		if not previous or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
@@ -5449,7 +5506,7 @@ function PAD.aim(self)
 	elseif previous then
 		-- brought back to the center: the aim goes off and nothing fires
 		self.pad_aim, self.aiming, self.pad_charge = false, false, false
-		missions.touch(self.missione, "annulla")
+		CP.touch(self, "annulla")
 	end
 end
 -- the trigger charges past CHARGE and fires when it comes back below
@@ -5513,7 +5570,7 @@ PAD.COMMANDS = {
 	-- SALTA on a button (settings): jumps while held, like the stick pushed up
 	salta = function(self)
 		self.jump_pressed, self.pad_jump = true, true
-		missions.touch(self.missione, "salta")
+		CP.touch(self, "salta")
 	end,
 	teletrasporto = function(self) choose_slot(self, "teleport") end,
 	rampino = function(self) choose_slot(self, "hook") end,
@@ -5533,7 +5590,7 @@ PAD.COMMANDS = {
 	-- stopwatch, which is there when possible)
 	baratto = function(self)
 		if my_turn(self) and self.g.phase == "aim" and self.g:can_use("swap") and missions.sees(self.missione, "baratto") then
-			missions.touch(self.missione, "baratto")
+			CP.touch(self, "baratto")
 			self.fire = { angle = 0, power = 0, weapon = "swap" }
 		end
 	end,
@@ -5661,12 +5718,12 @@ function PAD.every_frame(self)
 		self.pad_jump = self.pad_jump and c.giu[jump_key] or false
 	elseif sticks.move(st, PAD.stick(self, "muove").x, PAD.stick(self, "muove").y) then
 		self.jump_pressed = true
-		missions.touch(self.missione)
-		missions.touch(self.missione, "salta")
+		CP.touch(self)
+		CP.touch(self, "salta")
 	end
 	if st.moving and not previous then
-		missions.touch(self.missione)
-		missions.touch(self.missione, "cammina")
+		CP.touch(self)
+		CP.touch(self, "cammina")
 	end
 	self.pad_walk = st.moving and st.dir or 0
 	if not jump_key then self.pad_jump = st.jumping end
@@ -5744,7 +5801,7 @@ function PAD.event(self, e)
 	elseif command == "spara" and self.controls_visible then
 		-- pressing fires at once; "lasciando" (settings) charges and fires on
 		-- release; with power from the trigger PAD.aim takes care of it
-		missions.touch(self.missione)
+		CP.touch(self)
 		if PAD.setting(self, "potenza") == "grilletto" then return end
 		if PAD.setting(self, "sparo") == "rilascio" then
 			self.pad_charge = self.pad_aim
@@ -5752,7 +5809,7 @@ function PAD.event(self, e)
 			PAD.COMMANDS.spara(self)
 		end
 	elseif command and self.controls_visible then
-		missions.touch(self.missione)
+		CP.touch(self)
 		PAD.COMMANDS[command](self)
 	end
 end
@@ -5924,10 +5981,10 @@ function PAD.on_input(self, action_id, action)
 	end
 	if self.missione and action.pressed and (action_id == ACTION.LEFT or action_id == ACTION.RIGHT
 		or action_id == ACTION.JUMP or action_id == ACTION.TELE_BTN or ACTION.WEAPON[action_id]) then
-		missions.touch(self.missione)
+		CP.touch(self)
 	end
 	if (action_id == ACTION.LEFT or action_id == ACTION.RIGHT) and action.pressed then
-		missions.touch(self.missione, "cammina")
+		CP.touch(self, "cammina")
 	end
 	if action_id == ACTION.LEFT then
 		self.keys.left = not action.released
@@ -5936,7 +5993,7 @@ function PAD.on_input(self, action_id, action)
 	elseif action_id == ACTION.JUMP then
 		if action.pressed then
 			self.jump_pressed = true
-			missions.touch(self.missione, "salta")
+			CP.touch(self, "salta")
 		end
 		self.keys.jump = not action.released
 	elseif action_id == ACTION.TELE_BTN then

@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -19,7 +21,7 @@ import (
 // Protocol version: change it together with PROTOCOL in
 // client/main/game.gui_script every time the messages change in a way an old
 // client wouldn't understand.
-const protocolVersion = 9
+const protocolVersion = 10
 
 type Config struct {
 	Node           string // node name, goes into tokens: a load balancer can send whoever comes back to the right node
@@ -119,8 +121,9 @@ type Player struct {
 	cancel    context.CancelFunc
 	room      atomic.Pointer[seatRef] // the match they're playing, nil if not playing
 	closeOnce sync.Once
-	showcase  []byte    // the card as JSON, checked (showcaseJSON): level and badges
-	equip     []byte    // what they wear as a Lua value (equipLua), nil: the base stats
+	showcase  []byte    // the card as JSON, checked (showcaseJSON): level and badges, from their profile
+	equip     []byte    // what they wear as a Lua value (equipLua), from their profile; nil: the base stats
+	account   int64     // their guest profile (accounts.go), 0: none (the base card and stats, no prizes)
 	joined    time.Time // when they entered the queue (bots after BotAfter, lobby.go)
 	private   *Private  // the private room they are in before the match (private.go; under the lobby's lock)
 }
@@ -276,8 +279,7 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	if !ok {
 		mode = modes["2v2"]
 	}
-	p.showcase = showcaseJSON(m.Showcase)
-	p.equip = equipLua(m.Equip)
+	s.cards(p, m.Profile)
 	// a private room (private.go): "nuova" opens one, a code joins it
 	if m.Private == "nuova" {
 		s.lobby.NewPrivate(p)
@@ -287,6 +289,26 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	}
 	s.lobby.Join(p, mode)
 	return true
+}
+
+// cards: the card and what the player wears come from their profile on the
+// server ("profilo": "<id>.<chiave>", accounts.go), never from what the phone
+// says; without a profile (a test one, profiles off) the base card and stats
+func (s *Server) cards(p *Player, profile string) {
+	if s.accounts == nil || profile == "" {
+		return
+	}
+	ids, key, _ := strings.Cut(profile, ".")
+	id, err := strconv.ParseInt(ids, 10, 64)
+	if err != nil || id <= 0 || key == "" || len(key) > 128 {
+		return
+	}
+	showcase, equip, err := s.accounts.Cards(id, key)
+	if err != nil {
+		log.Printf("profili: carte di %d non lette: %v", id, err)
+		return
+	}
+	p.showcase, p.equip, p.account = showcaseJSON(showcase), equipLua(equip), id
 }
 
 // writeLoop sends messages in order and keeps the connection alive with a

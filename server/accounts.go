@@ -25,15 +25,14 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// Guest profiles (plan of 17 Nov, PR 3: the profile "in the shadow"). The
-// phone asks the server for an identity (a number and a long random key; the
-// server keeps only the key's hash), brings its progress over once (cut to
-// the caps, sim/profile.lua import) and then sends a copy of its profile at
-// every start and match end. For now the phone's profile is the one that
-// counts: the server keeps its own (the import) and the latest copy, and
-// writes every change in the register, so for a few days it shows on the VPS
-// whether everything comes back. The profile travels and is kept as the
-// recipes' text (sim/replay.lua write/read: pure data).
+// Guest profiles (plan of 17 Nov). The phone asks the server for an identity
+// (a number and a long random key; the server keeps only the key's hash) and
+// brings its progress over once (cut to the caps, sim/profile.lua import).
+// From PR 4 the server's profile is the one that counts: the phone sends what
+// it did (sim/progress.lua: a purchase, the ZAINO, a match...), the server
+// does it with the same rules and answers its profile, which the phone takes.
+// Every request goes into the register. The profile travels and is kept as
+// the recipes' text (sim/replay.lua write/read: pure data).
 //
 // SQLite in one file (-profili, on the VPS /var/lib/megablast/megablast.db),
 // pure Go driver (no cgo: the VPS build stays the same). The VPS copies it
@@ -44,7 +43,8 @@ import (
 var ProfileDB = ""
 
 const (
-	profileMax = 256 << 10
+	// a profile, or the actions of a request (up to 5 matches with their recipes)
+	profileMax = 8 << 20
 	// new profiles from one address in an hour (a phone makes one, once)
 	profileNewPerHour = 10
 )
@@ -94,6 +94,15 @@ CREATE INDEX IF NOT EXISTS registro_giocatore ON registro(giocatore, id);`)
 		db.Close()
 		return nil, err
 	}
+	// PR 4: whether the server already owns the profile (before, the phone's
+	// latest copy counted: it becomes the server's at the first request), and
+	// the number of the last action of the phone done
+	for _, col := range []string{"padrone INTEGER NOT NULL DEFAULT 0", "ultima INTEGER NOT NULL DEFAULT 0"} {
+		if _, err := db.Exec(`ALTER TABLE giocatori ADD COLUMN ` + col); err != nil && !strings.Contains(err.Error(), "duplicate column") {
+			db.Close()
+			return nil, err
+		}
+	}
 	return &Accounts{db: db, births: map[string][]time.Time{}}, nil
 }
 
@@ -108,7 +117,12 @@ type ProfileSummary struct {
 	Pieces    int    `json:"pezzi"`
 	Stars     int    `json:"stelle"`
 	Profile   string `json:"profilo,omitempty"`
-	Err       string `json:"err,omitempty"`
+	// profile_do: the last action done and what each one did ("compra,no firma")
+	Last int64  `json:"ultima,omitempty"`
+	Done string `json:"fatte,omitempty"`
+	// the numbers of the matches replayed and not paid (server/worker.lua profile_do)
+	Refused []int64 `json:"rifiutate,omitempty"`
+	Err     string  `json:"err,omitempty"`
 }
 
 func (s ProfileSummary) String() string {
@@ -116,6 +130,12 @@ func (s ProfileSummary) String() string {
 }
 
 func profileLua(f string, args map[string]string) (ProfileSummary, error) {
+	s, _, err := profileCall(f, args)
+	return s, err
+}
+
+// profileCall: like profileLua, with the raws of the answer too
+func profileCall(f string, args map[string]string) (ProfileSummary, [][]byte, error) {
 	b := &Batch{}
 	b.Cmd(f, 0, nil)
 	keys := make([]string, 0, len(args))
@@ -129,16 +149,16 @@ func profileLua(f string, args map[string]string) (ProfileSummary, error) {
 	b.End()
 	res, err := callUtil(b)
 	if err != nil {
-		return ProfileSummary{}, err
+		return ProfileSummary{}, nil, err
 	}
 	var s ProfileSummary
 	if err := json.Unmarshal(res.Head, &s); err != nil {
-		return s, err
+		return s, nil, err
 	}
 	if s.Err != "" {
-		return s, errors.New(s.Err)
+		return s, nil, errors.New(s.Err)
 	}
-	return s, nil
+	return s, res.Raw, nil
 }
 
 func hashKey(key string) string {
@@ -161,6 +181,10 @@ type Account struct {
 	Name    string `json:"nome"`
 	Rev     int64  `json:"rev"`
 	Profile string `json:"profilo"`
+	// the last action of the phone done (main/account.lua drops it from its queue)
+	Last int64 `json:"ultima"`
+	// the phone's matches not paid in this request (the receipt says «non valida»)
+	Refused []int64 `json:"rifiutate,omitempty"`
 }
 
 // New creates a profile, from the phone's progress when text isn't empty.
@@ -215,57 +239,132 @@ func ledger(tx *sql.Tx, id, now int64, kind string, s ProfileSummary) error {
 
 var errNoProfile = errors.New("profilo sconosciuto o chiave sbagliata")
 
-// Get returns the profile of id if key is its key.
-func (a *Accounts) Get(id int64, key string) (Account, error) {
-	var acc Account
-	var hash string
-	err := a.db.QueryRow(`SELECT id, chiave, nome, rev, profilo FROM giocatori WHERE id = ?`, id).Scan(&acc.ID, &hash, &acc.Name, &acc.Rev, &acc.Profile)
-	if errors.Is(err, sql.ErrNoRows) {
-		return acc, errNoProfile
-	}
-	if err != nil {
-		return acc, err
-	}
-	if subtle.ConstantTimeCompare([]byte(hash), []byte(hashKey(key))) != 1 {
-		return Account{}, errNoProfile
-	}
-	return acc, nil
-}
+// the day of the rules (the first win, the bots' matches, the BOTTEGA) is
+// Italy's (rome, events.go), never the phone's clock
+func today(now time.Time) string { return now.In(rome).Format("2006-01-02") }
 
-// Copy keeps the phone's copy of the profile; the register gets a row when
-// its numbers changed since the last copy. Returns whether they changed.
-func (a *Accounts) Copy(id int64, key, text string) (ProfileSummary, bool, error) {
-	if _, err := a.Get(id, key); err != nil {
-		return ProfileSummary{}, false, err
-	}
-	s, err := profileLua("profile_summary", map[string]string{"text": text})
-	if err != nil {
-		return s, false, err
-	}
-	now := time.Now().Unix()
+// Do does the phone's actions (actions: sim/replay.lua text, { azioni = {
+// { n, k, ... } } }; empty: none) on the profile of id if key is its key, and
+// returns it. The actions up to the last one already done are skipped (the
+// phone sends again what got no answer).
+func (a *Accounts) Do(id int64, key, actions string, now time.Time) (Account, ProfileSummary, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	tx, err := a.db.Begin()
+	var acc Account
+	var hash string
+	var owner int
+	var phoneCopy sql.NullString
+	err := a.db.QueryRow(`SELECT id, chiave, nome, rev, profilo, padrone, ultima, copia FROM giocatori WHERE id = ?`, id).
+		Scan(&acc.ID, &hash, &acc.Name, &acc.Rev, &acc.Profile, &owner, &acc.Last, &phoneCopy)
+	if errors.Is(err, sql.ErrNoRows) || err == nil && subtle.ConstantTimeCompare([]byte(hash), []byte(hashKey(key))) != 1 {
+		return Account{}, ProfileSummary{}, errNoProfile
+	}
 	if err != nil {
-		return s, false, err
+		return Account{}, ProfileSummary{}, err
 	}
-	defer tx.Rollback()
-	var last sql.NullString
-	err = tx.QueryRow(`SELECT dati FROM registro WHERE giocatore = ? AND tipo = 'copia' ORDER BY id DESC LIMIT 1`, id).Scan(&last)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return s, false, err
-	}
-	if _, err := tx.Exec(`UPDATE giocatori SET copia = ?, copia_rev = copia_rev + 1, copia_quando = ? WHERE id = ?`, text, now, id); err != nil {
-		return s, false, err
-	}
-	data, _ := json.Marshal(ProfileSummary{Level: s.Level, XP: s.XP, Scaglie: s.Scaglie, Ossidiana: s.Ossidiana, Pieces: s.Pieces, Stars: s.Stars})
-	changed := !last.Valid || last.String != string(data)
-	if changed {
-		if err := ledger(tx, id, now, "copia", s); err != nil {
-			return s, false, err
+	var kinds []string
+	var took ProfileSummary
+	if owner == 0 && phoneCopy.Valid && phoneCopy.String != "" {
+		// the first request of PR 4: the phone's latest copy (it counted until
+		// now) becomes the server's, through the import like at the birth
+		if took, err = profileLua("profile_new", map[string]string{"name": acc.Name, "text": phoneCopy.String}); err == nil {
+			acc.Profile = took.Profile
+			kinds = append(kinds, "padrone")
 		}
 	}
-	return s, changed, tx.Commit()
+	s, err := profileLua("profile_do", map[string]string{"text": acc.Profile, "actions": actions,
+		"today": today(now), "last": strconv.FormatInt(acc.Last, 10)})
+	if err != nil {
+		return Account{}, s, err
+	}
+	acc.Refused = s.Refused
+	if s.Done == "" && len(kinds) == 0 && owner == 1 {
+		return acc, s, nil
+	}
+	acc.Profile, acc.Last, acc.Rev = s.Profile, s.Last, acc.Rev+1
+	tx, err := a.db.Begin()
+	if err != nil {
+		return Account{}, s, err
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec(`UPDATE giocatori SET profilo = ?, rev = ?, ultima = ?, padrone = 1, aggiornato = ? WHERE id = ?`,
+		acc.Profile, acc.Rev, acc.Last, now.Unix(), id); err != nil {
+		return Account{}, s, err
+	}
+	if len(kinds) > 0 {
+		if err := ledger(tx, id, now.Unix(), "padrone", took); err != nil {
+			return Account{}, s, err
+		}
+	}
+	if s.Done != "" {
+		if err := ledger(tx, id, now.Unix(), "azioni", s); err != nil {
+			return Account{}, s, err
+		}
+	}
+	return acc, s, tx.Commit()
+}
+
+// Cards: what the player of id (with key) shows and wears online, from the
+// server's profile (sim/profile.lua showcase and equip, as JSON): the phone's
+// word doesn't count (server.go, hello)
+func (a *Accounts) Cards(id int64, key string) (showcase, equip json.RawMessage, err error) {
+	acc, _, err := a.Do(id, key, "", time.Now())
+	if err != nil {
+		return nil, nil, err
+	}
+	b := &Batch{}
+	b.Cmd("profile_cards", 0, nil)
+	b.Str("text", acc.Profile)
+	b.End()
+	res, err := callUtil(b)
+	if err != nil {
+		return nil, nil, err
+	}
+	var v struct {
+		Showcase json.RawMessage `json:"vetrina"`
+		Equip    json.RawMessage `json:"eq"`
+		Err      string          `json:"err"`
+	}
+	if err := json.Unmarshal(res.Head, &v); err != nil {
+		return nil, nil, err
+	}
+	if v.Err != "" {
+		return nil, nil, errors.New(v.Err)
+	}
+	return v.Showcase, v.Equip, nil
+}
+
+// Award gives the profile of id an online match (action: worker.lua prizes,
+// made by the server). Returns the gain as JSON, for the phone's podium.
+func (a *Accounts) Award(id int64, action string, now time.Time) ([]byte, ProfileSummary, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	var text string
+	var rev int64
+	if err := a.db.QueryRow(`SELECT profilo, rev FROM giocatori WHERE id = ?`, id).Scan(&text, &rev); err != nil {
+		return nil, ProfileSummary{}, err
+	}
+	s, raws, err := profileCall("profile_award", map[string]string{"text": text, "action": action, "today": today(now)})
+	if err != nil {
+		return nil, s, err
+	}
+	tx, err := a.db.Begin()
+	if err != nil {
+		return nil, s, err
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec(`UPDATE giocatori SET profilo = ?, rev = ?, padrone = 1, aggiornato = ? WHERE id = ?`,
+		s.Profile, rev+1, now.Unix(), id); err != nil {
+		return nil, s, err
+	}
+	if err := ledger(tx, id, now.Unix(), "online", s); err != nil {
+		return nil, s, err
+	}
+	var gain []byte
+	if len(raws) > 0 {
+		gain = raws[0]
+	}
+	return gain, s, tx.Commit()
 }
 
 // Who sends the request: the address Caddy puts in X-Forwarded-For when the
@@ -320,7 +419,7 @@ func writeJSON(w http.ResponseWriter, v any) {
 	json.NewEncoder(w).Encode(v)
 }
 
-// /profilo/nuovo, /profilo, /profilo/copia (docs/server.md, "Profili ospite")
+// /profilo/nuovo, /profilo/fai (docs/server.md, "Profili ospite")
 func (s *Server) handleProfile(w http.ResponseWriter, r *http.Request) {
 	a := s.accounts
 	if a == nil {
@@ -357,34 +456,26 @@ func (s *Server) handleProfile(w http.ResponseWriter, r *http.Request) {
 			log.Printf("profili: %d nato da %s, da zero", acc.ID, who)
 		}
 		writeJSON(w, acc)
-	case "/profilo":
-		id, key, ok := authProfile(r)
-		acc, err := a.Get(id, key)
-		if !ok || err != nil {
-			http.Error(w, errNoProfile.Error(), http.StatusUnauthorized)
-			return
-		}
-		writeJSON(w, acc)
-	case "/profilo/copia":
+	case "/profilo/fai":
 		id, key, ok := authProfile(r)
 		if !ok {
 			http.Error(w, errNoProfile.Error(), http.StatusUnauthorized)
 			return
 		}
-		sum, changed, err := a.Copy(id, key, string(body))
+		acc, sum, err := a.Do(id, key, string(body), time.Now())
 		if errors.Is(err, errNoProfile) {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 		if err != nil {
-			log.Printf("profili: copia di %d da %s rifiutata: %v", id, who, err)
-			http.Error(w, "copia rifiutata", http.StatusBadRequest)
+			log.Printf("profili: azioni di %d da %s rifiutate: %v", id, who, err)
+			http.Error(w, "azioni rifiutate", http.StatusBadRequest)
 			return
 		}
-		if changed {
-			log.Printf("profili: copia di %d da %s: %s", id, who, sum)
+		if sum.Done != "" {
+			log.Printf("profili: %d da %s ha fatto %s: %s", id, who, sum.Done, sum)
 		}
-		writeJSON(w, map[string]bool{"ok": true})
+		writeJSON(w, acc)
 	default:
 		http.NotFound(w, r)
 	}

@@ -158,6 +158,8 @@ return {
 	-- ui/receipt.lua: what a match or a level gave, line by line
 	receipt = {
 		title = "GUADAGNI",
+		-- what the server said of them (Sergio, 19 Nov: proposal A)
+		verdict = { wait = "IN ATTESA DEL SERVER…", ok = "CONFERMATI", bad = "PARTITA NON VALIDA" },
 		xp = "XP",
 		lines = { match = "Partita", win = "Vittoria", second = "Secondo posto", mvp = "MVP",
 			done = "Prima volta", bots_over = "Allenamento di oggi finito", replay = "Record battuto", replay_plain = "Rigiocata senza record", daily = "Prima vittoria di oggi",
@@ -236,7 +238,7 @@ return {
 		record_beat = "RECORD · %s PUNTI · BATTILO",
 	},
 
-	-- menu/tally.lua: the moments of the match, in the profile's history
+	-- sim/tally.lua: the moments of the match, in the profile's history
 	tally = {
 		long_shot = "Colpo da %d px su %s",
 		you_drop = "Butti nel vuoto %s",
@@ -424,6 +426,8 @@ return {
 		-- in the ZAINO: opens the piece's card, with +1 LIVELLO
 		upgrade_here = "POTENZIA",
 		missing = "mancano %s",
+		-- without the network the Armeria can be looked at, not used (the server keeps the progress)
+		need_network = "serve la rete",
 		pick_ware = "tocca un pezzo",
 		in_wardrobe = "ce l'hai già",
 		buy = "COMPRA",

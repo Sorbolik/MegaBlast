@@ -165,9 +165,11 @@ function M.footer(s, low2, right, sel)
 	local set, slot = sel[1], sel[2]
 	-- the signature is lit with Ossidiana, a grade for each step done (Sergio, 17 Nov)
 	local sn = wallet.sign_next(p, set, slot)
-	local can = sn and not sn.level and p.ossidiana >= sn.cost
+	-- without the network nothing is spent (the server keeps the progress, choice 2A)
+	local net = profile.can_spend()
+	local can = sn and not sn.level and p.ossidiana >= sn.cost and net
 	local note = not sn and T.sign_top or sn.level and T.sign_needs:format(sn.level)
-		or T.sign_cost:format(sn.cost)
+		or not net and TP.need_network or T.sign_cost:format(sn.cost)
 	local sb = kit.secondary(low2, T.light_sign, 430, 640, 270, 62, { icon = "gemma", sub = kit.upper(note), sub_color = KC.OBSIDIAN, off = not can })
 	kit.button(s.buttons, sb, "firma", { spento = not can })
 
@@ -176,12 +178,12 @@ function M.footer(s, low2, right, sel)
 	-- why it can't be done, in place of that line
 	local nxt = wallet.next(p, set, slot)
 	if nxt then
-		local ok = nxt.proof_done >= nxt.proof and p.scaglie >= nxt.cost
+		local ok = nxt.proof_done >= nxt.proof and p.scaglie >= nxt.cost and net
 		local px = 910
 		local num = kit.text(right, coins.format(nxt.cost), px, 668, 28, nxt.cost < (nxt.full_cost or nxt.cost) and KC.MINT or KC.SAND, "end")
 		kit.piece(right, "scaglia", px - kit.width(num) - 22, 658, 34)
 		local why = nxt.proof_done < nxt.proof and TP.proof_first or p.scaglie < nxt.cost
-			and TP.missing:format(coins.format(nxt.cost - p.scaglie)) or nil
+			and TP.missing:format(coins.format(nxt.cost - p.scaglie)) or not net and TP.need_network or nil
 		kit.text(right, kit.upper(why or TP.price_for:format(nxt.level)), px, 692, 16, why and KC.RED or KC.MUTE, "end", 0.5)
 		s.action = kit.action(right, TP.upgrade, 948, 628, 308, 80, { size = 44, off = not ok })
 		kit.button(s.buttons, s.action, "potenzia", { main = true, spento = not ok })
@@ -196,7 +198,7 @@ function M.run(s, kind, sel)
 	if not sel or (kind ~= "potenzia" and kind ~= "firma") then return false end
 	if kind == "potenzia" then
 		local before = equip.tier(wallet.level(p, sel[1], sel[2]))
-		local level = wallet.upgrade(p, sel[1], sel[2])
+		local level = profile.act(p, { k = "potenzia", set = sel[1], slot = sel[2] })
 		if level then
 			sound.play("#scaglia")
 			if equip.tier(level) > before then
@@ -209,7 +211,7 @@ function M.run(s, kind, sel)
 		end
 	else
 		local sn = wallet.sign_next(p, sel[1], sel[2])
-		if wallet.light(p, sel[1], sel[2]) then
+		if profile.act(p, { k = "firma", set = sel[1], slot = sel[2] }) then
 			sound.play("#martello")
 			s.just, s.sign_cost = "sign", sn and sn.cost
 		end

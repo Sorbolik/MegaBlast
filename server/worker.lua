@@ -27,6 +27,9 @@ _G.print = function(...)
 end
 
 local N = require "net"
+local game = require "sim.game"
+-- profiles, recipes and actions travel as pure data text (sim/replay.lua write/read)
+local replay_text = require "sim.replay"
 
 -- JSON like the server always wrote it (luajson.go before LuaJIT): integers
 -- stay integers, the other numbers get two decimals (enough for positions and
@@ -165,12 +168,20 @@ function CMD.ready(c)
 	answer({ ok = ok, all = all })
 end
 
+-- the stats of each person in an online match (sim/tally.lua), for their
+-- rewards at the end (prizes)
+local tally = require "sim.tally"
+
 -- start{r}: the draft closes and the match starts; map and players (with picks)
 function CMD.start(c)
 	local r = room(c)
 	local players = N.draft_finish(r.d)
 	r.d = nil
 	r.g = N.new(r.seed, nil, players, r.rules)
+	r.tallies = {}
+	for i, p in ipairs(players) do
+		if not p.bot then r.tallies[i] = tally.new(r.g, i) end
+	end
 	answer({ map = r.g.map, cur = N.current(r.g) }, { json(N.start_players(players)) })
 end
 
@@ -187,12 +198,20 @@ end
 -- last raw is the state (asked, or the match is over); raws: the events, then
 -- the state.
 function CMD.tick(c)
-	local g = room(c).g
+	local rm = room(c)
+	local g = rm.g
 	local cur = g.current
 	local k = c.k or EMPTY
+	local t = rm.tallies and rm.tallies[cur]
+	-- a person's shot (not the bot standing in for them), for their stats
+	if t and k.a and not N.bot_turn(g, cur) then tally.shot(t, g, game.WEAPONS[k.w] and k.w or "missile") end
 	N.step(g, k.l, k.r, k.j, k.h, k.a, k.p, k.w)
 	local nxt = g.current
 	local evs = N.events(g)
+	for _, tt in pairs(rm.tallies or EMPTY) do
+		for i = 1, #evs do tally.event(tt, g, evs[i]) end
+		tally.tick(tt, g)
+	end
 	local raws = {}
 	for i = 1, #evs do raws[i] = json(evs[i]) end
 	local over = N.over(g)
@@ -248,6 +267,38 @@ function CMD.stand_in(c)
 	answer()
 end
 
+-- prizes{r}: the match is over. For each person, by seat, what they did as an
+-- action of the profile (sim/progress.lua partita, online: the full price;
+-- sim/replay.lua text): Go gives it to the profile of whoever sat there
+-- (accounts.go, Award); "" for the bots' seats
+local awards = require "sim.awards"
+function CMD.prizes(c)
+	local rm = room(c)
+	local g = rm.g
+	local res = g:results()
+	local per_robot, mvp = awards.assign(res.ranking), awards.mvp(res.ranking)
+	local raws = {}
+	for i = 1, #g.robots do
+		local t = rm.tallies and rm.tallies[i]
+		local mine
+		for _, v in ipairs(res.ranking) do
+			if v.robot == i then mine = v end
+		end
+		if t and mine then
+			local won = nil
+			if res.winner then won = res.winner == mine.team end
+			local s = tally.finish(t, g, res, { gruppo = res.mode })
+			raws[i] = replay_text.write({ k = "partita",
+				r = { points = mine.points, won = won, second = res.mode == "ffa" and mine.place == 2, mvp = mvp == i,
+					awards = per_robot[i], online = true },
+				conta = { gruppo = res.mode, valori = s.valori, armi = s.armi, won = s.won } })
+		else
+			raws[i] = ""
+		end
+	end
+	answer(nil, raws)
+end
+
 -- free{r}: the room is closed
 function CMD.free(c)
 	ROOMS[c.r] = nil
@@ -262,10 +313,20 @@ end
 -- Guest profiles (server/accounts.go): the profile travels and is stored as
 -- the recipes' text (sim/replay.lua, write and read: pure data, never code).
 -- profile_new{name, text}: a new profile, from the phone's progress when text
--- is there (sim/profile.lua, import: cut to the caps); profile_summary{text}:
--- a few numbers of a profile, for the log and the register.
+-- is there (sim/profile.lua, import: cut to the caps); profile_do{text,
+-- actions, today, last}: the phone's actions on the profile (sim/progress.lua,
+-- the same rules as on the phone; last: the number of the last one already
+-- done, the ones up to it are skipped).
 local profile_rules = require "sim.profile"
-local replay_text = require "sim.replay"
+local progress = require "sim.progress"
+local judge = require "sim.judge"
+
+-- the most actions of one request (the phone's queue sends them together),
+-- and the most matches to replay (a second or two each): the phone sends the
+-- rest again
+local ACTIONS_MAX, MATCHES_MAX = 200, 5
+-- the matches played on the phone: paid only replayed (sim/judge.lua)
+local MATCH_ACTIONS = { partita = true, missione = true, statistiche = true }
 
 local function summary(p)
 	local pieces = 0
@@ -284,10 +345,66 @@ function CMD.profile_new(c)
 	answer(s)
 end
 
-function CMD.profile_summary(c)
+function CMD.profile_do(c)
 	local p = replay_text.read(c.text)
 	if not p then error("profilo illeggibile") end
-	answer(summary(p))
+	local req = { azioni = {} }
+	if (c.actions or "") ~= "" then req = replay_text.read(c.actions) end
+	if type(req) ~= "table" or type(req.azioni) ~= "table" then error("azioni illeggibili") end
+	local last = tonumber(c.last) or 0
+	local done, refused, matches = {}, {}, 0
+	for i = 1, math.min(#req.azioni, ACTIONS_MAX) do
+		local a = req.azioni[i]
+		if type(a) == "table" and type(a.n) == "number" and a.n % 1 == 0 and a.n > last then
+			local n, k = a.n, type(a.k) == "string" and a.k:sub(1, 20) or "?"
+			local why
+			if MATCH_ACTIONS[a.k] then
+				matches = matches + 1
+				if matches > MATCHES_MAX then break end
+				local ok, a2, w = pcall(judge.action, p, a)
+				if ok and a2 then a = a2 else why = ok and w or "errore" end
+			end
+			last = n
+			if why then
+				done[#done + 1] = "non valida " .. k .. " (" .. why .. ")"
+				refused[#refused + 1] = n
+			else
+				local ok, r = pcall(progress.act, p, a, c.today)
+				done[#done + 1] = (ok and r) and k or "no " .. k
+			end
+		end
+	end
+	local s = summary(p)
+	s.profilo = replay_text.write(p)
+	s.ultima = last
+	s.fatte = table.concat(done, ",")
+	-- the matches not paid (the phone's receipt says so, ui/receipt.lua verdict)
+	if #refused > 0 then s.rifiutate = refused end
+	answer(s)
+end
+
+-- profile_cards{text}: what the player of that profile shows and wears online
+-- (sim/profile.lua showcase and equip): the server's, never the phone's
+function CMD.profile_cards(c)
+	local p = replay_text.read(c.text)
+	if not p then error("profilo illeggibile") end
+	answer({ vetrina = profile_rules.showcase(p), eq = profile_rules.equip(p) })
+end
+
+-- profile_award{text, action, today}: an online match's action (prizes) on
+-- the profile, done as it is (the server made it); head: the profile and the
+-- gain (sim/profile.lua match_end, with the coins), raw: the gain as JSON for
+-- the phone's podium
+function CMD.profile_award(c)
+	local p = replay_text.read(c.text)
+	local a = replay_text.read(c.action)
+	if not p or not a then error("premio illeggibile") end
+	local gain = progress.act(p, a, c.today)
+	if not gain then error("premio non dato") end
+	local s = summary(p)
+	s.profilo = replay_text.write(p)
+	s.fatte = "online"
+	answer(s, { json(gain) })
 end
 
 -- eval{code}: runs code (with N among the globals) and answers what it

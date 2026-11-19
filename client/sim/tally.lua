@@ -2,15 +2,15 @@
 -- the end of the match makes the summary for the profile (profilo.registra):
 -- the stat numbers, the damage per weapon, and the match for the PARTITE tab
 -- (how it went lap by lap, the moments to rewatch, who was there). Pure Lua:
--- it watches the simulation's events and the state, the same locally and online.
+-- it watches the simulation's events and the state, the same locally, online
+-- and on the server, which counts again the matches it replays (sim/judge.lua).
 --
---   local c = conta.nuova(g, me, nomi)       -- me: the robot of whoever plays here
+--   local c = conta.nuova(g, me, nomi, T)    -- me: the robot of whoever plays here;
+--                                            -- T: the moments' texts (lang/text.lua tally), nil: no moments
 --   conta.sparo(c, g, arma)                  -- when me attacks
 --   conta.evento(c, g, e)                    -- for every sim event
 --   conta.tick(c, g)                         -- after every step (the laps)
 --   local r = conta.fine(c, g, results, info) -- info: gruppo, mappa, quando, giocatori
-
-local T = require("lang.text").tally
 
 local M = {}
 
@@ -35,17 +35,18 @@ local function lead_text(c, g)
 	return math.floor(my_own - (another or 0) + 0.5), math.floor(my_own + 0.5), math.floor((another or 0) + 0.5)
 end
 
-function M.new(g, me, name_list)
-	local c = { me = me, team = g.robots[me].team, nomi = name_list or {}, armi = {}, moments = {},
+function M.new(g, me, name_list, texts)
+	local c = { me = me, T = texts, team = g.robots[me].team, nomi = name_list or {}, armi = {}, moments = {},
 		fune = { 0 }, giro = g.round or 1,
 		colpi = 0, a_segno = 0, globi = 0, colpo_lungo = 0 }
 	return c
 end
 
 -- giro: the lap as a number (the history puts the moment on that lap of the rope)
+-- (txt(T): the text; without the texts no moments)
 local function moment(c, g, txt)
-	if #c.moments >= M.MOMENTS then return end
-	c.moments[#c.moments + 1] = { t = g.tick, giro = g.round or 1, testo = txt }
+	if not c.T or #c.moments >= M.MOMENTS then return end
+	c.moments[#c.moments + 1] = { t = g.tick, giro = g.round or 1, testo = txt(c.T) }
 end
 
 -- The robot me attacks with arma (also the swap for an orb, which doesn't count)
@@ -74,19 +75,19 @@ function M.event(c, g, e)
 			local d = math.floor(math.sqrt((o.x - c.colpo.x) ^ 2 + (o.y - c.colpo.y) ^ 2) + 0.5)
 			if d > c.colpo_lungo then c.colpo_lungo = d end
 			if d >= M.LONG then
-				moment(c, g, T.long_shot:format(d, c.nomi[e.robot] or "?"))
+				moment(c, g, function(T) return T.long_shot:format(d, c.nomi[e.robot] or "?") end)
 			end
 		end
 	elseif t == "death" then
 		if e.by == c.me and enemy(c, g, e.robot) then
-			moment(c, g, (e.env and T.you_drop or T.you_kill):format(c.nomi[e.robot] or "?"))
+			moment(c, g, function(T) return (e.env and T.you_drop or T.you_kill):format(c.nomi[e.robot] or "?") end)
 		elseif e.robot == c.me and e.by and enemy(c, g, e.by) then
-			moment(c, g, (e.env and T.drops_you or T.kills_you):format(c.nomi[e.by] or "?"))
+			moment(c, g, function(T) return (e.env and T.drops_you or T.kills_you):format(c.nomi[e.by] or "?") end)
 		end
 	elseif (t == "teleports" or t == "swap") and e.robot == c.me then
 		c.globi = c.globi + (t == "swap" and 1 or (e.amount or 0))
 	elseif t == "final_round" then
-		moment(c, g, T.double_points)
+		moment(c, g, function(T) return T.double_points end)
 	elseif t == "turn" then
 		c.colpo = nil
 	end
