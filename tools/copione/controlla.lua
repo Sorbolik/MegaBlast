@@ -62,10 +62,10 @@ local MOSSE = insieme({ "cammina", "salta", "arma", "aspetta", "dice", "posa" })
 local LATI = insieme({ "destra", "sinistra", "su" })
 -- i campi che accompagnano il verbo di una mossa
 local EXTRA = insieme({ "angolo", "potenza", "secondi", "in_aria", "subito", "verso", "fino_a" })
--- le clip delle animazioni (client/battle/animations.lua) che Favilla può fare in posa
+-- le clip delle animazioni (client/battle/characters/favilla/animations.lua) che Favilla può fare in posa
 local CLIP = {}
 do
-	local h = assert(io.open("client/battle/animations.lua"))
+	local h = assert(io.open("client/battle/characters/favilla/animations.lua"))
 	for nome in h:read("*a"):gmatch("\n\t([%w_]+) = { duration") do CLIP[nome] = true end
 	h:close()
 end

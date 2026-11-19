@@ -1,7 +1,7 @@
 -- Made by tools/grafica/armi.py, do not edit by hand.
 -- The weapons in world units (shots from their center), x forward and
 -- y up. For each one: image (tint: the parts in the team color), center
--- (x, y) and size (w, h). Where the hand holds them: battle/grips.lua.
+-- (x, y) and size (w, h). Where the hand holds them: battle/characters/<name>/grips.lua.
 return {
 	weapons = {
 		missile = { img = "missile", tint = "missile_tinta", x = 2.50, y = -0.75, w = 28.00, h = 14.10 },

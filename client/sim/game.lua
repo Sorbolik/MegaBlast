@@ -20,7 +20,9 @@ local maps = require "sim.maps"
 local melee = require "sim.melee"
 local hazards = require "sim.hazards"
 local C = require "sim.config"
-local BODY_SCALE = require "sim.body"
+-- the active character's body (sim/body.lua)
+local BODIES = require "sim.body"
+local BODY_SCALE = BODIES[BODIES.active]
 
 local M = {}
 M.__index = M

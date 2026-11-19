@@ -219,9 +219,9 @@ def main():
                     help="file e cartelle dell'ondata")
     ap.add_argument("--fuori", nargs="*", default=[
         "client/sim/bot.lua", "client/sim/rete.lua", "client/sim/body.lua", "tests/bot_test.lua",
-        "client/battle/animations.lua", "client/battle/weapons.lua", "client/battle/devil.lua",
-        "client/battle/paintings.lua", "client/battle/grips.lua", "client/battle/skins.lua",
-        "client/battle/pivots.lua", "client/sim/mapdata.lua"], help="file da lasciare fuori dall'ondata")
+        "client/battle/characters", "client/battle/weapons.lua", "client/battle/devil.lua",
+        "client/battle/paintings.lua", "client/battle/skins.lua",
+        "client/sim/mapdata.lua"], help="file da lasciare fuori dall'ondata")
     ap.add_argument("--prova", action="store_true", help="dice cosa farebbe, senza cambiare niente")
     ap.add_argument("--nomi", default="nomi_lua.txt",
                     help="dizionario dei nomi Lua (PR 8, il bot: nomi_bot.txt con --dentro dei file del bot)")

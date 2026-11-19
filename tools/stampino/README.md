@@ -2,7 +2,7 @@
 
 Teste, corazze, maglie, ali, code, elmi o un personaggio intero si disegnano
 sopra lo stesso foglio, lo **stampino**, e il gioco li monta sullo scheletro del
-diavoletto: si muovono con le stesse animazioni (`client/battle/animations.lua`)
+diavoletto: si muovono con le stesse animazioni (`client/battle/characters/<personaggio>/animations.lua`)
 senza toccare il codice.
 
 ## Lo scheletro e i posti

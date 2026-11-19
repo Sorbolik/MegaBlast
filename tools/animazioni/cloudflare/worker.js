@@ -9,14 +9,18 @@
 const REPO = "Sorbolik/MegaBlast";
 const RAMO = "editor-ultima";
 const FILE = {
-	animazioni: "client/battle/animations.lua",
-	animazioni_favilla: "client/battle/animations_favilla.lua",
-	corpo: "client/sim/body.lua",
-	perni: "client/battle/pivots.lua",
-	impugnature: "client/battle/grips.lua",
 	ritocchi: "tools/stampino/ritocchi.json",
 	mantello: "client/battle/cape_tuning.lua",
 };
+// i file di un personaggio (ognuno ha i suoi): animazioni_<nome>, perni_<nome>,
+// impugnature_<nome>; corpo_<nome> è tutto body.lua con cambiata solo la sua riga
+const DEL_PERSONAGGIO = { animazioni: "animations.lua", perni: "pivots.lua", impugnature: "grips.lua" };
+function percorso(file) {
+	if (FILE[file]) return FILE[file];
+	const m = /^(animazioni|perni|impugnature|corpo)_([a-z][a-z0-9_]{0,39})$/.exec(file || "");
+	if (!m) return null;
+	return m[1] === "corpo" ? "client/sim/body.lua" : `client/battle/characters/${m[2]}/${DEL_PERSONAGGIO[m[1]]}`;
+}
 
 
 function base64(testo) {
@@ -50,8 +54,9 @@ async function manda(request, env) {
 		scritti[`richieste/${nome}.json`] = base64(lua);
 		scritti[`richieste/${nome}.png`] = immagine;
 	} else {
-		if (!FILE[file] || typeof lua !== "string" || lua.length > 2000000) return new Response("file sconosciuto", { status: 400 });
-		scritti[FILE[file]] = base64(lua);
+		const dove = percorso(file);
+		if (!dove || typeof lua !== "string" || lua.length > 2000000) return new Response("file sconosciuto", { status: 400 });
+		scritti[dove] = base64(lua);
 	}
 	const api = (p, init = {}) => fetch(`https://api.github.com/repos/${REPO}${p}`, {
 		...init,

@@ -109,7 +109,7 @@ end
 -- le clip delle animazioni: le pose che Favilla può fare quando mostra (dimostra)
 local clip = {}
 do
-	local h = assert(io.open("client/battle/animations.lua"))
+	local h = assert(io.open("client/battle/characters/favilla/animations.lua"))
 	for nome in h:read("*a"):gmatch("\n\t([%w_]+) = { duration") do clip[nome] = true end
 	h:close()
 end
