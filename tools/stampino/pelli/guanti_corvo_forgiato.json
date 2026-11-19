@@ -4,50 +4,50 @@
  "pezzi": {
   "braccio_1": {
    "img": "guanti_corvo_forgiato_guanto_braccio_1",
-   "x": -1.5,
-   "y": -36.1,
-   "w": 40.5,
-   "h": 43.8,
+   "x": 0.4,
+   "y": -28.9,
+   "w": 36.7,
+   "h": 56.7,
    "modo": "sopra"
   },
   "braccio": {
    "img": "guanti_corvo_forgiato_guanto_braccio_1",
-   "x": -1.9,
-   "y": -37.5,
-   "w": 45.0,
-   "h": 48.6,
+   "x": 0.3,
+   "y": -29.5,
+   "w": 40.8,
+   "h": 63.0,
    "modo": "sopra"
   },
   "braccio_dietro_1": {
    "img": "guanti_corvo_forgiato_guanto_braccio_dietro_1",
-   "x": 0.6,
-   "y": -38.8,
-   "w": 40.7,
-   "h": 47.7,
+   "x": -0.8,
+   "y": -31.1,
+   "w": 37.0,
+   "h": 63.0,
    "modo": "sopra"
   },
   "braccio_dietro": {
    "img": "guanti_corvo_forgiato_guanto_braccio_dietro_1",
-   "x": 0.6,
-   "y": -38.6,
-   "w": 40.3,
-   "h": 47.2,
+   "x": -0.7,
+   "y": -31.0,
+   "w": 36.6,
+   "h": 62.4,
    "modo": "sopra"
   },
   "braccio_2": {
    "img": "guanti_corvo_forgiato_guanto_braccio_2",
    "x": 0.6,
-   "y": -41.8,
+   "y": -38.1,
    "w": 29.6,
-   "h": 29.9,
+   "h": 37.3,
    "modo": "sopra"
   },
   "braccio_dietro_2": {
    "img": "guanti_corvo_forgiato_guanto_braccio_dietro_2",
-   "x": 0.3,
-   "y": -45.9,
-   "w": 31.7,
-   "h": 33.4,
+   "x": 0.5,
+   "y": -41.9,
+   "w": 31.2,
+   "h": 41.4,
    "modo": "sopra"
   }
  }
