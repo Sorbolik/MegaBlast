@@ -214,9 +214,12 @@ end
 -- real top as at 16:9. Moved by hand (screen.y1) and not with ANCHOR_TOP:
 -- Defold moves an anchored node at y = 0 toward the bottom, not the top.
 -- The screens build their root again every time they open.
+-- (the roots made, so the transitions know them: ui/transition.lua)
+M.ROOTS = setmetatable({}, { __mode = "k" })
 function M.root()
 	local n = gui.new_box_node(vec(0, screen.y1 - 720), vec(0, 0))
 	gui.set_visible(n, false)
+	M.ROOTS[n] = true
 	-- a screen being moved whole (ui/kit.lua, track_begin)
 	if M.tracking then M.tracking[#M.tracking + 1] = n end
 	return n
