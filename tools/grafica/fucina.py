@@ -148,7 +148,6 @@ def fai_pezzi():
     for nome, t in zip(["piastra_freccia", "piastra_storta", "piastra_stendardo"], cs):
         tre(nome, t[2], 200)
     tre("piastra_calda", caldo(cs[1][2]), 200)
-    tre("piastra_chiara", chiaro(cs[1][2]), 200)
     cs = pezzi(senza_verde(os.path.join(p, "pezzo_piccoli.png")), 800)
     ymid = np.mean([t[0] for t in cs])
     su = sorted([t for t in cs if t[0] < ymid], key=lambda t: t[1])

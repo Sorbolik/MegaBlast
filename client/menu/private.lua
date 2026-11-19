@@ -96,14 +96,14 @@ local function seat(c, i, s, x, y)
 	end
 end
 
--- The room (Figma 20): the code on a light plate and the mode on the left,
+-- The room (Figma 20): the code, glowing, and the mode on the left,
 -- the teams in columns, VIA as the screen's action
 local function build_room(c)
 	local g, room = c.kg, c.room
 	local host = room.host == room.you
 	kit.text(g, T.code, 66, 124, 16, KC.MUTE, "start", 2)
-	kit.sand(g, 60, 134, 330, 110, KC.HOT, { sk = 30, d = 12 })
-	kit.text(g, room.code or "", 100, 220, 72, KC.INK)
+	local on_plate = kit.caption(g, 60, 134, 330, 110, 30)
+	kit.text(on_plate.g, room.code or "", 100, 220, 72, kit.TAB_HOT)
 	local opts, on = {}, 1
 	for i, m in ipairs(MODES) do
 		opts[i] = { T.modes_short[m], "modo:" .. m }

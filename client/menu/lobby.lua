@@ -92,13 +92,13 @@ function M.new(of, title, parent_below)
 	kit.scene_place(s.scene, "below", s.radice)
 	local g = { node = s.radice, ox = 0, oy = 720 }
 	s.g = g
-	-- what you are doing on a light plate, and under it how it is going
+	-- what you are doing, glowing, and under it how it is going
 	s.testa = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.testa, false)
 	gui.set_parent(s.testa, s.radice)
 	local tg = { node = s.testa, ox = 0, oy = 720 }
-	local on_plate = kit.sand(tg, 60, 120, 470, 84, KC.RED, { sk = 26, d = 12 })
-	kit.text(on_plate.g, T.searching, 92, 178, 48, KC.INK)
+	local on_plate = kit.caption(tg, 60, 120, 470, 84, 26)
+	kit.text(on_plate.g, T.searching, 92, 178, 48, kit.TAB_HOT)
 	kit.info(tg, 90, 222, 440, 38, KC.HOT)
 	s.riga = kit.text(tg, "", 114, 248, 17, KC.SAND, "start", 1)
 	-- the screen's name and the way back, as on every screen (they stick to the

@@ -74,10 +74,10 @@ function M.new(showcases, title)
 	local xs, vs = M.seats(squads)
 	-- its own backdrop, whole: nothing of the draft under it shows (Sergio, 16 Nov)
 	s.scene = kit.scene(640, 360, { bg = true })
-	-- the match's name on a light plate that comes out of the real left edge
+	-- the match's name glowing, near the real left edge
 	local top_left = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
-	local on_plate = kit.sand(top_left, -20, 30, 330, 58, KC.HOT, { sk = 22 })
-	local name = kit.text(on_plate.g, title, 40, 71, 32, KC.INK)
+	local on_plate = kit.caption(top_left, -20, 30, 330, 58, 22)
+	local name = kit.text(on_plate.g, title, 40, 71, 32, kit.TAB_HOT)
 	local wide = kit.width(name)
 	if wide > 270 then
 		local sc = gui.get_scale(name)
@@ -160,7 +160,10 @@ function M.strip(showcases)
 			gui.set_scale(name, vec(sc.x * NAME_W / wide, sc.y * NAME_W / wide))
 		end
 		-- the green tick of whoever has pressed PRONTO, at the end of the plate
-		st.ticks[i] = kit.pic(p.g, "spunta_verde", b.x1 - TICK, mid - TICK / 2, TICK, TICK)
+		-- (in the middle of the plate's face, above its shadow: the room to write
+		-- in sits lower, Sergio 19 Nov)
+		local face = 23 + MINI_H / 2 - 2
+		st.ticks[i] = kit.pic(p.g, "spunta_verde", b.x1 - TICK, face - TICK / 2, TICK, TICK)
 		gui.set_enabled(st.ticks[i], false)
 	end
 	return st

@@ -552,18 +552,21 @@ function M.sheet(s, g, a, a2, back)
 	kit.button(s.buttons, b, "foglio")
 end
 
+-- a loadout's chip: never narrower than kit.least (Sergio, 19 Nov)
+local CHIP_W, CHIP_H = 84, 46
+
 -- The three loadouts at (x, y): the label, then 1 2 3 on small plates, the
 -- active one light; a closed one says from which level. Tapping: "<prefix>:<i>"
 function M.loadouts(s, g, x, y, active, prefix, label)
 	kit.text(g, label, x, y + 14, 18, KC.MUTE, "start", 1)
 	local n = 0
 	for i = 1, loadout.LOADOUTS do
-		local bx = x + n * 76
+		local bx = x + n * (CHIP_W + 10)
 		if loadout.open(i, s.prof.livello) then
 			local on = i == active
-			kit.strip(g, on and "piastrina_chiara" or "piastrina", bx, y + 24, 66, 52)
-			kit.text(g, tostring(i), bx + 33, y + 60, 28, on and KC.INK or KC.SAND, "middle")
-			kit.zone(g, s.buttons, bx - 5, y + 18, 76, 64, prefix .. ":" .. i)
+			kit.strip(g, on and "piastrina_chiara" or "piastrina", bx, y + 24, CHIP_W, CHIP_H)
+			kit.text(g, tostring(i), bx + CHIP_W / 2, y + 57, 28, on and KC.INK or KC.SAND, "middle")
+			kit.zone(g, s.buttons, bx - 5, y + 18, CHIP_W + 10, CHIP_H + 12, prefix .. ":" .. i)
 			n = n + 1
 		else
 			kit.text(g, T.loadout_locked:format(loadout.LOADOUT_LEVELS[i]), bx + 4, y + 58, 17, KC.MUTE, "start", 1)
@@ -574,12 +577,13 @@ end
 
 -- A row of filters from (x, y): small iron plates, the active one warm.
 -- list: { { label, ui_action }, ... }
--- maxw: the room they have (the padding shrinks to stay in it, never under 14).
+-- maxw: the room they have (the padding shrinks to stay in it, never under 20;
+-- a chip is never narrower than kit.least, so the row can pass it).
 -- c.slot: a chip with the symbol of that slot's type instead of words (the
 -- filters of the ZAINO, Sergio 19 Nov), in the type's colour, dimmed when off
 local ICON = 30
 function M.chips(s, g, x, y, list, active, maxw)
-	local widths, sum = {}, 0
+	local widths = {}
 	for i, c in ipairs(list) do
 		if c.slot then
 			widths[i] = ICON
@@ -588,21 +592,25 @@ function M.chips(s, g, x, y, list, active, maxw)
 			widths[i] = kit.width(n)
 			gui.delete_node(n)
 		end
-		sum = sum + widths[i]
 	end
 	local pad, gap, size = 30, 8, 19
+	local least = kit.least("piastrina", 48)
+	local function row(p, k)
+		local t = gap * (#list - 1)
+		for i = 1, #list do t = t + math.max(widths[i] * k + p, least) end
+		return t
+	end
 	if maxw then
 		gap = 6
-		pad = math.max(12, math.min(pad, (maxw - sum - gap * (#list - 1)) / #list))
+		while pad > 20 and row(pad, 1) > maxw do pad = pad - 1 end
 		-- still too wide: smaller words, never under the smallest text of the menus
-		local room = maxw - (pad + gap) * #list + gap
-		if sum > room then size = math.max(kit.MIN_TEXT, size * room / sum) end
+		while size > kit.MIN_TEXT and row(pad, size / 19) > maxw do size = size - 0.5 end
 	end
 	local k = size / 19
 	local cx = x
 	for i, c in ipairs(list) do
 		local on = i == active
-		local w = widths[i] * k + pad
+		local w = math.max(widths[i] * k + pad, least)
 		kit.strip(g, on and "piastrina_calda" or "piastrina", cx, y, w, 48)
 		if c.slot then
 			local icon = fit(g, TYPE[c.slot], cx + (w - ICON) / 2, y + 24 - ICON / 2 - 2, ICON, ICON)
