@@ -1,5 +1,5 @@
 -- The devil on the left of the screens that are not yet redrawn (ALLENAMENTO,
--- the queue, the private room, the events' board), with a light plate under it
+-- the queue, the private room, the events' board), with a glowing line under it
 -- that says what the place is. Where there is room at the sides (a screen
 -- wider than 16:9) it goes left with the real edge and the rest breathes
 -- (Sergio, 11 Nov; the measures are kit.side, kit.lean and kit.air).
@@ -45,9 +45,9 @@ function M.devil(s, line)
 	gui.set_scale(pose, vmath.vector3(k, k, 1))
 	gui.set_parent(s.figure.root, pose)
 	scoria.set_enabled(s.figure, true)
-	-- a light plate that says what the place is
-	local on_plate = kit.sand(s.low, kit.PLATE_X, kit.PLATE_Y, 340, 62, s.accent or KC.STAR, { sk = 22 })
-	kit.text(on_plate.g, line, kit.PLATE_X + 170, kit.PLATE_Y + 38, 22, KC.INK, "middle", 1)
+	-- a glowing line that says what the place is
+	local on_plate = kit.caption(s.low, kit.PLATE_X, kit.PLATE_Y, 340, 62, 22)
+	kit.text(on_plate.g, line, kit.PLATE_X + 170, kit.PLATE_Y + 38, 22, kit.TAB_HOT, "middle", 1)
 end
 
 return M

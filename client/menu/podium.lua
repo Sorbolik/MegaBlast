@@ -1,6 +1,6 @@
 -- End-of-match podium (redone 10 Nov, Sergio: "del podio di oggi puoi rifare
 -- tutto"; drawn with ui/kit.lua, Figma coordinates). On the left the result on
--- a light plate and the steps, one per team (in free-for-all one per player):
+-- a glowing title and the steps, one per team (in free-for-all one per player):
 -- on each the devils of that team with their names, the points and the awards
 -- they took (sim/awards.lua); the MVP has a gold tag over the head. On the
 -- right the receipt of whoever plays on this phone (ui/receipt.lua): every line
@@ -147,8 +147,8 @@ local function title(p, results, first)
 		label = T.wins:format(kit.upper(results.mode == "2v2" and g.nome:gsub(" %d$", "") or g.nome))
 	end
 	local gg = { node = p.radice, ox = 0, oy = 720 }
-	local on_plate = kit.sand(gg, 30, 36, 420, 104, KC.HOT, { sk = 34, d = 14 })
-	local t = kit.text(on_plate.g, label, 64, 116, 74, KC.INK)
+	local on_plate = kit.caption(gg, 30, 36, 420, 104, 34)
+	local t = kit.text(on_plate.g, label, 64, 116, 74, kit.TAB_HOT)
 	local wide = kit.width(t)
 	if wide > 372 then
 		local sc = gui.get_scale(t)

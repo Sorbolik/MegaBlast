@@ -518,15 +518,6 @@ images {
   image: "/assets/fucina/piastra_calda_sx.png"
 }
 images {
-  image: "/assets/fucina/piastra_chiara_cx.png"
-}
-images {
-  image: "/assets/fucina/piastra_chiara_dx.png"
-}
-images {
-  image: "/assets/fucina/piastra_chiara_sx.png"
-}
-images {
   image: "/assets/fucina/piastra_freccia_cx.png"
 }
 images {

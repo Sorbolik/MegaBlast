@@ -234,8 +234,8 @@ local function refresh(s)
 		local x, y = 44 - (i - 1) * 4, 362 + (i - 1) * 56
 		icon(s, g, w, x + 40, y + 24, 46)
 	end
-	local on_plate = kit.sand(low, 80, 630, 340, 62, KC.HOT, { sk = 22 })
-	fit(kit.text(on_plate.g, title, 250, 668, 22, KC.INK, "middle", 0.5), 290)
+	local on_plate = kit.caption(low, 80, 630, 340, 62, 22)
+	fit(kit.text(on_plate.g, title, 250, 668, 22, kit.TAB_HOT, "middle", 0.5), 290)
 
 	-- the cards of the row (with both picked, the last row stays)
 	local shown = math.min(s.passo, 2)

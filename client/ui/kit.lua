@@ -51,7 +51,7 @@ M.hex = hex
 M.C = {
 	INK = hex("0a080b"),            -- the ink: outlines, text on light plates
 	SOOT = hex("121013"),           -- the dark behind everything
-	SAND = hex("f4ece1"),           -- text (ivory), and the light plates
+	SAND = hex("f4ece1"),           -- text (ivory), and the light chips and panels
 	SAND_SHADOW = hex("9e958f"),
 	MUTE = hex("9e958f"),           -- secondary text (ash)
 	LINE = hex("4a4550"),           -- unlit pips, faint outlines (steel)
@@ -119,10 +119,31 @@ local function pic(name, x, y, w, h, parent)
 	return n
 end
 
+-- The pieces whose ends do not meet at the same height (the rim of the slanted
+-- plates climbs along the middle): squeezing the middle makes a step where the
+-- ends meet (Sergio, 19 Nov). M.least says how narrow they can go: the ends
+-- whole and 70% of the middle (the step stays under half a pixel). The
+-- simulator fails on a narrower one (tools/simula/simula.py)
+local SLANTED = { piastrina = true, piastrina_calda = true, piastrina_chiara = true, piastra_storta = true,
+	piastra_calda = true, scheggia = true, primario_acceso = true, primario_premuto = true, primario_spento = true }
+function M.least(name, h)
+	local m = P[name]
+	if not SLANTED[name] then return 0 end
+	return (2 * m.c + 0.7 * (m.w - 2 * m.c)) * h / m.h
+end
+local narrow_told = {}
+local function too_narrow(name, w, h)
+	local key = name .. math.floor(w)
+	if narrow_told[key] then return end
+	narrow_told[key] = true
+	print(("SIMULA pezzo_stretto %s %d x %d, almeno %d"):format(name, w, h, M.least(name, h)))
+end
+
 -- A long piece w x h centered on parent, in three parts: the ends keep their
 -- shape (as wide as the height asks), only the middle is stretched
 local function three_fit(parts, name, w, h)
 	local m = P[name]
+	if w < M.least(name, h) - 0.5 then too_narrow(name, w, h) end
 	local cw = math.min(m.c * h / m.h, w / 2)
 	gui.set_size(parts[1], vec(math.max(1, w - 2 * cw + 1), h))
 	gui.set_size(parts[2], vec(cw, h)); gui.set_position(parts[2], vec(-w / 2 + cw / 2, 0))
@@ -320,7 +341,7 @@ function M.plate(g, x, y, w, h, shadow, opt)
 	local small = h <= 52
 	local name = opt.piece
 	if not name then
-		if opt.fill == C.SAND then name = small and "piastrina_chiara" or "piastra_chiara"
+		if opt.fill == C.SAND then name = "piastrina_chiara"
 		elseif shadow == C.HOT then name = small and "piastrina_calda" or "piastra_calda"
 		else name = small and "piastrina" or "piastra_storta" end
 	end
@@ -339,10 +360,16 @@ function M.plate(g, x, y, w, h, shadow, opt)
 	return p
 end
 
--- The light plate (the player's name, the current chapter)
-function M.sand(g, x, y, w, h, shadow, opt)
-	opt = opt or {}
-	return M.plate(g, x, y, w, h, shadow or C.HOT, { sk = opt.sk, d = opt.d, fill = C.SAND })
+-- Where a title or a line of state goes on its own, without a plate (Sergio,
+-- 19 Nov: the light slanted plate is gone): the text sits, glowing, where the
+-- plate's writing was, in the room of the box x..x+w+sk, y..y+h. Write on its
+-- g in M.TAB_HOT, the red-hot gold of the active tab
+function M.caption(g, x, y, w, h, sk)
+	sk = sk or 0
+	local cx, cy = x + (w + sk) / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, 0, 0, g.node)
+	local box = room("piastra_storta", cx, cy, w + sk, h)
+	return { node = n, g = { node = n, ox = cx, oy = cy, box = box }, box = box }
 end
 
 -- The light small plate behind what is chosen (a tab, an option): the box

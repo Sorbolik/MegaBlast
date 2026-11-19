@@ -229,7 +229,8 @@ local function inventory(s)
 		for _, sl in ipairs(equip.SLOTS) do list[#list + 1] = { sl.name, "filtro:" .. sl.id, slot = sl.id } end
 		local active = 1
 		for i, sl in ipairs(equip.SLOTS) do if s.slot == sl.id then active = i + 1 end end
-		gear_ui.chips(s, g, 430, 100, list, active, 500)
+		-- (as wide as the four cards under them)
+		gear_ui.chips(s, g, 430, 100, list, active, 578)
 
 		-- the pieces, four in a row and big (Sergio, 18 Nov: «non facciamo tutto
 		-- striminzito»): with many of them the grid scrolls, the row cut at the bottom fades

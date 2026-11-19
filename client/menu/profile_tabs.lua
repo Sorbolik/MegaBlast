@@ -134,7 +134,8 @@ local function sheet_stats(s)
 		list[i] = { T.mode_short[gr] or kit.upper(profile.GROUP_NAMES[gr]), "gruppo:" .. gr }
 		if gr == s.gruppo then active = i end
 	end
-	require("menu.gear_ui").chips(s, g, 350, 98, list, active)
+	-- as wide as the two columns of cards under them
+	require("menu.gear_ui").chips(s, g, 350, 98, list, active, 2 * 218 + 14)
 	local cw, ch = 218, 70
 	for i, t in ipairs(milestones.WHITELIST) do
 		local x = 350 + ((i - 1) % 2) * (cw + 14)

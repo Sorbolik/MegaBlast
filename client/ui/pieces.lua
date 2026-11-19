@@ -106,7 +106,6 @@ return {
 	perla_prossima = { w = 62, h = 64 },
 	perla_vuota = { w = 63, h = 64 },
 	piastra_calda = { w = 846, h = 200, c = 203, box = { 225, 62, 140, 36 } },
-	piastra_chiara = { w = 846, h = 200, c = 203, box = { 225, 62, 141, 37 } },
 	piastra_freccia = { w = 888, h = 200, c = 213, box = { 185, 43, 168, 37 } },
 	piastra_stendardo = { w = 938, h = 200, c = 225, box = { 171, 38, 213, 41 } },
 	piastra_storta = { w = 846, h = 200, c = 203, box = { 224, 62, 139, 36 } },

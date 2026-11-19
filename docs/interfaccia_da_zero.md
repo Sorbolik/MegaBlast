@@ -38,7 +38,7 @@ dall'alto, testo sulla linea di base):
 |---|---|
 | Scena (velo, raggi, alone, cucitura, scintille) | `kit.scene`, `kit.scene_show` |
 | Titolo e ritorno | `kit.header`, `kit.title` |
-| Piastra scura, piastra sabbia | `kit.plate`, `kit.sand` |
+| Piastra scura, scritta senza piastra | `kit.plate`, `kit.caption` |
 | Azione principale | `kit.action` |
 | Carta, carta con l'immagine, immagine inclinata | `kit.card`, `kit.card_picture`, `kit.picture` |
 | Scelta fra poche voci, schede | `kit.choice`, `kit.tabs` |

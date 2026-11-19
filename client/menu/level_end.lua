@@ -54,9 +54,9 @@ function M.new(o, sound)
 	gui.set_scale(pose, vmath.vector3(k, k, 1))
 	gui.set_parent(f.figure.root, pose)
 	scoria.set_enabled(f.figure, true)
-	-- how it went on a light plate, under it the level's name
-	local on_plate = kit.sand(g, 30, 36, 560, 110, KC.HOT, { sk = 34, d = 14 })
-	local head = kit.text(on_plate.g, o.fallita and T.failed or T.done, 66, 116, 70, KC.INK)
+	-- how it went, glowing, under it the level's name
+	local on_plate = kit.caption(g, 30, 36, 560, 110, 34)
+	local head = kit.text(on_plate.g, o.fallita and T.failed or T.done, 66, 116, 70, kit.TAB_HOT)
 	local wide = kit.width(head)
 	if wide > 506 then
 		local sc = gui.get_scale(head)
