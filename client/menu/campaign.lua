@@ -201,12 +201,17 @@ local function card_list(c, cap)
 	end
 end
 
--- who guides the chapter, on the left: the portrait on a light plate, and
--- under it how far you are
+-- the light panel (f2eadf) times this is the portraits' ground (f5e3c5)
+local PORTRAIT_GROUND = vmath.vector4(1, 0.97, 0.883, 1)
+
+-- who guides the chapter, on the left: the portrait on a light plate in the
+-- cream of the drawing's own ground, so the two read as one piece (Sergio,
+-- 19 Nov), and under it how far you are
 local function guide(c, cap)
 	local g = c.kg
 	local who = cap == payload.CAPITOLI[1] and "favilla" or "fabbro"
 	local p = kit.plate(g, 60, 180, 330, 400, KC.HOT, { sk = 20, fill = KC.SAND })
+	kit.tint(p.parts, PORTRAIT_GROUND)
 	local pic = gui.new_box_node(vmath.vector3(4, 35, 0), vmath.vector3(306, 306, 0))
 	gui.set_texture(pic, "ritratti")
 	gui.play_flipbook(pic, who .. (who == "favilla" and "_spiega" or "_calma"))
