@@ -8,7 +8,14 @@
 -- Sergio's mapping. Everything is saved to the profile at once.
 --
 --   local impostazioni = require "menu.settings"
---   local s = impostazioni.new(p, ctrl)         -- p the profile, ctrl the controller (ui/controller.lua)
+-- IL MIO PROFILO (top right, Sergio, 19 Nov: step 6 of the guest profiles) turns
+-- the right panel into the profile's: its name and the recovery code to write
+-- down (NUOVO CODICE: another, the old one stops working), and HO GIÀ UN
+-- PROFILO: the code typed on a keypad of its letters (the controller and the
+-- web too, no system keyboard), RECUPERA brings that profile to this phone.
+--
+--   local s = impostazioni.new(p, ctrl, acc)    -- p the profile, ctrl the controller (ui/controller.lua),
+--                                               -- acc main/account.lua (identity, code, recover; nil: none)
 --   impostazioni.on_input(s, action_id, action) -- "indietro" or nil
 --     (buttons arrive as ui.PAD with action.nome, the button pressed)
 --   impostazioni.destroy(s)
@@ -55,6 +62,101 @@ local PANEL_Y, PANEL_H = 108, #CHOICES * ROW + 6
 local KEYS_PANEL_X, KEYS_PANEL_W = 608, 640
 local KEYS_X, KEY_W, KEY_H, KEY_GAP = KEYS_PANEL_X + 16, 298, 54, 12
 local KEYS_Y, KEY_ROW = 154, 62
+-- the profile's panel: the inner width (two key cards and their gap), the
+-- recovery code's letters (server/recovery.go) on a keypad of PAD_COLS columns
+local INNER_W = 2 * KEY_W + KEY_GAP
+local LETTERS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+local CODE_LEN = 12
+local PAD_COLS, PAD_GAP = 7, 6
+local PAD_W = (INNER_W - (PAD_COLS - 1) * PAD_GAP) / PAD_COLS
+local PAD_H, PAD_ROW = 40, 46
+
+-- the typed letters as the code is shown, in groups of four; the empty places as dots
+local function shown(typed)
+	local out = {}
+	for i = 1, CODE_LEN do
+		out[#out + 1] = i <= #typed and typed:sub(i, i) or "·"
+		if i % 4 == 0 and i < CODE_LEN then out[#out + 1] = "-" end
+	end
+	return table.concat(out)
+end
+
+-- a text that must stay inside room pixels: smaller if it doesn't
+local function fit(t, room)
+	local wide = kit.width(t)
+	if wide > room then
+		local sc = gui.get_scale(t)
+		gui.set_scale(t, vmath.vector3(sc.x * room / wide, sc.y * room / wide, 1))
+	end
+	return t
+end
+
+-- The right panel as the profile's: its name and code, or the keypad
+local function profile_panel(s, g)
+	local x, top = KEYS_X, PANEL_Y
+	local bottom_line = PANEL_Y + PANEL_H - 24
+	local acc = s.acc
+	local test = profile.test ~= nil and profile.test ~= false
+	if s.view == "mio" then
+		kit.text(g, T.my_profile, x, top + 32, 17, KC.HOT_TOP, "start", 1.5)
+		local id = acc and acc.identity()
+		fit(kit.text(g, id and id.nome and id.nome:upper() or T.no_profile, x, top + 86, 30, KC.SAND, "start", 1), INNER_W)
+		kit.text(g, T.code_label, x, top + 132, 16, KC.MUTE, "start", 1)
+		local card = kit.card(g, x, top + 146, INNER_W, 70, KC.PURPLE)
+		local what, color = s.code, KC.SAND
+		if test then
+			what, color = T.code_test, KC.MUTE
+		elseif not what then
+			what, color = s.code_why == "rete" and T.need_network or T.code_asking, KC.MUTE
+		end
+		local big = s.code ~= nil and not test
+		fit(kit.text(card.g, what, x + INNER_W / 2, top + 146 + (big and 47 or 42), big and 36 or 20, color, "middle",
+			big and 4 or 1), INNER_W - 40)
+		kit.text(g, T.code_help, x, top + 248, 16, KC.MUTE, "start", 1)
+		fit(kit.text(g, T.code_help2, x, top + 270, 16, KC.MUTE, "start", 1), INNER_W)
+		local off = test or not acc
+		local again = kit.secondary(g, T.new_code, x, top + 300, KEY_W, KEY_H, { off = off })
+		if not off then kit.button(s.buttons, again, "profilo_mio:nuovo") end
+		local have = kit.secondary(g, T.have_profile, x + KEY_W + KEY_GAP, top + 300, KEY_W, KEY_H, { off = off })
+		if not off then kit.button(s.buttons, have, "profilo_mio:recupera") end
+		fit(kit.text(g, T.code_old, x, bottom_line, 16, KC.MUTE, "start", 1), INNER_W)
+		return
+	end
+	-- HO GIÀ UN PROFILO: the code typed on the keypad
+	kit.text(g, T.have_profile, x, top + 32, 17, KC.HOT_TOP, "start", 1.5)
+	local card = kit.card(g, x, top + 46, INNER_W, 58, KC.PURPLE, { sel = #s.typed < CODE_LEN })
+	kit.text(card.g, shown(s.typed), x + INNER_W / 2, top + 46 + 40, 32, KC.SAND, "middle", 4)
+	-- (31 letters: four rows of seven, then three and CANCELLA as wide as the rest of the row)
+	for i = 1, #LETTERS + 1 do
+		local col, row = (i - 1) % PAD_COLS, math.floor((i - 1) / PAD_COLS)
+		local kx, ky = x + col * (PAD_W + PAD_GAP), top + 118 + row * PAD_ROW
+		local letter = LETTERS:sub(i, i)
+		local kw = letter ~= "" and PAD_W or x + INNER_W - kx
+		local full = #s.typed >= CODE_LEN
+		local off = letter ~= "" and full or letter == "" and #s.typed == 0
+		local key = kit.card(g, kx, ky, kw, PAD_H, KC.PURPLE, { off = off })
+		if letter ~= "" then
+			kit.text(key.g, letter, kx + PAD_W / 2, ky + 31, 22, off and KC.MUTE or KC.SAND, "middle", 1)
+		else
+			-- the last key takes the last letter away
+			kit.text(key.g, T.delete, kx + kw / 2, ky + 30, 18, off and KC.MUTE or KC.SAND, "middle", 1)
+		end
+		if not off then kit.button(s.buttons, key, "lettera:" .. (letter ~= "" and letter or "via")) end
+	end
+	local by = top + 118 + 4 * PAD_ROW + PAD_H + 16
+	local cancel = kit.secondary(g, T.cancel_recover, x, by, KEY_W, KEY_H)
+	kit.button(s.buttons, cancel, "profilo_mio:annulla")
+	local ready = #s.typed == CODE_LEN and not s.asking
+	local go = kit.secondary(g, T.recover, x + KEY_W + KEY_GAP, by, KEY_W, KEY_H, { off = not ready })
+	if ready then kit.button(s.buttons, go, "profilo_mio:vai") end
+	local line, color = T.recover_help, KC.MUTE
+	if s.asking then
+		line, color = T.recovering, KC.HOT_TOP
+	elseif s.recover_why then
+		line, color = T.recover_errors[s.recover_why] or T.need_network, KC.RED
+	end
+	fit(kit.text(g, line, x, bottom_line, 16, color, "start", 1), INNER_W)
+end
 
 local function build(s)
 	-- the controller light stays on the same button
@@ -66,6 +168,12 @@ local function build(s)
 	s.head = kit.header(s.buttons, T.title, KC.STEEL, "indietro", common.home)
 	s.radice = ui.root()
 	local g = { node = s.radice, ox = 0, oy = 720 }
+	-- IL MIO PROFILO above the right panel, at its right edge (on 20:9 too); on
+	-- the profile's panel the same place goes back to the controller's buttons
+	local top_w = 300
+	local swap = kit.secondary(g, s.view and T.controller_keys or T.my_profile,
+		KEYS_PANEL_X + KEYS_PANEL_W - top_w, 36, top_w, KEY_H)
+	kit.button(s.buttons, swap, "profilo_mio:scambia")
 
 	-- the choices on an iron panel: their names are read on it, not on the painting
 	kit.panel(kit.group(g, 32 + (NAME_W + 12 + 340 + 16) / 2, PANEL_Y + PANEL_H / 2).node,
@@ -95,6 +203,13 @@ local function build(s)
 
 	-- the controller's buttons: two columns of commands on their panel
 	kit.panel(kit.group(g, KEYS_PANEL_X + KEYS_PANEL_W / 2, PANEL_Y + PANEL_H / 2).node, KEYS_PANEL_W, PANEL_H)
+	if s.view then
+		profile_panel(s, g)
+		for _, b in ipairs(s.buttons) do
+			if b.ui_action == lit then ui.light(s.buttons, b) end
+		end
+		return
+	end
 	kit.text(g, T.controller_keys, KEYS_X, PANEL_Y + 32, 17, KC.HOT_TOP, "start", 1.5)
 	local n = #controller.COMMANDS
 	local per_column = math.ceil(n / 2)
@@ -137,8 +252,8 @@ local function build(s)
 	end
 end
 
-function M.new(p, c)
-	local s = { p = p, c = c }
+function M.new(p, c, acc)
+	local s = { p = p, c = c, acc = acc, typed = "" }
 	controller.levette = profile.setting(p, "levette")
 	s.scene = kit.scene(200, 400, { halo = 300, accent = KC.STEEL, bg = "banco" })
 	-- which build this is, small on the bottom band at the right edge (Sergio, 18 Nov):
@@ -151,6 +266,56 @@ function M.new(p, c)
 		1280 - 40, 713, 16, KC.MUTE, "end", 1)
 	build(s)
 	return s
+end
+
+-- the recovery code of the profile in use, from the server when fresh
+local function ask_code(s, fresh)
+	if not s.acc or (profile.test ~= nil and profile.test ~= false) then return end
+	if fresh then s.code = nil end
+	s.code_why = nil
+	s.acc.code(fresh, function(code, why)
+		if s.gone then return end
+		s.code, s.code_why = code or s.code, why
+		build(s)
+	end)
+end
+
+-- IL MIO PROFILO's buttons and the keypad's letters
+local function profile_action(s, mine, letter)
+	if letter == "via" then
+		s.typed = s.typed:sub(1, -2)
+	elseif letter then
+		if #s.typed < CODE_LEN then s.typed = s.typed .. letter end
+	end
+	if letter then
+		s.recover_why = nil
+		return
+	end
+	if mine == "scambia" then
+		s.view = not s.view and "mio" or nil
+		s.attesa = nil
+		if s.view then ask_code(s, false) end
+	elseif mine == "nuovo" then
+		ask_code(s, true)
+	elseif mine == "recupera" then
+		s.view, s.typed, s.recover_why = "recupera", "", nil
+	elseif mine == "annulla" then
+		s.view = "mio"
+	elseif mine == "vai" and s.acc and #s.typed == CODE_LEN and not s.asking then
+		s.asking, s.recover_why = true, nil
+		s.acc.recover(s.typed, function(ok, why)
+			if s.gone then return end
+			s.asking = false
+			if ok then
+				-- the profile of the code is this phone's now: its name and code
+				s.view, s.typed, s.code = "mio", "", nil
+				ask_code(s, false)
+			else
+				s.recover_why = why
+			end
+			build(s)
+		end)
+	end
 end
 
 local function save(s)
@@ -181,6 +346,13 @@ function M.on_input(s, action_id, action)
 	local ui_action = ui.touch(s.buttons, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" then return "indietro" end
+	local mine = ui_action:match("^profilo_mio:(.*)$")
+	local letter = ui_action:match("^lettera:(.*)$")
+	if mine or letter then
+		profile_action(s, mine, letter)
+		build(s)
+		return nil
+	end
 	if ui_action == "ripristina" then
 		controller.base(s.c)
 		save(s)
@@ -202,6 +374,7 @@ function M.on_input(s, action_id, action)
 end
 
 function M.destroy(s)
+	s.gone = true
 	kit.header_delete(s.head)
 	gui.delete_node(s.radice)
 	gui.delete_node(s.version.node)

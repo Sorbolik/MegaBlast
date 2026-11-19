@@ -471,7 +471,11 @@ Passo 6 del piano (`server/recovery.go`).
   `registro N`, `blocca N` / `sblocca N` (un profilo bloccato non fa azioni, non prende premi e
   non si recupera; online gioca con le statistiche di base), `reimporta N` (di nuovo dall'ultima
   copia del telefono del passo 3, coi tetti). Tutto finisce nel registro.
-- Prove: `TestRecovery` (`server/recovery_test.go`), `tests/guest_test.lua`.
+- Sul telefono: IMPOSTAZIONI > IL MIO PROFILO (`client/menu/settings.lua`): il nome, il codice
+  (chiesto la prima volta), NUOVO CODICE e HO GIÀ UN PROFILO col tastierino delle lettere del
+  codice (va anche col controller e nel browser, senza la tastiera del telefono).
+- Prove: `TestRecovery` (`server/recovery_test.go`), `tests/guest_test.lua`, scenario
+  `tools/simula/scenari/codice_profilo.txt` (server vero: codice, codice sbagliato, codice nuovo).
 
 ## Sul VPS (17 nov)
 
