@@ -161,6 +161,9 @@ flush = function()
 			end
 		end
 		queue.list = kept
+		-- the server did more than this phone numbered (a phone put back from
+		-- Android's backup, the profile recovered here): the next ones after it
+		queue.n = math.max(queue.n, t.ultima or 0)
 		save_queue()
 		take(t)
 		if #queue.list > 0 then flush() end
@@ -219,6 +222,49 @@ function M.send(p, a)
 	save_queue()
 	flush()
 	return copy.n
+end
+
+-- The recovery code of this profile (IMPOSTAZIONI, server/recovery.go): the
+-- one kept with the identity, or a new one from the server when fresh or
+-- there is none (the old one stops working). done(code or nil, why)
+function M.code(fresh, done)
+	local id = M.identity()
+	if id and id.codice and not fresh then return done(id.codice) end
+	if not state.url or not id or state.is_test() then return done(nil, "rete") end
+	http.request(M.url(state.url, "/profilo/codice") .. "?p=" .. who(), "POST", function(_, _, res)
+		local ok, t = pcall(json.decode, res and res.status == 200 and res.response or "")
+		if not ok or type(t) ~= "table" or type(t.codice) ~= "string" then return done(nil, "rete") end
+		local now = M.identity()
+		if now and now.id == id.id then
+			now.codice = t.codice
+			pcall(sys.save, save_file("identita"), now)
+		end
+		done(t.codice)
+	end, auth(id), "", OPTIONS)
+end
+
+-- «Ho già un profilo»: the profile of that recovery code takes this phone's
+-- place (its waiting actions go: they were of the profile left).
+-- done(true) or done(false, why): "codice" (unknown), "tentativi" (too many in
+-- an hour), "rete"
+function M.recover(code, done)
+	if not state.url or state.is_test() then return done(false, "rete") end
+	http.request(M.url(state.url, "/profilo/recupera") .. "?p=" .. who(), "POST", function(_, _, res)
+		local status = res and res.status or 0
+		if status == 404 then return done(false, "codice") end
+		if status == 429 then return done(false, "tentativi") end
+		local ok, t = pcall(json.decode, status == 200 and res.response or "")
+		if not ok or type(t) ~= "table" or type(t.id) ~= "number" or type(t.chiave) ~= "string" then
+			return done(false, "rete")
+		end
+		local plain = code:upper():gsub("[^%w]", "")
+		local shown = plain:sub(1, 4) .. "-" .. plain:sub(5, 8) .. "-" .. plain:sub(9, 12)
+		pcall(sys.save, save_file("identita"), { id = t.id, chiave = t.chiave, nome = t.nome, codice = shown })
+		queue.list, queue.n = {}, t.ultima or 0
+		save_queue()
+		take({ profilo = t.profilo, ultima = queue.n })
+		done(true)
+	end, { ["Content-Type"] = "text/plain" }, code, OPTIONS)
 end
 
 -- The profile for the online greeting, "<id>.<chiave>" (nil: none, or a test one)

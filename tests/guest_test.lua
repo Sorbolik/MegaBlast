@@ -136,6 +136,25 @@ do
 		"then it goes to the server")
 	asked[3].cb(nil, nil, { status = 0 })
 	check(not account.online() and #files.azioni.list == 1, "without the network the action waits in its file")
+
+	-- the recovery code: asked once, then kept with the identity
+	local got
+	account.code(false, function(c) got = c end)
+	check(#asked == 4 and asked[4].url:find("^http://host/profilo/codice"), "the code: asked to the server")
+	asked[4].cb(nil, nil, { status = 200, response = { codice = "ABCD-EFGH-JKMN" } })
+	got = nil
+	account.code(false, function(c) got = c end)
+	check(got == "ABCD-EFGH-JKMN" and #asked == 4, "then read from the identity")
+	-- «Ho già un profilo»: a wrong code, then the right one (the queue of the profile left goes)
+	local ok, why
+	account.recover("zzzz", function(a, b) ok, why = a, b end)
+	asked[5].cb(nil, nil, { status = 404 })
+	check(ok == false and why == "codice", "a wrong code: nothing changes")
+	sp.scaglie = 777
+	account.recover("pqrs tuvw xyz2", function(a, b) ok, why = a, b end)
+	asked[6].cb(nil, nil, { status = 200, response = { id = 9, chiave = "k2", ultima = 40, profilo = replay.write(sp) } })
+	check(ok and ph.scaglie == 777 and account.identity().id == 9 and account.identity().codice == "PQRS-TUVW-XYZ2"
+		and #files.azioni.list == 0 and files.azioni.n == 40, "the right code: that profile, numbered after the server's actions")
 	http, sys, json = nil, nil, nil
 end
 

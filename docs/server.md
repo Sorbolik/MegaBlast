@@ -453,6 +453,26 @@ l'Armeria si guarda ma non compra («serve la rete»); le partite si giocano e a
 - Resta separata la ricetta mandata a `/ricetta` (`client/main/recipe_check.lua`): serve ad
   allenare i bot.
 
+## Ritrovare il profilo (19 nov)
+
+Passo 6 del piano (`server/recovery.go`).
+
+| Richiesta | Cosa manda il telefono | Cosa risponde |
+|---|---|---|
+| `POST /profilo/codice` | `Authorization: Profilo <id>.<chiave>` | `{codice}`: 12 lettere (`ABCD-EFGH-JKMN`, senza 0/O e 1/I/L); quello vecchio smette di valere |
+| `POST /profilo/recupera` | il codice (maiuscole o no, trattini e spazi non contano) | `{id, chiave, nome, rev, ultima, profilo}` con una chiave nuova: quella del telefono vecchio smette di valere |
+
+- Il server tiene solo l'impronta del codice (colonna `codice`); il telefono lo tiene accanto
+  all'identità per mostrarlo. Al massimo 10 tentativi di recupero all'ora dallo stesso indirizzo.
+- Dopo un recupero il telefono riparte coi numeri delle azioni da `ultima` (e lo stesso a ogni
+  risposta, per un telefono rimesso dal backup di Android, che è acceso: il manifest non lo spegne).
+- **Pannello** (Actions > Profili, `.github/workflows/profili.yml`): sul VPS, come l'utente del
+  servizio, `megablast-server -profili FILE profili COMANDO ARG`: `cerca` (numero o pezzo del nome),
+  `registro N`, `blocca N` / `sblocca N` (un profilo bloccato non fa azioni, non prende premi e
+  non si recupera; online gioca con le statistiche di base), `reimporta N` (di nuovo dall'ultima
+  copia del telefono del passo 3, coi tetti). Tutto finisce nel registro.
+- Prove: `TestRecovery` (`server/recovery_test.go`), `tests/guest_test.lua`.
+
 ## Sul VPS (17 nov)
 
 Il server pubblico gira su un VPS Hetzner Cloud (Ubuntu 24.04, Germania,
