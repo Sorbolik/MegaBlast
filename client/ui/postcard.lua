@@ -1,7 +1,7 @@
 -- The mission's postcard (Sergio, 4 Nov; 6 Nov: the miniature of the map
 -- instead of a painting, and kept, it is needed going from one mission
 -- straight to the next): before a campaign mission the miniature of its map
--- opens in front of the menu on a leaning iron plate over the colonnade, with the label of its
+-- opens in front of the menu on a straight iron plate over the colonnade, with the label of its
 -- kind (the first time you meet that kind, also the line that says what it
 -- is), the mission's name at the top, its stars with what each one takes, and
 -- GIOCA. It is only a zoom on the card you tapped: the map is not loaded yet,
@@ -32,8 +32,8 @@ local M = {}
 local KC = kit.C
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
--- the iron plate and the picture in it (the picture leans like the plate)
-M.POST = { x = 70, y = 116, w = 640, h = 380, sk = 26, pic_w = 612, pic_h = 356, pic_sk = 24 }
+-- the iron plate and the picture in it, straight, filling it (Sergio, 19 Nov)
+M.POST = { x = 70, y = 116, w = 640, h = 380, sk = 0, pic_w = 612, pic_h = 356, pic_sk = 0 }
 local P = M.POST
 -- the middle of the plate: the zoom turns around it
 local CX, CY = P.x + (P.w + P.sk) / 2, P.y + P.h / 2

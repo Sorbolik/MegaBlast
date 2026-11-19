@@ -1,4 +1,4 @@
--- The story's comic (ui/story.lua): one panel at a time on a leaning iron
+-- The story's comic (ui/story.lua): one panel at a time on a straight iron
 -- plate over the campaign's colonnade (ui/kit.lua, Figma coordinates), each panel with
 -- its own shape (wide or square), and its lines one balloon at a time in the
 -- calm corner of the panel. AVANTI (or A) goes on; SALTA only when you have
@@ -21,9 +21,9 @@ local M = {}
 
 local KC = kit.C
 local function c(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
--- the picture: its middle, how tall, at most how wide, how much it leans; the
+-- the picture: its middle, how tall, at most how wide; the
 -- light margin around it
-local CX, CY, PIC_H, PIC_MAX_W, PIC_SK, MARGIN = 640, 330, 536, 1002, 28, 14
+local CX, CY, PIC_H, PIC_MAX_W, MARGIN = 640, 330, 536, 1002, 14
 -- the balloon: at most this wide, its padding, its distance from the picture's edges
 local BALLOON_W, BALLOON_PAD, BALLOON_GAP, TEXT_SIZE = 520, 18, 30, 19
 
@@ -60,8 +60,9 @@ local function show_picture(s, pg)
 	local w = math.min(PIC_MAX_W, math.floor(PIC_H * ratio + 0.5))
 	s.pic_w = w
 	local pw, ph = w + 2 * MARGIN, PIC_H + 2 * MARGIN - 4
-	kit.plate(s.g, CX - (pw + 30) / 2, CY - ph / 2, pw, ph, KC.HOT, { sk = 30, d = 14 })
-	kit.picture(s.sheet, tex, w, PIC_H, PIC_SK, ratio)
+	-- straight, the picture filling the frame (Sergio, 19 Nov)
+	kit.plate(s.g, CX - pw / 2, CY - ph / 2, pw, ph, KC.HOT, { sk = 0, d = 14 })
+	kit.picture(s.sheet, tex, w, PIC_H, 0, ratio)
 	s.balloon = nil
 	kit.pop(s.sheet, 0, 0.22, 0.96)
 end
