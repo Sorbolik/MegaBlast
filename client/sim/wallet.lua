@@ -268,12 +268,14 @@ end
 
 -- What the next level of a piece asks:
 -- { level, cost, full_cost, proof, proof_done } or nil at the top
+-- (p.no_proof: the "da zero" test profile, no Proof to play, Sergio 18 Nov)
 function M.next(p, set, slot)
 	local l = M.level(p, set, slot) + 1
 	if l > equip.LIVELLO_MAX then return nil end
 	local hand = M.smith_hand(p, set)
-	return { level = l, cost = equip.cost(l, hand), full_cost = equip.cost(l), proof = equip.proof(l),
-		proof_done = math.min(equip.proof(l), p.prova[key(set, slot)] or 0) }
+	local proof = not p.no_proof and equip.proof(l) or 0
+	return { level = l, cost = equip.cost(l, hand), full_cost = equip.cost(l), proof = proof,
+		proof_done = math.min(proof, p.prova[key(set, slot)] or 0) }
 end
 
 -- Buy the next level. Returns the new level, or nil and why

@@ -70,6 +70,9 @@ for _ = 2, 9 do wallet.upgrade(p, "corvo", "mask") end
 check(wallet.level(p, "corvo", "mask") == 9 and p.scaglie == 10000 - 800, "levels 2..9 cost 800")
 local lv, why = wallet.upgrade(p, "corvo", "mask")
 check(lv == nil and why == "proof", "the step 10 waits for the Proof")
+p.no_proof = true
+check(wallet.next(p, "corvo", "mask").proof == 0, "the \"da zero\" test profile has no Proof to play")
+p.no_proof = nil
 local a = { gear = { mask = "corvo", chest = "fornace" } }
 for _ = 1, 3 do wallet.wear(p, a) end
 check(wallet.next(p, "corvo", "mask").proof_done == 3 and p.prova.fornace_chest == nil,
