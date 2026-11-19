@@ -83,10 +83,14 @@ function M.update(o)
 	local a, b = gui.get_screen_position(o.low), gui.get_screen_position(o.high)
 	local x, y = math.floor(a.x), math.floor(a.y)
 	local w, h = math.ceil(b.x) - x, math.ceil(b.y) - y
+	-- the room: the rectangle when the devil is made, at rest (a door or the
+	-- ZAINO moves and scales it after): the render script makes its images that
+	-- big once, not again at every pixel the rectangle changes
+	if not o.room_w then o.room_w, o.room_h = w, h end
 	if x ~= o.x or y ~= o.y or w ~= o.w or h ~= o.hh then
 		o.x, o.y, o.w, o.hh = x, y, w, h
 		msg.post("@render:", "outline", { rect = vmath.vector4(x, y, w, h), close = CLOSE * h / (ABOVE + BELOW),
-			glow = GLOW * h / (ABOVE + BELOW) })
+			glow = GLOW * h / (ABOVE + BELOW), room_w = o.room_w, room_h = o.room_h })
 		local width = vmath.vector4(WIDTH * h / (ABOVE + BELOW), WIDTH_INK * h / (ABOVE + BELOW), GLOW_ALPHA, 0)
 		gui.set(o.node, "width", width)
 		if o.cape then gui.set(o.cape, "width", width) end

@@ -204,21 +204,41 @@ local JUMP_V = sqrt(2 * game.GRAVITY * game.base_stats().jump_height)
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(0, 0, 0, 1)
+-- a node of a devil followed by a silhouette devil (M.mirror) -> { its node
+-- there, the twin of that node or false }: every place, turn, scale and size set
+-- here is set there too, at once. Copying them every frame with gui.get_* made
+-- some hundred vectors of garbage a frame in the ZAINO and the SHOP, and the
+-- collector's stops were stutters (Sergio, 19 Nov)
+local FOLLOW = setmetatable({}, { __mode = "k" })
 local function pos(node, x, y)
 	V.x, V.y, V.z = x, y, 0
 	gui.set_position(node, V)
+	local f = FOLLOW[node]
+	if f then
+		gui.set_position(f[1], V)
+		if f[2] then gui.set_position(f[2], V) end
+	end
 end
 local function rot(node, rad)
 	V.x, V.y, V.z = 0, 0, rad * DEG
 	gui.set_euler(node, V)
+	local f = FOLLOW[node]
+	if f then gui.set_euler(f[1], V) end
 end
 local function scale(node, x, y)
 	V.x, V.y, V.z = x, y, 1
 	gui.set_scale(node, V)
+	local f = FOLLOW[node]
+	if f then gui.set_scale(f[1], V) end
 end
 local function size(node, w, h)
 	V.x, V.y, V.z = w, h, 0
 	gui.set_size(node, V)
+	local f = FOLLOW[node]
+	if f then
+		gui.set_size(f[1], V)
+		if f[2] then gui.set_size(f[2], V) end
+	end
 end
 
 -- the nodes of the devil being made, in the order they are made (M.mirror)
@@ -513,17 +533,28 @@ end
 
 -- The silhouette devil takes the pose of the real one: every node, made in the
 -- same order, copies place, turn, size, image and whether it shows; the layers too.
+-- Place, turn, scale and size are copied once, then they follow (FOLLOW)
 local EMPTY = hash("")
 function M.mirror(shadow, s)
 	levels(shadow, s.z_order)
 	local seen = shadow.seen or {}
 	shadow.seen = seen
+	local first = not shadow.following
+	shadow.following = true
 	for i = 1, #s.nodes do
 		local a, b = s.nodes[i], shadow.nodes[i]
-		gui.set_position(b, gui.get_position(a))
-		gui.set_rotation(b, gui.get_rotation(a))
-		gui.set_scale(b, gui.get_scale(a))
-		gui.set_size(b, gui.get_size(a))
+		if first then
+			gui.set_position(b, gui.get_position(a))
+			gui.set_rotation(b, gui.get_rotation(a))
+			gui.set_scale(b, gui.get_scale(a))
+			gui.set_size(b, gui.get_size(a))
+			local t = shadow.twins[b]
+			if t then
+				gui.set_position(t, gui.get_position(a))
+				gui.set_size(t, gui.get_size(a))
+			end
+			FOLLOW[a] = { b, t or false }
+		end
 		gui.set_enabled(b, gui.is_enabled(a))
 		local f = gui.get_flipbook(a)
 		local t = shadow.twins[b]
@@ -534,10 +565,6 @@ function M.mirror(shadow, s)
 				gui.set_enabled(t, OUTLINE_HASH[f] == true)
 				if OUTLINE_HASH[f] then gui.play_flipbook(t, f) end
 			end
-		end
-		if t then
-			gui.set_position(t, gui.get_position(a))
-			gui.set_size(t, gui.get_size(a))
 		end
 	end
 end
