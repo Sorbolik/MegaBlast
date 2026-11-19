@@ -1,5 +1,5 @@
 {
- "_": "Il Corvo: i guanti addosso all'apprendista (WB-070), sulla mano aperta e sul pugno.",
+ "_": "Il Corvo: i guanti addosso all'apprendista (WB-081, rifatti senza artigli), sulla mano aperta e sul pugno.",
  "tavolozza": "tools/stampino/tavolozze/apprendista_corvo.json",
  "colori": [
   "#3E3E58",
@@ -24,12 +24,12 @@
  },
  "forme": {
   "": {
-   "corpo": "art/WB-070/corvo_corpo_base_1.png",
-   "pugni": "art/WB-070/corvo_pugni_base.png"
+   "corpo": "art/WB-081/corvo_corpo_base_2.png",
+   "pugni": "art/WB-081/corvo_pugni_base_1.png"
   },
   "_forgiato": {
-   "corpo": "art/WB-070/corvo_corpo_forgiata.png",
-   "pugni": "art/WB-070/corvo_pugni_forgiata.png"
+   "corpo": "art/WB-081/corvo_corpo_forgiata.png",
+   "pugni": "art/WB-081/corvo_pugni_forgiata.png"
   }
  }
 }

@@ -1,6 +1,6 @@
 # WB-081 · I guanti Corvo rifatti
 
-- **Stato:** APPROVATA (Sergio, 19 nov: «approvo»)
+- **Stato:** IMPLEMENTATA (19 nov; approvata da Sergio: «approvo»)
 - **Data:** 2026-11-19
 - **Ramo della scheda:** `claude/project-thread-rc20kg` (eseguila da questo ramo: `git fetch origin claude/project-thread-rc20kg`) · **Ramo delle immagini:** `design/WB-081`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-081` senza chiedere conferma (il repository è privato).
@@ -145,5 +145,21 @@ Centered, filling about 80% of a square image, on a flat pure magenta #FF00FF ba
 Approvata da Sergio il 19 nov.
 
 ## Consegna di Codex
+Eseguita il 19 novembre 2026 sul ramo design/WB-081, creato da origin/claude/project-thread-rc20kg (215d284d). Generazione con ImageGen integrato, prompt usati integralmente senza modifiche e riferimenti nell'ordine della tabella.
 
+Consegnati in art/WB-081/, ciascuno col proprio .txt:
+- corvo_corpo_base_1.png e corvo_corpo_base_2.png (1536 x 1024, un tentativo ciascuno).
+- corvo_corpo_forgiata.png (1536 x 1024, tre tentativi, selezionato il terzo).
+- corvo_pugni_base_1.png e corvo_pugni_base_2.png (1536 x 1024, un tentativo ciascuno).
+- corvo_pugni_forgiata.png (1536 x 1024, un tentativo).
+- ic_corvo_guanti_base_1.png e ic_corvo_guanti_base_2.png (1254 x 1254, tre tentativi ciascuno; selezionati rispettivamente il terzo e il secondo).
+- ic_corvo_guanti_forgiato_1.png e ic_corvo_guanti_forgiato_2.png (1254 x 1254, tre tentativi ciascuno, selezionati i terzi).
+
+Scelte per i riferimenti successivi: corvo_corpo_base_2, per piume piu leggibili e minore variazione fuori dai guanti rispetto alla variante 1; corvo_pugni_base_1, per dita separate e piume leggibili. Scelte riportate anche nei TXT. Confronto numerico fuori da due rettangoli che contengono mani e polsi: rispetto a R1 risultano modificati 1.522.695 pixel nella variante corpo 1 e 1.496.138 nella variante 2 (include minime variazioni cromatiche dello sfondo). La disposizione appare conservata, ma il requisito degli stessi pixel NON e soddisfatto.
+
+Controllati visivamente tutti i 20 risultati generati: dita arrotondate senza artigli, piume sul dorso, braccia nude sopra il polsino, parti complete senza tagli al bordo, nessuna scritta; base e forgiata distinguibili per ventaglio e doppio bordo ciano. PNG originali, senza ritocco, compositing, ricalco o ridimensionamento; fondo magenta mantenuto come richiesto.
+
+Difformita residue da sottoporre a Claude: restano sfumature/variazioni cromatiche nonostante il divieto; nei polsini forgiati il generatore introduce anche viola e un ventaglio con piu di tre piume; la forma delle piume sul dorso varia fra base e forgiata. Le quattro icone misurano 1254 x 1254 invece di 1024 x 1024. La conservazione esatta dei pixel fuori dai guanti non e ottenuta; non certificati colori esadecimali, uniformita numerica del magenta, sagome e posizioni identiche al pixel. Nelle icone alcune dita si sovrappongono: da verificare la lettura alla misura effettiva nel gioco. Nessuna prova nel gioco o integrazione eseguita. Criteri di accettazione lasciati a Claude, senza spuntarli.
 ## Resoconto di Claude
+
+19 nov. Guardate tutte le 10 immagini: nessuna scartata per difetti. Montate: `corvo_corpo_base_2` e `corvo_pugni_base_1` (le scelte di Codex), `corvo_corpo_forgiata`, `corvo_pugni_forgiata`; icone `ic_corvo_guanti_base_1` e `ic_corvo_guanti_forgiato_2` (nella 1 le piume pendono sotto il polsino). Il viola del ventaglio forgiato è quello della corazza forgiata: tenuto. Ricetta `tools/stampino/addosso/corvo_guanti.json` sui fogli nuovi, `addosso.py` e `taglia.py --rifai` (le teste di Favilla rigenerate per caso: rimesse com'erano); icone ritagliate dal magenta in `art/WB-076/ritagli/` e rifatte con `tools/grafica/fucina.py`. Verificato: scenari `guanti_corvo.txt` e `guanti_corvo_forgiato.txt` (fermo e in corsa con l'arma). Confronto prima/dopo mandato a Sergio.
