@@ -1,6 +1,6 @@
 # WB-081 · I guanti Corvo rifatti
 
-- **Stato:** PROPOSTA
+- **Stato:** APPROVATA (Sergio, 19 nov: «approvo»)
 - **Data:** 2026-11-19
 - **Ramo della scheda:** `claude/project-thread-rc20kg` (eseguila da questo ramo: `git fetch origin claude/project-thread-rc20kg`) · **Ramo delle immagini:** `design/WB-081`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-081` senza chiedere conferma (il repository è privato).
@@ -141,6 +141,8 @@ Centered, filling about 80% of a square image, on a flat pure magenta #FF00FF ba
 ---
 
 ## Decisione
+
+Approvata da Sergio il 19 nov.
 
 ## Consegna di Codex
 
