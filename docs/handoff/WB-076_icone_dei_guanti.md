@@ -1,6 +1,6 @@
 # WB-076 · Le icone dei guanti
 
-- **Stato:** APPROVATA (Sergio, 18 nov: «okok, approvo»)
+- **Stato:** IMPLEMENTATA (19 nov; approvata da Sergio il 18 nov: «okok, approvo»)
 - **Data:** 2026-11-18
 - **Ramo della scheda:** `claude/project-thread-rc20kg` (eseguila da questo ramo: `git fetch origin claude/project-thread-rc20kg`) · **Ramo delle immagini:** `design/WB-076`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-076` senza chiedere conferma (il repository è privato).
@@ -177,4 +177,4 @@ Approvata da Sergio il 18 nov.
 
 ## Resoconto di Claude
 
-Consegna guardata il 18 nov: le venti icone vanno bene (nota di Codex: il Corvo base ha gli artigli, voluto). Scelte: variante 1 per tutte tranne Fornace forgiata (2). Non ancora nel gioco: restano in `art/WB-076/` finché i guanti non diventano il quinto posto (il posto dell'etichetta sul diavoletto è già pronto vicino alla mano dietro).
+Consegna guardata il 18 nov: le venti icone vanno bene (nota di Codex: il Corvo base ha gli artigli, voluto). Scelte: variante 1 per tutte tranne Fornace forgiata (2). 19 nov: nel gioco coi guanti quinto posto. Ritagliate dal magenta in `art/WB-076/ritagli/` (con la sagoma vuota di WB-070, `vuoto_guanti`) e montate da `tools/grafica/fucina.py` nell'atlante della fucina: zaino, Bottega, cartellino del giocatore.

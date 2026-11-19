@@ -669,6 +669,8 @@ function M:hurt(rb, amount, by, reason, weapon)
 			by.damage = by.damage + real
 			rb.life_damage[by.id] = (rb.life_damage[by.id] or 0) + real
 			self:add_points(by, real * 100 / rb.stats.max_hp * score.damage * mult, "damage", rb)
+			-- Morsa (the Leviatano's gloves): after hitting in your turn, pushes move you less until your next one
+			if by.stats.sig_grip > 0 and by.id == self.current then by.grip = true end
 			-- Brace addosso: whoever hits you up close catches fire
 			if weapon and C.MELEE[weapon] and rb.stats.sig_thorns > 0 then self:add_status(by, "burn", rb) end
 		end
@@ -1456,7 +1458,7 @@ function M:teleport(rb, x, y)
 	rb.fall_top = nil
 	-- Agguato, Velo, Scia breve (sim/gear.lua) remember the teleport's turn
 	local st = rb.stats
-	if st.sig_ambush > 0 or st.sig_blink_guard > 0 or st.sig_blink_run > 0 then rb.blink = self.turn_no end
+	if st.sig_ambush > 0 or st.sig_blink_guard > 0 or st.sig_blink_run > 0 or st.sig_void_push > 0 then rb.blink = self.turn_no end
 	self:emit({ type = "teleport", robot = rb.id, from_x = fx, from_y = fy, x = tx, y = ty })
 	-- Scia d'ombra (sim/skills.lua): before attacking, a teleport gives turn time
 	if rb.stats.orb_time > 0 and rb.id == self.current and self.phase == "aim" and self.window == 0 then
@@ -1674,7 +1676,7 @@ end
 -- The hit knocks the target in the direction it was going
 function M:sniper_hit(p, rb)
 	local sp = math.sqrt(p.vx * p.vx + p.vy * p.vy)
-	local k = self:knock_mul(rb)
+	local k = self:knock_mul(rb, self.robots[p.owner])
 	local s = C.SNIPER
 	rb.vx = p.vx / sp * s.push * k
 	rb.vy = (p.vy / sp * s.push + s.lift) * k
@@ -1948,9 +1950,17 @@ function M:terrain_between(x0, y0, x1, y1)
 	return false
 end
 
+-- how far rb's Mantice reaches: Soffio di forgia (the Smith's gloves) adds half its value
+function M.bellows_range(rb)
+	return C.BELLOWS.range * (1 + rb.stats.sig_bellows / 2)
+end
+
 function M:fire_bellows(angle)
 	local rb = self.robots[self.current]
 	local s = C.BELLOWS
+	-- Soffio di forgia (the Smith's gloves): it pushes further and reaches half as much further
+	local soffio = rb.stats.sig_bellows
+	local range = M.bellows_range(rb)
 	rb.facing = math.cos(angle) < 0 and -1 or 1
 	local cx, cy = rb.x, rb.y + M.DISEGNO_H / 2
 	local ux, uy = math.cos(angle), math.sin(angle)
@@ -1962,8 +1972,8 @@ function M:fire_bellows(angle)
 			local dx, dy = ox - cx, oy - cy
 			local d = math.sqrt(dx * dx + dy * dy)
 			-- inside the fan: the angle from the aim within cone (cosine, no acos)
-			if d <= s.range and dx * ux + dy * uy >= d * math.cos(s.cone) and not self:terrain_between(cx, cy, ox, oy) then
-				local f = (1 - (1 - s.far) * d / s.range) * self:knock_mul(o)
+			if d <= range and dx * ux + dy * uy >= d * math.cos(s.cone) and not self:terrain_between(cx, cy, ox, oy) then
+				local f = (1 - (1 - s.far) * d / range) * self:knock_mul(o, rb) * (1 + soffio)
 				o.vx, o.vy = ux * s.push * f, (uy * s.push + s.lift) * f
 				o.hooked = nil
 				o.grounded, o.knocked, o.fall_top = false, true, nil
@@ -2026,7 +2036,7 @@ function M:update_cannon(rb)
 				local reach = M.HURT_R + M.ROBOT_HALF_W
 				if dx * dx + dy * dy < reach * reach then
 					c.hit[o.id] = true
-					local k = self:knock_mul(o)
+					local k = self:knock_mul(o, rb)
 					o.vx, o.vy = (c.vx < 0 and -1 or 1) * s.push * k, s.lift * k
 					o.hooked = nil
 					o.grounded, o.knocked, o.fall_top = false, true, nil
@@ -2062,7 +2072,7 @@ function M:petard_blast(p)
 			local dx, dy = rb.x - p.x, rb.y + M.HURT_Y - p.y
 			local d = math.sqrt(dx * dx + dy * dy)
 			if d <= s.radius then
-				local f = (1 - 0.5 * d / s.radius) * self:knock_mul(rb)
+				local f = (1 - 0.5 * d / s.radius) * self:knock_mul(rb, owner)
 				local ux, uy = 0, 1
 				if d > 0.5 then ux, uy = dx / d, dy / d end
 				rb.vx, rb.vy = ux * s.push * f, (uy * s.push + s.lift) * f
@@ -2584,7 +2594,7 @@ end
 
 function M:punch_hit(rb, other, dir)
 	self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.HURT_Y })
-	local k = self:knock_mul(other)
+	local k = self:knock_mul(other, rb)
 	other.vx, other.vy = 0, M.PUNCH_LAUNCH * k
 	other.fall_top = nil
 	other.grounded, other.knocked = false, true
@@ -2756,10 +2766,20 @@ end
 
 -- Tactical items ----------------------------------------------------------------
 
--- How far rb gets pushed: less with the shield
-function M:knock_mul(rb)
+-- How far rb gets pushed (by: who pushes, nil if not known): less with the shield
+function M:knock_mul(rb, by)
 	local st = rb.stats
 	local k = st.knockback_mul
+	-- the gloves' signatures (sim/gear.lua): Picchiata, Vampata, Mano del vuoto, Morsa
+	if by and by ~= rb then
+		local a = by.stats
+		local up = 0
+		if a.sig_dive > 0 and not rb.grounded then up = up + a.sig_dive end
+		if a.sig_scorch > 0 and rb.status.burn then up = up + a.sig_scorch end
+		if a.sig_void_push > 0 and by.blink == self.turn_no and by.id == self.current then up = up + a.sig_void_push end
+		k = k * (1 + up)
+	end
+	if st.sig_grip > 0 and rb.grip then k = k * (1 - st.sig_grip) end
 	if rb.shield then k = k * C.SHIELD.knockback end
 	-- the signatures of the pieces (sim/gear.lua): Cappa da forgia, Piedi piantati, Zavorra
 	if st.sig_chute > 0 and rb.parachute then k = k * math.max(0, 1 - st.sig_chute) end
@@ -3022,8 +3042,8 @@ function M:preview(angle, power, count, every, pts, weapon)
 	elseif weapon == "sniper" then
 		return self:sniper_preview(x, y, angle, count, pts)
 	elseif weapon == "eagle" or weapon == "hook" or weapon == "bellows" or weapon == "boomerang" then
-		local range = (weapon == "eagle" and C.EAGLE or weapon == "hook" and C.HOOK or weapon == "boomerang" and C.BOOMERANG
-			or C.BELLOWS).range
+		local range = weapon == "bellows" and M.bellows_range(rb)
+			or (weapon == "eagle" and C.EAGLE or weapon == "hook" and C.HOOK or C.BOOMERANG).range
 		return self:ray_preview(x, y, angle, range, count, pts)
 	elseif weapon == "cannon" then
 		-- the flight of the Cannonata: from the robot's centre, like the real thing
@@ -3115,9 +3135,9 @@ function M:blast_on(rb, x, y, blast, owner)
 	if owner == rb.id then dmg = dmg * M.SELF_DAMAGE end
 	dmg = math.floor(dmg + 0.5)
 	-- the velocity is replaced
-	local imp = blast.impulse * self:knock_mul(rb)
 	-- the shooter's Fucina: Sigilli points and Colpo di grazia (sim/skills.lua)
 	local by = owner and owner ~= rb.id and self.robots[owner]
+	local imp = blast.impulse * self:knock_mul(rb, by or nil)
 	if by then
 		imp = imp * by.stats.blast_push
 		if by.stats.finisher > 0 and rb.hp < C.FINISHER_HP then imp = imp * 2 end
@@ -3181,6 +3201,7 @@ function M:start_turn(player)
 	rb.hooks_spare = rb.stats.extra_hooks
 	-- the Velo of the pieces lasts until your next turn
 	if rb.blink then rb.blink = nil end
+	if rb.grip then rb.grip = nil end
 	self:pair_start(rb)
 	-- the shield lasts until the start of the owner's next turn
 	if rb.shield then

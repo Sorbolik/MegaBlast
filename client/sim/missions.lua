@@ -302,7 +302,7 @@ end
 function M.bot_gear(l, nth)
 	if not l.step then return nil end
 	local level, share = M.campaign_level(l)
-	local slots = #equip.SLOTS
+	local slots = equip.CAMPAIGN_SLOTS
 	local count = math.min(slots, 1 + math.floor((slots - 1) * share + 0.5))
 	local family = equip.SETS[(l.chapter_n - 1) % #equip.SETS + 1].id
 	local gear, levels = {}, {}
@@ -324,7 +324,7 @@ function M.expected_stats(l, nth)
 		gear, levels = M.bot_gear(l, nth)
 	else
 		local level = M.campaign_level(l)
-		local slot = equip.SLOTS[(l.step - 1) % #equip.SLOTS + 1].id
+		local slot = equip.SLOTS[(l.step - 1) % equip.CAMPAIGN_SLOTS + 1].id
 		gear, levels = { [slot] = equip.SETS[(l.chapter_n - 1) % #equip.SETS + 1].id }, { [slot] = level }
 	end
 	return loadout.stats(game.base_stats(), { tree = {}, gear = gear }, levels)

@@ -23,6 +23,7 @@ local skills = require "sim.skills"
 local milestones = require "menu.milestones"
 local showcase = require "menu.showcase"
 local gear_ui = require "menu.gear_ui"
+local equip = require "sim.gear"
 local T = require("lang.text").tag_card
 local common = require("lang.text").common
 
@@ -81,8 +82,10 @@ function M.TOP(opt)
 end
 
 -- how big a piece's slot is on a tag that wide
+-- the slots of the pieces in one row (five since the gloves)
+local SLOTS = #equip.SLOTS
 local function piece_size(W)
-	return math.min(PIECE, math.floor((W - 2 * PAD - 3 * 8) / 4))
+	return math.min(PIECE, math.floor((W - 2 * PAD - (SLOTS - 1) * 8) / SLOTS))
 end
 
 -- opt.portrait: true, or how tall the devil's room is; opt.wide: narrower than
@@ -182,7 +185,7 @@ function M.new(v, x, y, opt, parent)
 	-- the pieces worn: the slots of the ZAINO, each with its picture and level
 	-- (an empty slot: the shadow of what goes there)
 	local ps = piece_size(W)
-	local pgap = (wide - 4 * ps) / 3
+	local pgap = (wide - SLOTS * ps) / (SLOTS - 1)
 	for i, p in ipairs(v.pezzi or {}) do
 		gear_ui.slot(g, sx + (i - 1) * (ps + pgap), yy, ps,
 			{ set = p.set, slot = p.slot, level = p.set and p.livello or nil })

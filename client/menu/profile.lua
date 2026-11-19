@@ -33,15 +33,16 @@ end
 M.GROUP_NAMES = { ["2v2"] = common.modes["2v2"], ["1v1"] = common.modes["1v1"], torneo = common.tournament,
 	campagna = common.campaign, ffa = common.modes.ffa, tutte = common.all }
 
--- scenari/vuoto_indossato.txt): the active loadout wears the four pieces of the Void,
+-- scenari/vuoto_indossato.txt): the active loadout wears the five pieces of the Void,
 -- or of another family (imposta prova_famiglia fabbro)
 function M.sample_void(p, form, family)
 	if (form or 0) <= 0 then return end
 	family = family or "vuoto"
 	local a = p.loadouts[p.is_active]
-	a.gear = { mask = family, chest = family, cloak = family, legs = family }
-	for _, slot in ipairs({ "mask", "chest", "cloak", "legs" }) do
-		p.pezzi[family .. "_" .. slot] = form == 2 and 20 or 1
+	a.gear = {}
+	for _, sl in ipairs(require("sim.gear").SLOTS) do
+		a.gear[sl.id] = family
+		p.pezzi[family .. "_" .. sl.id] = form == 2 and 20 or 1
 	end
 end
 

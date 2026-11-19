@@ -101,7 +101,7 @@ const (
 	gradeMax = 4
 	levelMax = 999
 	// the slots of the gear and the last level of a piece (sim/gear.lua)
-	pieceSlots    = 4
+	pieceSlots    = 5
 	pieceLevelMax = 30
 )
 

@@ -193,6 +193,27 @@ hp = r2.hp
 g:hurt(r2, 40, r1)
 g:hurt(r2, 40, r1)
 check(hp - r2.hp == 32 + 40, "Pelle dura: only the first hit of the turn")
+-- the gloves' signatures (19 Nov): all about pushing
+local function near1(x, y) return math.abs(x - y) < 1e-9 end
+g, r1, r2 = duel({ sig_dive = 0.3, sig_scorch = 0.3, sig_void_push = 0.3, sig_bellows = 0.4 }, { sig_grip = 0.2 })
+g.current = r1.id
+r2.grounded = true
+check(near1(g:knock_mul(r2, r1), 1) and near1(g:knock_mul(r2), 1), "on the ground, not burning, no teleport: the same push")
+r2.grounded = false
+check(near1(g:knock_mul(r2, r1), 1.3) and near1(g:knock_mul(r2), 1), "Picchiata: who is in the air flies 30% further")
+r2.grounded = true
+g:add_status(r2, "burn", r1)
+check(near1(g:knock_mul(r2, r1), 1.3), "Vampata: who burns flies 30% further")
+r2.status.burn = nil
+r1.blink = g.turn_no
+check(near1(g:knock_mul(r2, r1), 1.3), "Mano del vuoto: after your teleport you push 30% further")
+r1.blink = nil
+check(near1(game.bellows_range(r1), game.bellows_range(r2) * 1.2), "Soffio di forgia: the Mantice reaches 20% further")
+g.current = r2.id
+g:hurt(r1, 10, r2)
+check(r2.grip and near1(g:knock_mul(r2, r1), 0.8), "Morsa: after hitting, pushes move you 20% less")
+g:start_turn(r2.id)
+check(not r2.grip and near1(g:knock_mul(r2), 1), "...until your next turn")
 
 a.gear = { mask = "vuoto", chest = "corvo" }
 check(loadout.valid(a, 20), "valid loadout")
@@ -206,9 +227,9 @@ check(equip.tier(29) < equip.TIERS, "variant B only at 30")
 check(equip.next_tier(12) == 20 and equip.next_tier(30) == nil, "next step")
 local total = 0
 for l = 2, equip.LIVELLO_MAX do total = total + equip.cost(l) end
-check(total == 40000 and equip.cost(2) == 55 and equip.cost(10) == 1200 and equip.cost(20) == 4000 and equip.cost(30) == 6800
-	and equip.cost(31) == nil, "a piece at 30 costs 40,000 Scaglie")
-check(equip.cost(10, true) == 840 and equip.cost(2, true) == 40, "the Smith's hand: 30% off, rounded to 5")
+check(total == 32000 and equip.cost(2) == 44 and equip.cost(10) == 960 and equip.cost(20) == 3200 and equip.cost(30) == 5440
+	and equip.cost(31) == nil, "a piece at 30 costs 32,000 Scaglie")
+check(equip.cost(10, true) == 670 and equip.cost(2, true) == 30, "the Smith's hand: 30% off, rounded to 5")
 check(equip.proof(10) == 3 and equip.proof(20) == 5 and equip.proof(30) == 8 and equip.proof(11) == 0, "the steps ask for a Proof")
 
 -- Awards

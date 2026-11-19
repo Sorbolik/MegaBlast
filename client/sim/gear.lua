@@ -3,7 +3,7 @@
 -- Pure Lua, like sim/skills.lua.
 --
 -- The Sigilli say what you can do, the pieces say how you do it and who you
--- are. Four slots, five families. Every piece has four rows (Sergio, 14 Nov,
+-- are. Five slots (the gloves since 19 Nov), five families. Every piece has four rows (Sergio, 14 Nov,
 -- document https://claude.ai/artifact/WvXeAErLuw6uw5cHY4wwei): a main bonus
 -- from its slot (the type changes from piece to piece), two secondaries on
 -- any stat (they make the builds: all attack, all movement...), a minus that
@@ -22,11 +22,16 @@ M.SLOTS = {
 	{ id = "chest", name = "CORAZZA", art = "corazza" },
 	{ id = "cloak", name = "MANTELLO", art = "mantello" },
 	{ id = "legs", name = "STIVALI", art = "gambali_davanti" },
+	-- the gloves (Sergio, 18-19 Nov, WB-070 and WB-076): blast push and Attack
+	{ id = "gloves", name = "GUANTI", art = "guanti" },
 }
 -- Level of a piece: from 1 to LIVELLO_MAX, bought with Scaglie (Sergio, 10
 -- Nov, page "Scaglie e Ossidiana", choices 4A-6A). Every TIER_LEVELS level is a
 -- step ("scatto"): the grade goes up (bronze, silver, gold, ember).
 M.LIVELLO_MAX = 30
+-- the campaign's bots and its expected player wear only the first four
+-- slots: the stars are tuned on them (the gloves came on 19 Nov)
+M.CAMPAIGN_SLOTS = 4
 M.TIER_LEVELS = { 10, 20, 30 }
 M.TIERS = #M.TIER_LEVELS + 1
 -- the level from which a piece is "gold": it counts for its family's bonus
@@ -37,16 +42,20 @@ M.GOLD = 20
 -- about 400 Scaglie an hour, and a piece at 30 has to take about 100 hours:
 -- 40,000 in all, light at the start (the first step in five hours and a
 -- half) and heavy at the end (the last third of the levels is two thirds of
--- the cost). tools/economia/conti.lua turns these into hours.
-M.COSTS = { [10] = 1200, [20] = 4000, [30] = 6800 }
-for l = 2, 9 do M.COSTS[l] = 55 + 20 * (l - 2) end
-for l = 11, 19 do M.COSTS[l] = 500 + 100 * (l - 11) end
-for l = 21, 29 do M.COSTS[l] = 1500 + 150 * (l - 21) end
+-- the cost). tools/economia/conti.lua turns these into hours. Sergio, 19 Nov
+-- (the gloves, a fifth piece): every cost 20% lower, so the four pieces
+-- before and the five now take the same time (32,000 a piece). To review:
+-- Sergio may keep the old prices and let a set take longer.
+M.COSTS = { [10] = 960, [20] = 3200, [30] = 5440 }
+for l = 2, 9 do M.COSTS[l] = 44 + 16 * (l - 2) end
+for l = 11, 19 do M.COSTS[l] = 400 + 80 * (l - 11) end
+for l = 21, 29 do M.COSTS[l] = 1200 + 120 * (l - 21) end
 -- the Proof of a step: matches played wearing the piece at the level just
 -- below it (9, 19, 29) before you can buy the step
 M.PROOF = { [10] = 3, [20] = 5, [30] = 8 }
--- the Smith's hand: once a piece of a slot is at 30, every other piece of
--- that slot costs this much (30% off), to buy and to level up
+-- the Smith's hand: once a piece of a family is at 30, every other piece of
+-- that family costs this much (30% off), to buy and to level up (Sergio, 19
+-- Nov: the family, it was the slot)
 M.SMITH_HAND = 0.7
 
 -- Scaglie to go up to level l (nil past the last); discounted: the Smith's
@@ -80,6 +89,7 @@ M.MAINS = {
 	chest = { "defense", "max_hp", "knockback_mul" },
 	legs = { "walk_speed", "jump_height" },
 	cloak = { "air_speed", "fall_damage_mul" },
+	gloves = { "blast_push" },
 }
 -- The rows of a piece at level 30, by the stat's group (shares of the base;
 -- points for life, Attack and Defense). Every piece has the same budget: one
@@ -125,6 +135,12 @@ M.SIGNS = {
 	sig_blink_guard = { max = 0.15, name = "Velo", desc = "Dopo un tuo teletrasporto, fino al tuo turno dopo, prendi il %d%% di danno in meno" },
 	sig_blink_run = { max = 0.20, name = "Scia breve", desc = "Dopo un tuo teletrasporto corri il %d%% più veloce fino a fine turno" },
 	sig_far_orb = { max = 0.20, name = "Lancio lungo", desc = "Il globo parte il %d%% più veloce e arriva più lontano" },
+	-- the gloves' (Sergio, 19 Nov): all about pushing
+	sig_bellows = { max = 0.40, name = "Soffio di forgia", desc = "Il Mantice spinge il %d%% più lontano e arriva più in là" },
+	sig_dive = { max = 0.30, name = "Picchiata", desc = "Chi è in aria lo spingi il %d%% più lontano" },
+	sig_scorch = { max = 0.30, name = "Vampata", desc = "Chi brucia lo spingi il %d%% più lontano" },
+	sig_grip = { max = 0.20, name = "Morsa", desc = "Dopo che colpisci, fino al tuo turno dopo, le spinte ti spostano il %d%% in meno" },
+	sig_void_push = { max = 0.30, name = "Mano del vuoto", desc = "Dopo un tuo teletrasporto, nello stesso turno, spingi il %d%% più lontano" },
 }
 -- how much of a signature's max at each grade (I: off)
 M.SIGN_TIERS = { 0, 0.5, 0.75, 1 }
@@ -145,6 +161,7 @@ M.SETS = {
 			chest = { "defense", { "attack", "knockback_mul" }, "jump_height", "sig_self" },
 			legs = { "walk_speed", { "defense", "attack" }, "air_speed", "sig_climb" },
 			cloak = { "fall_damage_mul", { "max_hp", "attack" }, "teleport_ticks", "sig_chute" },
+			gloves = { "blast_push", { "attack", "defense" }, "fall_damage_mul", "sig_bellows" },
 		},
 		pair = { stat = "max_hp" },
 		style = { a = "Mestiere: la prima cassa che apri ti dà un colpo in più di quell'arma, salto -5%",
@@ -155,6 +172,7 @@ M.SETS = {
 			chest = { "knockback_mul", { "jump_height", "air_speed" }, "max_hp", "sig_air_guard" },
 			legs = { "jump_height", { "air_speed", "walk_speed" }, "defense", "sig_soft" },
 			cloak = { "air_speed", { "jump_height", "attack" }, "defense", "sig_glide" },
+			gloves = { "blast_push", { "attack", "jump_height" }, "defense", "sig_dive" },
 		},
 		pair = { stat = "air_speed" },
 		style = { a = "Picchiata: cadendo su un nemico da più di 150 px gli fai 10 di danno e lo spingi, vita -5",
@@ -165,6 +183,7 @@ M.SETS = {
 			chest = { "max_hp", { "attack", "blast_push" }, "jump_height", "sig_thorns" },
 			legs = { "walk_speed", { "attack", "blast_push" }, "max_hp", "sig_stomp" },
 			cloak = { "air_speed", { "attack", "fall_damage_mul" }, "knockback_mul", "sig_air_fire" },
+			gloves = { "blast_push", { "attack", "walk_speed" }, "jump_height", "sig_scorch" },
 		},
 		pair = { stat = "blast_push" },
 		style = { a = "Terra rovente: le tue esplosioni lasciano braci per un turno, chi ci finisce il turno perde 5, salto -5%",
@@ -175,6 +194,7 @@ M.SETS = {
 			chest = { "defense", { "max_hp", "knockback_mul" }, "walk_speed", "sig_first_guard" },
 			legs = { "walk_speed", { "defense", "knockback_mul" }, "jump_height", "sig_rooted" },
 			cloak = { "fall_damage_mul", { "defense", "knockback_mul" }, "air_speed", "sig_ballast" },
+			gloves = { "blast_push", { "attack", "knockback_mul" }, "air_speed", "sig_grip" },
 		},
 		pair = { stat = "knockback_mul" },
 		style = { a = "Ancora: se finisci il turno senza muoverti prendi metà spinta fino al tuo turno, corsa -5%",
@@ -185,6 +205,7 @@ M.SETS = {
 			chest = { "knockback_mul", { "teleport_ticks", "defense" }, "max_hp", "sig_blink_guard" },
 			legs = { "walk_speed", { "teleport_ticks", "jump_height" }, "defense", "sig_blink_run" },
 			cloak = { "air_speed", { "teleport_ticks", "walk_speed" }, "max_hp", "sig_far_orb" },
+			gloves = { "blast_push", { "attack", "teleport_ticks" }, "max_hp", "sig_void_push" },
 		},
 		pair = { stat = "teleport_ticks" },
 		style = { a = "Senza scia: gli avversari non vedono la tua mira né dove va il globo, vita -5",

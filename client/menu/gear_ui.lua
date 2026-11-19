@@ -35,7 +35,7 @@ local KC = kit.C
 M.ROMAN = { "I", "II", "III", "IV" }
 
 -- the name of a slot in the pictures' names (WB-043)
-M.ART = { mask = "elmo", chest = "corazza", cloak = "mantello", legs = "stivali" }
+M.ART = { mask = "elmo", chest = "corazza", cloak = "mantello", legs = "stivali", gloves = "guanti" }
 function M.slot_of(id)
 	for _, sl in ipairs(equip.SLOTS) do if sl.id == id then return sl end end
 	return equip.SLOTS[1]
@@ -239,7 +239,7 @@ function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try, bare)
 	local at = { mask = { 88, -318, 190, 120 }, chest = { 92, -205, 150, 110 }, gloves = { 96, -120, 110, 80 },
 		cloak = { -128, -150, 90, 150 }, legs = { -118, -40, 230, 80 } }
 	local left = { cloak = true, legs = true }
-	local cats = { mask = "elmo", chest = "corazza", cloak = "mantello", legs = "stivali" }
+	local cats = { mask = "elmo", chest = "corazza", cloak = "mantello", legs = "stivali", gloves = "guanti" }
 	local colors = {}
 	for _, sl in ipairs(equip.SLOTS) do
 		local set = a.gear[sl.id]
@@ -572,17 +572,32 @@ end
 
 -- A row of filters from (x, y): small iron plates, the active one warm.
 -- list: { { label, ui_action }, ... }
-function M.chips(s, g, x, y, list, active)
+-- maxw: the room they have (the padding shrinks to stay in it, never under 14)
+function M.chips(s, g, x, y, list, active, maxw)
+	local widths, sum = {}, 0
+	for i, c in ipairs(list) do
+		local n = kit.text(g, c[1], 0, y + 31, 19, KC.SAND, "middle")
+		widths[i] = kit.width(n)
+		sum = sum + widths[i]
+		gui.delete_node(n)
+	end
+	local pad, gap, size = 30, 8, 19
+	if maxw then
+		gap = 6
+		pad = math.max(12, math.min(pad, (maxw - sum - gap * (#list - 1)) / #list))
+		-- still too wide: smaller words, never under the smallest text of the menus
+		local room = maxw - (pad + gap) * #list + gap
+		if sum > room then size = math.max(kit.MIN_TEXT, size * room / sum) end
+	end
+	local k = size / 19
 	local cx = x
 	for i, c in ipairs(list) do
 		local on = i == active
-		local n = kit.text(g, c[1], 0, y + 31, 19, on and KC.HOT or KC.SAND, "middle")
-		local w = kit.width(n) + 30
-		gui.delete_node(n)
+		local w = widths[i] * k + pad
 		kit.strip(g, on and "piastrina_calda" or "piastrina", cx, y, w, 48)
-		kit.text(g, c[1], cx + w / 2, y + 31, 19, on and KC.HOT or KC.SAND, "middle")
+		kit.text(g, c[1], cx + w / 2, y + 31 - (19 - size) * 0.37, size, on and KC.HOT or KC.SAND, "middle")
 		kit.zone(g, s.buttons, cx - 3, y - 6, w + 6, 60, c[2])
-		cx = cx + w + 8
+		cx = cx + w + gap
 	end
 	return cx
 end

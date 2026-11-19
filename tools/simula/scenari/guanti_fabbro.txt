@@ -1,8 +1,6 @@
-# I guanti (WB-070) del fabbro addosso coi suoi quattro pezzi, base e a pugno chiuso con l'arma.
-# Non sono ancora un posto dell'equipaggiamento: li mette solo questa prova.
+# I guanti (WB-070) del fabbro addosso con gli altri quattro pezzi, base e a pugno chiuso con l'arma.
 imposta prova_vuoto 1
 imposta prova_famiglia fabbro
-imposta prova_guanti 1
 imposta prova_vignette no
 
 aspetta 3

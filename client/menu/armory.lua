@@ -57,7 +57,7 @@ local function ware(a, x, y, w, h, set, slot, price, o)
 	local py = y + h - 28
 	if o.owned then
 		kit.text(g, kit.upper(T.yours), x + w / 2, py + 18, 18, KC.MUTE, "middle")
-	elseif o.old then
+	elseif o.old and w >= 130 then
 		-- old price, coin and new price as one group, centered under the frame
 		local on = kit.text(g, coins.format(o.old), 0, py + 17, 16, KC.SAND)
 		local nn = kit.text(g, coins.format(price), 0, py + 17, 18, KC.HOT)
@@ -69,15 +69,16 @@ local function ware(a, x, y, w, h, set, slot, price, o)
 		kit.piece(g, "scaglia", left + ow + 20, py + 10, 20)
 		shift(nn, left + ow + 10 + 24)
 	else
-		local nn = kit.text(g, coins.format(price), 0, py + 17, 18, KC.SAND)
+		-- (a narrow offer: only the new price, hot; the badge says the discount)
+		local nn = kit.text(g, coins.format(price), 0, py + 17, 18, o.old and KC.HOT or KC.SAND)
 		local nw = kit.width(nn)
 		local left = x + (w - (24 + nw)) / 2
 		kit.piece(g, "scaglia", left + 10, py + 10, 20)
 		shift(nn, left + 24)
 	end
 	if o.badge then
-		kit.pic(g, "sconto", x + w - 66, y - 12, 80, 32)
-		kit.text(g, o.badge, x + w - 26, y + 10, 18, KC.SAND, "middle")
+		kit.pic(g, "sconto", x + w - 72, y - 12, 80, 32)
+		kit.text(g, o.badge, x + w - 32, y + 10, 18, KC.SAND, "middle")
 	end
 	if not o.owned then kit.zone(g, a.buttons, x, y, w, h, "merce:" .. set .. ":" .. slot) end
 end
@@ -94,7 +95,8 @@ local function shop(a)
 	local g = a.mid
 	local x = 430
 	local today = wallet.today()
-	-- the Smith and his four offers
+	-- the Smith and his offers, one per slot (five since the gloves: in the
+	-- columns of the pieces of the day)
 	kit.pic(g, "tondo_oro", x - 6, 92, 58, 58)
 	local face = gui.new_pie_node(vmath.vector3(x + 23 - g.ox, g.oy - 121, 0), vmath.vector3(50, 50, 0))
 	gui.set_clipping_mode(face, gui.CLIPPING_MODE_STENCIL)
@@ -111,9 +113,9 @@ local function shop(a)
 	for _, sl in ipairs(equip.SLOTS) do
 		local set = offers[sl.id]
 		if set then
-			local price = wallet.price(p, sl.id, true)
+			local price = wallet.price(p, set, sl.id, true)
 			local off = math.floor((1 - price / full) * 100 + 0.5)
-			ware(a, x + i * 148, 160, 136, 166, set, sl.id, price, { hot = true, old = full, badge = "−" .. off .. "%",
+			ware(a, x + i * 117, 166, 109, 154, set, sl.id, price, { hot = true, old = full, badge = "−" .. off .. "%",
 				sel = a.ware and a.ware[1] == set and a.ware[2] == sl.id and a.ware[3] })
 			i = i + 1
 		end
@@ -123,7 +125,7 @@ local function shop(a)
 	kit.text(g, kit.upper(T.day_line), x + 226, 358, 17, KC.MUTE, "start", 0.5)
 	for k, it in ipairs(wallet.day(today)) do
 		local set, slot = it[1], it[2]
-		ware(a, x + ((k - 1) % 5) * 117, 372 + math.floor((k - 1) / 5) * 118, 109, 110, set, slot, wallet.price(p, slot, false),
+		ware(a, x + ((k - 1) % 5) * 117, 372 + math.floor((k - 1) / 5) * 118, 109, 110, set, slot, wallet.price(p, set, slot, false),
 			{ owned = wallet.owns(p, set, slot), sel = a.ware and a.ware[1] == set and a.ware[2] == slot and not a.ware[3] })
 	end
 	-- pay with a voucher, or with Scaglie
@@ -132,7 +134,7 @@ local function shop(a)
 	local vb = kit.secondary(a.low2, T.use_voucher, 430, 640, 270, 62,
 		{ icon = "buono", sub = kit.upper(T.you_have:format(p.buoni)), sub_color = KC.HOT_BOTTOM, off = not usable })
 	kit.button(a.buttons, vb, "buono", { spento = not usable })
-	local price = w and wallet.price(p, w[2], w[3])
+	local price = w and wallet.price(p, w[1], w[2], w[3])
 	local ok = w and not wallet.owns(p, w[1], w[2]) and p.scaglie >= price
 	local sub = not w and TP.pick_ware or (wallet.owns(p, w[1], w[2]) and TP.in_wardrobe)
 		or (p.scaglie < price and TP.missing:format(coins.format(price - p.scaglie))) or TP.price_only:format(coins.format(price))

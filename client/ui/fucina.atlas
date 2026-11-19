@@ -215,6 +215,12 @@ images {
   image: "/assets/fucina/ic_corvo_elmo_forgiato.png"
 }
 images {
+  image: "/assets/fucina/ic_corvo_guanti_base.png"
+}
+images {
+  image: "/assets/fucina/ic_corvo_guanti_forgiato.png"
+}
+images {
   image: "/assets/fucina/ic_corvo_mantello_base.png"
 }
 images {
@@ -237,6 +243,12 @@ images {
 }
 images {
   image: "/assets/fucina/ic_fabbro_elmo_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_fabbro_guanti_base.png"
+}
+images {
+  image: "/assets/fucina/ic_fabbro_guanti_forgiato.png"
 }
 images {
   image: "/assets/fucina/ic_fabbro_mantello_base.png"
@@ -263,6 +275,12 @@ images {
   image: "/assets/fucina/ic_fornace_elmo_forgiato.png"
 }
 images {
+  image: "/assets/fucina/ic_fornace_guanti_base.png"
+}
+images {
+  image: "/assets/fucina/ic_fornace_guanti_forgiato.png"
+}
+images {
   image: "/assets/fucina/ic_fornace_mantello_base.png"
 }
 images {
@@ -285,6 +303,12 @@ images {
 }
 images {
   image: "/assets/fucina/ic_leviatano_elmo_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_leviatano_guanti_base.png"
+}
+images {
+  image: "/assets/fucina/ic_leviatano_guanti_forgiato.png"
 }
 images {
   image: "/assets/fucina/ic_leviatano_mantello_base.png"
@@ -321,6 +345,12 @@ images {
 }
 images {
   image: "/assets/fucina/ic_vuoto_elmo_forgiato.png"
+}
+images {
+  image: "/assets/fucina/ic_vuoto_guanti_base.png"
+}
+images {
+  image: "/assets/fucina/ic_vuoto_guanti_forgiato.png"
 }
 images {
   image: "/assets/fucina/ic_vuoto_mantello_base.png"
@@ -996,6 +1026,9 @@ images {
 }
 images {
   image: "/assets/fucina/vuoto_elmo.png"
+}
+images {
+  image: "/assets/fucina/vuoto_guanti.png"
 }
 images {
   image: "/assets/fucina/vuoto_mantello.png"
