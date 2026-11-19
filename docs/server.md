@@ -214,9 +214,11 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
    livelli e firme, livello del giocatore), il server controlla che sia
    giocabile (`sim/loadout.lua`, `net_clean`) e ne fa le statistiche del robot;
    `start` lo rimanda a tutti (`players[i].eq`) e ogni telefono rifà gli stessi
-   conti. Il server non ha ancora i profili: si fida di quello che il telefono
-   dice di avere (Sergio: «per ora non mi importa»); coi profili ospite lo
-   leggerà dal suo database. I bot hanno le statistiche di base.
+   conti. Dal 19 nov (protocollo 10) il `hello` non porta più `eq` né
+   `vetrina`: porta `profilo` («<numero>.<chiave>» del profilo ospite) e il
+   server prende pezzi, Sigilli, livello e badge dal suo database
+   (`Accounts.Cards`, `CMD.profile_cards`). Senza profilo valido: statistiche di
+   base e cartellino vuoto. I bot hanno le statistiche di base.
 4. **Prove**: un test in `server/server_test.go` per il comportamento nuovo e
    l'online nel simulatore (`tools/simula/scenari/scelta_online.txt`:
    server vero e giocatori finti).
@@ -225,7 +227,7 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
 
 ## Protocollo
 
-Il primo messaggio del client è `{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
+Il primo messaggio del client è `{"t":"hello","v":10,"mode":"2v2","profilo":"12.<chiave>"}` (dal 19 nov; prima `v` 9 con `vetrina` ed `eq` dichiarati dal telefono). Fino al 18 nov era `{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
 (`mode`: la coda scelta in DOVE GIOCHI?, o la `coda` di un evento; `vetrina`:
 livello e al massimo tre badge, il server tiene solo i valori validi, livello
 1-999, badge di lettere minuscole con grado 1-4; dal 16 nov anche `"pz":[{"set":"corvo","liv":24},…]`,
@@ -412,6 +414,41 @@ Il profilo viaggia e sta nel database come il testo delle ricette (`client/sim/r
 
 Il protocollo resta 9: sono richieste nuove, il gioco online non cambia. Col passo 4 il server
 diventa il padrone del profilo (protocollo 10).
+
+## Il server padrone del profilo (19 nov)
+
+Passi 4 e 5 del piano (scelta di Sergio del 19 nov: insieme, in una PR). Vale il profilo del
+server; il telefono fa le cose subito e le manda come **azioni** (`client/sim/progress.lua`):
+`compra`, `buono`, `potenzia`, `firma`, `zaino` (assetti e Sigilli), `partita`, `missione`,
+`statistiche` (una battaglia della campagna persa). Ogni azione ha un numero `n`; il telefono le
+tiene nel file `azioni` finché il server non risponde (al massimo 200) e poi prende il profilo del
+server rifacendo sopra quelle ancora in viaggio (`client/main/account.lua`, `adopt`). Senza rete
+l'Armeria si guarda ma non compra («serve la rete»); le partite si giocano e aspettano.
+
+| Richiesta | Cosa manda il telefono | Cosa risponde |
+|---|---|---|
+| `POST /profilo/nuovo?p=<telefono>` | il suo profilo (o niente) | `{id, chiave, nome, rev, profilo}` |
+| `POST /profilo/fai?p=<telefono>` | `Authorization: Profilo <id>.<chiave>` e `{azioni={…}}` (testo delle ricette) | `{id, nome, rev, ultima, fatte, profilo}` |
+
+- Il server fa ogni azione con le sue regole (`CMD.profile_do` in `server/worker.lua`) e salta
+  quelle con `n` ≤ `ultima`: mandata due volte, conta una volta. Al massimo 200 azioni e 5
+  partite per richiesta (il telefono manda a gruppi), 8 MB.
+- **Le partite si rigiocano** (`client/sim/judge.lua`): campagna, lezioni, allenamento e stesso
+  telefono portano la ricetta (con `missione`, `tocchi` e l'impronta finale). Il server rifà la
+  partita dal suo profilo (pezzi, Sigilli, i bot che ne escono, la missione com'è in
+  `sim/levels.lua`), coi bot che ripensano, controlla tutte le impronte e rifà i conti (punti,
+  premi, stelle, statistiche). Se non torna: «non valida» nel log, niente premio. La stessa
+  ricetta paga una volta (`pagate`, le ultime 200).
+- **Online** il server conta durante la partita (`CMD.tick`, `sim/tally.lua`) e alla fine dà a
+  ogni giocatore col profilo il suo premio (`CMD.prizes`, `Accounts.Award`): manda
+  `{"t":"premio","g":{…}}` prima di chiudere, e il telefono mostra quello sul podio.
+- Alla prima richiesta un profilo del passo 3 prende l'ultima copia del telefono (tagliata ai
+  tetti) e diventa del server (`padrone`). Nel registro: `padrone`, `azioni`, `online`.
+- Prove: `TestGuestProfiles`, `tests/guest_test.lua`, `tests/judge_test.lua`; nel simulatore
+  `imposta prova_identita 1` (scenario `profilo_server.txt`, nel log «ha fatto partita») e
+  `armeria_senza_rete.txt`.
+- Resta separata la ricetta mandata a `/ricetta` (`client/main/recipe_check.lua`): serve ad
+  allenare i bot.
 
 ## Sul VPS (17 nov)
 
