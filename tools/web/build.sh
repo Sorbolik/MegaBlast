@@ -17,7 +17,9 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 # e senza le estensioni native del client (client/vibra): si compila una copia
 python3 "$REPO/tools/simula/senza_estensioni.py" "$REPO/simulazione/web_client"
-printf "[project]\ndependencies#0 =\n\n[native_extension]\napp_manifest =\n" > "$TMP/web.ini"
+# senza i dipinti HD dei PC (client/paintings_hd): la pagina li caricherebbe tutti
+CR="$(grep '^custom_resources' "$REPO/client/game.project" | sed 's#,/paintings_hd##')"
+printf "[project]\ndependencies#0 =\n%s\n\n[native_extension]\napp_manifest =\n" "$CR" > "$TMP/web.ini"
 # il codice della versione (si vede nelle IMPOSTAZIONI del gioco); PROVA fuori da main
 RAMO="${GITHUB_REF_NAME:-$(git -C "$REPO" branch --show-current)}"
 printf "\n[megablast]\nversion = %s\ntest = %s\n" "$(git -C "$REPO" log -1 --format=%h)" "$([ "$RAMO" = main ] && echo 0 || echo 1)" >> "$TMP/web.ini"
