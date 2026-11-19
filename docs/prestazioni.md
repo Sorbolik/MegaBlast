@@ -202,6 +202,33 @@ prima il globo in volo restava fermo 2-3 frame di fila e poi faceva 10-13 px in
 un frame; con la coda (`client/main/playout.lua`) fa 5-6 px a ogni frame per
 tutto il volo. `tests/playout_test.lua` lo controlla con arrivi a mucchi.
 
+## Cosa si è trovato (19 nov, scatti nello SHOP e nello ZAINO)
+
+Sergio col contatore acceso vedeva tanti scatti nelle animazioni dello SHOP e dello
+ZAINO. Scenario `tools/simula/scenari/fluidita_zaino_shop.txt` (porta SHOP, ZAINO che
+cresce, griglia che scorre, POTENZIA con lama e cartello, SIGILLI), con `--senza-video`.
+Due cause, tutte e due del contorno illuminato dei pezzi (`menu/outline.lua`):
+
+- **Le sette immagini delle sagome rifatte di continuo.** Il render script le rifaceva
+  ogni volta che il rettangolo del diavoletto cambiava misura: scorrendo con la porta
+  o coi pezzi che entrano cambia di un pixel avanti e indietro (753/754), e con lo
+  ZAINO che cresce cambia a ogni frame. Ogni volta sette immagini cancellate e create
+  sulla GPU. Ora si fanno grandi come il diavoletto fermo (`room`, mandato da
+  `outline.lua`) e non si rimpiccioliscono mai; i passaggi disegnano solo il
+  rettangolo nel loro angolo. Nello scenario: da 91 volte a 2 (la prima e una a metà
+  del rimbalzo dello ZAINO, un quarto più grande e poi più).
+- **Il diavoletto ombra ricopiava tutto a ogni frame** (`scoria.mirror`: posto, giro,
+  scala e misura di ogni pezzo con `gui.get_*`, centinaia di vettori nuovi): 33-40 KB
+  di memoria nuova per frame nello ZAINO e scatti `gc`. Ora copia una volta e poi
+  segue: quello che la posa scrive su un pezzo lo scrive subito anche sull'ombra
+  (`FOLLOW` in `battle/scoria.lua`). Memoria per frame 2-10 KB, scatti `gc` da 22 a 7.
+  Controllato pezzo per pezzo che l'ombra resti identica (zero differenze).
+
+Resta il costo fisso del contorno: nel simulatore (disegno sulla CPU) lo ZAINO fa
+un frame normale di 70 ms con il contorno e 28 senza. Sulla GPU vera pesa molto meno,
+ma sono sette passaggi grandi quasi quanto lo schermo: se il contatore su telefono
+mostra ancora FPS bassi (non scatti) nello ZAINO, il prossimo passo è lì.
+
 ## Il piano di ottimizzazione (9 nov)
 
 Sergio (8 nov): analizzare il client col manuale di Defold (`docs/llms-full.md`) e
