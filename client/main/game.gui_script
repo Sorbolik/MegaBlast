@@ -1660,7 +1660,7 @@ local function open_podium(self)
 	-- experience, Scaglie, Ossidiana and stats (also on the server), then the
 	-- match into the phone's list (with the replay)
 	local c = CP.tally_end(self, res)
-	local gain = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c) })
+	local gain = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
 	local number = CP.record(self, c)
 	for i, g in ipairs(giocatori) do g.vetrina = self.match_showcases and self.match_showcases[i] end
 	show_message(self, "", true)
@@ -2534,6 +2534,23 @@ function CP.account_start(self)
 	profile.on_act = CP.account.send
 end
 
+-- The player touched the controls in a mission (sim/missions.lua touch): into
+-- the recipe too, the server replays it (sim/judge.lua)
+function CP.touch(self, what)
+	if not self.missione then return end
+	missions.touch(self.missione, what)
+	if self.ricetta and self.g then replay.touch(self.ricetta, self.g, what) end
+end
+
+-- The recipe of the match played here, closed where it stops, as text: it
+-- goes to the server with what the player did (sim/progress.lua), the server
+-- replays it before paying (sim/judge.lua)
+function CP.recipe_text(self)
+	replay.close(self.ricetta, self.g)
+	local ok, text = pcall(replay.encode, self.ricetta)
+	return ok and text or nil
+end
+
 -- The match's summary (sim/tally.lua finish), nil if it wasn't counted
 function CP.tally_end(self, res)
 	local c = self.conta
@@ -2877,7 +2894,10 @@ local function start_mission(self, id, picks)
 	-- your pieces, Sigilli and level count in the campaign (from the Forgia on)
 	local my_own = profile.active_loadout(self.profilo)
 	local own = profile.stats(self.profilo, my_own, game.base_stats())
-	new_match(self, missions.match(r, os.time(), picks, profile.help(self.profilo, id), own))
+	local help = profile.help(self.profilo, id)
+	new_match(self, missions.match(r, os.time(), picks, help, own))
+	-- the server builds the mission's match again from these (sim/judge.lua)
+	self.ricetta.missione = { id = id, picks = picks, help = help or nil }
 	-- prova_durata N also in the missions' battles (scenari/podio_forgia.txt)
 	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0
 	if duration > 0 then
@@ -3061,7 +3081,11 @@ local function mission_update(self, dt)
 	end
 	if r.esito == "fatta" and not r.was_saved then
 		r.was_saved = true
-		self.mission_gain = profile.act(self.profilo, { k = "missione", id = r.l.id, stars = missions.stars(r), made = missions.points(r) })
+		-- a battle really finished goes into the stats too (lessons don't)
+		local c = self.g.phase == "over" and CP.tally_end(self, self.g:results()) or nil
+		self.mission_tally = c
+		self.mission_gain = profile.act(self.profilo, { k = "missione", id = r.l.id, stars = missions.stars(r),
+			made = missions.points(r), conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
 		if not r.l.guidata then
 			-- a moment to see the shot, then (or at the first tap) the stars
 			show_message(self, TM.mission_done, true)
@@ -3074,6 +3098,10 @@ local function mission_update(self, dt)
 		profile.failed(self.profilo, r.l.id)
 		profile.save(self.profilo)
 		if self.g.phase == "over" then
+			-- a battle lost: its stats count all the same
+			local c = CP.tally_end(self, self.g:results())
+			self.mission_tally = c
+			profile.act(self.profilo, { k = "statistiche", id = r.l.id, conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
 			show_message(self, TM.mission_retry, true)
 			self.mode = "ended"
 			set_controls_visible(self, false)
@@ -3090,14 +3118,9 @@ local function open_level_end(self)
 	local r = self.missione
 	self.end_t, self.missione = nil, nil
 	self.missione_finita = r.l.id
-	-- battles (really finished) go into the stats, lessons don't
-	if self.g.phase == "over" then
-		local c = CP.tally_end(self, self.g:results())
-		profile.act(self.profilo, { k = "statistiche", conta = CP.stats_of(c) })
-		CP.record(self, c)
-	else
-		self.conta = nil
-	end
+	-- battles (really finished) into the phone's list of matches, lessons don't
+	CP.record(self, self.mission_tally)
+	self.mission_tally, self.conta = nil, nil
 	show_message(self, "", true)
 	score.goal(self.punti, nil)
 	self.vign:quiet()
@@ -3374,10 +3397,10 @@ CP.vibrate = vibrate_touch -- for the blocks above it (the zoom)
 
 local function move_pad_drag(self, x, y)
 	local nx, ny = pad_drag(self.move_pad, x, y)
-	if math.abs(nx) > 0.3 then missions.touch(self.missione, "cammina") end
+	if math.abs(nx) > 0.3 then CP.touch(self, "cammina") end
 	if sticks.move(self.move_st, nx, ny) then
 		self.jump_pressed = true
-		missions.touch(self.missione, "salta")
+		CP.touch(self, "salta")
 		-- the thumb just entered the jump arc: a micro-vibration
 		vibrate_touch()
 	end
@@ -5054,7 +5077,7 @@ end
 local function choose_slot(self, w)
 	-- the hidden teleport (lessons that don't talk about orbs) doesn't respond
 	if w == "teleport" and not self.tele_sees then return end
-	missions.touch(self.missione, w)
+	CP.touch(self, w)
 	local g = self.g
 	local why = my_turn(self) and g.phase == "aim" and hud.reason(g, w)
 	if why then
@@ -5097,7 +5120,7 @@ local function cancel_pad_aim(self)
 	self.pointers[self.aim_pad.id] = "cancelled"
 	aim_pad_drop(self)
 	show_message(self, TM.aim_cancelled)
-	missions.touch(self.missione, "annulla")
+	CP.touch(self, "annulla")
 end
 
 -- ESCI DALLA PARTITA: online the server knows at once (the seat isn't kept,
@@ -5217,7 +5240,7 @@ local function pointer_down(self, id, px, py)
 		return
 	end
 	-- in the lessons time starts when you touch the controls
-	if self.missione then missions.touch(self.missione) end
+	if self.missione then CP.touch(self) end
 	-- on the phone bringing the stick back to zero is awkward: while aiming, a
 	-- tap on the right half of the screen cancels the aim (and does nothing
 	-- else); the left half stays with the walking hand
@@ -5227,7 +5250,7 @@ local function pointer_down(self, id, px, py)
 		return
 	end
 	if hud.swap_press(self.scambio, px, py) then
-		missions.touch(self.missione, "baratto")
+		CP.touch(self, "baratto")
 		self.fire = { angle = 0, power = 0, weapon = "swap" }
 	elseif gui.pick_node(self.btn_zoom, px, py) then
 		self.pointers[id] = "zoom"
@@ -5245,14 +5268,14 @@ local function pointer_down(self, id, px, py)
 			-- with something to throw (at the start of the first lesson you have no weapons)
 			and self.g:can_use(self.tele_armed and "teleport" or self.weapon) then
 			self.pointers[id] = "pad_aim"
-			missions.touch(self.missione, "mira")
+			CP.touch(self, "mira")
 			pad_press(self.aim_pad, id, x, y)
 			aim_pad_drag(self, x, y)
 		end
 	elseif my_turn(self) and self.g:can_use(self.tele_armed and "teleport" or self.weapon) then
 		-- on the computer you aim from the robot with the mouse
 		self.pointers[id] = "aim"
-		missions.touch(self.missione, "mira")
+		CP.touch(self, "mira")
 		self.aiming = true
 		aim_from(self, x, y, true)
 	end
@@ -5296,7 +5319,7 @@ local function pointer_up(self, id, x, y)
 				weapon = self.tele_armed and "teleport" or self.weapon }
 			self.tele_armed = false
 		elseif self.aim_dist <= CANCEL_R then
-			missions.touch(self.missione, "annulla")
+			CP.touch(self, "annulla")
 		end
 		self.aiming = false
 	end
@@ -5412,7 +5435,7 @@ function PAD.aim(self)
 	-- power is how far you press the SPARA button, and releasing it fires the shot
 	local trigger = PAD.setting(self, "potenza") == "grilletto"
 	if st.active then
-		if not previous then missions.touch(self.missione, "mira") end
+		if not previous then CP.touch(self, "mira") end
 		self.pad_aim, self.aiming = true, true
 		self.aim_target = st.angle
 		if not previous or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
@@ -5434,7 +5457,7 @@ function PAD.aim(self)
 	elseif previous then
 		-- brought back to the center: the aim goes off and nothing fires
 		self.pad_aim, self.aiming, self.pad_charge = false, false, false
-		missions.touch(self.missione, "annulla")
+		CP.touch(self, "annulla")
 	end
 end
 -- the trigger charges past CHARGE and fires when it comes back below
@@ -5498,7 +5521,7 @@ PAD.COMMANDS = {
 	-- SALTA on a button (settings): jumps while held, like the stick pushed up
 	salta = function(self)
 		self.jump_pressed, self.pad_jump = true, true
-		missions.touch(self.missione, "salta")
+		CP.touch(self, "salta")
 	end,
 	teletrasporto = function(self) choose_slot(self, "teleport") end,
 	rampino = function(self) choose_slot(self, "hook") end,
@@ -5518,7 +5541,7 @@ PAD.COMMANDS = {
 	-- stopwatch, which is there when possible)
 	baratto = function(self)
 		if my_turn(self) and self.g.phase == "aim" and self.g:can_use("swap") and missions.sees(self.missione, "baratto") then
-			missions.touch(self.missione, "baratto")
+			CP.touch(self, "baratto")
 			self.fire = { angle = 0, power = 0, weapon = "swap" }
 		end
 	end,
@@ -5646,12 +5669,12 @@ function PAD.every_frame(self)
 		self.pad_jump = self.pad_jump and c.giu[jump_key] or false
 	elseif sticks.move(st, PAD.stick(self, "muove").x, PAD.stick(self, "muove").y) then
 		self.jump_pressed = true
-		missions.touch(self.missione)
-		missions.touch(self.missione, "salta")
+		CP.touch(self)
+		CP.touch(self, "salta")
 	end
 	if st.moving and not previous then
-		missions.touch(self.missione)
-		missions.touch(self.missione, "cammina")
+		CP.touch(self)
+		CP.touch(self, "cammina")
 	end
 	self.pad_walk = st.moving and st.dir or 0
 	if not jump_key then self.pad_jump = st.jumping end
@@ -5729,7 +5752,7 @@ function PAD.event(self, e)
 	elseif command == "spara" and self.controls_visible then
 		-- pressing fires at once; "lasciando" (settings) charges and fires on
 		-- release; with power from the trigger PAD.aim takes care of it
-		missions.touch(self.missione)
+		CP.touch(self)
 		if PAD.setting(self, "potenza") == "grilletto" then return end
 		if PAD.setting(self, "sparo") == "rilascio" then
 			self.pad_charge = self.pad_aim
@@ -5737,7 +5760,7 @@ function PAD.event(self, e)
 			PAD.COMMANDS.spara(self)
 		end
 	elseif command and self.controls_visible then
-		missions.touch(self.missione)
+		CP.touch(self)
 		PAD.COMMANDS[command](self)
 	end
 end
@@ -5909,10 +5932,10 @@ function PAD.on_input(self, action_id, action)
 	end
 	if self.missione and action.pressed and (action_id == ACTION.LEFT or action_id == ACTION.RIGHT
 		or action_id == ACTION.JUMP or action_id == ACTION.TELE_BTN or ACTION.WEAPON[action_id]) then
-		missions.touch(self.missione)
+		CP.touch(self)
 	end
 	if (action_id == ACTION.LEFT or action_id == ACTION.RIGHT) and action.pressed then
-		missions.touch(self.missione, "cammina")
+		CP.touch(self, "cammina")
 	end
 	if action_id == ACTION.LEFT then
 		self.keys.left = not action.released
@@ -5921,7 +5944,7 @@ function PAD.on_input(self, action_id, action)
 	elseif action_id == ACTION.JUMP then
 		if action.pressed then
 			self.jump_pressed = true
-			missions.touch(self.missione, "salta")
+			CP.touch(self, "salta")
 		end
 		self.keys.jump = not action.released
 	elseif action_id == ACTION.TELE_BTN then

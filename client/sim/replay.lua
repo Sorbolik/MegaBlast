@@ -98,6 +98,21 @@ function M.after(r, g)
 	end
 end
 
+-- A mission's touch of the controls (sim/missions.lua touch: they move its
+-- steps and its clock), at the tick it came: the server replays it there
+function M.touch(r, g, what)
+	r.tocchi = r.tocchi or {}
+	r.tocchi[#r.tocchi + 1] = { t = g.tick, w = what or false }
+end
+
+-- The match stops here (a mission done, the match over): the last
+-- fingerprint and the tick, so who replays it knows where it ends
+function M.close(r, g)
+	local last = r.impronte[#r.impronte]
+	if not last or last.t ~= g.tick then r.impronte[#r.impronte + 1] = { t = g.tick, h = g:fingerprint() } end
+	r.fine = g.tick
+end
+
 -- Reads a recipe back: the real players' keys tick by tick (bots think on
 -- their own, as when it was played, unless the recipe has their keys too). Used by verifica and by the in-game
 -- replay (MATCHES tab of the profile).

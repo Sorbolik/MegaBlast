@@ -7,9 +7,10 @@
 -- Everything that comes in is checked like data from outside: an action that
 -- doesn't fit the rules does nothing.
 --
--- Until the server replays the matches played on the phone (PR 5 of the
--- plan) their results are declared, within the caps of DECLARED (Sergio's
--- choice of 19 Nov).
+-- The matches played on the phone (partita, missione) carry their recipe:
+-- the phone counts them at once with what it saw, the server only after
+-- replaying them (sim/judge.lua, Sergio's choice of 19 Nov), with its own
+-- numbers. The caps of DECLARED hold for both.
 
 local profile = require "sim.profile"
 local wallet = require "sim.wallet"
@@ -45,8 +46,8 @@ local function clean_match(r)
 		local a = r.awards[i]
 		out.awards[i] = { name = type(a) == "table" and type(a.name) == "string" and a.name:sub(1, 40) or "" }
 	end
-	-- on the phone (training, same phone) half; online the full price until
-	-- the server counts the online matches itself (PR B of the plan)
+	-- on the phone (training, same phone) half; online (only the server
+	-- makes that action, server/worker.lua) the full price
 	out.bots = not out.online
 	return out
 end
@@ -114,18 +115,21 @@ function DO.partita(p, a, today)
 	return gain
 end
 
--- a campaign mission done: its stars and the points made
+-- a campaign mission done: its stars, the points made and, for a battle, its
+-- stats (conta)
 function DO.missione(p, a)
 	if not LEVELS[a.id] or type(a.stars) ~= "table" then return nil, "missione" end
 	local stars = { a.stars[1] == true, a.stars[2] == true, a.stars[3] == true }
 	local made = type(a.made) == "number" and math.max(0, math.min(1e6, math.floor(a.made))) or nil
 	local chapters = wallet.chapters_done(p, campaign.CAPITOLI)
 	local gain = profile.mission(p, a.id, stars, made)
+	local c = clean_tally(a.conta)
+	if c then profile.add_stats(p, c) end
 	gain.coins = mission_coins(p, gain, chapters)
 	return gain
 end
 
--- the stats of a campaign battle (its rewards come with missione)
+-- the stats of a campaign battle lost (a won one brings them with missione)
 function DO.statistiche(p, a)
 	local c = clean_tally(a.conta)
 	if not c then return nil, "statistiche" end

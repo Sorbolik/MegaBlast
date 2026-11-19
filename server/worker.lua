@@ -268,10 +268,15 @@ end
 -- done, the ones up to it are skipped).
 local profile_rules = require "sim.profile"
 local progress = require "sim.progress"
+local judge = require "sim.judge"
 local replay_text = require "sim.replay"
 
--- the most actions of one request (the phone's queue sends them together)
-local ACTIONS_MAX = 200
+-- the most actions of one request (the phone's queue sends them together),
+-- and the most matches to replay (a second or two each): the phone sends the
+-- rest again
+local ACTIONS_MAX, MATCHES_MAX = 200, 5
+-- the matches played on the phone: paid only replayed (sim/judge.lua)
+local MATCH_ACTIONS = { partita = true, missione = true, statistiche = true }
 
 local function summary(p)
 	local pieces = 0
@@ -297,14 +302,25 @@ function CMD.profile_do(c)
 	if (c.actions or "") ~= "" then req = replay_text.read(c.actions) end
 	if type(req) ~= "table" or type(req.azioni) ~= "table" then error("azioni illeggibili") end
 	local last = tonumber(c.last) or 0
-	local done = {}
+	local done, matches = {}, 0
 	for i = 1, math.min(#req.azioni, ACTIONS_MAX) do
 		local a = req.azioni[i]
 		if type(a) == "table" and type(a.n) == "number" and a.n % 1 == 0 and a.n > last then
-			last = a.n
-			local ok, r = pcall(progress.act, p, a, c.today)
-			local k = type(a.k) == "string" and a.k:sub(1, 20) or "?"
-			done[#done + 1] = (ok and r) and k or "no " .. k
+			local n, k = a.n, type(a.k) == "string" and a.k:sub(1, 20) or "?"
+			local why
+			if MATCH_ACTIONS[a.k] then
+				matches = matches + 1
+				if matches > MATCHES_MAX then break end
+				local ok, a2, w = pcall(judge.action, p, a)
+				if ok and a2 then a = a2 else why = ok and w or "errore" end
+			end
+			last = n
+			if why then
+				done[#done + 1] = "non valida " .. k .. " (" .. why .. ")"
+			else
+				local ok, r = pcall(progress.act, p, a, c.today)
+				done[#done + 1] = (ok and r) and k or "no " .. k
+			end
 		end
 	end
 	local s = summary(p)
