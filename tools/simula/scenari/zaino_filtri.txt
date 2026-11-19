@@ -1,0 +1,15 @@
+# I filtri dello ZAINO coi simboli del tipo (Sergio, 19 nov: sei parole non ci stavano):
+# TUTTI a parole, poi elmo, corazza, mantello, stivali e guanti nel colore del loro tipo.
+# Gira anche con --schermo 1600x720 e 960x720.
+imposta prova_profilo 4
+
+aspetta 4
+tocca_centro 640 300               # l'apprendista: lo ZAINO
+aspetta 5
+foto 01_tutti
+tocca_centro 543 596               # il filtro dell'elmo
+aspetta 2
+foto 02_elmi
+tocca_centro 808 596               # il filtro dei guanti
+aspetta 2
+foto 03_guanti

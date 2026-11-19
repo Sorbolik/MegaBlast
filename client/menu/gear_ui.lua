@@ -144,6 +144,7 @@ M.TINT = { mask = hexc("f26419"), chest = hexc("9ec4e0"), cloak = hexc("b07ce8")
 
 -- the name of a slot in the type symbols (WB-078)
 local TYPE = { mask = "tipo_elmo", chest = "tipo_corazza", cloak = "tipo_mantello", legs = "tipo_stivali", gloves = "tipo_guanti" }
+M.TYPE = TYPE
 
 -- a picture inside the box (x, y, w, h), as large as it fits and centered: never stretched
 local function fit(g, name, x, y, w, h)
@@ -572,14 +573,21 @@ end
 
 -- A row of filters from (x, y): small iron plates, the active one warm.
 -- list: { { label, ui_action }, ... }
--- maxw: the room they have (the padding shrinks to stay in it, never under 14)
+-- maxw: the room they have (the padding shrinks to stay in it, never under 14).
+-- c.slot: a chip with the symbol of that slot's type instead of words (the
+-- filters of the ZAINO, Sergio 19 Nov), in the type's colour, dimmed when off
+local ICON = 30
 function M.chips(s, g, x, y, list, active, maxw)
 	local widths, sum = {}, 0
 	for i, c in ipairs(list) do
-		local n = kit.text(g, c[1], 0, y + 31, 19, KC.SAND, "middle")
-		widths[i] = kit.width(n)
+		if c.slot then
+			widths[i] = ICON
+		else
+			local n = kit.text(g, c[1], 0, y + 31, 19, KC.SAND, "middle")
+			widths[i] = kit.width(n)
+			gui.delete_node(n)
+		end
 		sum = sum + widths[i]
-		gui.delete_node(n)
 	end
 	local pad, gap, size = 30, 8, 19
 	if maxw then
@@ -595,7 +603,13 @@ function M.chips(s, g, x, y, list, active, maxw)
 		local on = i == active
 		local w = widths[i] * k + pad
 		kit.strip(g, on and "piastrina_calda" or "piastrina", cx, y, w, 48)
-		kit.text(g, c[1], cx + w / 2, y + 31 - (19 - size) * 0.37, size, on and KC.HOT or KC.SAND, "middle")
+		if c.slot then
+			local icon = fit(g, TYPE[c.slot], cx + (w - ICON) / 2, y + 24 - ICON / 2 - 2, ICON, ICON)
+			local t = M.TINT[c.slot]
+			gui.set_color(icon, on and t or vmath.vector4(t.x, t.y, t.z, 0.6))
+		else
+			kit.text(g, c[1], cx + w / 2, y + 31 - (19 - size) * 0.37, size, on and KC.HOT or KC.SAND, "middle")
+		end
 		kit.zone(g, s.buttons, cx - 3, y - 6, w + 6, 60, c[2])
 		cx = cx + w + gap
 	end
