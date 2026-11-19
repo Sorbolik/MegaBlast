@@ -43,7 +43,8 @@ import (
 var ProfileDB = ""
 
 const (
-	profileMax = 256 << 10
+	// a profile, or the actions of a request (up to 5 matches with their recipes)
+	profileMax = 8 << 20
 	// new profiles from one address in an hour (a phone makes one, once)
 	profileNewPerHour = 10
 )
@@ -127,6 +128,12 @@ func (s ProfileSummary) String() string {
 }
 
 func profileLua(f string, args map[string]string) (ProfileSummary, error) {
+	s, _, err := profileCall(f, args)
+	return s, err
+}
+
+// profileCall: like profileLua, with the raws of the answer too
+func profileCall(f string, args map[string]string) (ProfileSummary, [][]byte, error) {
 	b := &Batch{}
 	b.Cmd(f, 0, nil)
 	keys := make([]string, 0, len(args))
@@ -140,16 +147,16 @@ func profileLua(f string, args map[string]string) (ProfileSummary, error) {
 	b.End()
 	res, err := callUtil(b)
 	if err != nil {
-		return ProfileSummary{}, err
+		return ProfileSummary{}, nil, err
 	}
 	var s ProfileSummary
 	if err := json.Unmarshal(res.Head, &s); err != nil {
-		return s, err
+		return s, nil, err
 	}
 	if s.Err != "" {
-		return s, errors.New(s.Err)
+		return s, nil, errors.New(s.Err)
 	}
-	return s, nil
+	return s, res.Raw, nil
 }
 
 func hashKey(key string) string {
@@ -290,6 +297,69 @@ func (a *Accounts) Do(id int64, key, actions string, now time.Time) (Account, Pr
 		}
 	}
 	return acc, s, tx.Commit()
+}
+
+// Cards: what the player of id (with key) shows and wears online, from the
+// server's profile (sim/profile.lua showcase and equip, as JSON): the phone's
+// word doesn't count (server.go, hello)
+func (a *Accounts) Cards(id int64, key string) (showcase, equip json.RawMessage, err error) {
+	acc, _, err := a.Do(id, key, "", time.Now())
+	if err != nil {
+		return nil, nil, err
+	}
+	b := &Batch{}
+	b.Cmd("profile_cards", 0, nil)
+	b.Str("text", acc.Profile)
+	b.End()
+	res, err := callUtil(b)
+	if err != nil {
+		return nil, nil, err
+	}
+	var v struct {
+		Showcase json.RawMessage `json:"vetrina"`
+		Equip    json.RawMessage `json:"eq"`
+		Err      string          `json:"err"`
+	}
+	if err := json.Unmarshal(res.Head, &v); err != nil {
+		return nil, nil, err
+	}
+	if v.Err != "" {
+		return nil, nil, errors.New(v.Err)
+	}
+	return v.Showcase, v.Equip, nil
+}
+
+// Award gives the profile of id an online match (action: worker.lua prizes,
+// made by the server). Returns the gain as JSON, for the phone's podium.
+func (a *Accounts) Award(id int64, action string, now time.Time) ([]byte, ProfileSummary, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	var text string
+	var rev int64
+	if err := a.db.QueryRow(`SELECT profilo, rev FROM giocatori WHERE id = ?`, id).Scan(&text, &rev); err != nil {
+		return nil, ProfileSummary{}, err
+	}
+	s, raws, err := profileCall("profile_award", map[string]string{"text": text, "action": action, "today": today(now)})
+	if err != nil {
+		return nil, s, err
+	}
+	tx, err := a.db.Begin()
+	if err != nil {
+		return nil, s, err
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec(`UPDATE giocatori SET profilo = ?, rev = ?, padrone = 1, aggiornato = ? WHERE id = ?`,
+		s.Profile, rev+1, now.Unix(), id); err != nil {
+		return nil, s, err
+	}
+	if err := ledger(tx, id, now.Unix(), "online", s); err != nil {
+		return nil, s, err
+	}
+	var gain []byte
+	if len(raws) > 0 {
+		gain = raws[0]
+	}
+	return gain, s, tx.Commit()
 }
 
 // Who sends the request: the address Caddy puts in X-Forwarded-For when the

@@ -21,6 +21,8 @@ local M = {}
 M.RETRY = 30
 -- the most actions waiting (the oldest go)
 M.QUEUE_MAX = 200
+-- the most matches (actions with a recipe) in one request: the server replays them
+M.MATCHES_MAX = 5
 -- what stays on the phone: the last matches (with their replays and their
 -- count), the settings, the weapons and the story already seen, the badges
 -- chosen, the lost missions in a row
@@ -119,7 +121,16 @@ end
 flush = function()
 	local id = M.identity()
 	if state.busy or not id then return end
-	local body = replay.write({ azioni = queue.list })
+	-- the first actions, in order, up to the most matches a request carries
+	local sent, matches = {}, 0
+	for _, a in ipairs(queue.list) do
+		if a.ricetta then
+			if matches == M.MATCHES_MAX then break end
+			matches = matches + 1
+		end
+		sent[#sent + 1] = a
+	end
+	local body = replay.write({ azioni = sent })
 	state.busy = true
 	http.request(M.url(state.url, "/profilo/fai") .. "?p=" .. who(), "POST", function(_, _, res)
 		state.busy = false
@@ -199,6 +210,17 @@ function M.send(p, a)
 	while #queue.list > M.QUEUE_MAX do table.remove(queue.list, 1) end
 	save_queue()
 	flush()
+end
+
+-- The profile for the online greeting, "<id>.<chiave>" (nil: none, or a test one)
+function M.key(test)
+	local id = not test and M.identity()
+	return id and string.format("%d", id.id) .. "." .. id.chiave or nil
+end
+
+-- The server's profile again (after an online match: its prizes)
+function M.refresh()
+	if state.url and state.is_test and not state.is_test() and M.identity() then flush() end
 end
 
 -- Whether the server answered the last time (the Armeria spends only then).

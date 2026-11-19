@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -395,7 +396,7 @@ func TestResumeUnknownToken(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	c := dial(t, ctx, url)
-	c.send(`{"t":"hello","v":9,"tok":"n1.inventato"}`)
+	c.send(`{"t":"hello","v":10,"tok":"n1.inventato"}`)
 	if m := c.waitFor(`"error"`); m["e"] != "expired" || !c.closed() {
 		t.Fatalf("unexpected answer: %v", m)
 	}
@@ -406,7 +407,7 @@ func TestOnlineMatch(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	hello := `{"t":"hello","v":9,"mode":"1v1"}`
+	hello := `{"t":"hello","v":10,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -518,7 +519,7 @@ func TestOnlineMatch(t *testing.T) {
 		t.Fatalf("unexpected away: %v", m)
 	}
 	a = dial(t, ctx, url)
-	a.send(fmt.Sprintf(`{"t":"hello","v":9,"tok":%q}`, sa["tok"]))
+	a.send(fmt.Sprintf(`{"t":"hello","v":10,"tok":%q}`, sa["tok"]))
 	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
 		t.Fatalf("unexpected resume: %v", m)
 	}
@@ -541,7 +542,7 @@ func TestStandIn(t *testing.T) {
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	hello := `{"t":"hello","v":9,"mode":"1v1"}`
+	hello := `{"t":"hello","v":10,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -571,7 +572,7 @@ func TestStandIn(t *testing.T) {
 	// back with the token in the middle of the turn: the seat is still theirs,
 	// the bot finishes the turn (si in the state) and the next one is theirs
 	a = dial(t, ctx, url)
-	a.send(fmt.Sprintf(`{"t":"hello","v":9,"tok":%q}`, sa["tok"]))
+	a.send(fmt.Sprintf(`{"t":"hello","v":10,"tok":%q}`, sa["tok"]))
 	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
 		t.Fatalf("unexpected resume: %v", m)
 	}
@@ -617,7 +618,7 @@ func TestDraftReady(t *testing.T) {
 	url := testServer(t, func(c *Config) { c.DraftTicks = 60 * tickRate })
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	hello := `{"t":"hello","v":9,"mode":"1v1"}`
+	hello := `{"t":"hello","v":10,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -666,7 +667,7 @@ func TestTeamDraft(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":9,"mode":"2v2"}`)
+		c[i].send(`{"t":"hello","v":10,"mode":"2v2"}`)
 	}
 	you := map[float64]*testClient{}
 	var offer, offer2 []any
@@ -716,7 +717,7 @@ func TestLeave(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":9,"mode":"ffa"}`)
+		c[i].send(`{"t":"hello","v":10,"mode":"ffa"}`)
 	}
 	you := map[float64]*testClient{}
 	for _, x := range c {
@@ -798,28 +799,25 @@ func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 	}
 }
 
-// Each player's card (level and badges, with the greeting) reaches the others
-// with the draft and with start, checked: level between 1 and levelMax, at
-// most badgeMax valid badges
+// Each player's card (level, badges, pieces worn) comes from their profile on
+// the server (accounts.go Cards), never from what the phone says, and reaches
+// the others with the draft and with start; without a profile the base card.
 func TestShowcases(t *testing.T) {
-	url := testServer(t)
+	url, acc := testServerProfiles(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":9,"mode":"1v1","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2},` +
-		`{"id":"<script>","grado":1},{"id":"danno","grado":9},{"id":"globi","grado":4},{"id":"casse","grado":1},{"id":"vinte","grado":1}]}}`)
+	a.send(`{"t":"hello","v":10,"mode":"1v1","profilo":"` + guest(t, acc, `p.livello = 12
+		p.posseduti.corvo_mask, p.pezzi.corvo_mask = true, 24
+		p.loadouts[1].gear.mask = "corvo"`) + `","vetrina":{"liv":99}}`)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
-	// an empty Lua table arrives as an object: the greeting still counts
-	// the pieces worn: five places, wrong names and levels out of range don't pass
-	b.send(`{"t":"hello","v":9,"mode":"1v1","vetrina":{"liv":100000,"bdg":{},"pz":[{"set":"corvo","liv":24},` +
-		`{"set":"<b>","liv":3},{"set":"fornace","liv":900},{"set":"","liv":0},{"set":"vuoto","liv":5},{"set":"fabbro","liv":7}]}}`)
+	b.send(`{"t":"hello","v":10,"mode":"1v1","profilo":"1.sbagliata"}`)
 	showcases := func(m map[string]any) string {
 		j, _ := json.Marshal(m["vetrine"])
 		return string(j)
 	}
-	want := `[{"bdg":[{"grado":2,"id":"mira"},{"grado":4,"id":"globi"},{"grado":1,"id":"casse"}],"liv":12},{"bdg":[],"liv":999,` +
-		`"pz":[{"liv":24,"set":"corvo"},{"liv":0,"set":""},{"liv":30,"set":"fornace"},{"liv":0,"set":""},{"liv":5,"set":"vuoto"}]}]`
+	want := `[{"bdg":[],"liv":12,"pz":[{"liv":20,"set":"corvo"},{"liv":0,"set":""},{"liv":0,"set":""},{"liv":0,"set":""},{"liv":0,"set":""}]},{}]`
 	if d := b.waitFor(`"draft"`); showcases(d) != want {
 		t.Fatalf("cards in the draft: %s, expected %s", showcases(d), want)
 	}
@@ -828,20 +826,56 @@ func TestShowcases(t *testing.T) {
 	}
 }
 
+// testServerProfiles: a test server with the guest profiles (accounts.go)
+func testServerProfiles(t *testing.T, change ...func(*Config)) (string, *Accounts) {
+	t.Helper()
+	acc, err := OpenAccounts(filepath.Join(t.TempDir(), "megablast.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { acc.Close() })
+	cfg := DefaultConfig()
+	cfg.ReconnectTicks = tickRate / 2
+	cfg.DraftTicks = tickRate
+	for _, c := range change {
+		c(&cfg)
+	}
+	s := NewServer(cfg)
+	s.accounts = acc
+	srv := httptest.NewServer(s.Handler())
+	t.Cleanup(srv.Close)
+	return "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws", acc
+}
+
+// guest: a profile born from the phone's progress (lua changes p, a new
+// profile), as the greeting carries it: "<id>.<chiave>"
+func guest(t *testing.T, acc *Accounts, lua string) string {
+	t.Helper()
+	var text string
+	luaEval(t, `local p = require("sim.profile").new()
+		`+lua+`
+		return require("sim.replay").write(p)`, &text)
+	a, _, err := acc.New(text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return itoa(a.ID) + "." + a.Key
+}
+
 // The waiting room (client/menu/lobby.lua): everyone in the queue gets the
 // cards of who is waiting, at every join and leave, with their own place.
 func TestWaitingRoom(t *testing.T) {
-	url := testServer(t)
+	url, acc := testServerProfiles(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":3}}`)
+	a.send(`{"t":"hello","v":10,"mode":"2v2","profilo":"` + guest(t, acc, "p.livello = 3") + `"}`)
 	w := a.waitFor(`"wait"`)
 	if w["of"] != float64(4) || w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
 		t.Fatalf("first wait: %v", w)
 	}
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":5}}`)
+	b.send(`{"t":"hello","v":10,"mode":"2v2","profilo":"` + guest(t, acc, "p.livello = 5") + `"}`)
 	w = b.waitFor(`"wait"`)
 	cards := w["vetrine"].([]any)
 	if w["you"] != float64(2) || len(cards) != 2 || cards[0].(map[string]any)["liv"] != float64(3) {
@@ -866,10 +900,10 @@ func TestLeaveQueue(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":9,"mode":"2v2"}`)
+	a.send(`{"t":"hello","v":10,"mode":"2v2"}`)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":9,"mode":"2v2"}`)
+	b.send(`{"t":"hello","v":10,"mode":"2v2"}`)
 	b.waitFor(`"you":2`)
 	a.send(`{"t":"leave"}`)
 	if w := b.waitFor(`"wait"`); w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
@@ -884,16 +918,16 @@ func TestLeaveQueue(t *testing.T) {
 // (here one second) the match starts with two bots, and the people are on
 // different teams.
 func TestBotsFillQueue(t *testing.T) {
-	url := testServer(t, func(c *Config) { c.BotAfter = time.Second })
+	url, acc := testServerProfiles(t, func(c *Config) { c.BotAfter = time.Second })
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12}}`)
+	a.send(`{"t":"hello","v":10,"mode":"2v2","profilo":"` + guest(t, acc, "p.livello = 12") + `"}`)
 	if w := a.waitFor(`"wait"`); w["bot_in"] == nil {
 		t.Fatalf("no bot_in in a normal queue: %v", w)
 	}
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":9,"mode":"2v2"}`)
+	b.send(`{"t":"hello","v":10,"mode":"2v2"}`)
 	d := a.waitFor(`"draft"`)
 	players := d["players"].([]any)
 	cards := d["vetrine"].([]any)
@@ -937,7 +971,7 @@ func TestPrivateRoom(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":9,"privata":"nuova","vetrina":{"liv":3}}`)
+	a.send(`{"t":"hello","v":10,"privata":"nuova"}`)
 	m := a.waitFor(`"privata"`)
 	code, _ := m["code"].(string)
 	if len(code) != 4 || m["mode"] != "2v2" || m["you"] != float64(1) || m["host"] != float64(1) || len(m["posti"].([]any)) != 4 {
@@ -945,12 +979,12 @@ func TestPrivateRoom(t *testing.T) {
 	}
 	// a wrong code: error and closed
 	x := dial(t, ctx, url)
-	x.send(`{"t":"hello","v":9,"privata":"x"}`)
+	x.send(`{"t":"hello","v":10,"privata":"x"}`)
 	if e := x.waitFor(`"error"`); e["e"] != "codice" || !x.closed() {
 		t.Fatalf("wrong code: %v", e)
 	}
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":9,"privata":"` + code + `"}`)
+	b.send(`{"t":"hello","v":10,"privata":"` + code + `"}`)
 	if m = b.waitFor(`"privata"`); m["you"] != float64(2) {
 		t.Fatalf("B must take seat 2: %v", m)
 	}
@@ -984,10 +1018,10 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":9,"privata":"nuova"}`)
+	a.send(`{"t":"hello","v":10,"privata":"nuova"}`)
 	code := a.waitFor(`"privata"`)["code"].(string)
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":9,"privata":"` + code + `"}`)
+	b.send(`{"t":"hello","v":10,"privata":"` + code + `"}`)
 	b.waitFor(`"privata"`)
 	a.send(`{"t":"modo","mode":"1v1"}`)
 	if m := b.waitFor(`"1v1"`); len(m["posti"].([]any)) != 2 || m["you"] != float64(2) {
@@ -995,7 +1029,7 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 	}
 	// full of people: a third can't come in
 	c := dial(t, ctx, url)
-	c.send(`{"t":"hello","v":9,"privata":"` + code + `"}`)
+	c.send(`{"t":"hello","v":10,"privata":"` + code + `"}`)
 	if e := c.waitFor(`"error"`); e["e"] != "piena" {
 		t.Fatalf("full room: %v", e)
 	}
@@ -1006,7 +1040,7 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 	b.send(`{"t":"leave"}`)
 	b.closed()
 	d := dial(t, ctx, url)
-	d.send(`{"t":"hello","v":9,"privata":"` + code + `"}`)
+	d.send(`{"t":"hello","v":10,"privata":"` + code + `"}`)
 	if e := d.waitFor(`"error"`); e["e"] != "codice" {
 		t.Fatalf("the empty room must be gone: %v", e)
 	}
@@ -1038,21 +1072,23 @@ func TestRateLimit(t *testing.T) {
 	}
 }
 
-// What a player wears (the greeting's "eq": Sigilli, pieces with levels and
-// signatures, level) makes the stats of their robot in the server's match,
-// and reaches everyone with start, checked; whoever sends nothing, or
-// something that can't be, plays with the base stats.
+// What a player wears (Sigilli, pieces with levels and signatures, level)
+// comes from their profile on the server and makes the stats of their robot
+// in the match, and reaches everyone with start; whoever has no profile plays
+// with the base stats, whatever the phone says.
 func TestEquipStats(t *testing.T) {
-	url := testServer(t)
+	url, acc := testServerProfiles(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":9,"mode":"1v1","eq":{"liv":30,"gear":{"mask":"corvo","chest":"corvo","legs":"fornace","cloak":"leviatano"},` +
-		`"lv":{"mask":30,"chest":12,"legs":20,"cloak":5},"sg":{"mask":3,"chest":3},"tree":{"armor":15,"pick":{"armor":{"1":1,"3":2}}},"altro":"<x>"}}`)
+	a.send(`{"t":"hello","v":10,"mode":"1v1","profilo":"` + guest(t, acc, `p.livello = 30
+		p.posseduti.corvo_mask, p.pezzi.corvo_mask, p.firme.corvo_mask = true, 20, 3
+		p.posseduti.corvo_chest, p.pezzi.corvo_chest = true, 12
+		p.loadouts[1].gear = { mask = "corvo", chest = "corvo" }
+		p.loadouts[1].tree = { armor = 15, pick = { armor = { 1, nil, 2 } } }`) + `"}`)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
-	// more points than the level gives: not playable, the base stats
-	b.send(`{"t":"hello","v":9,"mode":"1v1","eq":{"liv":2,"tree":{"wings":25}}}`)
+	b.send(`{"t":"hello","v":10,"mode":"1v1","eq":{"liv":30,"tree":{"armor":15}}}`)
 	s := a.waitFor(`"start"`)
 	players, _ := json.Marshal(s["players"])
 	var ps []struct {
@@ -1061,11 +1097,11 @@ func TestEquipStats(t *testing.T) {
 	if err := json.Unmarshal(players, &ps); err != nil || len(ps) != 2 {
 		t.Fatalf("players in start: %s", players)
 	}
-	if ps[0].Eq == nil || ps[0].Eq["altro"] != nil || ps[1].Eq != nil {
+	if ps[0].Eq == nil || ps[1].Eq != nil {
 		t.Fatalf("eq in start: %s", players)
 	}
-	// the signature of a piece at level 12 is lit one grade at most
-	if sg := ps[0].Eq["sg"].(map[string]any); sg["mask"] != 3.0 || sg["chest"] != 1.0 {
+	// the signature of a piece at level 20 is lit two grades at most
+	if sg := ps[0].Eq["sg"].(map[string]any); sg["mask"] != 2.0 {
 		t.Fatalf("signatures: %v", sg)
 	}
 	st := a.waitFor(`"state"`)
@@ -1085,7 +1121,7 @@ func TestEmptyRoomCloses(t *testing.T) {
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	hello := `{"t":"hello","v":9,"mode":"1v1"}`
+	hello := `{"t":"hello","v":10,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -1093,7 +1129,7 @@ func TestEmptyRoomCloses(t *testing.T) {
 	b.send(hello)
 	sa := a.waitFor(`"start"`)
 	b.waitFor(`"start"`)
-	back := fmt.Sprintf(`{"t":"hello","v":9,"tok":%q}`, sa["tok"])
+	back := fmt.Sprintf(`{"t":"hello","v":10,"tok":%q}`, sa["tok"])
 	// only one away, well past the time: the room is still there
 	a.conn.CloseNow()
 	b.waitFor(`"away"`)

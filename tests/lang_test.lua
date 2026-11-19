@@ -36,6 +36,15 @@ for _, f in ipairs(files) do
 		end
 	end
 end
+-- the moments of the match (client/sim/tally.lua): the phone passes the group
+-- tally to tally.new, the sim reads it as T
+do
+	local h = io.open("client/sim/tally.lua"); local src = h:read("*a"); h:close()
+	for key in src:gmatch("%f[%w_]T%.([%a_][%w_]*)") do
+		check(it.tally[key] ~= nil, "client/sim/tally.lua: tally." .. key .. " esiste")
+		used.tally[key] = true
+	end
+end
 for group, keys in pairs(it) do
 	for key in pairs(keys) do
 		check(used[group][key], group .. "." .. key .. " si usa")

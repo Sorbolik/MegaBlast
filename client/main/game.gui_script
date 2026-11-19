@@ -60,7 +60,7 @@ local TW, TH = game.GRID_W, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Protocol version, equal to protocolVersion in server/server.go
-local PROTOCOL = 9
+local PROTOCOL = 10
 -- If the connection drops in a match we retry for a while (the server keeps
 -- the seat for 20 seconds)
 -- for the whole match (ten minutes): the server keeps our seat to the end and
@@ -1660,7 +1660,16 @@ local function open_podium(self)
 	-- experience, Scaglie, Ossidiana and stats (also on the server), then the
 	-- match into the phone's list (with the replay)
 	local c = CP.tally_end(self, res)
-	local gain = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
+	local gain
+	if self.online_end then
+		-- online the server counts it and sends what it gave (CP "premio"); if
+		-- it hasn't arrived yet (or there is no profile on the server) the same
+		-- sums here, only on the phone: the server's profile comes back anyway
+		gain = self.online_gain or profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c) }, true)
+		self.online_gain = nil
+	else
+		gain = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
+	end
 	local number = CP.record(self, c)
 	for i, g in ipairs(giocatori) do g.vetrina = self.match_showcases and self.match_showcases[i] end
 	show_message(self, "", true)
@@ -1953,6 +1962,11 @@ local function on_server_message(self, m)
 		self.net_events[#self.net_events + 1] = m
 		-- the server closes right after the end: not a drop (see DISCONNECTED)
 		if m.type == "over" then self.net_over = true end
+	elseif m.t == "premio" then
+		-- what the server gave our profile for the match (server/room.go prizes):
+		-- the podium shows it, and the profile comes back from the server
+		self.online_gain = m.g
+		CP.account.refresh()
 	elseif m.t == "away" then
 		show_message(self, TM.opponent_away, true)
 	elseif m.t == "back" and m.robot ~= self.me then
@@ -2034,14 +2048,13 @@ on_socket = function(self, conn, data)
 			self.net_notes = nil
 		elseif self.privata then
 			-- the private match (menu/private.lua): a new room or a code
-			send(self, { t = "hello", v = PROTOCOL, privata = self.privata,
-				vetrina = profile.showcase(self.profilo), eq = profile.equip(self.profilo) })
+			send(self, { t = "hello", v = PROTOCOL, privata = self.privata, profilo = CP.account.key(profile.test ~= false) })
 		else
 			CP.wait(self, TM.waiting)
 			-- the queue picked in GIOCA ONLINE (menu/queue.lua): 2v2, 1v1 or an event,
-			-- and the tag: level and badges (menu/showcase.lua)
-			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2",
-				vetrina = profile.showcase(self.profilo), eq = profile.equip(self.profilo) })
+			-- and the guest profile: the server takes the tag and the pieces from
+			-- its own, and gives it the prizes (main/account.lua)
+			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2", profilo = CP.account.key(profile.test ~= false) })
 		end
 	elseif data.event == ws.EVENT_MESSAGE and conn == self.mute then
 		-- prova_muta: nothing arrives any more

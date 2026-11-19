@@ -19,6 +19,10 @@ mira 150 100 0.4
 aspetta_evento fire 5
 aspetta_stato turno=2 fase=aim 40
 mira -150 100 0.4
+aspetta_stato turno=1 fase=aim 40     # l'ultimo giro ×2: un altro colpo a testa
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
 aspetta_evento over 60
 aspetta 4
 foto 01_podio

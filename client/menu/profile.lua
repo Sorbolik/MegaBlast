@@ -218,11 +218,12 @@ end
 -- What changes the progress goes through here (sim/progress.lua): done at
 -- once on the phone and saved, then, when it worked, on_act(p, a) sends it to
 -- the server, whose profile counts (game.gui_script, main/account.lua).
--- Returns what the action returns
-function M.act(p, a)
+-- Returns what the action returns. here: only on the phone (an online match:
+-- the server counts it itself)
+function M.act(p, a, here)
 	local r, why = progress.act(p, a, wallet.today())
 	M.save(p)
-	if r and M.on_act then M.on_act(p, a) end
+	if r and M.on_act and not here then M.on_act(p, a) end
 	return r, why
 end
 

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"time"
 )
 
 const (
@@ -17,12 +18,13 @@ const (
 
 // Message from a client:
 //
-//	{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]},"eq":{...}}
+//	{"t":"hello","v":10,"mode":"2v2","profilo":"12.4f9a..."}
 //	                                    first message: protocol version, queue ("1v1",
 //	                                    "2v2", "ffa" or the id of an event with its queue, GET /eventi)
-//	                                    and card (level and badges, the others see them)
-//	{"t":"hello","v":9,"tok":"..."}    or: I'm back in the match I dropped from
-//	{"t":"hello","v":9,"privata":"nuova"} or "privata":"4821": I open a private room,
+//	                                    and guest profile (accounts.go: the card the others see and
+//	                                    what the robot wears come from it, the prizes go to it)
+//	{"t":"hello","v":10,"tok":"..."}   or: I'm back in the match I dropped from
+//	{"t":"hello","v":10,"privata":"nuova"} or "privata":"4821": I open a private room,
 //	                                    or join the one with that code (private.go, with its messages)
 //	{"t":"pick","w":"shards"}           start-of-match draft: one primary and one secondary
 //	                                    (the weapon tells the category; can change until time's up)
@@ -56,19 +58,14 @@ type clientMsg struct {
 	Private string `json:"privata"`
 	I       int    `json:"i"`
 	G       int    `json:"g"`
-	// with the greeting: level, badges and pieces worn of the card (sim/profile.lua, showcase)
-	// (raw: a wrong card must not make the greeting fail)
-	Showcase json.RawMessage `json:"vetrina"`
-	// what the player wears, for the stats of their robot: Sigilli, pieces with
-	// levels and signatures, level (sim/profile.lua equip; checked in
-	// the process: net.lua equip_stats)
-	Equip json.RawMessage `json:"eq"`
+	// with the greeting: the guest profile, "<id>.<chiave>" (server.go cards)
+	Profile string `json:"profilo"`
 }
 
-// equipMax: the longest "eq" of a greeting that is read (a full one is under 1 KB)
+// equipMax: the longest "eq" that is read (a full one is under 1 KB)
 const equipMax = 4096
 
-// equipLua writes the greeting's "eq" as a Lua value for the room's process;
+// equipLua writes what a profile wears (sim/profile.lua equip) as a Lua value for the room's process;
 // nil if it's missing, too long or not an object: the base stats
 func equipLua(raw json.RawMessage) []byte {
 	if len(raw) < 2 || len(raw) > equipMax || raw[0] != '{' {
@@ -198,6 +195,8 @@ type seat struct {
 	team int
 	bot  int // > 0: a bot of that grade (sim/bot.lua GRADES) that fills the queue, no connection
 	in   held
+	// the guest profile of whoever sits here (accounts.go), 0: none; the prizes go to it
+	account int64
 }
 
 // Room is a match: its players here, its simulation (draft, then match) in
@@ -280,7 +279,7 @@ func newRoom(srv *Server, mode Mode, specs []seatSpec, seed int64) (*Room, error
 			showcases = append(showcases, "{}")
 		}
 		teams = append(teams, fmt.Sprintf(`{"team":%d}`, team))
-		s := &seat{p: p, tok: srv.newToken(), team: team}
+		s := &seat{p: p, tok: srv.newToken(), team: team, account: p.account}
 		r.seats = append(r.seats, s)
 		srv.sessions.Store(s.tok, seatRef{r, i})
 		p.room.Store(&seatRef{r, i})
@@ -526,8 +525,49 @@ func (r *Room) ticked(next *Batch, res Result) {
 		r.broadcast(e)
 	}
 	if over == 1 {
-		r.close(next)
+		r.prizes(next)
 	}
+}
+
+// prizes: the match is over; each person's profile gets what they did
+// (worker.lua prizes, accounts.go Award) and their phone the gain ("premio",
+// for the podium), then the room closes. Who left by choice gets nothing.
+func (r *Room) prizes(b *Batch) {
+	acc := r.srv.accounts
+	if acc == nil {
+		r.close(b)
+		return
+	}
+	b.Cmd("prizes", r.id, func(next *Batch, res Result) {
+		if res.Err != nil {
+			log.Printf("errore premi: %v", res.Err)
+		}
+		held := map[*Player]bool{}
+		for i, s := range r.seats {
+			if s.account == 0 || s.gone || i >= len(res.Raw) || len(res.Raw[i]) == 0 {
+				continue
+			}
+			p, id, action := s.p, s.account, string(res.Raw[i])
+			if p != nil {
+				held[p] = true
+			}
+			go func() {
+				gain, sum, err := acc.Award(id, action, time.Now())
+				if err != nil {
+					log.Printf("profili: premio di %d non dato: %v", id, err)
+				} else {
+					log.Printf("profili: %d premiato online: %s", id, sum)
+				}
+				if p != nil {
+					if gain != nil {
+						p.Send(append(append([]byte(`{"t":"premio","g":`), gain...), '}'))
+					}
+					p.Close()
+				}
+			}()
+		}
+		r.closeExcept(next, held)
+	}).End()
 }
 
 func (r *Room) handle(b *Batch, m roomMsg) {
@@ -741,7 +781,11 @@ func (r *Room) leave(b *Batch, slot int) {
 
 // close closes the match and the connections (after sending the last
 // messages); its simulation is freed with b (nil: the process is gone).
-func (r *Room) close(b *Batch) {
+func (r *Room) close(b *Batch) { r.closeExcept(b, nil) }
+
+// closeExcept: like close, but the connections in held stay open (their
+// prizes close them)
+func (r *Room) closeExcept(b *Batch, held map[*Player]bool) {
 	if r.ended.Swap(true) {
 		return
 	}
@@ -762,7 +806,9 @@ func (r *Room) close(b *Batch) {
 		r.srv.sessions.Delete(s.tok)
 		if s.p != nil {
 			s.p.room.Store(nil)
-			s.p.Close()
+			if !held[s.p] {
+				s.p.Close()
+			}
 		}
 	}
 }

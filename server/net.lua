@@ -108,6 +108,11 @@ function N.over(g)
 	return g.phase == "over"
 end
 
+-- whether seat i's turn is played by a bot now (a bot's seat, or one standing in)
+function N.bot_turn(g, i)
+	return BOTS[g] ~= nil and BOTS[g][i] ~= nil
+end
+
 -- The robots' tables are reused from one state to the next (30 a second per
 -- match: less garbage for the collector); every field is written each time
 local ROBOTS = setmetatable({}, { __mode = "k" })

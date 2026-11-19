@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -34,15 +35,18 @@ func main() {
 	var wg sync.WaitGroup
 	for i := 0; i < *n; i++ {
 		wg.Add(1)
-		// la vetrina del finto: i quattro pezzi di una famiglia (il secondo forgiato: livello 30)
+		// il profilo del finto sul server, coi quattro pezzi di una famiglia (il
+		// secondo forgiato: il server li taglia al livello 20, server/accounts.go):
+		// il cartellino e le statistiche del robot online vengono da lì
 		vetrina := ""
 		if len(famiglie) > 0 {
 			f, liv := famiglie[i%len(famiglie)], 1+29*(i%2)
-			pz := fmt.Sprintf(`{"set":%q,"liv":%d}`, f, liv)
-			vetrina = fmt.Sprintf(`,"vetrina":{"liv":%d,"pz":[%s,%s,%s,%s]}`, 5+i, pz, pz, pz, pz)
-			// e quello che conta per le statistiche del robot (server/net.lua, equip_stats)
-			vetrina += fmt.Sprintf(`,"eq":{"liv":%d,"gear":{"mask":%q,"chest":%q,"legs":%q,"cloak":%q},"lv":{"mask":%d,"chest":%d,"legs":%d,"cloak":%d}}`,
-				5+i, f, f, f, f, liv, liv, liv, liv)
+			id, err := profilo(*url, f, liv, 5+i)
+			if err != nil {
+				log.Printf("finto: profilo non creato: %v", err)
+			} else {
+				vetrina = fmt.Sprintf(`,"profilo":%q`, id)
+			}
 		}
 		go func() {
 			defer wg.Done()
@@ -55,6 +59,36 @@ func main() {
 	wg.Wait()
 }
 
+// profilo crea sul server il profilo ospite di un finto (POST /profilo/nuovo,
+// col profilo da importare scritto come le ricette, sim/replay.lua) e
+// risponde "<id>.<chiave>" per il saluto
+func profilo(url, famiglia string, liv, livello int) (string, error) {
+	posti := []string{"mask", "chest", "legs", "cloak"}
+	var pos, pz, gear []string
+	for _, p := range posti {
+		k := famiglia + "_" + p
+		pos = append(pos, fmt.Sprintf(`[%q]=true`, k))
+		pz = append(pz, fmt.Sprintf(`[%q]=%d`, k, liv))
+		gear = append(gear, fmt.Sprintf(`[%q]=%q`, p, famiglia))
+	}
+	testo := fmt.Sprintf(`{["versione"]=2,["livello"]=%d,["posseduti"]={%s},["pezzi"]={%s},["loadouts"]={{["gear"]={%s}}}}`,
+		livello, strings.Join(pos, ","), strings.Join(pz, ","), strings.Join(gear, ","))
+	h := "http" + strings.TrimSuffix(strings.TrimPrefix(url, "ws"), "/ws") + "/profilo/nuovo?p=finto"
+	res, err := http.Post(h, "text/plain", strings.NewReader(testo))
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	var a struct {
+		ID  int64  `json:"id"`
+		Key string `json:"chiave"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&a); err != nil || a.ID == 0 {
+		return "", fmt.Errorf("risposta %d", res.StatusCode)
+	}
+	return fmt.Sprintf("%d.%s", a.ID, a.Key), nil
+}
+
 func gioca(url, modo, vetrina string) error {
 	ctx := context.Background()
 	c, _, err := websocket.Dial(ctx, url, nil)
@@ -64,7 +98,7 @@ func gioca(url, modo, vetrina string) error {
 	defer c.CloseNow()
 	c.SetReadLimit(1 << 20)
 	manda := func(s string) { c.Write(ctx, websocket.MessageText, []byte(s)) }
-	manda(fmt.Sprintf(`{"t":"hello","v":9,"mode":%q%s}`, modo, vetrina))
+	manda(fmt.Sprintf(`{"t":"hello","v":10,"mode":%q%s}`, modo, vetrina))
 	scelto, sparato, you := false, -1, 0
 	for {
 		_, data, err := c.Read(ctx)
