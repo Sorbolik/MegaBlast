@@ -1,0 +1,15 @@
+# Senza rete l'Armeria si guarda ma non si compra (piano dei profili ospite,
+# scelta 2A): COMPRA, USA UN BUONO, +1 LIVELLO e ACCENDI LA FIRMA spenti,
+# con «serve la rete» al posto del prezzo.
+imposta prova_profilo 1
+imposta prova_senza_rete 1
+
+aspetta 4
+tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
+aspetta 10
+foto 01_potenzia
+tocca_bordo 543 53 alto sinistra    # BOTTEGA
+aspetta 8
+tocca_centro 485 311               # il primo pezzo del giorno
+aspetta 3
+foto 02_pezzo_scelto

@@ -1,0 +1,26 @@
+# Piano dei profili ospite, PR 4: il server è il padrone dei progressi. Il
+# gioco prende l'identità (nel log del server, simulazione/server.txt:
+# «profili: 1 nato da ...»), gioca una partita sullo stesso telefono e a fine
+# partita manda al server cosa ha fatto: il server rifà i conti con le sue
+# regole («profili: 1 da ... ha fatto partita: livello 1, ... Scaglie»).
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_identita 1
+imposta prova_durata 3
+imposta prova_vignette no
+
+server 2v2 0
+aspetta 1
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 150 100 0.4
+aspetta_evento fire 5
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_evento over 60
+aspetta 4
+foto 01_podio
+aspetta 6
+foto 02_podio_conti

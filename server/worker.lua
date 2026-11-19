@@ -262,10 +262,16 @@ end
 -- Guest profiles (server/accounts.go): the profile travels and is stored as
 -- the recipes' text (sim/replay.lua, write and read: pure data, never code).
 -- profile_new{name, text}: a new profile, from the phone's progress when text
--- is there (sim/profile.lua, import: cut to the caps); profile_summary{text}:
--- a few numbers of a profile, for the log and the register.
+-- is there (sim/profile.lua, import: cut to the caps); profile_do{text,
+-- actions, today, last}: the phone's actions on the profile (sim/progress.lua,
+-- the same rules as on the phone; last: the number of the last one already
+-- done, the ones up to it are skipped).
 local profile_rules = require "sim.profile"
+local progress = require "sim.progress"
 local replay_text = require "sim.replay"
+
+-- the most actions of one request (the phone's queue sends them together)
+local ACTIONS_MAX = 200
 
 local function summary(p)
 	local pieces = 0
@@ -284,10 +290,28 @@ function CMD.profile_new(c)
 	answer(s)
 end
 
-function CMD.profile_summary(c)
+function CMD.profile_do(c)
 	local p = replay_text.read(c.text)
 	if not p then error("profilo illeggibile") end
-	answer(summary(p))
+	local req = { azioni = {} }
+	if (c.actions or "") ~= "" then req = replay_text.read(c.actions) end
+	if type(req) ~= "table" or type(req.azioni) ~= "table" then error("azioni illeggibili") end
+	local last = tonumber(c.last) or 0
+	local done = {}
+	for i = 1, math.min(#req.azioni, ACTIONS_MAX) do
+		local a = req.azioni[i]
+		if type(a) == "table" and type(a.n) == "number" and a.n % 1 == 0 and a.n > last then
+			last = a.n
+			local ok, r = pcall(progress.act, p, a, c.today)
+			local k = type(a.k) == "string" and a.k:sub(1, 20) or "?"
+			done[#done + 1] = (ok and r) and k or "no " .. k
+		end
+	end
+	local s = summary(p)
+	s.profilo = replay_text.write(p)
+	s.ultima = last
+	s.fatte = table.concat(done, ",")
+	answer(s)
 end
 
 -- eval{code}: runs code (with N among the globals) and answers what it

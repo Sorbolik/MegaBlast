@@ -26,6 +26,7 @@ local skills = require "sim.skills"
 local scoria = require "battle.scoria"
 local profile = require "menu.profile"
 local wallet = require "sim.wallet"
+local progress = require "sim.progress"
 local gear_ui = require "menu.gear_ui"
 local outline = require "menu.outline"
 local bench = require "menu.bench"
@@ -728,11 +729,11 @@ local function run_cmd(s, ui_action)
 		s.draft = copy(profile.active_loadout(p).tree or {})
 	elseif kind == "assetto" then
 		p.is_active = tonumber(x)
-		profile.save(p)
+		profile.act(p, progress.backpack(p))
 		dress(p)
 	elseif kind == "sigilli" then
 		p.seal_active = tonumber(x)
-		profile.save(p)
+		profile.act(p, progress.backpack(p))
 		s.draft = copy(profile.active_loadout(p).tree or {})
 	elseif kind == "filtro" then
 		s.slot = x ~= "" and x or nil
@@ -753,7 +754,7 @@ local function run_cmd(s, ui_action)
 		dress(p)
 	elseif kind == "indossa" and s.sel then
 		profile.active_loadout(p).gear[s.sel[2]] = s.sel[1]
-		profile.save(p)
+		profile.act(p, progress.backpack(p))
 		dress(p)
 	elseif kind == "via" then
 		s.path = x
@@ -775,9 +776,8 @@ local function run_cmd(s, ui_action)
 		local live = profile.active_loadout(p).tree
 		for key in pairs(live) do live[key] = nil end
 		for key, v in pairs(copy(s.draft)) do live[key] = v end
-		profile.save(p)
+		profile.act(p, progress.backpack(p))
 	end
-	profile.save(p)
 	build(s)
 	bench.after(s)
 end

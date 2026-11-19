@@ -78,6 +78,30 @@ function M.active_loadout(p)
 	return { gear = g.gear, tree = s.tree, variant = g.variant }
 end
 
+-- What a player shows of themselves online (the card: level, badges and the
+-- pieces worn, an empty slot set ""; menu/showcase.lua reads it) and what they
+-- wear, for their robot's stats (sim/loadout.lua net_clean: the Sigilli, the
+-- pieces with their levels lv and signatures lit sg, the level liv). The
+-- server makes them from its own profile (server/accounts.go)
+function M.showcase(p)
+	local bdg = {}
+	for _, b in ipairs(M.badge(p)) do bdg[#bdg + 1] = { id = b.id, grado = b.grado } end
+	-- (no badges, no bdg: the empty table would be an object in JSON)
+	local a = M.active_loadout(p)
+	local pz = {}
+	for i, s in ipairs(equip.SLOTS) do
+		local set = a.gear[s.id]
+		pz[i] = { set = set or "", liv = set and wallet.level(p, set, s.id) or 0 }
+	end
+	return { liv = p.livello, bdg = #bdg > 0 and bdg or nil, pz = pz }
+end
+
+function M.equip(p)
+	local a = M.active_loadout(p)
+	return loadout.net_clean({ tree = a.tree, gear = a.gear, variant = a.variant, liv = p.livello,
+		lv = wallet.levels(p, a), sg = wallet.signs(p, a) })
+end
+
 -- Adds the experience lines { { key, xp, ... } } to the profile and returns
 -- the gain: { lines, xp = total, level_before, livello, braci_before, braci }
 local function add_xp(p, lines)
@@ -175,14 +199,13 @@ function M.choose_badge(p, id)
 	return true
 end
 
--- End of match: r is the summary from menu/tally.lua (gruppo, valori, armi,
--- won, partita). Adds the stats to the group, keeps the win streak and puts
--- the match at the top of the list (the oldest drop out). Returns the saved
--- match, with its number (for the replay file).
-function M.record(p, r)
+-- End of match: r is the summary from sim/tally.lua (gruppo, valori, armi,
+-- won). Adds the stats to the group and keeps the win streak (the server's
+-- part: sim/progress.lua)
+function M.add_stats(p, r)
 	local g = p.statistiche[r.gruppo] or {}
 	p.statistiche[r.gruppo] = g
-	for k, v in pairs(r.valori) do
+	for k, v in pairs(r.valori or {}) do
 		local s = milestones.BY_ID[k]
 		if s and s.record then g[k] = math.max(g[k] or 0, v) else g[k] = (g[k] or 0) + v end
 	end
@@ -196,8 +219,12 @@ function M.record(p, r)
 	g.serie = math.max(g.serie or 0, p.serie)
 	g.armi = g.armi or {}
 	for w, n in pairs(r.armi or {}) do g.armi[w] = (g.armi[w] or 0) + n end
+end
+
+-- The match (r.partita of sim/tally.lua) at the top of the phone's list (the
+-- oldest drop out), with its number (for the replay file). Returns it
+function M.keep_match(p, play_match)
 	p.numero = p.numero + 1
-	local play_match = r.partita
 	play_match.numero = p.numero
 	table.insert(p.partite, 1, play_match)
 	while #p.partite > M.MATCHES do table.remove(p.partite) end
@@ -373,6 +400,57 @@ local function tree_copy(t)
 	return out
 end
 
+-- A stat group from outside (an import, a match declared by the phone):
+-- whole numbers of the known entries, at most top each, and the damage per
+-- weapon. nil if the group can't be one
+function M.clean_stats(g, vals, top)
+	if not name_ok(g) or g == "tutte" or type(vals) ~= "table" then return nil end
+	local known = {}
+	for _, st in ipairs(milestones.WHITELIST) do known[st.id] = true end
+	for _, k in ipairs(milestones.OTHERS) do known[k] = true end
+	known.vinte = true
+	local weapons = require("sim.game").WEAPONS
+	local out = {}
+	for k, v in pairs(vals) do
+		if known[k] and whole(v, 0, top) then out[k] = v end
+	end
+	if type(vals.armi) == "table" then
+		out.armi = {}
+		for w, n in pairs(vals.armi) do
+			if weapons[w] and whole(n, 0, top) then out.armi[w] = n end
+		end
+	end
+	return out
+end
+
+-- The loadouts and the active ones from outside (an import, the ZAINO of the
+-- phone): Sigilli within the points of p's level, pieces of sets that exist
+-- (the worn ones must also be owned: wallet.migrate, in upgrade)
+function M.take_loadouts(p, src)
+	local points = skills.points(p.livello)
+	for i = 1, loadout.LOADOUTS do
+		local a = type(src.loadouts) == "table" and src.loadouts[i]
+		if type(a) == "table" then
+			local l = p.loadouts[i]
+			local tree = tree_copy(a.tree)
+			if tree and skills.valid(tree, points) then l.tree = tree end
+			l.variant = a.variant == "b" and "b" or "a"
+			-- (a can be l itself: the phone's own ZAINO)
+			local gear = {}
+			if type(a.gear) == "table" then
+				for _, sl in ipairs(equip.SLOTS) do
+					local set = a.gear[sl.id]
+					if type(set) == "string" and equip.BY_ID[set] then gear[sl.id] = set end
+				end
+			end
+			l.gear = gear
+		end
+	end
+	for _, k in ipairs({ "is_active", "seal_active" }) do
+		if whole(src[k], 1, loadout.LOADOUTS) and loadout.open(src[k], p.livello) then p[k] = src[k] end
+	end
+end
+
 function M.import(src)
 	local p = M.new()
 	if type(src) ~= "table" then return p end
@@ -434,25 +512,10 @@ function M.import(src)
 		end
 	end
 	-- the stats: whole numbers of the known entries, the damage per weapon
-	local known = {}
-	for _, st in ipairs(milestones.WHITELIST) do known[st.id] = true end
-	for _, k in ipairs(milestones.OTHERS) do known[k] = true end
-	known.vinte = true
 	if type(src.statistiche) == "table" then
 		for g, vals in pairs(src.statistiche) do
-			if name_ok(g) and g ~= "tutte" and type(vals) == "table" then
-				local out = {}
-				for k, v in pairs(vals) do
-					if known[k] and whole(v, 0, 1e9) then out[k] = v end
-				end
-				if type(vals.armi) == "table" then
-					out.armi = {}
-					for w, n in pairs(vals.armi) do
-						if weapons[w] and whole(n, 0, 1e9) then out.armi[w] = n end
-					end
-				end
-				p.statistiche[g] = out
-			end
+			local out = M.clean_stats(g, vals, 1e9)
+			if out then p.statistiche[g] = out end
 		end
 	end
 	if whole(src.serie, 0, 1e6) then p.serie = src.serie end
@@ -463,26 +526,8 @@ function M.import(src)
 			if st and st.thresholds and #p.badge < milestones.SHOWN then p.badge[#p.badge + 1] = id end
 		end
 	end
-	-- the loadouts: Sigilli within the points of the imported level, only owned pieces
-	local points = skills.points(p.livello)
-	for i = 1, loadout.LOADOUTS do
-		local a = type(src.loadouts) == "table" and src.loadouts[i]
-		if type(a) == "table" then
-			local l = p.loadouts[i]
-			local tree = tree_copy(a.tree)
-			if tree and skills.valid(tree, points) then l.tree = tree end
-			if a.variant == "b" then l.variant = "b" end
-			if type(a.gear) == "table" then
-				for _, sl in ipairs(equip.SLOTS) do
-					local set = a.gear[sl.id]
-					if type(set) == "string" and equip.BY_ID[set] then l.gear[sl.id] = set end
-				end
-			end
-		end
-	end
-	for _, k in ipairs({ "is_active", "seal_active" }) do
-		if whole(src[k], 1, loadout.LOADOUTS) and loadout.open(src[k], p.livello) then p[k] = src[k] end
-	end
+	-- the loadouts: Sigilli within the points of the imported level
+	M.take_loadouts(p, src)
 	-- the worn pieces must be owned, the gifts already earned are given
 	return M.upgrade(p)
 end

@@ -236,7 +236,7 @@ return {
 		record_beat = "RECORD · %s PUNTI · BATTILO",
 	},
 
-	-- menu/tally.lua: the moments of the match, in the profile's history
+	-- sim/tally.lua: the moments of the match, in the profile's history
 	tally = {
 		long_shot = "Colpo da %d px su %s",
 		you_drop = "Butti nel vuoto %s",
@@ -424,6 +424,8 @@ return {
 		-- in the ZAINO: opens the piece's card, with +1 LIVELLO
 		upgrade_here = "POTENZIA",
 		missing = "mancano %s",
+		-- without the network the Armeria can be looked at, not used (the server keeps the progress)
+		need_network = "serve la rete",
 		pick_ware = "tocca un pezzo",
 		in_wardrobe = "ce l'hai già",
 		buy = "COMPRA",

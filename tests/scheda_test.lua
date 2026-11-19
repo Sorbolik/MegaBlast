@@ -1,13 +1,13 @@
 -- Character sheet tests: badges and stats (menu/milestones.lua,
 -- menu/profile.lua), the tags' showcases (menu/showcase.lua), the end-of-match
--- count (menu/tally.lua) and the replay (sim/replay.lua). From the root:
+-- count (sim/tally.lua) and the replay (sim/replay.lua). From the root:
 --   luajit tests/scheda_test.lua
 package.path = "client/?.lua;" .. package.path
 
 local milestones = require "menu.milestones"
 local profile = require "menu.profile"
 local showcase = require "menu.showcase"
-local count = require "menu.tally"
+local count = require "sim.tally"
 local replay = require "sim.replay"
 local game = require "sim.game"
 local equip = require "sim.gear"
@@ -39,13 +39,17 @@ check(milestones.valid({ id = "globi", grado = 2 }) and not milestones.valid({ i
 	and not milestones.valid({ id = "cadute", grado = 1 }) and not milestones.valid({ id = "x", grado = 1 }),
 	"badge: those arriving from outside are checked")
 
--- Profile: registra, stats, choose_badge ----------------------------------------
+-- Profile: add_stats, keep_match, choose_badge ----------------------------------------
 local p = profile.new()
 local function play_match(cluster, won, values)
 	return { gruppo = cluster, won = won, valori = values, armi = { missile = 100 },
 		partita = { gruppo = cluster, esito = won and "V" or "S", punti = { 1, 0 }, giocatori = {}, moments = {} } }
 end
-for i = 1, 12 do profile.record(p, play_match(i % 2 == 0 and "2v2" or "1v1", i > 9, { a_segno = 3, colpo_lungo = i * 100 })) end
+for i = 1, 12 do
+	local m = play_match(i % 2 == 0 and "2v2" or "1v1", i > 9, { a_segno = 3, colpo_lungo = i * 100 })
+	profile.add_stats(p, m)
+	profile.keep_match(p, m.partita)
+end
 check(#p.partite == profile.MATCHES and p.partite[1].numero == 12 and p.partite[profile.MATCHES].numero == 3,
 	"profile: the latest matches are kept, the newest on top")
 local two = profile.statistics(p, "2v2")
@@ -86,16 +90,16 @@ check(net.livello == 999 and #net.badge == 1 and net.badge[1].id == "globi", "sh
 local worn = showcase.from_net({ liv = 5, pz = { { set = "corvo", liv = 25 }, { set = "boh", liv = 3 }, { set = "", liv = 0 }, { set = "fornace", liv = 900 } } }, "Blu", 2, "")
 check(worn.pezzi[1].set == "corvo" and worn.pezzi[1].tier == 3 and worn.pezzi[2].set == nil and worn.pezzi[3].set == nil
 	and worn.pezzi[4].livello == equip.LIVELLO_MAX, "showcase: the pieces arriving online are checked (known family, level in range)")
-local sent = showcase.for_net(q)
+local sent = profile.showcase(q)
 check(#sent.pz == #equip.SLOTS and sent.pz[1].set == "corvo" and sent.pz[1].liv == 25, "showcase: the pieces worn go with the greeting")
-local pr = showcase.for_net(p)
+local pr = profile.showcase(p)
 check(pr.liv == p.livello and #(pr.bdg or {}) <= milestones.SHOWN, "showcase: level and badges go with the greeting")
-check(showcase.for_net(profile.new()).bdg == nil, "showcase: no badges, no bdg (in JSON it would be an object)")
+check(profile.showcase(profile.new()).bdg == nil, "showcase: no badges, no bdg (in JSON it would be an object)")
 
 -- Count and replay on a real match: two bots, replayed the same ----------------
 local r = replay.new(7, "pavimento", { players = { { team = 1, bot = "normale" }, { team = 2, bot = "normale" } } })
 local g, bots = replay.match(r)
-local c = count.new(g, 1, { "Rosso", "Blu" })
+local c = count.new(g, 1, { "Rosso", "Blu" }, require("lang.text").tally)
 while g.phase ~= "over" and g.tick < 60 * 60 * 3 do
 	local inp = replay.input(r, g, bots)
 	if inp.fire and g.current == 1 then count.shot(c, g, inp.fire.weapon) end

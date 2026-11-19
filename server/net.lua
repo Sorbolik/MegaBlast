@@ -237,7 +237,7 @@ end
 
 -- The stats a player enters the match with (Sergio, 18 Nov: online too pieces,
 -- Sigilli and level must count): eq is what their phone says they wear (client
--- menu/showcase.lua, equip_for_net). The server has no profiles yet: it can't
+-- sim/profile.lua, equip). The server has no profiles yet: it can't
 -- know whether it's true, only that it is possible (sim/loadout.lua, net_clean).
 -- Returns the stats and the checked eq (for the start message), or nil: the base stats.
 function N.equip_stats(eq)

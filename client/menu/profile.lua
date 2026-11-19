@@ -7,6 +7,7 @@
 
 local rules = require "sim.profile"
 local wallet = require "sim.wallet"
+local progress = require "sim.progress"
 local common = require("lang.text").common
 
 local M = setmetatable({}, { __index = rules })
@@ -210,10 +211,23 @@ function M.load_up()
 	return p
 end
 
--- on_save(p): called after every save (game.gui_script: the copy for the server, main/account.lua)
 function M.save(p)
 	sys.save(file(), p)
-	if M.on_save then M.on_save(p) end
 end
+
+-- What changes the progress goes through here (sim/progress.lua): done at
+-- once on the phone and saved, then, when it worked, on_act(p, a) sends it to
+-- the server, whose profile counts (game.gui_script, main/account.lua).
+-- Returns what the action returns
+function M.act(p, a)
+	local r, why = progress.act(p, a, wallet.today())
+	M.save(p)
+	if r and M.on_act then M.on_act(p, a) end
+	return r, why
+end
+
+-- Whether the Armeria can spend now: only with the network (choice 2A of the
+-- plan); game.gui_script asks main/account.lua
+M.can_spend = function() return true end
 
 return M

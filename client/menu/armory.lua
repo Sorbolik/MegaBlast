@@ -130,13 +130,15 @@ local function shop(a)
 	end
 	-- pay with a voucher, or with Scaglie
 	local w = a.ware
-	local usable = w and not wallet.owns(p, w[1], w[2]) and p.buoni > 0
+	-- without the network nothing is bought (the server keeps the progress, choice 2A)
+	local net = profile.can_spend()
+	local usable = w and not wallet.owns(p, w[1], w[2]) and p.buoni > 0 and net
 	local vb = kit.secondary(a.low2, T.use_voucher, 430, 640, 270, 62,
 		{ icon = "buono", sub = kit.upper(T.you_have:format(p.buoni)), sub_color = KC.HOT_BOTTOM, off = not usable })
 	kit.button(a.buttons, vb, "buono", { spento = not usable })
 	local price = w and wallet.price(p, w[1], w[2], w[3])
-	local ok = w and not wallet.owns(p, w[1], w[2]) and p.scaglie >= price
-	local sub = not w and TP.pick_ware or (wallet.owns(p, w[1], w[2]) and TP.in_wardrobe)
+	local ok = w and not wallet.owns(p, w[1], w[2]) and p.scaglie >= price and net
+	local sub = not w and TP.pick_ware or (wallet.owns(p, w[1], w[2]) and TP.in_wardrobe) or (not net and TP.need_network)
 		or (p.scaglie < price and TP.missing:format(coins.format(price - p.scaglie))) or TP.price_only:format(coins.format(price))
 	a.action = kit.action(a.right, TP.buy, 948, 628, 308, 80, { size = 46, off = not ok, sub = kit.upper(sub) })
 	kit.button(a.buttons, a.action, "compra", { main = true, spento = not ok })
@@ -205,11 +207,10 @@ local function run_cmd(a, ui_action)
 		local offer = wallet.shop(p, wallet.today())[s2] == s1
 		a.ware = { s1, s2, offer and wallet.today() or nil }
 	elseif kind == "compra" and a.ware then
-		if wallet.buy(p, a.ware[1], a.ware[2], a.ware[3]) then sound.play("#scaglia") end
+		if profile.act(p, { k = "compra", set = a.ware[1], slot = a.ware[2], offer = a.ware[3] ~= nil }) then sound.play("#scaglia") end
 	elseif kind == "buono" and a.ware then
-		wallet.use_voucher(p, a.ware[1], a.ware[2])
+		profile.act(p, { k = "buono", set = a.ware[1], slot = a.ware[2] })
 	end
-	profile.save(p)
 	build(a)
 end
 

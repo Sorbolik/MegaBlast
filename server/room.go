@@ -56,11 +56,11 @@ type clientMsg struct {
 	Private string `json:"privata"`
 	I       int    `json:"i"`
 	G       int    `json:"g"`
-	// with the greeting: level, badges and pieces worn of the card (menu/showcase.lua, for_net)
+	// with the greeting: level, badges and pieces worn of the card (sim/profile.lua, showcase)
 	// (raw: a wrong card must not make the greeting fail)
 	Showcase json.RawMessage `json:"vetrina"`
 	// what the player wears, for the stats of their robot: Sigilli, pieces with
-	// levels and signatures, level (menu/showcase.lua equip_for_net; checked in
+	// levels and signatures, level (sim/profile.lua equip; checked in
 	// the process: net.lua equip_stats)
 	Equip json.RawMessage `json:"eq"`
 }

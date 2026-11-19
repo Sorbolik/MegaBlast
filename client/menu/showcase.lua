@@ -165,28 +165,4 @@ function M.from_net(t, nome, team, under)
 	return v
 end
 
--- What is sent to the server with the greeting (hello): level, badges and the
--- pieces worn (an empty slot: set "")
-function M.for_net(p)
-	local bdg = {}
-	for _, b in ipairs(profile.badge(p)) do bdg[#bdg + 1] = { id = b.id, grado = b.grado } end
-	-- (no badges, no bdg: the empty table would be an object in JSON)
-	local a = profile.active_loadout(p)
-	local pz = {}
-	for i, s in ipairs(equip.SLOTS) do
-		local set = a.gear[s.id]
-		pz[i] = { set = set or "", liv = set and wallet.level(p, set, s.id) or 0 }
-	end
-	return { liv = p.livello, bdg = #bdg > 0 and bdg or nil, pz = pz }
-end
-
--- What whoever plays here wears, for the server: it works out the stats of
--- their robot online (sim/loadout.lua, net_clean): the Sigilli, the pieces with
--- their levels (lv) and signatures lit (sg), the player's level (liv)
-function M.equip_for_net(p)
-	local a = profile.active_loadout(p)
-	return require("sim.loadout").net_clean({ tree = a.tree, gear = a.gear, variant = a.variant, liv = p.livello,
-		lv = wallet.levels(p, a), sg = wallet.signs(p, a) })
-end
-
 return M

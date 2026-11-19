@@ -74,19 +74,69 @@ check(big.statistiche["2v2"].danno == nil and big.statistiche["2v2"].colpi == ni
 check(big.is_active == 3 and #big.badge == 1, "the active loadout open at level 30, only badges that exist")
 check(profile.import("x").livello == 1 and profile.import(nil).scaglie == 0, "something that isn't a profile: a new one")
 
--- started on a test profile, then back on the real one: the next save asks for the identity
+-- The actions (sim/progress.lua): the same rules on the phone and on the server
 do
-	local asked = {}
-	http = { request = function(url) asked[#asked + 1] = url end }
-	sys = { get_save_file = function() return "/nonexistent/identita" end, load = function() error("none") end,
-		get_sys_info = function() return {} end }
-	account.start("ws://host/ws", profile.new(), "prova")
+	local progress = require "sim.progress"
+	local today = "2026-11-19"
+	local a = profile.new()
+	a.scaglie = 5000
+	check(progress.act(a, { k = "compra", set = "corvo", slot = "mask" }, today) and a.scaglie == 200 and a.posseduti.corvo_mask,
+		"compra: from the CATALOGO at its price")
+	check(not progress.act(a, { k = "compra", set = "corvo", slot = "mask" }, today), "compra: a piece owned isn't bought again")
+	check(not progress.act(a, { k = "compra", set = "nessuno", slot = "mask" }, today) and not progress.act(a, { k = "boh" }, today),
+		"an unknown piece or action does nothing")
+	a.loadouts[1].gear = { mask = "corvo", chest = "fornace" }
+	progress.act(a, progress.backpack(a), today)
+	check(a.loadouts[1].gear.mask == "corvo" and a.loadouts[1].gear.chest == nil, "zaino: only owned pieces are worn")
+	local g = progress.act(a, { k = "partita", r = { points = 1e9, won = true, awards = { {}, {}, {}, {}, {} } },
+		conta = { gruppo = "2v2", valori = { danno = 1e9, colpi = 12, partite = 50 }, armi = { missile = 300 }, won = true } }, today)
+	check(#g.lines == 6 and a.statistiche["2v2"].colpi == 12 and a.statistiche["2v2"].danno == nil and a.statistiche["2v2"].partite == 1,
+		"partita: points, awards and stats within the caps")
+	check(a.bot_partite == 1, "partita: on the phone it counts as one against the bots")
+	check(progress.act(a, { k = "missione", id = "primi_passi", stars = { true, true, false }, made = 300 }, today).xp > 0
+		and not progress.act(a, { k = "missione", id = "inventata", stars = { true } }, today), "missione: only real levels")
+end
+
+-- The phone and the server: the identity, the actions in their queue, the server's profile
+do
+	local asked, files = {}, {}
+	http = { request = function(url, _, cb, _, body) asked[#asked + 1] = { url = url, cb = cb, body = body } end }
+	sys = { get_save_file = function(_, name) return name end,
+		load = function(f) if files[f] then return files[f] end error("none") end,
+		save = function(f, t) files[f] = t return true end, get_sys_info = function() return {} end }
+	json = { decode = function(t) return t end }
+	local test = true
+	local ph = profile.new()
+	ph.impostazioni.mira = "dito"
+	ph.scaglie = 9000
+	account.start("ws://host/ws", ph, function() return test end, function() end)
+	account.send(ph, { k = "compra", set = "corvo", slot = "mask" })
 	check(#asked == 0, "test profile: nothing goes to the server")
-	account.saved(profile.new(), "prova")
-	check(#asked == 0, "test profile: not even after a save")
-	account.saved(profile.new(), false)
-	check(#asked == 1 and asked[1]:find("^http://host/profilo/nuovo"), "back on the real one: the save asks for the identity")
-	http, sys = nil, nil
+	test = false
+	require("sim.progress").act(ph, { k = "compra", set = "corvo", slot = "mask" }, "2026-11-19")
+	account.send(ph, { k = "compra", set = "corvo", slot = "mask" })
+	check(#asked == 1 and asked[1].url:find("^http://host/profilo/nuovo") and replay.read(asked[1].body).posseduti.corvo_mask,
+		"back on the real one: the identity, bringing the profile")
+	local sp = profile.import(replay.read(asked[1].body))
+	sp.scaglie = 4000
+	asked[1].cb(nil, nil, { status = 200, response = { id = 7, chiave = "k", profilo = replay.write(sp) } })
+	check(ph.scaglie == 4000 and ph.impostazioni.mira == "dito" and account.identity().id == 7 and account.online(),
+		"the server's profile takes the place of the phone's, the settings stay")
+	ph.pezzi.corvo_mask = nil
+	require("sim.progress").act(ph, { k = "potenzia", set = "corvo", slot = "mask" }, "2026-11-19")
+	account.send(ph, { k = "potenzia", set = "corvo", slot = "mask" })
+	account.send(ph, { k = "potenzia", set = "corvo", slot = "mask" })
+	local sent2 = replay.read(asked[2].body)
+	check(#asked == 2 and asked[2].url:find("^http://host/profilo/fai") and #sent2.azioni == 1 and sent2.azioni[1].n == 1,
+		"an action goes at once, the next one waits for the answer")
+	sp.scaglie = 3000
+	asked[2].cb(nil, nil, { status = 200, response = { rev = 2, ultima = 1, profilo = replay.write(sp) } })
+	check(ph.scaglie < 3000 and ph.pezzi.corvo_mask == 2, "what the server hasn't seen is done again on its profile")
+	check(#asked == 3 and #replay.read(asked[3].body).azioni == 1 and replay.read(asked[3].body).azioni[1].n == 2,
+		"then it goes to the server")
+	asked[3].cb(nil, nil, { status = 0 })
+	check(not account.online() and #files.azioni.list == 1, "without the network the action waits in its file")
+	http, sys, json = nil, nil, nil
 end
 
 print(failures == 0 and "OK" or (failures .. " FAIL"))

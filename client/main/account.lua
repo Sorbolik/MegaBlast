@@ -1,19 +1,31 @@
--- The guest profile on the server (plan of 17 Nov, PR 3: "in the shadow",
--- server/accounts.go). At the first start with the network the phone asks for
--- an identity (a number and a key, kept in a file of its own) and brings its
--- progress over once (the server cuts it to the caps); then, at every start
--- and after a save (at most every COPY_EVERY seconds), it sends a copy of
--- its profile. For now the phone's profile is the one that counts: nothing
--- waits for the answers and nothing changes in the game if the server isn't
--- there. The test profiles (menu/profile.lua, test) never go to the server.
+-- The guest profile on the server (plan of 17 Nov, server/accounts.go). At
+-- the first start with the network the phone asks for an identity (a number
+-- and a key, kept in a file of its own) and brings its progress over once
+-- (the server cuts it to the caps). From then on the server's profile is the
+-- one that counts (PR 4): every action that changes the progress
+-- (sim/progress.lua: a purchase, the ZAINO, a match...) is done at once on
+-- the phone and goes to the server in a queue kept in a file (it waits there
+-- without the network); the server does it again with its own rules and
+-- answers its profile, which takes the place of the phone's (what it hasn't
+-- seen yet is done again on top). The last matches, the settings and the
+-- little things only of this phone stay as they are. The test profiles
+-- (menu/profile.lua, test) never go to the server.
 
 local replay = require "sim.replay"
+local progress = require "sim.progress"
+local wallet = require "sim.wallet"
 
 local M = {}
 
-M.COPY_EVERY = 30
--- what stays on the phone: the last matches (with their replays) and the settings
-local PHONE_ONLY = { partite = true, impostazioni = true }
+-- seconds between two tries while actions wait without the network
+M.RETRY = 30
+-- the most actions waiting (the oldest go)
+M.QUEUE_MAX = 200
+-- what stays on the phone: the last matches (with their replays and their
+-- count), the settings, the weapons and the story already seen, the badges
+-- chosen, the lost missions in a row
+local PHONE_ONLY = { partite = true, numero = true, impostazioni = true, armi = true, storia = true, badge = true,
+	failed_ones = true }
 
 local OPTIONS = { timeout = 30 }
 
@@ -23,12 +35,12 @@ function M.url(ws_url, path)
 	return (u:gsub("/ws$", "")) .. path
 end
 
-local function file()
-	return sys.get_save_file("megablast", "identita")
+local function save_file(name)
+	return sys.get_save_file("megablast", name)
 end
 
 function M.identity()
-	local ok, t = pcall(sys.load, file())
+	local ok, t = pcall(sys.load, save_file("identita"))
 	if ok and type(t) == "table" and type(t.id) == "number" and type(t.chiave) == "string" then return t end
 	return nil
 end
@@ -43,75 +55,157 @@ function M.text(p)
 	return ok and s or nil
 end
 
+-- The server's profile (text) in the place of p's progress; done: the last
+-- action the server did, the ones after it are done again on top
+function M.adopt(p, text, done, queue, today)
+	local ok, sp = pcall(replay.read, text or "")
+	if not ok or type(sp) ~= "table" then return false end
+	for k in pairs(p) do
+		if not PHONE_ONLY[k] then p[k] = nil end
+	end
+	for k, v in pairs(sp) do
+		if not PHONE_ONLY[k] then p[k] = v end
+	end
+	for _, a in ipairs(queue or {}) do
+		if a.n > done then progress.act(p, a, today) end
+	end
+	return true
+end
+
 local function who()
 	local info = sys.get_sys_info()
 	local s = (info.system_name or "?") .. " " .. (info.device_model or "")
 	return (s:gsub("[^%w%-%._~]", function(c) return string.format("%%%02X", c:byte()) end))
 end
 
-local state = { url = nil, asking = false, last = -math.huge, pending = nil, timer = nil }
+-- p: the profile in use; is_test(): it is a test one; save(p)
+local state = { url = nil, p = nil, is_test = nil, save = nil, asking = false, busy = false, online = false, timer = nil }
+-- the actions waiting: n = the last number given
+local queue = { n = 0, list = {} }
 
-local function send_copy(p)
-	local id = M.identity()
-	local text = id and M.text(p)
-	if not text then return end
-	state.last = socket and socket.gettime and socket.gettime() or os.time()
-	http.request(M.url(state.url, "/profilo/copia") .. "?p=" .. who(), "POST", function() end,
-		{ ["Content-Type"] = "text/plain", Authorization = "Profilo " .. string.format("%d", id.id) .. "." .. id.chiave },
-		text, OPTIONS)
+local function load_queue()
+	local ok, t = pcall(sys.load, save_file("azioni"))
+	if ok and type(t) == "table" and type(t.n) == "number" and type(t.list) == "table" then
+		queue.n, queue.list = t.n, t.list
+	end
 end
 
--- At startup: the identity if missing (with the import of the progress), else a copy.
--- test: the profile in use is a test one (nothing goes to the server)
-function M.start(ws_url, p, test)
-	if not http or not ws_url then return end
-	-- the address stays even with a test profile: back on the real one, the
-	-- next save asks for the identity (M.saved)
-	state.url = ws_url
-	if test then return end
-	if M.identity() then
-		send_copy(p)
-		return
-	end
-	if state.asking then return end
-	local text = M.text(p)
+local function save_queue()
+	pcall(sys.save, save_file("azioni"), { n = queue.n, list = queue.list })
+end
+
+local function auth(id)
+	return { ["Content-Type"] = "text/plain", Authorization = "Profilo " .. string.format("%d", id.id) .. "." .. id.chiave }
+end
+
+local flush, birth
+
+-- without the network: again in a while (the Armeria waits for it)
+local function retry_later()
+	if state.timer or not timer then return end
+	state.timer = timer.delay(M.RETRY, false, function()
+		state.timer = nil
+		if state.is_test() then return end
+		if M.identity() then flush() else birth() end
+	end)
+end
+
+local function take(t)
+	if state.is_test() then return end
+	if M.adopt(state.p, t.profilo, t.ultima or 0, queue.list, wallet.today()) then state.save(state.p) end
+end
+
+-- Sends the actions waiting (none: just takes the server's profile)
+flush = function()
+	local id = M.identity()
+	if state.busy or not id then return end
+	local body = replay.write({ azioni = queue.list })
+	state.busy = true
+	http.request(M.url(state.url, "/profilo/fai") .. "?p=" .. who(), "POST", function(_, _, res)
+		state.busy = false
+		local status = res and res.status or 0
+		if status == 401 then
+			-- the server doesn't know this identity (or its key): a new one, from this profile
+			pcall(sys.save, save_file("identita"), {})
+			queue.list = {}
+			save_queue()
+			birth()
+			return
+		end
+		local ok, t = pcall(json.decode, status == 200 and res.response or "")
+		if not ok or type(t) ~= "table" then
+			state.online = false
+			retry_later()
+			return
+		end
+		state.online = true
+		local kept = {}
+		for _, a in ipairs(queue.list) do
+			if a.n > (t.ultima or 0) then kept[#kept + 1] = a end
+		end
+		queue.list = kept
+		save_queue()
+		take(t)
+		if #queue.list > 0 then flush() end
+	end, auth(id), body, OPTIONS)
+end
+
+-- A new identity, bringing this profile's progress over
+birth = function()
+	if state.asking or state.is_test() then return end
+	local text = M.text(state.p)
 	if not text then return end
 	state.asking = true
-	http.request(M.url(ws_url, "/profilo/nuovo") .. "?p=" .. who(), "POST", function(_, _, res)
+	http.request(M.url(state.url, "/profilo/nuovo") .. "?p=" .. who(), "POST", function(_, _, res)
 		state.asking = false
-		if not res or res.status ~= 200 then return end
-		local ok, t = pcall(json.decode, res.response or "")
-		if ok and type(t) == "table" and type(t.id) == "number" and type(t.chiave) == "string" then
-			pcall(sys.save, file(), { id = t.id, chiave = t.chiave, nome = t.nome })
+		local ok, t = pcall(json.decode, res and res.status == 200 and res.response or "")
+		if not ok or type(t) ~= "table" or type(t.id) ~= "number" or type(t.chiave) ~= "string" then
+			state.online = false
+			retry_later()
+			return
 		end
+		state.online = true
+		pcall(sys.save, save_file("identita"), { id = t.id, chiave = t.chiave, nome = t.nome })
+		take({ profilo = t.profilo, ultima = 0 })
+		-- what was done while it was being born
+		if #queue.list > 0 then flush() end
 	end, { ["Content-Type"] = "text/plain" }, text, OPTIONS)
 end
 
--- After a save: a copy now, or at most COPY_EVERY seconds after the last one
--- (without an identity yet, because the server wasn't there at startup: it
--- asks again, at most every COPY_EVERY seconds)
-function M.saved(p, test)
-	if not http or not state.url or test then return end
-	local now = socket and socket.gettime and socket.gettime() or os.time()
-	if not M.identity() then
-		if now - state.last >= M.COPY_EVERY then
-			state.last = now
-			M.start(state.url, p, test)
-		end
+-- At startup: the identity if missing (with the import of the progress), else
+-- the actions waiting and the server's profile. is_test(): the profile in use
+-- is a test one (nothing goes to the server, nothing comes back); save(p)
+function M.start(ws_url, p, is_test, save)
+	if not http or not ws_url then return end
+	state.url, state.p, state.is_test, state.save = ws_url, p, is_test, save
+	load_queue()
+	if is_test() then return end
+	if M.identity() then flush() else birth() end
+end
+
+-- An action done on the phone (menu/profile.lua act): to the server
+function M.send(p, a)
+	if not state.url or state.is_test() then return end
+	if not M.identity() and not state.asking then
+		-- the server wasn't there at startup: the identity, with this profile
+		birth()
 		return
 	end
-	if now - state.last >= M.COPY_EVERY then
-		send_copy(p)
-		return
-	end
-	state.pending = p
-	if state.timer or not timer then return end
-	state.timer = timer.delay(M.COPY_EVERY - (now - state.last), false, function()
-		state.timer = nil
-		local q = state.pending
-		state.pending = nil
-		if q then send_copy(q) end
-	end)
+	local ok, copy = pcall(function() return replay.read(replay.write(a)) end)
+	if not ok or type(copy) ~= "table" then return end
+	queue.n = queue.n + 1
+	copy.n = queue.n
+	queue.list[#queue.list + 1] = copy
+	while #queue.list > M.QUEUE_MAX do table.remove(queue.list, 1) end
+	save_queue()
+	flush()
+end
+
+-- Whether the server answered the last time (the Armeria spends only then).
+-- Without a server to talk to (no address, no http) the phone is on its own
+function M.online()
+	if not http or not state.url then return true end
+	return state.online
 end
 
 return M
