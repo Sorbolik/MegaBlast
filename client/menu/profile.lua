@@ -143,10 +143,12 @@ end
 
 -- The test profile with every resource and no upgrade (Sergio, 17 Nov: "voglio
 -- vedere come si uppa"): the full wallet, every piece owned at level 1 with its
--- signature off, the last level with no Sigilli point spent, everything open.
+-- signature off, the last level with no Sigilli point spent, everything open,
+-- and the Proof's matches counted as played (Sergio, 18 Nov: wallet.next).
 -- It starts over every time it is picked in the settings; a load only tops
 -- the wallet up, so what was upgraded stays until then.
 function M.resources(p)
+	p.no_proof = true
 	return M.endgame(p, true)
 end
 
