@@ -25,6 +25,9 @@
 --                                          -- in the bar, the last one (i == n) with level_up true
 --                                          -- when it brings a new level
 --   receipt.skip(r)               -- everything at once (a tap during the count or the flight)
+--   receipt.verdict(r, v)         -- what the server said of it, at the top right (Sergio, 19 Nov,
+--                                 -- proposal A): "wait" in attesa del server, "ok" confermati,
+--                                 -- "bad" partita non valida (the amounts back to +0)
 
 local ui = require "ui.ui"
 local kit = require "ui.kit"
@@ -137,6 +140,7 @@ function M.new(gain, prof, top, buttons, parent)
 		return t, icon
 	end
 	kit.text(g, T.title, NAME_X, top, 16, KC.HOT_TOP, "start", 1.5)
+	r.verdict_node = kit.text(g, "", AMOUNT_X, top, 16, KC.MUTE, "end")
 	local y = first
 	for i, l in ipairs(lines) do
 		local base = y + tall / 2 + 5
@@ -147,7 +151,10 @@ function M.new(gain, prof, top, buttons, parent)
 			gui.set_scale(name, vec(sca.x * NAME_W / wide, sca.y * NAME_W / wide))
 		end
 		local row = { name }
-		if l.xp then row[2] = kit.text(g, xp_text(l.xp), XP_X, base, 16, KC.MINT, "end") end
+		if l.xp then
+			row[2] = kit.text(g, xp_text(l.xp), XP_X, base, 16, KC.MINT, "end")
+			row.xp = row[2]
+		end
 		if l.scaglie or l.ossidiana then
 			local a, b = coin_cell(l.ossidiana and "ossidiana" or "scaglia", l.scaglie or l.ossidiana, base, 16)
 			row[#row + 1], row.icon = a, b
@@ -348,6 +355,31 @@ function M.skip(r)
 		for i = 1, f.n do spark_land(r, f, i, nil, r.coin_cb, true) end
 	end
 	coins.finish(r.wallet)
+end
+
+local VERDICT = { wait = { "wait", KC.MUTE }, ok = { "ok", KC.MINT }, bad = { "bad", KC.RED } }
+
+function M.verdict(r, v)
+	local how = VERDICT[v]
+	if not how or r.void then return end
+	gui.set_text(r.verdict_node, T.verdict[how[1]])
+	gui.set_color(r.verdict_node, how[2])
+	if v ~= "bad" then return end
+	-- not paid: every amount +0, the counts too
+	r.void = true
+	local zero = {}
+	for k, x in pairs(r.gain) do zero[k] = x end
+	zero.xp = 0
+	r.gain = zero
+	r.sc, r.ob = 0, 0
+	for _, row in ipairs(r.rows) do
+		for j = 2, #row do
+			gui.set_text(row[j], row[j] == row.xp and xp_text(0) or T.plus:format(0))
+			gui.set_color(row[j], KC.MUTE)
+		end
+	end
+	gui.set_text(r.total, xp_text(0))
+	for _, t in pairs(r.coin_total) do gui.set_text(t, T.plus:format(0)) end
 end
 
 function M.delete(r)

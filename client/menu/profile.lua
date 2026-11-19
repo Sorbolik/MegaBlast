@@ -218,13 +218,15 @@ end
 -- What changes the progress goes through here (sim/progress.lua): done at
 -- once on the phone and saved, then, when it worked, on_act(p, a) sends it to
 -- the server, whose profile counts (game.gui_script, main/account.lua).
--- Returns what the action returns. here: only on the phone (an online match:
--- the server counts it itself)
+-- Returns what the action returns, then nil and the number on_act gave it (the
+-- receipt waits for the server's word on it). here: only on the phone (an
+-- online match: the server counts it itself)
 function M.act(p, a, here)
 	local r, why = progress.act(p, a, wallet.today())
 	M.save(p)
-	if r and M.on_act and not here then M.on_act(p, a) end
-	return r, why
+	local n
+	if r and M.on_act and not here then n = M.on_act(p, a) end
+	return r, why, n
 end
 
 -- Whether the Armeria can spend now: only with the network (choice 2A of the

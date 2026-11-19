@@ -438,7 +438,10 @@ l'Armeria si guarda ma non compra («serve la rete»); le partite si giocano e a
   partita dal suo profilo (pezzi, Sigilli, i bot che ne escono, la missione com'è in
   `sim/levels.lua`), coi bot che ripensano, controlla tutte le impronte e rifà i conti (punti,
   premi, stelle, statistiche). Se non torna: «non valida» nel log, niente premio. La stessa
-  ricetta paga una volta (`pagate`, le ultime 200).
+  ricetta paga una volta (`pagate`, le ultime 200). La risposta porta in `rifiutate` i numeri
+  delle partite non pagate: sul riquadro GUADAGNI del podio e della fine missione in alto a destra
+  c'è «IN ATTESA DEL SERVER…», poi «CONFERMATI» o «PARTITA NON VALIDA» coi numeri a +0
+  (`ui/receipt.lua`, `verdict`; proposta A scelta da Sergio il 19 nov).
 - **Online** il server conta durante la partita (`CMD.tick`, `sim/tally.lua`) e alla fine dà a
   ogni giocatore col profilo il suo premio (`CMD.prizes`, `Accounts.Award`): manda
   `{"t":"premio","g":{…}}` prima di chiudere, e il telefono mostra quello sul podio.

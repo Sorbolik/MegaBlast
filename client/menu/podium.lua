@@ -16,6 +16,7 @@
 --   p.tick = function(i) ... end   -- optional: the sound of the receipt's i-th line
 --   p.coin = function(kind, i) ... end  -- optional: a coin landing in the wallet pill
 --   p.xp = function(i, n, level_up) ... end  -- optional: a spark of experience landing in the bar
+--   podio.verdict(p, v)  -- the server's word on the gains: "wait", "ok", "bad" (ui/receipt.lua)
 --   podio.update(p, dt) ; podio.on_input(p, action_id, action) -> "continua", "sigilli", { rivedi = numero } or nil
 --   tapping a player on the podium opens their tag (ui/tag_card.lua); a tap closes it
 --   podio.destroy(p)
@@ -204,6 +205,11 @@ function M.new(results, giocatori, me, my_gain, prof, number)
 	local go = kit.action(p.right, T.go_on, 930, 560, 270, 84, { size = 44 })
 	kit.button(p.buttons, go, "continua", { main = true })
 	return p
+end
+
+-- the server's word on the gains (ui/receipt.lua verdict)
+function M.verdict(p, v)
+	if p.receipt then receipt.verdict(p.receipt, v) end
 end
 
 function M.update(p, dt)

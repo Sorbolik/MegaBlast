@@ -120,7 +120,9 @@ type ProfileSummary struct {
 	// profile_do: the last action done and what each one did ("compra,no firma")
 	Last int64  `json:"ultima,omitempty"`
 	Done string `json:"fatte,omitempty"`
-	Err  string `json:"err,omitempty"`
+	// the numbers of the matches replayed and not paid (server/worker.lua profile_do)
+	Refused []int64 `json:"rifiutate,omitempty"`
+	Err     string  `json:"err,omitempty"`
 }
 
 func (s ProfileSummary) String() string {
@@ -181,6 +183,8 @@ type Account struct {
 	Profile string `json:"profilo"`
 	// the last action of the phone done (main/account.lua drops it from its queue)
 	Last int64 `json:"ultima"`
+	// the phone's matches not paid in this request (the receipt says «non valida»)
+	Refused []int64 `json:"rifiutate,omitempty"`
 }
 
 // New creates a profile, from the phone's progress when text isn't empty.
@@ -273,6 +277,7 @@ func (a *Accounts) Do(id int64, key, actions string, now time.Time) (Account, Pr
 	if err != nil {
 		return Account{}, s, err
 	}
+	acc.Refused = s.Refused
 	if s.Done == "" && len(kinds) == 0 && owner == 1 {
 		return acc, s, nil
 	}

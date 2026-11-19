@@ -106,6 +106,16 @@ func TestGuestProfiles(t *testing.T) {
 			t.Fatalf("azioni %d: ultima %d, %v Scaglie", i, back.Last, sc)
 		}
 	}
+	// a match whose recipe doesn't come back: done (it isn't sent again) but not paid
+	bad := `{["azioni"]={{["n"]=3,["k"]="partita",["ricetta"]="x"}}}`
+	if code, body = postProfile(t, url+"/profilo/fai", auth, bad); code != http.StatusOK {
+		t.Fatalf("partita: %d %s", code, body)
+	}
+	back = Account{}
+	json.Unmarshal(body, &back)
+	if back.Last != 3 || len(back.Refused) != 1 || back.Refused[0] != 3 {
+		t.Fatalf("partita non valida: ultima %d, rifiutate %v", back.Last, back.Refused)
+	}
 	if code, _ = postProfile(t, url+"/profilo/fai", auth, "{"); code != http.StatusBadRequest {
 		t.Fatalf("azioni illeggibili: %d", code)
 	}
@@ -120,7 +130,7 @@ func TestGuestProfiles(t *testing.T) {
 		rows = append(rows, k)
 	}
 	r.Close()
-	if strings.Join(rows, ",") != "import,azioni" {
+	if strings.Join(rows, ",") != "import,azioni,azioni" {
 		t.Fatalf("registro: %v", rows)
 	}
 	// a profile of PR 3, whose phone sent copies: the latest becomes the server's

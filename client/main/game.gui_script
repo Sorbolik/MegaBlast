@@ -1666,9 +1666,18 @@ local function open_podium(self)
 		-- it hasn't arrived yet (or there is no profile on the server) the same
 		-- sums here, only on the phone: the server's profile comes back anyway
 		gain = self.online_gain or profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c) }, true)
+		CP.expect(self, nil)
+		if self.online_gain then
+			self.verdict = "ok"
+		elseif CP.account.key(profile.test ~= false) then
+			-- its prize still on the way (CP "premio")
+			self.verdict, self.verdict_online = "wait", true
+		end
 		self.online_gain = nil
 	else
-		gain = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
+		local _, n
+		gain, _, n = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
+		CP.expect(self, n)
 	end
 	local number = CP.record(self, c)
 	for i, g in ipairs(giocatori) do g.vetrina = self.match_showcases and self.match_showcases[i] end
@@ -1682,6 +1691,7 @@ local function open_podium(self)
 	self.schermata.obj.xp = CP.xp_sound
 	self.mode = "schermata"
 	if self.pill then menu.pill.raise(self.pill) end
+	CP.verdict(self, self.verdict)
 end
 
 local function open_screen(self, mod, ...)
@@ -1966,6 +1976,10 @@ local function on_server_message(self, m)
 		-- what the server gave our profile for the match (server/room.go prizes):
 		-- the podium shows it, and the profile comes back from the server
 		self.online_gain = m.g
+		if self.verdict_online then
+			self.verdict_online = nil
+			CP.verdict(self, "ok")
+		end
 		CP.account.refresh()
 	elseif m.t == "away" then
 		show_message(self, TM.opponent_away, true)
@@ -2543,8 +2557,27 @@ function CP.account_start(self)
 		return is_test() or CP.account.online()
 	end
 	if SIMULATE and config_int("megablast.prova_identita", 0) == 0 then return end
+	CP.account.on_result = function(n, paid)
+		if n ~= self.verdict_n then return end
+		self.verdict_n = nil
+		CP.verdict(self, paid and "ok" or "bad")
+	end
 	CP.account.start(server_url(), self.profilo, is_test, profile.save)
 	profile.on_act = CP.account.send
+end
+
+-- The gains on screen wait for the server's word (ui/receipt.lua verdict,
+-- Sergio, 19 Nov: proposal A): n the number of their action (nil: nothing
+-- goes to the server, no word)
+function CP.expect(self, n)
+	self.verdict_n, self.verdict, self.verdict_online = n, n and "wait" or nil, nil
+end
+
+-- The server's word ("wait", "ok", "bad") on the screen that shows the gains
+function CP.verdict(self, v)
+	self.verdict = v
+	local s = self.schermata
+	if v and s and s.mod.verdict then s.mod.verdict(s.obj, v) end
 end
 
 -- The player touched the controls in a mission (sim/missions.lua touch): into
@@ -3097,8 +3130,10 @@ local function mission_update(self, dt)
 		-- a battle really finished goes into the stats too (lessons don't)
 		local c = self.g.phase == "over" and CP.tally_end(self, self.g:results()) or nil
 		self.mission_tally = c
-		self.mission_gain = profile.act(self.profilo, { k = "missione", id = r.l.id, stars = missions.stars(r),
+		local _, n
+		self.mission_gain, _, n = profile.act(self.profilo, { k = "missione", id = r.l.id, stars = missions.stars(r),
 			made = missions.points(r), conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
+		CP.expect(self, n)
 		if not r.l.guidata then
 			-- a moment to see the shot, then (or at the first tap) the stars
 			show_message(self, TM.mission_done, true)
@@ -3150,6 +3185,7 @@ local function open_level_end(self)
 		avanti = won and (missions.after(r.l.id) ~= nil),
 		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo, coin = CP.coin_sound, xp = CP.xp_sound,
 	}, function(v) sound.play("#punto", { speed = v }) end)
+	if won then CP.verdict(self, self.verdict) end
 	self.mission_gain = nil
 end
 

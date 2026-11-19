@@ -352,7 +352,7 @@ function CMD.profile_do(c)
 	if (c.actions or "") ~= "" then req = replay_text.read(c.actions) end
 	if type(req) ~= "table" or type(req.azioni) ~= "table" then error("azioni illeggibili") end
 	local last = tonumber(c.last) or 0
-	local done, matches = {}, 0
+	local done, refused, matches = {}, {}, 0
 	for i = 1, math.min(#req.azioni, ACTIONS_MAX) do
 		local a = req.azioni[i]
 		if type(a) == "table" and type(a.n) == "number" and a.n % 1 == 0 and a.n > last then
@@ -367,6 +367,7 @@ function CMD.profile_do(c)
 			last = n
 			if why then
 				done[#done + 1] = "non valida " .. k .. " (" .. why .. ")"
+				refused[#refused + 1] = n
 			else
 				local ok, r = pcall(progress.act, p, a, c.today)
 				done[#done + 1] = (ok and r) and k or "no " .. k
@@ -377,6 +378,8 @@ function CMD.profile_do(c)
 	s.profilo = replay_text.write(p)
 	s.ultima = last
 	s.fatte = table.concat(done, ",")
+	-- the matches not paid (the phone's receipt says so, ui/receipt.lua verdict)
+	if #refused > 0 then s.rifiutate = refused end
 	answer(s)
 end
 

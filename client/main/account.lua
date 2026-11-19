@@ -150,9 +150,15 @@ flush = function()
 			return
 		end
 		state.online = true
+		local refused = {}
+		for _, n in ipairs(type(t.rifiutate) == "table" and t.rifiutate or {}) do refused[n] = true end
 		local kept = {}
 		for _, a in ipairs(queue.list) do
-			if a.n > (t.ultima or 0) then kept[#kept + 1] = a end
+			if a.n > (t.ultima or 0) then
+				kept[#kept + 1] = a
+			elseif M.on_result then
+				M.on_result(a.n, not refused[a.n])
+			end
 		end
 		queue.list = kept
 		save_queue()
@@ -194,7 +200,9 @@ function M.start(ws_url, p, is_test, save)
 	if M.identity() then flush() else birth() end
 end
 
--- An action done on the phone (menu/profile.lua act): to the server
+-- An action done on the phone (menu/profile.lua act): to the server. Returns
+-- its number (nil: it doesn't go); when the server has done it,
+-- M.on_result(n, paid) is called (paid false: a match replayed and not paid)
 function M.send(p, a)
 	if not state.url or state.is_test() then return end
 	if not M.identity() and not state.asking then
@@ -210,6 +218,7 @@ function M.send(p, a)
 	while #queue.list > M.QUEUE_MAX do table.remove(queue.list, 1) end
 	save_queue()
 	flush()
+	return copy.n
 end
 
 -- The profile for the online greeting, "<id>.<chiave>" (nil: none, or a test one)
