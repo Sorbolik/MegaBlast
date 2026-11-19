@@ -1,0 +1,4 @@
+sound: "/assets/sounds/scatto_carica.ogg"
+looping: 0
+group: "master"
+gain: 0.9

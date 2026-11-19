@@ -2,7 +2,7 @@
 # ritrovare il suo sfondo, la home il suo, e la porta dell'ARMERIA deve riaprirsi
 # intera (Sergio, 18 nov: dopo lo scatto sfondi neri e la porta ferma a metà).
 # Le foto seguono le battute dello scatto approvato il 18 nov (ui/step_scene.lua):
-# carica, colpi, attesa, sagoma, pezzo nuovo, rivelazione.
+# carica, colpi, attesa, sagoma, pezzo nuovo, rivelazione (più lento di 2 secondi dal 19 nov).
 imposta prova_profilo 1
 
 aspetta 4
@@ -12,13 +12,13 @@ tocca_bordo 72 280 alto sinistra    # CORAZZA (Fornace, livello 19, prova fatta)
 aspetta 0.8
 foto 01_corazza
 tocca_bordo 208 48 basso destra     # +1 LIVELLO: lo scatto al 20
-aspetta 1.0
+aspetta 1.25
 foto 02_carica
-aspetta 0.72
+aspetta 1.45
 foto 03_secondo_colpo
-aspetta 0.7
+aspetta 1.2
 foto 04_attesa
-aspetta 0.52
+aspetta 0.97
 foto 05_sagoma
 aspetta 0.5
 foto 06_pezzo_nuovo

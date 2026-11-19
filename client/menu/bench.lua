@@ -74,7 +74,8 @@ function M.draw(s, g, sel)
 	local level = wallet.level(p, set, slot)
 	local tier = equip.tier(level)
 	local ig = kit.group(g, x + 28 + 75, 128 + 75)
-	gear_ui.slot(ig, x + 28, 128, 150, { set = set, slot = slot })
+	-- the forged picture from gold on (Sergio, 19 Nov: it stayed the base one)
+	gear_ui.slot(ig, x + 28, 128, 150, { set = set, slot = slot, form = level })
 	s.bench.icon = ig.node
 	kit.text(g, gear_ui.name(set, slot), x + 200, 170, 32, KC.SAND)
 	kit.text(g, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), x + 202, 203, 20, ui.C.GRADI[tier], "start", 1)
@@ -281,10 +282,6 @@ function M.after(s)
 	end
 	s.just = nil
 	if s.step then
-		-- the three blows: the hammer, higher each time
-		s.step.on_blow = function(i)
-			sound.play("#martello", { speed = 0.85 + 0.12 * i })
-		end
 		s.scene = step_scene.new(s.step)
 		s.step = nil
 	end

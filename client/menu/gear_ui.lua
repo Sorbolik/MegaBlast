@@ -165,7 +165,8 @@ function M.slot(g, x, y, s, opt)
 	local frame = opt.sel and "casella_scelta" or opt.set and "casella" or "casella_vuota"
 	keep(kit.pic(g, frame, x - s * 0.04, y - s * 0.04, s * 1.08, s * 1.08))
 	if opt.set then
-		keep(fit(g, M.icon(opt.set, opt.slot, opt.level), x + s * 0.12, y + s * 0.12, s * 0.76, s * 0.76))
+		-- opt.form: the level that picks the picture (base or forged) without the badge
+		keep(fit(g, M.icon(opt.set, opt.slot, opt.form or opt.level), x + s * 0.12, y + s * 0.12, s * 0.76, s * 0.76))
 	elseif opt.slot and M.ART[opt.slot] then
 		keep(fit(g, "vuoto_" .. M.ART[opt.slot], x + s * 0.16, y + s * 0.16, s * 0.68, s * 0.68))
 	end

@@ -801,7 +801,8 @@ local function cut_half(g, text, mid, cut_y, w, up, size, color)
 end
 
 -- cut: a table, when the tags are cut through by the blade (the ARMERIA in the
--- ZAINO, Sergio 18 Nov): every word cold, in two halves along a slanted line; cut[i] = { top, bottom, top_text, bottom_text, mid }
+-- ZAINO, Sergio 18 Nov): the open word cold, in two halves along a slanted line, the
+-- others whole (Sergio, 19 Nov: only INVENTARIO); cut[i] = { top, bottom, top_text, bottom_text, mid }
 function M.tabs(g, list_of, x, y, tabs, active, accent, tag, cut)
 	local h, cx = tag and 50 or 58, x
 	local key = tag and tabs[1] and tabs[1][2]
@@ -813,14 +814,14 @@ function M.tabs(g, list_of, x, y, tabs, active, accent, tag, cut)
 			-- grey-ice (Sergio, 18 Nov, proposal C · Scritta incandescente)
 			local slot = #tab[1] * 14 + 64
 			local mid = cx + slot / 2
-			if cut then
-				local size, base = on and 30 or 22, y + (on and 37 or 35)
+			if cut and on then
+				local size, base = 30, y + 37
 				-- each word cut through its own middle (a long slant would miss the last one)
 				local cut_y = base - size * 0.36
 				local text = { tab[1], mid, base }
 				local top, tt = cut_half(g, text, mid, cut_y, slot + 40, true, size, TAB_COLD)
 				local bottom, bt = cut_half(g, text, mid, cut_y, slot + 40, false, size, TAB_COLD)
-				cut[i] = { top = top, bottom = bottom, top_text = tt, bottom_text = bt, mid = mid, cut_y = cut_y }
+				cut[#cut + 1] = { top = top, bottom = bottom, top_text = tt, bottom_text = bt, mid = mid, cut_y = cut_y }
 			elseif on then
 				local glow = shape("alone", mid - g.ox, g.oy - (y + 26), #tab[1] * 22 + 80, 70, with_alpha(C.HOT_BOTTOM, 0.55), g.node)
 				gui.set_blend_mode(glow, gui.BLEND_ADD)
@@ -1539,7 +1540,7 @@ end
 
 -- the burst where a node is
 function M.burst_at(node, n, color)
-	local p = gui.get_screen_position(node)
+	local p = screen.node_pos(node)
 	M.burst(p.x, p.y, n, color)
 end
 
