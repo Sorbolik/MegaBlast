@@ -5,6 +5,7 @@
 #   client/paintings/mappe/<mappa>_<d>.png      il terreno disegnato, 1920 x 1080 per d
 #   client/paintings/sfondi/<girone>_*_<d>.png  il cielo e i tre gruppi di piani dello sfondo
 #   client/battle/paintings.lua              misure e velocità che servono allo shader
+#   client/paintings_hd/...                   le stesse immagini per i PC con lo schermo grande (DENSITA_HD)
 #   tools/grafica/mappe/<mappa>.png       la maschera di collisione (bianco terra, rosso
 #                                             acciaio), che mappa_in_lua.py porta in sim/mapdata.lua
 # Le mappe: il pavimento e la fossa del Fabbro (documento delle mappe dell'apprendista, layout A
@@ -20,6 +21,8 @@
 #   python3 tools/grafica/mappe_dipinte.py      (dalla cartella del repository; serve node
 #                                                    con playwright, che disegna gli SVG,
 #                                                    e il pacchetto python imagequant)
+#   python3 tools/grafica/mappe_dipinte.py --hd  (solo client/paintings_hd, con le fasce degli
+#                                                    sfondi già scritte in paintings.lua)
 import json, os, random, subprocess, sys, tempfile
 from PIL import Image, ImageDraw
 
@@ -47,6 +50,12 @@ DENSITA = {
     1: dict(terreno=1.0, cielo=0.5, lontano=0.5, medio=0.75, vicino=1.0),
     2: dict(terreno=1.5, cielo=1.0, lontano=1.0, medio=1.2, vicino=1.6),
 }
+# Per i PC con lo schermo alto almeno 1400 pixel (Sergio, 19 nov: «su desktop la qualità grafica può
+# essere migliorata»): con lo zoom vicino un pixel del terreno a densità 2 diventava 2,75 pixel veri su
+# 2560 x 1600. Il doppio della 2, fino a 8192 di lato (le schede video dei PC li reggono tutte); sta in
+# client/paintings_hd, che l'APK e la build web non portano (apk.yml, tools/web/build.sh).
+DENSITA_HD = {3: dict(terreno=3.0, cielo=2.0, lontano=2.0, medio=2.4, vicino=3.2)}
+OUT_HD = os.path.join(RADICE, "client", "paintings_hd")
 # i piani: quanto seguono la camera (0 fermi, 1 come la mappa) e la velocità dello scorrimento
 # «calmo» del documento delle mappe: il piano più vicino a 20 pixel al secondo
 QUANTO = dict(lontano=0.1, medio=0.3, vicino=0.6)
@@ -405,43 +414,69 @@ def sfondi():
     return out
 
 
-def main():
+def cartella(d):
+    return OUT_HD if d in DENSITA_HD else OUT
+
+
+def largo(d):
+    return 8192 if d in DENSITA_HD else 4096
+
+
+def fasce_scritte():
+    """{(sfondo, gruppo): (y0, h, scorrimento)} come le ha già scritte paintings.lua."""
+    import re
+    out, sf = {}, None
+    for riga in open(LUA):
+        m = re.match(r"\t\t(\w+) = \{$", riga)
+        if m:
+            sf = m.group(1)
+        m = re.search(r'name = "(\w+)", y0 = (\d+), h = (\d+)', riga)
+        if m and sf:
+            out[sf, m.group(1)] = (int(m.group(2)), int(m.group(3)), None)
+    return out
+
+
+def main(solo_hd=False):
     P = TEMI["forgia"]
-    for sotto in ("maps", "backgrounds"):
-        os.makedirs(os.path.join(OUT, sotto), exist_ok=True)
-        for f in os.listdir(os.path.join(OUT, sotto)):
-            os.remove(os.path.join(OUT, sotto, f))
+    densita = dict(DENSITA_HD) if solo_hd else dict(DENSITA, **DENSITA_HD)
+    for d0 in set(cartella(d) for d in densita):
+        for sotto in ("maps", "backgrounds"):
+            os.makedirs(os.path.join(d0, sotto), exist_ok=True)
+            for f in os.listdir(os.path.join(d0, sotto)):
+                os.remove(os.path.join(d0, sotto, f))
     lavori, strisce = [], []
     # gli sfondi: il cielo (fermo, con il bagliore e i raggi) e i tre gruppi di piani
     SF = sfondi()
     for sf, (cielo, gruppi, scorre, scena, tema) in SF.items():
-        for d, k in DENSITA.items():
+        for d, k in densita.items():
             lavori.append((svg(cielo + '<g style="mix-blend-mode:screen">%s</g>' % raggi(scena, tema), (0, 0, W, H),
                                round(W * k["cielo"]), round(H * k["cielo"])),
-                           os.path.join(OUT, "backgrounds", "%s_cielo_%d.png" % (sf, d)), round(W * k["cielo"]), round(H * k["cielo"])))
+                           os.path.join(cartella(d), "backgrounds", "%s_cielo_%d.png" % (sf, d)), round(W * k["cielo"]), round(H * k["cielo"])))
             for nome, contenuto, vel in gruppi:
-                w = min(4096, round(2560 * k[nome]))
+                w = min(largo(d), round(2560 * k[nome]))
                 lavori.append((svg(contenuto, (0, 0, 2560, H), w, round(H * w / 2560)),
-                               os.path.join(OUT, "backgrounds", "%s_%s_%d.png" % (sf, nome, d)), w, round(H * w / 2560)))
+                               os.path.join(cartella(d), "backgrounds", "%s_%s_%d.png" % (sf, nome, d)), w, round(H * w / 2560)))
         for nome, contenuto, vel in gruppi:
             strisce.append((sf, nome, vel if scorre else 0))
     sfondo_di = {}
     # il terreno delle mappe dipinte
     for nome, g in MAPPE.items():
-        maschera(g, nome)
+        if not solo_hd:
+            maschera(g, nome)
         sfondo_di[nome] = TEMA.get(nome, "forgia")
         Pm = TEMI[sfondo_di[nome]]
         gioco = piani(g, Pm)["gioco"] + (spuntoni(g, Pm) if g.get("acciaio") else "")
-        for d, k in DENSITA.items():
+        for d, k in densita.items():
             w, h = round((1920 + 3 * MARGINE) * k["terreno"]), round(1080 * k["terreno"])
-            lavori.append((svg(gioco, (-MARGINE, 0, W + 2 * MARGINE, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
+            lavori.append((svg(gioco, (-MARGINE, 0, W + 2 * MARGINE, H), w, h), os.path.join(cartella(d), "maps", "%s_%d.png" % (nome, d)), w, h))
     for nome, (disegno, collisione, sf) in ALTRE.items():
-        maschera(None, nome, collisione)
+        if not solo_hd:
+            maschera(None, nome, collisione)
         sfondo_di[nome] = sf
         gioco = disegno()
-        for d, k in DENSITA.items():
+        for d, k in densita.items():
             w, h = round((1920 + 3 * MARGINE) * k["terreno"]), round(1080 * k["terreno"])
-            lavori.append((svg(gioco, (-MARGINE, 0, W + 2 * MARGINE, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
+            lavori.append((svg(gioco, (-MARGINE, 0, W + 2 * MARGINE, H), w, h), os.path.join(cartella(d), "maps", "%s_%d.png" % (nome, d)), w, h))
     # le arene delle missioni: il cortile dipinto, le altre d'acciaio, in coordinate del mondo
     m = {c: grade(v, "materiale", P) for c, v in FORGIA["mat"].items() if isinstance(v, str) and v.startswith("#")}
     for mid, rett in arene().items():
@@ -450,28 +485,36 @@ def main():
         else:
             corpo = "".join(acciaio(x, 1080 - y - h, w, h, m) for x, y, w, h in rett)
             vb, sfondo_di["missione_" + mid] = (-1.5 * MARGINE, 0, 1920 + 3 * MARGINE, 1080), "forgia"
-        for d, k in DENSITA.items():
+        for d, k in densita.items():
             w, h = round((1920 + 3 * MARGINE) * k["terreno"]), round(1080 * k["terreno"])
-            lavori.append((svg(corpo, vb, w, h), os.path.join(OUT, "maps", "missione_%s_%d.png" % (mid, d)), w, h))
+            lavori.append((svg(corpo, vb, w, h), os.path.join(cartella(d), "maps", "missione_%s_%d.png" % (mid, d)), w, h))
     with tempfile.TemporaryDirectory() as tmp:
         rendi(lavori, tmp)
-    # i gruppi dello sfondo: si tiene solo la fascia che ha qualcosa (misure nella scena)
-    fasce = {}
+    # i gruppi dello sfondo: si tiene solo la fascia che ha qualcosa (misure nella scena), la stessa per
+    # tutte le densità; quella HD si taglia come le altre
+    fasce = fasce_scritte() if solo_hd else {}
     for sf, nome, vel in strisce:
-        y0s, y1s = [], []
-        for d in DENSITA:
-            im = Image.open(os.path.join(OUT, "backgrounds", "%s_%s_%d.png" % (sf, nome, d)))
-            box = im.getchannel("A").getbbox()
-            sc = im.width / 2560
-            y0s.append(box[1] / sc)
-            y1s.append(box[3] / sc)
-        y0, y1 = max(0, int(min(y0s)) - 2), min(H, int(max(y1s)) + 3)
-        for d in DENSITA:
-            f = os.path.join(OUT, "backgrounds", "%s_%s_%d.png" % (sf, nome, d))
+        if (sf, nome) not in fasce:
+            y0s, y1s = [], []
+            for d in DENSITA:
+                im = Image.open(os.path.join(OUT, "backgrounds", "%s_%s_%d.png" % (sf, nome, d)))
+                box = im.getchannel("A").getbbox()
+                sc = im.width / 2560
+                y0s.append(box[1] / sc)
+                y1s.append(box[3] / sc)
+            y0, y1 = max(0, int(min(y0s)) - 2), min(H, int(max(y1s)) + 3)
+            fasce[sf, nome] = (y0, y1 - y0, vel)
+        y0, h, _ = fasce[sf, nome]
+        for d in densita:
+            f = os.path.join(cartella(d), "backgrounds", "%s_%s_%d.png" % (sf, nome, d))
             im = Image.open(f)
             sc = im.width / 2560
-            im.crop((0, round(y0 * sc), im.width, round(y1 * sc))).save(f, optimize=True)
-        fasce[sf, nome] = (y0, y1 - y0, vel)
+            im.crop((0, round(y0 * sc), im.width, round((y0 + h) * sc))).save(f, optimize=True)
+    import alleggerisci
+    if solo_hd:
+        print("fatto:", len(lavori), "immagini HD")
+        alleggerisci.tutti([OUT_HD])
+        return
     # i numeri per lo shader
     righe = ["-- Made by tools/grafica/mappe_dipinte.py, do not edit by hand.",
              "-- The painted images (client/paintings, one per screen density) and the background",
@@ -500,12 +543,11 @@ def main():
     open(LUA, "w").write("\n".join(righe))
     print("fatto:", len(lavori), "immagini")
     # a tavolozza, tre volte più leggeri: l'APK deve stare sotto i 50 MB di Telegram (alleggerisci.py)
-    import alleggerisci
-    alleggerisci.tutti([os.path.join(OUT, "maps"), os.path.join(OUT, "backgrounds")])
+    alleggerisci.tutti([os.path.join(OUT, "maps"), os.path.join(OUT, "backgrounds"), OUT_HD])
     # le miniature delle missioni della CAMPAGNA si rifanno dai dipinti nuovi
     import miniature_missioni
     miniature_missioni.main()
 
 
 if __name__ == "__main__":
-    main()
+    main("--hd" in sys.argv[1:])

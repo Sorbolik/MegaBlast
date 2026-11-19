@@ -1,0 +1,11 @@
+# I dipinti HD dei PC (client/paintings_hd): da vicino su uno schermo alto almeno 1400
+# pixel il terreno e lo sfondo si caricano a densità 3. Da girare con --scala 2
+# (2560 x 1440) e confrontare con main: il disegno deve essere lo stesso, più nitido.
+imposta prova_vignette no
+imposta prova_missione il_fabbro
+imposta zoom 1
+
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 6
+foto 01_vicino
+zoom 02_dettaglio 4
