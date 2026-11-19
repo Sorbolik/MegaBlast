@@ -14,7 +14,7 @@
 --   scoria.set_color(s, color)     -- the team changes from one match to the next
 -- stato: x, y, facing, grounded, moving, aim (nil if not aiming), turno (it is their turn),
 -- paracadute (hanging from the open parachute), vittoria (celebrates on the podium),
--- posa (a clip of battle/animations.lua played from the start, hands free: Favilla showing a move)
+-- posa (a clip of battle/characters/<name>/animations.lua played from the start, hands free: Favilla showing a move)
 --
 -- Pieces: head (with goggles and horns, in four faces), torso, two legs, two
 -- arms (a single piece per arm, with the fist), the wing, the tail in segments,
@@ -26,7 +26,7 @@
 --
 -- Motion is made of springs (squash and stretch, tilt, hit push, recoil, head,
 -- tail) and of poses per state, which are keyframe clips
--- (battle/animations.lua, made with the editor
+-- (battle/characters/<name>/animations.lua, made with the editor
 -- tools/animazioni/editor.html; sampled by battle/pose.lua) giving the
 -- targets to the springs and limbs. The states, in order: defeat (falls
 -- backward and fades), hit (white flash, hit face, arms up), parachute
@@ -44,7 +44,7 @@
 -- tail has separate border and color like the base one; the parts with the
 -- team color have their own layer.
 -- The pivots of all pieces (body, head, arms, little hands, legs, wing, tail)
--- are moved from the animation editor (battle/pivots.lua): it changes the
+-- are moved from the animation editor (battle/characters/<name>/pivots.lua): it changes the
 -- point the piece turns around, not where it sits at rest.
 -- The clips also say which pieces are shown (head, torso, arms, legs, wing,
 -- tail, weapon and the detached little hands, free pieces the clips move and
@@ -52,7 +52,7 @@
 -- corsa_arma, aria_arma, sale_arma, scende_arma) and aiming while still the
 -- mira clip; a weapon can have its own (fermo_arma_mallet, mira_mallet); if
 -- one is missing the _arma one is used, then the one without a weapon. Grip,
--- pivot and shoulder of each weapon come from battle/grips.lua (also
+-- pivot and shoulder of each weapon come from battle/characters/<name>/grips.lua (also
 -- from the editor). The clip with the biggest weight picks who grips the
 -- weapon (held_by: an arm, which turns toward the grip, or a little hand,
 -- which sits on it; by default the front arm) and the order of the pieces,
@@ -65,11 +65,8 @@ local FROM = require("battle.weapons").weapons
 -- where the hook sits on the grapple launcher (HOOK_TIP of tools/grafica/armi.py)
 local HOOK_TIP = 15.2
 local pose = require "battle.pose"
-local A = require "battle.animations"
-local A_FAVILLA = require "battle.animations_favilla"
+local CHARACTERS = require "battle.characters"
 local SKINS = require "battle.skins"
-local PIVOTS = require "battle.pivots"
-local GRIPS = require "battle.grips"
 local FLAME = require "battle.flame"
 local CLOTH = require "battle.cloth"
 local LIGHTS = require "battle.lights"
@@ -122,27 +119,11 @@ end
 
 local P, PT = D.pieces, D.points
 
--- where each spot turns in the idle body: the skeleton point plus the moved
--- pivot (battle/pivots.lua); the spot's pieces move the opposite way
 local IDLE = { 0, 0 }
-local function shift(spot) return PIVOTS[spot] or IDLE end
-local function pivot(spot, x, y)
-	local d = shift(spot)
-	return { x + d[1], y + d[2] }
-end
-local J = {
-	testa = pivot("testa", PT.collo[1], PT.collo[2]),
-	braccio = pivot("braccio", PT.spalle[1], PT.spalle[2]),
-	braccio_dietro = pivot("braccio_dietro", -PT.spalle[1], PT.spalle[2]),
-	gamba = pivot("gamba", PT.anche[1], PT.anche[2]),
-	gamba_dietro = pivot("gamba_dietro", -PT.anche[1], PT.anche[2]),
-	ala = pivot("ala", PT.ala[1], PT.ala[2]),
-	busto = pivot("busto", PT.bacino[1], PT.bacino[2]),
-}
 -- the tail: the root moves with the pivot, the segments the opposite way
 -- (turned like the first segment at rest, so with the tail at rest they stay put)
-local function tail_pivot(r1)
-	local d = shift("coda")
+local function tail_pivot(s, r1)
+	local d = s.rig.shift("coda")
 	local c, sn = math.cos(r1), math.sin(r1)
 	return d, { -(d[1] * c + d[2] * sn), -(-d[1] * sn + d[2] * c) }
 end
@@ -374,7 +355,7 @@ end
 -- the pieces of a spot (dress) in the parent joint
 local function dresses(s, parent, spot, k)
 	for _, p in ipairs(s.strati(spot)) do
-		if p then piece(s, parent, p, k, true, shift(spot)) end
+		if p then piece(s, parent, p, k, true, s.rig.shift(spot)) end
 	end
 end
 
@@ -386,11 +367,34 @@ local function steady_hand(spot, x)
 	return { x + b.x, PT.spalle[2] + b.y - b.h / 2 + pu.h * 0.4 }
 end
 local HAND_FRONT, HAND_BACK = steady_hand("braccio", PT.spalle[1]), steady_hand("braccio_dietro", -PT.spalle[1])
--- the little hands' pivot: at rest they turn there (the pieces move the opposite way)
-local HAND = shift("pugno")
--- the hand of the hanging arm seen from the shoulder, to turn it toward the grip
-local TOWARD_A = atan2(HAND_FRONT[2] - J.braccio[2], HAND_FRONT[1] - J.braccio[1])
-local TOWARD_D = atan2(HAND_BACK[2] - J.braccio_dietro[2], HAND_BACK[1] - J.braccio_dietro[1])
+
+-- Each character's rig, from its own pivots (battle/characters/<name>/pivots.lua):
+-- where each spot turns in the idle body, the skeleton point plus the moved
+-- pivot (the spot's pieces move the opposite way)
+local function make_rig(pivots)
+	local function shift(spot) return pivots[spot] or IDLE end
+	local function pivot(spot, x, y)
+		local d = shift(spot)
+		return { x + d[1], y + d[2] }
+	end
+	local J = {
+		testa = pivot("testa", PT.collo[1], PT.collo[2]),
+		braccio = pivot("braccio", PT.spalle[1], PT.spalle[2]),
+		braccio_dietro = pivot("braccio_dietro", -PT.spalle[1], PT.spalle[2]),
+		gamba = pivot("gamba", PT.anche[1], PT.anche[2]),
+		gamba_dietro = pivot("gamba_dietro", -PT.anche[1], PT.anche[2]),
+		ala = pivot("ala", PT.ala[1], PT.ala[2]),
+		busto = pivot("busto", PT.bacino[1], PT.bacino[2]),
+	}
+	return {
+		shift = shift, J = J,
+		-- the little hands' pivot: at rest they turn there (the pieces move the opposite way)
+		hand = shift("pugno"),
+		-- the hand of the hanging arm seen from the shoulder, to turn it toward the grip
+		toward_a = atan2(HAND_FRONT[2] - J.braccio[2], HAND_FRONT[1] - J.braccio[1]),
+		toward_d = atan2(HAND_BACK[2] - J.braccio_dietro[2], HAND_BACK[1] - J.braccio_dietro[1]),
+	}
+end
 
 -- The layers: the pieces from the back, what is in front of what. A clip can
 -- have its own order (layers), otherwise this one
@@ -436,7 +440,7 @@ local function make_cape(s, k)
 end
 
 local function little_hand(s, point, k)
-	local g = joint(s.forma, (point[1] + shift("pugno")[1]) * k, (point[2] + shift("pugno")[2]) * k)
+	local g = joint(s.forma, (point[1] + s.rig.hand[1]) * k, (point[2] + s.rig.hand[2]) * k)
 	dresses(s, g, "pugno", k)
 	return g
 end
@@ -451,7 +455,7 @@ end
 
 -- The weapons in hand: rest angle (radians) around the pivot, 0 facing
 -- forward. Images and sizes are in battle/weapons.lua
--- (tools/grafica/armi.py), grip, pivot and shoulder in battle/grips.lua
+-- (tools/grafica/armi.py), grip, pivot and shoulder in battle/characters/<name>/grips.lua
 local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
 	punch = -0.9, eagle = -0.6, hook = -0.4, bellows = -0.3,
@@ -465,13 +469,13 @@ local GRIP = 20
 -- an image from the weapons atlas, sizes in world units
 -- the weapon: in the hand of whoever's turn it is or who aims (and of whoever
 -- waits, now and then), with the pivot on the weapon's shoulder
--- (battle/grips.lua, plus the clip) and turned by s.weapon_a; the
+-- (battle/characters/<name>/grips.lua, plus the clip) and turned by s.weapon_a; the
 -- recoil pushes it back along its axis. Returns where the grip is in the
 -- shape (drawing units), for whoever grips it
 local WEAPON0 = { grip = IDLE, pivot = IDLE, shoulder = PT.spalle }
 local function weapon_in_hand(s, po, in_hand, lx, q)
 	if not in_hand then return 0, 0 end
-	local g = GRIPS[s.chosen_weapon] or WEAPON0
+	local g = s.grips[s.chosen_weapon] or WEAPON0
 	local ax, ay = g.shoulder[1] + po.arma_x, g.shoulder[2] + po.arma_y
 	pos(s.presa, ax * s.k, ay * s.k)
 	scale(s.presa, 1 / lx, 1 / q)
@@ -597,10 +601,18 @@ local function make_armed(anim)
 	return armed
 end
 
-local ANIMAZIONI_PERSONAGGIO = {
-	apprendista = { A = A, armed = make_armed(A) },
-	favilla = { A = A_FAVILLA, armed = make_armed(A_FAVILLA) },
-}
+-- each character's own data (battle/characters.lua): clips, clips with the
+-- weapon, rig and grips, made once
+local made_characters = {}
+local function character(name)
+	local c = made_characters[name]
+	if not c then
+		local data = CHARACTERS[name]
+		c = { A = data.animations, armed = make_armed(data.animations), rig = make_rig(data.pivots), grips = data.grips }
+		made_characters[name] = c
+	end
+	return c
+end
 
 -- lit: a devil of the battle, that takes its lights (battle/lights.lua: the
 -- lit materials and the cape's ambient); the figures of the menus and cards don't
@@ -609,19 +621,18 @@ function M.new(color, look, weapon_only, lit, shadow)
 	-- three quarters of the height wide, like the starting capsule (sim/body.lua)
 	local Wd = H * 0.75
 	local k = H / D.height
-	local char_name = "apprendista"
-	if look then
-		for _, name in ipairs(look) do
-			if ANIMAZIONI_PERSONAGGIO[name] then
-				char_name = name
-				break
-			end
+	-- the character worn (its animations, pivots and grips), else everyone's
+	local char_name = M.PERSONAGGIO[1]
+	for _, name in ipairs(look or {}) do
+		if CHARACTERS[name] then
+			char_name = name
+			break
 		end
 	end
-	local anim_data = ANIMAZIONI_PERSONAGGIO[char_name] or ANIMAZIONI_PERSONAGGIO.apprendista
+	local anim_data = character(char_name)
 	local s = { color = color, h = H, w = Wd, k = k, armi = {}, tinte = {}, weapon_tints = {}, flashes = {},
 		fire = {}, fire_nodes = {}, fire_col = vmath.vector4(1, 1, 1, 1), white = 0,
-		personaggio = char_name, A = anim_data.A, armed = anim_data.armed,
+		personaggio = char_name, A = anim_data.A, armed = anim_data.armed, rig = anim_data.rig, grips = anim_data.grips,
 		teste = {}, heads_t = {}, facce = {}, vis = {},
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
 		-- this frame's pose from the clips and the angles (radians) of the hanging
@@ -654,7 +665,7 @@ function M.new(color, look, weapon_only, lit, shadow)
 	-- from the back: the tail (all the borders first, then all the colors: so the
 	-- segments merge into a single tail), the wing, the back arm, the legs, the
 	-- torso, the head, the weapon, the front arm
-	s.tail_pivot, s.coda_dentro = tail_pivot(s.tail_shape.riposo[1])
+	s.tail_pivot, s.coda_dentro = tail_pivot(s, s.tail_shape.riposo[1])
 	-- the tail's root: the drawing's one, moved by the skin and the pivot
 	local rc = s.tail_shape.radice
 	s.tail_base = { PT.coda[1] + rc[1] + s.tail_pivot[1], PT.coda[2] + rc[2] + s.tail_pivot[2] }
@@ -669,6 +680,7 @@ function M.new(color, look, weapon_only, lit, shadow)
 			x, y = s.tail_shape.l[i] * k, 0
 		end
 	end
+	local J = s.rig.J
 	s.ala = joint(s.forma, J.ala[1] * k, J.ala[2] * k)
 	dresses(s, s.ala, "ala", k)
 	-- the cape, right above the wing
@@ -695,7 +707,7 @@ function M.new(color, look, weapon_only, lit, shadow)
 	local head = s.facce.testa[1]
 	s.cima = (PT.collo[2] + head.y + head.h / 2) * k
 	for i = 1, layers do
-		s.teste[i] = piece(s, s.testa, s.facce.testa[i] or s.facce.testa[1], k, true, shift("testa"))
+		s.teste[i] = piece(s, s.testa, s.facce.testa[i] or s.facce.testa[1], k, true, s.rig.shift("testa"))
 		s.heads_t[i] = box(s.testa, 0, 0, 0, 0)
 		gui.set_texture(s.heads_t[i], "diavoletto")
 		gui.set_material(s.heads_t[i], s.mat_tint)
@@ -778,7 +790,7 @@ local function eyelid(s, stage)
 	s.blink_shown = e
 	gui.set_enabled(s.palpebre, e ~= nil)
 	if not e then return end
-	local k, d = s.k, shift("testa")
+	local k, d = s.k, s.rig.shift("testa")
 	gui.play_flipbook(s.palpebre, e.img)
 	-- the eyelid's center and size are fractions of the head image (y from the top)
 	pos(s.palpebre, (p.x - d[1] + (e.x - 0.5) * p.w) * k, (p.y - d[2] + (0.5 - e.y) * p.h) * k)
@@ -814,7 +826,7 @@ local function face_img(s, nome)
 		-- a new face: the blink starts again from it
 		gui.set_enabled(s.palpebre, false)
 		s.blink_shown = nil
-		local f, k, d = s.facce[nome], s.k, shift("testa")
+		local f, k, d = s.facce[nome], s.k, s.rig.shift("testa")
 		for i = 1, #s.teste do
 			local n, t, p = s.teste[i], s.heads_t[i], f[i]
 			gui.set_enabled(n, p ~= nil)
@@ -949,6 +961,7 @@ local function back(x, y)
 	return x / T.lx, y / T.q
 end
 local function cape(s, dt, st, po, lx, q)
+	local J = s.rig.J
 	local k = s.k
 	local r = s.x[LEAN] + po.corpo
 	T.lx, T.q, T.cr, T.sr = lx, q, cos(r), sin(r)
@@ -1007,6 +1020,7 @@ local function death(s, dt)
 end
 
 function M.update(s, dt, st)
+	local J = s.rig.J
 	if s.morto then return end
 	dt = min(dt, 1 / 20)
 	s.t = s.t + dt
@@ -1148,9 +1162,9 @@ function M.update(s, dt, st)
 	local hx, hy = weapon_in_hand(s, po, in_hand, lx, q)
 	-- whoever grips it follows it: the arm turns toward the grip, the little hand sits on it
 	if who_hit == "braccio_a" then
-		s.braccia[1] = atan2(hy - J.braccio[2] - po.braccio_a_y, hx - J.braccio[1] - po.braccio_a_x) - TOWARD_A
+		s.braccia[1] = atan2(hy - J.braccio[2] - po.braccio_a_y, hx - J.braccio[1] - po.braccio_a_x) - s.rig.toward_a
 	elseif who_hit == "braccio_d" then
-		s.braccia[2] = atan2(hy - J.braccio_dietro[2] - po.braccio_d_y, hx - J.braccio_dietro[1] - po.braccio_d_x) - TOWARD_D
+		s.braccia[2] = atan2(hy - J.braccio_dietro[2] - po.braccio_d_y, hx - J.braccio_dietro[1] - po.braccio_d_x) - s.rig.toward_d
 	end
 	s.gambe[1] = s.gambe[1] + (po.gamba_a - s.gambe[1]) * follow
 	s.gambe[2] = s.gambe[2] + (po.gamba_d - s.gambe[2]) * follow
@@ -1167,14 +1181,14 @@ function M.update(s, dt, st)
 		pos(s.manina_a, hx * s.k, hy * s.k)
 		rot(s.manina_a, s.weapon_a + po.manina_a)
 	else
-		pos(s.manina_a, (HAND_FRONT[1] + HAND[1] + po.manina_a_x) * s.k, (HAND_FRONT[2] + HAND[2] + po.manina_a_y) * s.k)
+		pos(s.manina_a, (HAND_FRONT[1] + s.rig.hand[1] + po.manina_a_x) * s.k, (HAND_FRONT[2] + s.rig.hand[2] + po.manina_a_y) * s.k)
 		rot(s.manina_a, po.manina_a)
 	end
 	if who_hit == "manina_d" then
 		pos(s.manina_d, hx * s.k, hy * s.k)
 		rot(s.manina_d, s.weapon_a + po.manina_d)
 	else
-		pos(s.manina_d, (HAND_BACK[1] + HAND[1] + po.manina_d_x) * s.k, (HAND_BACK[2] + HAND[2] + po.manina_d_y) * s.k)
+		pos(s.manina_d, (HAND_BACK[1] + s.rig.hand[1] + po.manina_d_x) * s.k, (HAND_BACK[2] + s.rig.hand[2] + po.manina_d_y) * s.k)
 		rot(s.manina_d, po.manina_d)
 	end
 	rot(s.ala, po.ala)
@@ -1229,7 +1243,7 @@ function M.set_weapon(s, name)
 	if s.chosen_weapon == name or not s.armi[name] then return end
 	if s.chosen_weapon then gui.set_enabled(s.armi[s.chosen_weapon], false) end
 	s.chosen_weapon = name
-	local sc = GRIPS[name] and GRIPS[name].scale or 1
+	local sc = s.grips[name] and s.grips[name].scale or 1
 	scale(s.armi[name], sc, sc)
 	-- dead, the weapon is gone
 	gui.set_enabled(s.armi[name], not s.morte and not s.vuote)
