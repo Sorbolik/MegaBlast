@@ -122,7 +122,7 @@
 --       salta with in_aria = true: the
 --       next move starts at the top of the jump; aspetta = seconds; dice = "text"
 --       (over her head, like the bots); posa = "vittoria" (an animation clip,
---       battle/animations.lua) for secondi (default 1.5)
+--       battle/characters/favilla/animations.lua) for secondi (default 1.5)
 --   scintilla = { x =, y = }: a spark in the air, taken when your body touches it
 --     over that height there (counter "scintille"): the medal of a full jump
 --   nascosti = { 2 }: robots that aren't there (the game wants at least two)

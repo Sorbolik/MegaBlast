@@ -1995,9 +1995,10 @@ check(hb:hits_robot(hr.x + game.HURT_R - 0.5, hcy, 1, 0) and not hb:hits_robot(h
 	"the target is a circle of radius HURT_R")
 check(not hb:hits_robot(hr.x + game.ROBOT_HALF_W, hr.y, 1, 0), "the bottom corner of the box doesn't count")
 
--- Walking capsule and hit circle come from sim/body.lua (the animation editor
+-- Walking capsule and hit circle come from sim/body.lua, the active character's (the animation editor
 -- changes them); the drawing keeps its own size
-local body_shape = require "sim.body"
+local bodies = require "sim.body"
+local body_shape = bodies[bodies.active]
 check(game.ROBOT_H == body_shape.walk.height and game.ROBOT_HALF_W * 2 == body_shape.walk.width
 	and game.HURT_R == body_shape.hit.radius and game.HURT_Y == body_shape.hit.center,
 	"capsule and hit circle from sim/body.lua")

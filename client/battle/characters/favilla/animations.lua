@@ -1,4 +1,4 @@
--- Favilla's animations (battle/scoria.lua): made with the editor
+-- Favilla's animations (favilla, battle/scoria.lua): made with the editor
 -- tools/animazioni/editor.html, which opens them and saves them here. No
 -- need to edit them by hand. The format, and how they are sampled: battle/pose.lua.
 return {

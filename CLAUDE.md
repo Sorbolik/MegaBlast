@@ -118,24 +118,29 @@ dentro la griglia (da 1 a `w * h`), come fa `client/sim/terrain.lua`.
 ## Animazioni del diavoletto
 
 Le pose del diavoletto (fermo, corsa, aria, paracadute, colpito, vittoria,
-sconfitta, scenette) sono clip in `client/battle/animations.lua`, campionate da
-`client/battle/pose.lua` sotto le molle e la mira di `scoria.lua`. Si fanno con
+sconfitta, scenette) sono clip, **una serie per personaggio** (Sergio, 19 nov: toccarne uno
+non cambia mai gli altri): `client/battle/characters/<personaggio>/animations.lua`
+(apprendista_nuovo, apprendista, favilla; l'elenco è `client/battle/characters.lua`), campionate da
+`client/battle/pose.lua` sotto le molle e la mira di `scoria.lua`, che usa quelle del
+personaggio indossato. Si fanno con
 l'editor `tools/animazioni/editor.html`: `python3 tools/animazioni/prepara.py`
 scrive `simulazione/animazioni/editor.html` (pezzi e animazioni dentro), che si
 apre nel browser e si pubblica come Artifact sempre allo stesso indirizzo:
 https://claude.ai/artifact/YJeMenvfJLGmto89yAbKJ5 . Se cambiano i pezzi o le animazioni,
-ripubblicalo. "Manda a Claude" nell'editor salva il file nel database
-dell'Artifact (documento `animazioni/ultima`, campo `lua`): da lì va copiato in
-`client/battle/animations.lua`.
+ripubblicalo. "Manda a Claude" nell'editor manda solo il personaggio scelto: documenti
+`animazioni_<personaggio>/ultima`, `perni_<personaggio>/ultima`, `impugnature_<personaggio>/ultima`
+e `corpo_<personaggio>/ultima` (campo `lua`), da copiare nei suoi file. Da un personaggio
+all'altro si copia solo apposta, con "Copia da" nell'editor (una clip, tutte, perni, impugnature, hitbox).
 
-Dallo stesso editor si cambiano le hitbox (`client/sim/body.lua`: la capsula per
-camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
-perni di testa, braccia, gambe e ala (`client/battle/pivots.lua`) e le
+Dallo stesso editor si cambiano, per personaggio, le hitbox (`client/sim/body.lua`: una riga per
+personaggio con la capsula per camminare e il cerchio dei colpi; è fisica: il gioco usa quella
+del personaggio di tutti, `active`, anche online) e i
+perni di testa, braccia, gambe e ala (`pivots.lua` del personaggio) e le
 impugnature di ogni arma: presa (`grip`, dove la tiene chi la impugna), perno (`pivot`,
-dove gira) e spalla (`shoulder`, dove sta il perno nel corpo) in `client/battle/grips.lua`. Ogni clip sceglie chi
+dove gira) e spalla (`shoulder`, dove sta il perno nel corpo) in `grips.lua` del personaggio
+(un'arma nuova va nei `grips.lua` di tutti). Ogni clip sceglie chi
 impugna l'arma (`held_by`) e l'ordine dei pezzi davanti e dietro (`layers`).
-"Manda a Claude" li mette nei documenti `corpo/ultima`, `perni/ultima` e
-`impugnature/ultima` (campo `lua`). Il "Manda a Claude" in alto manda tutto quello che è cambiato, anche i
+Il "Manda a Claude" in alto manda tutto quello che è cambiato, anche i
 ritocchi dei pezzi (`ritocchi/ultima`) e il mantello: se il gioco non è uguale all'editor,
 guarda prima `ritocchi/ultima`. Una clip con l'arma può avere la versione di
 una sola arma (`fermo_arma_mallet`): il gioco la preferisce a quella di tutte.

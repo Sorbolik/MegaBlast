@@ -1,4 +1,4 @@
--- The devil's animation clips (battle/animations.lua, made with the
+-- The devil's animation clips (battle/characters/<name>/animations.lua, made with the
 -- editor tools/animazioni/editor.html): keyframes per channel, sampled at
 -- any time, so motion is smooth at every frame rate.
 --

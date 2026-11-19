@@ -1,4 +1,4 @@
--- The devil's animations (battle/scoria.lua): made with the editor
+-- The old apprentice's animations (apprendista, battle/scoria.lua): made with the editor
 -- tools/animazioni/editor.html, which opens them and saves them here. No
 -- need to edit them by hand. The format, and how they are sampled: battle/pose.lua.
 return {
