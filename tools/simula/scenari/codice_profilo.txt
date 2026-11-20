@@ -1,0 +1,54 @@
+# IL MIO PROFILO nelle impostazioni (passo 6 dei profili ospite): il nome e il
+# codice per ritrovare il profilo, chiesto al server vero; HO GIÀ UN PROFILO
+# col codice scritto dalla tastiera, un codice sbagliato, poi ANNULLA.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_identita 1
+
+server 2v2 0
+aspetta 2
+tocca_bordo 74 54 basso sinistra       # la rotellina delle impostazioni
+aspetta 1.2
+foto 01_impostazioni
+tocca_centro 1098 657        # IL MIO PROFILO
+aspetta 1.5
+foto 02_il_mio_profilo
+tocca_centro 1087 290                  # HO GIÀ UN PROFILO
+aspetta 0.6
+foto 03_scrivi_codice
+# il codice ABCD-EMNP-QRST, che non esiste, scritto in minuscolo (diventa maiuscolo)
+premi a
+aspetta 0.1
+premi b
+aspetta 0.1
+premi c
+aspetta 0.1
+premi d
+aspetta 0.1
+premi e
+aspetta 0.1
+premi m
+aspetta 0.1
+premi n
+aspetta 0.1
+premi p
+aspetta 0.1
+premi q
+aspetta 0.1
+premi r
+aspetta 0.1
+premi s
+aspetta 0.1
+premi t
+aspetta 0.1
+foto 04_codice_scritto
+tocca_centro 1087 290                  # RECUPERA
+aspetta 1.5
+foto 05_codice_sbagliato
+premi BackSpace                        # cancella l'ultima lettera
+aspetta 0.3
+foto 06_cancellata
+tocca_centro 773 290                   # ANNULLA: torna al profilo
+aspetta 0.5
+tocca_centro 773 290                   # NUOVO CODICE
+aspetta 1.5
+foto 07_nuovo_codice

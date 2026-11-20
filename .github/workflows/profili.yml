@@ -1,0 +1,39 @@
+# Pannello dei profili ospite (passo 6 del piano): cerca un profilo, ne mostra
+# il registro, lo blocca o sblocca, rifà l'import dall'ultima copia del telefono.
+# Actions > Profili > Run workflow, poi si legge il risultato nel log della corsa.
+# Gira sul VPS col programma del server (server/recovery.go, profileAdmin), come
+# l'utente del servizio, sullo stesso database. Stessi segreto e variabile di
+# "Server sul VPS" (tools/vps/README.md).
+name: Profili
+on:
+  workflow_dispatch:
+    inputs:
+      comando:
+        description: "Cosa fare"
+        type: choice
+        options: [cerca, registro, blocca, sblocca, reimporta]
+        default: cerca
+      argomento:
+        description: "cerca: numero o pezzo del nome (es. Diavoletto 48); gli altri: il numero del profilo"
+        type: string
+        required: true
+permissions:
+  contents: read
+jobs:
+  profili:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sul VPS
+        env:
+          CHIAVE: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
+          COMANDO: ${{ inputs.comando }}
+          ARGOMENTO: ${{ inputs.argomento }}
+        run: |
+          [ -n "$CHIAVE" ] && [ -n "$VPS_HOST" ] || { echo "manca VPS_SSH_KEY o VPS_HOST"; exit 1; }
+          install -m 600 /dev/null "$RUNNER_TEMP/chiave"
+          printf '%s\n' "$CHIAVE" > "$RUNNER_TEMP/chiave"
+          # gli input passano al VPS già quotati: nessun testo diventa un comando
+          cmd="cd /var/lib/megablast && runuser -u megablast -- /opt/megablast/megablast-server -luajit /usr/bin/luajit -profili /var/lib/megablast/megablast.db profili $(printf %q "$COMANDO") $(printf %q "$ARGOMENTO")"
+          ssh -i "$RUNNER_TEMP/chiave" -o StrictHostKeyChecking=accept-new "root@$VPS_HOST" "$cmd"

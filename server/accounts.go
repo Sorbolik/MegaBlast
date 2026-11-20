@@ -55,6 +55,8 @@ type Accounts struct {
 
 	nmu    sync.Mutex
 	births map[string][]time.Time
+	// the recovery codes tried, per address (recovery.go)
+	tries map[string][]time.Time
 }
 
 func OpenAccounts(path string) (*Accounts, error) {
@@ -97,13 +99,19 @@ CREATE INDEX IF NOT EXISTS registro_giocatore ON registro(giocatore, id);`)
 	// PR 4: whether the server already owns the profile (before, the phone's
 	// latest copy counted: it becomes the server's at the first request), and
 	// the number of the last action of the phone done
-	for _, col := range []string{"padrone INTEGER NOT NULL DEFAULT 0", "ultima INTEGER NOT NULL DEFAULT 0"} {
+	// PR 6: the fingerprint of the recovery code and the block from the panel
+	for _, col := range []string{"padrone INTEGER NOT NULL DEFAULT 0", "ultima INTEGER NOT NULL DEFAULT 0",
+		"codice TEXT", "bloccato INTEGER NOT NULL DEFAULT 0"} {
 		if _, err := db.Exec(`ALTER TABLE giocatori ADD COLUMN ` + col); err != nil && !strings.Contains(err.Error(), "duplicate column") {
 			db.Close()
 			return nil, err
 		}
 	}
-	return &Accounts{db: db, births: map[string][]time.Time{}}, nil
+	if _, err := db.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS giocatori_codice ON giocatori(codice)`); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return &Accounts{db: db, births: map[string][]time.Time{}, tries: map[string][]time.Time{}}, nil
 }
 
 func (a *Accounts) Close() error { return a.db.Close() }
@@ -239,6 +247,9 @@ func ledger(tx *sql.Tx, id, now int64, kind string, s ProfileSummary) error {
 
 var errNoProfile = errors.New("profilo sconosciuto o chiave sbagliata")
 
+// a profile blocked from the panel (recovery.go): no actions, no prizes
+var errBlocked = errors.New("profilo bloccato")
+
 // the day of the rules (the first win, the bots' matches, the BOTTEGA) is
 // Italy's (rome, events.go), never the phone's clock
 func today(now time.Time) string { return now.In(rome).Format("2006-01-02") }
@@ -254,10 +265,14 @@ func (a *Accounts) Do(id int64, key, actions string, now time.Time) (Account, Pr
 	var hash string
 	var owner int
 	var phoneCopy sql.NullString
-	err := a.db.QueryRow(`SELECT id, chiave, nome, rev, profilo, padrone, ultima, copia FROM giocatori WHERE id = ?`, id).
-		Scan(&acc.ID, &hash, &acc.Name, &acc.Rev, &acc.Profile, &owner, &acc.Last, &phoneCopy)
+	var blocked int
+	err := a.db.QueryRow(`SELECT id, chiave, nome, rev, profilo, padrone, ultima, copia, bloccato FROM giocatori WHERE id = ?`, id).
+		Scan(&acc.ID, &hash, &acc.Name, &acc.Rev, &acc.Profile, &owner, &acc.Last, &phoneCopy, &blocked)
 	if errors.Is(err, sql.ErrNoRows) || err == nil && subtle.ConstantTimeCompare([]byte(hash), []byte(hashKey(key))) != 1 {
 		return Account{}, ProfileSummary{}, errNoProfile
+	}
+	if err == nil && blocked != 0 {
+		return Account{}, ProfileSummary{}, errBlocked
 	}
 	if err != nil {
 		return Account{}, ProfileSummary{}, err
@@ -341,7 +356,7 @@ func (a *Accounts) Award(id int64, action string, now time.Time) ([]byte, Profil
 	defer a.mu.Unlock()
 	var text string
 	var rev int64
-	if err := a.db.QueryRow(`SELECT profilo, rev FROM giocatori WHERE id = ?`, id).Scan(&text, &rev); err != nil {
+	if err := a.db.QueryRow(`SELECT profilo, rev FROM giocatori WHERE id = ? AND bloccato = 0`, id).Scan(&text, &rev); err != nil {
 		return nil, ProfileSummary{}, err
 	}
 	s, raws, err := profileCall("profile_award", map[string]string{"text": text, "action": action, "today": today(now)})
@@ -383,19 +398,24 @@ func requestIP(r *http.Request) string {
 }
 
 func (a *Accounts) allowBirth(ip string, now time.Time) bool {
+	return a.allow(a.births, ip, now, profileNewPerHour)
+}
+
+// allow: whether ip can do one more of what m counts, at most max in an hour
+func (a *Accounts) allow(m map[string][]time.Time, ip string, now time.Time, max int) bool {
 	a.nmu.Lock()
 	defer a.nmu.Unlock()
-	kept := a.births[ip][:0]
-	for _, t := range a.births[ip] {
+	kept := m[ip][:0]
+	for _, t := range m[ip] {
 		if now.Sub(t) < time.Hour {
 			kept = append(kept, t)
 		}
 	}
-	if len(kept) >= profileNewPerHour {
-		a.births[ip] = kept
+	if len(kept) >= max {
+		m[ip] = kept
 		return false
 	}
-	a.births[ip] = append(kept, now)
+	m[ip] = append(kept, now)
 	return true
 }
 
@@ -419,7 +439,7 @@ func writeJSON(w http.ResponseWriter, v any) {
 	json.NewEncoder(w).Encode(v)
 }
 
-// /profilo/nuovo, /profilo/fai (docs/server.md, "Profili ospite")
+// /profilo/nuovo, /profilo/fai, /profilo/codice, /profilo/recupera (docs/server.md, "Profili ospite")
 func (s *Server) handleProfile(w http.ResponseWriter, r *http.Request) {
 	a := s.accounts
 	if a == nil {
@@ -467,6 +487,10 @@ func (s *Server) handleProfile(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
+		if errors.Is(err, errBlocked) {
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
 		if err != nil {
 			log.Printf("profili: azioni di %d da %s rifiutate: %v", id, who, err)
 			http.Error(w, "azioni rifiutate", http.StatusBadRequest)
@@ -476,6 +500,8 @@ func (s *Server) handleProfile(w http.ResponseWriter, r *http.Request) {
 			log.Printf("profili: %d da %s ha fatto %s: %s", id, who, sum.Done, sum)
 		}
 		writeJSON(w, acc)
+	case "/profilo/codice", "/profilo/recupera":
+		s.handleRecovery(w, r, a, body, who)
 	default:
 		http.NotFound(w, r)
 	}

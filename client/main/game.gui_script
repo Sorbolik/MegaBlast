@@ -5951,7 +5951,7 @@ function PAD.on_input(self, action_id, action)
 			local open_view = {
 				armeria = function() open_screen(self, menu.armory, self.profilo) end,
 				allenamento = function() open_screen(self, menu.training, self.against_bot, profile.total_stars(self.profilo)) end,
-				impostazioni = function() open_screen(self, menu.settings, self.profilo, self.ctrl) end,
+				impostazioni = function() open_screen(self, menu.settings, self.profilo, self.ctrl, CP.account) end,
 				campagna = function() open_campaign(self) end,
 				profilo = function() CP.open_profile(self, "statistiche") end,
 				-- the ZAINO, from the apprentice (menu/backpack.lua)

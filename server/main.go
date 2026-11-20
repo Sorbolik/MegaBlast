@@ -54,6 +54,23 @@ func main() {
 	if _, err := exec.LookPath(LuaJIT); err != nil {
 		log.Fatalf("manca LuaJIT (%s): installalo o passa -luajit PERCORSO", LuaJIT)
 	}
+	// the panel's commands (server/recovery.go, .github/workflows/profili.yml):
+	// they run and end, the server isn't started
+	if flag.Arg(0) == "profili" {
+		if ProfileDB == "" {
+			log.Fatal("profili: manca -profili FILE")
+		}
+		acc, err := OpenAccounts(ProfileDB)
+		if err != nil {
+			log.Fatalf("profili: database %s non aperto: %v", ProfileDB, err)
+		}
+		err = profileAdmin(acc, flag.Args()[1:], os.Stdout)
+		acc.Close()
+		if err != nil {
+			log.Fatalf("profili: %v", err)
+		}
+		return
+	}
 	srv := NewServer(cfg)
 	if ProfileDB != "" {
 		acc, err := OpenAccounts(ProfileDB)

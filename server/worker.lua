@@ -335,6 +335,13 @@ local function summary(p)
 		stelle = profile_rules.total_stars(p) }
 end
 
+-- profile_summary{text}: its few numbers (the panel, server/recovery.go)
+function CMD.profile_summary(c)
+	local p = replay_text.read(c.text)
+	if not p then error("profilo illeggibile") end
+	answer(summary(p))
+end
+
 function CMD.profile_new(c)
 	local src = c.text and c.text ~= "" and replay_text.read(c.text)
 	if c.text and c.text ~= "" and not src then error("profilo illeggibile") end
