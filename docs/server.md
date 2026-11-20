@@ -472,8 +472,8 @@ Passo 6 del piano (`server/recovery.go`).
   non si recupera; online gioca con le statistiche di base), `reimporta N` (di nuovo dall'ultima
   copia del telefono del passo 3, coi tetti). Tutto finisce nel registro.
 - Sul telefono: IMPOSTAZIONI > IL MIO PROFILO (`client/menu/settings.lua`): il nome, il codice
-  (chiesto la prima volta), NUOVO CODICE e HO GIÀ UN PROFILO col tastierino delle lettere del
-  codice (va anche col controller e nel browser, senza la tastiera del telefono).
+  (chiesto la prima volta), NUOVO CODICE e HO GIÀ UN PROFILO col codice scritto dalla
+  tastiera del telefono (si apre toccando il codice; va anche quella del computer).
 - Prove: `TestRecovery` (`server/recovery_test.go`), `tests/guest_test.lua`, scenario
   `tools/simula/scenari/codice_profilo.txt` (server vero: codice, codice sbagliato, codice nuovo).
 

@@ -11,8 +11,8 @@
 -- IL MIO PROFILO (top right, Sergio, 19 Nov: step 6 of the guest profiles) turns
 -- the right panel into the profile's: its name and the recovery code to write
 -- down (NUOVO CODICE: another, the old one stops working), and HO GIÀ UN
--- PROFILO: the code typed on a keypad of its letters (the controller and the
--- web too, no system keyboard), RECUPERA brings that profile to this phone.
+-- PROFILO: the code typed with the phone's keyboard (opened by a tap on the
+-- code; the computer's works too), RECUPERA brings that profile to this phone.
 --
 --   local s = impostazioni.new(p, ctrl, acc)    -- p the profile, ctrl the controller (ui/controller.lua),
 --                                               -- acc main/account.lua (identity, code, recover; nil: none)
@@ -62,14 +62,12 @@ local PANEL_Y, PANEL_H = 108, #CHOICES * ROW + 6
 local KEYS_PANEL_X, KEYS_PANEL_W = 608, 640
 local KEYS_X, KEY_W, KEY_H, KEY_GAP = KEYS_PANEL_X + 16, 298, 54, 12
 local KEYS_Y, KEY_ROW = 154, 62
--- the profile's panel: the inner width (two key cards and their gap), the
--- recovery code's letters (server/recovery.go) on a keypad of PAD_COLS columns
+-- the profile's panel: the inner width (two key cards and their gap); the
+-- recovery code's letters (server/recovery.go: no 0/O, 1/I/L)
 local INNER_W = 2 * KEY_W + KEY_GAP
 local LETTERS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 local CODE_LEN = 12
-local PAD_COLS, PAD_GAP = 7, 6
-local PAD_W = (INNER_W - (PAD_COLS - 1) * PAD_GAP) / PAD_COLS
-local PAD_H, PAD_ROW = 40, 46
+local TEXT, BACKSPACE = hash("text"), hash("backspace")
 
 -- the typed letters as the code is shown, in groups of four; the empty places as dots
 local function shown(typed)
@@ -91,7 +89,7 @@ local function fit(t, room)
 	return t
 end
 
--- The right panel as the profile's: its name and code, or the keypad
+-- The right panel as the profile's: its name and code, or the code to write
 local function profile_panel(s, g)
 	local x, top = KEYS_X, PANEL_Y
 	local bottom_line = PANEL_Y + PANEL_H - 24
@@ -122,34 +120,24 @@ local function profile_panel(s, g)
 		fit(kit.text(g, T.code_old, x, bottom_line, 16, KC.MUTE, "start", 1), INNER_W)
 		return
 	end
-	-- HO GIÀ UN PROFILO: the code typed on the keypad
+	-- HO GIÀ UN PROFILO: the code written with the phone's keyboard (or the
+	-- computer's), on the same grid as the profile's view
 	kit.text(g, T.have_profile, x, top + 32, 17, KC.HOT_TOP, "start", 1.5)
-	local card = kit.card(g, x, top + 46, INNER_W, 58, KC.PURPLE, { sel = #s.typed < CODE_LEN })
-	kit.text(card.g, shown(s.typed), x + INNER_W / 2, top + 46 + 40, 32, KC.SAND, "middle", 4)
-	-- (31 letters: four rows of seven, then three and CANCELLA as wide as the rest of the row)
-	for i = 1, #LETTERS + 1 do
-		local col, row = (i - 1) % PAD_COLS, math.floor((i - 1) / PAD_COLS)
-		local kx, ky = x + col * (PAD_W + PAD_GAP), top + 118 + row * PAD_ROW
-		local letter = LETTERS:sub(i, i)
-		local kw = letter ~= "" and PAD_W or x + INNER_W - kx
-		local full = #s.typed >= CODE_LEN
-		local off = letter ~= "" and full or letter == "" and #s.typed == 0
-		local key = kit.card(g, kx, ky, kw, PAD_H, KC.PURPLE, { off = off })
-		if letter ~= "" then
-			kit.text(key.g, letter, kx + PAD_W / 2, ky + 31, 22, off and KC.MUTE or KC.SAND, "middle", 1)
-		else
-			-- the last key takes the last letter away
-			kit.text(key.g, T.delete, kx + kw / 2, ky + 30, 18, off and KC.MUTE or KC.SAND, "middle", 1)
-		end
-		if not off then kit.button(s.buttons, key, "lettera:" .. (letter ~= "" and letter or "via")) end
-	end
-	local by = top + 118 + 4 * PAD_ROW + PAD_H + 16
+	kit.text(g, T.write_code, x, top + 86, 30, KC.SAND, "start", 1)
+	kit.text(g, T.code_label, x, top + 132, 16, KC.MUTE, "start", 1)
+	local card = kit.card(g, x, top + 146, INNER_W, 70, KC.PURPLE, { sel = #s.typed < CODE_LEN })
+	kit.text(card.g, shown(s.typed), x + INNER_W / 2, top + 146 + 47, 36, KC.SAND, "middle", 4)
+	-- a tap on the code opens the keyboard again (closed by the phone's back)
+	kit.button(s.buttons, card, "profilo_mio:tastiera")
+	kit.text(g, T.tap_code, x, top + 248, 16, KC.MUTE, "start", 1)
+	fit(kit.text(g, T.recover_help, x, top + 270, 16, KC.MUTE, "start", 1), INNER_W)
+	local by = top + 300
 	local cancel = kit.secondary(g, T.cancel_recover, x, by, KEY_W, KEY_H)
 	kit.button(s.buttons, cancel, "profilo_mio:annulla")
 	local ready = #s.typed == CODE_LEN and not s.asking
 	local go = kit.secondary(g, T.recover, x + KEY_W + KEY_GAP, by, KEY_W, KEY_H, { off = not ready })
 	if ready then kit.button(s.buttons, go, "profilo_mio:vai") end
-	local line, color = T.recover_help, KC.MUTE
+	local line, color = T.code_old, KC.MUTE
 	if s.asking then
 		line, color = T.recovering, KC.HOT_TOP
 	elseif s.recover_why then
@@ -280,17 +268,27 @@ local function ask_code(s, fresh)
 	end)
 end
 
--- IL MIO PROFILO's buttons and the keypad's letters
-local function profile_action(s, mine, letter)
-	if letter == "via" then
-		s.typed = s.typed:sub(1, -2)
-	elseif letter then
-		if #s.typed < CODE_LEN then s.typed = s.typed .. letter end
+-- the phone's keyboard, for the code (none on a computer: its own keys write)
+local function keyboard(on)
+	if on and gui.show_keyboard then
+		gui.show_keyboard(gui.KEYBOARD_TYPE_DEFAULT, false)
+	elseif not on and gui.hide_keyboard then
+		gui.hide_keyboard()
 	end
-	if letter then
-		s.recover_why = nil
-		return
+end
+
+-- what the keyboard wrote: only the code's letters, small ones as capitals
+-- (dashes and spaces are skipped, a pasted code goes in whole)
+local function type_in(s, text)
+	for c in text:upper():gmatch(".") do
+		if #s.typed < CODE_LEN and LETTERS:find(c, 1, true) then s.typed = s.typed .. c end
 	end
+	s.recover_why = nil
+end
+
+-- IL MIO PROFILO's buttons
+local function profile_action(s, mine)
+	local was = s.view
 	if mine == "scambia" then
 		s.view = not s.view and "mio" or nil
 		s.attesa = nil
@@ -299,6 +297,8 @@ local function profile_action(s, mine, letter)
 		ask_code(s, true)
 	elseif mine == "recupera" then
 		s.view, s.typed, s.recover_why = "recupera", "", nil
+	elseif mine == "tastiera" then
+		keyboard(true)
 	elseif mine == "annulla" then
 		s.view = "mio"
 	elseif mine == "vai" and s.acc and #s.typed == CODE_LEN and not s.asking then
@@ -309,6 +309,7 @@ local function profile_action(s, mine, letter)
 			if ok then
 				-- the profile of the code is this phone's now: its name and code
 				s.view, s.typed, s.code = "mio", "", nil
+				keyboard(false)
 				ask_code(s, false)
 			else
 				s.recover_why = why
@@ -316,6 +317,7 @@ local function profile_action(s, mine, letter)
 			build(s)
 		end)
 	end
+	if s.view ~= was then keyboard(s.view == "recupera") end
 end
 
 local function save(s)
@@ -324,6 +326,18 @@ local function save(s)
 end
 
 function M.on_input(s, action_id, action)
+	-- the code of HO GIÀ UN PROFILO, from the keyboard
+	if s.view == "recupera" and not s.asking then
+		if action_id == TEXT and action.text then
+			type_in(s, action.text)
+			build(s)
+			return nil
+		elseif action_id == BACKSPACE and (action.pressed or action.repeated) then
+			s.typed, s.recover_why = s.typed:sub(1, -2), nil
+			build(s)
+			return nil
+		end
+	end
 	-- waiting for the new button: the controller's first button (not the sticks)
 	if s.attesa and action_id == ui.PAD then
 		if not (action.pressed and action.nome) or action.levetta then return nil end
@@ -347,9 +361,8 @@ function M.on_input(s, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" then return "indietro" end
 	local mine = ui_action:match("^profilo_mio:(.*)$")
-	local letter = ui_action:match("^lettera:(.*)$")
-	if mine or letter then
-		profile_action(s, mine, letter)
+	if mine then
+		profile_action(s, mine)
 		build(s)
 		return nil
 	end
@@ -375,6 +388,7 @@ end
 
 function M.destroy(s)
 	s.gone = true
+	if s.view == "recupera" then keyboard(false) end
 	kit.header_delete(s.head)
 	gui.delete_node(s.radice)
 	gui.delete_node(s.version.node)
