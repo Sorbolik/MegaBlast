@@ -1,5 +1,5 @@
-# Quello che finisce resta al suo posto, quasi spento e con lo 0 (lo Scudo usato),
-# le primarie dopo lo sparo, la Lama già usata resta in mano ma spenta.
+# Quello che finisce esce dalla barra (lo Scudo usato; Sergio, 21 nov), la
+# secondaria scelta resta anche a 0; le primarie dopo lo sparo, la Lama già usata resta in mano ma spenta.
 imposta prova_armi 1
 imposta comandi telefono
 
@@ -14,7 +14,7 @@ aspetta 0.3
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 2.5
-tocca_bordo 44 334 basso destra     # Scudo: si usa subito, ne resta 0
+tocca_bordo 44 334 basso destra     # Scudo: si usa subito ed esce dalla barra
 aspetta 1
 foto 01_oggetto_finito
 levetta_mira -40 40 0.4             # Lanciarune: le primarie sono usate
