@@ -3610,11 +3610,8 @@ local function update_bar(self)
 		AN.x[4], AN.y[4] = (ax + bx) / 2, (ay + by) / 2
 	end
 	for _, sl in ipairs(self.slots) do
-		local real = slot_have(rb, sl.weapon, l)
-		-- what ran out stays in its place, spent, so nothing shifts (Sergio, 21 Nov)
-		if self.seen_g ~= g or self.seen_rb ~= rb.id then self.seen_g, self.seen_rb, self.seen_w = g, rb.id, {} end
-		if real then self.seen_w[sl.weapon] = true end
-		local have = real or self.seen_w[sl.weapon] or false
+		-- what ran out leaves the bar (Sergio, 21 Nov); the picked secondary stays, also at 0 (slot_have)
+		local have = slot_have(rb, sl.weapon, l)
 		if sl.have ~= have then
 			gui.set_enabled(sl.node, have)
 			sl.have = have
@@ -3653,14 +3650,12 @@ local function update_bar(self)
 			if LY then x, y, us = RM.layout.place(LY, AN.UNIT[gr], x, y, AN.x[gr], AN.y[gr]) end
 			if gr == 3 then ogg_top, ogg_x = y + d * us / 2, x end
 			local count = sl.weapon == "parachute" and rb.parachutes_left or rb.ammo[sl.weapon] or 0
-			if not real then count = -1 end
 			if sl.count ~= count then
 				if sl.tondo then
-					hud.round_number(sl.tondo, count > 0 and tostring(count) or (count < 0 and "0" or ""), count < 0 and CP.hand.BADGE or nil)
+					hud.round_number(sl.tondo, count > 0 and tostring(count) or "")
 				else
 					gui.set_enabled(sl.badge, count ~= 0)
-					gui.set_text(sl.label, count > 0 and ("x" .. count) or (count < 0 and "x0" or ""))
-					gui.set_color(sl.badge_border, count < 0 and CP.hand.BADGE or BAR_COLORS[sl.group])
+					gui.set_text(sl.label, count > 0 and ("x" .. count) or "")
 				end
 				sl.count = count
 			end
@@ -3669,8 +3664,6 @@ local function update_bar(self)
 				or ((not turn or g:can_use(sl.weapon)) and 1 or 0)
 			-- 3 (4 if it can't be used now): the item lit by the controller (LT)
 			if on ~= 2 and gr == 3 and self.pad_on and sl.weapon == self.pad_item then on = on == 0 and 4 or 3 end
-			-- 5: ran out (it stays, almost gone)
-			if not real then on = 5 end
 			if on == 2 then
 				y = y + SIZES.alza * us
 				chosen = sl
@@ -3684,12 +3677,12 @@ local function update_bar(self)
 			local used_key = on == 2 and turn and not g:can_use(sl.weapon)
 			if sl.on ~= on or sl.sc ~= sc or sl.team_c ~= self.hand_color or sl.used_key ~= used_key then
 				sl.used_key = used_key
-				gui.set_color(sl.bordo, on == 5 and SLOT_BORDER[0] or (on >= 2 and ui.C.LIGHT or (on == 1 and CP.hand.dim(BAR_COLORS[gr]) or SLOT_BORDER[0])))
+				gui.set_color(sl.bordo, on >= 2 and ui.C.LIGHT or (on == 1 and CP.hand.dim(BAR_COLORS[gr]) or SLOT_BORDER[0]))
 				-- in hand but already used this turn (the Blade after its blow): the icon goes off
 				local spent_hand = on == 2 and turn and not g:can_use(sl.weapon)
 				if sl.icon then
-					gui.set_color(sl.icon, on == 5 and CP.hand.SPENT or ((on == 0 or on == 4 or spent_hand) and ICON_USED
-						or (on == 1 and CP.hand.dim(WHITE) or WHITE)))
+					gui.set_color(sl.icon, (on == 0 or on == 4 or spent_hand) and ICON_USED
+						or (on == 1 and CP.hand.dim(WHITE) or WHITE))
 				end
 				CP.hand.frame(sl, gr <= 2 and "slot_arma" or (gr == 3 and "oggetto" or "gettone"), on == 2,
 					gr <= 2 and SLOT or (gr == 3 and SIZES.oggetto or TELE_BTN_D), self.hand_color)
@@ -3715,9 +3708,9 @@ end
 -- raised, bigger, with the light border, an outer frame of their own shape in
 -- your team's color and the name above; everything else you could pick is at
 -- half light (CP.hand.DIM; 1 would leave it lit), what is used up for this turn
--- dimmer, and what ran out (CP.hand.SPENT) stays in its place almost gone, with 0
-CP.hand = { DIM = 0.5, FRAME = 1.16, SPENT = vmath.vector4(1, 1, 1, 0.12), dimmed = {},
-	-- the badge of what ran out ("0"): grey
+-- dimmer; what runs out leaves the bar, the picked secondary stays (also at 0)
+CP.hand = { DIM = 0.5, FRAME = 1.16, dimmed = {},
+	-- the shared PER TURNO badge once used ("0"): grey
 	BADGE = vmath.vector4(0.45, 0.42, 0.4, 1) }
 function CP.hand.dim(c)
 	local t = CP.hand.dimmed[c]
@@ -5038,7 +5031,7 @@ function init(self)
 			gui.set_enabled(badge, false)
 			local count = label(0, 1, "", 0.8)
 			gui.set_parent(count, badge)
-			sl.node, sl.bordo, sl.icon, sl.label, sl.badge, sl.badge_border = n, border, icon, count, badge, badge_border
+			sl.node, sl.bordo, sl.icon, sl.label, sl.badge = n, border, icon, count, badge
 		end
 		gui.set_enabled(sl.node, false)
 		self.slots[i] = sl
@@ -5397,10 +5390,6 @@ local function choose_slot(self, w)
 	CP.touch(self, w)
 	local g = self.g
 	local why = my_turn(self) and g.phase == "aim" and hud.reason(g, w)
-	-- what ran out says so on anyone's turn (it stays in the bar, spent)
-	for _, sl in ipairs(self.slots) do
-		if sl.weapon == w and sl.on == 5 then why = require("lang.text").hud.no_ammo end
-	end
 	if why then
 		if w == "teleport" then
 			local p = self.touch_ui and TELE_BTN_TOUCH or TELE_BTN_DESK
