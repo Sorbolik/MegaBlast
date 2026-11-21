@@ -4588,7 +4588,6 @@ local function arrange(self)
 	MOVE_PAD.x, MOVE_PAD.y = x0 + 115, y0 + 117
 	AIM_PAD.x, AIM_PAD.y = x1 - 115, y0 + 117
 	PAD_ZONE.sx, PAD_ZONE.dx, PAD_ZONE.y = x0 + (x1 - x0) * 0.4, x1 - (x1 - x0) * 0.4, y0 + (y1 - y0) * 0.6
-	TELE_BTN_TOUCH.x, TELE_BTN_TOUCH.y = x1 - 72, y0 + 257
 	TELE_BTN_TOUCH.x, TELE_BTN_TOUCH.y = CP.hand.arc(1)
 	TELE_BTN_DESK.x, TELE_BTN_DESK.y = x1 - 100, y0 + 62
 	gui.set_position(self.btn_zoom, ZOOM_BTN)
