@@ -5108,9 +5108,15 @@ function update(self, dt)
 	end
 	self.sc_ox, self.sc_oy = camera.shake_frame(self.cam, dt)
 	self.sc_k = camera.punch_frame(self.cam, dt)
-	-- (a menu backdrop left on over the match hides the world: off)
-	if (self.mode == "local" or self.mode == "online") and not self.schermata and not self.layout_ed
-		and not (self.queue and self.queue.found) and menu.kit.scene_clear() then
+	-- a home passage cut off by the match, or a menu backdrop left on over it
+	-- (it would hide the world): off. Cheap when there is none
+	-- (a draft too: the passage only, the draft has its own backdrop)
+	local playing = (self.mode == "local" or self.mode == "online") and not self.schermata and not self.layout_ed
+		and not (self.queue and self.queue.found)
+	if (playing or self.mode == "scelta" or self.mode == "scelta_online") and menu.door_pass.abort(self.door_pass) then
+		print("passaggio dei menu interrotto dalla partita: chiuso")
+	end
+	if playing and menu.kit.scene_clear() then
 		print("sfondo dei menu rimasto acceso in partita: spento")
 	end
 	if self.layout_ed then

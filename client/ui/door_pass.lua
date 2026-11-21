@@ -42,7 +42,7 @@ local EDGE = 17
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
 function M.new()
-	return {}
+	return { gen = 0 }
 end
 
 function M.is_active(dp) return dp.busy == true end
@@ -141,6 +141,25 @@ local function unride(d)
 	gui.set_position(d.node, d.rest)
 end
 
+-- f, unless the passage was cut off in the meantime (M.abort)
+local function step(dp, f)
+	local gen = dp.gen
+	return function(...)
+		if dp.gen == gen then f(...) end
+	end
+end
+
+-- the copy of the home's backdrop under a passage, gone with it
+local function hold(dp, h)
+	dp.still = kit.scene_copy(h.scene)
+end
+
+local function release(dp)
+	kit.scene_cut(false)
+	if dp.still then kit.scene_copy_drop(dp.still) end
+	dp.still = nil
+end
+
 local function home_on(h, on)
 	h.under = on
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, on) end
@@ -175,13 +194,18 @@ local function measure(h, id)
 end
 
 function M.open(dp, h, id, change)
-	dp.busy = true
+	dp.busy, dp.h = true, h
 	local d = measure(h, id)
-	-- 1. the button shoots to its edge and brakes
-	gui.animate(d.node, "position.x", d.rest.x + d.dx, gui.EASING_OUTCUBIC, M.OUT, 0, function()
+	dp.d = d
+	-- 1. the button shoots to its edge and brakes (the steps go on timers, not on
+	-- the button's callbacks: an animation of the button cancelled by something
+	-- else would leave the passage half done, with the home's backdrop copy left
+	-- over the next screens, the match too: Sergio's photo, 21 Nov)
+	gui.animate(d.node, "position.x", d.rest.x + d.dx, gui.EASING_OUTCUBIC, M.OUT)
+	timer.delay(M.OUT, false, step(dp, function()
 		-- 2. the new screen, made out of sight with its backdrop, its edge on the shield;
 		-- the home stays under it, with a copy of the backdrop
-		local still = kit.scene_copy(h.scene)
+		hold(dp, h)
 		kit.track_begin()
 		change()
 		dp.kind, dp.door = "door", id
@@ -195,24 +219,23 @@ function M.open(dp, h, id, change)
 		ride(d)
 		-- (a moment for the frame that made the screen, a long one) the line
 		-- comes in from the border up to the shield, then the button drags
-		timer.delay(0.03, false, function() slide(page, d.p0 - d.back, gui.EASING_OUTQUAD, M.ENTER, function()
+		timer.delay(0.03, false, step(dp, function() slide(page, d.p0 - d.back, gui.EASING_OUTQUAD, M.ENTER, step(dp, function()
 			-- 3. the button drags it across, and in the last stretch it goes out
 			-- over the screen's border with the line (Sergio, 15 Nov: it must not
 			-- come off the edge, «lo dovrebbe accompagnare fino alla fine»)
 			gui.animate(d.node, "position.x", d.rest.x + d.dx + d.off, gui.EASING_INOUTQUAD,
 				M.ACROSS * (1 - M.LEAVE), M.ACROSS * M.LEAVE)
-			slide(join(page, { d.rider }), -d.p0, gui.EASING_INOUTCUBIC, M.ACROSS, function()
+			slide(join(page, { d.rider }), -d.p0, gui.EASING_INOUTCUBIC, M.ACROSS, step(dp, function()
 				home_on(h, false)
-				kit.scene_cut(false)
-				kit.scene_copy_drop(still)
+				release(dp)
 				-- 4. the line is out of the screen, gone (Sergio, 17 Nov: left there it
 				-- read as a defect); the button, out of sight, goes back home
 				drop_line(dp)
 				unride(d)
-				dp.busy = false
-			end)
-		end) end)
-	end)
+				dp.busy, dp.d = false, nil
+			end))
+		end)) end))
+	end))
 end
 
 -- when INOUTCUBIC gets to the fraction f of its way (0..1)
@@ -224,21 +247,23 @@ end
 
 function M.close(dp, h, change)
 	if dp.kind == "zaino" then return M.shrink(dp, h, change) end
-	dp.busy = true
+	dp.busy, dp.h = true, h
 	local d = measure(h, dp.door)
 	local page = alive(kit.tracked())
 	kit.track_end()
 	local tops = kit.scene_tops()
 	-- 1. the home comes back under the screen, the button back on the line
-	local still = kit.scene_copy(h.scene)
+	hold(dp, h)
 	home_on(h, true)
 	kit.scene_cut(true)
 	if not dp.line then dp.line = line(d.line_x) end
 	ride(d)
+	dp.d = d
 	gui.set_position(d.node, vec(d.rest.x + d.dx - d.p0 + d.off, d.rest.y))
 	-- (out of an animation's callback: started there, some animations of the
 	-- same frame would start a frame late, and the backdrop would lag the page)
-	gui.animate(d.node, "position.x", d.rest.x + d.dx - d.p0, gui.EASING_OUTQUAD, M.SLIP, 0, function() timer.delay(0, false, function()
+	gui.animate(d.node, "position.x", d.rest.x + d.dx - d.p0, gui.EASING_OUTQUAD, M.SLIP)
+	timer.delay(M.SLIP, false, step(dp, function()
 		-- 2. it pushes the screen out toward its edge, the home under it; the
 		-- button stops on its place (Sergio, 15 Nov: «quando arriva al suo
 		-- posto resta lì») with a small bounce, the page goes on to the edge
@@ -247,26 +272,28 @@ function M.close(dp, h, change)
 			left = left - 1
 			if left > 0 then return end
 			unride(d)
-			dp.kind, dp.busy = nil, false
+			dp.kind, dp.busy, dp.d = nil, false, nil
 		end
-		slide(join(page, tops, { dp.line }), d.back, gui.EASING_INOUTCUBIC, M.ACROSS_BACK, function()
+		slide(join(page, tops, { dp.line }), d.back, gui.EASING_INOUTCUBIC, M.ACROSS_BACK, step(dp, function()
 			-- (all in one frame: the backdrop back in its place under the home)
 			shift(tops, -d.back)
-			kit.scene_cut(false)
+			-- (the copy goes before change: a screen that fails to come must not keep it)
+			release(dp)
 			change()
-			kit.scene_copy_drop(still)
 			drop_line(dp)
 			done()
-		end)
+		end))
 		-- the button rides the line just as far as its place
 		gui.animate(d.node, "position.x", d.rest.x + d.dx - d.p0 + d.back, gui.EASING_INOUTCUBIC, M.ACROSS_BACK)
-		timer.delay(M.ACROSS_BACK * reach((d.p0 - d.dx) / d.back), false, function()
+		timer.delay(M.ACROSS_BACK * reach((d.p0 - d.dx) / d.back), false, step(dp, function()
 			gui.cancel_animations(d.node, "position.x")
-			gui.animate(d.node, "position.x", d.rest.x + d.side * M.BOUNCE, gui.EASING_OUTQUAD, 0.10, 0, function()
-				gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTQUAD, 0.20, 0, done)
-			end)
-		end)
-	end) end)
+			gui.animate(d.node, "position.x", d.rest.x + d.side * M.BOUNCE, gui.EASING_OUTQUAD, 0.10)
+			timer.delay(0.10, false, step(dp, function()
+				gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTQUAD, 0.20)
+				timer.delay(0.20, false, step(dp, done))
+			end))
+		end))
+	end))
 end
 
 -- the screen went another way (a mission, a match)
@@ -275,6 +302,25 @@ function M.drop(dp)
 	drop_line(dp)
 	kit.track_end()
 	dp.kind = nil
+end
+
+-- A passage cut off halfway (a match starts under it): its steps still to come do
+-- nothing, the home's backdrop copy, the line and the button go back. Nothing
+-- to do (and cheap) when no passage is running
+function M.abort(dp)
+	if not dp.busy and not dp.still then return false end
+	dp.gen = dp.gen + 1
+	release(dp)
+	drop_line(dp)
+	local d = dp.d
+	if d then
+		gui.cancel_animations(d.node, "position.x")
+		if d.rider then pcall(unride, d) else gui.set_position(d.node, d.rest) end
+	end
+	if dp.h then home_on(dp.h, false) end
+	kit.track_end()
+	dp.busy, dp.kind, dp.d = false, nil, nil
+	return true
 end
 
 -- ZAINO -------------------------------------------------------------------------
@@ -315,7 +361,7 @@ end
 function M.grow(dp, h, change, done)
 	dp.busy = true
 	-- the apprentice breathes first (menu/home.lua), then the ZAINO comes out of him
-	timer.delay(0.3, false, function()
+	timer.delay(0.3, false, step(dp, function()
 		local px, py = home.apprentice_point(h)
 		kit.track_begin()
 		change()
@@ -323,13 +369,13 @@ function M.grow(dp, h, change, done)
 		local page = alive(kit.tracked())
 		local rest = places(page)
 		around(page, 0.12, px, py)
-		timer.delay(0.03, false, function()
-			grow_to(page, rest, px, py, 1, gui.EASING_OUTBACK, M.GROW, function()
+		timer.delay(0.03, false, step(dp, function()
+			grow_to(page, rest, px, py, 1, gui.EASING_OUTBACK, M.GROW, step(dp, function()
 				dp.busy = false
 				if done then done() end
-			end)
-		end)
-	end)
+			end))
+		end))
+	end))
 end
 
 function M.shrink(dp, h, change, done)
@@ -337,12 +383,12 @@ function M.shrink(dp, h, change, done)
 	local px, py = home.apprentice_point(h)
 	local page = alive(kit.tracked())
 	kit.track_end()
-	grow_to(page, places(page), px, py, 0.12, gui.EASING_INCUBIC, M.SHRINK, function()
+	grow_to(page, places(page), px, py, 0.12, gui.EASING_INCUBIC, M.SHRINK, step(dp, function()
 		change()
 		home.settle(h)
 		dp.kind, dp.busy = nil, false
 		if done then done() end
-	end)
+	end))
 end
 
 return M
