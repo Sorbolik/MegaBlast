@@ -330,6 +330,20 @@ return {
 
 
 	-- menu/settings.lua: IMPOSTAZIONI
+	-- IMPOSTAZIONI > DISPOSIZIONE TASTI: the HUD's buttons moved and resized (menu/hud_editor.lua)
+	hud_editor = {
+		title = "DISPOSIZIONE TASTI",
+		reset = "RIPRISTINA",
+		done = "FATTO",
+		-- %s: the group touched
+		size = "GRANDEZZA: %s",
+		pick = "TOCCA UN TASTO PER SPOSTARLO O CAMBIARNE LA GRANDEZZA",
+		drag = "trascina per spostare",
+		units = {
+			primarie = "ARMI PRIMARIE", secondarie = "ARMI SECONDARIE", cronometro = "TEMPO DEL TURNO",
+			teletrasporto = "TELETRASPORTO", attrezzi = "RAMPINO E GIANO", oggetti = "OGGETTI", zoom = "ZOOM",
+		},
+	},
 	settings = {
 		title = "IMPOSTAZIONI",
 		-- the settings at the top (profile.SETTINGS) and their values
@@ -349,6 +363,8 @@ return {
 			oggetti = "OGGETTO DOPO", usa_oggetto = "USA L'OGGETTO", baratto = "BARATTO", zoom = "ZOOM",
 		},
 		controller_keys = "TASTI DEL CONTROLLER",
+		-- the button that opens the HUD's layout (menu/hud_editor.lua)
+		layout = "DISPOSIZIONE TASTI",
 		-- IL MIO PROFILO: the name, the recovery code, HO GIÀ UN PROFILO (step 6 of the guest profiles)
 		my_profile = "IL MIO PROFILO",
 		no_profile = "SENZA PROFILO SUL SERVER",

@@ -114,7 +114,8 @@ function M.stopwatch(x, y)
 	-- the match time at the top right, on the points' row (report UI-002)
 	c.clock = fit(ui.text("", 0, 0, CLOCK, ui.C.TEXT))
 	gui.set_pivot(c.clock, gui.PIVOT_E)
-	c.x, c.y, c.k = x, y, 1
+	-- base: the size the player chose (battle/hud_layout.lua)
+	c.x, c.y, c.k, c.base = x, y, 1, 1
 	return c
 end
 
@@ -178,7 +179,7 @@ function M.stopwatch_update(c, dt, stage, left_ones, total, team, clock)
 		end
 	end
 	c.beat = max(0, c.beat - dt * 4)
-	scale(c.radice, 1 + c.amp * c.beat * c.beat)
+	scale(c.radice, (c.base or 1) * (1 + c.amp * c.beat * c.beat))
 	c.wave = max(0, c.wave - dt * 2.2)
 	gui.set_enabled(c.wave_n, c.wave > 0)
 	if c.wave > 0 then
