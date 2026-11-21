@@ -4493,6 +4493,8 @@ function init(self)
 	self.bots = {}
 	self.orbs_wait = 0
 	msg.post(".", "acquire_input_focus")
+	-- the phone never dims or sleeps while the game is open (no effect on desktop/web)
+	window.set_dim_mode(window.DIMMING_OFF)
 	self.keys = {}
 	self.preview_pts = {}
 
