@@ -17,8 +17,9 @@ local M = setmetatable({}, { __index = rules })
 -- (tasti: the remapped controller buttons, button -> command; nil is the default mapping, ui/controller.lua)
 -- (sparo: with the controller the shot fires on pressing or on releasing the
 -- button; potenza: with the controller it comes from the right stick or from
--- how far the trigger is pressed)
-M.SETTINGS = { mira = "lancetta", sparo = "rilascio", potenza = "levetta", levette = "destra", fps = "spento" }
+-- how far the trigger is pressed; vibrazione: all the phone's vibrations, main/phone.lua)
+M.SETTINGS = { mira = "lancetta", sparo = "rilascio", potenza = "levetta", levette = "destra", fps = "spento",
+	vibrazione = "accesa" }
 
 function M.setting(p, lookup_key)
 	local v = p and p.impostazioni and p.impostazioni[lookup_key]

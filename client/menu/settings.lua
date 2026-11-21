@@ -44,6 +44,7 @@ local CHOICES = {
 	choice_of("sparo", { "pressione", "rilascio" }),
 	choice_of("potenza", { "levetta", "grilletto" }),
 	choice_of("levette", { "sinistra", "destra" }),
+	choice_of("vibrazione", { "spenta", "accesa" }),
 	choice_of("fps", { "spento", "acceso" }),
 	-- the end-game test profile (menu/profile.lua, endgame): its own save
 	choice_of("profilo", { "vero", "prova" }),
@@ -56,8 +57,8 @@ local KC = kit.C
 -- title and its help line inside: two columns of cards KEY_W wide from KEYS_X,
 -- KEY_GAP apart, a row every KEY_ROW
 local NAME_W = 196
--- (a row every ROW: seven rows above the bottom line)
-local ROW = 66
+-- (a row every ROW: eight rows above the bottom line)
+local ROW = 62
 local PANEL_Y, PANEL_H = 108, #CHOICES * ROW + 6
 local KEYS_PANEL_X, KEYS_PANEL_W = 608, 640
 local KEYS_X, KEY_W, KEY_H, KEY_GAP = KEYS_PANEL_X + 16, 298, 54, 12

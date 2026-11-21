@@ -49,6 +49,7 @@ local score = require "battle.score"
 local hud = require "battle.hud"
 local screen = require "ui.screen"
 local frames = require "ui.frames"
+local phone = require "main.phone"
 -- in the browser without the extension (web build) the browser's WebSocket is enough
 local ws = websocket or (html5 and require "main.ws_browser")
 
@@ -865,6 +866,7 @@ local function explosion(self, x, y, r)
 	impact.explosion(self.fx, x, y, r)
 	if self.lights then self.lights:flash(x, y, r) end
 	sound.play("#boom", { gain = 0.7 + 0.3 * math.min(1, r / 40), speed = 1.25 - math.min(0.45, r / 90) + math.random() * 0.1 })
+	phone.blast(r)
 
 	-- debris: pieces of rock and ember thrown upward
 	for j = 1, DEBRIS_PER_SHOT do
@@ -3430,17 +3432,8 @@ local function pad_release(pad, ring_color)
 	pad_color(pad, ring_color)
 end
 
--- Micro-vibration: client/vibra on Android phones, in the browser where
--- navigator.vibrate exists
-local function vibrate_touch()
-	if vibra then
-		vibra.tocco()
-	elseif html5 then
-		html5.run("navigator.vibrate && navigator.vibrate(12)")
-	elseif SIMULATE then
-		print("SIMULA evento vibra")
-	end
-end
+-- Micro-vibration (main/phone.lua: off with the IMPOSTAZIONI switch)
+local vibrate_touch = phone.tap
 
 CP.vibrate = vibrate_touch -- for the blocks above it (the zoom)
 
@@ -4493,6 +4486,8 @@ function init(self)
 	self.bots = {}
 	self.orbs_wait = 0
 	msg.post(".", "acquire_input_focus")
+	-- screen always on, sound off in the background, 90/120 Hz (main/phone.lua)
+	require("main.phone").init()
 	self.keys = {}
 	self.preview_pts = {}
 
@@ -4829,6 +4824,8 @@ end
 
 function update(self, dt)
 	frames.begin()
+	phone.vibration(profile.setting(self.profilo, "vibrazione") == "accesa")
+	phone.update(dt, self.mode == "local" or self.mode == "online" or self.mode == "replay" or self.mode == "ended")
 	if screen.update() then arrange(self) end
 	self.vign:update(dt)
 	if self.ingresso then CP.entry_update(self, dt) end
@@ -5698,6 +5695,11 @@ function PAD.every_frame(self)
 			CP.leave_room(self)
 		elseif not from_b and (self.controls_visible and (self.mode == "local" or self.mode == "online") or self.mode == "connecting") then
 			open_wheel(self, not self.menu_open)
+		elseif not from_b and self.cartolina then
+			CP.postcard_choice(self, menu.postcard.pad(self.cartolina, "b"))
+		elseif not from_b and (self.mode == "schermata" or self.mode == "scelta" or self.mode == "scelta_online") then
+			-- in the menus the phone's back key closes, like the controller's B (Sergio, 21 Nov)
+			PAD.on_input(self, ACTION.PAD, { pressed = true, ui = "indietro", nome = "b" })
 		end
 	end
 	if not self.pad_on and (reader.pushed(c.sx) or reader.pushed(c.dx)) then PAD.event(self, {}) end
@@ -6000,11 +6002,6 @@ function PAD.on_input(self, action_id, action)
 		if action.pressed then choose_slot(self, "teleport") end
 	elseif action_id == ACTION.ZOOM then
 		if action.pressed then change_zoom(self) end
-	elseif action_id == ACTION.MENU then
-		-- Esc (or back on the phone): opens and closes the wheel, at the end of the
-		-- frame (PAD.every_frame): the controller's B button on Android also sends
-		-- "indietro", and that one doesn't count
-		if action.pressed then self.menu_requested = true end
 	elseif action_id == ACTION.ZOOM_IN or action_id == ACTION.ZOOM_OUT then
 		if action.pressed then change_zoom(self, action_id == ACTION.ZOOM_OUT and 1 or -1) end
 	elseif ACTION.WEAPON[action_id] then
@@ -6086,6 +6083,10 @@ function on_input(self, action_id, action)
 end
 
 function CP.on_input(self, action_id, action)
+	if action.pressed then phone.input() end
+	-- Esc (or back on the phone): handled at the end of the frame (PAD.every_frame),
+	-- where the controller's B on Android, which also sends "indietro", doesn't count
+	if action_id == ACTION.MENU and action.pressed then self.menu_requested = true end
 	-- during the entry and the transitions nothing can be touched (a tap
 	-- hurries the entry's flame to its burst)
 	if self.ingresso or menu.passaggio.is_active(self.passaggio) or menu.door_pass.is_active(self.door_pass) then
