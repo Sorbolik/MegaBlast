@@ -4616,7 +4616,10 @@ local function render(self, dt)
 	-- the orb ticks only if leftover time gives orbs (not in all lessons)
 	self.chrono.ticks_on = g.robots[g.current].stats.time_orbs > 0
 	hud.stopwatch_update(self.chrono, dt, stage, left_ones, total, self.colors[g.current], g.phase ~= "over" and clock or "")
-	CP.hand.focus(self, g, dt, stage == "turno" and left_ones or nil)
+	-- the last 8 seconds' tension: also after the first attack, until the turn's
+	-- moves are done (both attacks, or the second swapped for a teleport; Rampino
+	-- and traps don't count, leaving them can be a choice. Sergio, 21 Nov)
+	CP.hand.focus(self, g, dt, (stage == "turno" or stage == "secondo") and left_ones or nil)
 	-- swapping the second attack for a teleport: one tap
 	-- (after the turn announcement has vanished: they would overlap)
 	local swap_sees = self.tele_sees and my_turn(self) and g:can_use("swap")
