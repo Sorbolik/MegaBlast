@@ -151,6 +151,7 @@ end
 
 -- the copy of the home's backdrop under a passage, gone with it
 local function hold(dp, h)
+	if dp.still then kit.scene_copy_drop(dp.still) end
 	dp.still = kit.scene_copy(h.scene)
 end
 

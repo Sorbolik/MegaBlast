@@ -1,0 +1,28 @@
+# Il tasto indietro del telefono durante il passaggio delle porte della home (foto di
+# Sergio, 21 nov: una partita senza terreno, coi robot sul cielo della home). Indietro
+# premuto mentre la porta trascina dentro la pagina, e di nuovo mentre la riporta
+# fuori: il passaggio non si deve rompere, la copia del cielo non deve restare viva.
+# Poi una partita: il terreno si deve vedere.
+aspetta 4
+tocca_bordo 210 170 mezzo destra    # la porta SHOP
+aspetta 0.2
+premi Escape                        # indietro mentre entra
+aspetta 0.1
+premi Escape
+aspetta 2.5
+foto 01_shop_aperto
+premi Escape                        # indietro: torna alla home
+aspetta 0.2
+premi Escape                        # di nuovo, mentre torna
+aspetta 0.1
+premi Escape
+aspetta 1.5
+foto 02_home
+tocca 220 172                       # ALLENAMENTO
+aspetta 1
+tocca 761 551                       # STESSO TELEFONO
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 0.5
+foto 03_partita_col_terreno
