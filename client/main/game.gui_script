@@ -5108,6 +5108,17 @@ function update(self, dt)
 	end
 	self.sc_ox, self.sc_oy = camera.shake_frame(self.cam, dt)
 	self.sc_k = camera.punch_frame(self.cam, dt)
+	-- a home passage cut off by the match, or a menu backdrop left on over it
+	-- (it would hide the world): off. Cheap when there is none
+	-- (a draft too: the passage only, the draft has its own backdrop)
+	local playing = (self.mode == "local" or self.mode == "online") and not self.schermata and not self.layout_ed
+		and not (self.queue and self.queue.found)
+	if (playing or self.mode == "scelta" or self.mode == "scelta_online") and menu.door_pass.abort(self.door_pass) then
+		print("passaggio dei menu interrotto dalla partita: chiuso")
+	end
+	if playing and menu.kit.scene_clear() then
+		print("sfondo dei menu rimasto acceso in partita: spento")
+	end
 	if self.layout_ed then
 		menu.hud_editor.update(self.layout_ed)
 	elseif self.mode == "local" and not self.menu_open and not self.carta and not self.intro_on and not (self.queue and self.queue.found) then
@@ -5951,6 +5962,10 @@ function PAD.every_frame(self)
 	end
 	reader.levette = PAD.setting(self, "levette")
 	-- Esc or back (PAD.on_input), if it wasn't the controller's B
+	-- (the phone's back key during a menu passage: forgotten, a second passage
+	-- started over the first one left its backdrop copy over the next screens,
+	-- the match too: Sergio's photo, 21 Nov)
+	if self.menu_requested and CP.passing(self) then self.menu_requested = nil end
 	if self.menu_requested then
 		self.menu_requested = nil
 		local from_b = c.giu.b or (self.pad_b_t and self.clock - self.pad_b_t < 0.3)
@@ -6007,6 +6022,8 @@ end
 -- A controller button pressed or released (ui/controller.lua)
 function PAD.event(self, e)
 	self.pad_on = true
+	-- during the entry and the passages the controller waits too, like the fingers
+	if CP.passing(self) then return end
 	if self.cartolina then
 		if e.nome and e.held_down then CP.postcard_choice(self, menu.postcard.pad(self.cartolina, e.nome)) end
 		return
@@ -6356,6 +6373,11 @@ function on_input(self, action_id, action)
 	return r
 end
 
+-- the entry or a passage between menus running: no input
+function CP.passing(self)
+	return self.ingresso or menu.passaggio.is_active(self.passaggio) or menu.door_pass.is_active(self.door_pass)
+end
+
 function CP.on_input(self, action_id, action)
 	if action.pressed then phone.input() end
 	-- Esc (or back on the phone): handled at the end of the frame (PAD.every_frame),
@@ -6363,7 +6385,7 @@ function CP.on_input(self, action_id, action)
 	if action_id == ACTION.MENU and action.pressed then self.menu_requested = true end
 	-- during the entry and the transitions nothing can be touched (a tap
 	-- hurries the entry's flame to its burst)
-	if self.ingresso or menu.passaggio.is_active(self.passaggio) or menu.door_pass.is_active(self.door_pass) then
+	if CP.passing(self) then
 		if action_id == ACTION.TOUCH and action.pressed then menu.passaggio.skip(self.passaggio) end
 		return true
 	end
