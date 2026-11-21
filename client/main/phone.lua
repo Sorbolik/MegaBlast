@@ -17,6 +17,9 @@
 
 local M = {}
 
+-- in the simulator the vibrations are written to the log (tools/simula)
+local SIMULATE = sys.get_config_int("megablast.simula", 0) == 1
+
 -- the frame rates (0: every frame of the screen)
 local MATCH, MATCH_BATTERY, MENU, MENU_IDLE = 0, 60, 60, 30
 -- seconds without a touch before the menus go to MENU_IDLE

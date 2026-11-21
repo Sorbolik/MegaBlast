@@ -925,6 +925,8 @@ return {
 		reread = "RILEGGI",
 		cancel = "ANNULLA",
 		items = "OGGETTI",
+		-- Grapple and Janus: one of the two per turn (the copper number between them)
+		per_turn = "PER TURNO",
 		-- entry and waiting room
 		loading_events = "Prendo gli eventi dal server...",
 		in_queue = "In coda",

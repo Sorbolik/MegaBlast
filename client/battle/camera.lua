@@ -59,7 +59,10 @@ end
 function M.new(w, h, mw, mh, margin, reach)
 	local c = { w = w, h = h, cx = w / 2, cy = h / 2, mw = mw, mh = mh, x = mw / 2, y = mh / 2, s = 1,
 		margin = margin or 0, reach = reach or 0,
-		f = 1, f_before = nil, sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0, pu = 0, mx = 120, msu = 90, mgiu = 170 }
+		f = 1, f_before = nil, sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0, pu = 0, mx = 120, msu = 90, mgiu = 170,
+		-- lift: screen pixels what is followed sits higher (on your turn the
+		-- points go away and the map rises above the buttons, battle/turn_focus.lua)
+		lift = 0 }
 	return c
 end
 
@@ -234,7 +237,7 @@ end
 
 -- fast: for shots in flight, which would otherwise escape the screen
 function M.follow(c, dt, x, y, s, fast)
-	toward(c, dt, x, y, s, ZOOM, fast and FOLLOW_FAST or FOLLOW)
+	toward(c, dt, x, y - c.lift / c.s, s, ZOOM, fast and FOLLOW_FAST or FOLLOW)
 end
 
 -- In the menu: the whole map, still, in the middle
@@ -255,7 +258,7 @@ function M.frame_on(c, dt, ax, ay, bx, by, s)
 	local needs = math.min((c.w - 2 * c.mx) / math.max(1, x1 - x0),
 		(c.h - c.msu - c.mgiu) / math.max(1, y1 - y0))
 	s = math.max(M.whole(c), math.min(s, needs))
-	toward(c, dt, (x0 + x1) / 2, (y0 + y1) / 2 - (c.mgiu - c.msu) / (2 * c.s), s,
+	toward(c, dt, (x0 + x1) / 2, (y0 + y1) / 2 - (c.mgiu - c.msu + c.lift) / (2 * c.s), s,
 		s < c.s and ZOOM_OUT or ZOOM, FOLLOW_FAST)
 	-- the springs lag behind: if a point is about to leave, zoom out at once
 	local m = c.s

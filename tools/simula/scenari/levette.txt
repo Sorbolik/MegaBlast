@@ -23,7 +23,7 @@ levetta_mira 6 4 0.4 05_mira_spenta
 niente_evento fire 1
 
 # teletrasporto: pulsante sopra la levetta della mira, poi la levetta
-tocca 1208 257                      # TELE
+tocca_bordo 145 286 basso destra     # TELE (sull'arco sopra la levetta della mira)
 levetta_mira -30 30 0.5 06_mira_teletrasporto
 aspetta_evento orb 2
 aspetta_evento teleport 4

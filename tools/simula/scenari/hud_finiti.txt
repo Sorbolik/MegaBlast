@@ -1,0 +1,36 @@
+# Quello che finisce resta al suo posto, quasi spento e con lo 0 (lo Scudo usato),
+# le primarie dopo lo sparo, la Lama già usata resta in mano ma spenta.
+imposta prova_armi 1
+imposta comandi telefono
+
+aspetta 2
+tocca 220 172                      # ALLENAMENTO
+aspetta 1
+tocca 547 470                       # 1 CONTRO 1
+tocca 840 382                       # DIFFICILE
+aspetta 1
+tocca 1151 249                       # LA FOSSA DEL FABBRO
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 2.5
+tocca_bordo 44 334 basso destra     # Scudo: si usa subito, ne resta 0
+aspetta 1
+foto 01_oggetto_finito
+levetta_mira -40 40 0.4             # Lanciarune: le primarie sono usate
+aspetta_evento explosion 6
+aspetta 0.8
+foto 02_primarie_usate
+premi 6                             # Lama
+levetta_mira 40 0 0.3
+aspetta_evento swing 2
+aspetta 0.6
+foto 03_tutto_usato
+# Rampino e Giano: un uso in due per turno, il numerino di rame fra loro
+aspetta_stato turno=1 fase=aim 40
+aspetta 1
+foto 04_attrezzo_1
+tocca_bordo 239 236 basso destra    # Rampino
+levetta_mira -60 60 0.3
+aspetta 1.2
+foto 05_attrezzo_0
