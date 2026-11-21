@@ -19,7 +19,7 @@ tocca 640 400                       # altrove: si chiude
 aspetta 0.5
 levetta 60 0 0.6
 aspetta 0.5
-levetta_mira -40 40 0.4 03_mira
+levetta_mira 30 -25 0.4 03_mira       # verso il basso a destra: il colpo resta nella mappa
 aspetta_evento explosion 6
 aspetta 2
 tocca_bordo 70 90 alto destra       # zoom: un tocco, tutto lo spazio di gioco
