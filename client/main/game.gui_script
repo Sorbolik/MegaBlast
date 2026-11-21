@@ -5108,6 +5108,11 @@ function update(self, dt)
 	end
 	self.sc_ox, self.sc_oy = camera.shake_frame(self.cam, dt)
 	self.sc_k = camera.punch_frame(self.cam, dt)
+	-- (a menu backdrop left on over the match hides the world: off)
+	if (self.mode == "local" or self.mode == "online") and not self.schermata and not self.layout_ed
+		and not (self.queue and self.queue.found) and menu.kit.scene_clear() then
+		print("sfondo dei menu rimasto acceso in partita: spento")
+	end
 	if self.layout_ed then
 		menu.hud_editor.update(self.layout_ed)
 	elseif self.mode == "local" and not self.menu_open and not self.carta and not self.intro_on and not (self.queue and self.queue.found) then

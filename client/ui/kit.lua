@@ -1359,10 +1359,13 @@ end
 -- A still copy of the backdrop of the screen s (its hold, M.scene), under
 -- everything (ui/door_pass.lua: the home keeps it while a screen with the
 -- real one is dragged over it). Returns it, for M.scene_copy_drop
+-- (the copies still alive: M.scene_clear deletes the ones a passage forgot)
+local COPIES = {}
 function M.scene_copy(s)
 	if not S then return {} end
 	local out = M.copy_of(s.opt)
 	for i = #out, 1, -1 do gui.move_below(out[i], nil) end
+	COPIES[out] = true
 	return out
 end
 
@@ -1452,6 +1455,8 @@ function M.scene_still_fade(out, t)
 end
 
 function M.scene_copy_drop(out)
+	if out and not COPIES[out] then return end
+	if out then COPIES[out] = nil end
 	for _, n in ipairs(out or {}) do gui.delete_node(n) end
 	local kept = S and S.kept
 	if kept then
@@ -1486,6 +1491,24 @@ function M.scene_drop(s)
 	if not S or S.owner ~= s then return end
 	S.owner = nil
 	for _, n in ipairs(S.tops) do gui.set_enabled(n, false) end
+end
+
+-- In a match no menu backdrop may stay on: it would cover the world, with
+-- the robots floating on the home's sky (Sergio's photo, 21 Nov). true if
+-- there was one (the real backdrop still taken, or a passage's copy)
+function M.scene_clear()
+	local any = false
+	for out in pairs(COPIES) do
+		any = true
+		M.scene_copy_drop(out)
+	end
+	if S and (S.owner or S.clip or gui.is_enabled(S.base)) then
+		any = true
+		M.scene_cut(false)
+		S.owner = nil
+		for _, n in ipairs(S.tops) do gui.set_enabled(n, false) end
+	end
+	return any
 end
 
 function M.scene_show(s, on)
