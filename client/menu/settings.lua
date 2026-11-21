@@ -163,6 +163,10 @@ local function build(s)
 	local swap = kit.secondary(g, s.view and T.controller_keys or T.my_profile,
 		KEYS_PANEL_X + KEYS_PANEL_W - top_w, 36, top_w, KEY_H)
 	kit.button(s.buttons, swap, "profilo_mio:scambia")
+	-- DISPOSIZIONE TASTI at its left: the HUD's buttons, moved and resized
+	-- (menu/hud_editor.lua, opened by game.gui_script)
+	local arrange = kit.secondary(g, T.layout, KEYS_PANEL_X + KEYS_PANEL_W - 2 * top_w - 16, 36, top_w, KEY_H)
+	kit.button(s.buttons, arrange, "disposizione")
 
 	-- the choices on an iron panel: their names are read on it, not on the painting
 	kit.panel(kit.group(g, 32 + (NAME_W + 12 + 340 + 16) / 2, PANEL_Y + PANEL_H / 2).node,
@@ -360,7 +364,7 @@ function M.on_input(s, action_id, action)
 	end
 	local ui_action = ui.touch(s.buttons, action_id, action)
 	if not ui_action then return nil end
-	if ui_action == "indietro" then return "indietro" end
+	if ui_action == "indietro" or ui_action == "disposizione" then return ui_action end
 	local mine = ui_action:match("^profilo_mio:(.*)$")
 	if mine then
 		profile_action(s, mine)

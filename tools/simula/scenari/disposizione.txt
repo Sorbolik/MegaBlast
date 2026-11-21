@@ -1,0 +1,44 @@
+# IMPOSTAZIONI > DISPOSIZIONE TASTI (Sergio, 21 Nov): la partita ferma con ogni
+# gruppo di tasti tratteggiato; un tocco lo sceglie (angoli arancioni), il dito
+# lo sposta, la barra in alto ne cambia la GRANDEZZA; FATTO salva e torna alle
+# impostazioni. Poi in allenamento i tasti sono dove li hai messi.
+imposta prova_armi 1
+imposta comandi telefono
+
+aspetta 2
+tocca_bordo 74 54 basso sinistra    # la rotellina delle impostazioni
+aspetta 1.2
+foto 01_impostazioni
+tocca_centro 782 657                # DISPOSIZIONE TASTI
+aspetta 1.5
+foto 02_editor
+tocca 1135 286                      # il teletrasporto
+aspetta 0.3
+foto 03_scelto
+trascina 1135 286 1010 380 0.6      # più in alto e a sinistra
+aspetta 0.3
+aspetta 0.3
+tocca 800 608                       # GRANDEZZA quasi al massimo
+aspetta 0.3
+foto 04_spostato
+tocca 420 75                        # le armi primarie
+aspetta 0.3
+trascina 420 75 420 150 0.6         # più in alto
+aspetta 0.3
+tocca 500 608                       # più piccole
+aspetta 0.3
+foto 05_primarie
+tocca 1146 684                      # FATTO
+aspetta 1.5
+foto 06_impostazioni
+premi Escape                        # di nuovo alla home
+aspetta 1.2
+tocca 220 172                       # ALLENAMENTO
+aspetta 1
+tocca 547 470                       # 1 CONTRO 1
+tocca 840 382                       # DIFFICILE
+aspetta 1
+tocca_bordo 175 52 basso destra     # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 07_partita

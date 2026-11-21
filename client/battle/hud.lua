@@ -114,7 +114,8 @@ function M.stopwatch(x, y)
 	-- the match time at the top right, on the points' row (report UI-002)
 	c.clock = fit(ui.text("", 0, 0, CLOCK, ui.C.TEXT))
 	gui.set_pivot(c.clock, gui.PIVOT_E)
-	c.x, c.y, c.k = x, y, 1
+	-- base: the size the player chose (battle/hud_layout.lua)
+	c.x, c.y, c.k, c.base = x, y, 1, 1
 	return c
 end
 
@@ -178,7 +179,7 @@ function M.stopwatch_update(c, dt, stage, left_ones, total, team, clock)
 		end
 	end
 	c.beat = max(0, c.beat - dt * 4)
-	scale(c.radice, 1 + c.amp * c.beat * c.beat)
+	scale(c.radice, (c.base or 1) * (1 + c.amp * c.beat * c.beat))
 	c.wave = max(0, c.wave - dt * 2.2)
 	gui.set_enabled(c.wave_n, c.wave > 0)
 	if c.wave > 0 then
@@ -262,15 +263,19 @@ function M.token(x, y, d, icon_img, color, parent, shape)
 	return t
 end
 
--- the small number at the top right (teleports left, items in hand)
-function M.round_number(t, txt)
+-- the small number at the top right (teleports left, items in hand); color:
+-- of its disc (nil: the family's)
+function M.round_number(t, txt, color)
 	if not t.num then
 		local r = t.d * 0.36
 		t.num = fit(ui.disc(r, r, t.d * 0.36, t.colore, t.nodo))
 		t.num_t = fit(ui.text("", 0, 1, t.d / 84 * 0.8, ui.C.BOTTOM, t.num))
+		gui.set_inherit_alpha(t.num, true)
+		gui.set_inherit_alpha(t.num_t, true)
 		gui.set_outline(t.num_t, vmath.vector4(0, 0, 0, 0))
 	end
 	gui.set_enabled(t.num, txt ~= "")
+	gui.set_color(t.num, color or t.colore)
 	gui.set_text(t.num_t, txt)
 end
 
@@ -279,6 +284,7 @@ end
 function M.round_flash(t)
 	if not t.lampo then
 		t.lampo = fit(ui.sagoma(t.shape .. "_bordo", 0, 0, t.d, t.d, ui.C.LIGHT, t.nodo))
+		gui.set_inherit_alpha(t.lampo, true)
 		gui.set_enabled(t.lampo, false)
 	end
 	gui.cancel_animations(t.lampo, "scale")
@@ -320,8 +326,10 @@ function M.tag_up(k, x, y, txt)
 		V.x, V.y, V.z = w, 26, 0
 		gui.set_size(k.nodo, V)
 		gui.set_size(k.bordo, V)
-		k.text_s = txt
+		k.text_s, k.w = txt, w
 	end
+	-- inside the screen (the items column sits on the edge)
+	x = max(screen.x0 + k.w / 2 + 8, min(screen.x1 - k.w / 2 - 8, x))
 	if k.x ~= x or k.y ~= y then
 		V.x, V.y, V.z = x, y, 0
 		gui.set_position(k.nodo, V)
