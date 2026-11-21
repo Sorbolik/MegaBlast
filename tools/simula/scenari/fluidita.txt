@@ -10,7 +10,7 @@ imposta prova_vignette no             # le vignette hanno il loro scenario (vign
 aspetta 2
 tocca_bordo 74 54 basso sinistra       # la rotellina delle impostazioni
 aspetta 0.5
-tocca_centro 339 196                # CONTATORE FPS: ACCESO
+tocca_centro 505 267                # CONTATORE FPS: ACCESO
 aspetta 0.5
 foto 00_impostazioni
 tocca_bordo 36 60 basso sinistra    # indietro

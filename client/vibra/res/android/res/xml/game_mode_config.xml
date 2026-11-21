@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Le modalità del pannello dei giochi (Android 12+) le gestisce il gioco: in
+     risparmio batteria tiene la partita a 60 FPS e i menu a 30 (main/game.gui_script);
+     il telefono non abbassa da solo la risoluzione né gli FPS. -->
+<game-mode-config xmlns:android="http://schemas.android.com/apk/res/android"
+    android:supportsBatteryGameMode="true"
+    android:supportsPerformanceGameMode="true"
+    android:allowGameDownscaling="false"
+    android:allowGameFpsOverride="false" />

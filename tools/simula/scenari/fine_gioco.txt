@@ -5,7 +5,7 @@ aspetta 9
 tocca_bordo 74 54 basso sinistra       # la rotellina delle impostazioni
 aspetta 1
 foto 01_impostazioni
-tocca 505 245                         # PROVA FINE GIOCO
+tocca 505 205                         # PROVA FINE GIOCO
 aspetta 0.5
 foto 02_prova_fine_gioco
 tocca 72 60                           # indietro: la home del profilo di prova
