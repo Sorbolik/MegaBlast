@@ -208,7 +208,9 @@ C.VORTEX = { blast = { r = 110, damage_r = 130, damage = 30, damage_min = 10, im
 -- It passes through robots hitting each once (damage, and pushes them away at
 -- push) and stops against terrain. Past an edge it just falls: whoever lands
 -- in the void dies, the parachute and the air jumps still work after it ends.
-C.CANNON = { speed = 640, min_power = 0.35, gravity = 0.8, damage = 40, push = 320, lift = 160 }
+-- windup: seconds standing still before the flight (Sergio 22 nov: the user jumps
+-- into the cannon and the fuse burns; client/battle/cannon.lua draws it).
+C.CANNON = { speed = 640, min_power = 0.35, gravity = 0.8, damage = 40, push = 320, lift = 160, windup = 0.95 }
 -- Petardo (secondary, petard): a small bomb thrown like the Uovo that bounces and
 -- blows up on touching a robot (not the thrower in the first moments) or after
 -- fuse ticks: damage, no crater, and everyone within radius (the thrower too, for

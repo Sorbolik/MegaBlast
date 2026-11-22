@@ -38,7 +38,7 @@ end
 
 -- The training's or the same phone's players, built again: teams, bots'
 -- grades and characters, the draft's picks; the player wears the server's
--- profile, the bots what comes out of it with the seed (sim/loadout.lua rival)
+-- profile, the bots what comes out of it with the seed (sim/loadout.lua dress_bots)
 local function local_players(r, p)
 	local src = type(r.opzioni) == "table" and type(r.opzioni.players) == "table" and r.opzioni.players or {}
 	if #src < 2 or #src > game.MAX_PLAYERS then return nil end
@@ -54,12 +54,13 @@ local function local_players(r, p)
 			out.bot, out.carattere = q.bot, plain(q.carattere, "string")
 		end
 		if training then
-			out.eq = i == ME and mine or (out.bot and loadout.rival(mine, r.seme, i)) or nil
+			out.eq = i == ME and mine or nil
 		elseif i == ME then
 			out.stats = profile.stats(p, profile.active_loadout(p), game.base_stats())
 		end
 		players[i] = out
 	end
+	if training then loadout.dress_bots(players, r.seme) end
 	local opts = { players = players, random_spawns = r.opzioni.random_spawns == true or nil,
 		intro = plain(r.opzioni.intro, "number") }
 	return opts, training
