@@ -69,7 +69,16 @@ Le cose da sapere sono poche.
     la fornace) e passa davanti mentre salta fuori.
 11. **Quanto dura.** In fondo alla timeline, Start e End (ora 0 e 150).
 
-Quando ti piace: Ctrl+S e dimmelo, al resto penso io (esportazione, controllo, anteprima).
+## Mandare il lavoro a Claude
+
+Non serve nessun collegamento dentro Blender:
+
+1. salva con Ctrl+S in `C:\Sviluppo\MegaBlast\simulazione\blender\fornace.blend` (sempre lì);
+2. scrivi a Claude nel thread «fatto, prendi la fornace».
+
+Claude prende il file dal PC (la cartella `C:\Sviluppo\MegaBlast` è già collegata ai thread del
+progetto), lo esporta, lo rigioca e ti manda l'anteprima. Se il PC non è collegato, trascina il
+file `.blend` nella chat del thread: va bene lo stesso.
 
 ## Esportare e controllare
 
