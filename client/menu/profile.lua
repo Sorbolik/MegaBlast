@@ -110,8 +110,9 @@ end
 
 -- The end-game test profile (Sergio, 14 Nov: "voglio provare l'end game",
 -- to tune the top of the progression and then go back down): a second save,
--- picked in the settings, that never touches the real one. Online it changes
--- nothing: the server plays everyone with the base stats.
+-- picked in the settings, that never touches the real one. Online it counts
+-- with what it wears, sent with the greeting (Sergio, 22 Nov; server.go cards),
+-- and pays nothing.
 -- (false: the real profile; "prova": the end game; "risorse": every resource
 -- and no upgrade, below)
 M.test = false
