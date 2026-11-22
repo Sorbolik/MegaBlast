@@ -265,7 +265,7 @@ if hit_a then
 		two_attacks(c)
 		c.hold(RIGHT, until_x(1020))
 		c.hold(IDLE, 30)
-		c.use("teleport", 1.2, 0.65)
+		c.use("teleport", 1.2, 0.75)
 		c.hold(IDLE, function(gg) return gg.robots[1].x >= 1120 and gg.robots[1].grounded end)
 	end)
 	check(outcome == "fatta" and g.turn_no == YOURS, "turno: two attacks in the same turn, then behind the wall")
