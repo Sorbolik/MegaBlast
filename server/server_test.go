@@ -1022,6 +1022,22 @@ func TestBotsFillQueue(t *testing.T) {
 	a.waitFor(`"t":"state"`)
 }
 
+// A test profile (FINE GIOCO, DA ZERO: no "profilo") sends what it wears with
+// the greeting ("prova", Sergio 22 Nov): it counts online, so its bot wears as
+// much; the plain "eq" of an old phone still counts for nothing.
+func TestTestProfileEquip(t *testing.T) {
+	url := testServer(t, func(c *Config) { c.BotAfter = time.Second })
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	a := dial(t, ctx, url)
+	a.send(`{"t":"hello","v":11,"mode":"1v1","prova":{"liv":30,"gear":{"mask":"corvo"},"lv":{"mask":20},"tree":{"armor":15}}}`)
+	players := a.waitFor(`"start"`)["players"].([]any)
+	me, bot := players[0].(map[string]any)["eq"], players[1].(map[string]any)["eq"]
+	if me == nil || bot == nil || bot.(map[string]any)["liv"] != float64(30) || bot.(map[string]any)["gear"] == nil {
+		t.Fatalf("the test profile's eq and its bot's: %v %v", me, bot)
+	}
+}
+
 // A bot seat in net.lua (N.new with players[i].bot) plays its turn by itself
 // on the server: it shoots and passes the turn on, with the server's work
 // budget, the same as on the phone.

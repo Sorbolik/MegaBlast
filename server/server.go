@@ -279,7 +279,7 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	if !ok {
 		mode = modes["2v2"]
 	}
-	s.cards(p, m.Profile)
+	s.cards(p, m.Profile, m.Test)
 	// a private room (private.go): "nuova" opens one, a code joins it
 	if m.Private == "nuova" {
 		s.lobby.NewPrivate(p)
@@ -293,8 +293,16 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 
 // cards: the card and what the player wears come from their profile on the
 // server ("profilo": "<id>.<chiave>", accounts.go), never from what the phone
-// says; without a profile (a test one, profiles off) the base card and stats
-func (s *Server) cards(p *Player, profile string) {
+// says; without a profile (profiles off, nothing sent) the base card and stats.
+// A test profile (FINE GIOCO, DA ZERO) has no profile on the server: what it
+// wears (test) comes from the phone and counts online, so the bots wear as
+// much too (Sergio, 22 Nov); its matches pay nothing (no account). To close
+// before the launch: whoever picks the test profile plays with everything.
+func (s *Server) cards(p *Player, profile string, test json.RawMessage) {
+	if profile == "" && test != nil {
+		p.equip = equipLua(test)
+		return
+	}
 	if s.accounts == nil || profile == "" {
 		return
 	}
