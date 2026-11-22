@@ -1,8 +1,8 @@
-# Online tutto esce dalla stessa coda dei robot (Sergio, 16 nov: "ogni tanto non
-# vedo il mio stesso rampino partire, e poi mi ritrovo nel punto dove sarei
-# finito"): eventi, fune, vita e turno aspettano il disegno (main/playout.lua,
-# net_reach), anche su una rete che trattiene i messaggi fino a 120 ms. Il
-# Rampino tirato in alto si deve vedere in volo con la sua fune, poi cadere.
+# Online il proprio turno si gioca sul telefono, subito (Sergio, 16 nov: "ogni
+# tanto non vedo il mio stesso rampino partire"; 22 nov: niente input lag),
+# anche su una rete che trattiene i messaggi fino a 120 ms. Il Rampino tirato in
+# alto si deve vedere in volo con la sua fune, poi cadere; i turni dei bot vanno
+# coi tasti che manda il server.
 imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_rete 120
 imposta prova_vignette no

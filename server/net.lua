@@ -1,6 +1,7 @@
--- Glue between the server and the simulation: passes inputs to the game and
--- prepares state and events as simple Lua tables, which server/worker.lua
--- writes as JSON. It runs in the server's LuaJIT processes (server/proc.go).
+-- Glue between the server and the simulation: passes inputs to the game (and
+-- tells which input it applied: every phone steps its copy of the match with
+-- the same, sim/netkeys.lua) and prepares the state as a simple Lua table,
+-- which server/worker.lua writes as JSON. It runs in the server's LuaJIT processes (server/proc.go).
 local game = require "sim.game"
 local maps = require "sim.maps"
 local config = require "sim.config"
@@ -8,6 +9,7 @@ local draft = require "sim.draft"
 local rules = require "sim.rules"
 local bot = require "sim.bot"
 local loadout = require "sim.loadout"
+local netkeys = require "sim.netkeys"
 
 local N = {}
 
@@ -17,7 +19,7 @@ local N = {}
 -- on gopher-lua it had 100 and thought over more ticks. After THINK_MAX ticks
 -- of thinking it plays the best move found so far, so it never stands still
 -- for long (Sergio, 9 Nov). Its moves can differ from the phone's: fine, online
--- the client only follows the server's state and these matches are not replayed.
+-- the phones receive the keys it pressed (N.step), they don't think for it.
 N.THINK_MAX = 120
 local BOTS = setmetatable({}, { __mode = "k" })
 
@@ -57,7 +59,6 @@ end
 function N.new(seed, map, players, r)
 	local g = game.new(seed, map, rules.options(r, { players = players, random_spawns = true, intro = game.INTRO_TICKS }))
 	g:pop_events()
-	g.carves = {} -- terrain digs, for whoever reconnects
 	for i, p in ipairs(players or {}) do
 		if p.bot then
 			local b = bot.new(i, p.bot, seed)
@@ -69,17 +70,35 @@ function N.new(seed, map, players, r)
 	return g
 end
 
--- hold: jump is still held down (releasing it while rising makes the jump short)
-function N.step(g, left, right, jump, hold, angle, power, weapon)
-	-- a bot's turn: the keys are its own (the server passes none)
+-- The input of one tick. code: the keys of the person on turn (sim/netkeys.lua),
+-- applied only if lead (their robot) is the one on turn and no bot plays for
+-- it; a bot's turn uses its own keys. Returns the code of the input applied
+-- (the phones step with exactly that), the input itself (decode(encode(input)):
+-- the server steps with the same) and whether a bot played it.
+function N.input(g, code, lead)
 	local b = BOTS[g] and BOTS[g][g.current]
+	local input
 	if b then
-		g:step(bot.input(b, g))
-		return
+		input = bot.input(b, g)
+	elseif code and g.current == lead then
+		input = netkeys.decode(code)
 	end
-	local fire = nil
-	if angle then fire = { angle = angle, power = power, weapon = game.WEAPONS[weapon] and weapon or "missile" } end
-	g:step({ left = left, right = right, jump = jump, hold = hold, fire = fire })
+	local applied, clean = netkeys.clean(input)
+	return applied, clean, b ~= nil
+end
+
+-- One tick with those keys (tests); returns the code applied
+function N.step(g, code, lead)
+	local applied, clean = N.input(g, code, lead)
+	g:step(clean)
+	return applied
+end
+
+-- Where the bot on turn is aiming (nil if no bot plays or nobody aims): the
+-- phones show it, the human's aim comes from their phone (room.go, "k")
+function N.bot_aim(g)
+	local b = BOTS[g] and BOTS[g][g.current]
+	if b and g.phase == "aim" then return bot.shown_aim(b) end
 end
 
 function N.current(g)
@@ -207,28 +226,20 @@ function N.snapshot(g, aim)
 	local b = BOTS[g] and BOTS[g][g.current]
 	if b then aim = bot.shown_aim(b) end
 	if g.phase ~= "aim" then aim = nil end
+	-- n, fp: the tick and the fingerprint (game:fingerprint): the phones, that
+	-- step the same match with the same keys, check they have the same
 	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0) + (g.used.tool and 4 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
 		u = used, mt = g.match_left, ai = g.intro > 0 and g.intro or nil, fr = g.final_round, gr = g.round,
 		av = g.ahead, ab = g.ahead_base, r = robots, p = p, o = orbs, s = shards,
 		c = crates, pl = placed, hl = heals, pp = pools, hz = g.hz, aim = aim,
-		si = b and b.stand_in or nil }
+		si = b and b.stand_in or nil, n = g.tick, fp = g:fingerprint() }
 end
 
--- Events since the last tick (a list, empty if none happened)
+-- Events since the last tick (a list, empty if none happened): only for the
+-- server's own counts (sim/tally.lua), the phones make their own
 function N.events(g)
-	local list = g:pop_events()
-	for _, e in ipairs(list) do
-		e.t = "ev"
-		if e.type == "explosion" or e.type == "carve" then g.carves[#g.carves + 1] = { e.x, e.y, e.r } end
-	end
-	return list
-end
-
--- The digs made so far: whoever reconnects redoes them on their terrain, in
--- the same order
-function N.sync(g)
-	return { t = "sync", x = g.carves }
+	return g:pop_events()
 end
 
 -- Start-of-match draft (sim/draft.lua), before N.new --------------------

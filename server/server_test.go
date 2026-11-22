@@ -65,7 +65,7 @@ for seed = 5, 8 do
 local g = N.new(seed, "pavimento", { { team = 1, bot = 5 }, { team = 2, bot = 5 } })
 local turn, from, flagged = nil, 0, false
 while g.tick < 3000 do
-	N.step(g, false, false, false, false)
+	N.step(g)
 	aimed = aimed or N.snapshot(g).aim ~= nil
 	if g.turn_no ~= turn then turn, from, flagged = g.turn_no, g.tick, false; turns = turns + 1 end
 	local acted = g.used.primary or g.used.secondary or g.used.tool
@@ -150,33 +150,6 @@ func TestEarnedTeleportsFirstTurn(t *testing.T) {
 	sim.Step(tele)
 	if n := orbs(); n != 4 {
 		t.Fatalf("the two earned orbs must leave too: %d in flight", n)
-	}
-}
-
-// Keys held at the end of a turn don't pass to the next one: the client sends
-// its releases only on its own turn, so the server lets them go itself.
-func TestTurnReleasesHeldKeys(t *testing.T) {
-	// two players away (p nil) who have all the time to come back
-	srv := &Server{cfg: Config{ReconnectTicks: 1 << 30, EmptyTicks: 1 << 30}}
-	p := testProc(t)
-	sim := newTestSimOn(t, p, 42, "pavimento")
-	r := &Room{srv: srv, id: sim.id, opened: true, ready: true, started: true, seats: []*seat{{team: 1}, {team: 2}}}
-	r.seats[0].in = held{right: true, hold: true, fire: true, angle: 1.0, power: 0.6, weapon: "missile"}
-	for i := 0; i < 60*30 && r.cur == 0; i++ {
-		b := &Batch{}
-		r.Tick(b)
-		if err := p.Run(b, &Batch{}); err != nil {
-			t.Fatal(err)
-		}
-		if r.ended.Load() {
-			t.Fatal("the match ended")
-		}
-		if r.seats[0].in.right != (r.cur == 0) {
-			t.Fatalf("tick %d: right held %v on turn %d", i, r.seats[0].in.right, r.cur+1)
-		}
-	}
-	if sim.Current() != 2 {
-		t.Fatal("the turn didn't pass")
 	}
 }
 
@@ -292,11 +265,85 @@ func sameJSON(a, b []byte) bool {
 // testClient always reads, like a real client: whoever doesn't read gets
 // disconnected by the server when its queue fills up.
 type testClient struct {
-	t    *testing.T
-	conn *websocket.Conn
-	ctx  context.Context
-	msgs chan []byte // closed when the connection drops
-	err  error
+	t     *testing.T
+	conn  *websocket.Conn
+	ctx   context.Context
+	msgs  chan []byte // closed when the connection drops
+	err   error
+	next  int            // the next tick of the match, from the "k" read so far
+	cur   int            // the robot on turn then
+	state map[string]any // the last state read
+}
+
+// keys reads a "k" message (the keys of the ticks played) if data is one
+func (c *testClient) keys(data []byte) {
+	var m struct {
+		T      string
+		N      int
+		K      []string
+		Cur    int
+		Resume bool
+	}
+	if json.Unmarshal(data, &m) != nil {
+		return
+	}
+	if m.T == "state" {
+		json.Unmarshal(data, &c.state)
+	} else if m.T == "k" {
+		c.next, c.cur = m.N+len(m.K), m.Cur
+	} else if m.T == "start" && !m.Resume {
+		c.next, c.cur = 0, m.Cur
+	}
+}
+
+// drain reads what has already arrived, until nothing comes for a while: on
+// our turn the match waits for our keys
+func (c *testClient) drain() {
+	c.t.Helper()
+	for {
+		select {
+		case data, ok := <-c.msgs:
+			if !ok {
+				c.t.Fatalf("leading: %v", c.err)
+			}
+			c.keys(data)
+		case <-time.After(100 * time.Millisecond):
+			return
+		}
+	}
+}
+
+// lead plays the codes (sim/netkeys.lua) as the phone of robot you does: on
+// its turn, from the next tick
+func (c *testClient) lead(you int, codes ...string) {
+	c.t.Helper()
+	for c.drain(); c.cur != you; c.drain() {
+	}
+	// a hundred at a time (the server reads small messages)
+	for len(codes) > 0 {
+		n := min(len(codes), 100)
+		k, _ := json.Marshal(codes[:n])
+		c.send(fmt.Sprintf(`{"t":"k","n":%d,"k":%s}`, c.next, k))
+		c.next += n
+		codes = codes[n:]
+	}
+}
+
+// play: lead the codes, then nothing until the turn passes
+func (c *testClient) play(you int, codes ...string) {
+	c.t.Helper()
+	c.lead(you, codes...)
+	for c.drain(); c.cur == you; c.drain() {
+		c.lead(you, still(60)...)
+	}
+}
+
+// still: n ticks of no keys
+func still(n int, codes ...string) []string {
+	for i := 0; i < n; i++ {
+		codes = append(codes, "")
+	}
+	return codes
 }
 
 func dial(t *testing.T, ctx context.Context, url string) *testClient {
@@ -323,6 +370,7 @@ func dial(t *testing.T, ctx context.Context, url string) *testClient {
 func (c *testClient) waitFor(want string) map[string]any {
 	c.t.Helper()
 	for data := range c.msgs {
+		c.keys(data)
 		if strings.Contains(string(data), want) {
 			var m map[string]any
 			json.Unmarshal(data, &m)
@@ -396,7 +444,7 @@ func TestResumeUnknownToken(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	c := dial(t, ctx, url)
-	c.send(`{"t":"hello","v":10,"tok":"n1.inventato"}`)
+	c.send(`{"t":"hello","v":11,"tok":"n1.inventato"}`)
 	if m := c.waitFor(`"error"`); m["e"] != "expired" || !c.closed() {
 		t.Fatalf("unexpected answer: %v", m)
 	}
@@ -407,7 +455,7 @@ func TestOnlineMatch(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	hello := `{"t":"hello","v":10,"mode":"1v1"}`
+	hello := `{"t":"hello","v":11,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -440,8 +488,14 @@ func TestOnlineMatch(t *testing.T) {
 		t.Fatalf("unexpected start: %v %v", sa, sb)
 	}
 
-	// Player 1 walks: the opponent receives the new position
+	// The match waits for the phone of whoever is on turn (robot 1, during the
+	// 3-2-1 too: 3 s, game.INTRO_TICKS), which plays at once and sends its keys:
+	// the opponent gets them and the state every half second (the check)
+	a.lead(1, still(180)...)
 	first := b.waitFor(`"state"`)
+	if first["n"].(float64) != stateEvery || first["fp"] == nil {
+		t.Fatalf("state without tick or fingerprint: %v", first)
+	}
 	r0 := first["r"].([]any)[0].(map[string]any)
 	x0 := r0["x"].(float64)
 	// the state carries crates, shards and shots: player 1 has the shots
@@ -463,13 +517,14 @@ func TestOnlineMatch(t *testing.T) {
 	if r0["sw"] != w2 || r1["sw"] != d["offer2"].([]any)[0].(string) {
 		t.Fatalf("wrong picked secondaries: %v %v", r0["sw"], r1["sw"])
 	}
-	// the 3-2-1 first (3 s, game.INTRO_TICKS), then walking is slow (5 U, 38.8 px/s): one second is enough
-	time.Sleep(3200 * time.Millisecond)
-	a.send(`{"t":"in","l":false,"r":true}`)
-	time.Sleep(1000 * time.Millisecond)
-	a.send(`{"t":"in","l":false,"r":false}`)
+	// walking is slow (5 U, 38.8 px/s): one second is enough
+	walk := make([]string, 60)
+	for i := range walk {
+		walk[i] = "r"
+	}
+	a.lead(1, still(300, walk...)...)
 	moved := false
-	for i := 0; i < 600 && !moved; i++ {
+	for i := 0; i < 60 && !moved; i++ {
 		st := b.waitFor(`"state"`)
 		x := st["r"].([]any)[0].(map[string]any)["x"].(float64)
 		moved = x > x0+10
@@ -477,56 +532,54 @@ func TestOnlineMatch(t *testing.T) {
 	if !moved {
 		t.Fatal("player 1's movement doesn't reach player 2")
 	}
+	// the keys come back to everyone as the server applied them
+	if b.cur != 1 || b.next <= 180 {
+		t.Fatalf("keys of the ticks played don't reach player 2: robot %d, tick %d", b.cur, b.next)
+	}
 
 	// The teleport orb leaves without ending the turn
-	a.send(`{"t":"fire","a":1.7,"p":0.3,"w":"teleport"}`)
-	if orb := b.waitFor(`"orb"`); orb["robot"].(float64) != 1 {
-		t.Fatalf("orb of the wrong robot: %v", orb)
-	}
-
-	// Without shots the Uovo di Fiamma doesn't leave (it stays player 1's turn).
-	// Player 2 can't shoot out of turn; player 1 can
-	a.send(`{"t":"fire","a":1.0,"p":0.6,"w":"grenade"}`)
-	b.send(`{"t":"fire","a":2.0,"p":0.5}`)
-	a.send(`{"t":"fire","a":1.0,"p":0.6}`)
-	ev := b.waitFor(`"fire"`)
-	if ev["robot"].(float64) != 1 {
-		t.Fatalf("the wrong robot fired: %v", ev)
-	}
-	turn := b.waitFor(`"turn"`)
-	if turn["robot"].(float64) != 2 {
-		t.Fatalf("the turn doesn't pass to player 2: %v", turn)
-	}
-
-	explosions := 0
-	for st := b.waitFor(`"state"`); st["cur"].(float64) != 2; st = b.waitFor(`"state"`) {
-	}
-	b.send(`{"t":"fire","a":2.2,"p":0.7}`)
-	for {
-		ev := b.waitFor(`"ev"`)
-		// player 2's primary is random: a boomerang or a tar pool digs nothing
-		if ev["type"] == "explosion" || ev["type"] == "carve" {
-			explosions++
+	a.lead(1, still(300, "fteleport,1.7,0.3")...)
+	for st := b.waitFor(`"state"`); ; st = b.waitFor(`"state"`) {
+		if st["cur"].(float64) != 1 {
+			t.Fatalf("the teleport ended the turn: %v", st)
 		}
-		if ev["type"] == "turn" {
+		if st["r"].([]any)[0].(map[string]any)["tl"].(float64) < r0["tl"].(float64) {
 			break
 		}
 	}
 
-	// Whoever drops can come back with the token: they get the match and the digs again
+	// Without shots the Uovo di Fiamma doesn't leave (it stays player 1's turn).
+	// Player 2's keys out of turn count for nothing; player 1 fires
+	b.send(fmt.Sprintf(`{"t":"k","n":%d,"k":["fmissile,2,0.5"]}`, b.next))
+	a.play(1, "fgrenade,1,0.6", "", "fmissile,1,0.6")
+	if b.drain(); b.cur != 2 || shots(b.state["r"].([]any)[1].(map[string]any)) != 2 {
+		t.Fatalf("player 2 fired out of turn, or the turn didn't pass: robot %d, %v", b.cur, b.state)
+	}
+
+	// Player 2's shot passes the turn back
+	b.play(2, "fmissile,2.2,0.7")
+	if a.drain(); a.cur != 1 {
+		t.Fatalf("the turn doesn't come back to player 1: robot %d", a.cur)
+	}
+	played := a.next
+
+	// Whoever drops can come back with the token: they get the match again,
+	// all the keys from the start (the phone replays them)
 	a.conn.CloseNow()
 	if m := b.waitFor(`"away"`); m["robot"].(float64) != 1 {
 		t.Fatalf("unexpected away: %v", m)
 	}
 	a = dial(t, ctx, url)
-	a.send(fmt.Sprintf(`{"t":"hello","v":10,"tok":%q}`, sa["tok"]))
+	a.send(fmt.Sprintf(`{"t":"hello","v":11,"tok":%q}`, sa["tok"]))
 	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
 		t.Fatalf("unexpected resume: %v", m)
 	}
-	if m := a.waitFor(`"sync"`); len(m["x"].([]any)) < explosions {
-		t.Fatalf("missing digs (%d explosions): %v", explosions, m)
+	if m := a.waitFor(`"t":"k"`); m["n"].(float64) != 0 {
+		t.Fatalf("the keys don't start from the beginning: n %v", m["n"])
 	}
-	a.waitFor(`"state"`)
+	if a.drain(); a.next < played {
+		t.Fatalf("missing keys: %d ticks played, %d come back", played, a.next)
+	}
 	b.waitFor(`"back"`)
 
 	// (who never comes back keeps the seat and a bot plays their turns: TestStandIn)
@@ -538,11 +591,11 @@ func TestOnlineMatch(t *testing.T) {
 // coming back they get the match again.
 func TestStandIn(t *testing.T) {
 	url := testServer(t, func(c *Config) {
-		c.StandInTicks = tickRate / 4
+		c.StandInTicks = tickRate / 2
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	hello := `{"t":"hello","v":10,"mode":"1v1"}`
+	hello := `{"t":"hello","v":11,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -554,16 +607,29 @@ func TestStandIn(t *testing.T) {
 	if m := b.waitFor(`"away"`); m["robot"].(float64) != 1 {
 		t.Fatalf("unexpected away: %v", m)
 	}
-	// robot 1's turn goes on without its player: an attack is used (u in the
-	// state) well before the turn's time is up
+	// robot 1's turn goes on without its player: the bot shoots (a code with
+	// a shot that isn't a teleport, in the keys the server sends) well before
+	// the turn's time is up
 	began := time.Now()
-	for {
-		st := b.waitFor(`"t":"state"`)
-		if st["cur"].(float64) != 1 {
-			t.Fatalf("robot 1's turn passed without an attack: %v", st)
+	for shot := false; !shot; {
+		data, ok := <-b.msgs
+		if !ok {
+			t.Fatalf("waiting for the stand-in's shot: %v", b.err)
 		}
-		if u, _ := st["u"].(float64); u > 0 {
-			break
+		var m struct {
+			T   string
+			K   []string
+			Cur int
+		}
+		json.Unmarshal(data, &m)
+		if m.T != "k" {
+			continue
+		}
+		for _, c := range m.K {
+			shot = shot || strings.Contains(c, "f") && !strings.Contains(c, "fteleport")
+		}
+		if !shot && m.Cur != 1 {
+			t.Fatalf("robot 1's turn passed without an attack")
 		}
 	}
 	if d := time.Since(began); d > 15*time.Second {
@@ -572,7 +638,7 @@ func TestStandIn(t *testing.T) {
 	// back with the token in the middle of the turn: the seat is still theirs,
 	// the bot finishes the turn (si in the state) and the next one is theirs
 	a = dial(t, ctx, url)
-	a.send(fmt.Sprintf(`{"t":"hello","v":10,"tok":%q}`, sa["tok"]))
+	a.send(fmt.Sprintf(`{"t":"hello","v":11,"tok":%q}`, sa["tok"]))
 	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
 		t.Fatalf("unexpected resume: %v", m)
 	}
@@ -581,11 +647,10 @@ func TestStandIn(t *testing.T) {
 		t.Fatalf("the bot should be finishing robot 1's turn: cur %v si %v", st["cur"], st["si"])
 	}
 	// player 2 passes their turn by shooting; then robot 1 is its player's again
-	for st := b.waitFor(`"t":"state"`); st["cur"].(float64) != 2; st = b.waitFor(`"t":"state"`) {
-	}
-	b.send(`{"t":"fire","a":2.2,"p":0.7}`)
+	b.play(2, "fmissile,2.2,0.7")
 	for st := a.waitFor(`"t":"state"`); st["cur"].(float64) != 2; st = a.waitFor(`"t":"state"`) {
 	}
+	a.lead(1, still(120)...)
 	for {
 		st := a.waitFor(`"t":"state"`)
 		if st["cur"].(float64) == 1 && st["phase"] == "aim" {
@@ -618,7 +683,7 @@ func TestDraftReady(t *testing.T) {
 	url := testServer(t, func(c *Config) { c.DraftTicks = 60 * tickRate })
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	hello := `{"t":"hello","v":10,"mode":"1v1"}`
+	hello := `{"t":"hello","v":11,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -667,7 +732,7 @@ func TestTeamDraft(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":10,"mode":"2v2"}`)
+		c[i].send(`{"t":"hello","v":11,"mode":"2v2"}`)
 	}
 	you := map[float64]*testClient{}
 	var offer, offer2 []any
@@ -717,7 +782,7 @@ func TestLeave(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":10,"mode":"ffa"}`)
+		c[i].send(`{"t":"hello","v":11,"mode":"ffa"}`)
 	}
 	you := map[float64]*testClient{}
 	for _, x := range c {
@@ -807,12 +872,12 @@ func TestShowcases(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":10,"mode":"1v1","profilo":"` + guest(t, acc, `p.livello = 12
+	a.send(`{"t":"hello","v":11,"mode":"1v1","profilo":"` + guest(t, acc, `p.livello = 12
 		p.posseduti.corvo_mask, p.pezzi.corvo_mask = true, 24
 		p.loadouts[1].gear.mask = "corvo"`) + `","vetrina":{"liv":99}}`)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":10,"mode":"1v1","profilo":"1.sbagliata"}`)
+	b.send(`{"t":"hello","v":11,"mode":"1v1","profilo":"1.sbagliata"}`)
 	showcases := func(m map[string]any) string {
 		j, _ := json.Marshal(m["vetrine"])
 		return string(j)
@@ -869,13 +934,13 @@ func TestWaitingRoom(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":10,"mode":"2v2","profilo":"` + guest(t, acc, "p.livello = 3") + `"}`)
+	a.send(`{"t":"hello","v":11,"mode":"2v2","profilo":"` + guest(t, acc, "p.livello = 3") + `"}`)
 	w := a.waitFor(`"wait"`)
 	if w["of"] != float64(4) || w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
 		t.Fatalf("first wait: %v", w)
 	}
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":10,"mode":"2v2","profilo":"` + guest(t, acc, "p.livello = 5") + `"}`)
+	b.send(`{"t":"hello","v":11,"mode":"2v2","profilo":"` + guest(t, acc, "p.livello = 5") + `"}`)
 	w = b.waitFor(`"wait"`)
 	cards := w["vetrine"].([]any)
 	if w["you"] != float64(2) || len(cards) != 2 || cards[0].(map[string]any)["liv"] != float64(3) {
@@ -900,10 +965,10 @@ func TestLeaveQueue(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":10,"mode":"2v2"}`)
+	a.send(`{"t":"hello","v":11,"mode":"2v2"}`)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":10,"mode":"2v2"}`)
+	b.send(`{"t":"hello","v":11,"mode":"2v2"}`)
 	b.waitFor(`"you":2`)
 	a.send(`{"t":"leave"}`)
 	if w := b.waitFor(`"wait"`); w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
@@ -924,12 +989,12 @@ func TestBotsFillQueue(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":10,"mode":"2v2","profilo":"` + guest(t, acc, "p.livello = 12") + `"}`)
+	a.send(`{"t":"hello","v":11,"mode":"2v2","profilo":"` + guest(t, acc, "p.livello = 12") + `"}`)
 	if w := a.waitFor(`"wait"`); w["bot_in"] == nil {
 		t.Fatalf("no bot_in in a normal queue: %v", w)
 	}
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":10,"mode":"2v2"}`)
+	b.send(`{"t":"hello","v":11,"mode":"2v2"}`)
 	d := a.waitFor(`"draft"`)
 	players := d["players"].([]any)
 	cards := d["vetrine"].([]any)
@@ -965,7 +1030,7 @@ func TestNetBotPlays(t *testing.T) {
 local g = N.new(5, nil, { { team = 1, bot = 4 }, { team = 2, bot = 4 } })
 local shot = false
 while g.tick < 3000 and N.current(g) == 1 do
-	N.step(g, false, false, false, false)
+	N.step(g)
 	shot = shot or g.used.primary or g.used.secondary
 end
 assert(shot, "the bot didn't shoot")
@@ -981,7 +1046,7 @@ func TestPrivateRoom(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":10,"privata":"nuova"}`)
+	a.send(`{"t":"hello","v":11,"privata":"nuova"}`)
 	m := a.waitFor(`"privata"`)
 	code, _ := m["code"].(string)
 	if len(code) != 4 || m["mode"] != "2v2" || m["you"] != float64(1) || m["host"] != float64(1) || len(m["posti"].([]any)) != 4 {
@@ -989,12 +1054,12 @@ func TestPrivateRoom(t *testing.T) {
 	}
 	// a wrong code: error and closed
 	x := dial(t, ctx, url)
-	x.send(`{"t":"hello","v":10,"privata":"x"}`)
+	x.send(`{"t":"hello","v":11,"privata":"x"}`)
 	if e := x.waitFor(`"error"`); e["e"] != "codice" || !x.closed() {
 		t.Fatalf("wrong code: %v", e)
 	}
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":10,"privata":"` + code + `"}`)
+	b.send(`{"t":"hello","v":11,"privata":"` + code + `"}`)
 	if m = b.waitFor(`"privata"`); m["you"] != float64(2) {
 		t.Fatalf("B must take seat 2: %v", m)
 	}
@@ -1028,10 +1093,10 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":10,"privata":"nuova"}`)
+	a.send(`{"t":"hello","v":11,"privata":"nuova"}`)
 	code := a.waitFor(`"privata"`)["code"].(string)
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":10,"privata":"` + code + `"}`)
+	b.send(`{"t":"hello","v":11,"privata":"` + code + `"}`)
 	b.waitFor(`"privata"`)
 	a.send(`{"t":"modo","mode":"1v1"}`)
 	if m := b.waitFor(`"1v1"`); len(m["posti"].([]any)) != 2 || m["you"] != float64(2) {
@@ -1039,7 +1104,7 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 	}
 	// full of people: a third can't come in
 	c := dial(t, ctx, url)
-	c.send(`{"t":"hello","v":10,"privata":"` + code + `"}`)
+	c.send(`{"t":"hello","v":11,"privata":"` + code + `"}`)
 	if e := c.waitFor(`"error"`); e["e"] != "piena" {
 		t.Fatalf("full room: %v", e)
 	}
@@ -1050,7 +1115,7 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 	b.send(`{"t":"leave"}`)
 	b.closed()
 	d := dial(t, ctx, url)
-	d.send(`{"t":"hello","v":10,"privata":"` + code + `"}`)
+	d.send(`{"t":"hello","v":11,"privata":"` + code + `"}`)
 	if e := d.waitFor(`"error"`); e["e"] != "codice" {
 		t.Fatalf("the empty room must be gone: %v", e)
 	}
@@ -1091,14 +1156,14 @@ func TestEquipStats(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":10,"mode":"1v1","profilo":"` + guest(t, acc, `p.livello = 30
+	a.send(`{"t":"hello","v":11,"mode":"1v1","profilo":"` + guest(t, acc, `p.livello = 30
 		p.posseduti.corvo_mask, p.pezzi.corvo_mask, p.firme.corvo_mask = true, 20, 3
 		p.posseduti.corvo_chest, p.pezzi.corvo_chest = true, 12
 		p.loadouts[1].gear = { mask = "corvo", chest = "corvo" }
 		p.loadouts[1].tree = { armor = 15, pick = { armor = { 1, nil, 2 } } }`) + `"}`)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":10,"mode":"1v1","eq":{"liv":30,"tree":{"armor":15}}}`)
+	b.send(`{"t":"hello","v":11,"mode":"1v1","eq":{"liv":30,"tree":{"armor":15}}}`)
 	s := a.waitFor(`"start"`)
 	players, _ := json.Marshal(s["players"])
 	var ps []struct {
@@ -1131,7 +1196,7 @@ func TestEmptyRoomCloses(t *testing.T) {
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	hello := `{"t":"hello","v":10,"mode":"1v1"}`
+	hello := `{"t":"hello","v":11,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -1139,7 +1204,7 @@ func TestEmptyRoomCloses(t *testing.T) {
 	b.send(hello)
 	sa := a.waitFor(`"start"`)
 	b.waitFor(`"start"`)
-	back := fmt.Sprintf(`{"t":"hello","v":10,"tok":%q}`, sa["tok"])
+	back := fmt.Sprintf(`{"t":"hello","v":11,"tok":%q}`, sa["tok"])
 	// only one away, well past the time: the room is still there
 	a.conn.CloseNow()
 	b.waitFor(`"away"`)

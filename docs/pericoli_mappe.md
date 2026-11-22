@@ -30,9 +30,10 @@ Un pericolo dei giri ha quattro punti d'ingresso, tutti facoltativi tranne `setu
 
 ## Server
 
-Niente da fare per un pericolo nuovo oltre a quello che c'è: `hz` va nello stato così com'è
-(`server/net.lua`, `N.snapshot`) e il client lo ricopia in `apply_state`
-(`client/main/game.gui_script`). Gli eventi (`g:emit`) arrivano da soli. Si aggiunge un
+Niente da fare per un pericolo nuovo: online ogni telefono gioca la stessa partita del
+server coi tasti di ogni tick (dal 22 nov, `client/sim/netkeys.lua`), quindi il pericolo e i
+suoi eventi (`g:emit`) ci sono da soli. `hz` va anche nello stato del server così com'è
+(`server/net.lua`, `N.snapshot`), che serve ai test. Si aggiunge un
 controllo in `tests/hazards_test.lua` e, se serve, in `server/server_test.go`.
 
 ## Client

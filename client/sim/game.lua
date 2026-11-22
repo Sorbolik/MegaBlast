@@ -226,9 +226,6 @@ M.RESPAWN_TICKS = math.floor(C.RESPAWN_SECONDS * 60)
 M.SETTLE_TICKS = 60      -- 1 s between one turn and the next
 M.MAX_SETTLE_TICKS = 5 * 60
 
--- Online the server sends a state every SNAPSHOT_TICKS ticks (30 per second)
-M.SNAPSHOT_TICKS = 2
-
 -- Controls (used by the client). Shot power comes from how far the finger is:
 -- f = distance / reach (0..1). Below AIM_DEADZONE it doesn't count, then it
 -- grows with exponent AIM_EXPONENT (2: quadratic, more precise on short shots).
