@@ -90,4 +90,12 @@ Approvata da Claude il 22 nov (scheda reversibile); la trasformazione l'ha scelt
 
 ## Consegna di Codex
 
+- `art/WB-083/palla_feritoia_1.png` e `palla_feritoia_1.txt` — 1024×1024, un tentativo.
+- `art/WB-083/palla_feritoia_2.png` e `palla_feritoia_2.txt` — 1024×1024, un tentativo. Variante scelta come riferimento per la feritoia più regolare.
+- `art/WB-083/palla_gusci.png` e `palla_gusci.txt` — 1536×1024, tre tentativi, selezionato il secondo.
+
+Prompt eseguiti alla lettera con ImageGen e i riferimenti nell'ordine indicato. I PNG sono stati ridimensionati in proporzione e centrati su tela magenta per ottenere le misure della tabella. Il diametro delle palle è circa 700 px e i gusci sono larghi circa 645 px ciascuno.
+
+Controllo visivo sui tre PNG finali. Le palle sono intere, senza corna, volto o scritte, con feritoia magenta a estremità tonde e una fascia verde. I gusci sono separati, hanno contorni chiusi e la frattura dentata mostra la sezione scura. Alcuni denti entrano nella fascia verde. Campionando i pixel, il fondo e la feritoia risultano magenta prossimo a #FF00FF, con piccole variazioni. Si notano anche variazioni nelle campiture, e la fascia non corrisponde esattamente ai verdi richiesti. Il criterio della palette piatta con valori esatti non è soddisfatto. Non sono stati verificati il ricalco vettoriale e la resa in gioco.
+
 ## Resoconto di Claude
