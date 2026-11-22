@@ -1,0 +1,38 @@
+# Online lo sparo parte sempre anche sullo schermo veloce del telefono
+# (Sergio, 22 nov: "carico la levetta, lascio il dito e non fa niente"):
+# a 90-120 Hz molti frame non fanno girare nessun tick, e lo sparo lasciato
+# in uno di quei frame si perdeva (CP.net_frame), e così il salto toccato e gli
+# oggetti. Qui lo schermo va senza vsync (nel simulatore 70-80 fps: abbastanza
+# perché alcuni frame non abbiano tick) e si spara con la levetta in tre turni.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta comandi telefono
+imposta prova_hz 240
+imposta prova_fps 1
+imposta prova_vignette no
+aspetta 1
+server 2v2 0 bot_dopo=3s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 175 52 basso destra     # GIOCA
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
+aspetta_stato modo=scelta_online 15
+aspetta_stato modo=online 25
+aspetta_stato modo=online turno=1 fase=aim 20
+aspetta 4                            # il conto 3-2-1
+levetta_mira -60 40 0.4 01_mira
+aspetta_evento fire 2
+aspetta 1
+foto 02_sparato
+aspetta_stato turno=2 40
+aspetta_stato turno=1 fase=aim 90
+aspetta 1
+levetta_mira 60 40 0.3
+aspetta_evento fire 2
+aspetta_stato turno=2 40
+aspetta_stato turno=1 fase=aim 90
+aspetta 1
+levetta_mira -50 50 0.25
+aspetta_evento fire 2
+aspetta 1
+foto 03_terzo_sparo
