@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Si unisce al manifest del gioco: il telefono lo tratta da gioco (pannelli dei
+     giochi di Samsung, Xiaomi...), conosce le modalità prestazioni e risparmio
+     batteria (res/android/res/xml/game_mode_config.xml) e lascia vibrare le esplosioni. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.sorbolik.megablast.vibra">
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <application android:isGame="true">
+        <meta-data android:name="android.game_mode_config" android:resource="@xml/game_mode_config" />
+    </application>
+</manifest>

@@ -27,6 +27,7 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	settings = require "menu.settings", board = require "menu.board", queue = require "menu.queue",
 	lineup = require "menu.lineup", profile_tabs = require "menu.profile_tabs", lobby = require "menu.lobby",
 	story = require "menu.story", private = require "menu.private", backpack = require "menu.backpack",
+	hud_editor = require "menu.hud_editor",
 	-- not screens, here so as not to add local variables (limit of 200): the
 	-- server's events and their rules (start online)
 	eventi = require "main.events", regole = require "sim.rules",
@@ -49,6 +50,7 @@ local score = require "battle.score"
 local hud = require "battle.hud"
 local screen = require "ui.screen"
 local frames = require "ui.frames"
+local phone = require "main.phone"
 -- in the browser without the extension (web build) the browser's WebSocket is enough
 local ws = websocket or (html5 and require "main.ws_browser")
 
@@ -89,16 +91,18 @@ local TEAM_NAMES = TM.team_names
 local TEAM_COLORS = ui.C.SQUADRA
 local WHITE = vmath.vector4(1, 1, 1, 1)
 
--- Weapon bar, in this order: only those the robot has are shown. Around the
+-- Weapon bar, in this order: only those the robot has are shown (what runs out
+-- in the match stays, spent: CP.hand). Around the
 -- stopwatch at the bottom center (docs/decisioni/interfaccia.md): on the left
 -- the primaries (Rune launcher always, next to the ring, the others from
 -- crates) with an ember border, on the right the secondaries (the Blade
 -- always, plus the one picked at the start) with a steel border. The Grapple
 -- is round and purple next to the teleport: on the right, where the aiming
--- hand is, because the left one moves. The consumable items (trap, shield,
+-- hand is, because the left one moves (on the phone on an arc around the aim
+-- stick, CP.hand.arc). The consumable items (trap, shield,
 -- springboard, parachute: tapping them uses them at once) are a thing of their
 -- own (Sergio, 29 Oct: above the secondaries they looked like a submenu of
--- theirs): a mint column above the teleport, titled OGGETTI with how many are
+-- theirs): a mint column (on the phone on the right edge), titled OGGETTI with how many are
 -- left. Once a weapon is used, its whole group goes off: the next shot is the
 -- other color.
 -- status effects: the label rising over the robot when they arrive and the
@@ -108,7 +112,7 @@ local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "boomer
 	"lunge", "bellows", "vortex", "cannon", "petard",
 	"trap", "shield", "trampoline", "hook", "janus", "parachute" }
 -- border color of the four groups: primaries, secondaries, items, Grapple
-local BAR_COLORS = { ui.C.BRACE, ui.C.STEEL, ui.C.MINT, ui.C.PURPLE }
+local BAR_COLORS = { ui.C.BRACE, ui.C.STEEL, ui.C.MINT, ui.C.COPPER }
 local function bar_group(w)
 	if w == "hook" or w == "janus" then return 4 end
 	return game.SECONDARY[w] and 2 or (game.TOOLS[w] and 3 or 1)
@@ -246,9 +250,9 @@ local MOVE_PAD = { x = 115, y = 117 }
 local AIM_PAD = { x = W - 115, y = 117 }
 -- the sticks are grabbed in the left and right 40%, below 60% of the height
 local PAD_ZONE = { sx = W * 0.4, dx = W * 0.6, y = H * 0.6 }
--- teleport: on the phone at the top right of the aim stick; on the computer
--- at the bottom right (or the T key)
-local TELE_BTN_TOUCH = vmath.vector3(W - 72, 257, 0)
+-- teleport: on the phone on the arc above the aim stick (CP.hand.arc, set by
+-- arrange); on the computer at the bottom right (or the T key)
+local TELE_BTN_TOUCH = vmath.vector3(W - 145, 286, 0)
 local TELE_BTN_DESK = vmath.vector3(W - 100, 62, 0)
 local TELE_BTN_D = 84
 -- aim ring: light blue when off, red when releasing fires the shot
@@ -865,6 +869,7 @@ local function explosion(self, x, y, r)
 	impact.explosion(self.fx, x, y, r)
 	if self.lights then self.lights:flash(x, y, r) end
 	sound.play("#boom", { gain = 0.7 + 0.3 * math.min(1, r / 40), speed = 1.25 - math.min(0.45, r / 90) + math.random() * 0.1 })
+	phone.blast(r)
 
 	-- debris: pieces of rock and ember thrown upward
 	for j = 1, DEBRIS_PER_SHOT do
@@ -958,7 +963,7 @@ end
 
 -- Grapple and Bellows as drawn, in a single table: the file is close to the
 -- 200 locals Lua allows
-local RM = { fune = require "battle.rope", hazards = require "battle.hazards", GUSTS = 5,
+local RM = { fune = require "battle.rope", hazards = require "battle.hazards", focus = require "battle.turn_focus", layout = require "battle.hud_layout", GUSTS = 5,
 	-- the images of the new shots in flight (battle/weapons.lua, shots), by projectile kind
 	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano", vortex = "voragine_volo" } }
 -- The weapons' signatures (WB-066): one drawing on the impact, tinted
@@ -3430,17 +3435,8 @@ local function pad_release(pad, ring_color)
 	pad_color(pad, ring_color)
 end
 
--- Micro-vibration: client/vibra on Android phones, in the browser where
--- navigator.vibrate exists
-local function vibrate_touch()
-	if vibra then
-		vibra.tocco()
-	elseif html5 then
-		html5.run("navigator.vibrate && navigator.vibrate(12)")
-	elseif SIMULATE then
-		print("SIMULA evento vibra")
-	end
-end
+-- Micro-vibration (main/phone.lua: off with the IMPOSTAZIONI switch)
+local vibrate_touch = phone.tap
 
 CP.vibrate = vibrate_touch -- for the blocks above it (the zoom)
 
@@ -3540,8 +3536,8 @@ local function set_touch_ui(self, on)
 	if self.move_pad.id then move_pad_release(self) end
 	if self.aim_pad.id then aim_pad_drop(self) end
 	self.touch_ui = on
-	gui.set_position(self.btn_tele.nodo, on and TELE_BTN_TOUCH or TELE_BTN_DESK)
-	self.tele_state = nil
+	-- the player's layout is only for the phone (battle/hud_layout.lua)
+	CP.layout_place(self)
 	gui.set_enabled(self.tele_key, not on)
 	if self.controls_visible ~= nil then set_controls_visible(self, self.controls_visible) end
 end
@@ -3599,8 +3595,22 @@ local function update_bar(self)
 	local from_pt = hud.OUTSIDE + SIZES.from_ring
 	local tele = tel and TELE_BTN_TOUCH or TELE_BTN_DESK
 	local bar_y = BAR_Y + screen.y0
-	local how_many_m, chosen, ogg_top = { 0, 0, 0, 0 }, nil, nil
+	local how_many_m, chosen, ogg_top, ogg_x = { 0, 0, 0, 0 }, nil, nil, nil
+	-- the player's layout, on the phone: each group grows around its center and moves
+	local LY = tel and self.layout
+	local AN = CP.layout_box
+	if LY then
+		AN.x = AN.x or {}
+		AN.y = AN.y or {}
+		AN.x[1], AN.y[1] = W / 2 - from_pt, bar_y
+		AN.x[2], AN.y[2] = W / 2 + from_pt, bar_y
+		AN.x[3], AN.y[3] = screen.x1 - CP.hand.ARC.ITEMS_X, CP.hand.ARC.ITEMS_Y + screen.y0
+		local ax, ay = CP.hand.arc(2)
+		local bx, by = CP.hand.arc(3)
+		AN.x[4], AN.y[4] = (ax + bx) / 2, (ay + by) / 2
+	end
 	for _, sl in ipairs(self.slots) do
+		-- what ran out leaves the bar (Sergio, 21 Nov); the picked secondary stays, also at 0 (slot_have)
 		local have = slot_have(rb, sl.weapon, l)
 		if sl.have ~= have then
 			gui.set_enabled(sl.node, have)
@@ -3617,22 +3627,34 @@ local function update_bar(self)
 			elseif gr == 2 then
 				x = W / 2 + from_pt + d / 2 + k * (d + gap)
 			elseif gr == 3 then
-				-- the items column above the teleport: with all four its title
-				-- stays under the zoom button (report UI-001)
+				-- the items column: on the phone on the right edge, above the aim
+				-- stick (CP.hand.ARC); on the computer above the teleport. With all
+				-- four its title stays under the zoom button (report UI-001)
 				d = SIZES.oggetto
-				x, y = tele.x, tele.y + TELE_BTN_D / 2 + 16 + d / 2 + k * (d + 6)
-				ogg_top = y + d / 2
+				if tel then
+					x, y = screen.x1 - CP.hand.ARC.ITEMS_X, CP.hand.ARC.ITEMS_Y + screen.y0 + k * (d + 6)
+				else
+					x, y = tele.x, tele.y + TELE_BTN_D / 2 + 16 + d / 2 + k * (d + 6)
+				end
 			else
-				-- Rampino and Giano, side by side to the left of the teleport
+				-- Rampino and Giano: on the phone on the arc around the aim stick,
+				-- after the teleport; on the computer side by side left of it
 				d = TELE_BTN_D
-				x, y = tele.x - (k + 1) * (TELE_BTN_D + 12), tele.y
+				if tel then
+					x, y = CP.hand.arc(k + 2)
+				else
+					x, y = tele.x - (k + 1) * (TELE_BTN_D + 12), tele.y
+				end
 			end
+			local us = 1
+			if LY then x, y, us = RM.layout.place(LY, AN.UNIT[gr], x, y, AN.x[gr], AN.y[gr]) end
+			if gr == 3 then ogg_top, ogg_x = y + d * us / 2, x end
 			local count = sl.weapon == "parachute" and rb.parachutes_left or rb.ammo[sl.weapon] or 0
 			if sl.count ~= count then
 				if sl.tondo then
 					hud.round_number(sl.tondo, count > 0 and tostring(count) or "")
 				else
-					gui.set_enabled(sl.badge, count > 0)
+					gui.set_enabled(sl.badge, count ~= 0)
 					gui.set_text(sl.label, count > 0 and ("x" .. count) or "")
 				end
 				sl.count = count
@@ -3643,31 +3665,244 @@ local function update_bar(self)
 			-- 3 (4 if it can't be used now): the item lit by the controller (LT)
 			if on ~= 2 and gr == 3 and self.pad_on and sl.weapon == self.pad_item then on = on == 0 and 4 or 3 end
 			if on == 2 then
-				y = y + SIZES.alza
+				y = y + SIZES.alza * us
 				chosen = sl
 			end
-			sl.d = d
+			sl.d = d * us
 			if sl.x ~= x or sl.y ~= y then
 				set_pos(sl.node, x, y)
 				sl.x, sl.y = x, y
 			end
-			local sc = (gr <= 2 and d / SLOT or 1) * (on >= 2 and CHOSEN or 1)
-			if sl.on ~= on or sl.sc ~= sc then
-				gui.set_color(sl.bordo, on >= 2 and ui.C.LIGHT or (on == 1 and BAR_COLORS[gr] or SLOT_BORDER[0]))
-				if sl.icon then gui.set_color(sl.icon, (on == 0 or on == 4) and ICON_USED or WHITE) end
+			local sc = (gr <= 2 and d / SLOT or 1) * ((on >= 2 and on <= 4) and CHOSEN or 1) * us
+			local used_key = on == 2 and turn and not g:can_use(sl.weapon)
+			if sl.on ~= on or sl.sc ~= sc or sl.team_c ~= self.hand_color or sl.used_key ~= used_key then
+				sl.used_key = used_key
+				gui.set_color(sl.bordo, on >= 2 and ui.C.LIGHT or (on == 1 and CP.hand.dim(BAR_COLORS[gr]) or SLOT_BORDER[0]))
+				-- in hand but already used this turn (the Blade after its blow): the icon goes off
+				local spent_hand = on == 2 and turn and not g:can_use(sl.weapon)
+				if sl.icon then
+					gui.set_color(sl.icon, (on == 0 or on == 4 or spent_hand) and ICON_USED
+						or (on == 1 and CP.hand.dim(WHITE) or WHITE))
+				end
+				CP.hand.frame(sl, gr <= 2 and "slot_arma" or (gr == 3 and "oggetto" or "gettone"), on == 2,
+					gr <= 2 and SLOT or (gr == 3 and SIZES.oggetto or TELE_BTN_D), self.hand_color)
+				sl.team_c = self.hand_color
 				SLOT_SCALE.x, SLOT_SCALE.y = sc, sc
 				gui.set_scale(sl.node, SLOT_SCALE)
 				sl.on, sl.sc = on, sc
 			end
 		end
 	end
+	CP.hand.tool_badge(self, rb, turn)
 	-- the column's title, above the last item
-	if ogg_top then set_pos(self.items_title, tele.x, ogg_top + 16) end
+	if ogg_top then set_pos(self.items_title, ogg_x, ogg_top + 16) end
 	if self.items_on ~= (ogg_top ~= nil) then
 		self.items_on = ogg_top ~= nil
 		gui.set_enabled(self.items_title, self.items_on)
 	end
 	return chosen
+end
+
+-- What you hold (Sergio, 21 Nov: «deve avere la stessa identità grafica sempre
+-- quello che hai in mano»): weapons, Grapple, Janus and teleport alike are
+-- raised, bigger, with the light border, an outer frame of their own shape in
+-- your team's color and the name above; everything else you could pick is at
+-- half light (CP.hand.DIM; 1 would leave it lit), what is used up for this turn
+-- dimmer; what runs out leaves the bar, the picked secondary stays (also at 0)
+CP.hand = { DIM = 0.5, FRAME = 1.16, dimmed = {},
+	-- the shared PER TURNO badge once used ("0"): grey
+	BADGE = vmath.vector4(0.45, 0.42, 0.4, 1) }
+function CP.hand.dim(c)
+	local t = CP.hand.dimmed[c]
+	if not t then t = vmath.vector4(c.x, c.y, c.z, c.w * CP.hand.DIM); CP.hand.dimmed[c] = t end
+	return t
+end
+
+-- sl: a slot or the teleport ({ node, mano }); d: the size of its shape
+function CP.hand.frame(sl, shape, on, d, color)
+	if on and not sl.mano then
+		sl.mano = fit(ui.sagoma(shape .. "_bordo", 0, 0, d, d, WHITE, sl.node))
+		gui.set_inherit_alpha(sl.mano, true)
+		gui.set_scale(sl.mano, vmath.vector3(CP.hand.FRAME, CP.hand.FRAME, 1))
+	end
+	if sl.mano then
+		gui.set_enabled(sl.mano, on)
+		if on then gui.set_color(sl.mano, color) end
+	end
+end
+
+-- The default layout on the phone (Sergio, 21 Nov): teleport, Grapple and
+-- Janus on an arc around the aim stick (the thumb reaches them without leaving
+-- it), the items in a column on the right edge
+CP.hand.ARC = { R = 172, ANGLES = { 100, 136, 172 }, ITEMS_Y = 272, ITEMS_X = 44 }
+function CP.hand.arc(i)
+	local a = math.rad(CP.hand.ARC.ANGLES[i])
+	return AIM_PAD.x + CP.hand.ARC.R * math.cos(a), AIM_PAD.y + CP.hand.ARC.R * math.sin(a)
+end
+
+CP.hand.TOOL = { D = 30, OUT = 40, CAPTION_X = -22 }
+function CP.hand.tool_badge_create(self)
+	local T = CP.hand.TOOL
+	local b = { root = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))) }
+	gui.set_parent(b.root, self.bar)
+	b.disc = fit(ui.disc(0, 0, T.D, ui.C.COPPER, b.root))
+	b.num = fit(ui.text("1", 0, 1, 0.8, ui.C.BOTTOM, b.disc))
+	gui.set_outline(b.num, vmath.vector4(0, 0, 0, 0))
+	-- the words on the disc's left, outside the buttons
+	b.caption = label(T.CAPTION_X, 0, TM.per_turn, 1)
+	gui.set_pivot(b.caption, gui.PIVOT_E)
+	gui.set_color(b.caption, ui.C.COPPER)
+	gui.set_parent(b.caption, b.root)
+	gui.set_enabled(b.root, false)
+	self.tool_badge = b
+end
+
+-- between the two buttons, a little outward (away from the aim stick on the
+-- phone, above them on the computer); 0 once one of the two is used this turn
+function CP.hand.tool_badge(self, rb, turn)
+	local b, a, c = self.tool_badge, nil, nil
+	for _, sl in ipairs(self.slots) do
+		if sl.group == 4 and sl.have and sl.x then
+			if a then c = sl else a = sl end
+		end
+	end
+	local on = a ~= nil and c ~= nil
+	if b.on ~= on then gui.set_enabled(b.root, on); b.on = on end
+	if not on then return end
+	local mx, my = (a.x + c.x) / 2, (a.y + c.y) / 2
+	local dx, dy = 0, 1
+	if self.touch_ui then
+		dx, dy = mx - AIM_PAD.x, my - AIM_PAD.y
+		local l = math.sqrt(dx * dx + dy * dy)
+		dx, dy = dx / l, dy / l
+	end
+	local T = CP.hand.TOOL
+	local out = self.touch_ui and T.OUT or TELE_BTN_D / 2 + 20
+	local x, y = mx + dx * out, my + dy * out
+	if b.x ~= x or b.y ~= y then set_pos(b.root, x, y); b.x, b.y = x, y end
+	local left = (turn and self.g.used.tool) and 0 or 1
+	if b.left ~= left then
+		b.left = left
+		gui.set_text(b.num, tostring(left))
+		gui.set_color(b.disc, left > 0 and ui.C.COPPER or CP.hand.BADGE)
+	end
+end
+
+-- IMPOSTAZIONI > DISPOSIZIONE TASTI (menu/hud_editor.lua): a match of two on
+-- this phone that stands still (it never steps), with every button there: the
+-- items with one of each, the phone's sticks. FATTO saves and goes back to the
+-- settings
+CP.LAYOUT_AMMO = { grenade = 1, shards = 1, punch = 1, sniper = 1, trap = 1, shield = 1, trampoline = 1 }
+function CP.layout_open(self)
+	close_screen(self)
+	hide_menu(self)
+	local players = { { team = 1 }, { team = 2 } }
+	players[1].stats = profile.stats(self.profilo, profile.active_loadout(self.profilo), game.base_stats())
+	new_match(self, 1, self.mappa or "pavimento", { players = players, ammo = CP.LAYOUT_AMMO })
+	CP.begin(self, nil, nil, nil, false)
+	self.mode = "local"
+	self.layout_was_touch = self.touch_ui
+	set_touch_ui(self, true)
+	set_controls_visible(self, true)
+	self.layout_ed = menu.hud_editor.new({
+		layout = self.layout,
+		boxes = function() return CP.layout_boxes(self) end,
+		changed = function() CP.layout_place(self) end,
+	})
+end
+
+function CP.layout_close(self)
+	local e = self.layout_ed
+	if not e then return end
+	self.layout_ed = nil
+	profile.set(self.profilo, "disposizione", RM.layout.to_save(self.layout))
+	profile.save(self.profilo)
+	self.mode = "uscita"
+	CP.iris(self, function()
+		menu.hud_editor.destroy(e)
+		set_touch_ui(self, self.layout_was_touch)
+		show_menu(self, true)
+		open_screen(self, menu.settings, self.profilo, self.ctrl, CP.account)
+	end)
+end
+
+-- The player's layout (battle/hud_layout.lua, only on the phone): teleport,
+-- zoom and turn time here, when the screen or the layout changes; the weapon
+-- bar's groups in update_bar
+function CP.layout_place(self)
+	if not self.chrono then return end
+	local L, HL = self.touch_ui and self.layout or nil, RM.layout
+	local ax, ay = CP.hand.arc(1)
+	TELE_BTN_TOUCH.x, TELE_BTN_TOUCH.y = HL.place(L, "teletrasporto", ax, ay, ax, ay)
+	gui.set_position(self.btn_tele.nodo, self.touch_ui and TELE_BTN_TOUCH or TELE_BTN_DESK)
+	self.tele_state = nil
+	local zx, zy, s = screen.x1 - 70, screen.y1 - 90, 1
+	ZOOM_BTN.x, ZOOM_BTN.y, s = HL.place(L, "zoom", zx, zy, zx, zy)
+	gui.set_position(self.btn_zoom, ZOOM_BTN)
+	gui.set_scale(self.btn_zoom, vmath.vector3(s, s, 1))
+	local cx, cy = W / 2, screen.y0 + SIZES.ring_y
+	cx, cy, s = HL.place(L, "cronometro", cx, cy, cx, cy)
+	hud.stopwatch_move(self.chrono, cx, cy)
+	self.chrono.base = s
+	for _, sl in ipairs(self.slots) do sl.x = nil end
+end
+
+-- Each group's rectangle on the screen (x0, y0, x1, y1), for the layout's
+-- editor (menu/hud_editor.lua); a group that isn't there has none
+CP.layout_box = { UNIT = { "primarie", "secondarie", "oggetti", "attrezzi" }, all = {} }
+function CP.layout_boxes(self)
+	local all = CP.layout_box.all
+	for _, u in ipairs(RM.layout.UNITS) do
+		all[u] = all[u] or {}
+		all[u].on = false
+	end
+	local function add(u, x, y, r)
+		local b = all[u]
+		if not b.on then
+			b.on, b[1], b[2], b[3], b[4] = true, x - r, y - r, x + r, y + r
+		else
+			b[1], b[2], b[3], b[4] = math.min(b[1], x - r), math.min(b[2], y - r), math.max(b[3], x + r), math.max(b[4], y + r)
+		end
+	end
+	for _, sl in ipairs(self.slots) do
+		if sl.have and sl.x then add(CP.layout_box.UNIT[sl.group], sl.x, sl.y, sl.d / 2) end
+	end
+	local L = self.layout
+	if self.tele_sees then
+		add("teletrasporto", TELE_BTN_TOUCH.x, TELE_BTN_TOUCH.y, TELE_BTN_D * RM.layout.of(L, "teletrasporto").s / 2)
+	end
+	add("cronometro", self.chrono.x, self.chrono.y, hud.OUTSIDE * RM.layout.of(L, "cronometro").s)
+	add("zoom", ZOOM_BTN.x, ZOOM_BTN.y, ZM.W * RM.layout.of(L, "zoom").s / 2)
+	return all
+end
+
+-- Every frame: whose turn it is decides the buttons' light, the points and the
+-- camera; the last seconds of your turn the tension (battle/turn_focus.lua)
+function CP.hand.focus(self, g, dt, left)
+	local f = self.focus
+	local mine = my_turn(self) and g.phase ~= "over" and self.controls_visible
+	RM.focus.update(f, dt, mine, mine and (g.current .. ":" .. g.turn_no) or nil, self.clock)
+	if self.fade_a ~= f.alpha then
+		self.fade_a = f.alpha
+		for _, r in ipairs(self.fade_roots) do
+			local c = gui.get_color(r)
+			c.w = f.alpha
+			gui.set_color(r, c)
+		end
+	end
+	local off = f.hide * RM.focus.OUT
+	if self.slid ~= off or self.slid_y1 ~= screen.y1 then
+		self.slid, self.slid_y1 = off, screen.y1
+		score.slide(self.punti, off)
+		gui.set_position(self.chrono.clock, vmath.vector3(screen.x1 - ui.EDGE, screen.y1 - hud.CLOCK_TOP + off, 0))
+	end
+	self.cam.lift = f.lift
+	RM.focus.tension(f, dt, mine and left or nil)
+	if self.shading ~= f.shading then
+		self.shading = f.shading
+		gui.set_enabled(self.tension_n, f.shading)
+	end
+	if f.shading then gui.set_color(self.tension_n, f.shade) end
 end
 
 -- A secondary shot coming back (the Blade hit an enemy, Sergio 3 Nov:
@@ -3754,7 +3989,8 @@ local function apply_camera(self)
 	if self.zoom_point then ZM.display(self) end
 	local tx, ty = camera.shift(c)
 	-- the zoom punch scales about the center of the screen
-	local k = self.sc_k or 1
+	-- the last seconds of your turn close in a little (battle/turn_focus.lua)
+	local k = (self.sc_k or 1) * self.focus.zoom
 	tx, ty = W / 2 + (tx - W / 2) * k + self.sc_ox, H / 2 + (ty - H / 2) * k + self.sc_oy
 	local cs = c.s * k
 	if tx == self.cam_tx and ty == self.cam_ty and cs == self.cam_s then return end
@@ -4220,6 +4456,9 @@ local function render(self, dt)
 	local tele_ok = g:can_use("teleport") and my_turn(self)
 	-- picked on the others' turn it stays in hand; on yours, with orbs used up, no
 	if self.tele_armed and not tele_ok and my_turn(self) and g.phase == "aim" then self.tele_armed = false end
+	-- the frame of what you hold: the color of whoever the bar belongs to
+	local owner = bar_robot(self)
+	self.hand_color = self.colors[owner and owner.id or g.current]
 	local chosen = update_bar(self)
 	CP.fly_pending(self)
 	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
@@ -4230,21 +4469,26 @@ local function render(self, dt)
 		gui.set_enabled(bt.nodo, tele_sees)
 		self.tele_sees = tele_sees
 	end
-	if self.tele_state ~= tele_state then
-		gui.set_color(bt.bordo, tele_state == 2 and ui.C.LIGHT or (tele_state == 1 and ui.C.PURPLE or SLOT_BORDER[0]))
-		gui.set_color(bt.icon_img, tele_state == 0 and ICON_USED or WHITE)
-		local sc = tele_state == 2 and CHOSEN or 1
+	if self.tele_state ~= tele_state or bt.team_c ~= self.hand_color then
+		gui.set_color(bt.bordo, tele_state == 2 and ui.C.LIGHT or (tele_state == 1 and CP.hand.dim(ui.C.PURPLE) or SLOT_BORDER[0]))
+		gui.set_color(bt.icon_img, tele_state == 0 and ICON_USED or (tele_state == 1 and CP.hand.dim(WHITE) or WHITE))
+		bt.node = bt.node or bt.nodo
+		CP.hand.frame(bt, "gettone", tele_state == 2, TELE_BTN_D, self.hand_color)
+		bt.team_c = self.hand_color
+		local ts = self.touch_ui and RM.layout.of(self.layout, "teletrasporto").s or 1
+		local sc = (tele_state == 2 and CHOSEN or 1) * ts
 		SLOT_SCALE.x, SLOT_SCALE.y = sc, sc
 		gui.set_scale(bt.nodo, SLOT_SCALE)
 		local p = self.touch_ui and TELE_BTN_TOUCH or TELE_BTN_DESK
-		set_pos(bt.nodo, p.x, p.y + (tele_state == 2 and SIZES.alza or 0))
+		set_pos(bt.nodo, p.x, p.y + (tele_state == 2 and SIZES.alza * ts or 0))
 		self.tele_state = tele_state
 	end
 	-- what you hold: the tag with the name above and the halo in your color
 	local hand, mx, my, md = nil, 0, 0, 0
 	if self.tele_armed then
 		local p = self.touch_ui and TELE_BTN_TOUCH or TELE_BTN_DESK
-		hand, mx, my, md = "teleport", p.x, p.y + SIZES.alza, TELE_BTN_D
+		local ts = self.touch_ui and RM.layout.of(self.layout, "teletrasporto").s or 1
+		hand, mx, my, md = "teleport", p.x, p.y + SIZES.alza * ts, TELE_BTN_D * ts
 	elseif chosen then
 		hand, mx, my, md = chosen.weapon, chosen.x, chosen.y, chosen.d
 	end
@@ -4372,6 +4616,10 @@ local function render(self, dt)
 	-- the orb ticks only if leftover time gives orbs (not in all lessons)
 	self.chrono.ticks_on = g.robots[g.current].stats.time_orbs > 0
 	hud.stopwatch_update(self.chrono, dt, stage, left_ones, total, self.colors[g.current], g.phase ~= "over" and clock or "")
+	-- the last 8 seconds' tension: also after the first attack, until the turn's
+	-- moves are done (both attacks, or the second swapped for a teleport; Rampino
+	-- and traps don't count, leaving them can be a choice. Sergio, 21 Nov)
+	CP.hand.focus(self, g, dt, (stage == "turno" or stage == "secondo") and left_ones or nil)
 	-- swapping the second attack for a teleport: one tap
 	-- (after the turn announcement has vanished: they would overlap)
 	local swap_sees = self.tele_sees and my_turn(self) and g:can_use("swap")
@@ -4442,17 +4690,12 @@ local function arrange(self)
 	MOVE_PAD.x, MOVE_PAD.y = x0 + 115, y0 + 117
 	AIM_PAD.x, AIM_PAD.y = x1 - 115, y0 + 117
 	PAD_ZONE.sx, PAD_ZONE.dx, PAD_ZONE.y = x0 + (x1 - x0) * 0.4, x1 - (x1 - x0) * 0.4, y0 + (y1 - y0) * 0.6
-	TELE_BTN_TOUCH.x, TELE_BTN_TOUCH.y = x1 - 72, y0 + 257
 	TELE_BTN_DESK.x, TELE_BTN_DESK.y = x1 - 100, y0 + 62
-	gui.set_position(self.btn_zoom, ZOOM_BTN)
 	for _, pad in ipairs({ self.move_pad, self.aim_pad }) do
 		if not pad.id then set_pos(pad.base, pad.rest.x, pad.rest.y) end
 	end
-	gui.set_position(self.btn_tele.nodo, self.touch_ui and TELE_BTN_TOUCH or TELE_BTN_DESK)
-	-- teleport and weapon bar are put back in place by the next update
-	self.tele_state = nil
-	for _, sl in ipairs(self.slots) do sl.x = nil end
-	hud.stopwatch_move(self.chrono, W / 2, y0 + SIZES.ring_y)
+	-- teleport, zoom, turn time and (with the next update) the weapon bar
+	CP.layout_place(self)
 	score.top(self.punti, y1)
 	RM.hazards.place(self.pericoli, x0 + 130, y1 - 118)
 	if self.vign then self.vign:top(y1) end
@@ -4493,6 +4736,8 @@ function init(self)
 	self.bots = {}
 	self.orbs_wait = 0
 	msg.post(".", "acquire_input_focus")
+	-- screen always on, sound off in the background, 90/120 Hz (main/phone.lua)
+	require("main.phone").init()
 	self.keys = {}
 	self.preview_pts = {}
 
@@ -4743,13 +4988,23 @@ function init(self)
 	self.move_pad = new_pad(MOVE_PAD, MOVE_IDLE, true)
 	self.aim_pad = new_pad(AIM_PAD, AIM_IDLE)
 	self.move_st, self.aim_st = sticks.new(), sticks.new()
-	-- weapon bar around the stopwatch and, apart, the teleport
+	-- the warm shade of the last seconds of your turn: over the world, under the HUD
+	self.focus = RM.focus.new()
+	self.tension_n = fit(gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(4000, 3000, 0)))
+	gui.set_blend_mode(self.tension_n, gui.BLEND_MULT)
+	gui.set_enabled(self.tension_n, false)
+	-- weapon bar around the stopwatch and, apart, the teleport; they fade on
+	-- the others' turn (battle/turn_focus.lua)
+	RM.focus.capture_begin()
 	self.bar = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(self.bar, false)
 	fit(self.bar)
 	-- the halo in your color behind what you hold
 	self.chosen_glow = glow(0, 0, SLOT * 1.7, WHITE)
 	gui.set_parent(self.chosen_glow, self.bar)
+	-- Grapple and Janus share one use per turn: one copper number between them
+	-- (Sergio, 21 Nov: «l'altro colore e il numerino»), CP.hand.tool_badge
+	CP.hand.tool_badge_create(self)
 	self.items_title = label(0, 0, TM.items, 1)
 	gui.set_color(self.items_title, ui.C.MINT)
 	gui.set_parent(self.items_title, self.bar)
@@ -4799,6 +5054,8 @@ function init(self)
 	self.tag = hud.tag()
 	self.avviso = hud.notice()
 	self.scambio = hud.swap()
+	self.fade_roots = { self.bar, self.btn_tele.nodo, self.tag.nodo, self.scambio.radice }
+	RM.focus.capture_end(self.fade_roots)
 	hud.orbs_nodes(self.chrono)
 	self.pointers = {}
 	set_touch_ui(self, touch_device())
@@ -4810,6 +5067,9 @@ function init(self)
 	self.home = home.new(TEAM_COLORS[1])
 	self.pill = menu.pill.new()
 	self.profilo = profile.load_up()
+	-- where the player put the buttons (IMPOSTAZIONI > DISPOSIZIONE TASTI)
+	self.layout = RM.layout.load(profile.setting(self.profilo, "disposizione"))
+	CP.layout_place(self)
 	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2, config_int("megablast.prova_profilo", 0) == 3, config_int("megablast.prova_profilo", 0) == 4) end
 	if SIMULATE then profile.sample_void(self.profilo, config_int("megablast.prova_vuoto", 0), sys.get_config_string("megablast.prova_famiglia", "vuoto")) end
 	CP.account_start(self)
@@ -4829,6 +5089,8 @@ end
 
 function update(self, dt)
 	frames.begin()
+	phone.vibration(profile.setting(self.profilo, "vibrazione") == "accesa")
+	phone.update(dt, self.mode == "local" or self.mode == "online" or self.mode == "replay" or self.mode == "ended")
 	if screen.update() then arrange(self) end
 	self.vign:update(dt)
 	if self.ingresso then CP.entry_update(self, dt) end
@@ -4849,7 +5111,20 @@ function update(self, dt)
 	end
 	self.sc_ox, self.sc_oy = camera.shake_frame(self.cam, dt)
 	self.sc_k = camera.punch_frame(self.cam, dt)
-	if self.mode == "local" and not self.menu_open and not self.carta and not self.intro_on and not (self.queue and self.queue.found) then
+	-- a home passage cut off by the match, or a menu backdrop left on over it
+	-- (it would hide the world): off. Cheap when there is none
+	-- (a draft too: the passage only, the draft has its own backdrop)
+	local playing = (self.mode == "local" or self.mode == "online") and not self.schermata and not self.layout_ed
+		and not (self.queue and self.queue.found)
+	if (playing or self.mode == "scelta" or self.mode == "scelta_online") and menu.door_pass.abort(self.door_pass) then
+		print("passaggio dei menu interrotto dalla partita: chiuso")
+	end
+	if playing and menu.kit.scene_clear() then
+		print("sfondo dei menu rimasto acceso in partita: spento")
+	end
+	if self.layout_ed then
+		menu.hud_editor.update(self.layout_ed)
+	elseif self.mode == "local" and not self.menu_open and not self.carta and not self.intro_on and not (self.queue and self.queue.found) then
 		self.acc = math.min(self.acc + dt_world, 0.25)
 		-- a bot that thinks in this frame (sim/bot.lua, work): the counter says BOT
 		local thought = bot.totale
@@ -5690,14 +5965,26 @@ function PAD.every_frame(self)
 	end
 	reader.levette = PAD.setting(self, "levette")
 	-- Esc or back (PAD.on_input), if it wasn't the controller's B
+	-- (the phone's back key during a menu passage: forgotten, a second passage
+	-- started over the first one left its backdrop copy over the next screens,
+	-- the match too: Sergio's photo, 21 Nov)
+	if self.menu_requested and CP.passing(self) then self.menu_requested = nil end
 	if self.menu_requested then
 		self.menu_requested = nil
 		local from_b = c.giu.b or (self.pad_b_t and self.clock - self.pad_b_t < 0.3)
-		if not from_b and self.mode == "connecting" and self.sala then
+		if self.layout_ed then
+			-- back in DISPOSIZIONE TASTI: like FATTO
+			CP.layout_close(self)
+		elseif not from_b and self.mode == "connecting" and self.sala then
 			-- the waiting room has no gear: back leaves the queue, like its arrow
 			CP.leave_room(self)
 		elseif not from_b and (self.controls_visible and (self.mode == "local" or self.mode == "online") or self.mode == "connecting") then
 			open_wheel(self, not self.menu_open)
+		elseif not from_b and self.cartolina then
+			CP.postcard_choice(self, menu.postcard.pad(self.cartolina, "b"))
+		elseif not from_b and (self.mode == "schermata" or self.mode == "scelta" or self.mode == "scelta_online") then
+			-- in the menus the phone's back key closes, like the controller's B (Sergio, 21 Nov)
+			PAD.on_input(self, ACTION.PAD, { pressed = true, ui = "indietro", nome = "b" })
 		end
 	end
 	if not self.pad_on and (reader.pushed(c.sx) or reader.pushed(c.dx)) then PAD.event(self, {}) end
@@ -5738,6 +6025,8 @@ end
 -- A controller button pressed or released (ui/controller.lua)
 function PAD.event(self, e)
 	self.pad_on = true
+	-- during the entry and the passages the controller waits too, like the fingers
+	if CP.passing(self) then return end
 	if self.cartolina then
 		if e.nome and e.held_down then CP.postcard_choice(self, menu.postcard.pad(self.cartolina, e.nome)) end
 		return
@@ -5830,6 +6119,11 @@ function PAD.on_input(self, action_id, action)
 		if action.released then self.wait_release = nil end
 		return true
 	end
+	-- DISPOSIZIONE TASTI: the match stands still, the fingers move the buttons
+	if self.layout_ed then
+		if menu.hud_editor.on_input(self.layout_ed, action_id, action) == "fatto" then CP.layout_close(self) end
+		return true
+	end
 	-- the replay: a controller button goes back to the profile (taps in pointer_down)
 	if self.mode == "replay" and action_id == ACTION.PAD then
 		if action.pressed then CP.replay_end(self) end
@@ -5891,6 +6185,8 @@ function PAD.on_input(self, action_id, action)
 		elseif type(end_of) == "table" and end_of.rivedi then
 			-- RIVEDI on the podium or in the profile
 			CP.rewatch(self, end_of.rivedi, end_of.da)
+		elseif end_of == "disposizione" then
+			CP.iris(self, function() CP.layout_open(self) end)
 		elseif type(end_of) == "table" and end_of.missione then
 			self.ritorno = "campagna"
 			CP.enter_mission(self, end_of.missione, end_of.da)
@@ -6000,11 +6296,6 @@ function PAD.on_input(self, action_id, action)
 		if action.pressed then choose_slot(self, "teleport") end
 	elseif action_id == ACTION.ZOOM then
 		if action.pressed then change_zoom(self) end
-	elseif action_id == ACTION.MENU then
-		-- Esc (or back on the phone): opens and closes the wheel, at the end of the
-		-- frame (PAD.every_frame): the controller's B button on Android also sends
-		-- "indietro", and that one doesn't count
-		if action.pressed then self.menu_requested = true end
 	elseif action_id == ACTION.ZOOM_IN or action_id == ACTION.ZOOM_OUT then
 		if action.pressed then change_zoom(self, action_id == ACTION.ZOOM_OUT and 1 or -1) end
 	elseif ACTION.WEAPON[action_id] then
@@ -6085,10 +6376,19 @@ function on_input(self, action_id, action)
 	return r
 end
 
+-- the entry or a passage between menus running: no input
+function CP.passing(self)
+	return self.ingresso or menu.passaggio.is_active(self.passaggio) or menu.door_pass.is_active(self.door_pass)
+end
+
 function CP.on_input(self, action_id, action)
+	if action.pressed then phone.input() end
+	-- Esc (or back on the phone): handled at the end of the frame (PAD.every_frame),
+	-- where the controller's B on Android, which also sends "indietro", doesn't count
+	if action_id == ACTION.MENU and action.pressed then self.menu_requested = true end
 	-- during the entry and the transitions nothing can be touched (a tap
 	-- hurries the entry's flame to its burst)
-	if self.ingresso or menu.passaggio.is_active(self.passaggio) or menu.door_pass.is_active(self.door_pass) then
+	if CP.passing(self) then
 		if action_id == ACTION.TOUCH and action.pressed then menu.passaggio.skip(self.passaggio) end
 		return true
 	end

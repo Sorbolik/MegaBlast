@@ -1,0 +1,22 @@
+# Gli ultimi 8 secondi (Sergio, 21 nov): la scena si avvicina e si scalda anche
+# dopo il primo attacco (agli 8 secondi ci arrivi subito) e smette quando le mosse
+# del turno sono finite: il secondo attacco o lo scambio col teletrasporto. Rampino
+# e trappole non contano.
+aspetta 2
+tocca 220 172                      # ALLENAMENTO
+aspetta 1
+tocca 547 470                       # 1 CONTRO 1
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 2
+foto 01_inizio_turno                # niente tensione
+premi 1                             # Lanciarune
+mira 150 -60 0.3                    # primo attacco
+aspetta 3.5
+foto 02_dopo_il_primo_attacco       # la scena si avvicina e si scalda
+premi 2                             # la secondaria
+aspetta 0.3
+mira 80 0 0.2                       # secondo attacco: mosse finite
+aspetta 1.5
+foto 03_mosse_finite                # la tensione se ne va

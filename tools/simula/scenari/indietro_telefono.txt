@@ -1,0 +1,16 @@
+# Il tasto indietro del telefono (Esc sul computer) nei menu chiude come la B
+# del controller: dalle IMPOSTAZIONI e dall'ALLENAMENTO torna alla home
+# (main/game.gui_script, PAD.every_frame). In partita apre la rotellina.
+aspetta 2
+tocca_bordo 74 54 basso sinistra       # la rotellina delle impostazioni
+aspetta 1.2
+foto 01_impostazioni
+premi Escape
+aspetta 1.5
+foto 02_home
+tocca_bordo 220 172 mezzo sinistra     # ALLENAMENTO
+aspetta 1.5
+foto 03_allenamento
+premi Escape
+aspetta 1.5
+foto 04_home

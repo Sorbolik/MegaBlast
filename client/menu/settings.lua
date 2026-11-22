@@ -44,6 +44,7 @@ local CHOICES = {
 	choice_of("sparo", { "pressione", "rilascio" }),
 	choice_of("potenza", { "levetta", "grilletto" }),
 	choice_of("levette", { "sinistra", "destra" }),
+	choice_of("vibrazione", { "spenta", "accesa" }),
 	choice_of("fps", { "spento", "acceso" }),
 	-- the end-game test profile (menu/profile.lua, endgame): its own save
 	choice_of("profilo", { "vero", "prova" }),
@@ -56,8 +57,8 @@ local KC = kit.C
 -- title and its help line inside: two columns of cards KEY_W wide from KEYS_X,
 -- KEY_GAP apart, a row every KEY_ROW
 local NAME_W = 196
--- (a row every ROW: seven rows above the bottom line)
-local ROW = 66
+-- (a row every ROW: eight rows above the bottom line)
+local ROW = 62
 local PANEL_Y, PANEL_H = 108, #CHOICES * ROW + 6
 local KEYS_PANEL_X, KEYS_PANEL_W = 608, 640
 local KEYS_X, KEY_W, KEY_H, KEY_GAP = KEYS_PANEL_X + 16, 298, 54, 12
@@ -162,6 +163,10 @@ local function build(s)
 	local swap = kit.secondary(g, s.view and T.controller_keys or T.my_profile,
 		KEYS_PANEL_X + KEYS_PANEL_W - top_w, 36, top_w, KEY_H)
 	kit.button(s.buttons, swap, "profilo_mio:scambia")
+	-- DISPOSIZIONE TASTI at its left: the HUD's buttons, moved and resized
+	-- (menu/hud_editor.lua, opened by game.gui_script)
+	local arrange = kit.secondary(g, T.layout, KEYS_PANEL_X + KEYS_PANEL_W - 2 * top_w - 16, 36, top_w, KEY_H)
+	kit.button(s.buttons, arrange, "disposizione")
 
 	-- the choices on an iron panel: their names are read on it, not on the painting
 	kit.panel(kit.group(g, 32 + (NAME_W + 12 + 340 + 16) / 2, PANEL_Y + PANEL_H / 2).node,
@@ -359,7 +364,7 @@ function M.on_input(s, action_id, action)
 	end
 	local ui_action = ui.touch(s.buttons, action_id, action)
 	if not ui_action then return nil end
-	if ui_action == "indietro" then return "indietro" end
+	if ui_action == "indietro" or ui_action == "disposizione" then return ui_action end
 	local mine = ui_action:match("^profilo_mio:(.*)$")
 	if mine then
 		profile_action(s, mine)

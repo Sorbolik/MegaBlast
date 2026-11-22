@@ -55,6 +55,8 @@ local TEAMS = 4
 -- above for the Crown
 local TOP = 38
 local Y, HALF = 720 - TOP, 640
+-- the mission goal stays at GOAL_Y when the points slide away (M.slide)
+local GOAL_Y = Y
 local GET_W, GET_H, GET_GAP = 104, 30, 6
 local STRIP, BORDER_MINE = 6, 3
 -- two teams: two point tokens and the rope in between
@@ -366,15 +368,25 @@ end
 
 -- The real top of the screen (ui/screen.lua: higher than 720 on a tablet)
 function M.top(p, y1)
-	Y = y1 - TOP
+	p.y1 = y1
+	GOAL_Y = y1 - TOP
+	Y = GOAL_Y + (p.slid or 0)
 	position(p.fune, HALF, Y)
 	position(p.riga, HALF, Y - ROW_Y)
-	position(p.obiettivo, p.goal_x or HALF + 330, Y)
+	position(p.obiettivo, p.goal_x or HALF + 330, GOAL_Y)
 	position(p.avviso, HALF, Y - NOTICE_Y)
 	position(p.banner, HALF, y1 / 2 + 40)
 	for _, gt in ipairs(p.gettoni) do
 		if gt.x then position(gt.radice, gt.x, Y) end
 	end
+end
+
+-- On your turn the points go away upward (battle/turn_focus.lua): off pixels
+-- above their place; the mission goal stays
+function M.slide(p, off)
+	if p.slid == off then return end
+	p.slid = off
+	M.top(p, p.y1 or 720)
 end
 
 function M.goal(p, txt)
@@ -719,7 +731,7 @@ local function faces(p, g, human, looks, views)
 	local goal_x = (p.ready_on and ready_x + READY_W / 2 or faces_end) + GOAL_GAP
 	if p.goal_x ~= goal_x or p.goal_x1 ~= screen.x1 then
 		p.goal_x, p.goal_x1 = goal_x, screen.x1
-		position(p.obiettivo, goal_x, Y)
+		position(p.obiettivo, goal_x, GOAL_Y)
 		-- up to the clock at the right edge
 		local w = max(GOAL_MIN_W, min(GOAL_W, screen.x1 - GOAL_RIGHT - goal_x))
 		gui.set_size(p.objective_text, vmath.vector3(w / (CAPTION * 0.5), 100, 0))

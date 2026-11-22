@@ -1,6 +1,6 @@
 # Il controller (ui/controller.lua, docs/controller.md) col controller finto del
 # simulatore (comandi pad, pad_tieni e pad_lascia: ogni tasto ha un tasto della
-# tastiera). Nella home la croce accende GIOCA, su va a STESSO TELEFONO, A entra;
+# tastiera). Nella home la croce accende GIOCA;
 # nella scelta delle armi la croce sposta la luce sulle carte, Y apre la scheda,
 # A sceglie. In battaglia (la mappatura di Sergio): levetta destra cammina e
 # in su salta, LB e RB le primarie e le secondarie a giro, la levetta sinistra
@@ -14,15 +14,14 @@ aspetta 2
 pad giu                             # la prima pressione accende la luce, su GIOCA
 aspetta 0.3
 foto 01_home_luce
-pad su                              # STESSO TELEFONO
-aspetta 0.3
-foto 02_home_stesso_telefono
-pad a
+# STESSO TELEFONO ora sta in ALLENAMENTO: la partita parte dalla zona degli scenari
+tocca 222 148
 aspetta_stato modo=scelta 5
 aspetta 0.5
 pad a                               # chiude lo schieramento dei cartellini
 aspetta 0.3
-pad destra                          # la luce sulla prima carta
+pad destra                          # la luce su PRIMARIA, a sinistra
+pad destra                          # la prima carta
 pad destra                          # la seconda
 aspetta 0.3
 foto 03_scelta_luce

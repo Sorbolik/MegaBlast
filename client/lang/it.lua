@@ -330,17 +330,31 @@ return {
 
 
 	-- menu/settings.lua: IMPOSTAZIONI
+	-- IMPOSTAZIONI > DISPOSIZIONE TASTI: the HUD's buttons moved and resized (menu/hud_editor.lua)
+	hud_editor = {
+		title = "DISPOSIZIONE TASTI",
+		reset = "RIPRISTINA",
+		done = "FATTO",
+		-- %s: the group touched
+		size = "GRANDEZZA: %s",
+		pick = "TOCCA UN TASTO PER SPOSTARLO O CAMBIARNE LA GRANDEZZA",
+		drag = "trascina per spostare",
+		units = {
+			primarie = "ARMI PRIMARIE", secondarie = "ARMI SECONDARIE", cronometro = "TEMPO DEL TURNO",
+			teletrasporto = "TELETRASPORTO", attrezzi = "RAMPINO E GIANO", oggetti = "OGGETTI", zoom = "ZOOM",
+		},
+	},
 	settings = {
 		title = "IMPOSTAZIONI",
 		-- the settings at the top (profile.SETTINGS) and their values
 		choices = {
 			mira = "MIRA", sparo = "SPARO COL CONTROLLER", potenza = "POTENZA COL CONTROLLER",
-			levette = "LEVETTA CHE MUOVE", fps = "CONTATORE FPS", profilo = "PROFILO", profilo_zero = "PROFILO DI PROVA",
+			levette = "LEVETTA CHE MUOVE", vibrazione = "VIBRAZIONE", fps = "CONTATORE FPS", profilo = "PROFILO", profilo_zero = "PROFILO DI PROVA",
 		},
 		values = {
 			lancetta = "LANCETTA", mirino = "MIRINO", pressione = "PREMENDO", rilascio = "LASCIANDO",
 			levetta = "LEVETTA", grilletto = "GRILLETTO", destra = "DESTRA", sinistra = "SINISTRA",
-			spento = "SPENTO", acceso = "ACCESO", vero = "IL MIO", prova = "FINE GIOCO", risorse = "DA ZERO",
+			spento = "SPENTO", acceso = "ACCESO", spenta = "SPENTA", accesa = "ACCESA", vero = "IL MIO", prova = "FINE GIOCO", risorse = "DA ZERO",
 		},
 		-- the controller's commands (controller.COMMANDS)
 		commands = {
@@ -349,6 +363,8 @@ return {
 			oggetti = "OGGETTO DOPO", usa_oggetto = "USA L'OGGETTO", baratto = "BARATTO", zoom = "ZOOM",
 		},
 		controller_keys = "TASTI DEL CONTROLLER",
+		-- the button that opens the HUD's layout (menu/hud_editor.lua)
+		layout = "DISPOSIZIONE TASTI",
 		-- IL MIO PROFILO: the name, the recovery code, HO GIÀ UN PROFILO (step 6 of the guest profiles)
 		my_profile = "IL MIO PROFILO",
 		no_profile = "SENZA PROFILO SUL SERVER",
@@ -925,6 +941,8 @@ return {
 		reread = "RILEGGI",
 		cancel = "ANNULLA",
 		items = "OGGETTI",
+		-- Grapple and Janus: one of the two per turn (the copper number between them)
+		per_turn = "PER TURNO",
 		-- entry and waiting room
 		loading_events = "Prendo gli eventi dal server...",
 		in_queue = "In coda",
