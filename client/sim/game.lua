@@ -2086,24 +2086,33 @@ function M:fire_vortex(angle, power)
 end
 
 -- Cannonata (config.CANNON) -----------------------------------------------------
--- The user flies as a ballistic body, in place of the normal physics
--- (update_robot), through the robots (each hit once) and stops against terrain.
+-- The user stands still for the windup (wait ticks: into the cannon, the fuse),
+-- then flies as a ballistic body, in place of the normal physics (update_robot),
+-- through the robots (each hit once) and stops against terrain.
 
 function M:start_cannon(angle, power)
 	local rb = self.robots[self.current]
 	local s = C.CANNON
 	local speed = s.speed * math.max(s.min_power, math.min(1, power or 1))
 	rb.facing = math.cos(angle) < 0 and -1 or 1
-	rb.cannon = { vx = math.cos(angle) * speed, vy = math.sin(angle) * speed, hit = {} }
+	rb.cannon = { vx = math.cos(angle) * speed, vy = math.sin(angle) * speed, hit = {}, angle = angle,
+		wait = math.floor(s.windup / M.DT + 0.5) }
 	rb.vx, rb.vy = 0, 0
-	rb.y = rb.y + 1
-	rb.grounded, rb.knocked, rb.fall_top = false, false, nil
 	self:emit({ type = "cannon", robot = rb.id, angle = angle })
 end
 
 function M:update_cannon(rb)
 	local c = rb.cannon
 	local s = C.CANNON
+	if c.wait > 0 then
+		c.wait = c.wait - 1
+		if c.wait > 0 then return end
+		-- BOOM: off it goes
+		rb.y = rb.y + 1
+		rb.grounded, rb.knocked, rb.fall_top = false, false, nil
+		self:emit({ type = "cannon_fire", robot = rb.id, angle = c.angle, x = rb.x, y = rb.y + M.DISEGNO_H / 2 })
+		return
+	end
 	c.vy = c.vy - self.gravity * s.gravity * M.DT
 	local mx, my = c.vx * M.DT, c.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
@@ -3331,6 +3340,8 @@ function M:can_use(weapon)
 	if self.permitted and not self.permitted(weapon) then return false end
 	local rb = self.robots[self.current]
 	if rb.dead then return false end
+	-- inside the cannon, waiting for the fuse: nothing else
+	if rb.cannon and rb.cannon.wait > 0 then return false end
 	if weapon == "parachute" then
 		-- only in the air
 		if rb.grounded then return false end

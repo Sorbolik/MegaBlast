@@ -1,0 +1,13 @@
+Image 1 is a cannonball of our 2D comic game, with a horizontal visor slit (the magenta inside the slit is a hole) and a green team band. Image 2 is a broken eggshell sign of the same game: look at its jagged broken edge.
+
+Draw the SAME cannonball of image 1 BROKEN IN TWO HALVES, as if it just cracked open from the inside: on the left the TOP HALF, on the right the BOTTOM HALF, side by side, separated by a wide gap of magenta, both seen from the front, both the same size as in image 1 (about 700 px wide each, scale the image so both fit).
+The ball breaks along a jagged zigzag line with four or five big teeth, like the edge of image 2, running across the ball just below the green band. The top half keeps the visor slit (still a magenta hole), the rivets, the highlight and the green band; the bottom half is the plain lower part of the ball. Where each half is broken, show the inside of the thick iron shell as a dark pitch #1E1724 strip along the jagged edge, with its black outline. Each half is one closed piece with its own thick black outline all around: nothing else on the sheet.
+
+Rendering rules, very strict, because every shape will be traced into vector layers:
+- Exactly the drawing style, colors, outline weight and highlight of image 1.
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow, no blur, no sparkles, no motion lines, no flying debris.
+- Use ONLY these colors: pitch #2E2433, pitch sheen #5E4870, dark pitch shadow #1E1724; team band pure green #00FF00 with shadow #00B400; black #000000.
+- Background: flat pure magenta #FF00FF everywhere, no halo around the pieces, no ground shadow. The two halves never touch.
+- No text, numbers, letters, labels, arrows or signatures.
+
+Riferimenti (ordine di allegato): art/WB-083/palla_feritoia_2.png, art/armi/fx_guscio.png

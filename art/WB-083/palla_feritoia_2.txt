@@ -1,0 +1,16 @@
+Image 1 is the icon of a weapon of our 2D comic game: a round black cannonball with devil horns and a face. Image 2 is the hand cannon of the same game: look at its thick black outline and at its pure green team band.
+
+Draw ONE cannonball alone, seen from the front, in exactly the drawing style and the materials of image 1, but WITHOUT horns and WITHOUT any face: no eyes, no mouth, no grin. It is a heavy round iron ball, a perfect circle about 700 px wide, centered in the square image.
+Across the ball runs a horizontal VISOR SLIT, like the slit of a knight's helmet: a straight horizontal opening with rounded ends, about 70% of the ball's width and about 13% of the ball's height, its center slightly above the center of the ball. The slit is a HOLE: inside it there is only flat pure magenta #FF00FF, exactly like the background, nothing else (no eyes, no darkness, no inner wall). The slit has its own thick closed black outline, like a cut in the iron.
+Below the slit, a straight horizontal band around the ball, about 9% of the ball's height, in pure green #00FF00 with a hard shadow part in #00B400 (the team color, like the band of image 2), with its black outline; the band follows the roundness of the ball with a slight curve.
+One single hard-edged highlight shape on the upper left, like the highlight of image 1. Three or four small round rivets along the top edge of the slit.
+
+Rendering rules, very strict, because every shape will be traced into vector layers:
+- Thick closed pure black #000000 outline around every shape and between color areas, the same weight as image 1 relative to the size.
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow, no blur, no sparkles, no motion lines.
+- Use ONLY these colors: pitch #2E2433, pitch sheen #5E4870, dark pitch shadow #1E1724; team band pure green #00FF00 with shadow #00B400; black #000000.
+- Background: flat pure magenta #FF00FF everywhere, no halo around the ball, no ground shadow.
+- No text, numbers, letters, labels, arrows or signatures.
+
+Riferimenti (ordine di allegato): art/armi/cannon_icona.png, art/armi/cannon.png
+Variante 2, scelta per i gusci per la feritoia più regolare e il margine nero più uniforme.

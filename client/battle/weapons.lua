@@ -25,6 +25,10 @@ return {
 	},
 	pieces = {
 		uncino = { img = "uncino", tint = nil, x = 5.25, y = 0.00, w = 14.50, h = 7.27 },
+		cannone_grande = { img = "cannone_grande", tint = "cannone_grande_tinta", x = 8.31, y = -1.90, w = 44.17, h = 35.62 },
+		palla_cannonata = { img = "palla_cannonata", tint = "palla_cannonata_tinta", x = 0.00, y = 0.00, w = 24.00, h = 24.00 },
+		guscio_su = { img = "guscio_su", tint = "guscio_su_tinta", x = 0.00, y = 0.00, w = 24.00, h = 24.00 },
+		guscio_giu = { img = "guscio_giu", tint = nil, x = 0.00, y = 0.00, w = 24.00, h = 24.00 },
 	},
 	shots = {
 		razzo = { img = "razzo", tint = "razzo_tinta", x = 0.00, y = 0.00, w = 15.14, h = 18.00 },

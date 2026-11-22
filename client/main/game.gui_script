@@ -963,7 +963,7 @@ end
 
 -- Grapple and Bellows as drawn, in a single table: the file is close to the
 -- 200 locals Lua allows
-local RM = { fune = require "battle.rope", hazards = require "battle.hazards", focus = require "battle.turn_focus", layout = require "battle.hud_layout", GUSTS = 5,
+local RM = { fune = require "battle.rope", cannon = require "battle.cannon", hazards = require "battle.hazards", focus = require "battle.turn_focus", layout = require "battle.hud_layout", GUSTS = 5,
 	-- the images of the new shots in flight (battle/weapons.lua, shots), by projectile kind
 	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano", vortex = "voragine_volo" } }
 -- The weapons' signatures (WB-066): one drawing on the impact, tinted
@@ -1456,13 +1456,26 @@ local function handle_event(self, e)
 	elseif e.type == "bellows_hit" then
 		self.shot_x, self.shot_y, self.shot_t = self.g.robots[e.robot].x, self.g.robots[e.robot].y + game.DISEGNO_H / 2, self.clock
 		plate.announcement(self.robots[e.target].plate, TM.blown)
-	elseif e.type == "lunge" or e.type == "cannon" then
+	elseif e.type == "lunge" then
 		scoria.lunge(self.robots[e.robot].rig)
+	elseif e.type == "cannon" then
+		-- the Cannonata: into the cannon, the fuse, BOOM (battle/cannon.lua)
+		local v = self.view[e.robot]
+		RM.cannon.start(self.cannone, e.robot, v.x, v.y, e.angle, self.robots[e.robot].rig.color)
+	elseif e.type == "cannon_fire" then
+		RM.cannon.fire(self.cannone)
+		sound.play("#boom", { gain = 0.8, speed = 1.15 })
+		camera.shake(self.cam, -math.cos(e.angle), -math.sin(e.angle), 10)
 	elseif e.type == "boomerang" or e.type == "vortex" then
 		self.last_shot, self.last_shot_t = e.type, self.clock
 		scoria.fire(self.robots[e.robot].rig, "throw")
 	elseif e.type == "petard_blast" or e.type == "cannon_land" or e.type == "tar_break" or e.type == "boomerang_turn" then
 		shock(self, e.x, e.y)
+		if e.type == "cannon_land" then
+			-- the ball splits and the devil pops out
+			RM.cannon.land(self.cannone, e.x, e.y)
+			scoria.lunge(self.robots[e.robot].rig)
+		end
 		if e.type == "petard_blast" then
 			impact.sign(self.fx, "fx_anello_fumo", e.x, e.y, (e.r or 30) * 1.8, RM.SIGN.white, "pop")
 			for _ = 1, 3 do impact.sign(self.fx, "fx_coriandolo", e.x, e.y, 9, RM.SIGN.paper, "fall") end
@@ -1757,6 +1770,8 @@ local function apply_state(self, s)
 		-- the Lunge's spear points along the dash (la: its angle)
 		rb.lunge_vx = rb.lunge and math.cos(r.la or 0) or nil
 		rb.lunge_vy = rb.lunge and math.sin(r.la or 0) or nil
+		-- the Cannonata: the fuse (cn ticks left) or the flight (-1)
+		rb.cannon = (r.cn or 0) ~= 0 and { wait = math.max(r.cn, 0), angle = r.ca or 0 } or nil
 		rb.knocked = r.kn or false
 		rb.trapped = r.tr or nil
 		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or (r.hk or 0) < 0 and { x = r.hx, y = r.hy } or nil
@@ -4231,6 +4246,9 @@ local function render(self, dt)
 			end
 		end
 		st.solid = self.solid_at
+		-- the Cannonata: curled up, into the cannon, the ball (battle/cannon.lua)
+		RM.cannon.rig(self.cannone, i, rb, st, dt)
+		if st.rannicchia or st.nascosto or st.palla then scoria.empty_hands(r.rig, true) end
 		scoria.update(r.rig, dt, st)
 	end
 
@@ -4724,6 +4742,9 @@ function RM.nodes(self)
 	end
 	self.rm_nodes = RM.fune.nodes(self.fune)
 	for _, n in ipairs(self.gusts) do self.rm_nodes[#self.rm_nodes + 1] = n end
+	-- the Cannonata: the big cannon and the ball's shells (battle/cannon.lua; its fx after impact.new)
+	self.cannone = RM.cannon.new(nil, RM.SIGN)
+	for _, n in ipairs(RM.cannon.nodes(self.cannone)) do self.rm_nodes[#self.rm_nodes + 1] = n end
 	-- the controller: buttons and sticks (ui/controller.lua), its aim and its
 	-- walking (here and not in init, which already has almost 60 upvalues)
 	self.ctrl, self.pad_st, self.pad_move = PAD.reader.new(sys.get_sys_info().system_name), sticks.new(), sticks.new()
@@ -4889,6 +4910,7 @@ function init(self)
 
 	-- explosions, sparks and numbers: the particles' pools
 	self.fx = impact.new()
+	self.cannone.fx = self.fx
 
 	-- explosion debris, reused in rotation
 	self.debris, self.debris_i = {}, 0
@@ -5282,6 +5304,7 @@ function update(self, dt)
 	if self.aim_pad.id then sticks.record(self.aim_st, self.clock, self.aim_angle, self.aim_power, self.aiming) end
 	frames.scope("disegno")
 	render(self, dt_world)
+	RM.cannon.update(self.cannone, dt_world)
 	move_debris(self, dt_world)
 	light_up(self, dt_world)
 	impact.update(self.fx, dt_world)
