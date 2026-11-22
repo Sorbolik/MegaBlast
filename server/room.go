@@ -73,6 +73,9 @@ type clientMsg struct {
 	G       int    `json:"g"`
 	// with the greeting: the guest profile, "<id>.<chiave>" (server.go cards)
 	Profile string `json:"profilo"`
+	// with the greeting from a test profile (FINE GIOCO, DA ZERO: no "profilo"),
+	// what it wears; it counts online until the launch (Sergio, 22 Nov), no prizes
+	Test json.RawMessage `json:"prova"`
 }
 
 // equipMax: the longest "eq" that is read (a full one is under 1 KB)

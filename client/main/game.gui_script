@@ -1210,6 +1210,12 @@ function CP.open_room(self, m)
 	menu.lobby.bot_in(self.sala, m.bot_in)
 end
 
+-- With a test profile (FINE GIOCO, DA ZERO) online counts what it wears, sent
+-- with the greeting (server.go cards; Sergio, 22 Nov: the bots wear as much)
+function CP.test_eq(self)
+	return profile.test and profile.equip(self.profilo) or nil
+end
+
 function CP.close_room(self)
 	if self.sala then menu.lobby.destroy(self.sala) end
 	self.sala = nil
@@ -2047,13 +2053,13 @@ on_socket = function(self, conn, data)
 			self.net_notes = nil
 		elseif self.privata then
 			-- the private match (menu/private.lua): a new room or a code
-			send(self, { t = "hello", v = PROTOCOL, privata = self.privata, profilo = CP.account.key(profile.test ~= false) })
+			send(self, { t = "hello", v = PROTOCOL, privata = self.privata, profilo = CP.account.key(profile.test ~= false), prova = CP.test_eq(self) })
 		else
 			CP.wait(self, TM.waiting)
 			-- the queue picked in GIOCA ONLINE (menu/queue.lua): 2v2, 1v1 or an event,
 			-- and the guest profile: the server takes the tag and the pieces from
 			-- its own, and gives it the prizes (main/account.lua)
-			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2", profilo = CP.account.key(profile.test ~= false) })
+			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2", profilo = CP.account.key(profile.test ~= false), prova = CP.test_eq(self) })
 		end
 	elseif data.event == ws.EVENT_MESSAGE and conn == self.mute then
 		-- prova_muta: nothing arrives any more
@@ -2346,6 +2352,9 @@ function CP.showcases(self, players, name_list, opt)
 			-- online the bots wear as much as the people too (sim/loadout.lua dress_bots)
 			v = CP.vetrina.from_eq(p.eq, name_list[i], p.team, under)
 			v.bot = true
+		elseif opt.rete and i == opt.me and profile.test then
+			-- a test profile has no card on the server: its own, from the phone
+			v = CP.vetrina.from_profile(self.profilo, name_list[i], p.team, under)
 		elseif opt.rete then
 			v = CP.vetrina.from_net(opt.rete[i], name_list[i], p.team, under)
 			-- the stats of what they wear (checked by the server), as in the match
@@ -3378,9 +3387,9 @@ function CP.net_frame(self, dt)
 	if not self.net_over and now - (self.state_at or now) > CP.STALL then
 		CP.resync(self, "niente dal server da " .. CP.STALL .. " s")
 	end
-	if n.ff then return CP.net_fast(self) end
-	if n.qn - g.tick >= CP.FF_TICKS and not CP.net_leads(self) then
-		n.ff = true
+	if n.qn - g.tick >= CP.FF_TICKS and not CP.net_leads(self) then n.ff = true end
+	if n.ff then
+		self.jump_pressed, self.fire = false, nil
 		return CP.net_fast(self)
 	end
 	self.acc = math.min(self.acc + dt, 0.25)
@@ -3417,7 +3426,10 @@ function CP.net_frame(self, dt)
 	end
 	-- waiting for the server: the time doesn't pile up (no burst afterwards)
 	if n.starved then self.acc = math.min(self.acc, game.DT) end
-	self.jump_pressed, self.fire = false, nil
+	-- a shot or a jump that no tick took yet waits for the next frame while we
+	-- lead: at 90-120 Hz many frames have no tick (Sergio, 22 Nov: "carico la
+	-- levetta, lascio il dito e non fa niente"). Not ours to lead: dropped
+	if not CP.net_leads(self) then self.jump_pressed, self.fire = false, nil end
 	self.pose_t, self.pose_dt = self.acc, game.DT
 	-- our keys, and where we aim (angle only: the others see us aim)
 	if #n.out > 0 then
@@ -5140,6 +5152,8 @@ function init(self)
 	-- where the player put the buttons (IMPOSTAZIONI > DISPOSIZIONE TASTI)
 	self.layout = RM.layout.load(profile.setting(self.profilo, "disposizione"))
 	CP.layout_place(self)
+	-- imposta prova_test prova (or risorse): the test profile of the settings (scenari/bot_prova_online.txt)
+	if SIMULATE and sys.get_config_string("megablast.prova_test", "") ~= "" then profile.choose_test(self.profilo, sys.get_config_string("megablast.prova_test", "")) end
 	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2, config_int("megablast.prova_profilo", 0) == 3, config_int("megablast.prova_profilo", 0) == 4) end
 	if SIMULATE then profile.sample_void(self.profilo, config_int("megablast.prova_vuoto", 0), sys.get_config_string("megablast.prova_famiglia", "vuoto")) end
 	CP.account_start(self)

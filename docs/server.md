@@ -246,7 +246,7 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
 
 ## Protocollo
 
-Il primo messaggio del client è `{"t":"hello","v":11,"mode":"2v2","profilo":"12.<chiave>"}` (dal 22 nov la versione 11: online in lockstep coi tasti, vedi sotto; dal 19 nov la 10; prima `v` 9 con `vetrina` ed `eq` dichiarati dal telefono). Fino al 18 nov era `{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
+Il primo messaggio del client è `{"t":"hello","v":11,"mode":"2v2","profilo":"12.<chiave>"}` (dal 22 nov la versione 11: online in lockstep coi tasti, vedi sotto; dal 19 nov la 10; prima `v` 9 con `vetrina` ed `eq` dichiarati dal telefono). Col profilo di prova (FINE GIOCO, DA ZERO) il telefono non manda `profilo` ma `"prova":{eq}`, quello che indossa: online conta, anche per vestire i bot, e non paga premi (Sergio, 22 nov; da chiudere prima del lancio, chi lo sceglie entra con tutto). Fino al 18 nov era `{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
 (`mode`: la coda scelta in DOVE GIOCHI?, o la `coda` di un evento; `vetrina`:
 livello e al massimo tre badge, il server tiene solo i valori validi, livello
 1-999, badge di lettere minuscole con grado 1-4; dal 16 nov anche `"pz":[{"set":"corvo","liv":24},…]`,
