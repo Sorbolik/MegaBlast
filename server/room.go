@@ -222,7 +222,7 @@ type Room struct {
 	cur     int  // seat on turn (from 0), from the last tick's answer
 
 	draftLeft int    // tick at the end of the draft
-	players   []byte // teams as JSON, [{"team":1},...]; from start also the draft picks
+	players   []byte // teams as JSON, [{"team":1},...]; from the draft also what everyone wears (eq), from start the picks
 	showcases []byte // the players' cards as JSON, [{"liv":12,"bdg":[...]},...]
 }
 
@@ -307,6 +307,10 @@ func (r *Room) open(b *Batch) {
 			return
 		}
 		r.draftLeft, r.ready = v.Secs*tickRate, true
+		// the players with what everyone wears, the bots too (net.lua draft_new)
+		if len(res.Raw) > 0 {
+			r.players = res.Raw[0]
+		}
 		if r.srv.cfg.DraftTicks > 0 {
 			r.draftLeft = r.srv.cfg.DraftTicks
 		}

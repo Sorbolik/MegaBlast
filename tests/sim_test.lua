@@ -2511,6 +2511,19 @@ do
 	local base = game.base_stats()
 	check(g.robots[2].stats.attack == loadout.net_stats(a, base).attack and g.robots[1].max_hp == loadout.net_stats(loadout.net_clean(mine), base).max_hp,
 		"recipe: eq gives the stats")
+	-- online too every bot is someone's rival (dress_bots): the people of the
+	-- other teams in turn, else of its own; training is the case of one person
+	local P = function(team, bot, eq) return { team = team, bot = bot, eq = eq } end
+	local enc = function(x) return x and replay.encode({ x = x }) end
+	local other = { liv = 7 }
+	local t = loadout.dress_bots({ P(1, nil, mine), P(2, 4), P(1, 4), P(2, 4) }, 1234)
+	check(enc(t[2].eq) == enc(a) and t[3].eq and t[4].eq and t[3].eq.liv == 30, "dress_bots: training, every bot the player's rival")
+	t = loadout.dress_bots({ P(1, nil, mine), P(2, 4), P(1, nil, other), P(2, 4) }, 5)
+	check(t[2].eq.liv == 30 and t[4].eq.liv == 7, "dress_bots: two people against two bots, one copy each")
+	t = loadout.dress_bots({ P(1, nil, mine), P(2, nil, other), P(1, 4), P(2, 4) }, 5)
+	check(t[3].eq.liv == 7 and t[4].eq.liv == 30, "dress_bots: a person and a bot each, the bot copies the other team's person")
+	t = loadout.dress_bots({ P(1, nil, nil), P(2, 4) }, 5)
+	check(t[2].eq == nil, "dress_bots: whoever wears nothing gets a bare bot")
 end
 
 if failures > 0 then

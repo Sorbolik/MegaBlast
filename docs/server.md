@@ -85,10 +85,12 @@ c'è almeno una persona. Le code degli eventi non hanno bot.
 
 
 Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`):
-ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","rd":[0,1],"you":1,"tok":…,"players":[{"team":1},…],"vetrine":[{"liv":12,"bdg":[…]},…],"left":1200}`
+ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","rd":[0,1],"you":1,"tok":…,"players":[{"team":1,"eq":{…}},{"team":2,"bot":4,"eq":{…}},…],"vetrine":[{"liv":12,"bdg":[…]},…],"left":1200}`
 (`offer` le primarie, `offer2` le secondarie; `p` e `p2` le **sue** scelte:
 quelle degli altri non si mandano, Sergio 30 ott; `rd` chi ha premuto PRONTO,
-1 o 0 per ogni robot; `left` i tick rimasti;
+1 o 0 per ogni robot; `left` i tick rimasti; `players` squadra, grado dei bot e
+`eq`, quello che indossa ognuno: i bot sono forti quanto le persone, come in allenamento,
+fatti dal server con `sim/loadout.lua` `dress_bots`, Sergio 22 nov;
 `vetrine` il cartellino di ognuno, livello, badge e pezzi indossati, arrivati col `hello` e
 controllati dal server) e
 manda `{"t":"pick","w":"shards"}` per ognuna (l'arma dice la categoria; si può
