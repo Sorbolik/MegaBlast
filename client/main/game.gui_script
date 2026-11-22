@@ -3358,9 +3358,9 @@ function CP.net_frame(self, dt)
 	if not self.net_over and now - (self.state_at or now) > CP.STALL then
 		CP.resync(self, "niente dal server da " .. CP.STALL .. " s")
 	end
-	if n.ff then return CP.net_fast(self) end
-	if n.qn - g.tick >= CP.FF_TICKS and not CP.net_leads(self) then
-		n.ff = true
+	if n.qn - g.tick >= CP.FF_TICKS and not CP.net_leads(self) then n.ff = true end
+	if n.ff then
+		self.jump_pressed, self.fire = false, nil
 		return CP.net_fast(self)
 	end
 	self.acc = math.min(self.acc + dt, 0.25)
@@ -3397,7 +3397,10 @@ function CP.net_frame(self, dt)
 	end
 	-- waiting for the server: the time doesn't pile up (no burst afterwards)
 	if n.starved then self.acc = math.min(self.acc, game.DT) end
-	self.jump_pressed, self.fire = false, nil
+	-- a shot or a jump that no tick took yet waits for the next frame while we
+	-- lead: at 90-120 Hz many frames have no tick (Sergio, 22 Nov: "carico la
+	-- levetta, lascio il dito e non fa niente"). Not ours to lead: dropped
+	if not CP.net_leads(self) then self.jump_pressed, self.fire = false, nil end
 	self.pose_t, self.pose_dt = self.acc, game.DT
 	-- our keys, and where we aim (angle only: the others see us aim)
 	if #n.out > 0 then
