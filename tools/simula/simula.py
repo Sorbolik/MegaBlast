@@ -109,7 +109,7 @@ def test_sim():
 
 def impostazioni(scenario):
     """Righe "imposta chiave valore" dello scenario: vanno nella sezione [megablast] della build."""
-    righe = []
+    righe, display = [], ""
     for riga in scenario.read_text().splitlines():
         p = shlex.split(riga, comments=True)
         if p and p[0] == "imposta":
@@ -120,7 +120,10 @@ def impostazioni(scenario):
             if p[1] == "prova_copione":
                 valore = str((REPO / valore).resolve())
             righe.append(f"{p[1]} = {valore}\n")
-    return "".join(righe)
+            # uno schermo veloce come quello del telefono (90-120 Hz): niente vsync
+            if p[1] == "prova_hz":
+                display = f"\n[display]\nvsync = 0\nupdate_frequency = {valore}\n"
+    return "".join(righe) + display
 
 
 def build(out, extra=""):
