@@ -61,8 +61,8 @@ local function build_choice(c)
 		local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
 		local x, y = 880 + kit.air() + col * 124 - row * 6, 236 + row * 76
 		local off = c.busy or (k == "canc" and #c.code == 0) or (#k == 1 and #c.code >= M.DIGITS)
-		local pl = kit.plate(g, x, y, 112, 66, off and KC.LINE or KC.ROSE, { sk = 0, d = 5, piece = "piastrina" })
-		kit.text(pl.g, k == "canc" and T.delete or k, x + 56, y + 45, k == "canc" and 18 or 34, off and KC.MUTE or KC.SAND, "middle")
+		local pl = kit.plate(g, x, y, 114, 66, off and KC.LINE or KC.ROSE, { sk = 0, d = 5, piece = "piastrina" })
+		kit.text(pl.g, k == "canc" and T.delete or k, x + 57, y + 45, k == "canc" and 18 or 34, off and KC.MUTE or KC.SAND, "middle")
 		kit.button(c.buttons, pl, k == "canc" and "canc" or "n:" .. k, { spento = off })
 	end
 	-- the one action: ENTRA, when the code is whole
@@ -91,7 +91,12 @@ local function seat(c, i, s, x, y)
 	else
 		local v = type(s.vetrina) == "table" and s.vetrina or {}
 		kit.text(k.g, i == room.you and common.you:upper() or T.player, x + 28, y + 46, 30, KC.SAND)
-		if tonumber(v.liv) then kit.text(k.g, T.level:format(v.liv), x + 26, y + 76, 16, KC.MUTE, "start", 1) end
+		-- back from the match but still on its results: VIA waits for them
+		if s.podio then
+			kit.text(k.g, T.on_podium, x + 26, y + 76, 16, KC.HOT_TOP, "start", 1)
+		elseif tonumber(v.liv) then
+			kit.text(k.g, T.level:format(v.liv), x + 26, y + 76, 16, KC.MUTE, "start", 1)
+		end
 		if i == room.host then kit.text(k.g, T.host, x + 200, y + 46, 16, KC.HOT_TOP, "start", 1) end
 	end
 end
@@ -110,7 +115,7 @@ local function build_room(c)
 		if room.mode == m then on = i end
 	end
 	if host then
-		kit.choice(g, c.buttons, 60, 306, T.mode, opts, on, 104)
+		kit.choice(g, c.buttons, 60, 306, T.mode, opts, on, 106)
 	else
 		kit.text(g, T.mode, 66, 290, 16, KC.MUTE, "start", 1.5)
 		kit.text(g, common.modes[room.mode] or "", 66, 332, 28, KC.SAND)
@@ -120,7 +125,7 @@ local function build_room(c)
 
 	-- the teams in team order, two columns; the seats of a team one under the other
 	local seats = type(room.posti) == "table" and room.posti or {}
-	local teams, by_team, bots = {}, {}, 0
+	local teams, by_team, bots, podium = {}, {}, 0, false
 	for i, s in ipairs(seats) do
 		if not by_team[s.team] then
 			by_team[s.team] = {}
@@ -129,6 +134,7 @@ local function build_room(c)
 		local list = by_team[s.team]
 		list[#list + 1] = i
 		if s.bot then bots = bots + 1 end
+		podium = podium or s.podio == true
 	end
 	table.sort(teams)
 	local row_y = 146
@@ -144,9 +150,10 @@ local function build_room(c)
 	end
 	if #teams == 2 then kit.text(g, T.versus, 835, 148, 20, KC.MUTE, "middle", 1) end
 
-	local sub = host and T.go_sub:format(common.modes[room.mode] or "", bots) or T.wait_host
-	c.action = kit.action(c.right, T.go, 930, 560, 270, 84, { size = 60, off = not host, sub = kit.upper(sub) })
-	kit.button(c.buttons, c.action, "via", { main = true, spento = not host })
+	local sub = not host and T.wait_host or podium and T.wait_podium or T.go_sub:format(common.modes[room.mode] or "", bots)
+	local off = not host or podium
+	c.action = kit.action(c.right, T.go, 930, 560, 270, 84, { size = 60, off = off, sub = kit.upper(sub) })
+	kit.button(c.buttons, c.action, "via", { main = true, spento = off })
 end
 
 local function build(c)

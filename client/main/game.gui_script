@@ -580,7 +580,7 @@ local function close_screen(self)
 end
 
 -- without_veil: you get here with a transition (ui/transition.lua), which already covers
-local function show_menu(self, without_veil, quiet)
+local function show_menu(self, without_veil, quiet, keep_room)
 	close_screen(self)
 	-- a big vignette still open goes away with its match: it would stay in
 	-- front of the home (the back button opens the wheel even over it)
@@ -588,7 +588,9 @@ local function show_menu(self, without_veil, quiet)
 	if self.sala then menu.lobby.destroy(self.sala); self.sala = nil end
 	self.podium_t = nil
 	-- in the queue the connection stays: you can go around the menus (ui/pill.lua)
-	if not self.queue then disconnect(self) end
+	-- and back to a private room after its match (CP.leave_end)
+	if not keep_room then self.private_room = nil end
+	if not self.queue and not keep_room then disconnect(self) end
 	self.mode = "menu"
 	home.show(self.home, without_veil, quiet)
 	home.queued(self.home, self.queue ~= nil)
@@ -1868,7 +1870,10 @@ local function on_server_message(self, m)
 	if m.t == "wait" then
 		CP.queue_wait(self, m)
 	elseif m.t == "privata" then
-		if CP.private_screen(self) then menu.private.status(self.schermata.obj, m) end
+		-- the room; after its match it arrives under the podium, and waits there
+		-- for the way back (CP.leave_end)
+		self.private_room = m
+		if CP.private_screen(self) then CP.private_status(self, m) end
 	elseif m.t == "error" and CP.private_screen(self) then
 		-- wrong code, room full: said on the keypad (the server closes)
 		self.privata = nil
@@ -1886,7 +1891,7 @@ local function on_server_message(self, m)
 		if first then
 			-- from the private room (menu/private.lua) it closes now, under the lineup
 			if CP.private_screen(self) then close_screen(self) end
-			self.queue, self.privata = nil, nil
+			self.queue, self.privata, self.private_room = nil, nil, nil
 			CP.close_room(self)
 			show_message(self, "", true)
 			-- the players are found: the search's gear goes away (the match has its own)
@@ -2141,6 +2146,30 @@ end
 
 function CP.private_screen(self)
 	return self.mode == "schermata" and self.schermata and self.schermata.mod == menu.private
+end
+
+-- The room on its screen; back from a match we are still on its podium for the
+-- server until we say we are here ("torna": VIA waits for everyone)
+function CP.private_status(self, m)
+	menu.private.status(self.schermata.obj, m)
+	local me = type(m.posti) == "table" and m.posti[m.you]
+	if type(me) == "table" and me.podio then send(self, { t = "torna" }) end
+end
+
+-- Out of a finished match (the podium, or a tap when there is none): back to
+-- the private room it came from, the same one on the same connection
+-- (server/private.go, Sergio 22 Nov: "finchè non esco dalla stanza deve tornare
+-- nel menu di scelta dei bot"), otherwise the home
+function CP.leave_end(self)
+	CP.iris(self, function()
+		local room = self.conn and self.private_room
+		show_menu(self, true, room and true or nil, room ~= nil)
+		if room then
+			self.exited, self.online_teams = {}, nil
+			open_screen(self, menu.private)
+			CP.private_status(self, room)
+		end
+	end)
 end
 
 -- The queue outside the waiting room (Sergio, 3 Nov: "puoi stare a guardare i
@@ -5499,7 +5528,7 @@ local function pointer_down(self, id, px, py)
 		elseif self.end_t then
 			open_level_end(self)
 		else
-			CP.iris(self, function() show_menu(self, true) end)
+			CP.leave_end(self)
 		end
 		return
 	elseif self.mode == "connecting" then
@@ -6161,7 +6190,7 @@ function PAD.on_input(self, action_id, action)
 		elseif end_of == "indietro" and self.schermata.mod == menu.private then
 			-- out of the room (if in one), back to GIOCA ONLINE
 			if self.conn then CP.let_go(self) end
-			self.privata = nil
+			self.privata, self.private_room = nil, nil
 			CP.slide(self, -1, function()
 				close_screen(self)
 				open_screen(self, menu.queue)
@@ -6189,7 +6218,7 @@ function PAD.on_input(self, action_id, action)
 		elseif end_of then
 			-- INDIETRO: the slider the other way (from the podium, which follows the battle, the iris)
 			if self.schermata.mod == menu.podium then
-				CP.iris(self, function() show_menu(self, true) end)
+				CP.leave_end(self)
 			elseif menu.door_pass.owns(self.door_pass) then
 				-- opened by a door or by the apprentice: back the same way (ui/door_pass.lua)
 				menu.door_pass.close(self.door_pass, self.home, function() show_menu(self, true, true) end)

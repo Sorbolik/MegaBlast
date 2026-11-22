@@ -150,6 +150,19 @@ vuota sparisce. Col `via` la stanza diventa una stanza normale (`newRoom` con
 i posti come sono, `seatSpec`): scelta delle armi, schieramento e partita come
 in coda; con dei bot gira sui worker dei bot.
 
+La stanza resta finché c'è qualcuno (Sergio, 22 nov: «non facciamo ricreare la
+stanza ogni volta»). Durante la partita il codice resta suo e chi prova a
+entrare riceve `{"t":"error","e":"partita"}`. Quando la partita si chiude (fine
+normale, avversari usciti, errore) il server non chiude le connessioni di chi
+è ancora collegato: tornano nella stessa stanza, negli stessi posti, con gli
+stessi bot e lo stesso host (`privateOver`, chiamata da `closeExcept`); i posti
+di chi è uscito o caduto diventano bot. Chi torna ha `"podio":true` nel suo
+posto finché il telefono, chiuso il podio, non manda `{"t":"torna"}`: fino ad
+allora il `via` aspetta, così nessuno viene tirato fuori dai risultati. Nel
+gioco il podio (o il tocco a fine partita) porta di nuovo alla stanza invece
+che alla home (`CP.leave_end`). Nessun cambio di versione: un client vecchio a
+fine partita chiude la connessione ed esce dalla stanza come prima.
+
 ## Eventi
 
 Il calendario lo fa Sergio nel **pannello degli eventi** (Worker di Cloudflare

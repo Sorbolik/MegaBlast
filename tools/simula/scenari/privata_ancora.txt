@@ -1,0 +1,33 @@
+# La stanza privata resta aperta tra le partite (Sergio, 22 nov: «quando
+# finisce una partita finchè non esco dalla stanza deve tornare nel menu di
+# scelta dei bot»): CREA UNA STANZA, 1 contro 1 col bot al livello 10, VIA; il
+# bot vince (io sto fermo), podio, CONTINUA: di nuovo la stessa stanza, stesso
+# codice e stesso bot; VIA fa partire la seconda partita.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_vignette no
+
+aspetta 1
+server 1v1 0
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 175 52 basso destra          # GIOCA
+aspetta 1
+tocca_bordo 676 413 alto centro          # PARTITA PRIVATA
+aspetta 1
+tocca_bordo 576 436 alto centro          # CREA
+aspetta 1.5
+tocca_bordo 112 322 alto centro          # 1 CONTRO 1
+aspetta 1
+foto 01_stanza
+tocca_bordo 175 52 basso destra          # VIA
+aspetta_stato modo=online 40
+aspetta_stato modo=ended 400
+aspetta 4
+foto 02_podio
+tocca_bordo 175 52 basso destra          # CONTINUA
+aspetta 2
+foto 03_di_nuovo_la_stanza               # stesso codice, io e il bot, VIA acceso
+tocca_bordo 175 52 basso destra          # VIA
+aspetta_stato modo=scelta_online 10
+aspetta 1
+foto 04_seconda_partita

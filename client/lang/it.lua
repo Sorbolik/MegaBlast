@@ -619,7 +619,7 @@ return {
 		},
 		create = "CREA",
 		have_code = "HAI UN CODICE?",
-		delete = "CANCELLA",
+		delete = "CANC",
 		join = "ENTRA",
 		connecting = "Mi collego...",
 		code = "CODICE",
@@ -632,6 +632,9 @@ return {
 		here = "QUI",
 		go = "VIA",
 		wait_host = "aspetta chi ha creato la stanza",
+		-- after a match, whoever still looks at its results (VIA waits for them)
+		on_podium = "AI RISULTATI",
+		wait_podium = "aspetta chi guarda i risultati",
 	},
 
 	-- menu/lobby.lua: the waiting room online
@@ -896,6 +899,7 @@ return {
 			evento = "L'evento è appena finito",
 			codice = "Nessuna stanza con questo codice",
 			piena = "La stanza è piena",
+			partita = "La stanza sta giocando:\nriprova a fine partita",
 		},
 		server_error = "Errore del server",
 		back_to_menu = "%s\nTocca per tornare al menu",
