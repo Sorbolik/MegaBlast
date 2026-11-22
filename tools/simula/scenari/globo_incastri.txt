@@ -1,0 +1,31 @@
+# Il globo del teletrasporto non si incastra (Sergio, 22 nov): il secondo
+# robot sta 60 pixel a destra. Un globo lanciato in alto gli cade sulla testa
+# e rotola giù (prima restava fermo lassù); uno tirato dritto contro il fianco
+# rimbalza e cade a terra (prima restava appeso in aria accanto a lui).
+imposta zoom 2
+imposta prova_vicino 60
+
+aspetta 2
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+tocca 1180 62                       # TELE
+mira 14 120 0.2                     # in alto, poco a destra: sulla sua testa
+aspetta_evento orb 2
+aspetta 0.7
+zoom 01_sulla_testa
+aspetta 0.6
+zoom 02_rotola_giu
+aspetta_evento teleport 4
+aspetta 0.3
+zoom 03_arrivato_accanto
+tocca 1180 62                       # TELE
+mira 150 -20 0.2                    # dritto contro il suo fianco
+aspetta_evento orb 2
+aspetta 0.4
+zoom 04_contro_il_fianco
+aspetta 0.6
+zoom 05_caduto_a_terra
+aspetta_evento teleport 4
+aspetta 0.3
+zoom 06_arrivato
