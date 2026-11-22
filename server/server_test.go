@@ -916,7 +916,9 @@ func TestLeaveQueue(t *testing.T) {
 
 // Bots fill the queue (lobby.go): two people in a 2 vs 2, after BotAfter
 // (here one second) the match starts with two bots, and the people are on
-// different teams.
+// different teams. Each bot wears as much as the person of the other team
+// (sim/loadout.lua dress_bots): A's level against A, nothing against B, who
+// has no profile; the draft and start say it, and the life shows it.
 func TestBotsFillQueue(t *testing.T) {
 	url, acc := testServerProfiles(t, func(c *Config) { c.BotAfter = time.Second })
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -939,8 +941,16 @@ func TestBotsFillQueue(t *testing.T) {
 			t.Fatalf("seat %d is not a grade 4 bot (average level 6): %v %v", i+1, players, cards)
 		}
 	}
+	botEq := func(players []any) (any, any) {
+		return players[2].(map[string]any)["eq"], players[3].(map[string]any)["eq"]
+	}
+	if mate, rival := botEq(players); mate != nil || rival == nil || rival.(map[string]any)["liv"] != float64(12) {
+		t.Fatalf("the bots' eq in the draft: %v", players)
+	}
 	b.waitFor(`"draft"`)
-	a.waitFor(`"start"`)
+	if mate, rival := botEq(a.waitFor(`"start"`)["players"].([]any)); mate != nil || rival.(map[string]any)["liv"] != float64(12) {
+		t.Fatalf("the bots' eq in start: %v %v", mate, rival)
+	}
 	// a few game states arrive: the room with bots runs (that they play is
 	// checked by TestNetBotPlays, without waiting for the real turns)
 	a.waitFor(`"t":"state"`)

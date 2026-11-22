@@ -255,13 +255,20 @@ end
 
 -- bots: the grade (sim/bot.lua GRADES) of the robots that are bots, by robot;
 -- they pick at once, like on the phone. eq: what each player wears, by robot
--- (N.equip_stats); the bots have the base stats
+-- (N.equip_stats); the bots wear as much as the people, like in training
+-- (Sergio, 22 Nov: every online mode; sim/loadout.lua dress_bots)
 function N.draft_new(seed, mode, r, bots, eq)
 	local players = {}
 	for i, p in ipairs(config.MODES[mode]) do
 		local b = bots and bots[i] or nil
 		players[i] = { team = p.team, bot = b }
 		if not b and eq then players[i].stats, players[i].eq = N.equip_stats(eq[i]) end
+	end
+	local ok = pcall(loadout.dress_bots, players, seed)
+	for _, p in ipairs(players) do
+		if p.bot then
+			if ok and p.eq then p.stats, p.eq = N.equip_stats(p.eq) else p.eq = nil end
+		end
 	end
 	local d = draft.new(seed, players, rules.weapons(r))
 	for i, p in ipairs(players) do
@@ -302,6 +309,12 @@ function N.draft_state(d, i)
 	local rd = {}
 	for k = 1, #d.players do rd[k] = d.ready[k] and 1 or 0 end
 	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = d.picks[i] or "", p2 = d.picks2[i] or "", rd = rd }
+end
+
+-- The draft's players for the draft message: teams, the bots' grades and what
+-- everyone wears (eq), so the lineup shows the bots as strong as they are
+function N.draft_players(d)
+	return N.start_players(d.players)
 end
 
 -- The match players for the start message: team, draft picks and what they wear
