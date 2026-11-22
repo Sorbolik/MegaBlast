@@ -1292,7 +1292,7 @@ function M:update_grenade(p)
 				self.projectile = nil
 				return
 			end
-			self:bounce_on_robot(p, hit, M.GRENADE_BOUNCE, M.GRENADE_FRICTION)
+			self:bounce_on_robot(p, hit, M.GRENADE_BOUNCE, M.GRENADE_FRICTION, M.GRENADE_R)
 			break
 		end
 		if self:spring(p, p.y + sy, M.GRENADE_R) then break end
@@ -1498,21 +1498,51 @@ end
 -- Whoever threw it doesn't touch it in the first OWNER_SAFE_TICKS.
 function M:body_hits_robot(o, x, y, r)
 	for _, rb in ipairs(self.robots) do
-		if not rb.dead and (rb.id ~= o.owner or o.age > M.OWNER_SAFE_TICKS) and M.hurt_at(rb, x, y, r) then
+		if not rb.dead and (rb.id ~= o.owner or o.age > M.OWNER_SAFE_TICKS) and rb.id ~= o.pass and M.hurt_at(rb, x, y, r) then
 			return rb
 		end
 	end
 end
 
--- Body o bounces on the box of robot hit and, if it comes in hard, moves it a tiny bit
-function M:bounce_on_robot(o, hit, bounce, friction)
-	local sx, sy = 0, 1
-	if o.y < hit.y + M.ROBOT_H - 2 then sx, sy = o.x < hit.x and -1 or 1, 0 end
+-- The orb is round on terrain too (Sergio, 22 Nov 2026: it got stuck in walls,
+-- slits and characters): its centre and 8 points of its rim
+local RIM = {}
+for k = 0, 7 do RIM[k + 1] = { math.cos(k * math.pi / 4) * M.ORB_R, math.sin(k * math.pi / 4) * M.ORB_R } end
+local function orb_touches(t, x, y)
+	if t:solid(x, y) then return true end
+	for i = 1, #RIM do
+		if t:solid(x + RIM[i][1], y + RIM[i][2]) then return true end
+	end
+	return false
+end
+local function point_solid(t, x, y) return t:solid(x, y) end
+
+-- Body o (radius r) bounces on the round body of robot hit, like on a ball: it
+-- rolls off heads and shoulders. If it is already inside (the robot walked into
+-- it) it goes back out first, straight out or sideways along the ground, where
+-- blocked(terrain, x, y) (the terrain point if not given) lets it. Coming in hard
+-- it moves the robot a tiny bit.
+function M:bounce_on_robot(o, hit, bounce, friction, r, blocked)
+	local cx, cy = hit.x, hit.y + M.HURT_Y
+	local dx, dy = o.x - cx, o.y - cy
+	local d = math.sqrt(dx * dx + dy * dy)
+	if d < 1e-6 then dx, dy, d = 0, 1, 1 end
+	local sx, sy = dx / d, dy / d
+	local out = M.HURT_R + r + 0.01
+	if d < out then
+		blocked = blocked or point_solid
+		local t = self.terrain
+		if not blocked(t, cx + sx * out, cy + sy * out) then
+			o.x, o.y = cx + sx * out, cy + sy * out
+		elseif math.abs(dy) < out then
+			local px = cx + (dx < 0 and -1 or 1) * math.sqrt(out * out - dy * dy)
+			if not blocked(t, px, o.y) then o.x = px end
+		end
+	end
 	local vn = o.vx * sx + o.vy * sy
 	if vn < -40 then
-		local d = (o.vx < 0 and -1 or 1)
-		if sy == 0 then d = -sx end
-		step_x(self, hit, d * M.ORB_NUDGE)
+		local side = math.abs(sx) > 0.5 and -sx or o.vx
+		step_x(self, hit, (side < 0 and -1 or 1) * M.ORB_NUDGE)
 	end
 	if vn < 0 then
 		local e = vn < -60 and bounce or 0
@@ -1523,30 +1553,69 @@ function M:bounce_on_robot(o, hit, bounce, friction)
 	o.touched = true
 end
 
+-- An orb that leans still on a robot for this long (or is wedged against it)
+-- passes through that robot until it is out of it: it never stays on a character
+M.ORB_LEAN_TICKS = 20
+M.ORB_LEAN_SPEED = 30     -- px/s: slower than this it counts as still
+-- How far an orb inside the terrain (crumbled ground, a robot that pushed it)
+-- looks for a free spot to get out
+M.ORB_ESCAPE = 15
+
+-- Where the orb sliding towards (x, y) ends up: there or, on the steps of the
+-- terrain cells, lifted at most a cell off the surface. nil if there is no way
+-- (plus the robot that blocks it, if it is a robot)
+function M:orb_slide(o, x, y)
+	local wedge = self:body_hits_robot(o, x, y, M.ORB_R)
+	if wedge then return nil, nil, wedge end
+	local t = self.terrain
+	if not orb_touches(t, x, y) then return x, y end
+	local sx, sy = surface_normal(t, x, y)
+	for lift = 1, M.CELL do
+		local lx, ly = x + sx * lift, y + sy * lift
+		if not orb_touches(t, lx, ly) then
+			if self:body_hits_robot(o, lx, ly, M.ORB_R) then return end
+			return lx, ly
+		end
+	end
+end
+
 -- Updates an orb; returns false when it's done (teleport done)
 function M:update_orb(o)
 	local rb = self.robots[o.owner]
 	if rb.dead then return false end
 	o.age = (o.age or 0) + 1
-	-- flies like the missile; when it touches terrain it bounces and rolls.
+	-- flies like the missile; when it touches terrain or a robot it bounces and
+	-- slides along it, it never stays hanging.
 	-- If it leaves the map it keeps falling: the teleport takes you there anyway.
 	local t = self.terrain
+	local pass = o.pass and self.robots[o.pass]
+	if pass and (pass.dead or not M.hurt_at(pass, o.x, o.y, M.ORB_R + M.CELL)) then o.pass = nil end
+	if orb_touches(t, o.x, o.y) then
+		for _, f in ipairs(teleport_offsets(M.ORB_ESCAPE)) do
+			if not orb_touches(t, o.x + f[1], o.y + f[2]) then
+				o.x, o.y = o.x + f[1], o.y + f[2]
+				break
+			end
+		end
+	end
 	o.vy = o.vy - self.gravity * M.ORB_GRAVITY * M.DT
 	if o.touched and M.ORB_DAMPING > 0 then
 		local k = 1 / (1 + M.DT * M.ORB_DAMPING)
 		o.vx, o.vy = o.vx * k, o.vy * k
 	end
-	local mx, my = o.vx * M.DT, o.vy * M.DT
-	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
+	local steps = math.max(1, math.ceil(math.max(math.abs(o.vx), math.abs(o.vy)) * M.DT / M.CELL))
+	local h = M.DT / steps
+	local leaning, x0, y0 = nil, o.x, o.y
 	for _ = 1, steps do
-		local nx, ny = o.x + mx / steps, o.y + my / steps
+		local nx, ny = o.x + o.vx * h, o.y + o.vy * h
 		local hit = self:body_hits_robot(o, nx, ny, M.ORB_R)
+		local ground = not hit and orb_touches(t, nx, ny)
 		if hit then
-			self:bounce_on_robot(o, hit, M.ORB_BOUNCE, M.ORB_FRICTION)
-			break
+			self:bounce_on_robot(o, hit, M.ORB_BOUNCE, M.ORB_FRICTION, M.ORB_R, orb_touches)
+			leaning = hit
 		elseif self:spring(o, ny, M.ORB_R) then
 			break
-		elseif t:solid(nx, ny) then
+		elseif ground then
 			local sx, sy = surface_normal(t, nx, ny)
 			local vn = o.vx * sx + o.vy * sy
 			if vn < 0 then
@@ -1558,10 +1627,26 @@ function M:update_orb(o)
 				o.vy = ty * M.ORB_FRICTION - e * vn * sy
 			end
 			o.touched = true
-			break
+		end
+		if hit or ground then
+			-- after the bounce the step goes on with the new speed: it slides along the
+			-- terrain or round the robot. Wedged with no way out it stops, and if a
+			-- robot blocks it, it passes through that robot
+			local wedge
+			nx, ny, wedge = self:orb_slide(o, o.x + o.vx * h, o.y + o.vy * h)
+			if not nx then
+				o.vx, o.vy = 0, 0
+				if wedge then o.pass, leaning = wedge.id, nil end
+				break
+			end
 		end
 		o.x, o.y = nx, ny
 	end
+	-- leaning still (a robot pushing it along doesn't count)
+	local mx, my, slow = o.x - x0, o.y - y0, M.ORB_LEAN_SPEED * M.DT
+	local still = mx * mx + my * my < slow * slow
+	o.leans = leaning and still and (o.leans or 0) + 1 or 0
+	if o.leans >= M.ORB_LEAN_TICKS then o.pass, o.leans = leaning.id, 0 end
 	o.timer = o.timer - 1
 	if o.timer <= 0 then
 		-- the orb is at the centre of the robot, the robot's position is at the feet

@@ -2353,8 +2353,16 @@ function CP.showcases(self, players, name_list, opt)
 	for i, p in ipairs(players) do
 		local under = i == opt.me and TM.roles.you or (p.dummy and not p.insegna) and TM.roles.dummy or p.team == my_team and TM.roles.mate or TM.roles.opponent
 		local v
-		if opt.rete then
+		if opt.rete and p.bot and p.eq then
+			-- online the bots wear as much as the people too (sim/loadout.lua dress_bots)
+			v = CP.vetrina.from_eq(p.eq, name_list[i], p.team, under)
+			v.bot = true
+		elseif opt.rete then
 			v = CP.vetrina.from_net(opt.rete[i], name_list[i], p.team, under)
+			-- the stats of what they wear (checked by the server), as in the match
+			local L = require "sim.loadout"
+			local ok, eq = pcall(L.net_clean, p.eq)
+			if ok and eq then CP.vetrina.with_stats(v, L.net_stats(eq, game.base_stats())) end
 		elseif i == opt.me then
 			v = CP.vetrina.from_profile(self.profilo, name_list[i], p.team, under)
 		elseif p.bot and p.eq then
@@ -2450,7 +2458,7 @@ function CP.begin(self, me, net, cluster, replay_ok)
 	if net and self.look == scoria.PERSONAGGIO then
 		for i in ipairs(self.g.robots) do
 			local gear, tiers = {}, {}
-			for _, pz in ipairs(v[i].bot and {} or v[i].pezzi or {}) do gear[pz.slot], tiers[pz.slot] = pz.set, pz.tier end
+			for _, pz in ipairs(v[i].pezzi or {}) do gear[pz.slot], tiers[pz.slot] = pz.set, pz.tier end
 			dress(self, i, i == me and scoria.player or scoria.look_of(gear, tiers))
 		end
 	elseif self.look == scoria.PERSONAGGIO then
@@ -2776,13 +2784,11 @@ local function start_local(self, against)
 	end
 	-- against the bots everyone wears as much as the player (Sergio, 18 Nov): the
 	-- player's eq and the bots' built from it with the match's seed, in the recipe
-	-- (sim/loadout.lua rival; the server builds them again, server/verify.lua)
+	-- (sim/loadout.lua dress_bots; the server builds them again, server/verify.lua)
 	local mine = against and not against.stesso and profile.equip(self.profilo)
 	if mine then
 		opts.players[1].eq = mine
-		for i, p in ipairs(opts.players) do
-			if p.bot then p.eq = require("sim.loadout").rival(mine, seed, i) end
-		end
+		require("sim.loadout").dress_bots(opts.players, seed)
 	end
 	self.local_opts, self.local_seed = opts, seed
 	-- in the test scenarios the draft is there only with prova_scelta 1 (scenario scelta.txt)

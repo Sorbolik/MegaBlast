@@ -271,7 +271,7 @@ rl.orbs = { { x = rr.x + 30, y = gy + 40, vx = 120, vy = -100, owner = 1, timer 
 local touched_x
 for _ = 1, 40 do
 	rl:step()
-	if rl.orbs[1] and not touched_x and rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y - 3) then touched_x = rl.orbs[1].x end
+	if rl.orbs[1] and not touched_x and rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y - game.ORB_R - 1) then touched_x = rl.orbs[1].x end
 end
 check(touched_x and rl.orbs[1] and rl.orbs[1].x > touched_x + 10, "the orb rolls after touching ground")
 check(rl.orbs[1] and not rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y), "the orb doesn't go into the terrain")
@@ -2138,6 +2138,52 @@ local gap_round, gr = slope_gap()
 -- terrain cell; a rectangle would stay a whole half width above
 check(gr and gap_round < math.min(game.ROBOT_HALF_W * 0.42 + game.CELL, game.ROBOT_HALF_W), string.format("capsule: at the centre it's as far above the slope as the edge of the circle (%.1f px)", gap_round))
 
+-- The orb never gets stuck (Sergio, 22 Nov 2026): not beside or on top of a
+-- robot, not in a wall, a slit or the terrain, not between a robot and a wall
+do
+local function orb_world(ground, robot_x)
+	local q = shaped_world(ground)
+	q.robots[1].x, q.robots[1].y = -5000, 5000
+	local r2 = q.robots[2]
+	if robot_x then place(r2, robot_x, ground(robot_x)); r2.grounded = true else r2.x = 5000 end
+	return q, r2
+end
+local function orb_after(q, x, y, vx, vy, ticks)
+	q.orbs = { { id = 1, x = x, y = y, vx = vx, vy = vy, owner = 1, timer = 100000, age = 100 } }
+	local o = q.orbs[1]
+	for _ = 1, ticks do q:update_orbs() end
+	return o
+end
+local floor100 = function() return 100 end
+local wall = function(x) return x > 700 and 400 or 100 end
+local hy = 100 + game.HURT_Y
+local q1 = orb_world(floor100, 600)
+local o1 = orb_after(q1, 600 - game.HURT_R - game.ORB_R + 1, hy, 0, -10, 120)
+check(o1.y < 100 + game.ORB_R + 2, string.format("orb beside a robot: it falls to the ground (%.0f)", o1.y))
+local q2 = orb_world(floor100, 600)
+local o2 = orb_after(q2, 601, hy + game.HURT_R + game.ORB_R + 3, 0, -50, 180)
+check(o2.y < 100 + game.ORB_R + 2, string.format("orb on a robot's head: it doesn't stay up there (%.0f)", o2.y))
+local q3 = orb_world(wall, 700 - game.ROBOT_HALF_W - 1)
+local o3 = orb_after(q3, 698, hy + game.HURT_Y + 20, 0, -20, 180)
+check(o3.y < 100 + game.ORB_R + 2, string.format("orb between a robot and a wall: it gets down (%.0f)", o3.y))
+local q4 = orb_world(floor100)
+local o4 = orb_after(q4, 600, 97, 40, 0, 60)
+check(not q4.terrain:solid(o4.x, o4.y) and o4.x > 610, "orb inside the terrain: it comes out and goes on")
+local q5 = orb_world(function(x) return (x > 600 and x < 606) and 40 or 100 end)
+local o5 = orb_after(q5, 603, 140, 0, -10, 120)
+check(o5.y > 100, string.format("orb on a narrow slit: it doesn't fall in (%.0f)", o5.y))
+local q6 = orb_world(wall)
+local o6 = orb_after(q6, 650, 250, 300, 50, 180)
+check(o6.x < 700 - game.ORB_R and o6.y < 100 + game.ORB_R + 2, "orb against a wall: it bounces and slides down")
+local q7 = orb_world(function(x) return 100 + math.max(0, x - 400) * 0.3 end)
+local o7 = orb_after(q7, 800, 100 + 400 * 0.3 + 12, 0, 0, 180)
+check(o7.x < 760, string.format("orb on a slope: it rolls down (%.0f)", o7.x))
+local q8, w8 = orb_world(floor100, 560)
+local o8 = orb_after(q8, 600, 100 + game.ORB_R + 0.5, 0, 0, 10)
+for _ = 1, 60 do w8.x = w8.x + 1; q8:update_orbs() end
+check(o8.x > w8.x + game.HURT_R * 0.8, "a robot walking into a resting orb pushes it along")
+end
+
 -- Short jump: releasing the button at once rises much less
 local function jump_top(hold_ticks)
 	local q = shaped_world(function() return 100 end)
@@ -2511,6 +2557,19 @@ do
 	local base = game.base_stats()
 	check(g.robots[2].stats.attack == loadout.net_stats(a, base).attack and g.robots[1].max_hp == loadout.net_stats(loadout.net_clean(mine), base).max_hp,
 		"recipe: eq gives the stats")
+	-- online too every bot is someone's rival (dress_bots): the people of the
+	-- other teams in turn, else of its own; training is the case of one person
+	local P = function(team, bot, eq) return { team = team, bot = bot, eq = eq } end
+	local enc = function(x) return x and replay.encode({ x = x }) end
+	local other = { liv = 7 }
+	local t = loadout.dress_bots({ P(1, nil, mine), P(2, 4), P(1, 4), P(2, 4) }, 1234)
+	check(enc(t[2].eq) == enc(a) and t[3].eq and t[4].eq and t[3].eq.liv == 30, "dress_bots: training, every bot the player's rival")
+	t = loadout.dress_bots({ P(1, nil, mine), P(2, 4), P(1, nil, other), P(2, 4) }, 5)
+	check(t[2].eq.liv == 30 and t[4].eq.liv == 7, "dress_bots: two people against two bots, one copy each")
+	t = loadout.dress_bots({ P(1, nil, mine), P(2, nil, other), P(1, 4), P(2, 4) }, 5)
+	check(t[3].eq.liv == 7 and t[4].eq.liv == 30, "dress_bots: a person and a bot each, the bot copies the other team's person")
+	t = loadout.dress_bots({ P(1, nil, nil), P(2, 4) }, 5)
+	check(t[2].eq == nil, "dress_bots: whoever wears nothing gets a bare bot")
 end
 
 if failures > 0 then

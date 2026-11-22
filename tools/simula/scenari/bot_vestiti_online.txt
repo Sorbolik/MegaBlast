@@ -1,0 +1,24 @@
+# Online i bot che riempiono la coda sono forti come le persone, come in
+# allenamento (Sergio, 22 nov; sim/loadout.lua dress_bots): 2 contro 2 con noi
+# (senza profilo sul server: niente pezzi) e un finto (Rosso 1) coi quattro
+# pezzi del Leviatano; dopo 20 s due bot. Ognuno copia la persona dell'altra
+# squadra: il nostro compagno (Blu 2) è vestito come il finto, con le famiglie a caso
+# famiglia agli stessi livelli e lo stesso livello; Rosso 2 è nudo come noi. Lo
+# schieramento li mostra già vestiti, in partita li indossano e la vita è quella
+# dei loro pezzi.
+imposta server_url ws://127.0.0.1:8090/ws
+
+aspetta 3
+server 2v2 1 bot_dopo=20s pezzi=leviatano
+tocca 1105 52                      # GIOCA
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
+aspetta_stato modo=scelta_online 40
+aspetta 1
+foto 00_schieramento_bot            # Blu 2 vestito come Rosso 1 (il finto), Rosso 2 nudo come noi
+aspetta_stato modo=online 20
+aspetta 5
+foto 01_partita
+aspetta_stato modo=online turno=4 120
+aspetta 2.5
+foto 02_turno_del_bot_vestito       # Blu 2: i suoi pezzi addosso, la vita sopra 100

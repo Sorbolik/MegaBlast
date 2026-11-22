@@ -236,4 +236,34 @@ function M.rival(eq, seed, nth)
 	return best
 end
 
+-- Every bot of a match as strong as the people (Sergio, 22 Nov: online too,
+-- in every mode, like in training): players by robot ({ team, bot, eq }),
+-- the people's eq as their phones send it. Each bot is the rival (M.rival)
+-- of one person: the people of the other teams in turn, by the order of the
+-- bots (so two people against two bots meet one copy each, and a person with
+-- a bot against a person with a bot each meet the other's copy: the teams
+-- weigh the same), and only if there are none the people of its own team.
+-- In training (one person) every bot is the person's rival. A bot whose
+-- person wears nothing (eq nil) stays bare. Fills p.eq of the bots and
+-- returns players
+function M.dress_bots(players, seed)
+	local n = 0
+	for i, p in ipairs(players) do
+		if p.bot then
+			local theirs, mates = {}, {}
+			for _, q in ipairs(players) do
+				if not q.bot then
+					local list = q.team == p.team and mates or theirs
+					list[#list + 1] = q
+				end
+			end
+			local from = #theirs > 0 and theirs or mates
+			local q = from[n % math.max(1, #from) + 1]
+			p.eq = q and q.eq ~= nil and M.rival(q.eq, seed, i) or nil
+			n = n + 1
+		end
+	end
+	return players
+end
+
 return M
