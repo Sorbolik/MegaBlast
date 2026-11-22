@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"strings"
 )
 
@@ -15,27 +16,41 @@ import (
 // Whoever joins takes the first bot seat. The match is a normal room
 // (room.go), with the people and the bots where they sat.
 //
+// The room outlives its matches (Sergio, 22 Nov: "non facciamo ricreare la
+// stanza ogni volta"): while the match is on its code is busy, and when it
+// ends whoever is still connected comes back to the same seats, with the same
+// bots and host (privateOver), until they leave. Back from the match each
+// person is still on the podium until their phone says "torna": until then
+// VIA waits, so nobody is pulled out of their results.
+//
 // Client to server, before the match (with the "privata" hello, room.go):
 //
 //	{"t":"posto","i":3}             I move to seat 3 (a bot's: the bot takes mine)
 //	{"t":"bot","i":3,"g":7}         host: the bot of seat 3 is grade 7 (1-10, sim/bot.lua GRADES)
 //	{"t":"modo","mode":"1v1"}       host: another mode ("1v1", "2v2", "ffa"), if the people fit
-//	{"t":"via"}                     host: the match starts (weapon draft, like a queue)
+//	{"t":"via"}                     host: the match starts (weapon draft, like a queue), when nobody is on the podium
+//	{"t":"torna"}                   back from the podium of the match into the room
 //	{"t":"leave"}                   I leave the room (the server closes)
 //
 // Server to everyone in the room, at every change:
 //
 //	{"t":"privata","code":"4821","mode":"2v2","you":1,"host":1,
-//	 "posti":[{"team":1,"vetrina":{"liv":12,"bdg":[]}},{"team":2,"bot":5},...]}
+//	 "posti":[{"team":1,"vetrina":{"liv":12,"bdg":[]},"podio":true},{"team":2,"bot":5},...]}
 //
-// you and host are seats (from 1). A wrong code gets {"t":"error","e":"codice"},
-// a room full of people {"t":"error","e":"piena"}.
+// you and host are seats (from 1), podio: that person still looks at the
+// results of the last match. A wrong code gets {"t":"error","e":"codice"}, a
+// room full of people {"t":"error","e":"piena"}, a room in a match
+// {"t":"error","e":"partita"}.
 type Private struct {
 	code  string
 	mode  Mode
 	seats []seatSpec // one per seat of the mode
 	teams []int      // config.MODES
 	host  *Player
+	// playing: its match is on (the code is kept, nobody can come in);
+	// podium: who is back from it but still on the results
+	playing bool
+	podium  map[*Player]bool
 }
 
 const botGradeMax = 10 // len(sim/bot.lua GRADES)
@@ -66,6 +81,10 @@ func (l *Lobby) JoinPrivate(p *Player, code string) bool {
 	r := l.privates[code]
 	if r == nil {
 		p.Send([]byte(`{"t":"error","e":"codice"}`))
+		return false
+	}
+	if r.playing {
+		p.Send([]byte(`{"t":"error","e":"partita"}`))
 		return false
 	}
 	for i := range r.seats {
@@ -105,7 +124,7 @@ func modeTeam(sim string, i int) int {
 func (l *Lobby) PrivateMsg(p *Player, m clientMsg) {
 	l.mu.Lock()
 	r := p.private
-	if r == nil {
+	if r == nil || r.playing {
 		l.mu.Unlock()
 		return
 	}
@@ -132,15 +151,18 @@ func (l *Lobby) PrivateMsg(p *Player, m clientMsg) {
 		if host && ok && mode.Name != r.mode.Name && len(people) <= mode.Players {
 			l.setMode(r, mode, people, r.grade())
 		}
+	case "torna":
+		delete(r.podium, p)
 	case "via":
-		if host {
-			start = r.seats
+		if host && len(r.podium) == 0 {
+			// the room waits for its match (privateOver), its code stays taken
+			start = append([]seatSpec(nil), r.seats...)
+			r.playing = true
 			for _, s := range r.seats {
 				if s.p != nil {
 					s.p.private = nil
 				}
 			}
-			delete(l.privates, r.code)
 		}
 	}
 	if start == nil {
@@ -148,8 +170,48 @@ func (l *Lobby) PrivateMsg(p *Player, m clientMsg) {
 	}
 	l.mu.Unlock()
 	if start != nil {
-		l.open(r.mode, start)
+		l.open(r.mode, start, r)
 	}
+}
+
+// privateOver: the match of room r has closed (room.go closeExcept). back has
+// one entry per seat: who is still connected there, nil for whoever left or
+// dropped, whose seat goes to a bot. They are back in the room, on the podium
+// until "torna"; with nobody back the room closes.
+func (l *Lobby) privateOver(r *Private, back []*Player) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	r.playing = false
+	r.podium = map[*Player]bool{}
+	draining := l.srv.draining.Load()
+	for i, p := range back {
+		if i >= len(r.seats) {
+			break
+		}
+		if r.seats[i].p == nil {
+			continue // a bot's seat: it stays as it was
+		}
+		if p == nil || p.Closed() || draining {
+			if p != nil {
+				p.Send([]byte(`{"t":"error","e":"draining"}`))
+				p.Close()
+			}
+			r.seats[i] = seatSpec{bot: r.grade()}
+			continue
+		}
+		r.seats[i].p = p
+		p.private = r
+		r.podium[p] = true
+	}
+	people := r.people()
+	if len(people) == 0 {
+		delete(l.privates, r.code)
+		return
+	}
+	if !slices.Contains(people, r.host) {
+		r.host = people[0]
+	}
+	l.tellPrivate(r)
 }
 
 // leavePrivate takes p out of their private room (lock held): the seat goes
@@ -160,6 +222,7 @@ func (l *Lobby) leavePrivate(p *Player) {
 		return
 	}
 	p.private = nil
+	delete(r.podium, p)
 	for i, s := range r.seats {
 		if s.p == p {
 			r.seats[i] = seatSpec{bot: r.grade()}
@@ -213,7 +276,11 @@ func (l *Lobby) tellPrivate(r *Private) {
 		if s.p.showcase != nil {
 			card = string(s.p.showcase)
 		}
-		seats[i] = fmt.Sprintf(`{"team":%d,"vetrina":%s}`, r.teams[i], card)
+		podium := ""
+		if r.podium[s.p] {
+			podium = `,"podio":true`
+		}
+		seats[i] = fmt.Sprintf(`{"team":%d,"vetrina":%s%s}`, r.teams[i], card, podium)
 	}
 	list := strings.Join(seats, ",")
 	for i, s := range r.seats {

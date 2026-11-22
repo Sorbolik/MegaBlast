@@ -244,6 +244,9 @@ type Room struct {
 	gone   string
 	botAim string
 
+	// the private room (private.go) its people go back to when it closes, nil: a queue's
+	private *Private
+
 	draftLeft int    // tick at the end of the draft
 	players   []byte // teams as JSON, [{"team":1},...]; from the draft also what everyone wears (eq), from start the picks
 	showcases []byte // the players' cards as JSON, [{"liv":12,"bdg":[...]},...]
@@ -646,7 +649,10 @@ func (r *Room) prizes(b *Batch) {
 					if gain != nil {
 						p.Send(append(append([]byte(`{"t":"premio","g":`), gain...), '}'))
 					}
-					p.Close()
+					// from a private room the connection stays: it is back there (closeExcept)
+					if r.private == nil {
+						p.Close()
+					}
 				}
 			}()
 		}
@@ -879,14 +885,24 @@ func (r *Room) closeExcept(b *Batch, held map[*Player]bool) {
 		}
 		break
 	}
-	for _, s := range r.seats {
+	// from a private room whoever is still connected goes back there (private.go)
+	var back []*Player
+	if r.private != nil {
+		back = make([]*Player, len(r.seats))
+	}
+	for i, s := range r.seats {
 		r.srv.sessions.Delete(s.tok)
 		if s.p != nil {
 			s.p.room.Store(nil)
-			if !held[s.p] {
+			if back != nil {
+				back[i] = s.p
+			} else if !held[s.p] {
 				s.p.Close()
 			}
 		}
+	}
+	if back != nil {
+		r.srv.lobby.privateOver(r.private, back)
 	}
 }
 

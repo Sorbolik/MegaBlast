@@ -1137,6 +1137,51 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 	}
 }
 
+// The private room outlives its match (Sergio, 22 Nov): while it plays its
+// code is busy; when it closes (here B leaves, one team is left) A is back in
+// the same room on the same connection, on the podium: VIA waits for "torna",
+// then a new match starts. B's seat is a bot.
+func TestPrivateRoomAfterMatch(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	a := dial(t, ctx, url)
+	a.send(`{"t":"hello","v":11,"privata":"nuova"}`)
+	code := a.waitFor(`"privata"`)["code"].(string)
+	b := dial(t, ctx, url)
+	b.send(`{"t":"hello","v":11,"privata":"` + code + `"}`)
+	b.waitFor(`"privata"`)
+	a.send(`{"t":"modo","mode":"1v1"}`)
+	b.waitFor(`"1v1"`)
+	a.send(`{"t":"via"}`)
+	a.waitFor(`"start"`)
+	b.waitFor(`"start"`)
+	c := dial(t, ctx, url)
+	c.send(`{"t":"hello","v":11,"privata":"` + code + `"}`)
+	if e := c.waitFor(`"error"`); e["e"] != "partita" {
+		t.Fatalf("a room in a match: %v", e)
+	}
+	b.send(`{"t":"leave"}`)
+	m := a.waitFor(`"privata"`)
+	seats := m["posti"].([]any)
+	if m["code"] != code || m["mode"] != "1v1" || m["host"] != float64(1) || len(seats) != 2 ||
+		seats[0].(map[string]any)["podio"] != true || seats[1].(map[string]any)["bot"] == nil {
+		t.Fatalf("back in the room: %v", m)
+	}
+	a.send(`{"t":"via"}`) // still on the podium: nothing
+	if m = a.waitFor(`"privata"`); m["posti"].([]any)[0].(map[string]any)["podio"] != true {
+		t.Fatalf("VIA from the podium: %v", m)
+	}
+	a.send(`{"t":"torna"}`)
+	if m = a.waitFor(`"privata"`); m["posti"].([]any)[0].(map[string]any)["podio"] != nil {
+		t.Fatalf("after torna: %v", m)
+	}
+	a.send(`{"t":"via"}`)
+	if d := a.waitFor(`"draft"`); len(d["players"].([]any)) != 2 {
+		t.Fatalf("second match: %v", d)
+	}
+}
+
 // The rate limit (server.go): a burst gets through, a flood doesn't, and the
 // tokens come back with time.
 func TestRateLimit(t *testing.T) {
