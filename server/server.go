@@ -21,7 +21,7 @@ import (
 // Protocol version: change it together with PROTOCOL in
 // client/main/game.gui_script every time the messages change in a way an old
 // client wouldn't understand.
-const protocolVersion = 10
+const protocolVersion = 11
 
 type Config struct {
 	Node           string // node name, goes into tokens: a load balancer can send whoever comes back to the right node
@@ -158,7 +158,7 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.CloseNow()
-	conn.SetReadLimit(1024) // client messages are a few tens of bytes
+	conn.SetReadLimit(4096) // client messages are small: the keys of a few ticks at most ("k")
 	s.online.Add(1)
 	defer s.online.Add(-1)
 
@@ -213,9 +213,9 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 }
 
 // rateLimit: at most msgRate messages a second per connection, with bursts
-// up to msgBurst; the rest is dropped before it's even read. A client sends a
-// few a second (keys when they change, the aim at most 10, the shot), so only
-// a broken or hostile client hits it: it can't fill its room's queue and make
+// up to msgBurst; the rest is dropped before it's even read. On its turn a
+// client sends its keys once per frame with ticks (60 a second, "k"), so only a
+// broken or hostile client hits it: it can't fill its room's queue and make
 // the others' keys get lost.
 type rateLimit struct {
 	tokens float64
@@ -223,8 +223,8 @@ type rateLimit struct {
 }
 
 const (
-	msgRate  = 30
-	msgBurst = 60
+	msgRate  = 90
+	msgBurst = 120
 )
 
 func (l *rateLimit) allow(now time.Time) bool {

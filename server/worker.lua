@@ -191,42 +191,40 @@ function CMD.new(c)
 	answer({ map = ROOMS[c.r].g.map })
 end
 
--- tick{r, k, s}: one tick of the match. k: the keys of the player on turn,
--- if any (l, r, j: left, right, jump; h: jump held; a, p, w: fire at angle a
--- with power p and weapon w; m: aiming at angle m), s: also the state.
--- head "cur next over st": on turn before and after, 1 if over, 1 if the
--- last raw is the state (asked, or the match is over); raws: the events, then
--- the state.
+-- tick{r, k, lead, s}: one tick of the match. k: the keys of the player of
+-- robot lead (sim/netkeys.lua), who is on turn and leads from their phone;
+-- without them a bot or nobody plays; s: also the state.
+-- head "cur next over st code aim": on turn before and after, 1 if over, 1 if
+-- the raw is the state (asked, or the match is over), the keys applied ("-"
+-- none), where the bot on turn aims ("-" none); raws: the state, if st.
 function CMD.tick(c)
 	local rm = room(c)
 	local g = rm.g
 	local cur = g.current
-	local k = c.k or EMPTY
+	local code, input, by_bot = N.input(g, c.k, c.lead)
 	local t = rm.tallies and rm.tallies[cur]
 	-- a person's shot (not the bot standing in for them), for their stats
-	if t and k.a and not N.bot_turn(g, cur) then tally.shot(t, g, game.WEAPONS[k.w] and k.w or "missile") end
-	N.step(g, k.l, k.r, k.j, k.h, k.a, k.p, k.w)
+	if t and input and input.fire and not by_bot then tally.shot(t, g, input.fire.weapon) end
+	g:step(input)
 	local nxt = g.current
 	local evs = N.events(g)
 	for _, tt in pairs(rm.tallies or EMPTY) do
 		for i = 1, #evs do tally.event(tt, g, evs[i]) end
 		tally.tick(tt, g)
 	end
-	local raws = {}
-	for i = 1, #evs do raws[i] = json(evs[i]) end
 	local over = N.over(g)
 	local st = c.s or over
-	if st then
-		-- the aim of whoever is still on turn (a new turn starts without)
-		raws[#raws + 1] = json(N.snapshot(g, nxt == cur and k.m or nil))
-	end
-	answer(format("%d %d %d %d", cur, nxt, over and 1 or 0, st and 1 or 0), raws)
+	local aim = N.bot_aim(g)
+	local raws = st and { json(N.snapshot(g, c.m)) } or nil
+	answer(format("%d %d %d %d %s %s", cur, nxt, over and 1 or 0, st and 1 or 0,
+		code == "" and "-" or code, aim and format("%.2f", aim) or "-"), raws)
 end
 
--- step{r, l, rt, j, h, a, p, w}: like tick but without events and state (tests)
+-- step{r, k}: one tick with the keys k of whoever is on turn, without events
+-- and state (tests)
 function CMD.step(c)
 	local g = room(c).g
-	N.step(g, c.l, c.rt, c.j, c.h, c.a, c.p, c.w)
+	N.step(g, c.k, g.current)
 	answer({ cur = g.current })
 end
 
@@ -239,12 +237,6 @@ end
 -- snapshot{r, m}: the state, with the aim m (nil if not aiming)
 function CMD.snapshot(c)
 	answer(nil, { json(N.snapshot(room(c).g, c.m)) })
-end
-
--- resume{r}: for whoever comes back, the digs so far and the state
-function CMD.resume(c)
-	local g = room(c).g
-	answer(nil, { json(N.sync(g)), json(N.snapshot(g)) })
 end
 
 function CMD.current(c)

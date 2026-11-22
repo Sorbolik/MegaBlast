@@ -149,31 +149,29 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 
 | Messaggio | Direzione | Contenuto |
 |---|---|---|
-| `{"t":"hello","v":9,"mode":"2v2","vetrina":{…}}` | C → S | primo messaggio: versione del protocollo e coda (`2v2`, `1v1` o la coda di un evento, [server.md](server.md#eventi)) e cartellino (livello e badge) (o `"tok"` per tornare in partita) |
+| `{"t":"hello","v":11,"mode":"2v2","profilo":"12.<chiave>"}` | C → S | primo messaggio: versione del protocollo, coda (`2v2`, `1v1` o la coda di un evento, [server.md](server.md#eventi)) e profilo ospite (o `"tok"` per tornare in partita) |
 | `{"t":"error","e":"version"}` | S → C | errore: `version` (aggiorna il gioco), `expired` (partita finita), `draining` (server in spegnimento) |
 | `{"t":"wait","of":4,"you":1,"vetrine":[…],"bot_in":25}` | S → C | sei in coda: quanti servono, il tuo posto, i cartellini di chi aspetta (a ogni entrata e uscita); `bot_in` i secondi prima che arrivino i bot (solo nelle code normali) |
 | `{"t":"draft","offer":[…],"offer2":[…],"offer3":[…],"p":[…],"p2":[…],"p3":[…],"pr":[…],"sw":[…],"you":1,"tok":…,"players":[…],"left":900}` | S → C | scelta delle armi d'inizio partita: primarie, secondarie e attrezzi, scelte di tutti, proposte di scambio (vedi [server.md](server.md)) |
 | `{"t":"pick","w":"shards"}` / `{"t":"swap","to":3}` | C → S | scelgo un'arma (primaria, secondaria o attrezzo, lo dice l'arma) / propongo lo scambio al compagno (`"to":0` ritira la proposta) |
-| `{"t":"start","seed":…,"map":"forgia","you":1,"tok":…,"resume":false,"players":[{"team":1},…],"regole":null,"vetrine":[…]}` | S → C | la partita parte: mappa, seed, quale robot sei, le squadre, le regole dell'evento (o `null`), i cartellini di tutti e il gettone per tornare se cadi |
-| `{"t":"sync","x":[[x,y,r],…]}` | S → C | a chi torna: gli scavi fatti finora nel terreno |
-| `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano e a ogni inizio del proprio turno; il server li lascia a ogni cambio di turno) |
-| `{"t":"jump"}` | C → S | salto |
-| `{"t":"fire","a":1.2,"p":0.7}` | C → S | sparo: angolo in radianti e potenza da 0 a 1 |
-| `{"t":"aim","a":1.2}` / `{"t":"aim_end"}` | C → S | sto mirando a quell'angolo (al più 10 al secondo, quando cambia) / ho smesso: gli altri lo vedono nello stato (`aim`), la potenza no |
-| `{"t":"state",…}` | S → C | fase, turno, timer, secondi dopo il primo attacco, ultimo giro, coppia di turni (squadra che l'ha aperta e i suoi punti allora), attacchi fatti (e attrezzo usato), teletrasporti, robot e missile (20 al secondo); `aim`: dove mira chi è di turno (manca se non mira; un bot mira alla mossa migliore mentre pensa) |
-| `{"t":"ev","type":…}` | S → C | eventi: `turn`, `fire`, `explosion` (x, y, raggio), `damage`, `death`, `miss`, `over` |
+| `{"t":"start","seed":…,"map":"forgia","you":1,"tok":…,"resume":false,"cur":1,"players":[{"team":1},…],"regole":null,"vetrine":[…]}` | S → C | la partita parte: mappa, seed, quale robot sei, chi comincia (`cur`), le squadre, le regole dell'evento (o `null`), i cartellini di tutti e il gettone per tornare se cadi |
+| `{"t":"k","n":120,"k":["r","r","jn","fmissile,1.2,0.7"],"m":1.2}` | C → S | nel proprio turno: i tasti dei tick giocati sul telefono da `n` in poi, uno per tick (`client/sim/netkeys.lua`: `l` `r` `j` sinistra, destra, salto, `h`/`n` salto tenuto o lasciato, `f<arma>,<angolo>,<forza>` lo sparo), e `m` dove mira (gli altri lo vedono, la forza no) |
+| `{"t":"k","n":120,"k":[…],"cur":1,"si":false,"m":1.2}` | S → C | a tutti, tre volte al secondo o più: i tasti dei tick giocati sul server da `n` in poi, come li ha applicati (anche quelli dei bot; `x2;` davanti: il robot 2 è uscito prima di quel tick), chi è di turno, se gioca un bot al suo posto (`si`), dove mira |
+| `{"t":"state",…,"n":150,"fp":123456}` | S → C | ogni mezzo secondo: lo stato della partita (fase, turno, robot, …) col tick `n` e l'impronta `fp` (`game:fingerprint`): il telefono controlla di avere la stessa |
 | `{"t":"away","robot":2}` / `{"t":"back","robot":2}` | S → C | un giocatore ha perso la connessione / è tornato |
 | `{"t":"leave"}` | C → S | esco dalla partita (ESCI DALLA PARTITA della rotellina, anche durante la scelta): il posto non si tiene, il robot sparisce (evento `gone`, `gn` nello stato) |
 | `{"t":"left","robot":2}` | S → C | è uscito o non è tornato in tempo (20 s): è fuori; la partita continua finché restano due squadre |
 
 ### Flusso di un turno
 
-1. Il server manda l'evento `turn`.
-2. Il giocatore di turno si muove e il client invia `in` a ogni cambio di tasto. Il server simula e invia `state` a entrambi, che interpolano le posizioni per avere un movimento fluido.
-3. Il giocatore spara con `fire`. Il server simula il volo del missile e lo trasmette dentro `state`. Quando il missile esplode, manda `explosion` e ogni client scava lo stesso cratere nel proprio terreno.
-4. Quando i robot sono fermi, il server passa il turno.
+Online ogni telefono gioca la stessa partita del server (la simulazione è deterministica, uguale su telefono, browser e server), tick per tick, con gli stessi tasti (dal 22 nov, Sergio: «voglio vedere in tempo reale quello che faccio, senza input lag»).
 
-Il terreno non viene mai inviato: ogni client lo genera dallo stesso seed e applica gli stessi crateri. Per ora il client non predice il proprio movimento e mostra quello che arriva dal server. In rete locale non si nota; su internet si potrà aggiungere la predizione.
+1. Nel proprio turno il telefono **guida**: muove subito il robot coi tasti del giocatore, come in locale, e li manda al server (`k`). Il server aspetta quei tasti e fa avanzare la sua partita con quelli (fino a 4 tick per tick se arrivano insieme).
+2. Il server rimanda a tutti i tasti come li ha applicati (`k`); gli altri telefoni li giocano qualche tick dopo, a passo regolare (3-10 tick di margine contro il WiFi). Chi ha guidato controlla che siano i suoi.
+3. Nei turni dei bot e di chi è caduto la partita va al passo del server.
+4. Ogni mezzo secondo lo stato col tick e l'impronta: se qualcosa non torna (tasti diversi, impronta diversa, tick mancanti) il telefono si ricollega e rigioca tutti i tasti dall'inizio senza disegnarli.
+
+Il terreno non viene mai inviato: ogni client lo genera dallo stesso seed e scava gli stessi crateri giocando la partita.
 
 Durante un turno di movimento il traffico è di pochi KB.
 

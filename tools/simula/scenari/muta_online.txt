@@ -1,6 +1,6 @@
 # La connessione resta aperta ma non porta più niente (Sergio, 17 nov: "si è
 # bloccato il mio personaggio in aria, come tutto il resto", e il server andava
-# avanti): dopo 5 secondi senza stati il gioco chiude e riapre la connessione da
+# avanti): dopo 8 secondi senza messaggi il gioco chiude e riapre la connessione da
 # solo (CP.resync) e la partita riparte da dov'è. prova_muta 8: da 8 secondi
 # dopo l'inizio i messaggi del server non arrivano più.
 imposta server_url ws://127.0.0.1:8090/ws
@@ -21,7 +21,7 @@ tieni destra 2
 aspetta_evento muta 10
 aspetta 2
 foto 00_fermo
-aspetta_evento rientro 12            # il guardiano: dopo 5 s senza stati torna da solo
+aspetta_evento rientro 15            # il guardiano: dopo 8 s senza messaggi torna da solo
 aspetta 1.5
 foto 01_dopo_la_caduta
 tocca 1084 62                        # Rampino: i comandi sono ancora nostri

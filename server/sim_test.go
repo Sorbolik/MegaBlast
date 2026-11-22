@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 )
 
@@ -19,6 +20,33 @@ type Input struct {
 	Fire              bool
 	Angle, Power      float64
 	Weapon            string
+}
+
+// Code: the keys as the phones send them (sim/netkeys.lua)
+func (in Input) Code() string {
+	c := ""
+	if in.Left {
+		c += "l"
+	}
+	if in.Right {
+		c += "r"
+	}
+	if in.Jump {
+		c += "j"
+	}
+	if in.Hold {
+		c += "h"
+	} else {
+		c += "n"
+	}
+	if in.Fire {
+		w := in.Weapon
+		if w == "" {
+			w = "missile"
+		}
+		c += "f" + w + "," + strconv.FormatFloat(in.Angle, 'g', 17, 64) + "," + strconv.FormatFloat(in.Power, 'g', 17, 64)
+	}
+	return c
 }
 
 func (s *Sim) call(b *Batch) (Result, error) {
@@ -92,10 +120,7 @@ func (s *Sim) Current() int { c, _, _ := s.state(); return c }
 func (s *Sim) Over() bool   { _, o, _ := s.state(); return o }
 
 func (s *Sim) Step(in Input) error {
-	b := s.cmd("step").Bool("l", in.Left).Bool("rt", in.Right).Bool("j", in.Jump).Bool("h", in.Hold)
-	if in.Fire {
-		b.Num("a", in.Angle).Num("p", in.Power).Str("w", in.Weapon)
-	}
+	b := s.cmd("step").Str("k", in.Code())
 	b.End()
 	_, err := s.call(b)
 	return err

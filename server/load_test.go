@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -121,12 +122,34 @@ func bot(ctx context.Context, url string, seed int64, stop chan struct{}) {
 		return
 	}
 	defer conn.CloseNow()
-	conn.Write(ctx, websocket.MessageText, fmt.Appendf(nil, `{"t":"hello","v":10,"mode":%q}`, *loadMode))
+	conn.Write(ctx, websocket.MessageText, fmt.Appendf(nil, `{"t":"hello","v":11,"mode":%q}`, *loadMode))
+	// the tick to play and whose turn it is, from the server's messages: on
+	// its turn the bot leads like a phone, a quarter of a second of keys at a time
+	var mu sync.Mutex
+	you, cur, next := 0, 0, 0
 	go func() {
 		for {
-			if _, _, err := conn.Read(ctx); err != nil {
+			_, data, err := conn.Read(ctx)
+			if err != nil {
 				return
 			}
+			var m struct {
+				T      string
+				N, Cur int
+				You    int
+				K      []string
+			}
+			if json.Unmarshal(data, &m) != nil {
+				continue
+			}
+			mu.Lock()
+			switch m.T {
+			case "start":
+				you, cur, next = m.You, m.Cur, 0
+			case "k":
+				cur, next = m.Cur, m.N+len(m.K)
+			}
+			mu.Unlock()
 		}
 	}()
 	rng := rand.New(rand.NewSource(seed))
@@ -140,16 +163,25 @@ func bot(ctx context.Context, url string, seed int64, stop chan struct{}) {
 			return
 		case <-tick.C:
 		}
-		var msg string
-		switch r := rng.Intn(12); {
-		case r == 0:
-			msg = fmt.Sprintf(`{"t":"fire","a":%.2f,"p":%.2f}`, rng.Float64()*3.14, 0.3+rng.Float64()*0.7)
-		case r == 1:
-			msg = `{"t":"jump"}`
-		default:
-			msg = fmt.Sprintf(`{"t":"in","l":%t,"r":%t}`, r%3 == 0, r%3 == 1)
+		mu.Lock()
+		mine, from := you > 0 && cur == you, next
+		mu.Unlock()
+		if !mine {
+			continue
 		}
-		if conn.Write(ctx, websocket.MessageText, []byte(msg)) != nil {
+		codes := make([]string, tickRate/4)
+		for i := range codes {
+			switch r := rng.Intn(12); {
+			case r == 0 && i == 0:
+				codes[i] = fmt.Sprintf("fmissile,%.2f,%.2f", rng.Float64()*3.14, 0.3+rng.Float64()*0.7)
+			case r == 1:
+				codes[i] = "jh"
+			default:
+				codes[i] = map[int]string{0: "l", 1: "r", 2: ""}[r%3]
+			}
+		}
+		k, _ := json.Marshal(codes)
+		if conn.Write(ctx, websocket.MessageText, fmt.Appendf(nil, `{"t":"k","n":%d,"k":%s}`, from, k)) != nil {
 			return
 		}
 	}

@@ -12,48 +12,61 @@ import (
 )
 
 const (
-	tickRate      = 60
-	snapshotEvery = 2 // 30 states per second, like SNAPSHOT_TICKS in client/sim/game.lua
+	tickRate = 60
+	// a state every stateEvery ticks (2 a second): the phones play the match
+	// themselves from the keys ("k"), the state is only the check that they
+	// are where the server is (its fingerprint, fp) and the stand-in (si)
+	stateEvery = 30
+	// at most this many ticks of the player on turn per tick of the server: the
+	// match catches up after a hiccup of their connection
+	leadCatchUp = 4
+	// at most this many ticks of keys waiting from a player (10 s)
+	keysMax = 600
+	// the longest key code of a tick (sim/netkeys.lua: a shot is about 50)
+	codeMax = 80
+	// whoever comes back gets all the keys from the start, this many per message
+	keysResume = 3000
 )
 
 // Message from a client:
 //
-//	{"t":"hello","v":10,"mode":"2v2","profilo":"12.4f9a..."}
+//	{"t":"hello","v":11,"mode":"2v2","profilo":"12.4f9a..."}
 //	                                    first message: protocol version, queue ("1v1",
 //	                                    "2v2", "ffa" or the id of an event with its queue, GET /eventi)
 //	                                    and guest profile (accounts.go: the card the others see and
 //	                                    what the robot wears come from it, the prizes go to it)
-//	{"t":"hello","v":10,"tok":"..."}   or: I'm back in the match I dropped from
-//	{"t":"hello","v":10,"privata":"nuova"} or "privata":"4821": I open a private room,
+//	{"t":"hello","v":11,"tok":"..."}   or: I'm back in the match I dropped from
+//	{"t":"hello","v":11,"privata":"nuova"} or "privata":"4821": I open a private room,
 //	                                    or join the one with that code (private.go, with its messages)
 //	{"t":"pick","w":"shards"}           start-of-match draft: one primary and one secondary
 //	                                    (the weapon tells the category; can change until time's up)
 //	{"t":"ready"}                       draft: PRONTO, both weapons picked and confirmed; the others see
 //	                                    it ("rd" in the draft), a different pick undoes it; with
 //	                                    everyone ready the match starts before time's up
-//	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
-//	{"t":"aim","a":1.2} | {"t":"aim_end"}  I'm aiming at that angle (at most a few per second) | I stopped:
-//	                                    the others see it in the state ("aim"), without the power
+//	{"t":"k","n":812,"k":["","r","r","fmissile,1.2,0.7"],"m":1.2}
+//	                                    on my turn: the keys of the ticks my phone has already
+//	                                    played (from tick n, sim/netkeys.lua); m: where I aim (the
+//	                                    others see it, without the power), absent if I'm not aiming
 //	{"t":"nota","w":"..."}              back after a drop: why it had dropped or stalled, for the server's log (server.go)
 //	{"t":"leave"}                       I leave the match (in-match gear wheel): I don't come
 //	                                    back, the others know at once (also during the draft);
 //	                                    still queued: out of the queue, the server closes
 //
-// "j" says whether jump is still held down: releasing it while rising makes the jump short.
-// "w" is the weapon: "missile" (if missing), "sword", "teleport", a secondary picked
-// at the start ("eagle", "mallet", "lunge", "bellows", "vortex", "cannon", "petard") or a crate
-// weapon ("grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill"): the simulation only uses it if the robot has shots.
+// Online every phone plays the match itself from the same keys (Sergio, 22 Nov:
+// «deve essere il client a comandare quello che vedi»): on your turn your phone
+// steps it at once with your keys and sends them, the room applies them
+// (waiting for them: your phone leads your turn) and passes everyone the keys
+// of every tick ("k" below), bots' included. A phone that finds itself
+// different from the server (the fingerprint of the state) comes back in.
 type clientMsg struct {
-	T    string  `json:"t"`
-	L    bool    `json:"l"`
-	R    bool    `json:"r"`
-	J    bool    `json:"j"`
-	A    float64 `json:"a"`
-	P    float64 `json:"p"`
-	W    string  `json:"w"`
-	V    int     `json:"v"`
-	Mode string  `json:"mode"`
-	Tok  string  `json:"tok"`
+	T    string   `json:"t"`
+	W    string   `json:"w"`
+	V    int      `json:"v"`
+	Mode string   `json:"mode"`
+	Tok  string   `json:"tok"`
+	N    int      `json:"n"`
+	K    []string `json:"k"`
+	M    *float64 `json:"m"`
 	// private rooms (private.go): "nuova" or the code in the hello; seat and bot grade
 	Private string `json:"privata"`
 	I       int    `json:"i"`
@@ -177,14 +190,6 @@ type roomMsg struct {
 	attach *Player // the player of seat slot reconnected with this connection
 }
 
-type held struct {
-	left, right, jump, hold, fire bool
-	angle, power                  float64
-	weapon                        string
-	aiming                        bool    // aiming now ("aim"): the others see it in the state
-	aim                           float64 // at which angle
-}
-
 // seat is a place in the room: robot slot+1.
 type seat struct {
 	p    *Player // nil while the player is disconnected
@@ -194,7 +199,13 @@ type seat struct {
 	sub  bool    // away in the match: a bot plays their turns until they are back (standIn)
 	team int
 	bot  int // > 0: a bot of that grade (sim/bot.lua GRADES) that fills the queue, no connection
-	in   held
+	// the ticks of their turn their phone has played and the room hasn't yet
+	// (keys[0] is tick keysAt), where they aim, and how long the match has been
+	// waiting for their keys on their turn
+	keys   []string
+	keysAt int
+	aim    *float64
+	wait   int
 	// the guest profile of whoever sits here (accounts.go), 0: none; the prizes go to it
 	account int64
 }
@@ -220,6 +231,15 @@ type Room struct {
 	ready   bool // and its time is known (draftLeft)
 	started bool // the match has been created (after the draft)
 	cur     int  // seat on turn (from 0), from the last tick's answer
+	step    int  // ticks of the match asked so far (the next one is tick step)
+
+	// the code of every tick played (sim/netkeys.lua), for whoever comes back;
+	// the last ones not yet sent (sent: how many of log went out), the robots
+	// removed before the next tick, where the bot on turn aims
+	log    []string
+	sent   int
+	gone   string
+	botAim string
 
 	draftLeft int    // tick at the end of the draft
 	players   []byte // teams as JSON, [{"team":1},...]; from start also the draft picks
@@ -383,8 +403,8 @@ func (r *Room) sendStart(slot int, resume bool) {
 	if rules == nil {
 		rules = []byte("null")
 	}
-	r.send(slot, fmt.Appendf(nil, `{"t":"start","seed":%d,"map":%q,"mode":%q,"you":%d,"tok":%q,"resume":%t,"players":%s,"regole":%s,"vetrine":%s}`,
-		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.players, rules, r.showcases))
+	r.send(slot, fmt.Appendf(nil, `{"t":"start","seed":%d,"map":%q,"mode":%q,"you":%d,"tok":%q,"resume":%t,"cur":%d,"players":%s,"regole":%s,"vetrine":%s}`,
+		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.cur+1, r.players, rules, r.showcases))
 }
 
 // sendDraft sends a player the weapon draft: fans, their picks (p, p2: the
@@ -454,6 +474,8 @@ func (r *Room) Tick(b *Batch) {
 	if r.ended.Load() {
 		return
 	}
+	// the keys of the last tick's steps (the answers came after it)
+	r.flush()
 	if !r.checkAway(b) {
 		r.close(b)
 		return
@@ -468,24 +490,67 @@ func (r *Room) Tick(b *Batch) {
 		r.startMatch(b)
 	}
 
-	// the keys of whoever is on turn (the others' don't count)
-	b.Cmd("tick", r.id, r.ticked).Bool("s", r.tick%snapshotEvery == 0)
-	if h := &r.seats[r.cur].in; *h != (held{}) {
-		b.Raw(",k={").Bool("l", h.left).Bool("r", h.right).Bool("j", h.jump).Bool("h", h.hold)
-		if h.fire {
-			b.Num("a", h.angle).Num("p", h.power).Str("w", h.weapon)
+	// whoever is on turn leads: their phone has already played these ticks and
+	// the match waits for them (a few at a time if they arrive together); the
+	// bots and whoever is disconnected play on the server's clock
+	if s := r.seats[r.cur]; s.bot == 0 && s.p != nil && !s.sub {
+		for len(s.keys) > 0 && s.keysAt < r.step {
+			s.keys, s.keysAt = s.keys[1:], s.keysAt+1
 		}
-		if h.aiming {
-			b.Num("m", h.aim)
+		n := 0
+		for ; n < leadCatchUp && len(s.keys) > 0 && s.keysAt == r.step; n++ {
+			r.stepTick(b, s.keys[0], r.cur+1)
+			s.keys, s.keysAt = s.keys[1:], s.keysAt+1
 		}
-		b.Raw("}")
-	}
-	b.End()
-	// jump and fire count for one tick only
-	for _, s := range r.seats {
-		s.in.jump, s.in.fire = false, false
+		if n > 0 {
+			s.wait = 0
+		} else if s.wait++; s.wait > r.srv.cfg.StandInTicks {
+			// connected but silent (the app in the background): like away
+			log.Printf("stanza %d: il robot %d non manda tasti da %d s, gioca un bot", r.id, r.cur+1, s.wait/tickRate)
+			s.wait = 0
+			r.standIn(b, r.cur, true)
+		}
+	} else {
+		r.stepTick(b, "", 0)
 	}
 	r.tick++
+}
+
+// stepTick asks a tick of the match: with the code of the keys of robot lead
+// (0: none, a bot's turn or nobody's keys)
+func (r *Room) stepTick(b *Batch, code string, lead int) {
+	r.step++
+	c := b.Cmd("tick", r.id, r.ticked).Bool("s", r.step%stateEvery == 0)
+	if lead > 0 {
+		c.Str("k", code).Int("lead", int64(lead))
+	}
+	c.End()
+}
+
+// flush sends everyone the keys of the ticks played since the last time (and
+// whoever comes back all of them from the start, keysMsg)
+func (r *Room) flush() {
+	if r.sent == len(r.log) {
+		return
+	}
+	r.broadcast(r.keysMsg(r.sent, len(r.log)))
+	r.sent = len(r.log)
+}
+
+// keysMsg: {"t":"k","n":from,"k":[codes of the ticks from from to to],"cur":robot
+// on turn,"si":a bot plays for them,"m":where they aim}
+func (r *Room) keysMsg(from, to int) []byte {
+	codes, _ := json.Marshal(r.log[from:to])
+	s := r.seats[r.cur]
+	msg := fmt.Appendf(nil, `{"t":"k","n":%d,"k":%s,"cur":%d,"si":%t`, from, codes, r.cur+1, s.sub)
+	if s.bot == 0 && !s.sub {
+		if s.aim != nil {
+			msg = fmt.Appendf(msg, `,"m":%.2f`, *s.aim)
+		}
+	} else if r.botAim != "" {
+		msg = fmt.Appendf(msg, `,"m":%s`, r.botAim)
+	}
+	return append(msg, '}')
 }
 
 // ticked: the answer of a tick of the match (worker.lua, tick).
@@ -494,10 +559,13 @@ func (r *Room) ticked(next *Batch, res Result) {
 		return
 	}
 	var v [4]int // cur, now, over, st
+	f := strings.Fields(string(res.Head))
 	if res.Err == nil {
-		if f := strings.Fields(string(res.Head)); len(f) == len(v) {
+		if len(f) == len(v)+2 {
 			for i := range v {
-				v[i], res.Err = strconv.Atoi(f[i])
+				if v[i], res.Err = strconv.Atoi(f[i]); res.Err != nil {
+					break
+				}
 			}
 		} else {
 			res.Err = fmt.Errorf("risposta %q", res.Head)
@@ -508,12 +576,19 @@ func (r *Room) ticked(next *Batch, res Result) {
 		r.fail(next, "errore step", res.Err)
 		return
 	}
-	// held keys stay, but not into the next turn: a release that arrives
-	// after the turn is over (the client sends only on its own turn) would make
-	// the next one start walking (Sergio, 5 Nov)
+	// the keys applied, with the robots that left right before (leave)
+	code := f[4]
+	if code == "-" {
+		code = ""
+	}
+	r.log = append(r.log, r.gone+code)
+	r.gone = ""
+	if r.botAim = f[5]; r.botAim == "-" {
+		r.botAim = ""
+	}
 	if now != cur {
 		for i, s := range r.seats {
-			s.in = held{}
+			s.keys, s.aim, s.wait = nil, nil, 0
 			// whoever came back while the bot played their turn has the keys again
 			if s.sub && s.p != nil {
 				r.standIn(next, i, false)
@@ -521,10 +596,12 @@ func (r *Room) ticked(next *Batch, res Result) {
 		}
 	}
 	r.cur = now - 1
+	// the state (the check of the phones)
 	for _, e := range res.Raw {
 		r.broadcast(e)
 	}
 	if over == 1 {
+		r.flush()
 		r.prizes(next)
 	}
 }
@@ -591,17 +668,18 @@ func (r *Room) handle(b *Batch, m roomMsg) {
 		if !r.started {
 			r.sendDraft(b, m.slot)
 		} else {
-			slot := m.slot
-			// start again, the digs so far and the state
-			b.Cmd("resume", r.id, func(_ *Batch, res Result) {
-				if r.ended.Load() || res.Err != nil {
-					return
+			// start again, and the keys of every tick so far: the phone plays the
+			// match again from the seed up to here, quickly (the ones not sent yet
+			// arrive twice: the phone skips them)
+			r.sendStart(m.slot, true)
+			// all the keys from the start (at least one message, even empty)
+			for from := 0; ; from += keysResume {
+				to := min(from+keysResume, len(r.log))
+				r.send(m.slot, r.keysMsg(from, to))
+				if to == len(r.log) {
+					break
 				}
-				r.sendStart(slot, true)
-				for _, msg := range res.Raw {
-					r.send(slot, msg)
-				}
-			}).End()
+			}
 		}
 		r.broadcast(fmt.Appendf(nil, `{"t":"back","robot":%d}`, m.slot+1))
 	default:
@@ -616,19 +694,9 @@ func (r *Room) handle(b *Batch, m roomMsg) {
 			r.handleDraft(b, m)
 			return
 		}
-		h := &s.in
-		switch m.msg.T {
-		case "in":
-			h.left, h.right, h.hold = m.msg.L, m.msg.R, m.msg.J
-		case "jump":
-			h.jump, h.hold = true, true
-		case "fire":
-			h.fire, h.angle, h.power, h.weapon = true, m.msg.A, m.msg.P, m.msg.W
-			h.aiming = false
-		case "aim":
-			h.aiming, h.aim = true, m.msg.A
-		case "aim_end":
-			h.aiming = false
+		if m.msg.T == "k" {
+			s.addKeys(m.msg.N, m.msg.K)
+			s.aim = m.msg.M
 		}
 	}
 }
@@ -693,7 +761,7 @@ func (r *Room) checkAway(b *Batch) bool {
 			continue
 		}
 		if s.p != nil && s.p.Closed() {
-			s.p, s.away, s.in = nil, 0, held{} // held keys are released
+			s.p, s.away, s.keys = nil, 0, nil
 			log.Printf("stanza %d: il robot %d ha perso la connessione (tick %d)", r.id, i+1, r.tick)
 			r.broadcast(fmt.Appendf(nil, `{"t":"away","robot":%d}`, i+1))
 		}
@@ -766,10 +834,12 @@ func (r *Room) leave(b *Batch, slot int) {
 	s := r.seats[slot]
 	s.p.room.Store(nil)
 	s.p.Close()
-	s.p, s.gone, s.in = nil, true, held{}
+	s.p, s.gone, s.keys = nil, true, nil
 	r.srv.sessions.Delete(s.tok)
 	// in the match their robot disappears at once (during the draft it doesn't exist yet)
 	if r.started {
+		// the phones remove it before the next tick (the code of the keys, "x2;")
+		r.gone += fmt.Sprintf("x%d;", slot+1)
 		b.Cmd("remove", r.id, func(_ *Batch, res Result) {
 			if res.Err != nil {
 				log.Printf("errore remove: %v", res.Err)
@@ -811,4 +881,28 @@ func (r *Room) closeExcept(b *Batch, held map[*Player]bool) {
 			}
 		}
 	}
+}
+
+// addKeys: keys of ticks from n that the phone of this seat has played. They
+// count only right after the ones already waiting (or as the first ones):
+// others mean the phone has gone its own way, it notices and comes back in.
+func (s *seat) addKeys(n int, k []string) {
+	if len(k) == 0 || len(k) > keysMax {
+		return
+	}
+	for _, c := range k {
+		if len(c) > codeMax {
+			return
+		}
+	}
+	if len(s.keys) == 0 {
+		s.keysAt = n
+	} else if n != s.keysAt+len(s.keys) {
+		return
+	}
+	if len(s.keys)+len(k) > keysMax {
+		s.keys = nil
+		return
+	}
+	s.keys = append(s.keys, k...)
 }
