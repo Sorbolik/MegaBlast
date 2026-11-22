@@ -1,6 +1,6 @@
 # WB-083 · La palla della Cannonata
 
-- **Stato:** APPROVATA (Claude, 22 nov: è reversibile; la trasformazione l'ha scelta Sergio, proposta 2 "Entra nel cannone")
+- **Stato:** IMPLEMENTATA (22 nov; la trasformazione l'ha scelta Sergio, proposta 2 "Entra nel cannone")
 - **Data:** 2026-11-22
 - **Ramo della scheda:** `claude/project-thread-5t5thg` (eseguila da questo ramo: `git fetch origin claude/project-thread-5t5thg`) · **Ramo delle immagini:** `design/WB-083`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-083` senza chiedere conferma (il repository è privato).
@@ -99,3 +99,12 @@ Prompt eseguiti alla lettera con ImageGen e i riferimenti nell'ordine indicato. 
 Controllo visivo sui tre PNG finali. Le palle sono intere, senza corna, volto o scritte, con feritoia magenta a estremità tonde e una fascia verde. I gusci sono separati, hanno contorni chiusi e la frattura dentata mostra la sezione scura. Alcuni denti entrano nella fascia verde. Campionando i pixel, il fondo e la feritoia risultano magenta prossimo a #FF00FF, con piccole variazioni. Si notano anche variazioni nelle campiture, e la fascia non corrisponde esattamente ai verdi richiesti. Il criterio della palette piatta con valori esatti non è soddisfatto. Non sono stati verificati il ricalco vettoriale e la resa in gioco.
 
 ## Resoconto di Claude
+
+Usate tutte e due le immagini buone: `palla_feritoia_2` (quella scelta da Codex, feritoia più
+regolare) e `palla_gusci`; scartata `palla_feritoia_1` (uguale, feritoia meno regolare). I piccoli
+scarti dai colori esatti non si vedono alla misura del gioco. `tools/grafica/palla_cannonata.py`
+toglie il magenta (fondo e feritoia, che resta vuota) e mette i due gusci nel riquadro della palla;
+`tools/grafica/armi.py` li porta alla misura del gioco (`palla_cannonata`, `guscio_su`,
+`guscio_giu`, con la fascia nel colore della squadra). Nel gioco dietro la palla c'è la testa del
+personaggio: corna e fiamma sopra, gli occhi nella feritoia (`client/battle/scoria.lua`).
+Verificato col simulatore (scenario `tools/simula/scenari/cannonata.txt`); non verificato sul telefono.

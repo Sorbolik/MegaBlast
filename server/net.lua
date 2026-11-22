@@ -135,6 +135,7 @@ function N.snapshot(g, aim)
 		-- pl: parachutes left; st: turns left of the effects (burn + 10 x slow + 100 x cracked armour)
 		-- sw: the secondary picked at the start (besides the Lama, "" if none), ss: its shots;
 		-- lu: ticks left of the Affondo, la: angle of its dash;
+		-- cn: Cannonata, ticks left of the fuse (-1 in flight, 0 none), ca: its angle;
 		-- kn: knocked by a hit (doesn't run by itself); tr: feet locked by a trap;
 		-- hk: who's pulling it with the Rampino (0 nobody, -1 if hanging from the terrain at hx, hy);
 		-- gs: its Rampino hook is in flight, at gx, gy; ml: tick of the Maglio swing,
@@ -164,6 +165,8 @@ function N.snapshot(g, aim)
 		r.tr = rb.trapped or false
 		r.la, r.gn = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, rb.gone or false
 		r.gd = rb.round_done
+		local cannon = rb.cannon
+		r.cn, r.ca = cannon and (cannon.wait > 0 and cannon.wait or -1) or 0, cannon and cannon.angle or 0
 	end
 	-- k: "missile", "grenade", "sniper", "boomerang", "drill", "tar", "petard" or "vortex", fu: ticks before the Uovo blows up
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }

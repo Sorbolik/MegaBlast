@@ -14,7 +14,10 @@
 --   scoria.set_color(s, color)     -- the team changes from one match to the next
 -- stato: x, y, facing, grounded, moving, aim (nil if not aiming), turno (it is their turn),
 -- paracadute (hanging from the open parachute), vittoria (celebrates on the podium),
--- posa (a clip of battle/characters/<name>/animations.lua played from the start, hands free: Favilla showing a move)
+-- posa (a clip of battle/characters/<name>/animations.lua played from the start, hands free: Favilla showing a move),
+-- the Cannonata (battle/cannon.lua): rannicchia (0..1, curled up to jump into the cannon), scala (the
+-- whole devil smaller, into the muzzle), nascosto (inside the cannon), palla (flying: only the head,
+-- behind the iron ball, with the ball's centre at x, y + DISEGNO_H / 2; palla_giro: its tilt)
 --
 -- Pieces: head (with goggles and horns, in four faces), torso, two legs, two
 -- arms (a single piece per arm, with the fist), the wing, the tail in segments,
@@ -62,6 +65,12 @@
 local game = require "sim.game"
 local D = require "battle.devil"
 local FROM = require("battle.weapons").weapons
+local FROM_PIECES = require("battle.weapons").pieces
+-- the ball sits this much of the head lower than the head's drawing (horns on top): on the face
+local BALL_DOWN = 0.23
+-- curled up to jump into the cannon (the pose, in the editor's channels)
+local CURLED = { schiaccia = 0.7, corpo = -0.5, braccio_a = 1.2, braccio_d = 1.2, gamba_a = 1.0, gamba_d = 0.8,
+	alza_a = 15, alza_d = 15, testa = -0.3, coda = 1.2 }
 -- where the hook sits on the grapple launcher (HOOK_TIP of tools/grafica/armi.py)
 local HOOK_TIP = 15.2
 local pose = require "battle.pose"
@@ -753,6 +762,22 @@ function M.new(color, look, weapon_only, lit, shadow)
 	for _, p in ipairs(s.strati("fiamma")) do
 		if p then s.cima = max(s.cima, (PT.collo[2] + PT.cima[2] + p.y + p.h * 0.59) * k) end
 	end
+	-- the Cannonata's ball (battle/cannon.lua): over the face, the horns and the flame stick
+	-- out above and the eyes look out of the slit; only in battle
+	if lit and not weapon_only then
+		local b = FROM_PIECES.palla_cannonata
+		local hd = s.rig.shift("testa")
+		s.palla_c = { (head.x - hd[1]) * k, (head.y - hd[2] - head.h * BALL_DOWN) * k }
+		s.palla = joint(s.collo, s.palla_c[1], s.palla_c[2])
+		local img = box(s.palla, b.x, b.y, b.w, b.h)
+		gui.set_texture(img, "armi")
+		gui.play_flipbook(img, b.img)
+		local t = box(s.palla, b.x, b.y, b.w, b.h)
+		gui.set_texture(t, "armi")
+		gui.play_flipbook(t, b.tint)
+		s.weapon_tints[#s.weapon_tints + 1] = t
+		gui.set_enabled(s.palla, false)
+	end
 	-- and above where the idle clip holds the head (each character lifts it its own way)
 	local lift = s.A.fermo and s.A.fermo.tracks.testa_y
 	if lift then s.cima = s.cima + lift[2] * k end
@@ -1046,6 +1071,38 @@ local function death(s, dt)
 	end
 end
 
+-- The Cannonata over the pose (battle/cannon.lua): smaller (into the muzzle),
+-- hidden (inside the cannon) or flying as the ball: only the head behind it, the
+-- ball's centre at x, y + DISEGNO_H / 2, tilted by palla_giro
+local CANNON_HIDE = { "braccio_a", "manina_a", "braccio_d", "manina_d", "ala", "busto", "gamba_a", "gamba_d", "presa" }
+local function cannonball(s, st)
+	local ball = st.palla and not s.morte
+	visible(s, s.palla, ball)
+	if s.ombra then visible(s, s.ombra, not ball and not st.nascosto) end
+	visible(s, s.corpo, not st.nascosto)
+	if st.scala then scale(s.root, s.face * st.scala, st.scala) end
+	if not ball then return end
+	for _, n in ipairs(CANNON_HIDE) do visible(s, s[n], false) end
+	visible(s, s.coda[1][1], false)
+	visible(s, s.coda[1][2], false)
+	if s.mantello then visible(s, s.mantello, false) end
+	visible(s, s.testa, true)
+	local J = s.rig.J
+	local cx, cy = J.testa[1] * s.k + s.palla_c[1], J.testa[2] * s.k + s.palla_c[2]
+	pos(s.root, st.x - s.face * cx, st.y + game.DISEGNO_H / 2 - cy)
+	pos(s.corpo, 0, 0)
+	rot(s.corpo, 0)
+	scale(s.forma, 1, 1)
+	pos(s.collo, J.testa[1] * s.k, J.testa[2] * s.k)
+	scale(s.collo, 1, 1)
+	-- it turns around the ball's centre, not around the neck
+	local a = st.palla_giro or 0
+	local c, sn = cos(a), sin(a)
+	local px, py = s.palla_c[1], s.palla_c[2]
+	pos(s.collo, J.testa[1] * s.k + px - (px * c - py * sn), J.testa[2] * s.k + py - (px * sn + py * c))
+	rot(s.collo, a)
+end
+
 function M.update(s, dt, st)
 	local J = s.rig.J
 	if s.morto then return end
@@ -1152,6 +1209,11 @@ function M.update(s, dt, st)
 		waiting(s, dt)
 	else
 		pose.add(po, frozen, s.t, 1)
+	end
+	-- the Cannonata: curled up to jump into the cannon
+	local curl = st.rannicchia
+	if curl and curl > 0 then
+		for name, v in pairs(CURLED) do po[name] = po[name] + (v - po[name]) * curl end
 	end
 	-- aiming, the head looks where you aim
 	local head = po.testa
@@ -1264,6 +1326,7 @@ function M.update(s, dt, st)
 	visible(s, s.coda[1][1], po.mostra_coda > 0.5)
 	visible(s, s.coda[1][2], po.mostra_coda > 0.5)
 	if s.mantello then visible(s, s.mantello, po.mostra_busto > 0.5) end
+	if s.palla then cannonball(s, st) end
 end
 
 function M.set_weapon(s, name)

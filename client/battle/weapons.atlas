@@ -182,6 +182,27 @@ images {
   image: "/assets/weapons/uncino.png"
 }
 images {
+  image: "/assets/weapons/cannone_grande.png"
+}
+images {
+  image: "/assets/weapons/cannone_grande_tinta.png"
+}
+images {
+  image: "/assets/weapons/palla_cannonata.png"
+}
+images {
+  image: "/assets/weapons/palla_cannonata_tinta.png"
+}
+images {
+  image: "/assets/weapons/guscio_su.png"
+}
+images {
+  image: "/assets/weapons/guscio_su_tinta.png"
+}
+images {
+  image: "/assets/weapons/guscio_giu.png"
+}
+images {
   image: "/assets/weapons/razzo.png"
 }
 images {
