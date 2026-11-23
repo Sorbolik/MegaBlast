@@ -76,8 +76,9 @@ M.key = key
 -- BOTTEGA has a piece of the day per slot (among those you don't own), the
 -- CATALOGO always has all of them for more; the Smith's hand lowers both.
 -- Ossidiana never buys pieces. 20% lower since the gloves (Sergio, 19 Nov:
--- five pieces in the time of four).
-M.PRICE_SHOP, M.PRICE_CATALOG = 3200, 4800
+-- five pieces in the time of four); 50% higher since 23 Nov (the stronger
+-- maximum and the longer road, sim/gear.lua).
+M.PRICE_SHOP, M.PRICE_CATALOG = 4800, 7200
 
 -- the Smith's vouchers and the gifts (choice 23A; fewer since 17 Nov, a
 -- piece is worth much more now): the Battle of the Forge gives the Smith's

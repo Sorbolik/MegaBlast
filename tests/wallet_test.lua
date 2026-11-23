@@ -67,7 +67,7 @@ check(wallet.chapters_done(q, chapters) == 1, "chapters: done when every mission
 p = wallet.init({})
 p.scaglie = 10000
 for _ = 2, 9 do wallet.upgrade(p, "corvo", "mask") end
-check(wallet.level(p, "corvo", "mask") == 9 and p.scaglie == 10000 - 800, "levels 2..9 cost 800")
+check(wallet.level(p, "corvo", "mask") == 9 and p.scaglie == 10000 - 1180, "levels 2..9 cost 1,180")
 local lv, why = wallet.upgrade(p, "corvo", "mask")
 check(lv == nil and why == "proof", "the step 10 waits for the Proof")
 p.no_proof = true
@@ -84,11 +84,11 @@ check(select(2, wallet.upgrade(p, "corvo", "mask")) == "scaglie", "without Scagl
 p.pezzi.corvo_mask = equip.LIVELLO_MAX
 check(select(2, wallet.upgrade(p, "corvo", "mask")) == "max", "at 30 there is nothing more")
 local n = wallet.next(p, "corvo", "chest")
-check(n.cost == 30 and n.full_cost == 44, "the Smith's hand: the other Corvo pieces cost 30% less")
-check(wallet.next(p, "vuoto", "mask").cost == 44, "only in the same family")
+check(n.cost == 40 and n.full_cost == 60, "the Smith's hand: the other Corvo pieces cost 30% less")
+check(wallet.next(p, "vuoto", "mask").cost == 60, "only in the same family")
 local whole = 0
 for l = 2, equip.LIVELLO_MAX do whole = whole + equip.cost(l) end
-check(whole == 32000 and equip.cost(10) + 800 == 1760, "a piece at 30 costs 32,000 Scaglie, the first step 1,760")
+check(whole == 63160 and equip.cost(10) + 1180 == 2530, "a piece at 30 costs 63,160 Scaglie, the first step 2,530")
 
 -- Signatures: lit with Ossidiana, one grade per step of the piece ------------------
 p = wallet.init({})
@@ -97,9 +97,9 @@ check(wallet.sign(p, "corvo", "mask") == 0 and wallet.sign_next(p, "corvo", "mas
 	and select(2, wallet.light(p, "corvo", "mask")) == "level", "the signature waits for the step 10")
 p.pezzi.corvo_mask = 12
 check(select(2, wallet.light(p, "corvo", "mask")) == "ossidiana", "without Ossidiana it stays off")
-p.ossidiana = 200
-check(wallet.light(p, "corvo", "mask") == 1 and p.ossidiana == 200 - equip.SIGN_COSTS[1] and wallet.sign(p, "corvo", "mask") == 1,
-	"lit for 160 Ossidiana")
+p.ossidiana = 300
+check(wallet.light(p, "corvo", "mask") == 1 and p.ossidiana == 300 - equip.SIGN_COSTS[1] and wallet.sign(p, "corvo", "mask") == 1,
+	"lit for 240 Ossidiana")
 check(wallet.sign_next(p, "corvo", "mask").grade == 2 and wallet.sign_next(p, "corvo", "mask").level == 20, "the next grade waits for the step 20")
 p.pezzi.corvo_mask, p.firme.corvo_mask = 30, 3
 check(wallet.sign_next(p, "corvo", "mask") == nil and select(2, wallet.light(p, "corvo", "mask")) == "max", "full: nothing more")
@@ -124,22 +124,22 @@ local differ = false
 for d = 12, 20 do differ = differ or wallet.shop(p, "2026-11-" .. d).mask ~= today.mask end
 check(differ, "other days, other pieces")
 check(select(2, wallet.buy(p, today.mask, "mask", "2026-11-11")) == "scaglie", "without Scaglie nothing is bought")
-p.scaglie = 10000
-check(wallet.buy(p, today.mask, "mask", "2026-11-11") and wallet.owns(p, today.mask, "mask") and p.scaglie == 6800,
-	"bought in the BOTTEGA for 3,200")
+p.scaglie = 20000
+check(wallet.buy(p, today.mask, "mask", "2026-11-11") and wallet.owns(p, today.mask, "mask") and p.scaglie == 15200,
+	"bought in the BOTTEGA for 4,800")
 check(wallet.shop(p, "2026-11-11").mask ~= today.mask, "a piece owned leaves the BOTTEGA")
 local other
 for _, f in ipairs(equip.SETS) do
 	if not other and not wallet.owns(p, f.id, "mask") and wallet.shop(p, "2026-11-11").mask ~= f.id then other = f.id end
 end
 check(select(2, wallet.buy(p, other, "mask", "2026-11-11")) == "shop", "the BOTTEGA sells only the pieces of the day")
-check(wallet.buy(p, other, "mask") and p.scaglie == 2000, "a piece of the catalogue costs 4,800")
+check(wallet.buy(p, other, "mask") and p.scaglie == 8000, "a piece of the catalogue costs 7,200")
 check(select(2, wallet.buy(p, other, "mask")) == "owned", "a piece is bought once")
 p.pezzi[other .. "_mask"] = equip.LIVELLO_MAX
 local third
 for _, f in ipairs(equip.SETS) do if not third and f.id ~= other then third = f.id end end
-check(wallet.price(p, other, "chest", true) == 2240 and wallet.price(p, other, "gloves") == 3360
-	and wallet.price(p, third, "mask") == 4800, "the Smith's hand lowers the prices of that family")
+check(wallet.price(p, other, "chest", true) == 3360 and wallet.price(p, other, "gloves") == 5040
+	and wallet.price(p, third, "mask") == 7200, "the Smith's hand lowers the prices of that family")
 check(select(2, wallet.use_voucher(p, "fornace", "chest")) == "voucher", "no voucher, no free piece")
 -- gifts: once each
 p.stelle = { battaglia_forgia = { true } }

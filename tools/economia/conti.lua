@@ -26,11 +26,15 @@ local GIOCATORI = {
 	{ nome = "medio", vince = 0.5, punti = 90, migliore = 0.25, premi = 0 },
 }
 
--- i tempi decisi da Sergio (17 nov), in ore del giocatore forte: { da, a }; coi
--- guanti (19 nov) un pezzo costa il 20% in meno, cinque pezzi nel tempo di quattro
+-- i tempi decisi da Sergio, in ore del giocatore forte: { da, a }. Dal 23 nov
+-- (statistiche massime più forti del 30%, strada più lunga: pagina
+-- https://claude.ai/artifact/KPmyMJNKCJ5WCZc6FArdKe, opzione B) un pezzo al 30
+-- chiede circa 150 ore coi premi di oggi e circa 108 quando arrivano le Commesse
+-- (il 39% di Scaglie in più): quando entrano nel gioco vanno contate in ora() e
+-- questi tempi stretti intorno a 108
 local TEMPI = {
-	primo_scatto = { 3, 8 },
-	pezzo = { 64, 96 },
+	primo_scatto = { 4, 8 },
+	pezzo = { 100, 160 },
 	livello_max = { 200, 280 },
 }
 
@@ -105,7 +109,8 @@ for _, g in ipairs(GIOCATORI) do
 		{ "pezzo", "un pezzo al livello " .. equip.LIVELLO_MAX, costo_pezzo(equip.LIVELLO_MAX) / s },
 		{ "set", posti .. " pezzi al massimo (quelli addosso)", posti * costo_pezzo(equip.LIVELLO_MAX) / s },
 		{ "tutti", "tutti i " .. pezzi .. " pezzi al massimo", pezzi * costo_pezzo(equip.LIVELLO_MAX) / s },
-		{ "bottega", "un pezzo del giorno in Bottega", wallet.PRICE_CATALOG / s },
+		{ "bottega", "un pezzo in offerta in Bottega", wallet.PRICE_SHOP / s },
+		{ "catalogo", "un pezzo del giorno in Bottega", wallet.PRICE_CATALOG / s },
 		{ "livello_max", "livello " .. profile.LEVEL_MAX, xp_fino(profile.LEVEL_MAX) / x },
 		{ "firma", "una firma tutta accesa (" .. firma .. " Ossidiana)", firma / o },
 		{ "firme", "le firme dei " .. posti .. " pezzi addosso", posti * firma / o },

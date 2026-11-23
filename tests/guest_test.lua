@@ -79,7 +79,7 @@ do
 	local progress = require "sim.progress"
 	local today = "2026-11-19"
 	local a = profile.new()
-	a.scaglie = 5000
+	a.scaglie = 7400
 	check(progress.act(a, { k = "compra", set = "corvo", slot = "mask" }, today) and a.scaglie == 200 and a.posseduti.corvo_mask,
 		"compra: from the CATALOGO at its price")
 	check(not progress.act(a, { k = "compra", set = "corvo", slot = "mask" }, today), "compra: a piece owned isn't bought again")

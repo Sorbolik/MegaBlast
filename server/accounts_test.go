@@ -102,7 +102,7 @@ func TestGuestProfiles(t *testing.T) {
 		json.Unmarshal(body, &back)
 		var sc float64
 		luaEval(t, `return require("sim.replay").read(`+luaQuote(back.Profile)+`).scaglie`, &sc)
-		if back.Last != 2 || sc != 20000-4800 {
+		if back.Last != 2 || sc != 20000-7200 {
 			t.Fatalf("azioni %d: ultima %d, %v Scaglie", i, back.Last, sc)
 		}
 	}

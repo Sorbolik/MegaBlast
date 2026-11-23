@@ -11,8 +11,9 @@
 --    two paths at most and give something up;
 -- 2. every point is worth a little (PER_POINT), the thresholds are worth a lot;
 -- 3. all the points of a path give a fifth of the maximum of its stats
---    (Sergio, 17 Nov: every stat comes from many sources, sim/gear.lua): 55
---    points of power, 25% of movement; the first threshold's powers a little more;
+--    (Sergio, 17 Nov: every stat comes from many sources, sim/gear.lua; 23
+--    Nov: 30% more, like every source): 72 points of power, 32% of movement;
+--    the first threshold's powers a little more;
 -- 4. free rebuild outside matches (sim/loadout.lua keeps the loadouts).
 --
 -- A chosen tree: { wings = 18, armor = 12, forge = 4, pick = { wings = { 2, 1, 1 }, ... } }
@@ -33,12 +34,12 @@ M.STEP = 5
 M.STEPS = M.PATH_MAX / M.STEP
 -- What the player's level gives by itself, on top of the points (Sergio, 14
 -- Nov: «statistiche di base flat ad ogni livello»; 17 Nov: four times as
--- much, and a little of everything): at LEVEL_MAX these points of Attack,
+-- much, and a little of everything; 23 Nov: 30% more): at LEVEL_MAX these points of Attack,
 -- Defense and life and these shares of movement, 70% spread evenly over the
 -- levels and 6% at every tenth level (10, 20, 30, 40, 50), so a round level
 -- is felt.
-M.LEVEL_BONUS = { attack = 35, defense = 35, max_hp = 35 }
-M.LEVEL_MOVE = { walk_speed = 0.15, jump_height = 0.15, air_speed = 0.15 }
+M.LEVEL_BONUS = { attack = 46, defense = 46, max_hp = 46 }
+M.LEVEL_MOVE = { walk_speed = 0.195, jump_height = 0.195, air_speed = 0.195 }
 function M.level_share(level)
 	level = math.max(1, math.min(M.LEVEL_MAX, level or 1))
 	return 0.7 * (level - 1) / (M.LEVEL_MAX - 1) + 0.06 * math.floor(level / 10)
@@ -63,12 +64,12 @@ end
 -- card calls it (ui/tag_card.lua).
 M.PATHS = {
 	{ id = "wings", name = "ALI", desc = "Muoversi: salto, corsa, globi, Rampino",
-		per_point = { { stat = "jump_height", share = 0.01 }, { stat = "walk_speed", share = 0.01 },
-			{ stat = "air_speed", share = 0.01 } },
-		per_point_desc = "salto, corsa e aria +%s%%", shown = 1,
+		per_point = { { stat = "jump_height", share = 0.013 }, { stat = "walk_speed", share = 0.013 },
+			{ stat = "air_speed", share = 0.013 } },
+		per_point_desc = "salto, corsa e aria +%s%%", shown = 1.3,
 		steps = {
-			{ { name = "Passo di brace", desc = "Corsa +10%", effects = { { stat = "walk_speed", mul = 1.1 } } },
-				{ name = "Salto lungo", desc = "Salto +10%", effects = { { stat = "jump_height", mul = 1.1 } } } },
+			{ { name = "Passo di brace", desc = "Corsa +13%", effects = { { stat = "walk_speed", mul = 1.13 } } },
+				{ name = "Salto lungo", desc = "Salto +13%", effects = { { stat = "jump_height", mul = 1.13 } } } },
 			{ { name = "Balzo nel vuoto", desc = "Un salto in aria", power_name = "salto in aria",
 					effects = { { stat = "air_jumps", add = 1 } } },
 				{ name = "Ali di riserva", desc = "Un paracadute in più", power_name = "paracadute in più",
@@ -87,11 +88,11 @@ M.PATHS = {
 					effects = { { stat = "extra_hooks", add = 1 } } } },
 		} },
 	{ id = "armor", name = "CORAZZA", desc = "Resistere: vita, cadute, spinte, scudi",
-		per_point = { { stat = "max_hp", add = 2.2 }, { stat = "defense", add = 2.2 } },
-		per_point_desc = "vita e Difesa +%s", shown = 2.2,
+		per_point = { { stat = "max_hp", add = 2.9 }, { stat = "defense", add = 2.9 } },
+		per_point_desc = "vita e Difesa +%s", shown = 2.9,
 		steps = {
-			{ { name = "Crosta", desc = "Vita +20", effects = { { stat = "max_hp", add = 20 } } },
-				{ name = "Ossa di pietra", desc = "Danno da caduta -30%", effects = { { stat = "fall_damage_mul", mul = 0.7 } } } },
+			{ { name = "Crosta", desc = "Vita +26", effects = { { stat = "max_hp", add = 26 } } },
+				{ name = "Ossa di pietra", desc = "Danno da caduta -39%", effects = { { stat = "fall_damage_mul", mul = 0.61 } } } },
 			{ { name = "Radici", desc = "Spinta subita -20%", power_name = "radici",
 					effects = { { stat = "knockback_mul", mul = 0.8 } } },
 				{ name = "Scudo pronto", desc = "Si parte con uno scudo", power_name = "scudo pronto",
@@ -110,8 +111,8 @@ M.PATHS = {
 					effects = { { stat = "shield_mul", mul = 2 } } } },
 		} },
 	{ id = "forge", name = "FUCINA", desc = "Colpire e ingannare: spinte, trappole, casse",
-		per_point = { { stat = "attack", add = 2.2 }, { stat = "blast_push", share = 0.022 } },
-		per_point_desc = "Attacco e spinta dei colpi +%s", shown = 2.2,
+		per_point = { { stat = "attack", add = 2.9 }, { stat = "blast_push", share = 0.029 } },
+		per_point_desc = "Attacco e spinta dei colpi +%s", shown = 2.9,
 		steps = {
 			{ { name = "Trappola larga", desc = "Raggio delle trappole +20%", effects = { { stat = "trap_radius", mul = 1.2 } } },
 				{ name = "Molla dura", desc = "I tuoi trampolini lanciano il 20% più in alto",

@@ -37,19 +37,18 @@ M.TIERS = #M.TIER_LEVELS + 1
 -- the level from which a piece is "gold": it counts for its family's bonus
 M.GOLD = 20
 
--- Scaglie to go up TO each level (2..30). Sergio, 17 Nov (plan
--- https://claude.ai/artifact/7pJTt98FayH3kovFAMmhsd): a strong player makes
--- about 400 Scaglie an hour, and a piece at 30 has to take about 100 hours:
--- 40,000 in all, light at the start (the first step in five hours and a
--- half) and heavy at the end (the last third of the levels is two thirds of
--- the cost). tools/economia/conti.lua turns these into hours. Sergio, 19 Nov
--- (the gloves, a fifth piece): every cost 20% lower, so the four pieces
--- before and the five now take the same time (32,000 a piece). To review:
--- Sergio may keep the old prices and let a set take longer.
-M.COSTS = { [10] = 960, [20] = 3200, [30] = 5440 }
-for l = 2, 9 do M.COSTS[l] = 44 + 16 * (l - 2) end
-for l = 11, 19 do M.COSTS[l] = 400 + 80 * (l - 11) end
-for l = 21, 29 do M.COSTS[l] = 1200 + 120 * (l - 21) end
+-- Scaglie to go up TO each level (2..30), light at the start and heavy at
+-- the end (the last third of the levels is two thirds of the cost).
+-- tools/economia/conti.lua turns these into hours. Sergio, 23 Nov (page
+-- https://claude.ai/artifact/KPmyMJNKCJ5WCZc6FArdKe, option B): the maximum
+-- is 30% stronger and the road is longer: a strong player with the Commesse
+-- makes about 585 Scaglie an hour, the first step takes a bit more than four
+-- hours and a piece at 30 about 108 (63,160 in all). The road starts long on
+-- purpose: over the years it can only get shorter.
+M.COSTS = { [10] = 1350, [20] = 5750, [30] = 11500 }
+for l = 2, 9 do M.COSTS[l] = 60 + 25 * (l - 2) end
+for l = 11, 19 do M.COSTS[l] = 720 + 145 * (l - 11) end
+for l = 21, 29 do M.COSTS[l] = 2520 + 250 * (l - 21) end
 -- the Proof of a step: matches played wearing the piece at the level just
 -- below it (9, 19, 29) before you can buy the step
 M.PROOF = { [10] = 3, [20] = 5, [30] = 8 }
@@ -99,55 +98,62 @@ M.MAINS = {
 -- is four times the one before and comes from many sources, none more than
 -- about a fifth: the level 12%, the Sigilli's points 20% and powers 8%, a
 -- piece's main 21%, the other pieces' secondaries 7% each, the family pair
--- 4%, the Tempra 7% (not in the game yet).
+-- 4%, the Tempra 7% (not in the game yet). Sergio, 23 Nov: every source 30%
+-- stronger (here, the caps below, the signatures and sim/skills.lua), the
+-- shares stay the same.
 M.ROWS = {
-	power = { main = 0.60, second = 0.20, pair = 0.10 },
-	move = { main = 0.25, second = 0.08, pair = 0.05 },
-	less = { main = 0.25, second = 0.10, pair = 0.05 },
+	power = { main = 0.78, second = 0.26, pair = 0.13 },
+	move = { main = 0.325, second = 0.104, pair = 0.065 },
+	less = { main = 0.325, second = 0.13, pair = 0.065 },
 }
 -- the caps on the pluses of a stat: from the pieces alone, and from
--- everything (level, Sigilli and pieces) over the base
-M.CAP_PIECES = { power = 1.70, move = 0.70, less = 0.50 }
-M.CAP_ALL = { power = 2.80, move = 1.20, less = 0.60 }
+-- everything (level, Sigilli and pieces) over the base. The "less" stats
+-- grew less than the others on 23 Nov (0.70, not 0.78): past that the
+-- teleport is almost instant and the pushes almost gone.
+M.CAP_PIECES = { power = 2.21, move = 0.91, less = 0.65 }
+M.CAP_ALL = { power = 3.64, move = 1.56, less = 0.70 }
 
 -- The signatures: one per piece, only that piece has it. They are stats of
 -- the robot (config.STATS, default 0) read by sim/game.lua. max: its value
 -- at level 30; it lights up at the step 10 (half), grows at 20 (three
--- quarters) and at 30 (all). desc: %d is the value in percent.
+-- quarters) and at 30 (all). desc: %d is the value in percent. 30% more
+-- since 23 Nov, but Cappa da forgia (already all the push) and Brace addosso
+-- (it is on or off).
 M.SIGNS = {
-	sig_sword = { max = 0.20, name = "Mano del mestiere", desc = "La Lama fa il %d%% di danno in più" },
-	sig_self = { max = 0.50, name = "Guscio di bottega", desc = "Le tue esplosioni ti fanno il %d%% di danno in meno" },
-	sig_climb = { max = 0.50, name = "Passo di montagna", desc = "Sali da solo gradini più alti del %d%%" },
+	sig_sword = { max = 0.26, name = "Mano del mestiere", desc = "La Lama fa il %d%% di danno in più" },
+	sig_self = { max = 0.65, name = "Guscio di bottega", desc = "Le tue esplosioni ti fanno il %d%% di danno in meno" },
+	sig_climb = { max = 0.65, name = "Passo di montagna", desc = "Sali da solo gradini più alti del %d%%" },
 	sig_chute = { max = 1.00, name = "Cappa da forgia", desc = "Col paracadute aperto le spinte ti spostano il %d%% in meno" },
-	sig_high = { max = 0.12, name = "Dall'alto", desc = "Contro chi sta più in basso di te fai il %d%% di danno in più" },
-	sig_air_guard = { max = 0.15, name = "Piume", desc = "In aria prendi il %d%% di danno in meno" },
-	sig_soft = { max = 0.50, name = "Atterraggio morbido", desc = "Cadi senza farti male da un'altezza più grande del %d%%" },
-	sig_glide = { max = 0.25, name = "Planata", desc = "Scendendo in aria cadi il %d%% più piano" },
-	sig_first = { max = 0.15, name = "Primo sangue", desc = "Il primo colpo del tuo turno fa il %d%% di danno in più" },
+	sig_high = { max = 0.16, name = "Dall'alto", desc = "Contro chi sta più in basso di te fai il %d%% di danno in più" },
+	sig_air_guard = { max = 0.20, name = "Piume", desc = "In aria prendi il %d%% di danno in meno" },
+	sig_soft = { max = 0.65, name = "Atterraggio morbido", desc = "Cadi senza farti male da un'altezza più grande del %d%%" },
+	sig_glide = { max = 0.33, name = "Planata", desc = "Scendendo in aria cadi il %d%% più piano" },
+	sig_first = { max = 0.20, name = "Primo sangue", desc = "Il primo colpo del tuo turno fa il %d%% di danno in più" },
 	sig_thorns = { max = 1.00, name = "Brace addosso", desc = "Chi ti colpisce da vicino (Lama, Maglio, Pugno, Affondo) prende la bruciatura" },
-	sig_stomp = { max = 1.00, name = "Pestone", desc = "Atterrando da una caduta lunga spingi via chi ti sta vicino (forza %d%%)" },
-	sig_air_fire = { max = 0.10, name = "Coda di fuoco", desc = "Se sei in aria quando il tuo colpo arriva fa il %d%% di danno in più" },
-	sig_fury = { max = 0.15, name = "Furia", desc = "Sotto 30 di vita fai il %d%% di danno in più" },
-	sig_first_guard = { max = 0.20, name = "Pelle dura", desc = "Il primo colpo che prendi in ogni turno nemico fa il %d%% in meno" },
-	sig_rooted = { max = 0.30, name = "Piedi piantati", desc = "A terra le spinte ti spostano il %d%% in meno" },
-	sig_ballast = { max = 0.25, name = "Zavorra", desc = "In aria le spinte ti spostano il %d%% in meno" },
-	sig_ambush = { max = 0.12, name = "Agguato", desc = "Dopo un tuo teletrasporto, nello stesso turno, fai il %d%% di danno in più" },
-	sig_blink_guard = { max = 0.15, name = "Velo", desc = "Dopo un tuo teletrasporto, fino al tuo turno dopo, prendi il %d%% di danno in meno" },
-	sig_blink_run = { max = 0.20, name = "Scia breve", desc = "Dopo un tuo teletrasporto corri il %d%% più veloce fino a fine turno" },
-	sig_far_orb = { max = 0.20, name = "Lancio lungo", desc = "Il globo parte il %d%% più veloce e arriva più lontano" },
+	sig_stomp = { max = 1.30, name = "Pestone", desc = "Atterrando da una caduta lunga spingi via chi ti sta vicino (forza %d%%)" },
+	sig_air_fire = { max = 0.13, name = "Coda di fuoco", desc = "Se sei in aria quando il tuo colpo arriva fa il %d%% di danno in più" },
+	sig_fury = { max = 0.20, name = "Furia", desc = "Sotto 30 di vita fai il %d%% di danno in più" },
+	sig_first_guard = { max = 0.26, name = "Pelle dura", desc = "Il primo colpo che prendi in ogni turno nemico fa il %d%% in meno" },
+	sig_rooted = { max = 0.39, name = "Piedi piantati", desc = "A terra le spinte ti spostano il %d%% in meno" },
+	sig_ballast = { max = 0.33, name = "Zavorra", desc = "In aria le spinte ti spostano il %d%% in meno" },
+	sig_ambush = { max = 0.16, name = "Agguato", desc = "Dopo un tuo teletrasporto, nello stesso turno, fai il %d%% di danno in più" },
+	sig_blink_guard = { max = 0.20, name = "Velo", desc = "Dopo un tuo teletrasporto, fino al tuo turno dopo, prendi il %d%% di danno in meno" },
+	sig_blink_run = { max = 0.26, name = "Scia breve", desc = "Dopo un tuo teletrasporto corri il %d%% più veloce fino a fine turno" },
+	sig_far_orb = { max = 0.26, name = "Lancio lungo", desc = "Il globo parte il %d%% più veloce e arriva più lontano" },
 	-- the gloves' (Sergio, 19 Nov): all about pushing
-	sig_bellows = { max = 0.40, name = "Soffio di forgia", desc = "Il Mantice spinge il %d%% più lontano e arriva più in là" },
-	sig_dive = { max = 0.30, name = "Picchiata", desc = "Chi è in aria lo spingi il %d%% più lontano" },
-	sig_scorch = { max = 0.30, name = "Vampata", desc = "Chi brucia lo spingi il %d%% più lontano" },
-	sig_grip = { max = 0.20, name = "Morsa", desc = "Dopo che colpisci, fino al tuo turno dopo, le spinte ti spostano il %d%% in meno" },
-	sig_void_push = { max = 0.30, name = "Mano del vuoto", desc = "Dopo un tuo teletrasporto, nello stesso turno, spingi il %d%% più lontano" },
+	sig_bellows = { max = 0.52, name = "Soffio di forgia", desc = "Il Mantice spinge il %d%% più lontano e arriva più in là" },
+	sig_dive = { max = 0.39, name = "Picchiata", desc = "Chi è in aria lo spingi il %d%% più lontano" },
+	sig_scorch = { max = 0.39, name = "Vampata", desc = "Chi brucia lo spingi il %d%% più lontano" },
+	sig_grip = { max = 0.26, name = "Morsa", desc = "Dopo che colpisci, fino al tuo turno dopo, le spinte ti spostano il %d%% in meno" },
+	sig_void_push = { max = 0.39, name = "Mano del vuoto", desc = "Dopo un tuo teletrasporto, nello stesso turno, spingi il %d%% più lontano" },
 }
 -- how much of a signature's max at each grade (I: off)
 M.SIGN_TIERS = { 0, 0.5, 0.75, 1 }
 -- Ossidiana to light a signature up to each grade (lit, bright, full): the
 -- piece must have reached the step 10, 20, 30 (Sergio, 17 Nov: the Scaglie
--- raise the numbers, the Ossidiana lights the powers). sim/wallet.lua
-M.SIGN_COSTS = { 160, 320, 640 }
+-- raise the numbers, the Ossidiana lights the powers; 23 Nov: 50% more, like
+-- the pieces' prices). sim/wallet.lua
+M.SIGN_COSTS = { 240, 480, 960 }
 
 -- Families: for each slot { main, { two secondaries }, minus, signature }; art:
 -- the piece's picture once it is drawn (nil: the placeholder of
