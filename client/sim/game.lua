@@ -649,7 +649,8 @@ function M:hurt(rb, amount, by, reason, weapon)
 		self:emit({ type = "shield_hit", robot = rb.id, amount = absorbed, left = rb.shield })
 		-- parry: whoever carries the shield earns points for the enemy damage it stops
 		if foe then
-			local p = math.min(self.score.parry_max - rb.parried, absorbed * self.score.parry)
+			-- (in hundredths of the carrier's life, like the points of the damage)
+			local p = math.min(self.score.parry_max - rb.parried, absorbed * C.STATS.max_hp / rb.max_hp * self.score.parry)
 			if p > 0 then
 				rb.parried = rb.parried + p
 				self:add_points(rb, p, "parry", by)
@@ -2968,7 +2969,7 @@ function M:use_tool(kind, fire)
 	end
 	rb.ammo[kind] = rb.ammo[kind] - 1
 	if kind == "shield" then
-		rb.shield, rb.parried = math.floor(C.SHIELD.hp * rb.stats.shield_mul + 0.5), 0
+		rb.shield, rb.parried = math.floor(M.nature(rb, C.SHIELD.hp) * rb.stats.shield_mul + 0.5), 0
 		self:emit({ type = "shield", robot = rb.id })
 		return
 	end

@@ -40,7 +40,7 @@
 		"kill": 50,
 		"leader": 1.5,
 		"parry": 0.5,
-		"parry_max": 20,
+		"parry_max": 15,
 		"self_death": -30,
 		"trap": 10
 	},

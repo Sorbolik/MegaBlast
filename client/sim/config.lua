@@ -60,8 +60,8 @@ C.SCORE = {
 	crown = 25,       -- extra to whoever kills the leader
 	crown_rounds = 1, -- full rounds before there is a Crown (whoever opens doesn't take it alone)
 	trap = 10,        -- to whoever placed it, when the trap fires on an opponent
-	parry = 0.5,      -- to whoever carries the shield, for each point of enemy damage it stops
-	parry_max = 20,   -- at most per shield (lasts until the owner's next turn)
+	parry = 0.5,      -- to whoever carries the shield, for each hundredth of its life of enemy damage it stops
+	parry_max = 15,   -- at most per shield: a whole one (lasts until the owner's next turn)
 	final_round = 2,  -- multiplier of all points in the last round (FINAL_ROUND_SHARE)
 }
 -- the kill goes to whoever hit last, if it was within these seconds
@@ -234,8 +234,10 @@ C.PETARD = { damage = 28, radius = 60, push = 450, lift = 120, fuse = 90 }
 -- until below min_vy you stop (shots then touch the terrain below, and the
 -- missile explodes).
 C.TRAMPOLINE = { half_w = 18, top = 7, launch_vy = 300, push_vx = 145, decay = 0.6, min_vy = 80 }
--- Shield: absorbs hp damage and halves pushes until the start of the owner's next turn
-C.SHIELD = { hp = 40, knockback = 0.5 }
+-- Shield: absorbs hp damage and halves pushes until the start of the owner's next turn.
+-- hp is for the base life and grows with the owner's life (game.nature); Sergio, 23 Nov:
+-- "un po' troppo potente all'inizio", 30 (it was 40)
+C.SHIELD = { hp = 30, knockback = 0.5 }
 -- Parachute: in your own turn, in the air, one tap opens it (if you have any
 -- of stats.parachutes per match) and another closes it. Open, you fall at most
 -- at fall_speed, move horizontally air_mul times faster (even right after

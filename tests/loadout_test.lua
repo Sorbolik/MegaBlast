@@ -213,6 +213,11 @@ check(r1.hp == 300 - 60 and r2.hp == BASE.max_hp - 20, "a fall takes the same sh
 r1.hp, g.heals = 100, { { id = 1, x = r1.x, y = r1.y } }
 g:apply_heals()
 check(r1.hp == 100 + 3 * require("sim.config").HEAL.hp, "a heal gives the same share too")
+g = game.new(42, "pavimento", { ammo = { shield = 1 }, players = { { team = 1, stats = { max_hp = 300 } }, { team = 2 } } })
+for _ = 1, 60 do g:step({}) end
+r1 = g.robots[g.current]
+g:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
+check(r1.shield == r1.max_hp / 100 * require("sim.config").SHIELD.hp, "the shield holds the same share of its owner's life")
 -- Furia: below 30% of your own life
 g, r1, r2 = duel({ sig_fury = 0.2, max_hp = 300 }, {})
 r1.hp, hp = 80, r2.hp
