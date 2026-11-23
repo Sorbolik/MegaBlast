@@ -22,8 +22,8 @@ local equip = require "sim.gear"
 local orders = require "sim.orders"
 local profile = require "menu.profile"
 local illustrations = require "ui.illustrations"
+local screen = require "ui.screen"
 local bench = require "menu.orders_bench"
-local gear_ui = require "menu.gear_ui"
 local T = require("lang.text").orders
 
 local M = {}
@@ -44,6 +44,14 @@ local ROW2_Y = Y0 + CARD_H + 30
 local ROW2_H = 590 - ROW2_Y
 local WEEK_W = 300
 local SMITH_W = 3 * CARD_W + 2 * GAP - WEEK_W - GAP
+
+-- (defined further down, used by the board and its taps)
+local smith_at_counter, find, modal, modal_cmd
+
+-- the clients' busts (WB-086, WB-087): where the face is, from the top of the
+-- bust (a fraction of its height), for the strip on the board's cards
+local FACE = { caronte = 0.42, minosse = 0.3, cerbero = 0.24, plutone = 0.31, flegias = 0.29,
+	medusa = 0.4, minotauro = 0.3, malacoda = 0.33 }
 
 local MAP_OF = {}
 for _, m in ipairs(orders.MATERIALS) do MAP_OF[m.id] = m.maps[1] end
@@ -74,11 +82,31 @@ local function mini(a, g, map, x, y, w, h)
 	gui.set_parent(img, clip)
 end
 
+-- A strip of a client's bust (the face) filling the Figma box, cut to it, with an ink rim
+local function face_strip(g, id, x, y, w, h)
+	kit.rect(g, x - 3, y - 3, w + 6, h + 6, KC.INK)
+	local cx, cy = x + w / 2, y + h / 2
+	local clip = gui.new_box_node(vmath.vector3(cx - g.ox, g.oy - cy, 0), vmath.vector3(w, h, 0))
+	gui.set_adjust_mode(clip, gui.ADJUST_FIT)
+	gui.set_clipping_mode(clip, gui.CLIPPING_MODE_STENCIL)
+	gui.set_parent(clip, g.node)
+	-- the bust as wide as the strip, its face in the middle
+	local bh = w * 485 / 366
+	local top = cy - FACE[id] * bh
+	kit.piece({ node = clip, ox = cx, oy = cy }, "cliente_" .. id .. "_chiede", cx, top + bh / 2, bh)
+end
+
 -- a panel filling the Figma box, and the group to write on it
+-- (name "carta": the paper of the tickets, WB-085)
 local function panel(g, x, y, w, h, name)
 	local grp = kit.group(g, x + w / 2, y + h / 2)
-	kit.panel(grp.node, w, h, name)
+	if name == "carta" then kit.paper(grp.node, w, h) else kit.panel(grp.node, w, h, name) end
 	return grp
+end
+
+-- the nail in a ticket's hole (kit.paper: its middle 10 under the top)
+local function nail(g, x, y, w)
+	kit.piece(g, "chiodo", x + w / 2, y + 10, 30)
 end
 
 -- a text that must stay w wide: shrunk if longer (never under the smallest size)
@@ -140,10 +168,10 @@ end
 local function client_card(a, g, o, x, y)
 	local p = a.prof
 	local client = orders.CLIENT[o.cliente]
-	local c = panel(g, x, y, CARD_W, CARD_H, "pannello_chiaro")
-	kit.piece(g, "chiodo", x + CARD_W / 2, y - 2, 30)
+	local c = panel(g, x, y, CARD_W, CARD_H, "carta")
 	local ix, iw = x + PAD, CARD_W - 2 * PAD
-	mini(a, c, MAP_OF[client.material], ix + 3, y + PAD + 3, iw - 6, 56)
+	face_strip(c, o.cliente, ix + 3, y + PAD + 3 + 14, iw - 6, 42)
+	nail(g, x, y, CARD_W)
 	fit(kit.text(c, kit.upper(T.clients[o.cliente]), ix, y + 100, 21, KC.INK, "start", 0.5), iw)
 	family_tag(c, client.set, ix, y + 108)
 	local words = (o.taglia == "benvenuto" and T.welcome .. " " or "") .. request_text(o)
@@ -190,12 +218,14 @@ end
 local function week_card(a, g, o, x, y)
 	local p = a.prof
 	local client = orders.CLIENT[o.cliente]
-	local c = panel(g, x, y, WEEK_W, ROW2_H, "pannello_chiaro")
+	local c = panel(g, x, y, WEEK_W, ROW2_H, "carta")
+	nail(g, x, y, WEEK_W)
 	local ix, iw = x + PAD, WEEK_W - 2 * PAD
-	fit(kit.text(c, T.week:format(kit.upper(T.clients[o.cliente])), ix, y + PAD + 18, 19, PAPER_HEAD, "start", 0.5), iw)
-	family_tag(c, client.set, ix, y + PAD + 26)
-	request_row(c, p, o, ix, y + 86, iw, KC.INK)
-	request_row(c, p, o.poi, ix, y + 124, iw, KC.INK)
+	-- (the title clear of the hole and its nail, in the middle of the top)
+	fit(kit.text(c, T.week:format(kit.upper(T.clients[o.cliente])), ix, y + PAD + 40, 19, PAPER_HEAD, "start", 0.5), iw)
+	family_tag(c, client.set, ix, y + PAD + 48)
+	request_row(c, p, o, ix, y + 102, iw, KC.INK)
+	request_row(c, p, o.poi, ix, y + 140, iw, KC.INK)
 	local prog, ready = orders.progress(p, o)
 	local n = foot(c, ix, y + ROW2_H - PAD - 2, iw, o, prog, ready, true)
 	if not ready then
@@ -272,6 +302,371 @@ local function bench_panel(a, g)
 	fit(kit.text(c, T.bench_state:format(t.partite or 0, #orders.clients(p), p.commesse.consegne or 0), ix, y + h - PAD - 2, 16, KC.MUTE, "start", 0.5), iw)
 end
 
+-- The Smith at his counter (WB-085), on the left of the board: 500 tall (drawn at 1000)
+smith_at_counter = function(g)
+	kit.piece(g, "fabbro_al_banco", 215, 350, 500)
+end
+
+-- Windows over the board (the drafts Sergio approved on 23 Nov: 6 the open
+-- card, 7 the swap, 8 the family of the Smith's order, 9 the clients' book).
+-- a.modal = { k = "carta" | "scambio" | "famiglia" | "libro", n = the order,
+-- sel = what is chosen }. They draw into a.over (the middle) and into their own
+-- band, a.mlow and a.mright, made after the veil so they are not under it
+
+local RED = vmath.vector4(0.72, 0.16, 0.1, 1)
+local PAPER = vmath.vector4(0.957, 0.918, 0.847, 1)
+local VEIL = vmath.vector4(0.03, 0.02, 0.035, 0.72)
+find = function(p, n)
+	for _, o in ipairs(orders.orders(p)) do
+		if o.n == n then return o end
+	end
+end
+
+-- a name with only its first letter big: "LEVIATANO" -> "Leviatano"
+local function proper(t)
+	return t:sub(1, 1) .. t:sub(2):lower()
+end
+
+-- a client's picture filling the Figma box, with an ink rim: its bust (asking)
+-- or, until Codex draws it, the miniature of its map
+local function portrait(a, g, id, x, y, w, h)
+	if FACE[id] then
+		kit.rect(g, x - 3, y - 3, w + 6, h + 6, KC.INK)
+		kit.piece(g, "cliente_" .. id .. "_chiede", x + w / 2, y + h / 2, h)
+	else
+		mini(a, g, MAP_OF[orders.CLIENT[id].material], x, y, w, h)
+	end
+end
+
+-- the pearls of trust in a row: the lap's (10), the next one lit
+local function pearls(g, trust, x, y, d)
+	local lap = trust == 0 and 0 or (trust - 1) % orders.TRUST_LAP + 1
+	for i = 1, orders.TRUST_LAP do
+		local name = i <= lap and "perla_piena" or (i == lap + 1 and "perla_prossima" or "perla_vuota")
+		kit.piece(g, name, x + (i - 0.5) * d, y, d - 2)
+	end
+end
+
+-- what the next pearls bring: "Ancora 2 e ..." (for the book and the open card)
+local function trust_next(id, trust)
+	local set = proper(equip.BY_ID[orders.CLIENT[id].set].name)
+	local function n_pearls(n) return (n == 1 and T.pearl or T.pearls):format(n) end
+	if trust < orders.TRUST_BONUS then return T.trust_bonus:format(n_pearls(orders.TRUST_BONUS - trust)) end
+	local lap = orders.TRUST_LAP - trust % orders.TRUST_LAP
+	return T.trust_gift:format(n_pearls(lap), trust < orders.TRUST_LAP and orders.TRUST_GIFT or orders.TRUST_GIFT_AGAIN, set)
+end
+
+-- the veil over everything, a tap on it closes; the window's own groups
+local function window(a, base)
+	-- (the board's buttons go: only the header's stay, and the window's)
+	for i = #a.buttons, base + 1, -1 do a.buttons[i] = nil end
+	for _, k in ipairs({ "low", "low2", "right" }) do gui.set_enabled(a[k].node, false) end
+	a.over = kit.anchor(0, 0)
+	local huge = 1280 * screen.FULL
+	kit.rect(a.over, 640 - huge / 2, 360 - huge / 2, huge, huge, VEIL)
+	kit.zone(a.over, a.buttons, 640 - huge / 2, 360 - huge / 2, huge, huge, "modale:chiudi")
+	a.mlow = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
+	a.mright = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
+end
+
+-- the window's sheet: paper or iron, the nail on the paper, and a zone that keeps its taps
+local function sheet(a, x, y, w, h, paper)
+	local c = panel(a.over, x, y, w, h, paper and "carta" or "pannello")
+	if paper then nail(a.over, x, y, w) end
+	kit.zone(a.over, a.buttons, x, y, w, h, "niente")
+	return c
+end
+
+local function back_button(a)
+	local b = kit.secondary(a.mlow, T.back, 160, 640, 214, 62, {})
+	kit.button(a.buttons, b, "modale:indietro")
+end
+
+-- one request of the open card: its icon, the words, the bar and the count
+local function big_request(c, p, r, x, y, w)
+	local tx = x
+	if r.materiale then
+		kit.piece(c, "materiale_" .. r.materiale, x + 18, y + 16, 38)
+		tx = x + 46
+	end
+	fit(kit.text(c, request_text(r), tx, y + 26, 22, KC.INK), x + w - tx)
+	local have, asked = orders.progress(p, { materiale = r.materiale, impresa = r.impresa, quanti = r.quanti, fatti = r.fatti })[1].done, r.quanti
+	local cn = kit.text(c, T.progress:format(coins.format(have), coins.format(asked)), x + w, y + 62, 18, KC.INK, "end")
+	kit.bar(c, x + 4, y + 50, w - kit.width(cn) - 22, 10, have / asked, have >= asked and KC.MINT or KC.HOT)
+	return asked - have
+end
+
+-- Draft 6: the open card. On the left the client and its trust, on the right
+-- what it says, asks and pays; under it CAMBIA, SCAMBIA and CONSEGNA
+local function open_card(a, o)
+	local p = a.prof
+	local id = o.cliente
+	local client = orders.CLIENT[id]
+	local X, Y, W, H = 300, 96, 680, 470
+	local c = sheet(a, X, Y, W, H, true)
+	local lx, top = X + 28, Y + 34
+	portrait(a, c, id, lx, top, 180, 240)
+	local trust = orders.trust(p, id)
+	kit.heading(c, T.trust:format(trust), lx, top + 270, PAPER_HEAD)
+	pearls(c, trust, lx, top + 290, 18)
+	local lines = kit.wrap(c, trust_next(id, trust), 16, 180)
+	for i = 1, math.min(3, #lines) do fit(kit.text(c, lines[i], lx, top + 318 + (i - 1) * 19, 16, PAPER_MUTE), 180) end
+
+	local rx, rw = X + 236, W - 236 - 28
+	fit(kit.text(c, kit.upper(T.clients[id]), rx, top + 24, 34, KC.INK, "start", 1), rw - 140)
+	family_tag(c, client.set, rx + rw - 120, top + 4)
+	local y = top + 44
+	local said = kit.wrap(c, T.lines[id], 18, rw)
+	for i = 1, math.min(3, #said) do
+		fit(kit.text(c, said[i], rx, y + i * 22, 18, KC.INK), rw)
+	end
+	-- each request a block 74 tall: the words, the bar, the count
+	y = y + math.min(3, #said) * 22 + 32
+	kit.heading(c, T.asks, rx, y, PAPER_HEAD)
+	local missing = big_request(c, p, o, rx, y + 8, rw)
+	if o.poi then big_request(c, p, o.poi, rx, y + 78, rw) end
+	y = y + (o.poi and 152 or 82) + 30
+	-- the prize: Scaglie, the fragments of its family (one more from 5 pearls), the voucher
+	local size = orders.SIZES[o.taglia]
+	local frags = size.frammenti + (trust >= orders.TRUST_BONUS and 1 or 0)
+	kit.heading(c, T.prize, rx, y, PAPER_HEAD)
+	local py = y + 30
+	kit.piece(c, "scaglia", rx + 14, py - 7, 28)
+	local sn = kit.text(c, coins.format(size.scaglie), rx + 34, py, 22, KC.INK)
+	local fx = rx + 34 + kit.width(sn) + 24
+	kit.piece(c, "frammento_" .. client.set, fx + 14, py - 7, 30)
+	local fnn = kit.text(c, tostring(frags), fx + 34, py, 22, KC.INK)
+	local wx = fx + 34 + kit.width(fnn) + 8
+	local fw = kit.text(c, (frags == 1 and T.fragment or T.fragments):format(proper(equip.BY_ID[client.set].name)), wx, py, 16, PAPER_MUTE)
+	if size.voucher then kit.piece(c, "buono", wx + kit.width(fw) + 22, py - 7, 28) end
+	-- where it comes from (a material: the map it drops on)
+	if not o.poi then
+		local hint = o.materiale and T.drops:format(T.drop_place[o.materiale]) or T.feat_hint
+		local hl = kit.wrap(c, hint, 16, rw)
+		for i = 1, math.min(2, #hl) do fit(kit.text(c, hl[i], rx, py + 30 + i * 19, 16, PAPER_MUTE), rw) end
+	end
+	-- at the bottom: ready and its cost, or what is still missing
+	local _, ready = orders.progress(p, o)
+	local cost = orders.cost(o)
+	local by = Y + H - 26
+	if ready then
+		local right = X + W - 28
+		if cost > 0 then
+			local cn = kit.text(c, T.cost_upper:format(cost), right - 26, by, 18, KC.INK, "end")
+			kit.piece(c, "gemma", right - 10, by - 6, 22)
+			kit.text(c, T.ready .. " · ", right - 26 - kit.width(cn), by, 18, READY_PAPER, "end", 0.5)
+		else
+			kit.text(c, T.ready .. " · " .. T.free, right, by, 18, READY_PAPER, "end", 0.5)
+		end
+	else
+		-- (the week's two requests are not counted together: it only says it is not ready)
+		kit.text(c, o.poi and T.not_ready or (missing == 1 and T.missing_one or T.missing):format(missing), X + W - 28, by, 18, RED, "end", 0.5)
+	end
+
+	-- the band: CAMBIA (free once a day, never the welcome or the week's), SCAMBIA, CONSEGNA
+	local today = day(a)
+	local on_board = false
+	for _, b in ipairs(p.commesse.bacheca) do on_board = on_board or b == o end
+	local can_change = on_board and o.taglia ~= "benvenuto" and orders.can_change(p, today)
+	local change_sub = not (on_board and o.taglia ~= "benvenuto") and T.change_never
+		or (can_change and T.change_free or T.change_tomorrow)
+	local cb = kit.secondary(a.mlow, T.change, 160, 640, 214, 62, { off = not can_change, sub = change_sub })
+	kit.button(a.buttons, cb, "cambia", { spento = not can_change })
+	local mat = o.materiale or (o.poi and o.poi.materiale)
+	local sb = kit.secondary(a.mlow, T.swap, 390, 640, 214, 62, { off = not mat, sub = mat and T.swap_sub or T.swap_none })
+	kit.button(a.buttons, sb, "scambia", { spento = not mat })
+	local can = ready and p.ossidiana >= cost and profile.can_spend()
+	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { size = 42, off = not can })
+	kit.button(a.buttons, act, "consegna1", { main = true, spento = not can })
+end
+
+-- Draft 7: the swap, three of a material for one of the asked one
+local function swap(a, o)
+	local p = a.prof
+	local mat = o.materiale or o.poi.materiale
+	local X, Y, W, H = 340, 140, 600, 410
+	local c = sheet(a, X, Y, W, H, false)
+	local ix, iw = X + 24, W - 48
+	fit(kit.text(c, T.swap_title:format(kit.upper(T.material_one[mat])), ix, Y + 46, 24, KC.HOT, "start", 1), iw)
+	local lines = kit.wrap(c, T.swap_line:format(orders.TRADE, T.material_one[mat]), 16, iw)
+	for i = 1, math.min(2, #lines) do kit.text(c, lines[i], ix, Y + 52 + i * 20, 16, KC.MUTE) end
+	local full = orders.materials(p, mat) >= orders.MATERIAL_MAX
+	local i = 0
+	for _, m in ipairs(orders.MATERIALS) do
+		if m.id ~= mat then
+			local col, row = i % 5, math.floor(i / 5)
+			local cx, cy = ix + 4 + col * 108 + 52, Y + 150 + row * 100
+			local n = orders.materials(p, m.id)
+			local usable = m.id ~= orders.JOLLY and n >= orders.TRADE and not full
+			if a.modal.sel == m.id then kit.panel(kit.group(c, cx, cy + 12).node, 92, 96, "pannello_caldo") end
+			local icon = kit.piece(c, "materiale_" .. m.id, cx, cy, 56)
+			if not usable then gui.set_color(icon, vmath.vector4(1, 1, 1, 0.35)) end
+			kit.text(c, tostring(n), cx, cy + 50, 18, usable and KC.SAND or KC.MUTE, "middle")
+			if usable then kit.zone(a.over, a.buttons, cx - 50, cy - 40, 100, 96, "dai:" .. m.id) end
+			i = i + 1
+		end
+	end
+	-- the trade, as it would be
+	local sel = a.modal.sel
+	local ty = Y + H - 30
+	if sel then
+		kit.piece(c, "materiale_" .. sel, ix + 20, ty - 8, 40)
+		kit.text(c, tostring(orders.TRADE), ix + 46, ty, 22, KC.SAND)
+		kit.text(c, "›", ix + 76, ty, 26, KC.HOT)
+		kit.piece(c, "materiale_" .. mat, ix + 120, ty - 8, 40)
+		kit.text(c, "1", ix + 146, ty, 22, KC.SAND)
+	else
+		kit.text(c, full and T.swap_full or T.swap_pick, ix, ty, 18, KC.MUTE, "start", 0.5)
+	end
+	kit.text(c, T.you_have:format(orders.materials(p, mat)), X + W - 24, ty, 16, KC.MUTE, "end", 1)
+	back_button(a)
+	local can = sel and orders.materials(p, sel) >= orders.TRADE and not full
+	local act = kit.action(a.mright, T.swap, 948, 628, 308, 80, { size = 42, off = not can })
+	kit.button(a.buttons, act, "baratta", { main = true, spento = not can })
+end
+
+-- Draft 8: the Smith's order, for which family
+local function family(a, o)
+	local p = a.prof
+	local _, ready = orders.progress(p, o)
+	local X, Y, W, H = 290, 150, 700, 380
+	local c = sheet(a, X, Y, W, H, false)
+	local ix, iw = X + 24, W - 48
+	fit(kit.text(c, ready and T.smith_ready or T.smith, ix, Y + 46, 24, KC.HOT, "start", 1), iw)
+	kit.text(c, T.family_line, ix, Y + 72, 16, KC.MUTE)
+	local sel = a.modal.sel
+	for i, f in ipairs(equip.SETS) do
+		local cx, cy = ix + (i - 0.5) * (iw / 5), Y + 160
+		if sel == f.id then kit.panel(kit.group(c, cx, cy + 28).node, 118, 158, "pannello_caldo") end
+		kit.piece(c, "frammento_" .. f.id, cx, cy, 84)
+		kit.text(c, f.name, cx, cy + 70, 18, KC.SAND, "middle", 0.5)
+		kit.text(c, T.you_have:format(coins.format(orders.fragments(p, f.id))), cx, cy + 92, 16, KC.MUTE, "middle", 0.5)
+		kit.zone(a.over, a.buttons, cx - 59, cy - 52, 118, 158, "famiglia:" .. f.id)
+	end
+	-- the prize of the family chosen, and how far the order is
+	local size = orders.SIZES[o.taglia]
+	local py = Y + H - 30
+	kit.heading(c, T.prize, ix, py, KC.HOT_TOP)
+	local px = ix + 90
+	kit.piece(c, "scaglia", px + 14, py - 7, 28)
+	local sn = kit.text(c, coins.format(size.scaglie), px + 34, py, 22, KC.SAND)
+	local fx = px + 34 + kit.width(sn) + 24
+	kit.piece(c, "frammento_" .. (sel or "fabbro"), fx + 14, py - 7, 30)
+	local fnn = kit.text(c, tostring(size.frammenti), fx + 34, py, 22, KC.SAND)
+	if sel then
+		kit.text(c, T.fragment:format(proper(equip.BY_ID[sel].name)), fx + 42 + kit.width(fnn), py, 16, KC.MUTE)
+	end
+	local prog = orders.progress(p, o)
+	local cost = orders.cost(o)
+	local right = X + W - 24
+	if not ready then
+		kit.text(c, (prog[1].asked - prog[1].done == 1 and T.missing_one or T.missing):format(prog[1].asked - prog[1].done), right, py, 18, KC.ROSE, "end", 0.5)
+	elseif cost > 0 then
+		local cn = kit.text(c, T.cost_upper:format(cost), right - 26, py, 18, KC.SAND, "end")
+		kit.piece(c, "gemma", right - 10, py - 6, 22)
+		kit.text(c, T.ready .. " · ", right - 26 - kit.width(cn), py, 18, READY_IRON, "end", 0.5)
+	else
+		kit.text(c, T.ready .. " · " .. T.free, right, py, 18, READY_IRON, "end", 0.5)
+	end
+	back_button(a)
+	local can = ready and sel ~= nil and p.ossidiana >= cost and profile.can_spend()
+	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { size = 42, off = not can })
+	kit.button(a.buttons, act, "consegna1", { main = true, spento = not can })
+end
+
+-- Draft 9: the clients' book, and from here the call
+local function book(a)
+	local p = a.prof
+	local X, Y, W, H = 190, 92, 900, 470
+	local c = sheet(a, X, Y, W, H, true)
+	local ix = X + 28
+	kit.text(c, T.book_title, ix, Y + 62, 34, KC.INK, "start", 1)
+	local lines = kit.wrap(c, T.book_line, 16, 400)
+	for i = 1, math.min(2, #lines) do kit.text(c, lines[i], X + W - 28 - 400, Y + 40 + i * 19, 16, PAPER_MUTE) end
+	local list = orders.clients(p)
+	local sel = a.modal.sel
+	for i, cl in ipairs(list) do
+		local x, y = ix + ((i - 1) % 3) * 284, Y + 86 + math.floor((i - 1) / 3) * 104
+		if cl.id == sel then
+			kit.rect(c, x - 6, y - 6, 270, 104, PAPER_HEAD)
+			kit.rect(c, x - 3, y - 3, 264, 98, PAPER)
+		end
+		portrait(a, c, cl.id, x, y, 70, 92)
+		fit(kit.text(c, kit.upper(T.clients[cl.id]), x + 84, y + 20, 20, KC.INK, "start", 0.5), 170)
+		family_tag(c, cl.set, x + 84, y + 30)
+		pearls(c, orders.trust(p, cl.id), x + 84, y + 76, 16)
+		kit.zone(a.over, a.buttons, x - 6, y - 6, 270, 104, "cliente:" .. cl.id)
+	end
+	local today = day(a)
+	local by = Y + H - 26
+	if sel then
+		local trust = orders.trust(p, sel)
+		fit(kit.text(c, T.book_detail:format(T.clients[sel], trust, trust_next(sel, trust)), ix, by - 24, 16, PAPER_MUTE), W - 56)
+		local called = p.commesse.chiamato
+		local now = orders.day_number(today)
+		local line, color
+		if not orders.can_call(p, sel, today) then
+			line, color = T.call_yesterday:format(T.clients[sel]), RED
+		elseif called and called.cliente == sel and called.giorno == now then
+			line, color = T.call_done:format(T.clients[sel]), READY_PAPER
+		else
+			line, color = T.call_when:format(T.clients[sel]), PAPER_HEAD
+		end
+		fit(kit.text(c, line, ix, by, 18, color, "start", 0.5), W - 56)
+	else
+		kit.text(c, T.book_none, ix, by, 18, PAPER_MUTE)
+	end
+	back_button(a)
+	local called = p.commesse.chiamato
+	local done = sel and called and called.cliente == sel and called.giorno == orders.day_number(today)
+	local can = sel ~= nil and not done and orders.can_call(p, sel, today)
+	local act = kit.action(a.mright, T.call_short, 948, 628, 308, 80, { size = 42, off = not can })
+	kit.button(a.buttons, act, "chiama", { main = true, spento = not can })
+end
+
+modal = function(a, base)
+	local m = a.modal
+	local o = m.n and find(a.prof, m.n)
+	if m.k ~= "libro" and not o then
+		a.modal = nil
+		return
+	end
+	window(a, base)
+	if m.k == "carta" then open_card(a, o)
+	elseif m.k == "scambio" then swap(a, o)
+	elseif m.k == "famiglia" then family(a, o)
+	else book(a) end
+end
+
+-- A tap inside a window. Returns true if it was one
+modal_cmd = function(a, kind, x)
+	local p = a.prof
+	local m = a.modal
+	if kind == "cambia" then
+		local new = profile.act(p, { k = "cambia", n = m.n })
+		if new then m.n = new.n end
+	elseif kind == "scambia" then
+		a.modal = { k = "scambio", n = m.n }
+	elseif kind == "dai" or kind == "famiglia" or kind == "cliente" then
+		m.sel = x
+	elseif kind == "baratta" then
+		local o = find(p, m.n)
+		local mat = o and (o.materiale or (o.poi and o.poi.materiale))
+		if mat and m.sel and profile.act(p, { k = "scambia", da = m.sel, a = mat }) then sound.play("#scaglia") end
+		if m.sel and orders.materials(p, m.sel) < orders.TRADE then m.sel = nil end
+	elseif kind == "consegna1" then
+		if profile.act(p, { k = "consegna", n = m.n, set = m.k == "famiglia" and m.sel or nil }) then
+			sound.play("#scaglia")
+			a.modal = nil
+		end
+	elseif kind == "chiama" then
+		if m.sel then profile.act(p, { k = "chiama", cliente = m.sel }) end
+	else
+		return false
+	end
+	return true
+end
+
 -- The round that calls you to the orders: orange with ink around, the number
 -- of those ready inside (n = 0: smaller, no number: something new waits)
 function M.badge(g, cx, cy, n)
@@ -291,11 +686,13 @@ end
 -- Draws the tab into the armory's groups (a.left, a.mid, a.rt, a.low, a.low2, a.right)
 function M.board(a)
 	local p = a.prof
+	-- (the buttons before the board's: the header's, kept under a window)
+	local base = #a.buttons
 	a.minis = a.minis or {}
 	orders.init(p)
 	if not p.commesse.aperta then
 		-- (test profiles only: the Smith has not called yet, the bench makes the matches)
-		if a.bench then bench_panel(a, a.left) else gear_ui.devil(a, a.left, 215, 600, 395) end
+		if a.bench then bench_panel(a, a.left) else smith_at_counter(a.left) end
 		local n = kit.text(a.mid, T.closed:format(orders.OPEN_AFTER, p.commesse.online, orders.OPEN_AFTER), 716, 330, 22, KC.MUTE, "middle", 0.5)
 		fit(n, 560)
 		local pb = kit.secondary(a.low, T.bench, 160, 640, 230, 62, {})
@@ -306,8 +703,8 @@ function M.board(a)
 	if p.commesse.giorno ~= day(a) or #p.commesse.attesa > 0 then profile.act(p, { k = "bacheca" }) end
 	local g = a.mid
 	local c = p.commesse
-	-- on the left the devil, as in the BANCO (the Smith at his counter waits for his drawing)
-	if a.bench then bench_panel(a, a.left) else gear_ui.devil(a, a.left, 215, 600, 395) end
+	-- on the left the Smith at his counter (WB-085), or the test bench in his place
+	if a.bench then bench_panel(a, a.left) else smith_at_counter(a.left) end
 	-- the clients' places: as many as you have earned, always three columns
 	local places = orders.places(p)
 	for i = 1, 3 do
@@ -327,8 +724,10 @@ function M.board(a)
 		local pb = kit.secondary(a.low, T.bench, 160, 640, 230, 62, {})
 		kit.button(a.buttons, pb, "prova:apri")
 	end
-	local cb = kit.secondary(a.low2, T.call, 430, 640, 270, 62, { off = true })
-	kit.button(a.buttons, cb, "chiama", { spento = true })
+	-- the call: it opens the clients' book, where you call them (Sergio, 23 Nov: one button)
+	local none = #orders.clients(p) == 0
+	local cb = kit.secondary(a.low2, T.call, 430, 640, 270, 62, { off = none })
+	kit.button(a.buttons, cb, "libro", { spento = none })
 	local ready, cost = 0, 0
 	for _, o in ipairs(orders.orders(p)) do
 		local _, ok = orders.progress(p, o)
@@ -342,6 +741,7 @@ function M.board(a)
 		or ((ready == 1 and T.ready_one or T.ready_many:format(ready)) .. " · " .. T.cost:format(cost))
 	a.action = kit.action(a.right, T.deliver, 948, 628, 308, 80, { size = 42, off = not can, sub = kit.upper(sub) })
 	kit.button(a.buttons, a.action, "consegna", { main = true, spento = not can })
+	if a.modal then modal(a, base) end
 end
 
 -- A tap of this tab (kind, x: the action's two halves). Returns true if it was one of its own
@@ -378,11 +778,22 @@ function M.cmd(a, kind, x)
 		end
 		if done > 0 then sound.play("#scaglia") end
 		return true
-	elseif kind == "cartellino" or kind == "chiama" then
-		-- (the open card and the call: their drafts are still to be approved)
+	elseif kind == "cartellino" then
+		local o = find(p, tonumber(x))
+		if o then a.modal = { k = o == p.commesse.fabbro and "famiglia" or "carta", n = o.n } end
+		return true
+	elseif kind == "libro" then
+		local list = orders.clients(p)
+		a.modal = { k = "libro", sel = list[1] and list[1].id }
+		return true
+	elseif kind == "modale" then
+		-- outside the window, or INDIETRO: the swap goes back to its card, the rest closes
+		if a.modal and a.modal.k == "scambio" then a.modal = { k = "carta", n = a.modal.n } else a.modal = nil end
+		return true
+	elseif kind == "niente" then
 		return true
 	end
-	return false
+	return a.modal ~= nil and modal_cmd(a, kind, x) or false
 end
 
 -- Gives back the miniatures loaded for the tab

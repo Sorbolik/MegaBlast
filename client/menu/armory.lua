@@ -150,7 +150,7 @@ end
 
 -- Screen ----------------------------------------------------------------------------
 
-local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over" }
+local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over", "mlow", "mright" }
 
 local function build(a)
 	if a.head then kit.header_delete(a.head) end
@@ -224,7 +224,7 @@ local function run_cmd(a, ui_action)
 	if orders_ui.cmd(a, kind, x) then
 		-- (a tap of the COMMESSE tab)
 	elseif kind == "scheda" then
-		a.tab, a.sheet = x, nil
+		a.tab, a.sheet, a.modal = x, nil, nil
 	elseif kind == "foglio" then
 		a.sheet = not a.sheet
 	elseif kind == "merce" then
@@ -246,7 +246,13 @@ end
 
 function M.on_input(a, action_id, action)
 	local ui_action = ui.touch(a.buttons, action_id, action)
-	if ui_action == "indietro" then return "indietro" end
+	if ui_action == "indietro" then
+		-- (a window of the COMMESSE closes first)
+		if not a.modal then return "indietro" end
+		a.modal = nil
+		build(a)
+		return nil
+	end
 	if ui_action then run_cmd(a, ui_action) end
 	return nil
 end

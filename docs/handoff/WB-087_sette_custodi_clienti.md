@@ -183,3 +183,11 @@ Difformita residue (anche dopo le rigenerazioni, massimo tre tentativi per varia
 Il requisito dei margini su tutti i lati NON e soddisfatto in tutti i fogli: in particolare Minosse, Cerbero, Plutone e Minotauro conservano tagli/contatti ai bordi. Criteri di accettazione lasciati senza spunta per la revisione di Claude e la scelta delle varianti di Sergio.
 
 ## Resoconto di Claude
+
+23 nov. Guardati tutti i quattordici fogli: belli, coerenti con Caronte, nessun difetto che si veda
+nei busti. I tagli ai bordi che Codex segnala stanno sotto il petto e spariscono nel ritaglio.
+Varianti scelte da Claude (da confermare con Sergio): Minosse 2 (la bilancia al collo dice "giudice"),
+Cerbero 1, Plutone 1, Flegiàs 1, Medusa 1, Minotauro 1, Malacoda 2 (coda e mantello più netti).
+Ritaglio uguale per tutti (`tools/grafica/fucina.py`, `fai_bottega`): i tre busti (chiede, contento,
+fiero) dentro la cornice, 366 x 485 (il ritratto più grande sullo schermo è 180 x 240). Nel gioco:
+cartellino aperto e libro dei clienti col busto, i cartellini della bacheca con la striscia del volto.

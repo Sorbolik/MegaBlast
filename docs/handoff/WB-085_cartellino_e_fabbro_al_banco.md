@@ -78,3 +78,12 @@ Prompt originali eseguiti con ImageGen e riferimenti nell'ordine indicato. I fog
 I due Fabbri guardano verso destra e sono interamente in campo con banco, incudine e martello. L'estensione verticale dei due disegni supera 1400 px. La variante 2 ha una voluta interamente contenuta nella tela. Il fondo pergamena presenta leggere variazioni tonali e non è #F3E3C3 esatto. Lo stiramento dei cartellini e la resa degli asset nell'interfaccia restano da verificare.
 
 ## Resoconto di Claude
+
+23 nov. Guardate tutte e quattro le immagini: nessun difetto visibile.
+- Cartellino: preso il foglio largo di `cartellino_1` (più pulito di `cartellino_2`), in nove parti
+  con gli angoli di 100 px (sullo schermo 34: l'orecchia resta intera) e il rinforzo del foro a parte
+  (`cartellino_foro`), messo al centro sotto il chiodo. Lo stesso foglio fa i cartellini alti, larghi e
+  le finestre (`kit.paper`). Il foglio alto non serve.
+- Fabbro al banco: variante 1 (più chiara, il banco intero), senza pergamena, alto 1000 (sullo schermo
+  500, a sinistra della bacheca). La variante 2 resta in `art/` per un'altra schermata.
+- Provati a 1280 x 720, 1600 x 720 e 960 x 720 (scenario `commesse.txt`).
