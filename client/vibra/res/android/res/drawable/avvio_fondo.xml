@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Il fondo della finestra del gioco finché il motore non disegna: Ruggine col disco
+     dritto. La finestra è già orizzontale, quindi col telefono ancora in verticale
+     Favilla si vede sdraiata (sui telefoni vecchi è la prima cosa che si vede). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/avvio_ruggine" />
+    <item>
+        <bitmap android:src="@drawable/avvio_disco" android:gravity="center" />
+    </item>
+</layer-list>

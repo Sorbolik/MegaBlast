@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Il tema della finestra del gioco (client/android/AndroidManifest.xml): quello di
+     Defold col fondo di avvio al posto del nero. Ruggine = il fondo dell'icona. -->
+<resources>
+    <color name="avvio_ruggine">#542c1b</color>
+    <style name="Avvio" parent="@android:style/Theme.NoTitleBar.Fullscreen">
+        <item name="android:windowBackground">@drawable/avvio_fondo</item>
+    </style>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: la schermata di avvio del telefono sul Ruggine con Favilla che si sdraia. -->
+<resources>
+    <style name="Avvio" parent="@android:style/Theme.NoTitleBar.Fullscreen">
+        <item name="android:windowBackground">@drawable/avvio_fondo</item>
+        <item name="android:windowSplashScreenBackground">@color/avvio_ruggine</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/avvio_giro</item>
+        <item name="android:windowSplashScreenAnimationDuration">450</item>
+    </style>
+</resources>
