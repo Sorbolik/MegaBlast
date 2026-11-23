@@ -12,10 +12,10 @@ foto 01_impostazioni
 tocca_centro 782 657                # DISPOSIZIONE TASTI
 aspetta 1.5
 foto 02_editor
-tocca 1135 286                      # il teletrasporto
+tocca 1222 286                      # il teletrasporto
 aspetta 0.3
 foto 03_scelto
-trascina 1135 286 1010 380 0.6      # più in alto e a sinistra
+trascina 1222 286 1010 330 0.6      # più a sinistra
 aspetta 0.3
 aspetta 0.3
 tocca 800 608                       # GRANDEZZA quasi al massimo

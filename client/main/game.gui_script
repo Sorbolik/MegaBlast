@@ -99,8 +99,8 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- crates) with an ember border, on the right the secondaries (the Blade
 -- always, plus the one picked at the start) with a steel border. The Grapple
 -- is round and purple next to the teleport: on the right, where the aiming
--- hand is, because the left one moves (on the phone on an arc around the aim
--- stick, CP.hand.arc). The consumable items (trap, shield,
+-- hand is, because the left one moves (on the phone around the teleport above the aim
+-- stick, CP.hand.SPOTS). The consumable items (trap, shield,
 -- springboard, parachute: tapping them uses them at once) are a thing of their
 -- own (Sergio, 29 Oct: above the secondaries they looked like a submenu of
 -- theirs): a mint column (on the phone on the right edge), titled OGGETTI with how many are
@@ -135,7 +135,6 @@ local SIZES = { slot_tel = 72, narrow_slot = 62, gap_tel = 8, oggetto = 56, from
 -- group's color), selected
 local SLOT_BORDER = { [0] = vmath.vector4(1, 0.886, 0.769, 0.06), ui.C.LINE, ui.C.LIGHT }
 -- icon of a weapon already used this turn (it goes off: you see what is left)
-local ICON_USED = vmath.vector4(1, 1, 1, 0.3)
 local SLOT_SCALE, CHOSEN = vmath.vector3(1, 1, 1), 1.12
 -- Sniper bounce: how much it squashes, how soon it calms down and how much it shakes
 local BOING_AMP, BOING_DAMP, BOING_FREQ = 0.7, 4, 26
@@ -251,9 +250,9 @@ local MOVE_PAD = { x = 115, y = 117 }
 local AIM_PAD = { x = W - 115, y = 117 }
 -- the sticks are grabbed in the left and right 40%, below 60% of the height
 local PAD_ZONE = { sx = W * 0.4, dx = W * 0.6, y = H * 0.6 }
--- teleport: on the phone on the arc above the aim stick (CP.hand.arc, set by
--- arrange); on the computer at the bottom right (or the T key)
-local TELE_BTN_TOUCH = vmath.vector3(W - 145, 286, 0)
+-- teleport: on the phone above the aim stick (CP.hand.SPOTS, set by
+-- CP.layout_place); on the computer at the bottom right (or the T key)
+local TELE_BTN_TOUCH = vmath.vector3(W - 58, 286, 0)
 local TELE_BTN_DESK = vmath.vector3(W - 100, 62, 0)
 local TELE_BTN_D = 84
 -- aim ring: light blue when off, red when releasing fires the shot
@@ -3682,9 +3681,9 @@ local function update_bar(self)
 		AN.y = AN.y or {}
 		AN.x[1], AN.y[1] = W / 2 - from_pt, bar_y
 		AN.x[2], AN.y[2] = W / 2 + from_pt, bar_y
-		AN.x[3], AN.y[3] = screen.x1 - CP.hand.ARC.ITEMS_X, CP.hand.ARC.ITEMS_Y + screen.y0
-		local ax, ay = CP.hand.arc(2)
-		local bx, by = CP.hand.arc(3)
+		AN.x[3], AN.y[3] = CP.hand.spot(4)
+		local ax, ay = CP.hand.spot(2)
+		local bx, by = CP.hand.spot(3)
 		AN.x[4], AN.y[4] = (ax + bx) / 2, (ay + by) / 2
 	end
 	for _, sl in ipairs(self.slots) do
@@ -3706,20 +3705,21 @@ local function update_bar(self)
 				x = W / 2 + from_pt + d / 2 + k * (d + gap)
 			elseif gr == 3 then
 				-- the items column: on the phone on the right edge, above the aim
-				-- stick (CP.hand.ARC); on the computer above the teleport. With all
+				-- stick (CP.hand.SPOTS); on the computer above the teleport. With all
 				-- four its title stays under the zoom button (report UI-001)
 				d = SIZES.oggetto
 				if tel then
-					x, y = screen.x1 - CP.hand.ARC.ITEMS_X, CP.hand.ARC.ITEMS_Y + screen.y0 + k * (d + 6)
+					x, y = CP.hand.spot(4)
+					y = y + k * (d + 6)
 				else
 					x, y = tele.x, tele.y + TELE_BTN_D / 2 + 16 + d / 2 + k * (d + 6)
 				end
 			else
-				-- Rampino and Giano: on the phone on the arc around the aim stick,
-				-- after the teleport; on the computer side by side left of it
+				-- Rampino and Giano: on the phone beside the teleport and the items
+				-- (CP.hand.SPOTS); on the computer side by side left of the teleport
 				d = TELE_BTN_D
 				if tel then
-					x, y = CP.hand.arc(k + 2)
+					x, y = CP.hand.spot(k + 2)
 				else
 					x, y = tele.x - (k + 1) * (TELE_BTN_D + 12), tele.y
 				end
@@ -3745,6 +3745,8 @@ local function update_bar(self)
 			if on == 2 then
 				y = y + SIZES.alza * us
 				chosen = sl
+			elseif on == 0 or on == 4 then
+				y = y - CP.hand.ASH.SINK * us
 			end
 			sl.d = d * us
 			if sl.x ~= x or sl.y ~= y then
@@ -3752,16 +3754,13 @@ local function update_bar(self)
 				sl.x, sl.y = x, y
 			end
 			local sc = (gr <= 2 and d / SLOT or 1) * ((on >= 2 and on <= 4) and CHOSEN or 1) * us
+				* ((on == 0 or on == 4) and CP.hand.ASH.SCALE or 1)
 			local used_key = on == 2 and turn and not g:can_use(sl.weapon)
 			if sl.on ~= on or sl.sc ~= sc or sl.team_c ~= self.hand_color or sl.used_key ~= used_key then
 				sl.used_key = used_key
-				gui.set_color(sl.bordo, on >= 2 and ui.C.LIGHT or (on == 1 and CP.hand.dim(BAR_COLORS[gr]) or SLOT_BORDER[0]))
-				-- in hand but already used this turn (the Blade after its blow): the icon goes off
-				local spent_hand = on == 2 and turn and not g:can_use(sl.weapon)
-				if sl.icon then
-					gui.set_color(sl.icon, (on == 0 or on == 4 or spent_hand) and ICON_USED
-						or (on == 1 and CP.hand.dim(WHITE) or WHITE))
-				end
+				gui.set_color(sl.bordo, on >= 2 and ui.C.LIGHT or (on == 1 and BAR_COLORS[gr] or SLOT_BORDER[0]))
+				-- in hand but already used this turn (the Blade after its blow): the icon goes ash too
+				CP.hand.ash(sl.node, sl.icon, on == 0 or on == 4 or used_key)
 				CP.hand.frame(sl, gr <= 2 and "slot_arma" or (gr == 3 and "oggetto" or "gettone"), on == 2,
 					gr <= 2 and SLOT or (gr == 3 and SIZES.oggetto or TELE_BTN_D), self.hand_color)
 				sl.team_c = self.hand_color
@@ -3781,19 +3780,27 @@ local function update_bar(self)
 	return chosen
 end
 
--- What you hold (Sergio, 21 Nov: «deve avere la stessa identità grafica sempre
--- quello che hai in mano»): weapons, Grapple, Janus and teleport alike are
--- raised, bigger, with the light border, an outer frame of their own shape in
--- your team's color and the name above; everything else you could pick is at
--- half light (CP.hand.DIM; 1 would leave it lit), what is used up for this turn
--- dimmer; what runs out leaves the bar, the picked secondary stays (also at 0)
-CP.hand = { DIM = 0.5, FRAME = 1.16, dimmed = {},
+-- Three states, always told apart (Sergio, 21 and 23 Nov, docs/decisioni/interfaccia.md):
+-- - in hand: weapons, Grapple, Janus and teleport alike are raised, bigger,
+--   with the light border, an outer frame of their own shape in your team's
+--   color and the name above («la stessa identità grafica sempre»);
+-- - clickable: full light, the border in its group's color;
+-- - not usable now ("Cenere e piccolo"): the icon in grey ash (the lampo
+--   material, battle/flash.fp: ASH.ICON is no color, 0.6 light), the
+--   panel darker, the button smaller (ASH.SCALE) and lower (ASH.SINK).
+-- What runs out leaves the bar, the picked secondary stays (also at 0)
+CP.hand = { FRAME = 1.16,
+	ASH = { SCALE = 0.82, SINK = 9, ICON = vmath.vector4(0.6, 1, 0, 0.85), PANEL = vmath.vector4(0.04, 0.036, 0.05, 1) },
 	-- the shared PER TURNO badge once used ("0"): grey
 	BADGE = vmath.vector4(0.45, 0.42, 0.4, 1) }
-function CP.hand.dim(c)
-	local t = CP.hand.dimmed[c]
-	if not t then t = vmath.vector4(c.x, c.y, c.z, c.w * CP.hand.DIM); CP.hand.dimmed[c] = t end
-	return t
+-- panel and icon of a button, in ash or lit
+function CP.hand.ash(panel, icon, off)
+	local A = CP.hand.ASH
+	gui.set_color(panel, off and A.PANEL or ui.C.PANEL)
+	if icon then
+		if off then gui.set_material(icon, "lampo") else gui.reset_material(icon) end
+		gui.set_color(icon, off and A.ICON or WHITE)
+	end
 end
 
 -- sl: a slot or the teleport ({ node, mano }); d: the size of its shape
@@ -3809,13 +3816,15 @@ function CP.hand.frame(sl, shape, on, d, color)
 	end
 end
 
--- The default layout on the phone (Sergio, 21 Nov): teleport, Grapple and
--- Janus on an arc around the aim stick (the thumb reaches them without leaving
--- it), the items in a column on the right edge
-CP.hand.ARC = { R = 172, ANGLES = { 100, 136, 172 }, ITEMS_Y = 272, ITEMS_X = 44 }
-function CP.hand.arc(i)
-	local a = math.rad(CP.hand.ARC.ANGLES[i])
-	return AIM_PAD.x + CP.hand.ARC.R * math.cos(a), AIM_PAD.y + CP.hand.ARC.R * math.sin(a)
+-- The default layout on the phone (Sergio, 23 Nov, from his own screen): above
+-- the aim stick the teleport on the right edge with Janus at its left, the
+-- Grapple above them, beside the items column (which grows upward). Each spot
+-- from the right and bottom edges: 1 teleport, 2 Grapple, 3 Janus, 4 the first item
+-- (low enough that with all four items OGGETTI stays under the zoom button)
+CP.hand.SPOTS = { { 58, 286 }, { 122, 375 }, { 166, 283 }, { 44, 352 } }
+function CP.hand.spot(i)
+	local p = CP.hand.SPOTS[i]
+	return screen.x1 - p[1], screen.y0 + p[2]
 end
 
 CP.hand.TOOL = { D = 30, OUT = 40, CAPTION_X = -22 }
@@ -3910,7 +3919,7 @@ end
 function CP.layout_place(self)
 	if not self.chrono then return end
 	local L, HL = self.touch_ui and self.layout or nil, RM.layout
-	local ax, ay = CP.hand.arc(1)
+	local ax, ay = CP.hand.spot(1)
 	TELE_BTN_TOUCH.x, TELE_BTN_TOUCH.y = HL.place(L, "teletrasporto", ax, ay, ax, ay)
 	gui.set_position(self.btn_tele.nodo, self.touch_ui and TELE_BTN_TOUCH or TELE_BTN_DESK)
 	self.tele_state = nil
@@ -4539,7 +4548,8 @@ local function render(self, dt)
 	self.hand_color = self.colors[owner and owner.id or g.current]
 	local chosen = update_bar(self)
 	CP.fly_pending(self)
-	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
+	-- on the others' turn it can be picked like the bar (update_bar), unless the orbs are used up
+	local tele_state = self.tele_armed and 2 or ((tele_ok or (not my_turn(self) and owner and owner.teleports_left > 0)) and 1 or 0)
 	local bt = self.btn_tele
 	-- in the lessons that don't talk about orbs the button isn't there
 	local tele_sees = self.controls_visible and missions.sees(self.missione, "teleport")
@@ -4548,17 +4558,17 @@ local function render(self, dt)
 		self.tele_sees = tele_sees
 	end
 	if self.tele_state ~= tele_state or bt.team_c ~= self.hand_color then
-		gui.set_color(bt.bordo, tele_state == 2 and ui.C.LIGHT or (tele_state == 1 and CP.hand.dim(ui.C.PURPLE) or SLOT_BORDER[0]))
-		gui.set_color(bt.icon_img, tele_state == 0 and ICON_USED or (tele_state == 1 and CP.hand.dim(WHITE) or WHITE))
+		gui.set_color(bt.bordo, tele_state == 2 and ui.C.LIGHT or (tele_state == 1 and ui.C.PURPLE or SLOT_BORDER[0]))
+		CP.hand.ash(bt.nodo, bt.icon_img, tele_state == 0)
 		bt.node = bt.node or bt.nodo
 		CP.hand.frame(bt, "gettone", tele_state == 2, TELE_BTN_D, self.hand_color)
 		bt.team_c = self.hand_color
 		local ts = self.touch_ui and RM.layout.of(self.layout, "teletrasporto").s or 1
-		local sc = (tele_state == 2 and CHOSEN or 1) * ts
+		local sc = (tele_state == 2 and CHOSEN or (tele_state == 0 and CP.hand.ASH.SCALE or 1)) * ts
 		SLOT_SCALE.x, SLOT_SCALE.y = sc, sc
 		gui.set_scale(bt.nodo, SLOT_SCALE)
 		local p = self.touch_ui and TELE_BTN_TOUCH or TELE_BTN_DESK
-		set_pos(bt.nodo, p.x, p.y + (tele_state == 2 and SIZES.alza * ts or 0))
+		set_pos(bt.nodo, p.x, p.y + (tele_state == 2 and SIZES.alza or (tele_state == 0 and -CP.hand.ASH.SINK or 0)) * ts)
 		self.tele_state = tele_state
 	end
 	-- what you hold: the tag with the name above and the halo in your color
