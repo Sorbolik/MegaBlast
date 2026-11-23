@@ -59,7 +59,7 @@ end
 
 -- The server's profile (text) in the place of p's progress; done: the last
 -- action the server did, the ones after it are done again on top
-function M.adopt(p, text, done, queue, today, board)
+function M.adopt(p, text, done, queue, today)
 	local ok, sp = pcall(replay.read, text or "")
 	if not ok or type(sp) ~= "table" then return false end
 	for k in pairs(p) do
@@ -69,7 +69,7 @@ function M.adopt(p, text, done, queue, today, board)
 		if not PHONE_ONLY[k] then p[k] = v end
 	end
 	for _, a in ipairs(queue or {}) do
-		if a.n > done then progress.act(p, a, today, board) end
+		if a.n > done then progress.act(p, a, today) end
 	end
 	return true
 end
@@ -114,7 +114,7 @@ end
 
 local function take(t)
 	if state.is_test() then return end
-	if M.adopt(state.p, t.profilo, t.ultima or 0, queue.list, wallet.today(), wallet.board_day()) then state.save(state.p) end
+	if M.adopt(state.p, t.profilo, t.ultima or 0, queue.list, wallet.today()) then state.save(state.p) end
 end
 
 -- Sends the actions waiting (none: just takes the server's profile)

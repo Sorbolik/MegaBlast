@@ -441,7 +441,7 @@ return {
 		-- the SHOP
 		yours = "tuo",
 		offers = "OFFERTE DEL FABBRO",
-		-- the time until midnight
+		-- the time until the day turns (5 in the morning)
 		change_in = "cambiano tra %s",
 		day = "PEZZI DEL GIORNO",
 		day_line = "cambiano domani",

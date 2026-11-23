@@ -83,9 +83,9 @@ local function ware(a, x, y, w, h, set, slot, price, o)
 	if not o.owned then kit.zone(g, a.buttons, x, y, w, h, "merce:" .. set .. ":" .. slot) end
 end
 
--- time until the shop changes (midnight)
-local function until_midnight()
-	local t = os.date("*t")
+-- time until the shop changes: the day turns at wallet.DAY_HOUR in the morning
+local function until_change()
+	local t = os.date("*t", os.time() - wallet.DAY_HOUR * 3600)
 	local left = (23 - t.hour) * 60 + (59 - t.min)
 	return string.format("%dH %dM", math.floor(left / 60), left % 60)
 end
@@ -106,7 +106,7 @@ local function shop(a)
 	gui.play_flipbook(img, "fabbro_calma")
 	gui.set_parent(img, face)
 	kit.text(g, T.offers, x + 60, 120, 26, KC.HOT, "start", 1)
-	kit.text(g, kit.upper(T.change_in:format(until_midnight())), x + 62, 143, 18, KC.MUTE, "start", 0.5)
+	kit.text(g, kit.upper(T.change_in:format(until_change())), x + 62, 143, 18, KC.MUTE, "start", 0.5)
 	local offers = wallet.shop(p, today)
 	local full = wallet.PRICE_CATALOG
 	local i = 0

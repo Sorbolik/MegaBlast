@@ -428,14 +428,12 @@ function M.apply(p, rows)
 end
 
 -- the date for the first win of the day (local time of the phone)
+-- The day of the rules (first win, BANCO del giorno, the Smith's orders) turns
+-- at 5 in the morning, not at midnight (Sergio, 23 Nov: nobody should stay up
+-- for it); the server's is Italy's (accounts.go, today)
+M.DAY_HOUR = 5
 function M.today()
-	return os.date("%Y-%m-%d")
-end
-
--- the day of the Smith's orders (sim/orders.lua): it turns at 5 in the morning
-M.BOARD_HOUR = 5
-function M.board_day()
-	return os.date("%Y-%m-%d", os.time() - M.BOARD_HOUR * 3600)
+	return os.date("%Y-%m-%d", os.time() - M.DAY_HOUR * 3600)
 end
 
 return M

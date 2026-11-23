@@ -144,7 +144,7 @@ function M.endgame(p, fresh)
 	p.scaglie, p.ossidiana, p.buoni = M.TEST_COINS, M.TEST_COINS, M.TEST_VOUCHERS
 	-- the Smith's orders: FINE GIOCO starts with every client and a bit of every
 	-- state, DA ZERO from the first time (menu/orders_bench.lua, test-only)
-	if not fresh then require("menu.orders_bench").fill(p, wallet.board_day()) end
+	if not fresh then require("menu.orders_bench").fill(p, wallet.today()) end
 	return p
 end
 
@@ -227,7 +227,7 @@ end
 -- receipt waits for the server's word on it). here: only on the phone (an
 -- online match: the server counts it itself)
 function M.act(p, a, here)
-	local r, why = progress.act(p, a, wallet.today(), wallet.board_day())
+	local r, why = progress.act(p, a, wallet.today())
 	M.save(p)
 	local n
 	if r and M.on_act and not here then n = M.on_act(p, a) end

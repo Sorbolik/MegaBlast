@@ -471,11 +471,6 @@ do
 	check(progress.act(p, { k = "scambia", da = "grandine", a = "pece" }, D) == true and orders.materials(p, "pece") == 1,
 		"the swap through the action")
 	check(progress.act(p, { k = "bacheca" }, D) == true, "looking at the board is an action too")
-	-- the orders' day turns at 5 in the morning: past midnight the board is still yesterday's
-	progress.act(p, { k = "bacheca" }, "2026-11-24", D)
-	check(p.commesse.giorno == D, "after midnight and before 5 the board keeps its day")
-	progress.act(p, { k = "bacheca" }, "2026-11-24", "2026-11-24")
-	check(p.commesse.giorno == "2026-11-24", "at 5 it turns")
 	-- fragments as money
 	p.commesse.frammenti.fornace = 500
 	check(progress.act(p, { k = "compra", set = "fornace", slot = "nessuno", frammenti = true }, D) == nil
