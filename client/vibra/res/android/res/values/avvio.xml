@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Avvio: il tema della finestra del gioco (client/android/AndroidManifest.xml) e del
-     pannello Ruggine con Favilla (Avvio.java) che copre il secondo in cui il motore si
-     accende. Ruggine = il fondo dell'icona. -->
+<!-- Avvio (Sergio, 23 nov): la finestra del gioco (client/android/AndroidManifest.xml)
+     parte nera come prima; il pannello Ruggine con Favilla che si sdraia (Avvio.java)
+     copre il secondo in cui il motore si accende. Ruggine = il fondo dell'icona. -->
 <resources>
     <color name="avvio_ruggine">#542c1b</color>
-    <style name="Avvio" parent="@android:style/Theme.NoTitleBar.Fullscreen">
-        <item name="android:windowBackground">@drawable/avvio_fondo</item>
-    </style>
+    <style name="Avvio" parent="@android:style/Theme.NoTitleBar.Fullscreen" />
     <style name="AvvioPannello" parent="@android:style/Theme.NoTitleBar.Fullscreen">
-        <item name="android:windowBackground">@drawable/avvio_fondo</item>
+        <item name="android:windowBackground">@color/avvio_ruggine</item>
         <item name="android:windowIsFloating">false</item>
         <item name="android:windowAnimationStyle">@null</item>
         <item name="android:backgroundDimEnabled">false</item>

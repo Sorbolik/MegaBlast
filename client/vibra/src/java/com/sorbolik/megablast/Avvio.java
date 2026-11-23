@@ -11,18 +11,27 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.Gravity;
 import android.view.Window;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.view.WindowManager;
 
-// Il pannello Ruggine con Favilla (res/drawable/avvio_fondo.xml) sopra il secondo di
-// nero in cui il motore si accende (Sergio, 23 nov). È una finestra a parte perché
+// Il pannello Ruggine con Favilla che si sdraia, sopra il secondo di nero in cui il
+// motore si accende (Sergio, 23 nov). La finestra è già orizzontale e Favilla parte
+// girata di 90 gradi, quindi col telefono ancora dritto si vede dritta e poi si sdraia:
+// "gira il telefono". È una finestra a parte perché
 // Defold disegna da solo sulla sua; non prende tocchi né fuoco e sfuma quando il gioco
 // ha disegnato i primi fotogrammi (vibra.cpp chiama pronto()).
 // È un ContentProvider (manifests/android/AndroidManifest.xml) solo per partire prima
 // della finestra di Defold, che le estensioni non possono estendere: da lì ascolta
 // quando la finestra nasce e le apre sopra il pannello.
 public class Avvio extends ContentProvider implements Application.ActivityLifecycleCallbacks {
+    private static final long GIRO_DOPO = 200;   // ms ferma prima di sdraiarsi
+    private static final long GIRO = 500;        // ms del giro
     private static Dialog pannello;
+    private static long aperto;
 
     @Override
     public boolean onCreate() {
@@ -46,9 +55,19 @@ public class Avvio extends ContentProvider implements Application.ActivityLifecy
             p.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
             w.setAttributes(p);
         }
+        FrameLayout fondo = new FrameLayout(attivita);
+        ImageView favilla = new ImageView(attivita);
+        favilla.setImageResource(attivita.getResources().getIdentifier("avvio_disco", "drawable", attivita.getPackageName()));
+        fondo.addView(favilla, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        d.setContentView(fondo);
         d.setCancelable(false);
         d.show();
+        favilla.setRotation(-90f);
+        favilla.animate().rotation(0f).setStartDelay(GIRO_DOPO).setDuration(GIRO)
+                .setInterpolator(new AccelerateDecelerateInterpolator());
         pannello = d;
+        aperto = System.currentTimeMillis();
         // se il gioco non lo chiude (un errore all'avvio), sparisce comunque
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
@@ -76,11 +95,13 @@ public class Avvio extends ContentProvider implements Application.ActivityLifecy
     }
 
     // Il gioco ha disegnato (dal thread del motore).
+    // Si aspetta comunque la fine del giro, anche su un telefono veloce.
     public static void pronto() {
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
+        long resta = Math.max(0, aperto + GIRO_DOPO + GIRO + 150 - System.currentTimeMillis());
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() { chiudi(); }
-        });
+        }, resta);
     }
 
     @Override public void onActivityStarted(Activity a) {}

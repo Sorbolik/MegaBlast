@@ -9,12 +9,8 @@ disegno grande (mai ingrandito):
   di Favilla, per le icone a tema) nella risorsa dell'estensione client/vibra;
 - icona classica (telefoni vecchi) da 36 a 192 px: fondo a quadrato arrotondato
   col disco sopra, in client/assets/icona/ (game.project, [android] app_icon_*);
-- avvio (Sergio, 23 nov: far capire che il gioco è orizzontale, senza nero):
-  sulla schermata di avvio del telefono (Android 12+) il disco dritto
-  (avvio_icona.png, 288 dp con il disco da 160 dp); poi il pannello Ruggine
-  sopra il secondo in cui il motore si accende (Avvio.java) e il fondo della
-  finestra sui telefoni vecchi: il disco dritto (avvio_disco.png) in una finestra
-  già orizzontale, che col telefono ancora in verticale si vede sdraiato.
+- avvio (Sergio, 23 nov): il disco da 160 dp (avvio_disco.png) che si sdraia sul
+  pannello Ruggine sopra il secondo in cui il motore si accende (Avvio.java).
 
     python3 tools/grafica/icona.py               # scrive i file del gioco
     python3 tools/grafica/icona.py --in CARTELLA # solo i PNG, in CARTELLA
@@ -37,8 +33,7 @@ CARTA = (240, 230, 209)
 DISCO_ADATTIVA = 66 / 108
 DISCO_CLASSICA = 0.80
 MISURE_CLASSICHE = (36, 48, 72, 96, 144, 192)
-# avvio, a xxxhdpi (4 px per dp): tela dell'icona di avvio 288 dp, disco 160 dp
-AVVIO_TELA = 288 * 4
+# il disco del pannello di avvio, a xxxhdpi (4 px per dp): 160 dp
 AVVIO_DISCO = 160 * 4
 
 
@@ -104,12 +99,6 @@ def classica(tinto, lato):
     return tela
 
 
-def avvio(tinto):
-    """Il disco per la schermata di avvio (nella tela di 288 dp) e quello da solo."""
-    disco = disco_a(tinto, AVVIO_DISCO)
-    return al_centro(disco, AVVIO_TELA), disco
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="cartella")
@@ -136,10 +125,8 @@ def main():
     mono.save(uscite["icon_monocromo.png"], optimize=True)
     for lato in MISURE_CLASSICHE:
         classica(tinto, lato).save(os.path.join(cla, "icona_%d.png" % lato), optimize=True)
-    icona_avvio, dritto = avvio(tinto)
     cartella = a.cartella or os.path.join(RES, "drawable-xxxhdpi")
-    icona_avvio.save(os.path.join(cartella, "avvio_icona.png"), optimize=True)
-    dritto.save(os.path.join(cartella, "avvio_disco.png"), optimize=True)
+    disco_a(tinto, AVVIO_DISCO).save(os.path.join(cartella, "avvio_disco.png"), optimize=True)
     print("ok")
 
 
