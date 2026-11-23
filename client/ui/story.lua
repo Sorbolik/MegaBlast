@@ -31,9 +31,9 @@ M.CHAPTERS = {
 	} },
 	{ id = "forgia_aperta", after = "guidata", pages = { { "s_forgia_aperta", "tr" } } },
 	{ id = "insieme", before = "battaglia_forgia", pages = { { "s_insieme", "tl" } } },
-	-- the Forge done: the Fabbro's boots (the ARMERIA) and then the kidnapping
-	-- (the gironi), together (Sergio, 4 Nov)
-	{ id = "regalo", after = "battaglia_forgia", pages = { { "s_regalo", "tr" } } },
+	-- the Fabbro beaten (Forge 6): his boots and the BOTTEGA (docs/commesse.md,
+	-- step 1 bis, 23 Nov); the Forge done: the kidnapping (the gironi)
+	{ id = "regalo", after = "il_fabbro", pages = { { "s_regalo", "tr" } } },
 	{ id = "rapimento", after = "battaglia_forgia", pages = {
 		{ "6_rapimento_a", "tl" }, { "6_rapimento_b", "t" }, { "6_rapimento_c", "t" }, { "s_ghiaccio", "t" },
 	} },

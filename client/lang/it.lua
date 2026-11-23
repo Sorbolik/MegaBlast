@@ -72,7 +72,7 @@ return {
 			regalo = {
 				s_regalo = {
 					{ "fabbro", "Te li sei guadagnati. Mettili, laggiù il pavimento brucia." },
-					{ "didascalia", "Gli stivali sono nel tuo ZAINO. E ora si apre l'ARMERIA." },
+					{ "didascalia", "Gli stivali sono nel tuo ZAINO. E ora si apre la BOTTEGA." },
 				},
 			},
 			insieme = {

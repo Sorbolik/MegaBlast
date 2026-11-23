@@ -142,10 +142,20 @@ check(wallet.price(p, other, "chest", true) == 3360 and wallet.price(p, other, "
 	and wallet.price(p, third, "mask") == 7200, "the Smith's hand lowers the prices of that family")
 check(select(2, wallet.use_voucher(p, "fornace", "chest")) == "voucher", "no voucher, no free piece")
 -- gifts: once each
-p.stelle = { battaglia_forgia = { true } }
+p.stelle = { il_fabbro = { true } }
 local rows = wallet.gifts(p, {}, 1)
-check(#rows == 1 and rows[1].key == "piece" and wallet.owns(p, "fabbro", "legs"), "the Battle of the Forge: the Smith's boots")
+check(#rows == 1 and rows[1].key == "piece" and wallet.owns(p, "fabbro", "legs"), "Forge 6, the Smith beaten: his boots")
 check(#wallet.gifts(p, {}, 1) == 0, "a gift comes once")
+p.stelle.battaglia_forgia = { true }
+rows = wallet.gifts(p, {}, 1)
+check(#rows == 1 and rows[1].key == "voucher" and p.buoni == 1, "the Battle of the Forge: the Smith's voucher")
+p.buoni = 0
+-- a save from before 23 Nov: the Battle gave the boots, now it gives the voucher (once), no boots row
+local old = wallet.init({})
+old.posseduti.fabbro_legs, old.regali.missione_battaglia_forgia = true, true
+old.stelle = { il_fabbro = { true }, battaglia_forgia = { true } }
+rows = wallet.gifts(old, {}, 1)
+check(#rows == 1 and rows[1].key == "voucher" and old.buoni == 1, "old saves: the voucher, not the boots again")
 check(#wallet.gifts(p, { a_segno = 10000 }, 49) == 0 and p.buoni == 0, "no voucher for a badge nor before level 50")
 check(#wallet.gifts(p, { a_segno = 10000 }, 50) == 1 and p.buoni == 1, "level 50: a voucher")
 check(wallet.use_voucher(p, "fornace", "chest") and wallet.owns(p, "fornace", "chest") and p.buoni == 0, "a voucher: a piece of your choice")
