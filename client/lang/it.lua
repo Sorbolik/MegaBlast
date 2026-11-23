@@ -433,6 +433,8 @@ return {
 		-- the Ossidiana spent lighting it, jumping under the balance
 		sign_spent = "−%s",
 		light_sign = "ACCENDI LA FIRMA",
+		-- the next level paid with the family's fragments (the Smith's orders): what it costs, how many you hold
+		with_fragments = "COI FRAMMENTI", fragments_cost = "Costa %d · ne hai %d",
 		sign_cost = "%d ossidiana",
 		sign_needs = "dallo scatto %d",
 		sign_top = "al massimo",
@@ -490,6 +492,7 @@ return {
 		receipt_smith = "Il Fabbro",
 		receipt_open = "Il Fabbro ti aspetta in bottega",
 		-- the test bench (test profiles only: menu/orders_bench.lua)
+		closed = "Il Fabbro ti chiama dopo %d partite online: fatte %d su %d",
 		bench = "PROVA",
 		bench_title = "BANCO DI PROVA",
 		bench_day = "GIORNO FINTO: %s",

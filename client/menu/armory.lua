@@ -164,7 +164,8 @@ local function build(a)
 	local p = a.prof
 	a.head = kit.header(a.buttons, common.shop, KC.PURPLE, "indietro", a.from or common.home)
 	-- the two tabs, once the Smith has called: COMMESSE (his orders) and BANCO (the shop)
-	local open = p.commesse and p.commesse.aperta
+	-- (a test profile sees them at once: the test bench is in COMMESSE)
+	local open = (p.commesse and p.commesse.aperta) or profile.test
 	if not open then a.tab = "banco" end
 	a.tab = a.tab or "commesse"
 	if open then
@@ -172,7 +173,7 @@ local function build(a)
 			a.tab == "banco" and 2 or 1, KC.PURPLE, true)
 		-- by COMMESSE, how many are ready
 		local ready = orders_ui.news(p)
-		if ready > 0 then orders_ui.badge(a.head.top_left, TABS_X + (#T.tab_orders * 14 + 64) + 18, 28 + 26, ready) end
+		if ready and ready > 0 then orders_ui.badge(a.head.top_left, TABS_X + (#T.tab_orders * 14 + 64) + 13, 28 + 26, ready) end
 	end
 	a.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(a.wallet, p.buoni or 0)

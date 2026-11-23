@@ -292,8 +292,17 @@ end
 function M.board(a)
 	local p = a.prof
 	a.minis = a.minis or {}
-	-- the day's refill goes through the profile's door, so the server follows
 	orders.init(p)
+	if not p.commesse.aperta then
+		-- (test profiles only: the Smith has not called yet, the bench makes the matches)
+		if a.bench then bench_panel(a, a.left) else gear_ui.devil(a, a.left, 215, 600, 395) end
+		local n = kit.text(a.mid, T.closed:format(orders.OPEN_AFTER, p.commesse.online, orders.OPEN_AFTER), 716, 330, 22, KC.MUTE, "middle", 0.5)
+		fit(n, 560)
+		local pb = kit.secondary(a.low, T.bench, 160, 640, 230, 62, {})
+		kit.button(a.buttons, pb, "prova:apri")
+		return
+	end
+	-- the day's refill goes through the profile's door, so the server follows
 	if p.commesse.giorno ~= day(a) or #p.commesse.attesa > 0 then profile.act(p, { k = "bacheca" }) end
 	local g = a.mid
 	local c = p.commesse

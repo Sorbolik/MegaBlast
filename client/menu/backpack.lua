@@ -747,7 +747,7 @@ local function run_cmd(s, ui_action)
 	elseif kind == "pezzo" then
 		-- only POTENZIA opens the card (Sergio, 18 Nov: not a second tap on the piece)
 		s.sel = { a, b }
-	elseif kind == "potenzia" or kind == "firma" then
+	elseif kind == "potenzia" or kind == "firma" or kind == "frammenti" then
 		bench.run(s, kind, s.sel)
 		-- a worn piece that reaches gold changes look on the apprentice at once
 		-- (Sergio, 19 Nov: you had to take it off and on again)
