@@ -2359,7 +2359,7 @@ function CP.showcases(self, players, name_list, opt)
 			-- the stats of what they wear (checked by the server), as in the match
 			local L = require "sim.loadout"
 			local ok, eq = pcall(L.net_clean, p.eq)
-			if ok and eq then CP.vetrina.with_stats(v, L.net_stats(eq, game.base_stats())) end
+			if ok and eq then CP.vetrina.with_pieces(CP.vetrina.with_stats(v, L.net_stats(eq, game.base_stats())), eq) end
 		elseif i == opt.me then
 			v = CP.vetrina.from_profile(self.profilo, name_list[i], p.team, under)
 		elseif p.bot and p.eq then
@@ -3383,6 +3383,12 @@ end
 function CP.net_frame(self, dt)
 	local n, g = self.net, self.g
 	local now = socket.gettime()
+	-- the engine's dt stops at 1/30 s (engine.max_time_step): under 30 FPS the
+	-- match went slower, and on our turn the server and every phone with it
+	-- (Sergio, 23 Nov: 14 FPS in Safari, "il tempo diventava più lento per tutta
+	-- la lobby"). The ticks follow the real clock (dt 0: the hit-stop holds the world)
+	local real = dt > 0 and n.frame_at and now - n.frame_at or dt
+	n.frame_at = now
 	if not self.net_over and now - (self.state_at or now) > CP.STALL then
 		CP.resync(self, "niente dal server da " .. CP.STALL .. " s")
 	end
@@ -3391,7 +3397,7 @@ function CP.net_frame(self, dt)
 		self.jump_pressed, self.fire = false, nil
 		return CP.net_fast(self)
 	end
-	self.acc = math.min(self.acc + dt, 0.25)
+	self.acc = math.min(self.acc + real, 0.25)
 	local extra = n.qn - g.tick > CP.LAG_MAX and 1 or 0
 	while (self.acc >= game.DT or extra > 0) and self.mode == "online" do
 		local t, code = g.tick, nil
@@ -3430,6 +3436,18 @@ function CP.net_frame(self, dt)
 	-- levetta, lascio il dito e non fa niente"). Not ours to lead: dropped
 	if not CP.net_leads(self) then self.jump_pressed, self.fire = false, nil end
 	self.pose_t, self.pose_dt = self.acc, game.DT
+	-- in the simulator, every 3 s of our turn: whether the match keeps the real
+	-- clock (ritmo_giusto) or slows down (ritmo_lento), scenario lento_online.txt
+	if SIMULATE and CP.net_leads(self) then
+		n.pace_t, n.pace_k = n.pace_t or now, n.pace_k or g.tick
+		if now - n.pace_t >= 3 then
+			local r = (g.tick - n.pace_k) * game.DT / (now - n.pace_t)
+			print(string.format("SIMULA evento ritmo_%s %.2f", r > 0.9 and "giusto" or "lento", r))
+			n.pace_t, n.pace_k = now, g.tick
+		end
+	else
+		n.pace_t, n.pace_k = nil, nil
+	end
 	-- our keys, and where we aim (angle only: the others see us aim)
 	if #n.out > 0 then
 		local aim = self.aiming and self.aim_angle or nil
@@ -5183,6 +5201,13 @@ end
 
 function update(self, dt)
 	frames.begin()
+	-- imposta prova_lento MS: every frame takes MS milliseconds more, like a slow
+	-- phone in the browser (scenario lento_online.txt)
+	if SIMULATE and self.slow_ms ~= 0 then
+		self.slow_ms = self.slow_ms or config_int("megablast.prova_lento", 0)
+		local stop = socket.gettime() + self.slow_ms / 1000
+		while socket.gettime() < stop do end
+	end
 	phone.vibration(profile.setting(self.profilo, "vibrazione") == "accesa")
 	phone.update(dt, self.mode == "local" or self.mode == "online" or self.mode == "replay" or self.mode == "ended")
 	if screen.update() then arrange(self) end
