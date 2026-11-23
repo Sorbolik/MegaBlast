@@ -375,7 +375,7 @@ function CMD.profile_do(c)
 				done[#done + 1] = "non valida " .. k .. " (" .. why .. ")"
 				refused[#refused + 1] = n
 			else
-				local ok, r = pcall(progress.act, p, a, c.today)
+				local ok, r = pcall(progress.act, p, a, c.today, c.board)
 				done[#done + 1] = (ok and r) and k or "no " .. k
 			end
 		end
@@ -405,7 +405,7 @@ function CMD.profile_award(c)
 	local p = replay_text.read(c.text)
 	local a = replay_text.read(c.action)
 	if not p or not a then error("premio illeggibile") end
-	local gain = progress.act(p, a, c.today)
+	local gain = progress.act(p, a, c.today, c.board)
 	if not gain then error("premio non dato") end
 	local s = summary(p)
 	s.profilo = replay_text.write(p)

@@ -105,7 +105,7 @@ local DO = {}
 
 -- a finished match: r for the rewards, conta for the stats (both optional
 -- but r); returns the gain (profile.match_end, with .coins)
-function DO.partita(p, a, today)
+function DO.partita(p, a, today, board)
 	local r = clean_match(a.r)
 	if not r then return nil, "partita" end
 	local stats_before = profile.statistics(p, "tutte")
@@ -117,7 +117,7 @@ function DO.partita(p, a, today)
 	-- summary, made by the server): their rows go to the podium's receipt
 	if r.online then
 		local s = orders.clean(a.commesse, r.mvp)
-		if s then gain.commesse = orders.match(p, s, today) end
+		if s then gain.commesse = orders.match(p, s, board or today) end
 	end
 	return gain
 end
@@ -169,39 +169,41 @@ end
 
 -- The Smith's orders (sim/orders.lua, docs/commesse.md). Each one first tells
 -- the board what day it is, so the phone and the server hang the same cards.
+-- Their day (board) turns at 5 in the morning, not at midnight (Sergio, 23
+-- Nov: nobody should stay up for it; wallet.board_day, accounts.go boardDay).
 -- bacheca: the board is looked at (the day's refill)
-function DO.bacheca(p, a, today)
-	orders.refresh(p, today)
+function DO.bacheca(p, a, _, board)
+	orders.refresh(p, board)
 	return true
 end
 
 -- consegna: order n is delivered (set: the family, for the Smith's own)
-function DO.consegna(p, a, today)
-	orders.refresh(p, today)
+function DO.consegna(p, a, _, board)
+	orders.refresh(p, board)
 	if type(a.n) ~= "number" then return nil, "commessa" end
 	local set = type(a.set) == "string" and equip.BY_ID[a.set] and a.set or nil
 	return orders.deliver(p, a.n, set)
 end
 
 -- scambia: TRADE of a material (da) for one of another (a)
-function DO.scambia(p, a, today)
-	orders.refresh(p, today)
+function DO.scambia(p, a, _, board)
+	orders.refresh(p, board)
 	if type(a.da) ~= "string" or type(a.a) ~= "string" then return nil, "materiale" end
 	return orders.trade(p, a.da, a.a)
 end
 
 -- cambia: the day's free change of a client's card
-function DO.cambia(p, a, today)
-	orders.refresh(p, today)
+function DO.cambia(p, a, _, board)
+	orders.refresh(p, board)
 	if type(a.n) ~= "number" then return nil, "commessa" end
-	return orders.change(p, a.n, today)
+	return orders.change(p, a.n, board)
 end
 
 -- chiama: a client is called for tomorrow
-function DO.chiama(p, a, today)
-	orders.refresh(p, today)
+function DO.chiama(p, a, _, board)
+	orders.refresh(p, board)
 	if type(a.cliente) ~= "string" then return nil, "cliente" end
-	return orders.call(p, a.cliente, today)
+	return orders.call(p, a.cliente, board)
 end
 
 -- the ZAINO: the loadouts (pieces worn, Sigilli) and the active ones
@@ -211,12 +213,13 @@ function DO.zaino(p, a)
 	return true
 end
 
--- Does action a on p (today: the date, for the day's counts and the
--- BOTTEGA). Returns what its rule returns (nil and why when it can't)
-function M.act(p, a, today)
+-- Does action a on p (today: the date, for the day's counts and the BANCO;
+-- board: the day of the Smith's orders, which turns at 5 in the morning,
+-- today when not given). Returns what its rule returns (nil and why when it can't)
+function M.act(p, a, today, board)
 	local f = type(a) == "table" and DO[a.k]
 	if not f then return nil, "azione" end
-	return f(p, a, today)
+	return f(p, a, today, board or today)
 end
 
 -- The ZAINO's action for p as it is now

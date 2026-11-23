@@ -185,6 +185,11 @@ Principi di Sergio che reggono tutto:
   colpo buono, ricomincia. DA ZERO mostra la prima volta; FINE GIOCO parte con
   tutti i clienti e stati diversi.
 - Il simulatore fotografa ogni stato con gli stessi comandi.
+- **Il giorno delle commesse gira alle 5 di mattina, ora italiana** (Sergio, 23 nov:
+  «non voglio che la gente giochi a mezzanotte, voglio che si corichi tranquilla e
+  l'indomani ha il premio di vedere le novità»): il server passa alle azioni due
+  giorni, quello del gioco (mezzanotte: Banco del giorno, prima vittoria) e quello
+  delle commesse (`boardDay` in `server/accounts.go`, `wallet.board_day` sul telefono).
 - **Dove sta il codice**: regole in `client/sim/orders.lua` (prove in
   `tests/orders_test.lua`), campo `commesse` del profilo. A fine partita online il
   server (`server/worker.lua`, `prizes`) aggiunge all'azione `partita` il riassunto

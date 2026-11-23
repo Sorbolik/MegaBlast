@@ -471,6 +471,11 @@ do
 	check(progress.act(p, { k = "scambia", da = "grandine", a = "pece" }, D) == true and orders.materials(p, "pece") == 1,
 		"the swap through the action")
 	check(progress.act(p, { k = "bacheca" }, D) == true, "looking at the board is an action too")
+	-- the orders' day turns at 5 in the morning: past midnight the board is still yesterday's
+	progress.act(p, { k = "bacheca" }, "2026-11-24", D)
+	check(p.commesse.giorno == D, "after midnight and before 5 the board keeps its day")
+	progress.act(p, { k = "bacheca" }, "2026-11-24", "2026-11-24")
+	check(p.commesse.giorno == "2026-11-24", "at 5 it turns")
 	-- fragments as money
 	p.commesse.frammenti.fornace = 500
 	check(progress.act(p, { k = "compra", set = "fornace", slot = "nessuno", frammenti = true }, D) == nil
@@ -487,6 +492,48 @@ do
 	local back = text.read(text.write(p))
 	check(back and back.commesse and back.commesse.frammenti.fornace == orders.fragments(p, "fornace")
 		and #orders.orders(back) == #orders.orders(p), "the orders travel with the profile")
+end
+
+-- The test bench (menu/orders_bench.lua): every state without playing or waiting
+do
+	local bench = require "menu.orders_bench"
+	local R = "2026-11-23"
+	for _, d in ipairs({ "1970-01-01", "2024-02-29", "2026-11-23", "2026-12-31", "2027-01-01", "2100-03-01" }) do
+		check(bench.date(orders.day_number(d)) == d, "the bench reads a day back: " .. d)
+	end
+	-- from zero: the first time
+	local p = wallet.init({ stelle = {} })
+	local rows
+	for _ = 1, orders.OPEN_AFTER do rows = bench.match(p, R) end
+	check(rows[1] and rows[1].key == "open" and p.commesse.aperta, "the bench plays up to the Smith's call")
+	check(bench.client(p, R) == orders.CLIENTS[1].id and #p.commesse.bacheca == 1
+		and p.commesse.bacheca[1].taglia == "benvenuto", "a client arrives with its welcome order")
+	check(bench.today(p, R) == R and bench.days(p, R, 1) == "2026-11-24" and bench.days(p, R, 7) == "2026-12-01",
+		"a day and a week pass")
+	check(bench.lucky(p) and orders.lucky(p), "the next delivery is a lucky strike")
+	for _ = 1, 12 do bench.match(p, R) end
+	local all = true
+	for _, m in ipairs(orders.MATERIALS) do all = all and orders.materials(p, m.id) > 0 end
+	check(all, "twelve made-up matches drop every material")
+	bench.reset(p)
+	check(not p.commesse.aperta and #orders.clients(p) == 0, "start over")
+	-- the end of the game: a bit of everything
+	local e = wallet.init({ stelle = {} })
+	check(bench.fill(e, R) and not bench.fill(e, R), "the full profile is filled once")
+	check(#orders.clients(e) == #orders.CLIENTS and orders.places(e) == 3 and #e.commesse.bacheca == 3,
+		"every client, three places taken")
+	check(e.commesse.settimana ~= nil and e.commesse.fabbro ~= nil, "the week's order and the Smith's hang")
+	local welcome, ready, half = false, 0, 0
+	for _, o in ipairs(orders.orders(e)) do
+		local prog, ok = orders.progress(e, o)
+		if o.taglia == "benvenuto" then welcome = true end
+		if ok then ready = ready + 1 end
+		for _, r in ipairs(prog) do
+			if r.done > 0 and r.done < r.asked then half = half + 1 end
+		end
+	end
+	check(welcome and ready >= 1 and half >= 1, "a welcome order, one ready, one half done (" .. ready .. " ready, " .. half .. " half)")
+	check(orders.trust(e, "minotauro") == 23 and orders.trust(e, "medusa") == 0, "trust from none to beyond two laps")
 end
 
 if failures > 0 then

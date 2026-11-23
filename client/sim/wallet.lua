@@ -432,4 +432,10 @@ function M.today()
 	return os.date("%Y-%m-%d")
 end
 
+-- the day of the Smith's orders (sim/orders.lua): it turns at 5 in the morning
+M.BOARD_HOUR = 5
+function M.board_day()
+	return os.date("%Y-%m-%d", os.time() - M.BOARD_HOUR * 3600)
+end
+
 return M

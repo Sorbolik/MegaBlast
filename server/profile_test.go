@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 // The profile and wallet rules (sim/profile.lua, sim/wallet.lua) run in the
 // server's Lua too, with the same sums as the phone: a won online match, a
@@ -72,5 +75,19 @@ func TestOrdersRules(t *testing.T) {
 		if got[i] != want[i] {
 			t.Fatalf("commesse sul server: %v, attese %v", got, want)
 		}
+	}
+}
+
+// The Smith's orders turn their day at 5 in the morning in Italy (Sergio, 23 Nov)
+func TestBoardDay(t *testing.T) {
+	at := func(h, m int) time.Time { return time.Date(2026, 11, 24, h, m, 0, 0, rome) }
+	if d := boardDay(at(4, 59)); d != "2026-11-23" {
+		t.Fatalf("alle 4:59 il giorno delle commesse è %s, atteso ieri", d)
+	}
+	if d := boardDay(at(5, 0)); d != "2026-11-24" {
+		t.Fatalf("alle 5:00 il giorno delle commesse è %s, atteso oggi", d)
+	}
+	if d := today(at(0, 1)); d != "2026-11-24" {
+		t.Fatalf("il giorno del gioco a mezzanotte e un minuto è %s", d)
 	}
 }
