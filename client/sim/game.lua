@@ -585,11 +585,19 @@ function M:credit(rb, by)
 	if by and enemies(by, rb) then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
 end
 
+-- What nobody's hand does to rb (a fall, the map's hazard, a heal): amount is
+-- for the base life and grows with rb's life, so it takes or gives the same
+-- share to everybody (Sergio, 23 Nov: with four times the life a fall or a
+-- heal counted a quarter). Not rounded.
+function M.nature(rb, amount)
+	return amount * rb.max_hp / C.STATS.max_hp
+end
+
 -- Attack, Defense and the signatures of the pieces (sim/gear.lua) on a hit
 -- of by on rb with weapon (nil: not known): the damage that is left. With the
--- base stats nothing changes.
+-- base stats nothing changes. A hit of nobody (by nil) grows with rb's life.
 function M:power(rb, amount, by, weapon)
-	if not by then return amount end
+	if not by then return math.floor(M.nature(rb, amount) + 0.5) end
 	local a, d = by.stats, rb.stats
 	local m = 1
 	if by == rb then
@@ -604,7 +612,7 @@ function M:power(rb, amount, by, weapon)
 			by.first_hit = self.turn_no
 			up = up + a.sig_first
 		end
-		if a.sig_fury > 0 and by.hp < C.SIG.fury_hp then up = up + a.sig_fury end
+		if a.sig_fury > 0 and by.hp < by.max_hp * C.SIG.fury_hp then up = up + a.sig_fury end
 		if a.sig_air_fire > 0 and not by.grounded then up = up + a.sig_air_fire end
 		if a.sig_ambush > 0 and by.blink == self.turn_no and by.id == self.current then up = up + a.sig_ambush end
 		-- in the air when hit (an explosion has already lifted it: air_hit says how it was)
@@ -641,7 +649,8 @@ function M:hurt(rb, amount, by, reason, weapon)
 		self:emit({ type = "shield_hit", robot = rb.id, amount = absorbed, left = rb.shield })
 		-- parry: whoever carries the shield earns points for the enemy damage it stops
 		if foe then
-			local p = math.min(self.score.parry_max - rb.parried, absorbed * self.score.parry)
+			-- (in hundredths of the carrier's life, like the points of the damage)
+			local p = math.min(self.score.parry_max - rb.parried, absorbed * C.STATS.max_hp / rb.max_hp * self.score.parry)
 			if p > 0 then
 				rb.parried = rb.parried + p
 				self:add_points(rb, p, "parry", by)
@@ -671,7 +680,7 @@ function M:hurt(rb, amount, by, reason, weapon)
 			-- Morsa (the Leviatano's gloves): after hitting in your turn, pushes move you less until your next one
 			if by.stats.sig_grip > 0 and by.id == self.current then by.grip = true end
 			-- Brace addosso: whoever hits you up close catches fire
-			if weapon and C.MELEE[weapon] and rb.stats.sig_thorns > 0 then self:add_status(by, "burn", rb) end
+			if weapon and C.MELEE[weapon] and rb.stats.sig_thorns > 0 then self:add_status(by, "burn", rb, rb.stats.sig_thorns) end
 		end
 	end
 	-- if they were first before the hit, the Crown stays even if the hit makes the killer first
@@ -683,15 +692,17 @@ end
 -- They last until the end of the next turn of whoever suffers them (or longer,
 -- with stats.status_turns of whoever gives them). Numbers in config.STATUS.
 
-function M:add_status(rb, kind, by)
+function M:add_status(rb, kind, by, power)
 	if rb.dead then return end
 	if kind == "burn" and rb.stats.burn_immune > 0 then return end
 	local turns = by and by.stats.status_turns or 1
 	local s = rb.status[kind]
 	if s then
 		s.turns, s.by = math.max(s.turns, turns), by and by.id
+		-- the stronger one stays (power nil: whole)
+		if s.power then s.power = power and math.max(s.power, power) or nil end
 	else
-		rb.status[kind] = { turns = turns, by = by and by.id }
+		rb.status[kind] = { turns = turns, by = by and by.id, power = power }
 	end
 	self:emit({ type = "status", robot = rb.id, kind = kind, turns = rb.status[kind].turns })
 end
@@ -2914,7 +2925,7 @@ function M:apply_heals()
 		for _, rb in ipairs(self.robots) do
 			local dx, dy = rb.x - h.x, rb.y - h.y
 			if not rb.dead and dx * dx + dy * dy <= r2 and rb.hp < rb.max_hp then
-				local amount = math.min(math.floor(C.HEAL.hp * rb.stats.heal_mul + 0.5), rb.max_hp - rb.hp)
+				local amount = math.min(math.floor(M.nature(rb, C.HEAL.hp) * rb.stats.heal_mul + 0.5), rb.max_hp - rb.hp)
 				rb.hp = rb.hp + amount
 				used = true
 				self:emit({ type = "heal", id = h.id, robot = rb.id, amount = amount })
@@ -2958,7 +2969,7 @@ function M:use_tool(kind, fire)
 	end
 	rb.ammo[kind] = rb.ammo[kind] - 1
 	if kind == "shield" then
-		rb.shield, rb.parried = math.floor(C.SHIELD.hp * rb.stats.shield_mul + 0.5), 0
+		rb.shield, rb.parried = math.floor(M.nature(rb, C.SHIELD.hp) * rb.stats.shield_mul + 0.5), 0
 		self:emit({ type = "shield", robot = rb.id })
 		return
 	end
@@ -3233,7 +3244,7 @@ function M:blast_on(rb, x, y, blast, owner)
 	local imp = blast.impulse * self:knock_mul(rb, by or nil)
 	if by then
 		imp = imp * by.stats.blast_push
-		if by.stats.finisher > 0 and rb.hp < C.FINISHER_HP then imp = imp * 2 end
+		if by.stats.finisher > 0 and rb.hp < rb.max_hp * C.FINISHER_HP then imp = imp * 2 end
 	end
 	return dmg, dx * imp * f, dy * imp * f
 end
@@ -3308,7 +3319,7 @@ function M:start_turn(player)
 	local burn = rb.status.burn
 	if burn then
 		local by = burn.by and self.robots[burn.by]
-		self:hurt(rb, math.floor(C.STATUS.burn.damage * (by and by.stats.burn_mul or 1) + 0.5), by, "burn")
+		self:hurt(rb, math.floor(C.STATUS.burn.damage * (burn.power or 1) * (by and by.stats.burn_mul or 1) + 0.5), by, "burn")
 	end
 	-- every crate_every turns a crate drops
 	self.turn_no = self.turn_no + 1

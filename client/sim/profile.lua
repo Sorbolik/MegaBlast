@@ -28,9 +28,10 @@ M.XP = { match = 40, points_share = 0.5, points_max = 120, win = 60, second = 30
 -- of a campaign level: the first time it's done, each new star, played again with nothing new
 M.XP_MISSION = { done = 40, star = 60, replay = 20 }
 -- experience to go from level n to n + 1: XP_BASE + XP_STEP * (n - 1)
--- (Sergio, 17 Nov: level 50 in about 240 hours of a strong player, who makes
--- about 2,900 an hour; light at the start: level 2 after three matches)
-M.XP_BASE, M.XP_STEP = 600, 560
+-- (Sergio, 17 Nov: a strong player makes about 2,800 an hour; light at the
+-- start: level 2 after three matches. 23 Nov: half as much again, level 50
+-- in about 370 hours: the road to the maximum got longer everywhere)
+M.XP_BASE, M.XP_STEP = 600, 850
 M.LEVEL_MAX = skills.LEVEL_MAX
 
 function M.new()
@@ -368,7 +369,7 @@ end
 -- comes along (the last matches, their replays and the settings stay on the
 -- phone); everything is checked like data from outside: what doesn't fit
 -- the rules is dropped, the rest stays.
-M.IMPORT = { level = 30, scaglie = 20000, ossidiana = 200, piece = 20, vouchers = 10 }
+M.IMPORT = { level = 30, scaglie = 30000, ossidiana = 200, piece = 20, vouchers = 10 }
 
 local function whole(v, lo, hi)
 	return type(v) == "number" and v % 1 == 0 and v >= lo and v <= hi

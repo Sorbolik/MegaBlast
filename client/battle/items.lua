@@ -270,7 +270,7 @@ function M.update(o, g, view, clock)
 		gui.set_enabled(o.shields[i], shield)
 		if shield then
 			local c = o.colori[rb.team]
-			o.col.x, o.col.y, o.col.z, o.col.w = c.x, c.y, c.z, 0.3 + 0.3 * rb.shield / config.SHIELD.hp
+			o.col.x, o.col.y, o.col.z, o.col.w = c.x, c.y, c.z, 0.3 + 0.3 * math.min(1, rb.shield / config.SHIELD.hp)
 				+ 0.05 * math.sin(clock * 3 + i)
 			gui.set_color(o.shields[i], o.col)
 			pos(o.shields[i], v.x, v.y + game.DISEGNO_H / 2)

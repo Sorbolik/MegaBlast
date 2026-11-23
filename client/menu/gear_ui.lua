@@ -63,16 +63,18 @@ function M.effect(e)
 end
 
 -- a row split in two: its value ("−19,1%", "+15") and its stat's name; with
--- e2, the change from e to e2 instead of the value ("−0,4%")
+-- e2, the change from e to e2 instead of the value ("−0,4%"; in points a
+-- change below one keeps its decimal, "+0,4": a level never reads "+0")
 function M.effect_parts(e, e2)
 	local info = equip.STATS[e.stat]
 	local name = kit.upper(TA.stats[e.stat] or e.stat)
 	local function shown(x)
-		if info.points then return math.floor(x.good * 100 + 0.5) end
+		if info.points then return x.good * 100 end
 		return (info.less and -x.good or x.good) * 100
 	end
 	local v = e2 and shown(e2) - shown(e) or shown(e)
-	local t = info.points and string.format("%+d", v) or string.format("%+.1f%%", v):gsub("%.0%%", "%%"):gsub("%.", ",")
+	local whole = info.points and (not e2 or math.abs(v) >= 1 or v == 0)
+	local t = whole and string.format("%+d", math.floor(v + 0.5)) or string.format(info.points and "%+.1f" or "%+.1f%%", v):gsub("%.0%%", "%%"):gsub("%.", ",")
 	return (t:gsub("^%-", "−")), name
 end
 

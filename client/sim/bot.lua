@@ -449,7 +449,8 @@ local function peril(b, g, w, share)
 	local s = 0
 	for i, c in ipairs(w.robots) do
 		if not c.dead and not g.robots[i].dead then
-			local hp = risk(c)
+			-- (it grows with the robot's life, like every hit of nobody: game.nature)
+			local hp = game.nature(g.robots[i], risk(c))
 			if hp > 0 then
 				local lost = math.min(hp, c.hp)
 				if c.team == me.team then
