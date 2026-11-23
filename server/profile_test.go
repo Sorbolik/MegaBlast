@@ -34,3 +34,43 @@ func TestProfileRules(t *testing.T) {
 		}
 	}
 }
+
+// The Smith's orders (sim/orders.lua, docs/commesse.md) run in the server's Lua:
+// what prizes (worker.lua) tells of an online match opens the bottega at the
+// fifth, then drops the map's material and moves the orders; the delivery is
+// an action of the profile (sim/progress.lua).
+func TestOrdersRules(t *testing.T) {
+	var got []float64
+	luaEval(t, `
+		local profile = require "sim.profile"
+		local progress = require "sim.progress"
+		local orders = require "sim.orders"
+		local p = profile.new()
+		local today = "2026-11-23"
+		local res = { mode = "2v2", winner = 1, ranking = {
+			{ robot = 1, team = 1, place = 1, points = 120, damage = 120, env_kills = 1 },
+			{ robot = 3, team = 1, place = 2, points = 60, damage = 60 },
+			{ robot = 2, team = 2, place = 3, points = 40, damage = 40 },
+			{ robot = 4, team = 2, place = 4, points = 10, damage = 10 } } }
+		local function match(humans)
+			return progress.act(p, { k = "partita", r = { points = 120, won = true, online = true, awards = {} },
+				commesse = orders.summary(res, 1, "gola", humans, 0, {}) }, today)
+		end
+		local gain
+		for _ = 1, orders.OPEN_AFTER do gain = match(2) end
+		local opened = gain.commesse[1].key == "open" and 1 or 0
+		match(1)
+		local alone = orders.materials(p, "grandine")
+		match(2)
+		local rows = progress.act(p, { k = "consegna", n = p.commesse.fabbro.n, set = "corvo" }, today)
+		return { opened, alone, orders.materials(p, "grandine"), rows and 1 or 0, orders.fragments(p, "corvo") > 0 and 1 or 0 }`, &got)
+	want := []float64{1, 0, 3, 1, 1}
+	if len(got) != len(want) {
+		t.Fatalf("commesse sul server: %v, attese %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("commesse sul server: %v, attese %v", got, want)
+		}
+	}
+}

@@ -185,6 +185,14 @@ Principi di Sergio che reggono tutto:
   colpo buono, ricomincia. DA ZERO mostra la prima volta; FINE GIOCO parte con
   tutti i clienti e stati diversi.
 - Il simulatore fotografa ogni stato con gli stessi comandi.
+- **Dove sta il codice**: regole in `client/sim/orders.lua` (prove in
+  `tests/orders_test.lua`), campo `commesse` del profilo. A fine partita online il
+  server (`server/worker.lua`, `prizes`) aggiunge all'azione `partita` il riassunto
+  `commesse` (mappa, quante persone, numeri tuoi e della squadra); le righe per lo
+  scontrino tornano in `gain.commesse`. Azioni del profilo (`client/sim/progress.lua`):
+  `bacheca` (guardo la bacheca: rifornimento del giorno), `consegna {n, set}`,
+  `scambia {da, a}`, `cambia {n}`, `chiama {cliente}`, e `compra` / `potenzia` con
+  `frammenti = true`. Una partita dichiarata dal telefono non muove le commesse.
 - La simulazione della partita non si tocca: le commesse leggono solo i numeri di
   fine partita.
 
