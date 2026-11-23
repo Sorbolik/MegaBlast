@@ -2,11 +2,11 @@
 -- The highest value of each stat in the game (player level max, pieces at 30,
 -- Sigilli full): the end of the stat bars (menu/gear_ui.lua).
 return {
-	attack = 230,
-	defense = 230,
-	max_hp = 320,
-	walk_speed = 85.271,
-	jump_height = 88.682,
-	air_speed = 81.347,
-	blast_push = 3.8,
+	attack = 300.5,
+	defense = 300.5,
+	max_hp = 388,
+	walk_speed = 99.225,
+	jump_height = 103.194,
+	air_speed = 99.225,
+	blast_push = 4.64,
 }

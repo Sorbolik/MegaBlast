@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- L'icona adattiva (Android 8+): Favilla nel disco di carta sul fondo Ruggine.
+     Le immagini le fa tools/grafica/icona.py; sui telefoni vecchi vale l'icona
+     classica di game.project (app_icon_*). -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/icon_sfondo" />
+    <foreground android:drawable="@drawable/icon_primo_piano" />
+    <monochrome android:drawable="@drawable/icon_monocromo" />
+</adaptive-icon>

@@ -84,26 +84,27 @@ check(not skills.valid({ wings = 26 }, 50) and not skills.valid({ nodo = 1 }, 50
 local a = loadout.new()
 a.tree = { armor = 10 }
 local st = loadout.stats(BASE, a)
-check(st.max_hp == BASE.max_hp + 22 and st.defense == 22, "10 CORAZZA points: life and Defense +22")
+check(st.max_hp == BASE.max_hp + 29 and st.defense == 29, "10 CORAZZA points: life and Defense +29")
 a.tree = { armor = 10, pick = { armor = { 1, 2 } } }
 st = loadout.stats(BASE, a)
-check(st.max_hp == BASE.max_hp + 42 and st.start_shields == 1, "Crosta and Scudo pronto")
+check(st.max_hp == BASE.max_hp + 55 and st.start_shields == 1, "Crosta and Scudo pronto")
 a.tree = { armor = 4, pick = { armor = { 1 } } }
 st = loadout.stats(BASE, a)
-check(st.max_hp == BASE.max_hp + 9, "a pick before its threshold gives nothing")
+check(st.max_hp == BASE.max_hp + 12, "a pick before its threshold gives nothing")
 a.tree = { wings = 25 }
 st = loadout.stats(BASE, a)
 check(st.jump_height > BASE.jump_height and BASE.jump_height == game.base_stats().jump_height, "ALI raises the jump, the base doesn't change")
 
 -- Rule 3: all the points of a path give a fifth of the maximum of its stats,
--- without powers: 55 points of power, 25% of movement
+-- without powers: 72.5 points of power, 32.5% of movement
 for _, p in ipairs(skills.PATHS) do
 	local s2 = loadout.stats(BASE, { tree = { [p.id] = skills.PATH_MAX }, gear = {}, variant = "a" })
 	for _, e in ipairs(p.per_point) do
 		local points = equip.STATS[e.stat].points
 		local d = points and s2[e.stat] - BASE[e.stat] or (s2[e.stat] / BASE[e.stat] - 1) * 100
-		local want = equip.STATS[e.stat].move and 25 or 55
-		check(math.abs(d - want) < 1e-6, string.format("%s full: %s +%.0f", p.id, e.stat, d))
+		local want = equip.STATS[e.stat].move and 32.5 or 72.5
+		-- (the life is a whole number)
+		check(math.abs(d - want) < (e.stat == "max_hp" and 0.51 or 1e-6), string.format("%s full: %s +%.1f", p.id, e.stat, d))
 	end
 end
 
@@ -118,22 +119,22 @@ check(rows[1].row == "main" and near(rows[1].good, R.power.main) and near(rows[2
 	"Fabbro helmet at 30: main, secondaries, minus, signature full")
 check(equip.piece("fabbro", "mask", 9)[5].good == 0 and near(equip.piece("fabbro", "mask", 10)[5].good, equip.SIGNS.sig_sword.max / 2),
 	"the signature lights up at the step 10, at half")
-check(near(equip.piece("fabbro", "mask", 1)[4].good, -R.move.second * 0.1), "the minus is there from level 1 and grows with the piece")
+check(math.abs(equip.piece("fabbro", "mask", 1)[4].good + R.move.second * 0.1) < 0.001, "the minus is there from level 1 and grows with the piece")
 a = loadout.new()
 a.gear = { mask = "fabbro" }
 st = loadout.stats(BASE, a, { mask = 30 })
-check(st.attack == 60 and st.max_hp == BASE.max_hp + 20 and near(st.walk_speed / BASE.walk_speed, 0.92) and st.sig_sword == 0.2,
-	"Fabbro helmet at 30: Attack +60, life +20, run -8%, Lama +20%")
+check(st.attack == 78 and st.max_hp == BASE.max_hp + 26 and near(st.walk_speed / BASE.walk_speed, 0.896) and st.sig_sword == 0.26,
+	"Fabbro helmet at 30: Attack +78, life +26, run -10.4%, Lama +26%")
 st = loadout.stats(BASE, a)
-check(st.attack == 6 and st.sig_sword == 0, "at level 1: Attack +6, no signature")
+check(st.attack == 7.8 and st.sig_sword == 0, "at level 1: Attack +7.8, no signature")
 -- a build all on Attack: main of the helmet and three secondaries
 a.gear = { mask = "fabbro", chest = "fabbro", legs = "fornace", cloak = "fornace" }
 st = loadout.stats(BASE, a, { mask = 30, chest = 30, legs = 30, cloak = 30 })
-check(st.attack == 120, "all on Attack: +120 from four pieces")
+check(st.attack == 156, "all on Attack: +156 from four pieces")
 -- no source gives more than about a fifth of a stat's maximum
 check(R.power.main <= 0.22 * equip.CAP_ALL.power and R.move.main <= 0.22 * equip.CAP_ALL.move
 	and skills.LEVEL_BONUS.attack <= 0.2 * equip.CAP_ALL.power * 100, "a main row and the level: a fifth of the maximum at most")
--- the caps: movement from the pieces +70% at most (all four on the jump give +49%)
+-- the caps: movement from the pieces +91% at most (all four on the jump give +64%)
 a.gear = { legs = "corvo", cloak = "corvo", mask = "corvo", chest = "corvo" }
 st = loadout.stats(BASE, a, { mask = 30, chest = 30, legs = 30, cloak = 30 })
 check(near(st.jump_height / BASE.jump_height, 1 + R.move.main + 3 * R.move.second), "Corvo jump: main and three secondaries")
@@ -141,21 +142,36 @@ a.tree = { wings = 25, pick = { wings = { 2 } } }
 local sig = loadout.stats(BASE, { tree = a.tree, gear = {} }, nil, 50)
 st = loadout.stats(BASE, a, { mask = 30, chest = 30, legs = 30, cloak = 30 }, 50)
 check(st.jump_height > sig.jump_height and near(st.jump_height, BASE.jump_height * (1 + equip.CAP_ALL.move)),
-	"level, Sigilli and pieces together: the jump stops at +120%")
+	"level, Sigilli and pieces together: the jump stops at +156%")
 a.tree = {}
 a.gear = { mask = "leviatano", chest = "leviatano" }
 local k19 = loadout.stats(BASE, a, { mask = 19, chest = 19 }).knockback_mul
 local k20 = loadout.stats(BASE, a, { mask = 20, chest = 20 }).knockback_mul
 check(k20 < k19 * (1 - 0.039), "two gold Leviatano pieces: their bonus too")
+-- the whole Vuoto: its teleport stops right at the cap of the pieces, nothing wasted
+a.gear = {}
+for _, sl in ipairs(equip.SLOTS) do a.gear[sl.id] = "vuoto" end
+local tele = 0
+for _, sl in ipairs(equip.SLOTS) do
+	for _, e in ipairs(equip.piece("vuoto", sl.id, 30)) do
+		if e.stat == "teleport_ticks" and e.good > 0 then tele = tele + e.good end
+	end
+end
+check(near(tele + R.less.pair, equip.CAP_PIECES.less), "the whole Vuoto: teleport at the cap of the pieces")
+-- Piedi di gatto: twice the safe height, and the pieces on the fall damage still count
+a.gear, a.tree = { cloak = "fabbro" }, { wings = 20, pick = { wings = { 1, 1, 1, 2 } } }
+st = loadout.stats(BASE, a, { cloak = 30 })
+check(st.sig_soft == 1 and near(st.fall_damage_mul, BASE.fall_damage_mul * (1 - R.less.main)), "Piedi di gatto and the Fabbro's cape together")
+a.tree = {}
 check(#equip.pairs_on({ mask = "corvo", chest = "corvo", cloak = "vuoto", legs = "vuoto" },
 	{ mask = 20, chest = 25, cloak = 30, legs = 20 }) == 2, "two plus two: two family bonuses")
--- the level by itself: nothing at 1, Attack, Defense and life +35 and movement +15% at 50, a jump every ten levels
+-- the level by itself: nothing at 1, Attack, Defense and life +46 and movement +19.5% at 50, a jump every ten levels
 check(next(skills.level_bonus(1)) == nil or (skills.level_bonus(1).attack == 0 and skills.level_bonus(1).max_hp == 0), "level 1: nothing")
-check(skills.level_bonus(50).attack == 35 and skills.level_bonus(50).defense == 35 and skills.level_bonus(50).max_hp == 35
-	and skills.level_move(50).jump_height == 0.15 and skills.level_move(1).jump_height == 0, "level 50: Attack, Defense and life +35, movement +15%")
+check(skills.level_bonus(50).attack == 46 and skills.level_bonus(50).defense == 46 and skills.level_bonus(50).max_hp == 46
+	and skills.level_move(50).jump_height == 0.195 and skills.level_move(1).jump_height == 0, "level 50: Attack, Defense and life +46, movement +19.5%")
 check(skills.level_share(10) - skills.level_share(9) > 3 * (skills.level_share(9) - skills.level_share(8)), "level 10 is felt")
 st = loadout.stats(BASE, loadout.new(), nil, 50)
-check(st.attack == 35 and st.max_hp == BASE.max_hp + 35 and near(st.walk_speed / BASE.walk_speed, 1.15), "a level 50 devil with nothing: Attack 35, life 135, run +15%")
+check(st.attack == 46 and st.max_hp == BASE.max_hp + 46 and near(st.walk_speed / BASE.walk_speed, 1.195), "a level 50 devil with nothing: Attack 46, life 146, run +19.5%")
 
 -- In the match: damage = weapon x (100 + Attack) / (100 + Defense), signatures on top
 local function duel(s1, s2)
@@ -184,6 +200,32 @@ check(hp - r2.hp == 40, "...only the Lama")
 g, r1, r2 = duel({}, { sig_thorns = 1 })
 g:hurt(r2, 10, r1, nil, "mallet")
 check(r1.status.burn ~= nil, "Brace addosso: who hits up close burns")
+g, r1, r2 = duel({}, { sig_thorns = 0.5 })
+g:hurt(r2, 10, r1, nil, "mallet")
+check(r1.status.burn.power == 0.5, "...at half strength while the signature is at half")
+g:add_status(r1, "burn", r2)
+check(r1.status.burn.power == nil, "a whole burn on top of a weak one: whole")
+-- what nobody's hand does grows with the life (Sergio, 23 Nov): a fall, a hazard, a heal
+g, r1, r2 = duel({ max_hp = 300 }, {})
+g:hurt(r1, 20, nil, "fall")
+g:hurt(r2, 20, nil, "fall")
+check(r1.hp == 300 - 60 and r2.hp == BASE.max_hp - 20, "a fall takes the same share of life from everybody")
+r1.hp, g.heals = 100, { { id = 1, x = r1.x, y = r1.y } }
+g:apply_heals()
+check(r1.hp == 100 + 3 * require("sim.config").HEAL.hp, "a heal gives the same share too")
+g = game.new(42, "pavimento", { ammo = { shield = 1 }, players = { { team = 1, stats = { max_hp = 300 } }, { team = 2 } } })
+for _ = 1, 60 do g:step({}) end
+r1 = g.robots[g.current]
+g:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
+check(r1.shield == r1.max_hp / 100 * require("sim.config").SHIELD.hp, "the shield holds the same share of its owner's life")
+-- Furia: below 30% of your own life
+g, r1, r2 = duel({ sig_fury = 0.2, max_hp = 300 }, {})
+r1.hp, hp = 80, r2.hp
+g:hurt(r2, 40, r1)
+check(hp - r2.hp == 48, "Furia: below 30% of your life")
+r1.hp, hp = 100, r2.hp
+g:hurt(r2, 40, r1)
+check(hp - r2.hp == 40, "...not above")
 g, r1, r2 = duel({ sig_self = 0.5 }, {})
 hp = r1.hp
 g:hurt(r1, 40, r1)
@@ -227,9 +269,9 @@ check(equip.tier(29) < equip.TIERS, "variant B only at 30")
 check(equip.next_tier(12) == 20 and equip.next_tier(30) == nil, "next step")
 local total = 0
 for l = 2, equip.LIVELLO_MAX do total = total + equip.cost(l) end
-check(total == 32000 and equip.cost(2) == 44 and equip.cost(10) == 960 and equip.cost(20) == 3200 and equip.cost(30) == 5440
-	and equip.cost(31) == nil, "a piece at 30 costs 32,000 Scaglie")
-check(equip.cost(10, true) == 670 and equip.cost(2, true) == 30, "the Smith's hand: 30% off, rounded to 5")
+check(total == 63160 and equip.cost(2) == 60 and equip.cost(10) == 1350 and equip.cost(20) == 5750 and equip.cost(30) == 11500
+	and equip.cost(31) == nil, "a piece at 30 costs 63,160 Scaglie")
+check(equip.cost(10, true) == 945 and equip.cost(2, true) == 40, "the Smith's hand: 30% off, rounded to 5")
 check(equip.proof(10) == 3 and equip.proof(20) == 5 and equip.proof(30) == 8 and equip.proof(11) == 0, "the steps ask for a Proof")
 
 -- Awards

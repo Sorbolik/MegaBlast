@@ -430,9 +430,11 @@ check(why == "max" and orders.level_cost(p, "corvo", "mask") == nil, "nothing pa
 do
 	local v = orders.fragment_value()
 	local function rate(s) return (s.scaglie + s.frammenti * v) / s.cost end
-	check(rate(orders.SIZES.piccola) == 6 and rate(orders.SIZES.media) == 6 and rate(orders.SIZES.settimana) == 6,
-		"the clients' orders pay 6 Scaglie of value per Ossidiana")
-	check(rate(orders.SIZES.fabbro) == 5, "the Smith's pays 5")
+	-- (the fragment follows the pieces' price: 60 Scaglie since the prices of 23 Nov)
+	check(v == 60, "a fragment is worth a 120th of a piece of the Catalogo: 60 Scaglie")
+	check(rate(orders.SIZES.piccola) == 7 and rate(orders.SIZES.media) == 7 and rate(orders.SIZES.settimana) == 7.2,
+		"the clients' orders pay 7 Scaglie of value per Ossidiana (the week's 7.2)")
+	check(rate(orders.SIZES.fabbro) == 6, "the Smith's pays 6")
 end
 
 -- Through the profile's actions (sim/progress.lua): what the phone and the server do

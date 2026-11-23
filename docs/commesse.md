@@ -114,11 +114,12 @@ Principi di Sergio che reggono tutto:
 ## Costo e premi (passo 5 e 10)
 
 - **Il cambio** è il numero che tara tutto: Scaglie di valore per ogni Ossidiana
-  spesa. Si parte **prudenti: 6 dai clienti, 5 dal Fabbro** (al passo 5 era 8 e 7:
-  si alzerà dopo).
+  spesa. Le Scaglie dei premi sono fisse; coi prezzi del 23 nov (PR 410, frammento a 60)
+  il cambio è **7 dai clienti (7,2 la settimana), 6 dal Fabbro** (era 6 e 5 coi prezzi
+  vecchi; al passo 5 era 8 e 7).
 - Il premio è **metà Scaglie, metà frammenti**.
-- **Un frammento vale un centoventesimo di un pezzo del Catalogo** (oggi 40
-  Scaglie) e solo sulla sua famiglia: 120 frammenti = un pezzo nuovo. Se i prezzi
+- **Un frammento vale un centoventesimo di un pezzo del Catalogo** (oggi 60
+  Scaglie, Catalogo a 7.200) e solo sulla sua famiglia: 120 frammenti = un pezzo nuovo. Se i prezzi
   salgono, il frammento li segue.
 - I frammenti pagano **ogni livello e ogni scatto** dei pezzi della loro famiglia,
   in alternativa alle Scaglie (la Mano del Fabbro abbassa anche quel conto). Dopo

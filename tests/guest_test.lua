@@ -63,7 +63,7 @@ local big = profile.import({ livello = 50, xp = 1e9, scaglie = 999999, ossidiana
 	armi = { missile = true, bazooka_finto = true }, statistiche = { ["2v2"] = { danno = -1, colpi = 1.5, vinte = 3 } },
 	loadouts = { { gear = { mask = "corvo", chest = "fornace" }, tree = { wings = 25, armor = 25, forge = 25 } }, "x" },
 	is_active = 3, badge = { "colpo_lungo", "cadute", "boh" } })
-check(big.livello == 30 and big.xp == profile.xp_level(30) - 1 and big.scaglie == 20000, "caps: level 30, experience within the level, 20,000 Scaglie")
+check(big.livello == 30 and big.xp == profile.xp_level(30) - 1 and big.scaglie == 30000, "caps: level 30, experience within the level, 30,000 Scaglie")
 check(big.ossidiana == 0 and big.buoni == 10, "caps: negative Ossidiana is 0, at most 10 vouchers")
 check(big.pezzi.corvo_mask == 20 and big.pezzi.nessuno_mask == nil and big.firme.corvo_mask == 2, "caps: piece at 20, unknown pieces dropped")
 check(big.posseduti.fornace_chest == nil and big.loadouts[1].gear.chest == nil and big.loadouts[1].gear.mask == "corvo", "only owned pieces are worn")
@@ -79,7 +79,7 @@ do
 	local progress = require "sim.progress"
 	local today = "2026-11-19"
 	local a = profile.new()
-	a.scaglie = 5000
+	a.scaglie = 7400
 	check(progress.act(a, { k = "compra", set = "corvo", slot = "mask" }, today) and a.scaglie == 200 and a.posseduti.corvo_mask,
 		"compra: from the CATALOGO at its price")
 	check(not progress.act(a, { k = "compra", set = "corvo", slot = "mask" }, today), "compra: a piece owned isn't bought again")
