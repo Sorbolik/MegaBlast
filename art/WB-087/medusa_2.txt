@@ -1,0 +1,17 @@
+Image 1 is a character sheet of Charon, a character of our game: four panels in one row, a full figure and three busts with different expressions. It is the SHEET and the STYLE to copy exactly: the same four panels of the same size, thick slightly irregular black ink outline, short ink hatching for the shadows, flat warm colors, a pale parchment background in each panel, hand-drawn like a European comic. Image 2 is the character sheet of the Blacksmith of the same world: the same cartoon devil kind.
+
+Draw a character sheet of a NEW character of the same world, in the same style and with the same four panels: MEDUSA, the gorgon who watches from the towers of the city of Dis in the sixth circle and turns to stone whoever she looks at. He or she is a customer of the Blacksmith: funny rather than scary. The character: an elegant, vain, sharp-tongued old lady devil with living SNAKES instead of hair (seven or eight small funny snakes, each with its own little face), a long neck, a thin pointed chin, and two small horns among the snakes. Because her look turns people to stone she ALWAYS wears a pair of big round smoked dark glasses: her eyes are never seen. Skin pale stone grey (#B9B4C4, shadow #7F7A8E). She wears a high-collared shawl, violet (#C49CFF, highlight #E6D6FF, shadow #7A52B8), closed by a brooch shaped like a small spiral. Prop: she holds a small hand mirror with a violet handle.
+
+Four panels on one sheet, same size, in one row:
+1. FULL FIGURE: Medusa standing on a broken stone tomb lid, one hand on her hip, the mirror in the other, seen from three quarters.
+2. BUST, ASKING: she stretches one thin open hand toward the viewer, palm up, her head tilted, one eyebrow raised above the dark glasses, mouth closed and crooked, the snakes all looking at the viewer: "I need something from you".
+3. BUST, PLEASED: a small satisfied closed-mouth smile, she looks at herself in the hand mirror, the snakes relaxed and smiling.
+4. BUST, PROUD: chin up, a wide toothy smile, one hand lifting the dark glasses just a little above her nose WITHOUT showing her eyes, the snakes standing straight up and proud.
+In the three busts the head, the horns, the clothes and the colors are IDENTICAL: only the expression and the hands change. The busts are framed like Charon's in image 1: head and shoulders, turned three quarters, filling the panel. Keep the whole silhouette (horns and prop included) inside each panel, with some margin on every side, the bottom too. No letters, no numbers, no speech balloons.
+
+Riferimenti, in ordine:
+art/WB-086/caronte_2.png
+art/WB-012/3_foglio_fabbro_2.png
+
+ImageGen integrato, un tentativo. PNG originale senza ritocchi. Occhi sempre coperti dagli occhiali; margini inferiori presenti ma stretti. Numero e disposizione dei serpenti e piccoli dettagli del vestito variano fra le pose.
+Verificati quattro riquadri, stile, assenza di scritte; non provato nel gioco a 150 px. Colori esadecimali e identita di ogni dettaglio fra i busti non certificati.

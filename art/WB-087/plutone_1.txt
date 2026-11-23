@@ -1,0 +1,17 @@
+Image 1 is a character sheet of Charon, a character of our game: four panels in one row, a full figure and three busts with different expressions. It is the SHEET and the STYLE to copy exactly: the same four panels of the same size, thick slightly irregular black ink outline, short ink hatching for the shadows, flat warm colors, a pale parchment background in each panel, hand-drawn like a European comic. Image 2 is the character sheet of the Blacksmith of the same world: the same cartoon devil kind.
+
+Draw a character sheet of a NEW character of the same world, in the same style and with the same four panels: PLUTUS, the guardian of the fourth circle, the demon of wealth who sits on a heap of gold and wants to be paid. He or she is a customer of the Blacksmith: funny rather than scary. The character: a fat, stingy, vain rich devil: a wide body with short arms, heavy cheeks, a small pointed black beard, a gold monocle on one eye, two short horns each capped with a gold tip, rings on every finger. Skin wine red (#A8473F, shadow #6F2A28). He wears a heavy robe, warm gold (#FFB703, highlight #FFE08A, shadow #C77A06), with a brown fur collar, and hugs a bulging leather money purse against his chest. Prop: he always clutches the money purse with one arm.
+
+Four panels on one sheet, same size, in one row:
+1. FULL FIGURE: Plutus sitting on a small heap of gold coins, hugging his purse, seen from three quarters.
+2. BUST, ASKING: he stretches one ringed open hand toward the viewer, palm up, while pulling the purse away with the other arm, one eyebrow raised over the monocle, mouth closed and crooked: "I need something from you".
+3. BUST, PLEASED: a small satisfied closed-mouth grin, eyes half closed, he bites a gold coin to test it.
+4. BUST, PROUD: chin up, eyes closed, a wide toothy smile showing one gold tooth, the purse held up high in one hand.
+In the three busts the head, the horns, the clothes and the colors are IDENTICAL: only the expression and the hands change. The busts are framed like Charon's in image 1: head and shoulders, turned three quarters, filling the panel. Keep the whole silhouette (horns and prop included) inside each panel, with some margin on every side, the bottom too. No letters, no numbers, no speech balloons.
+
+Riferimenti, in ordine:
+art/WB-086/caronte_2.png
+art/WB-012/3_foglio_fabbro_2.png
+
+ImageGen integrato. Tre tentativi con prompt e riferimenti invariati. Selezionato tentativo 3. PNG originale senza ritocchi. Rimangono tagli inferiori/laterali della veste nei busti; il sacchetto fiero non e sempre sollevato sopra la testa. Dettagli del monocolo e ornamenti variano lievemente fra i riquadri.
+Verificati quattro riquadri, stile, assenza di scritte; non provato nel gioco a 150 px. Colori esadecimali e identita di ogni dettaglio fra i busti non certificati.

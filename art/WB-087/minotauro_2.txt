@@ -1,0 +1,17 @@
+Image 1 is a character sheet of Charon, a character of our game: four panels in one row, a full figure and three busts with different expressions. It is the SHEET and the STYLE to copy exactly: the same four panels of the same size, thick slightly irregular black ink outline, short ink hatching for the shadows, flat warm colors, a pale parchment background in each panel, hand-drawn like a European comic. Image 2 is the character sheet of the Blacksmith of the same world: the same cartoon devil kind.
+
+Draw a character sheet of a NEW character of the same world, in the same style and with the same four panels: THE MINOTAUR, the bull-headed guardian of the seventh circle, who charges in a straight line and crashes into walls. He or she is a customer of the Blacksmith: funny rather than scary. The character: a huge, strong, not very clever bull-man: a massive bull head with a wide wet nose, a big brass nose ring, small angry eyes, two thick horns that point forward, one horn chipped, and a round BUMP on his forehead covered by a crossed plaster (he keeps hitting walls). Very broad shoulders, small waist. Fur dark red-brown (#7A3B2E, shadow #4A1F19, muzzle #C99A7A). He wears a leather wrestler harness with a big round buckle, hot orange (#F26419, highlight #FFB703, shadow #A63A0B), and orange wrist wraps. Prop: he carries a broken piece of stone wall under one arm, like a trophy.
+
+Four panels on one sheet, same size, in one row:
+1. FULL FIGURE: the Minotaur standing on the edge of a rocky landslide, head lowered, pawing the ground, ready to charge, seen from three quarters.
+2. BUST, ASKING: he stretches one enormous open hand toward the viewer, palm up, clumsy, one eyebrow raised, nostrils puffing two small clouds, mouth closed and crooked: "I need something from you".
+3. BUST, PLEASED: a small satisfied closed-mouth grin, eyes half closed, he scratches the bump on his forehead with one finger.
+4. BUST, PROUD: chin up, eyes closed, a wide toothy smile, flexing one arm, the piece of wall held up in the other hand like a cup.
+In the three busts the head, the horns, the clothes and the colors are IDENTICAL: only the expression and the hands change. The busts are framed like Charon's in image 1: head and shoulders, turned three quarters, filling the panel. Keep the whole silhouette (horns and prop included) inside each panel, with some margin on every side, the bottom too. No letters, no numbers, no speech balloons.
+
+Riferimenti, in ordine:
+art/WB-086/caronte_2.png
+art/WB-012/3_foglio_fabbro_2.png
+
+ImageGen integrato. Tre tentativi con prompt e riferimenti invariati. Selezionato tentativo 3. PNG originale senza ritocchi. Persistono parti delle braccia e del busto a contatto o tagliate ai bordi laterali/inferiori; nella posa fiera il muro non e sollevato in alto come una coppa.
+Verificati quattro riquadri, stile, assenza di scritte; non provato nel gioco a 150 px. Colori esadecimali e identita di ogni dettaglio fra i busti non certificati.

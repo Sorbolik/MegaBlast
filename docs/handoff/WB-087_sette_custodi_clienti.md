@@ -156,4 +156,30 @@ Approvata: Sergio, 23 nov 14:55 («Mi piace Caronte, procedi»), sulla variante 
 
 ## Consegna di Codex
 
+Eseguita il 23 novembre 2026 sul ramo design/WB-087, creato da origin/claude/project-thread-ft5von (2a2b6859). ImageGen integrato, prompt completi invariati e riferimenti R1, R2 nell'ordine della scheda.
+
+Consegnati in art/WB-087/ i quattordici PNG originali a 1536 x 1024, ciascuno con il proprio TXT (prompt esatto, riferimenti, tentativi e problemi):
+- minosse_1.png e minosse_2.png: 3 tentativi per variante.
+- cerbero_1.png e cerbero_2.png: 3 tentativi per variante.
+- plutone_1.png e plutone_2.png: 3 tentativi per variante.
+- flegias_1.png e flegias_2.png: 1 tentativo per variante.
+- medusa_1.png e medusa_2.png: 1 tentativo per variante.
+- minotauro_1.png e minotauro_2.png: 3 tentativi per variante.
+- malacoda_1.png e malacoda_2.png: 1 tentativo per variante.
+
+Trenta risultati completati e controllati visivamente. Selezionati il secondo tentativo per minosse_2 e minotauro_1 (margini/posa preferibili), il terzo per gli altri sei fogli rigenerati; per Flegias, Medusa e Malacoda tenuti i primi tentativi. Nessun ritocco, ritaglio, ridimensionamento o integrazione. Sfondo pergamena come richiesto.
+
+Controllati: quattro riquadri in fila con figura e tre busti; china, tratteggio e pergamena coerenti con Caronte; sagome e colori distintivi dei sette custodi, assenza di scritte; occhi di Medusa sempre coperti. Non verificati nel gioco la leggibilita a 150 px, il ritaglio per i cartellini e l'effetto delle animazioni. Non certificati valori esadecimali e identita di ogni dettaglio nei tre busti. La misura complessiva e corretta; altezze e posizioni dei riquadri non sono sempre identiche a R1.
+
+Difformita residue (anche dopo le rigenerazioni, massimo tre tentativi per variante):
+- minosse: Rimangono tagli del busto/vesti ai bordi e scarso margine inferiore; la coda nella richiesta non punta chiaramente verso lo spettatore. Corona, motivi e dettagli cambiano leggermente fra i riquadri.
+- cerbero: Rimangono tagli inferiori/laterali dei busti; nella posa fiera l'osso e tenuto dalle zampe invece che dalla testa centrale. Le espressioni delle teste laterali non seguono sempre esattamente quelle richieste.
+- plutone: Rimangono tagli inferiori/laterali della veste nei busti; il sacchetto fiero non e sempre sollevato sopra la testa. Dettagli del monocolo e ornamenti variano lievemente fra i riquadri.
+- flegias: Margine inferiore presente ma limitato; sciarpa e spalle raggiungono alcuni bordi laterali. La pagaia e interpretata come un'asta con grande punta di ferro; sorrisi ed espressioni non rispettano sempre esattamente la bocca chiusa.
+- medusa: Occhi sempre coperti dagli occhiali; margini inferiori presenti ma stretti. Numero e disposizione dei serpenti e piccoli dettagli del vestito variano fra le pose.
+- minotauro: Persistono parti delle braccia e del busto a contatto o tagliate ai bordi laterali/inferiori; nella posa fiera il muro non e sollevato in alto come una coppa.
+- malacoda: Margini inferiori presenti ma stretti; punta della coda non sempre chiaramente biforcuta e nera; dettagli di coda, ali e abito variano leggermente fra i riquadri.
+
+Il requisito dei margini su tutti i lati NON e soddisfatto in tutti i fogli: in particolare Minosse, Cerbero, Plutone e Minotauro conservano tagli/contatti ai bordi. Criteri di accettazione lasciati senza spunta per la revisione di Claude e la scelta delle varianti di Sergio.
+
 ## Resoconto di Claude

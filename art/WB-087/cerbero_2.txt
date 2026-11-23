@@ -1,0 +1,17 @@
+Image 1 is a character sheet of Charon, a character of our game: four panels in one row, a full figure and three busts with different expressions. It is the SHEET and the STYLE to copy exactly: the same four panels of the same size, thick slightly irregular black ink outline, short ink hatching for the shadows, flat warm colors, a pale parchment background in each panel, hand-drawn like a European comic. Image 2 is the character sheet of the Blacksmith of the same world: the same cartoon devil kind.
+
+Draw a character sheet of a NEW character of the same world, in the same style and with the same four panels: CERBERUS, the three-headed guard dog of the third circle, always hungry. He or she is a customer of the Blacksmith: funny rather than scary. The character: a huge fat cartoon mastiff with THREE heads on one body and small devil horns on each head: the left head is grumpy with a torn ear, the middle head is greedy with its tongue out, the right head is sleepy with droopy eyes. Fur dark muddy brown (#6B4A36, shadow #3F2A1E, belly #B88A5E), mud on the paws. Each head wears a studded collar, hot orange (#F26419, highlight #FFB703, shadow #A63A0B), and from the middle collar hangs a small glowing ember tag. Prop: between his front paws he keeps one enormous gnawed bone.
+
+Four panels on one sheet, same size, in one row:
+1. FULL FIGURE: Cerberus sitting like a guard dog in a muddy puddle, the bone between his paws, seen from three quarters.
+2. BUST, ASKING: the three heads look at the viewer, the middle one holds an EMPTY food bowl in its mouth and offers it, the other two stare with big hungry eyes: "we need something from you".
+3. BUST, PLEASED: the three heads with eyes half closed and small satisfied closed-mouth smiles, the middle one licking its lips.
+4. BUST, PROUD: the three heads chin up, eyes closed, wide toothy smiles, the bone held high by the middle head like a trophy.
+In the three busts the head, the horns, the clothes and the colors are IDENTICAL: only the expression and the hands change. The busts are framed like Charon's in image 1: head and shoulders, turned three quarters, filling the panel. Keep the whole silhouette (horns and prop included) inside each panel, with some margin on every side, the bottom too. No letters, no numbers, no speech balloons.
+
+Riferimenti, in ordine:
+art/WB-086/caronte_2.png
+art/WB-012/3_foglio_fabbro_2.png
+
+ImageGen integrato. Tre tentativi con prompt e riferimenti invariati. Selezionato tentativo 3. PNG originale senza ritocchi. Rimangono tagli inferiori/laterali dei busti; nella posa fiera l'osso e tenuto dalle zampe invece che dalla testa centrale. Le espressioni delle teste laterali non seguono sempre esattamente quelle richieste.
+Verificati quattro riquadri, stile, assenza di scritte; non provato nel gioco a 150 px. Colori esadecimali e identita di ogni dettaglio fra i busti non certificati.
