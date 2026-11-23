@@ -30,6 +30,12 @@ show_made_with_defold = 0
 package = com.sorbolik.megablast
 immersive_mode = 1
 display_cutout = 0
+app_icon_36x36 = /assets/icona/icona_36.png
+app_icon_48x48 = /assets/icona/icona_48.png
+app_icon_72x72 = /assets/icona/icona_72.png
+app_icon_96x96 = /assets/icona/icona_96.png
+app_icon_144x144 = /assets/icona/icona_144.png
+app_icon_192x192 = /assets/icona/icona_192.png
 
 [native_extension]
 app_manifest = /megablast.appmanifest
