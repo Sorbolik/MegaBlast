@@ -1,0 +1,14 @@
+Images 1 and 2 are the head of the hero of our mobile game, a small red devil apprentice, drawn in our comic style. Draw an APP ICON FOREGROUND with this same character: his head and shoulders, three-quarter view, cheeky confident grin like image 2 with the happy eyes of image 1, looking at the viewer. He is the SAME character: same head shape, same big pointed ears, same red skin #B8402A with darker red shadow shapes, same cream muzzle #F2DCA8, same black outline, same eyes and teeth style. No new accessories, no hat, no horns, no text.
+
+Composition, very strict, because Android crops this layer into a circle and moves it:
+- Canvas 1024x1024, background fully TRANSPARENT (alpha), nothing drawn outside the character.
+- The whole character fits inside a centered circle of diameter 660 px (the safe zone): no ear, no shoulder and no outline crosses that circle. Leave the rest of the canvas empty.
+- The head is big and readable at 48 px: few large shapes, the face at the visual center.
+
+Rendering rules:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow, no drop shadow.
+- Thick closed pure black #000000 outline, heavier than usual (it must survive being shown at 48 px).
+- No text, numbers, letters, logos or signatures.
+
+Riferimenti, in ordine: client/assets/skins/apprendista_nuovo_testa_felice_1.png, client/assets/skins/apprendista_nuovo_testa_provocazione_1.png
+Variante 1

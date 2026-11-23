@@ -92,4 +92,11 @@ Approvata da Claude il 21 nov (reversibile).
 
 ## Consegna di Codex
 
+- Primo piano: `art/WB-082/icona_primo_piano_1.png` e `icona_primo_piano_2.png`, con i rispettivi `.txt`.
+- Sfondo: `art/WB-082/icona_sfondo_1.png` e `icona_sfondo_2.png`, con i rispettivi `.txt`.
+
+Quattro PNG da 1024×1024, un tentativo per variante con ImageGen e i prompt della scheda. I primi piani sono stati ridimensionati e centrati sulla tela trasparente. È stato escluso l'alfa residuo fuori dalla zona di sicurezza. La distanza massima dal centro dei pixel con alfa maggiore di zero è 328,3 px per la variante 1 e 321,7 px per la variante 2, entro il raggio richiesto di 330 px. Entrambi gli sfondi sono interamente opachi.
+
+Controllo visivo dei quattro asset e delle quattro combinazioni temporanee a 48 px. Il muso crema, le orecchie, il sorriso e il contrasto tra fuoco e ghiaccio restano leggibili. Le campiture presentano lievi variazioni tonali e gli occhi sono chiusi in entrambe le varianti, come nel riferimento felice. La prova con le maschere del launcher Android e la verifica su telefono restano da fare.
+
 ## Resoconto di Claude

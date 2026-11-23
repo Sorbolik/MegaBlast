@@ -1,0 +1,10 @@
+Draw an APP ICON BACKGROUND for a comic-style mobile game about a little fire devil: a full-bleed square 1024x1024, no character, no text. A dark warm night-red base #2A0E0A. From the bottom-left corner a big comic flame of orange #FF7A1A and yellow #FFC93C licks diagonally toward the center; from the top-right corner a cold cyan #19E6E6 frost shape answers it; the two meet in a jagged diagonal split behind the center. Large simple shapes only, readable when the square is cropped into a circle of diameter 1024 and when it is shrunk to 48 px.
+
+Rendering rules:
+- FLAT COLORS ONLY: solid areas with hard edges, no gradients, no textures, no noise, no glow.
+- Ink-style black #000000 outlines around the flame and frost shapes, the same weight as a comic panel.
+- The square is completely filled: no transparency, no border, no rounded corners, no vignette.
+- No text, numbers, letters, logos or signatures.
+
+Riferimenti: nessuno
+Variante 1
