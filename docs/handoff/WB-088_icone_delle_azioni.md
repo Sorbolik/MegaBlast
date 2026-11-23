@@ -110,4 +110,12 @@ e senza sporcizie»); a Codex vanno solo le icone, che sono disegni. Le icone ch
 
 ## Consegna di Codex
 
+- `art/WB-088/azioni_1_1.png` e `azioni_1_2.png`, con i rispettivi `.txt`.
+- `art/WB-088/azioni_2_1.png` e `azioni_2_2.png`, con i rispettivi `.txt`.
+- `art/WB-088/azioni_3_1.png` e `azioni_3_2.png`, con i rispettivi `.txt`.
+
+Sei fogli da 1536×1024, un tentativo per variante con ImageGen. Prompt originali e riferimenti allegati nell'ordine R3, R1, R2. I fogli sono stati ridimensionati in proporzione e centrati su tela verde.
+
+Verificati numero, ordine, separazione, ingombro approssimativamente quadrato e assenza di scritte. Le anteprime con celle da 48 px mantengono riconoscibili le sagome. Le porte di ritorno e uscita sono simili e si distinguono soprattutto dalla direzione della freccia. I contorni risultano spessi e scuri, con leggere variazioni tonali nei bordi e in alcune campiture. Il verde generato è vicino a #00FF00, con il campione di ogni foglio riportato nel rispettivo `.txt`. Ritaglio e resa sui pulsanti in gioco restano da verificare.
+
 ## Resoconto di Claude
