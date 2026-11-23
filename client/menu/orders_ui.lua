@@ -281,9 +281,9 @@ end
 
 -- The test bench, in the Smith's place: every state without playing or waiting
 local BENCH = { { "vinta", "bench_won" }, { "persa", "bench_lost" }, { "giorno", "bench_day1" }, { "settimana", "bench_week" },
-	{ "cliente", "bench_client" }, { "colpo", "bench_lucky" }, { "capo", "bench_reset" } }
+	{ "cliente", "bench_client" }, { "colpo", "bench_lucky" }, { "pezzi", "bench_pieces" }, { "capo", "bench_reset" } }
 local BENCH_TEXT = { bench_won = T.bench_won, bench_lost = T.bench_lost, bench_day1 = T.bench_day1, bench_week = T.bench_week,
-	bench_client = T.bench_client, bench_lucky = T.bench_lucky, bench_reset = T.bench_reset }
+	bench_client = T.bench_client, bench_lucky = T.bench_lucky, bench_pieces = T.bench_pieces, bench_reset = T.bench_reset }
 
 local function bench_panel(a, g)
 	local p = a.prof
@@ -293,9 +293,9 @@ local function bench_panel(a, g)
 	kit.text(c, T.bench_title, ix, y + PAD + 18, 22, KC.HOT, "start", 1)
 	fit(kit.text(c, T.bench_day:format((day(a):gsub("(%d+)-(%d+)-(%d+)", "%3/%2/%1"))), ix, y + PAD + 40, 16, KC.MUTE, "start", 0.5), iw)
 	for i, b in ipairs(BENCH) do
-		local by = y + 70 + (i - 1) * 54
-		local plate = kit.card(c, ix, by, iw, 46, KC.ROSE)
-		kit.text(plate.g, BENCH_TEXT[b[2]], ix + iw / 2, by + 30, 18, KC.SAND, "middle", 0.5)
+		local by = y + 70 + (i - 1) * 49
+		local plate = kit.card(c, ix, by, iw, 42, KC.ROSE)
+		kit.text(plate.g, BENCH_TEXT[b[2]], ix + iw / 2, by + 28, 18, KC.SAND, "middle", 0.5)
 		kit.button(a.buttons, plate, "prova:" .. b[1])
 	end
 	local t = p.commesse.prova or { partite = 0 }
@@ -761,6 +761,12 @@ function M.cmd(a, kind, x)
 			bench.client(p, real)
 		elseif x == "colpo" then
 			bench.lucky(p)
+		elseif x == "pezzi" then
+			-- the BANCO's pieces of the day go back to the shop, to see their prices
+			local wallet = require "sim.wallet"
+			local keys = {}
+			for _, it in ipairs(wallet.day(real)) do keys[#keys + 1] = wallet.key(it[1], it[2]) end
+			bench.give_back(p, keys)
 		elseif x == "capo" then
 			bench.reset(p)
 		end

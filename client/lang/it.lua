@@ -503,6 +503,7 @@ return {
 		bench_week = "PASSA UNA SETTIMANA",
 		bench_client = "ARRIVA UN CLIENTE",
 		bench_lucky = "PROSSIMO COLPO BUONO",
+		bench_pieces = "RIDAI I PEZZI DEL BANCO",
 		bench_reset = "RICOMINCIA DA CAPO",
 		bench_state = "%d PARTITE FINTE · %d CLIENTI · %d CONSEGNE",
 		-- the windows over the board (menu/orders_ui.lua): the open card
