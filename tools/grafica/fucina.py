@@ -276,7 +276,8 @@ def fai_bottega():
         scuro = np.asarray(cs.convert("RGB")).astype(int).sum(axis=2) < 360
         righe = np.where(scuro[:, 400:750].sum(axis=1) > 245)[0]
         alto = int(righe.min()) + 4
-        for nome, x in (("chiede", 394), ("contento", 777), ("fiero", 1160)):
+        # (per ora solo chi chiede: contento e fiero, x 777 e 1160, entreranno con la consegna)
+        for nome, x in (("chiede", 394),):
             im = cs.crop((x, alto, x + 366, alto + 485))
             salva(im, "cliente_%s_%s" % (cliente, nome))
             MISURE["cliente_%s_%s" % (cliente, nome)] = im.size

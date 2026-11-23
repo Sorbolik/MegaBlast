@@ -75,3 +75,5 @@ Guardati i tre fogli (23 nov): tutti puliti, stessa mano del Fabbro, nessun dife
 (la barca incisa sulla moneta, lo sguardo più vivo); Sergio, 23 nov 14:55: «Mi piace Caronte, procedi». Su quella
 nasce WB-087 con gli altri sette custodi. Da correggere in WB-087: il margine in basso dei busti (qui il mantello è
 tagliato). Nel gioco non è ancora montato: il cartellino mostra per ora la miniatura della mappa del cliente.
+
+Variante 2 scelta da Sergio (23 nov), nel gioco con WB-087; la 1 e la 3 tolte da `art/` (restano sul ramo `design/WB-086`).

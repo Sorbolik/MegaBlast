@@ -191,3 +191,4 @@ Cerbero 1, Plutone 1, Flegiàs 1, Medusa 1, Minotauro 1, Malacoda 2 (coda e mant
 Ritaglio uguale per tutti (`tools/grafica/fucina.py`, `fai_bottega`): i tre busti (chiede, contento,
 fiero) dentro la cornice, 366 x 485 (il ritratto più grande sullo schermo è 180 x 240). Nel gioco:
 cartellino aperto e libro dei clienti col busto, i cartellini della bacheca con la striscia del volto.
+Le varianti scartate sono tolte da `art/` (restano sul ramo `design/WB-087`); per ora nell'atlante c'è solo il busto che chiede: contento e fiero entreranno con la scena della consegna.

@@ -200,73 +200,25 @@ images {
   image: "/assets/fucina/cliente_caronte_chiede.png"
 }
 images {
-  image: "/assets/fucina/cliente_caronte_contento.png"
-}
-images {
-  image: "/assets/fucina/cliente_caronte_fiero.png"
-}
-images {
   image: "/assets/fucina/cliente_cerbero_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_cerbero_contento.png"
-}
-images {
-  image: "/assets/fucina/cliente_cerbero_fiero.png"
 }
 images {
   image: "/assets/fucina/cliente_flegias_chiede.png"
 }
 images {
-  image: "/assets/fucina/cliente_flegias_contento.png"
-}
-images {
-  image: "/assets/fucina/cliente_flegias_fiero.png"
-}
-images {
   image: "/assets/fucina/cliente_malacoda_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_malacoda_contento.png"
-}
-images {
-  image: "/assets/fucina/cliente_malacoda_fiero.png"
 }
 images {
   image: "/assets/fucina/cliente_medusa_chiede.png"
 }
 images {
-  image: "/assets/fucina/cliente_medusa_contento.png"
-}
-images {
-  image: "/assets/fucina/cliente_medusa_fiero.png"
-}
-images {
   image: "/assets/fucina/cliente_minosse_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_minosse_contento.png"
-}
-images {
-  image: "/assets/fucina/cliente_minosse_fiero.png"
 }
 images {
   image: "/assets/fucina/cliente_minotauro_chiede.png"
 }
 images {
-  image: "/assets/fucina/cliente_minotauro_contento.png"
-}
-images {
-  image: "/assets/fucina/cliente_minotauro_fiero.png"
-}
-images {
   image: "/assets/fucina/cliente_plutone_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_plutone_contento.png"
-}
-images {
-  image: "/assets/fucina/cliente_plutone_fiero.png"
 }
 images {
   image: "/assets/fucina/corona.png"

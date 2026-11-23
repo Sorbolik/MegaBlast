@@ -85,5 +85,5 @@ I due Fabbri guardano verso destra e sono interamente in campo con banco, incudi
   (`cartellino_foro`), messo al centro sotto il chiodo. Lo stesso foglio fa i cartellini alti, larghi e
   le finestre (`kit.paper`). Il foglio alto non serve.
 - Fabbro al banco: variante 1 (più chiara, il banco intero), senza pergamena, alto 1000 (sullo schermo
-  500, a sinistra della bacheca). La variante 2 resta in `art/` per un'altra schermata.
+  500, a sinistra della bacheca). Le varianti scartate sono tolte da `art/` (restano sul ramo `design/WB-085`).
 - Provati a 1280 x 720, 1600 x 720 e 960 x 720 (scenario `commesse.txt`).

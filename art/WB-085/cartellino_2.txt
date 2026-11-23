@@ -1,9 +1,0 @@
-Image 1 is a screen of our game: a board with order cards pinned to it. The cards are the pale ivory rectangles with a dark nail on top; the dark panels around them show the STYLE of our interface: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic.
-
-Draw TWO separate EMPTY paper order tickets for that board, side by side, well apart, on plain green (#00FF00), in that same interface style:
-1. LEFT: a TALL ticket, three units wide and four units tall.
-2. RIGHT: a WIDE ticket, three units wide and two units tall.
-Each ticket is a sheet of thick ivory paper (#F4EAD8, shadow #D9C7A6, highlight #FFF8EA) with a thick black ink outline, slightly uneven hand-cut edges, one corner a little dog-eared, and a small round hole at the top center with a short strip of darker reinforced paper around the hole. NO nail (the game draws it). The whole inside of each ticket is EMPTY and FLAT: one plain ivory color, no lines, no stamps, no stains, no texture, no writing, because the game writes on it; shading only in a thin band along the edges. The two tickets are the same paper and the same hand, only the shape changes. No letters, no numbers, no shadow on the ground, no glow.
-
-Riferimenti in ordine: art/WB-085/riferimenti/R1_commesse_oggi.png
-Un tentativo. Foglio ridimensionato in proporzione e centrato su tela verde 1536×1024. Due cartellini separati, vuoti, con foro e senza chiodo. Rapporti larghezza/altezza circa 0,68 e 1,48. Verde campionato #04F804 e lieve variazione nei toni avorio.
