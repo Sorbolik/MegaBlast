@@ -118,8 +118,8 @@ function M.new(of, title, parent_below)
 	-- on the right, under the thread: around the menus, still in the queue
 	s.low = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	gui.move_above(s.low.node, s.radice)
-	local back = kit.plate(s.low, 900, 638, 344, 56, KC.ROSE, { sk = 14, d = 6 })
-	kit.text(back.g, T.back_to_menus, 900 + 172, 638 + 34, 17, KC.SAND, "middle", 0.5)
+	-- a secondary button like the others (Sergio, 23 Nov: no more slanted plate)
+	local back = kit.secondary(s.low, T.back_to_menus, 908, 640, 348, 62, { icon = "az_torna" })
 	kit.button(s.buttons, back, "menu")
 	s.back = back.node
 	s.title = title
@@ -136,7 +136,7 @@ function M.players(s, showcases)
 		local v = showcases[i]
 		if v then
 			-- the tag of the match, short: the devil with his pieces on, the pieces, the powers
-			local c = tag.new(v, s.xs[i] + TAG_W / 2, 720 - TAG_TOP, { wide = TAG_W, portrait = 118, short = true, color = side(s, i) }, s.radice)
+			local c = tag.new(v, s.xs[i] + TAG_W / 2, 720 - TAG_TOP, { wide = TAG_W, portrait = 118, short = true, color = side(s, i), tu = v.tu }, s.radice)
 			s.card_list[#s.card_list + 1] = c
 			-- whoever just arrived comes in with a small jump
 			if i > s.n then

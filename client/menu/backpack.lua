@@ -73,23 +73,6 @@ end
 
 -- INVENTARIO ------------------------------------------------------------------------
 
--- A piece's effects ("+5% CORSA  +2 DIFESA ...") on lines `room` wide at the
--- smallest size, cut between two effects; past the second line the rest stays on it
-local function effect_lines(g, effects, room)
-	local lines = {}
-	for e in (effects .. "  "):gmatch("(.-)  ") do
-		local try = lines[#lines] and (lines[#lines] .. "  " .. e)
-		local fits = #lines >= 2
-		if try and not fits then
-			local n = kit.text(g, try, 0, 0, kit.MIN_TEXT, nil, "start", 0.5)
-			fits = kit.width(n) <= room
-			gui.delete_node(n)
-		end
-		if try and fits then lines[#lines] = try else lines[#lines + 1] = e end
-	end
-	return lines
-end
-
 -- The grid of the pieces in a window (VIEW, Figma), moved by s.scroll: the slots are
 -- cut at its edges (stencil) and their zones work only inside it
 local VIEW = { x = 418, y = 160, w = 612, h = 400 }
@@ -252,16 +235,9 @@ local function inventory(s)
 		local effects = kit.upper(gear_ui.effects(set, slot, level))
 		-- the room of the lines: up to POTENZIA, which sits left of the action
 		local room = screen.width() - (1280 - UP_X) - 14 - 220
-		if kit.in_queue then room = math.min(room, kit.PILL_X0 - 16 - (220 + screen.x0)) end
-		if kit.in_queue then
-			local lines = effect_lines(s.low, effects, room)
-			for i = 1, math.min(2, #lines) do
-				local n = kit.text(s.low, lines[i], 220, 650 + i * 22, kit.MIN_TEXT, KC.MUTE, "start", 0.5)
-				local wide = kit.width(n)
-				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
-			end
-		else
+		do
 			-- the level and grade beside the name, the beads under it across the band
+			-- (the queue's pill sits on the thread: the band is free, Sergio 23 Nov)
 			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 220 + kit.width(name) + 16, 646, 17,
 				ui.C.GRADI[tier], "start", 0.5)
 			bench.ingots(s.low, 220, 656, math.min(460, room), 20, level, wallet.sign(p, set, slot))

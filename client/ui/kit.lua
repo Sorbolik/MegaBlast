@@ -487,9 +487,8 @@ function M.keep_in(n, box, g, x, y, size, anchor)
 	M.check_small(n)
 end
 
--- The queue's pill under the thread in the menus (ui/pill.lua, "foot") starts
--- here; game.gui_script says when you are in the queue (M.in_queue)
-M.PILL_X0 = 534
+-- game.gui_script says when you are in the queue (M.in_queue); the pill sits on
+-- the thread (ui/pill.lua), the band under it stays free
 M.in_queue = false
 
 -- A line of the footer, left of the action, starting at x of g (stuck to the
@@ -497,7 +496,6 @@ M.in_queue = false
 -- and goes on a second line under it (Sergio, 15 Nov). Returns the lines
 function M.foot_text(g, t, x, y, size, color, wide, spacing)
 	local room = wide
-	if M.in_queue then room = math.min(wide, M.PILL_X0 - 16 - (x + screen.x0)) end
 	local function one(txt, ly)
 		local n = M.text(g, txt, x, ly, size, color, "start", spacing)
 		local w = M.width(n)

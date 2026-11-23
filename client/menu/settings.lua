@@ -237,8 +237,7 @@ local function build(s)
 	end
 	-- (where the second column ends)
 	local rx, ry = KEYS_X + KEY_W + KEY_GAP, KEYS_Y + (per_column - 1) * KEY_ROW
-	local reset = kit.plate(g, rx, ry - 1, KEY_W, KEY_H + 2, KC.ROSE, { sk = 0, d = 6, piece = "piastrina" })
-	kit.text(reset.g, T.reset, rx + KEY_W / 2, ry + 35, 21, KC.SAND, "middle", 0.5)
+	local reset = kit.secondary(g, T.reset, rx, ry, KEY_W, KEY_H, { icon = "az_ripristina" })
 	kit.button(s.buttons, reset, "ripristina")
 	for _, b in ipairs(s.buttons) do
 		if b.ui_action == lit then ui.light(s.buttons, b) end

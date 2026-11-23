@@ -44,12 +44,14 @@ local V = vmath.vector3()
 -- the pill: its height, the top of the ones under the thread, its text; along it
 -- the dot's middle, where the text starts and the room left after it (the text
 -- stays in the shell's trough, between the two rivets)
-local TALL, LOW_Y, SIZE = 52, 640, 19
-local DOT_X, TEXT_X, END_PAD = 38, 56, 30
+-- In the menus (low and foot) it is threaded on the thread, in the middle of the
+-- screen, the same on every screen (Sergio, 23 Nov, docs/ui-catalogo.md purpose 12):
+-- a thin thread around it (kit.thread_chip's pieces), the dot breathing flat
+local TALL, SIZE = 40, 17
+local DOT_X, TEXT_X, END_PAD = 26, 42, 22
 local MIN_W = 112
--- how wide each kind can get (past it the text shrinks), and the middle of the home's
-local MAX_W = { low = 640, foot = 174, head = 174, top = 174 }
-local LOW_CX = 496
+-- how wide each kind can get (past it the text shrinks)
+local MAX_W = { low = 520, foot = 240, head = 174, top = 174 }
 -- "head": its right end, 16 before the wallet (ui/coins.lua), on the header's line
 local HEAD_X1 = 860
 
@@ -59,13 +61,16 @@ function M.new()
 	p.root = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(p.root, false)
 	local g = { node = p.root, ox = 0, oy = 0 }
-	p.strip = kit.strip(g, "guscio", 0, -TALL / 2, MIN_W, TALL)
+	p.back = kit.strip(g, "filo_fondo", 0, -TALL / 2, MIN_W, TALL)
+	p.strip = kit.strip(g, "filo_bordo", 0, -TALL / 2, MIN_W, TALL)
+	kit.tint(p.strip.parts, kit.C.HOT)
 	p.ring = gui.new_box_node(vmath.vector3(DOT_X, 0, 0), vmath.vector3(20, 20, 0))
 	gui.set_texture(p.ring, "ui")
 	gui.play_flipbook(p.ring, "disco_p")
 	gui.set_color(p.ring, kit.C.INK)
+	gui.set_size(p.ring, vmath.vector3(16, 16, 0))
 	gui.set_parent(p.ring, p.root)
-	p.dot = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(14, 14, 0))
+	p.dot = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(11, 11, 0))
 	gui.set_texture(p.dot, "ui")
 	gui.play_flipbook(p.dot, "disco_p")
 	gui.set_color(p.dot, kit.C.HOT)
@@ -93,8 +98,10 @@ function M.place(p)
 	elseif p.kind == "head" then
 		V.x, V.y = HEAD_X1 - p.w, H - 44
 	else
-		V.x = p.kind == "low" and LOW_CX - p.w / 2 or kit.PILL_X0
-		V.y = H - (LOW_Y + TALL / 2)
+		-- on the thread, in the middle of the screen: the thread is stuck to the real
+		-- bottom edge (ui/screen.lua, y1), so the pill too
+		V.x = W / 2 - p.w / 2
+		V.y = (H - screen.y1) + (H - kit.THREAD)
 	end
 	V.z = 0
 	gui.set_position(p.root, V)
@@ -116,6 +123,7 @@ local function fit(p)
 	local room = w - TEXT_X - END_PAD
 	if wide > room then gui.set_scale(p.text, p.scale * (room / wide)); kit.check_small(p.text) end
 	if w ~= p.w then
+		kit.strip_width(p.back, w)
 		kit.strip_width(p.strip, w)
 		p.w = w
 	end
@@ -132,7 +140,7 @@ function M.show(p, on, kind, gear)
 	if kind ~= p.kind then
 		p.kind = kind
 		gui.set_xanchor(p.root, kind == "top" and gui.ANCHOR_LEFT or kind == "head" and gui.ANCHOR_RIGHT or gui.ANCHOR_NONE)
-		gui.set_yanchor(p.root, (kind == "top" or kind == "head") and gui.ANCHOR_TOP or gui.ANCHOR_BOTTOM)
+		gui.set_yanchor(p.root, (kind == "top" or kind == "head") and gui.ANCHOR_TOP or gui.ANCHOR_NONE)
 		fit(p)
 	end
 	M.place(p)
