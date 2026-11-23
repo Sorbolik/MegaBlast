@@ -6,7 +6,9 @@ https://claude.ai/artifact/MKh9TW93vC3V4FzKYdrsiW (bozze e scelte numerate).
 o campagna lo legge prima. Le regole possono cambiare, ma si cambiano qui, con la
 data, e con una riga in [decisioni/progressione.md](decisioni/progressione.md).
 
-Stato: **solo regole, nessun codice ancora.** Il minigioco della forgia (poker
+Stato (23 nov): regole, logica, server, banco di prova e la scheda COMMESSE della BOTTEGA
+(cartellini di **carta**, scelta di Sergio); mancano il cartellino aperto, CHIAMA UN CLIENTE, il libro
+dei CLIENTI, la porta in home, lo scontrino del podio e i frammenti in POTENZIA. Il minigioco della forgia (poker
 «Cinque Fiamme», martello a tempo) è un lavoro a parte, dopo.
 
 ## A cosa servono
@@ -180,7 +182,8 @@ Principi di Sergio che reggono tutto:
 - Ogni cliente ha nei dati **il livello della campagna che lo fa arrivare**:
   finché il livello non esiste, nel profilo vero non arriva. Niente di provvisorio
   da togliere.
-- **Banco di prova** nelle IMPOSTAZIONI, solo coi profili di prova: finisci una
+- **Banco di prova** dentro la BOTTEGA (pulsante PROVA nella scheda COMMESSE; Sergio, 23 nov:
+  lì l'effetto si vede subito), solo coi profili di prova: finisci una
   partita finta, passa un giorno, passa una settimana, arriva un cliente, prossimo
   colpo buono, ricomincia. DA ZERO mostra la prima volta; FINE GIOCO parte con
   tutti i clienti e stati diversi.

@@ -1,0 +1,14 @@
+Image 1 shows two currency icons of our game (a gold eight-sided coin and a round dark iron token): copy their visual size, their thickness and their relief. Image 2 is a button of the same game and is the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic. Image 3 shows, on the left, a faceted dark gem: this is how we draw the flat faces of a stone.
+
+Draw FIVE separate icons in one row, well apart, all the same visual size, on plain green (#00FF00). Each one is a FRAGMENT: a broken piece of forged armor plate, a chunky irregular shard with three or four flat faces and one clearly broken, jagged edge, thick like the coins of image 1. All five have the SAME kind of silhouette (a shard, a little taller than wide) but each one is broken differently, and each has its own color and one small symbol ENGRAVED into its biggest face (a hollow sunk into the metal, darker along its upper left edge, lighter along its lower right edge):
+1. SMITH: warm gold metal (#FFB703, highlight #FFE08A, shadow #C77A06). Engraved symbol: a small hammer.
+2. RAVEN: pale steel blue metal (#9EC4E0, highlight #D6E9F5, shadow #5F86A3). Engraved symbol: a single feather.
+3. FURNACE: hot orange metal (#F26419, highlight #FFB703, shadow #A63A0B). Engraved symbol: a small flame.
+4. LEVIATHAN: sea green metal (#5CDBB8, highlight #B8F2E2, shadow #2F8F78). Engraved symbol: a fish scale shaped like a drop, or a small wave.
+5. VOID: violet metal (#C49CFF, highlight #E6D6FF, shadow #7A52B8). Engraved symbol: a small spiral.
+Each icon must read at 24 pixels: one bold full silhouette, no thin details, the symbol large and simple. No letters, no numbers, no shadow on the ground, no glow outside the ink, no sparkles.
+
+Riferimenti in ordine: art/WB-072/scavate_2.png, art/WB-072/riferimenti/R3_stile.png, art/WB-072/monete_2.png
+Variante 3. Un tentativo con ImageGen. Uscita 2172×724 ridimensionata in proporzione e centrata su tela verde 1536×1024.
+Cinque schegge separate con martello, piuma, fiamma, onda e spirale. A 24 px in scala di grigi le incisioni più sottili perdono contrasto.
+Verde campionato a (5, 5): #02F809. Il fondo non è esattamente #00FF00. Lievi variazioni tonali nelle campiture.

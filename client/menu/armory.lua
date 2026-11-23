@@ -19,6 +19,7 @@ local profile = require "menu.profile"
 local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
 local outline = require "menu.outline"
+local orders_ui = require "menu.orders_ui"
 local T = require("lang.text").armory
 local TG = require("lang.text").gear_ui
 local TP = require("lang.text").pieces
@@ -27,6 +28,8 @@ local common = require("lang.text").common
 local M = {}
 
 local KC = kit.C
+-- where the tabs start, as in the ZAINO
+local TABS_X = 300
 
 local function copy(t)
 	if type(t) ~= "table" then return t end
@@ -157,8 +160,17 @@ local function build(a)
 	end
 	a.buttons, a.figure, a.action = {}, nil, nil
 	a.outline = nil
+	orders_ui.release(a)
 	local p = a.prof
 	a.head = kit.header(a.buttons, common.shop, KC.PURPLE, "indietro", a.from or common.home)
+	-- the two tabs, once the Smith has called: COMMESSE (his orders) and BANCO (the shop)
+	local open = p.commesse and p.commesse.aperta
+	if not open then a.tab = "banco" end
+	a.tab = a.tab or "commesse"
+	if open then
+		kit.tabs(a.head.top_left, a.buttons, TABS_X, 28, { { T.tab_orders, "scheda:commesse" }, { T.tab_bench, "scheda:banco" } },
+			a.tab == "banco" and 2 or 1, KC.PURPLE, true)
+	end
 	a.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(a.wallet, p.buoni or 0)
 	a.left = kit.anchor(0, 0, gui.ANCHOR_LEFT)
@@ -167,6 +179,11 @@ local function build(a)
 	a.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	a.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
+	if a.tab == "commesse" then
+		outline.off()
+		orders_ui.board(a)
+		return
+	end
 	local act = profile.active_loadout(p)
 	gear_ui.devil(a, a.left, 215, 600, 395)
 	local try, focus
@@ -200,7 +217,11 @@ local function run_cmd(a, ui_action)
 	local kind, x = ui_action:match("^(%a+):?(.*)$")
 	local p = a.prof
 	local s1, s2 = x:match("^([^:]*):?(.*)$")
-	if kind == "foglio" then
+	if orders_ui.cmd(a, kind, x) then
+		-- (a tap of the COMMESSE tab)
+	elseif kind == "scheda" then
+		a.tab, a.sheet = x, nil
+	elseif kind == "foglio" then
 		a.sheet = not a.sheet
 	elseif kind == "merce" then
 		-- an offer is bought at the shop's price; the day's pieces at the full one
@@ -228,6 +249,7 @@ end
 
 function M.destroy(a)
 	outline.off()
+	orders_ui.release(a)
 	kit.header_delete(a.head)
 	for _, k in ipairs(GROUPS) do
 		if a[k] then gui.delete_node(a[k].node) end

@@ -93,4 +93,21 @@ Approvata da Claude il 23 nov (icone nuove, niente da sostituire). Sergio scegli
 
 ## Consegna di Codex
 
+- `art/WB-084/frammenti_1.png`, `frammenti_2.png` e `frammenti_3.png`, con i rispettivi prompt `.txt`.
+- `art/WB-084/materiali_a_1.png`, `materiali_a_2.png` e `materiali_a_3.png`, con i rispettivi prompt `.txt`.
+- `art/WB-084/materiali_b_1.png`, `materiali_b_2.png` e `materiali_b_3.png`, con i rispettivi prompt `.txt`.
+
+Nove fogli da 1536×1024. Un tentativo per variante, in ImageGen, con i prompt della scheda e i riferimenti in ordine. I sei fogli a fila singola sono stati ridimensionati in proporzione e centrati sulla tela richiesta. I tre fogli a due file hanno le dimensioni native richieste.
+
+Controllati numero, ordine, separazione, sagome e contorni. Visivamente lo spessore della china è simile a R1. Non si vedono scritte, ombre a terra o bagliori esterni. I materiali restano distinguibili nelle anteprime a 24 px. In scala di grigi, a quella misura le incisioni più sottili perdono contrasto. Il fondo verde si discosta da #00FF00 e alcune campiture mostrano lievi variazioni tonali. I valori campionati dal fondo sono riportati nei singoli `.txt`. La corrispondenza dimensionale con le monete e la leggibilità nell'interfaccia di gioco non sono state verificate.
+
 ## Resoconto di Claude
+
+Guardati tutti e nove i fogli (23 nov): nessun difetto visibile, contorni e colori in stile con le monete di WB-072.
+Scelti `frammenti_1` (i simboli più leggibili, l'onda del Leviatano e la piuma del Corvo si capiscono subito),
+`materiali_a_1` e `materiali_b_2` (la lapide della Polvere di tomba è più grande). Tagliati con
+`tools/grafica/fucina.py` (`fai_commesse`): il verde si toglie solo fuori dalla china, perché l'Acqua dello Stige e il
+frammento del Leviatano sono verdi dentro; ognuno al centro di un quadrato di 192 px (il doppio della misura più
+grande sullo schermo), nomi `frammento_<famiglia>` e `materiale_<id>` nell'atlante fucina. Nel gioco sono nello
+SCAFFALE e sui cartellini della scheda COMMESSE (scenario `commesse.txt`, provato anche a 1600x720 e 960x720).
+Da tenere d'occhio: la Pece, nera, sullo scaffale scuro si legge solo dal riflesso.

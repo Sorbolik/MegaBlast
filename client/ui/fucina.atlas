@@ -179,6 +179,21 @@ images {
   image: "/assets/fucina/filo.png"
 }
 images {
+  image: "/assets/fucina/frammento_corvo.png"
+}
+images {
+  image: "/assets/fucina/frammento_fabbro.png"
+}
+images {
+  image: "/assets/fucina/frammento_fornace.png"
+}
+images {
+  image: "/assets/fucina/frammento_leviatano.png"
+}
+images {
+  image: "/assets/fucina/frammento_vuoto.png"
+}
+images {
   image: "/assets/fucina/freccia.png"
 }
 images {
@@ -381,6 +396,39 @@ images {
 }
 images {
   image: "/assets/fucina/lucchetto.png"
+}
+images {
+  image: "/assets/fucina/materiale_ghiaccio.png"
+}
+images {
+  image: "/assets/fucina/materiale_grandine.png"
+}
+images {
+  image: "/assets/fucina/materiale_pece.png"
+}
+images {
+  image: "/assets/fucina/materiale_piuma.png"
+}
+images {
+  image: "/assets/fucina/materiale_sabbia.png"
+}
+images {
+  image: "/assets/fucina/materiale_sangue.png"
+}
+images {
+  image: "/assets/fucina/materiale_scheggia.png"
+}
+images {
+  image: "/assets/fucina/materiale_scoria.png"
+}
+images {
+  image: "/assets/fucina/materiale_stige.png"
+}
+images {
+  image: "/assets/fucina/materiale_tomba.png"
+}
+images {
+  image: "/assets/fucina/materiale_vento.png"
 }
 images {
   image: "/assets/fucina/medaglia.png"

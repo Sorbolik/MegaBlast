@@ -174,6 +174,48 @@ def fai_monete():
     intero("buono", secondo[1][2], 120)
 
 
+def fai_commesse():
+    """I frammenti di famiglia e i materiali delle Commesse (WB-084, 23 nov): frammenti_1
+    (fabbro, corvo, fornace, leviatano, vuoto), materiali_a_1 (due file da tre) e materiali_b_2.
+    Il verde si toglie solo fuori dalla china (l'Acqua dello Stige e il Leviatano sono verdi
+    dentro). Ognuno al centro di un quadrato, cosi' in una griglia hanno tutti lo stesso
+    ingombro: 192 px, il doppio della misura piu' grande sullo schermo (96)."""
+    p = os.path.join(ART, "WB-084")
+
+    def fuori(percorso):
+        rgb = np.array(Image.open(percorso).convert("RGB"))
+        o = senza_verde(percorso)
+        lab, _ = ndi.label(o[..., 3] < 255)
+        bordo = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+        sfondo = np.isin(lab, bordo[bordo > 0])
+        o[~sfondo, :3] = rgb[~sfondo]
+        o[~sfondo, 3] = 255
+        return o
+
+    def quadrato(nome, arr, lato=192):
+        im = Image.fromarray(arr, "RGBA")
+        k = (lato - 4) / max(im.size)
+        im = im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)
+        q = Image.new("RGBA", (lato, lato), (0, 0, 0, 0))
+        q.paste(im, ((lato - im.size[0]) // 2, (lato - im.size[1]) // 2))
+        salva(q, nome)
+        MISURE[nome] = (lato, lato)
+
+    fr = sorted(pezzi(fuori(os.path.join(p, "frammenti_1.png"))), key=lambda t: t[1])
+    assert len(fr) == 5, len(fr)
+    for nome, t in zip(FAMIGLIE, fr):
+        quadrato("frammento_" + nome, t[2])
+    a = pezzi(fuori(os.path.join(p, "materiali_a_1.png")))
+    assert len(a) == 6, len(a)
+    ymid = np.mean([t[0] for t in a])
+    a = sorted([t for t in a if t[0] < ymid], key=lambda t: t[1]) + sorted([t for t in a if t[0] >= ymid], key=lambda t: t[1])
+    b = sorted(pezzi(fuori(os.path.join(p, "materiali_b_2.png"))), key=lambda t: t[1])
+    assert len(b) == 5, len(b)
+    nomi = ["scoria", "piuma", "vento", "grandine", "scheggia", "stige", "tomba", "sangue", "sabbia", "pece", "ghiaccio"]
+    for nome, t in zip(nomi, a + b):
+        quadrato("materiale_" + nome, t[2])
+
+
 def fai_perle():
     """Le perle del livello e lo slot della firma di WB-074 (Sergio, 18 nov: il modo ufficiale
     di mostrare gli upgrade). Dal foglio perle_2: sopra le tre perline (vuota, piena grigia che
@@ -738,6 +780,7 @@ if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     fai_pezzi()
     fai_monete()
+    fai_commesse()
     fai_perle()
     fai_stendardo()
     fai_secondario()

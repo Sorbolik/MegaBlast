@@ -24,7 +24,7 @@ return {
 		training = "ALLENAMENTO",
 		armory = "ARMERIA",
 		-- the Smith's shop, the home's door that was ARMERIA (18 Nov)
-		shop = "SHOP",
+		shop = "BOTTEGA",
 		stats = "STATISTICHE",
 		replay = "RIVEDI",
 	},
@@ -402,6 +402,8 @@ return {
 
 	-- menu/armory.lua (the SHOP) and menu/bench.lua (the ARMERIA in the ZAINO)
 	armory = {
+		-- the two tabs of the BOTTEGA: the Smith's orders and the shop
+		tab_orders = "COMMESSE", tab_bench = "BANCO",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
 			attack = "Attacco", defense = "Difesa",
@@ -447,6 +449,54 @@ return {
 		day_line = "cambiano domani",
 		use_voucher = "USA UN BUONO",
 		you_have = "ne hai %d",
+	},
+	-- menu/orders_ui.lua: the COMMESSE tab of the BOTTEGA (docs/commesse.md)
+	orders = {
+		clients = { caronte = "Caronte", minosse = "Minosse", cerbero = "Cerbero", plutone = "Plutone",
+			flegias = "Flegiàs", medusa = "Medusa", minotauro = "Minotauro", malacoda = "Malacoda" },
+		-- the materials, as a request names them: "6 Piume del Limbo"
+		materials = { scoria = "Scorie", piuma = "Piume del Limbo", vento = "Venti in bottiglia", grandine = "Chicchi di grandine",
+			scheggia = "Schegge di masso", stige = "Acque dello Stige", tomba = "Polveri di tomba", sangue = "Sangue bollente",
+			sabbia = "Sabbie roventi", pece = "Pece", ghiaccio = "Ghiacci di Cocito" },
+		request_material = "%d %s",
+		-- the feats (%s: how many)
+		feats = { partite = "Gioca %s partite online", vinte = "Vinci %s partite online", vinte_2v2 = "Vinci %s partite 2 contro 2",
+			punti = "Fate %s punti di squadra", nel_vuoto = "Buttate %s nemici nel vuoto", danno = "Fate %s danni di squadra",
+			mvp = "Sii il migliore in campo %s volte", casse = "Apri %s casse", teletrasporti = "Teletrasportati %s volte",
+			premi = "Prendi %s premi di fine partita" },
+		ready = "PRONTA",
+		progress = "%s su %s",
+		free = "GRATIS",
+		welcome = "Benvenuto!",
+		empty_place = "POSTO LIBERO",
+		empty_when = "Domani alle 5",
+		week = "DELLA SETTIMANA · %s",
+		week_ends = "Scade domenica",
+		smith = "LA COMMESSA DEL FABBRO",
+		smith_line = "Sempre aperta, la famiglia la scegli tu.",
+		shelf = "SCAFFALE",
+		shelf_materials = "MATERIALI",
+		shelf_fragments = "FRAMMENTI",
+		call = "CHIAMA UN CLIENTE",
+		deliver = "CONSEGNA",
+		none_ready = "Niente di pronto",
+		need_network = "Serve la rete",
+		missing_obsidian = "Ti mancano %d",
+		ready_one = "1 pronta",
+		ready_many = "%d pronte",
+		cost = "costa %d",
+		-- the test bench (test profiles only: menu/orders_bench.lua)
+		bench = "PROVA",
+		bench_title = "BANCO DI PROVA",
+		bench_day = "GIORNO FINTO: %s",
+		bench_won = "PARTITA FINTA VINTA",
+		bench_lost = "PARTITA FINTA PERSA",
+		bench_day1 = "PASSA UN GIORNO",
+		bench_week = "PASSA UNA SETTIMANA",
+		bench_client = "ARRIVA UN CLIENTE",
+		bench_lucky = "PROSSIMO COLPO BUONO",
+		bench_reset = "RICOMINCIA DA CAPO",
+		bench_state = "%d PARTITE FINTE · %d CLIENTI · %d CONSEGNE",
 	},
 
 

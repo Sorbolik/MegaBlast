@@ -1,0 +1,31 @@
+# Le Commesse del Fabbro (docs/commesse.md): la BOTTEGA con le schede COMMESSE e BANCO,
+# col profilo di prova FINE GIOCO (tutti i clienti, commesse in ogni stato), e il banco
+# di prova che fa passare partite e giorni finti.
+# Gira anche con --schermo 1600x720 e 960x720.
+imposta prova_test prova
+
+aspetta 4
+tocca_bordo 210 170 mezzo destra    # la porta BOTTEGA
+aspetta 10
+foto 01_commesse
+tocca_bordo 275 49 basso sinistra   # PROVA: il banco di prova al posto del Fabbro
+aspetta 2
+foto 02_banco_di_prova
+tocca_bordo 214 189 alto sinistra   # PARTITA FINTA VINTA
+aspetta 1
+tocca_bordo 214 189 alto sinistra
+aspetta 1
+tocca_bordo 214 189 alto sinistra
+aspetta 2
+foto 03_tre_partite_finte
+tocca_bordo 178 52 basso destra     # CONSEGNA
+aspetta 3
+foto 04_consegnate
+tocca_bordo 214 297 alto sinistra   # PASSA UN GIORNO
+aspetta 2
+foto 05_il_giorno_dopo
+tocca_bordo 275 49 basso sinistra   # PROVA: torna il Fabbro
+aspetta 1
+tocca_bordo 590 53 alto sinistra    # BANCO: lo shop di sempre
+aspetta 4
+foto 06_banco
