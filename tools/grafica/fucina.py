@@ -15,6 +15,7 @@
 #   client/ui/pieces.lua                le misure di ogni pezzo (generato)
 #   client/ui/fucina.atlas              l'atlante (generato)
 # Servono numpy, scipy e Pillow.
+import math
 import os
 import numpy as np
 from PIL import Image, ImageChops, ImageDraw
@@ -324,13 +325,21 @@ def fai_secondario():
     S = 4                       # il disegno a quattro volte, ridotto: bordi lisci
     W, FACE, R, INK = 520, 108, 30, 7
     stati = {
-        # nome: (altezza in tutto, ferro, luce)
-        "acceso": (120, (0x3A, 0x33, 0x40), (0x50, 0x48, 0x5A)),
-        "premuto": (114, (0x33, 0x2D, 0x39), (0x44, 0x3D, 0x4C)),
-        "spento": (120, (0x4A, 0x55, 0x60), (0x5C, 0x67, 0x72)),
+        # nome: (altezza in tutto, ferro, luce). «chiaro»: col mouse o la luce del controller
+        # sopra (Sergio, 23 nov: «all'hover cambino sfumatura di colore»), una tinta piatta
+        # piu' chiara, niente aloni. «principale»: lo stesso disegno in ferro rovente
+        # (Sergio, 23 nov: «come il secondario [...] ma di un colore leggermente diverso»)
+        "secondario_acceso": (120, (0x3A, 0x33, 0x40), (0x50, 0x48, 0x5A)),
+        "secondario_chiaro": (120, (0x46, 0x3E, 0x4E), (0x61, 0x57, 0x6D)),
+        "secondario_premuto": (114, (0x33, 0x2D, 0x39), (0x44, 0x3D, 0x4C)),
+        "secondario_spento": (120, (0x4A, 0x55, 0x60), (0x5C, 0x67, 0x72)),
+        "principale_acceso": (120, (0x4C, 0x28, 0x1F), (0x6C, 0x2B, 0x19)),
+        "principale_chiaro": (120, (0x5C, 0x30, 0x25), (0x83, 0x34, 0x1E)),
+        "principale_premuto": (114, (0x44, 0x27, 0x1F), (0x5B, 0x29, 0x1C)),
+        "principale_spento": (120, (0x4A, 0x55, 0x60), (0x5C, 0x67, 0x72)),
     }
     nero = (0x0A, 0x08, 0x0B, 255)
-    for stato, (h, ferro, luce) in stati.items():
+    for nome, (h, ferro, luce) in stati.items():
         im = Image.new("RGBA", (W * S, h * S), (0, 0, 0, 0))
         d = ImageDraw.Draw(im)
         top = 0                 # la faccia in alto, sotto lo spessore (12, premuto 6)
@@ -346,9 +355,36 @@ def fai_secondario():
         ImageDraw.Draw(banda).rectangle((0, 0, W * S, (top + INK + (FACE - 2 * INK) * 0.34) * S), fill=255)
         im.paste(Image.new("RGBA", im.size, luce + (255,)), (0, 0), ImageChops.multiply(maschera, banda))
         im = im.resize((W, h), Image.LANCZOS)
-        tre("secondario_" + stato, np.asarray(im), h, 0.26)
+        tre(nome, np.asarray(im), h, 0.26)
     # le scritte dopo la moneta, lontano dai bordi
     SPAZI["secondario_acceso"] = (118, 14, 26, 24)
+    SPAZI["principale_acceso"] = (118, 14, 26, 24)
+    # la freccina dell'indietro (Sergio, 23 nov: «tutta bianca come prima, basta che non si
+    # incontri cosi' male in punta, e che sia ben definito il <»): un pezzo solo, la punta
+    # unita ad angolo vivo, i capi tondi, niente contorno
+    fai_freccina()
+
+
+def fai_freccina():
+    S, W, H, T = 4, 56, 80, 14      # misure del disegno, T lo spessore del tratto
+    im = Image.new("RGBA", (W * S, H * S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    tip, top, bot = (12.0, H / 2), (W - 12.0, 10.0), (W - 12.0, H - 10.0)
+    ux, uy = top[0] - tip[0], top[1] - tip[1]
+    l = math.hypot(ux, uy)
+    ux, uy = ux / l, uy / l
+    nx, ny = -uy, ux                # normale del braccio in alto (verso l'interno, giu')
+    h = T / 2
+    # il gomito: dove si incontrano i bordi dei due bracci (simmetrici sull'asse orizzontale)
+    sin_a = abs(uy)
+    out_tip = (tip[0] - h / sin_a, tip[1])
+    in_tip = (tip[0] + h / sin_a, tip[1])
+    poli = [out_tip, (top[0] - nx * h, top[1] - ny * h), (top[0] + nx * h, top[1] + ny * h), in_tip,
+            (bot[0] + nx * h, bot[1] - ny * h), (bot[0] - nx * h, bot[1] + ny * h)]
+    d.polygon([(x * S, y * S) for x, y in poli], fill=(0xF4, 0xEC, 0xE1, 255))
+    for cx, cy in (top, bot):
+        d.ellipse(((cx - h) * S, (cy - h) * S, (cx + h) * S, (cy + h) * S), fill=(0xF4, 0xEC, 0xE1, 255))
+    intero("freccina", np.asarray(im), 96)
     # (le monete del foglio monete_* non sono piaciute a Sergio: si rifanno con WB-072)
 
 

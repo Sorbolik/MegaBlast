@@ -230,6 +230,9 @@ images {
   image: "/assets/fucina/freccia.png"
 }
 images {
+  image: "/assets/fucina/freccina.png"
+}
+images {
   image: "/assets/fucina/gemma.png"
 }
 images {
@@ -710,6 +713,42 @@ images {
   image: "/assets/fucina/primario_spento_sx.png"
 }
 images {
+  image: "/assets/fucina/principale_acceso_cx.png"
+}
+images {
+  image: "/assets/fucina/principale_acceso_dx.png"
+}
+images {
+  image: "/assets/fucina/principale_acceso_sx.png"
+}
+images {
+  image: "/assets/fucina/principale_chiaro_cx.png"
+}
+images {
+  image: "/assets/fucina/principale_chiaro_dx.png"
+}
+images {
+  image: "/assets/fucina/principale_chiaro_sx.png"
+}
+images {
+  image: "/assets/fucina/principale_premuto_cx.png"
+}
+images {
+  image: "/assets/fucina/principale_premuto_dx.png"
+}
+images {
+  image: "/assets/fucina/principale_premuto_sx.png"
+}
+images {
+  image: "/assets/fucina/principale_spento_cx.png"
+}
+images {
+  image: "/assets/fucina/principale_spento_dx.png"
+}
+images {
+  image: "/assets/fucina/principale_spento_sx.png"
+}
+images {
   image: "/assets/fucina/punto_libero.png"
 }
 images {
@@ -1008,6 +1047,15 @@ images {
 }
 images {
   image: "/assets/fucina/secondario_acceso_sx.png"
+}
+images {
+  image: "/assets/fucina/secondario_chiaro_cx.png"
+}
+images {
+  image: "/assets/fucina/secondario_chiaro_dx.png"
+}
+images {
+  image: "/assets/fucina/secondario_chiaro_sx.png"
 }
 images {
   image: "/assets/fucina/secondario_premuto_cx.png"

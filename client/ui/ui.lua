@@ -395,6 +395,14 @@ local function usable(b)
 	return not b.spento and gui.is_enabled(b.nodo, true)
 end
 
+-- A button with its own lighter drawing (ui/kit.lua, the slabs: Sergio, 23 Nov, «all'hover
+-- cambino sfumatura di colore») shows it while the controller's light or the mouse is on it
+local function shade(list_of, b)
+	if b and b.piastra and b.piastra.on_light then
+		b.piastra.on_light(list_of.luce == b or list_of.hover == b)
+	end
+end
+
 -- The light on b (nil: off)
 function M.light(list_of, b)
 	local first_one = list_of.luce
@@ -403,10 +411,21 @@ function M.light(list_of, b)
 		gui.set_color(first_one.bordo, first_one.riposo)
 	end
 	list_of.luce = b
+	shade(list_of, first_one)
 	if b then
 		gui.set_scale(b.nodo, LIGHT_SCALE)
 		gui.set_color(b.bordo, b.colore)
+		shade(list_of, b)
 	end
+end
+
+-- The mouse over a button (desktop): its lighter drawing, nothing else
+local function hover(list_of, b)
+	local was = list_of.hover
+	if was == b then return end
+	list_of.hover = b
+	shade(list_of, was)
+	shade(list_of, b)
 end
 
 -- Where the light starts: the last confirmed, the main one, or the first
@@ -476,6 +495,11 @@ function M.touch(list_of, action_id, action)
 				if b.ui_action == "indietro" and usable(b) then return "indietro" end
 			end
 		end
+		return nil
+	end
+	-- (no action: the mouse moved)
+	if action_id == nil then
+		if action.x and not list_of.held_down then hover(list_of, under(list_of, action.x, action.y)) end
 		return nil
 	end
 	if action_id ~= M.TOUCH then return nil end

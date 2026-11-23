@@ -610,96 +610,29 @@ function M.button(list_of, p, ui_action, opt)
 	return b
 end
 
--- The main action: the gold plate between fire and ice (WB-052, C · brace e
--- gelo; Sergio, 15 Nov: one primary button, the same on every screen) and,
--- at its left, a line saying what it starts. Three drawings: lit, pressed
--- (while the finger is on it) and off (it can't be done now: grey and frozen,
--- and the line says why). opt: size (of the label), sub, off. Under the thread
--- (y from 540) it takes its place in the band; higher (the vignette, a weapon's
--- sheet) it is drawn where asked, h tall
-local function sub_y(y, h)
-	-- under it, or over it when the thread is there
-	return y + h + 30 > 640 and y - 10 or y + h + 30
-end
-local LIT_H = 104   -- the lit drawing on the screen; the others as tall as drawn next to it
-local FACE_PAD = 6  -- between the label and the ends of the gem's free face
+-- The buttons (Sergio, 23 Nov, docs/ui-catalogo.md, purposes 1 and 2): one slab
+-- for all, the «Ferro liscio» drawn in tools/grafica/fucina.py, the same height
+-- side by side, each with its big icon sticking out of its left end. The main
+-- action is the same slab in red-hot iron (principale_*), the others dark iron
+-- (secondario_*). Four drawings: lit, lighter (the mouse or the controller's
+-- light on it: ui.lua, on_light), pressed (the finger on it), off (cold grey
+-- iron: it can't be done now, and the short line under the label says why).
 
-function M.action(g, label, x, y, w, h, opt)
-	opt = opt or {}
-	local size = opt.size or math.min(92, (w - 60) / (#label * 0.56))
-	-- an action at the bottom right goes under the thread, in the band, the
-	-- way back on the other side (Sergio, 12 Nov); its line at its left
-	local foot = y >= 540
-	if foot then
-		x, y, w, h = 926, M.THREAD + 10, 300, 88
-		size = math.min(size, 44)
-	end
-	local cx, cy = x + w / 2, y + h / 2
-	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
-	local p = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
-	local k = (foot and LIT_H or h * 1.18) / P.primario_acceso.h
-	local looks = {}
-	for _, state in ipairs({ "acceso", "premuto", "spento" }) do
-		local name = "primario_" .. state
-		local s = empty(0, 0, 0, 0, n)
-		three(s, name, w, P[name].h * k)
-		gui.set_enabled(s, state == (opt.off and "spento" or "acceso"))
-		looks[state] = s
-	end
-	-- the label in the middle of the free face of the gem, away from the flame
-	-- on the left and the crystals on the right; off, on the grey part before
-	-- the ice (pieces.lua, box; Sergio, 17 Nov: never over the button's drawings).
-	-- As big as fits both faces: lit or off, the same label has the same size
-	local function face(state)
-		local f = room("primario_" .. state, cx, cy, w, P["primario_" .. state].h * k)
-		f.wide, f.tall = f.x1 - f.x0 - 2 * FACE_PAD, f.y1 - f.y0
-		return f
-	end
-	local lit, off = face("acceso"), face("spento")
-	local where = opt.off and off or lit
-	size = math.max(M.MIN_TEXT, math.min(size, lit.tall / 0.72, off.tall / 0.72))
-	local ink = opt.off and with_alpha(C.INK, 0.55) or C.INK
-	p.label = M.text(p.g, label, (where.x0 + where.x1) / 2, (where.y0 + where.y1) / 2 + size * 0.36, size, ink, "middle")
-	local full = gui.get_scale(p.label)
-	-- another label on the same button (the vignette: AVANTI, then VAI!)
-	p.set_label = function(t)
-		gui.set_text(p.label, t)
-		gui.set_scale(p.label, full)
-		local lw = M.width(p.label)
-		local fit = math.min(1, lit.wide / lw, off.wide / lw)
-		if fit < 1 then gui.set_scale(p.label, full * fit); M.check_small(p.label) end
-	end
-	p.set_label(label)
-	local muted = opt.off and C.FROST or C.MUTE
-	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, cy + 7, 19, muted, "end", 0.6)
-	elseif opt.sub then p.sub = M.text(g, opt.sub, cx, sub_y(y, h), 16, muted, "middle", 1.2) end
-	-- the finger on it: the pressed drawing (ui.ui, premi)
-	if not opt.off then
-		local at = gui.get_position(p.label)
-		p.on_press = function(down)
-			gui.set_enabled(looks.acceso, not down)
-			gui.set_enabled(looks.premuto, down)
-			gui.set_position(p.label, vec(at.x, at.y - (down and 4 or 0)))
-		end
-	end
-	return p
-end
+-- At the bottom right, under the thread: the main action's place on every screen
+local FOOT = { x = 948, y = 640, w = 308, h = 62 }
 
--- The secondary action (WB-071, Sergio 18 Nov: never the light plates for a
--- button): a slab of dark iron, ember on its bottom left and frost on its top
--- right, with a round socket on the left for the action's icon (a piece of the
--- fucina atlas), its label in sand and under it a short line (the cost, why
--- not). Three drawings like the main one: lit, pressed, off (cold grey iron).
--- (x, y) its top left, w x h. opt: icon, sub, off. Returns the plate for M.button
+-- (x, y) its top left, w x h. opt: icon, sub, sub_color, off, main, size (of the
+-- label). Returns the plate for M.button
 function M.secondary(g, label, x, y, w, h, opt)
 	opt = opt or {}
+	local kind = opt.main and "principale_" or "secondario_"
 	local cx, cy = x + w / 2, y + h / 2
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
 	local p = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
-	local k = h / P.secondario_acceso.h
+	local k = h / P[kind .. "acceso"].h
 	local looks = {}
-	for _, state in ipairs({ "acceso", "premuto", "spento" }) do
-		local name = "secondario_" .. state
+	for _, state in ipairs({ "acceso", "chiaro", "premuto", "spento" }) do
+		local name = kind .. state
 		local s = empty(0, 0, 0, 0, n)
 		local sh = P[name].h * k
 		gui.set_position(s, vec(0, (sh - h) / 2))
@@ -720,28 +653,66 @@ function M.secondary(g, label, x, y, w, h, opt)
 		for _, n in ipairs({ sh, ic }) do gui.set_rotation(n, vmath.vector3(0, 0, 10)) end
 		if opt.off then gui.set_color(ic, vmath.vector4(0.45, 0.45, 0.5, 1)) end
 	end
-	local box = room("secondario_acceso", cx, cy, w, h)
-	local tx = box and box.x0 or x + h
+	-- the words after the icon; without one (its icon still to come) in the middle
+	local box = room(kind .. "acceso", cx, cy, w, h)
+	local x0 = opt.icon and box and box.x0 or x + h * 0.4
+	local x1 = box and box.x1 or x + w - 12
+	local room_w = x1 - x0
+	local tx, align = opt.icon and x0 or (x0 + x1) / 2, opt.icon and "start" or "middle"
 	local ink = opt.off and with_alpha(C.SAND, 0.45) or C.SAND
-	local room_w = (box and box.x1 or x + w - 12) - tx
-	local lt = M.text(f, label, tx, opt.sub and y + h * 0.46 or y + h * 0.6, 20, ink, "start", 0.5)
-	if M.width(lt) > room_w then gui.set_scale(lt, gui.get_scale(lt) * (room_w / M.width(lt))) end
+	local size = math.max(M.MIN_TEXT, math.min(opt.size or 20, h * (opt.sub and 0.34 or 0.42)))
+	local lt = M.text(f, label, tx, opt.sub and y + h * 0.48 or y + h / 2 + size * 0.36, size, ink, align, 0.5)
+	local full = gui.get_scale(lt)
+	-- another label on the same button (the vignette: AVANTI, then VAI!)
+	p.set_label = function(t)
+		gui.set_text(lt, t)
+		gui.set_scale(lt, full)
+		if M.width(lt) > room_w then gui.set_scale(lt, full * (room_w / M.width(lt))); M.check_small(lt) end
+	end
+	p.set_label(label)
+	p.label = lt
 	if opt.sub then
-		local st = M.text(f, opt.sub, tx, y + h * 0.78, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or C.MUTE, "start", 0.5)
+		local st = M.text(f, opt.sub, tx, y + h * 0.8, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or (opt.main and C.HOT or C.MUTE), align, 0.5)
 		if M.width(st) > room_w then gui.set_scale(st, gui.get_scale(st) * (room_w / M.width(st))) end
+		p.sub = st
 	end
 	if not opt.off then
+		local down_now, lit_now = false, false
+		local function show()
+			gui.set_enabled(looks.acceso, not down_now and not lit_now)
+			gui.set_enabled(looks.chiaro, not down_now and lit_now)
+			gui.set_enabled(looks.premuto, down_now)
+		end
 		p.on_press = function(down)
-			gui.set_enabled(looks.acceso, not down)
-			gui.set_enabled(looks.premuto, down)
+			down_now = down
+			show()
 			gui.set_position(p.face_node, vec(0, down and -3 or 0))
+		end
+		p.on_light = function(on)
+			lit_now = on
+			show()
 		end
 	end
 	return p
 end
 
+-- The main action: the red-hot slab. At the bottom right (y from 540) it takes
+-- its place under the thread, as tall as the others beside it; higher (the
+-- vignette, a weapon's sheet) it is drawn where asked, w x h
+function M.action(g, label, x, y, w, h, opt)
+	opt = opt or {}
+	if y >= 540 then x, y, w, h = FOOT.x, FOOT.y, FOOT.w, FOOT.h end
+	local o = {}
+	for k, v in pairs(opt) do o[k] = v end
+	o.main = true
+	o.size = opt.size and math.min(opt.size, 30) or 30
+	return M.secondary(g, label, x, y, w, h, o)
+end
+
 -- A plate goes down when pressed, and comes back
 function M.press(p, down)
+	-- (the slabs have their own pressed drawing: M.secondary, on_press)
+	if not p.d then return end
 	local d = down and p.d * 0.75 or 0
 	gui.animate(p.face_node, "position", vec(0, -d), gui.EASING_OUTQUAD, 0.06)
 end
@@ -770,8 +741,8 @@ function M.header(list_of, label, accent, back_action, from)
 		local bn = empty(74, 62, 114, 76, bl.node)
 		h.back = { node = bn, face_node = empty(0, 0, 0, 0, bn), d = 5, g = { node = bn, ox = 74, oy = 658 } }
 		whole("indietro", 0, 0, 76, h.back.face_node)
-		gui.set_parent(M.line(h.back.g, 82, 642, 64, 658, 7, C.SAND), h.back.face_node, true)
-		gui.set_parent(M.line(h.back.g, 64, 658, 82, 674, 7, C.SAND), h.back.face_node, true)
+		-- the little white arrow, one piece with a clean tip (tools/grafica/fucina.py, freccina)
+		whole("freccina", -2, 0, 36, h.back.face_node)
 		M.text(bl, from or "", 74, 713, 16, C.MUTE, "middle", 1)
 		-- the whole corner takes the tap
 		local zone = empty(76, M.BAND / 2, 152, M.BAND, bl.node)
