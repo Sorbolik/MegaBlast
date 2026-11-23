@@ -2,6 +2,14 @@
 -- fucina atlas (w, h and, for the pieces in three or nine parts, the cap c;
 -- box: the margins left, top, right, bottom of the room to write in).
 return {
+	badge_caronte = { w = 166, h = 185, box = { 63, 117, 103, 68 } },
+	badge_cerbero = { w = 160, h = 128, box = { 83, 60, 77, 68 } },
+	badge_flegias = { w = 126, h = 148, box = { 62, 80, 64, 68 } },
+	badge_malacoda = { w = 171, h = 163, box = { 72, 95, 99, 68 } },
+	badge_medusa = { w = 235, h = 175, box = { 106, 107, 129, 68 } },
+	badge_minosse = { w = 184, h = 166, box = { 64, 98, 120, 68 } },
+	badge_minotauro = { w = 165, h = 159, box = { 80, 91, 85, 68 } },
+	badge_plutone = { w = 184, h = 154, box = { 63, 86, 121, 68 } },
 	barra_brace = { w = 378, h = 44, c = 38 },
 	barra_chiara = { w = 378, h = 44, c = 38 },
 	barra_gelo = { w = 382, h = 44, c = 38 },

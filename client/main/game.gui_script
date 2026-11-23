@@ -1920,8 +1920,12 @@ local function on_server_message(self, m)
 			-- the lineup: the server also gives the draft its time
 			-- (config.LINEUP_SECONDS); coming back halfway, only the strip
 			local stays = math.min(gconfig.LINEUP_SECONDS, (m.left or 0) * game.DT - gconfig.DRAFT_SECONDS)
+			local humans = 0
+			for _, pl in ipairs(m.players) do
+				if not pl.bot then humans = humans + 1 end
+			end
 			CP.open_lineup(self, CP.showcases(self, m.players, name_list, { me = m.you, rete = m.vetrine or {} }),
-				profile.GROUP_NAMES[m.mode] or "", stays)
+				profile.GROUP_NAMES[m.mode] or "", stays, { p = self.profilo, map = m.map, humans = humans })
 		end
 	elseif m.t == "start" and not self.online_iris then
 		-- the match starts under the iris (the painted map loads in a long
@@ -2396,7 +2400,7 @@ function CP.close_choice(self)
 end
 
 -- The lineup over the weapon draft (seconds: how many are left, online)
-function CP.open_lineup(self, showcases, title, seconds_left)
+function CP.open_lineup(self, showcases, title, seconds_left, orders)
 	CP.close_choice(self)
 	-- they leave with the draft, however it closes
 	menu.pick.when_closing(self.scelta, function() CP.close_choice(self) end)
@@ -2405,7 +2409,7 @@ function CP.open_lineup(self, showcases, title, seconds_left)
 		self.strip = menu.lineup.strip(showcases)
 		return
 	end
-	self.schier = menu.lineup.new(showcases, title)
+	self.schier = menu.lineup.new(showcases, title, orders)
 	if seconds_left then self.schier.t = seconds_left end
 	-- the queue's pill above the lineup
 	if self.pill then menu.pill.raise(self.pill) end
@@ -2820,7 +2824,11 @@ local function start_local(self, against)
 		if p.bot then bot.choose(d, i, seed) end
 	end
 	menu.pick.show(self.scelta, d, name_list, palette)
-	CP.open_lineup(self, CP.showcases(self, opts.players, name_list, { me = 1 }), profile.GROUP_NAMES[modo] or "")
+	-- prova_commesse 1: the lineup shows the Smith's orders as an online one with a mate
+	-- (scenari/squadre_commesse.txt)
+	local orders = SIMULATE and config_int("megablast.prova_commesse", 0) == 1
+		and { p = self.profilo, map = opts.map or require("sim.maps").pick(seed), humans = 2 } or nil
+	CP.open_lineup(self, CP.showcases(self, opts.players, name_list, { me = 1 }), profile.GROUP_NAMES[modo] or "", nil, orders)
 end
 
 -- The match on the same phone, with the players coming out of the draft (nil: no draft)

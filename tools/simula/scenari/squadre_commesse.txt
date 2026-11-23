@@ -1,0 +1,17 @@
+# Le commesse prima della partita (Sergio, 23 nov, 1A): nella striscia in basso dello
+# schieramento le commesse che la partita fa avanzare e il materiale che cade sulla
+# mappa. Col profilo di prova FINE GIOCO e prova_commesse 1 (vale come online con un
+# compagno). Da provare anche con --schermo 1600x720 e 960x720.
+imposta prova_scelta 1
+imposta prova_test prova
+imposta prova_commesse 1
+
+aspetta 4
+tocca 220 172                      # ALLENAMENTO
+aspetta 1
+tocca 547 470                       # 1 CONTRO 1
+aspetta 0.3
+tocca_bordo 175 52 basso destra    # GIOCA
+aspetta_stato modo=scelta 5
+aspetta 0.8
+foto 01_squadre_commesse

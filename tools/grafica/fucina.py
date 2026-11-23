@@ -17,7 +17,7 @@
 # Servono numpy, scipy e Pillow.
 import os
 import numpy as np
-from PIL import Image, ImageChops, ImageDraw
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 from scipy import ndimage as ndi
 
 QUI = os.path.dirname(os.path.abspath(__file__))
@@ -284,6 +284,57 @@ def fai_bottega():
         for nome, x in (("chiede", 394), ("contento", 777), ("fiero", 1160)):
             im = cs.crop((x, alto, x + 366, alto + 485)).convert("RGB")
             im.save(os.path.join(BUSTI, "%s_%s.jpg" % (cliente, nome)), quality=92)
+
+
+def fai_badge_clienti():
+    """Il badge di ogni cliente a 10 perle (Sergio, 23 nov): come il cerchietto del profilo,
+    la testa parte dalla base del cerchio e sopra (e di lato) puo' uscire. Il busto chiede
+    ritagliato dalla carta (la carta che tocca i bordi e le macchie grandi chiuse), messo
+    con la testa al centro del disco; sotto la linea di mezzo si taglia col cerchio, sopra
+    no. Il disco e l'anello del colore del filo li disegna il gioco (ui/tag_card.lua):
+    qui il disco e' D = 128 (2x il badge piu' grande, 64 nel profilo), centro a (CX, CY)."""
+    from scipy import ndimage
+    D, W, H = 128, 360, 208
+    CX, CY = W // 2, H - D // 2 - 4
+    # dove sta la testa nel busto (366 x 485): centro x, y e larghezza, a occhio
+    teste = {"caronte": (150, 175, 170), "minosse": (172, 150, 190), "cerbero": (183, 125, 260),
+             "plutone": (165, 135, 190), "flegias": (150, 160, 200), "medusa": (170, 140, 170),
+             "minotauro": (195, 170, 230), "malacoda": (115, 150, 150)}
+    for cliente, (hx, hy, hw) in teste.items():
+        im = np.asarray(Image.open(os.path.join(BUSTI, cliente + "_chiede.jpg")).convert("RGB")).astype(int)
+        fondo = np.median(np.concatenate([im[0], im[:, 0], im[:, -1]]), axis=0)
+        carta = np.abs(im - fondo).sum(axis=2) < 60
+        lab, n = ndimage.label(carta)
+        bordo = set(np.unique(np.concatenate([lab[0], lab[:, 0], lab[:, -1]]))) - {0}
+        grandi = {i + 1 for i, k in enumerate(ndimage.sum(carta, lab, range(1, n + 1))) if k > 400}
+        fuori = np.isin(lab, list(bordo | grandi))
+        figura = ndimage.binary_opening(~fuori, iterations=1)
+        lab2, n2 = ndimage.label(figura)
+        figura = lab2 == (np.argmax(ndimage.sum(figura, lab2, range(1, n2 + 1))) + 1)
+        alfa = Image.fromarray((figura * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.8))
+        busto = Image.fromarray(np.dstack([im.astype(np.uint8), np.asarray(alfa)]), "RGBA")
+        k = D * 0.95 / hw
+        busto = busto.resize((round(busto.size[0] * k), round(busto.size[1] * k)), Image.LANCZOS)
+        tela = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        tela.alpha_composite(busto, (round(CX - hx * k), round(CY - D * 0.12 - hy * k)))
+        a = np.asarray(tela).copy()
+        yy, xx = np.mgrid[0:H, 0:W]
+        dentro = (xx - CX + 0.5) ** 2 + (yy - CY + 0.5) ** 2 <= (D / 2) ** 2
+        # fuori dal cerchio resta solo la testa (sopra la linea di mezzo, attaccata al
+        # centro della testa): non il remo o la lancia che spuntano di lato
+        sopra = (yy < CY) & (a[..., 3] > 40) & ~dentro | (yy < CY) & dentro & (a[..., 3] > 40)
+        lab3, _ = ndimage.label(sopra, structure=np.ones((3, 3)))
+        testa = lab3 == lab3[round(CY - D * 0.12), CX]
+        a[..., 3] = np.where(dentro | testa, a[..., 3], 0)
+        ys, xs = np.where(a[..., 3] > 0)
+        x0, x1 = xs.min(), xs.max() + 1
+        # il pezzo si ritaglia ai bordi veri; il centro del disco il gioco lo legge
+        # dal box (sinistra e alto = dove sta il centro, destra e basso il resto)
+        y0 = ys.min()
+        out = Image.fromarray(a[y0:, x0:x1], "RGBA")
+        salva(out, "badge_" + cliente)
+        MISURE["badge_" + cliente] = (out.size[0], out.size[1])
+        SPAZI["badge_" + cliente] = (CX - x0, CY - y0, x1 - CX, H - CY)
 
 
 def fai_perle():
@@ -865,6 +916,7 @@ if __name__ == "__main__":
     fai_fette()
     fai_sfondi()
     fai_filo()
+    fai_badge_clienti()
     fai_misure()
     fai_atlante()
     print("OK")

@@ -288,6 +288,9 @@ function N.draft_new(seed, mode, r, bots, eq)
 	for i, p in ipairs(players) do
 		if p.bot then bot.choose(d, i, seed) end
 	end
+	-- the map the match will have (game.new picks it from the seed): the lineup
+	-- shows what drops there for the Smith's orders
+	d.map = maps.pick(seed)
 	return d
 end
 
@@ -318,11 +321,12 @@ end
 
 -- The two fans (offer: primaries, offer2: secondaries) and the picks of robot i
 -- (p, p2, or ""): the others' picks aren't sent (Sergio, 30 Oct), only who
--- has pressed PRONTO (rd: 1 or 0 for each robot)
+-- has pressed PRONTO (rd: 1 or 0 for each robot); map: the match's map
 function N.draft_state(d, i)
 	local rd = {}
 	for k = 1, #d.players do rd[k] = d.ready[k] and 1 or 0 end
-	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = d.picks[i] or "", p2 = d.picks2[i] or "", rd = rd }
+	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = d.picks[i] or "", p2 = d.picks2[i] or "", rd = rd,
+		map = d.map }
 end
 
 -- The draft's players for the draft message: teams, the bots' grades and what

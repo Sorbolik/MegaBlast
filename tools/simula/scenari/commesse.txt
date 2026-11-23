@@ -28,7 +28,7 @@ aspetta 1
 foto 01c_famiglia_del_fabbro
 tocca_centro 150 320
 aspetta 1
-tocca_bordo 565 49 basso centro     # CHIAMA UN CLIENTE: il libro dei clienti
+tocca_bordo 565 49 basso centro     # I TUOI CLIENTI: il libro dei clienti
 aspetta 2
 tocca_centro 631 494                # il secondo cliente
 aspetta 1
