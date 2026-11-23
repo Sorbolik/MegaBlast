@@ -1,0 +1,17 @@
+Image 1 is a character sheet of Charon, a character of our game: four panels in one row, a full figure and three busts with different expressions. It is the SHEET and the STYLE to copy exactly: the same four panels of the same size, thick slightly irregular black ink outline, short ink hatching for the shadows, flat warm colors, a pale parchment background in each panel, hand-drawn like a European comic. Image 2 is the character sheet of the Blacksmith of the same world: the same cartoon devil kind.
+
+Draw a character sheet of a NEW character of the same world, in the same style and with the same four panels: MALACODA, the chief of the Malebranche devils who guard the boiling pitch in the eighth circle; a smooth liar: half of what he says is false. He or she is a customer of the Blacksmith: funny rather than scary. The character: a lean, sly, charming trickster devil with a sharp foxy face, a long thin pointed nose, a thin curled black moustache, narrow clever eyes, two thin horns that curl outward, two small bat wings on his back and a long forked TAIL that is always raised behind him in the shape of a question mark. Skin dark crimson (#8E2F3A, shadow #5A1B24), hands and tail tip black as if dipped in pitch. He wears a short cape of black raven feathers over a waistcoat, pale steel blue (#9EC4E0, highlight #D6E9F5, shadow #5F86A3). Prop: he carries a long pole that ends in an iron HOOK.
+
+Four panels on one sheet, same size, in one row:
+1. FULL FIGURE: Malacoda standing on a rock in the middle of a pool of black pitch, leaning on his hooked pole, a small bow to the viewer, seen from three quarters.
+2. BUST, ASKING: he stretches one open hand toward the viewer, palm up, with a too-friendly closed-mouth crooked smile and one eyebrow raised, while the other hand is hidden behind his back with two fingers crossed, visible to us: "I need something from you".
+3. BUST, PLEASED: a small satisfied closed-mouth grin, eyes half closed, he twirls the tip of his moustache with two fingers.
+4. BUST, PROUD: chin up, eyes closed, a wide toothy smile, one hand on his chest, the hooked pole planted next to him like a flag.
+In the three busts the head, the horns, the clothes and the colors are IDENTICAL: only the expression and the hands change. The busts are framed like Charon's in image 1: head and shoulders, turned three quarters, filling the panel. Keep the whole silhouette (horns and prop included) inside each panel, with some margin on every side, the bottom too. No letters, no numbers, no speech balloons.
+
+Riferimenti, in ordine:
+art/WB-086/caronte_2.png
+art/WB-012/3_foglio_fabbro_2.png
+
+ImageGen integrato, un tentativo. PNG originale senza ritocchi. Margini inferiori presenti ma stretti; punta della coda non sempre chiaramente biforcuta e nera; dettagli di coda, ali e abito variano leggermente fra i riquadri.
+Verificati quattro riquadri, stile, assenza di scritte; non provato nel gioco a 150 px. Colori esadecimali e identita di ogni dettaglio fra i busti non certificati.

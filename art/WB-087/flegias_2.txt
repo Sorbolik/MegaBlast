@@ -1,0 +1,17 @@
+Image 1 is a character sheet of Charon, a character of our game: four panels in one row, a full figure and three busts with different expressions. It is the SHEET and the STYLE to copy exactly: the same four panels of the same size, thick slightly irregular black ink outline, short ink hatching for the shadows, flat warm colors, a pale parchment background in each panel, hand-drawn like a European comic. Image 2 is the character sheet of the Blacksmith of the same world: the same cartoon devil kind.
+
+Draw a character sheet of a NEW character of the same world, in the same style and with the same four panels: PHLEGYAS, the furious boatman of the marsh of Styx in the fifth circle, who rams everything with his fast boat. He or she is a customer of the Blacksmith: funny rather than scary. The character: a YOUNG, strong, hot-tempered boatman, the opposite of old thin Charon: broad shoulders, a square jaw with a big underbite, thick angry eyebrows, a short flat nose, two short horns that point FORWARD like a ram prow, a red spiky tuft of hair. Skin brick orange (#C96A45, shadow #8A4129). He wears a sleeveless boatman vest, dark sea green (#2F8F78, highlight #5CDBB8, shadow #1E5A4C), a long sea green scarf flying behind his neck and a pair of round leather racing goggles pushed up on his forehead. Prop: he carries a short thick paddle with an iron tip, like a ram.
+
+Four panels on one sheet, same size, in one row:
+1. FULL FIGURE: Phlegyas standing on the pointed prow of a small fast black boat that cuts the marsh water, one foot on the prow, seen from three quarters.
+2. BUST, ASKING: he leans forward and stretches one big open hand toward the viewer, palm up, impatient, one eyebrow raised, mouth closed and crooked: "I need something from you, quick".
+3. BUST, PLEASED: a small satisfied closed-mouth grin, eyes half closed, arms crossed, the goggles pulled down on his eyes.
+4. BUST, PROUD: chin up, eyes closed, a wide toothy smile, one fist raised, the paddle planted next to him like a flag.
+In the three busts the head, the horns, the clothes and the colors are IDENTICAL: only the expression and the hands change. The busts are framed like Charon's in image 1: head and shoulders, turned three quarters, filling the panel. Keep the whole silhouette (horns and prop included) inside each panel, with some margin on every side, the bottom too. No letters, no numbers, no speech balloons.
+
+Riferimenti, in ordine:
+art/WB-086/caronte_2.png
+art/WB-012/3_foglio_fabbro_2.png
+
+ImageGen integrato, un tentativo. PNG originale senza ritocchi. Margine inferiore presente ma limitato; sciarpa e spalle raggiungono alcuni bordi laterali. La pagaia e interpretata come un'asta con grande punta di ferro; sorrisi ed espressioni non rispettano sempre esattamente la bocca chiusa.
+Verificati quattro riquadri, stile, assenza di scritte; non provato nel gioco a 150 px. Colori esadecimali e identita di ogni dettaglio fra i busti non certificati.
