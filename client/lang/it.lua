@@ -579,6 +579,8 @@ return {
 		play_sub = "ONLINE",
 		training_sub = "CONTRO I BOT",
 		armory_sub = "IL FABBRO",
+		-- on the BOTTEGA's door, the Smith's orders ready to deliver
+		orders_ready_one = "1 PRONTA", orders_ready = "%d PRONTE",
 	},
 
 	-- menu/gear_ui.lua: what the ZAINO and the ARMERIA share

@@ -9,6 +9,8 @@
 --   orders_ui.board(a)            -- draws the tab (a: the armory's screen)
 --   orders_ui.cmd(a, kind, x)     -- a tap of this tab; true if it was one
 --   orders_ui.release(a)          -- gives back the pictures it loaded
+--   orders_ui.badge(g, cx, cy, n) -- the orange round with a number (n = 0: a dot)
+--   orders_ui.news(p)             -- how many orders are ready, whether new ones wait
 --
 -- The materials and the fragments are Codex's icons (WB-084: materiale_<id>,
 -- frammento_<family>, 192 px squares in the fucina atlas). Until Codex draws
@@ -270,11 +272,29 @@ local function bench_panel(a, g)
 	fit(kit.text(c, T.bench_state:format(t.partite or 0, #orders.clients(p), p.commesse.consegne or 0), ix, y + h - PAD - 2, 16, KC.MUTE, "start", 0.5), iw)
 end
 
+-- The round that calls you to the orders: orange with ink around, the number
+-- of those ready inside (n = 0: smaller, no number: something new waits)
+function M.badge(g, cx, cy, n)
+	local d = n > 0 and 28 or 16
+	kit.dot(g, cx, cy, d + 6, KC.INK)
+	kit.dot(g, cx, cy, d, KC.HOT)
+	if n > 0 then kit.text(g, tostring(n), cx, cy + 7, 20, KC.INK, "middle") end
+end
+
+-- How many orders are ready to deliver, and whether the day's new ones are
+-- still to see (the board not opened today). nil: the Smith has not called yet
+function M.news(p)
+	if not (p.commesse and p.commesse.aperta) then return nil end
+	return orders.ready_count(p), p.commesse.giorno ~= profile.today(p)
+end
+
 -- Draws the tab into the armory's groups (a.left, a.mid, a.rt, a.low, a.low2, a.right)
 function M.board(a)
 	local p = a.prof
 	a.minis = a.minis or {}
-	orders.refresh(p, day(a))
+	-- the day's refill goes through the profile's door, so the server follows
+	orders.init(p)
+	if p.commesse.giorno ~= day(a) or #p.commesse.attesa > 0 then profile.act(p, { k = "bacheca" }) end
 	local g = a.mid
 	local c = p.commesse
 	-- on the left the devil, as in the BANCO (the Smith at his counter waits for his drawing)

@@ -394,6 +394,18 @@ function M.profile(h, p)
 	h.chapter = kit.upper(chapter.titolo)
 	kit.reached(chapter.id)
 	if not h.in_queue then set_sub(h.campaign, h.chapter) end
+	-- the BOTTEGA's door: how many orders are ready, and the round on its corner
+	-- (the number of those ready, or a dot when the morning brought new ones)
+	local orders_ui = require "menu.orders_ui"
+	local ready, new = orders_ui.news(p)
+	if h.orders_badge then gui.delete_node(h.orders_badge.node) end
+	h.orders_badge = nil
+	set_sub(h.armory, ready and ready > 0 and (ready == 1 and T.orders_ready_one or T.orders_ready:format(ready)) or T.armory_sub)
+	if ready and (ready > 0 or new) then
+		local d = h.armory.p
+		h.orders_badge = kit.group(d.g, DOORS.armeria[1] + d.w - 18, DOORS.armeria[2] + 10)
+		orders_ui.badge(h.orders_badge, DOORS.armeria[1] + d.w - 18, DOORS.armeria[2] + 10, ready)
+	end
 end
 
 -- The apprentice at rest in his pose now, not after the springs' first frames

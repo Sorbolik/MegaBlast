@@ -170,6 +170,9 @@ local function build(a)
 	if open then
 		kit.tabs(a.head.top_left, a.buttons, TABS_X, 28, { { T.tab_orders, "scheda:commesse" }, { T.tab_bench, "scheda:banco" } },
 			a.tab == "banco" and 2 or 1, KC.PURPLE, true)
+		-- by COMMESSE, how many are ready
+		local ready = orders_ui.news(p)
+		if ready > 0 then orders_ui.badge(a.head.top_left, TABS_X + (#T.tab_orders * 14 + 64) + 18, 28 + 26, ready) end
 	end
 	a.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(a.wallet, p.buoni or 0)

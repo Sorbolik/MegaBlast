@@ -5,6 +5,7 @@
 imposta prova_test prova
 
 aspetta 4
+foto 00_porta_in_home            # sulla porta: quante sono pronte
 tocca_bordo 210 170 mezzo destra    # la porta BOTTEGA
 aspetta 10
 foto 01_commesse
