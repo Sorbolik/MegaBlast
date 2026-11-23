@@ -61,4 +61,12 @@ Approvata da Claude il 23 nov (prova di stile). Sergio sceglie la variante; da l
 
 ## Consegna di Codex
 
+- `art/WB-086/caronte_1.png` e `caronte_1.txt` — tre tentativi, selezionato il secondo.
+- `art/WB-086/caronte_2.png` e `caronte_2.txt` — tre tentativi, selezionato il terzo.
+- `art/WB-086/caronte_3.png` e `caronte_3.txt` — tre tentativi, selezionato il secondo.
+
+Prompt della scheda eseguito con ImageGen e i due riferimenti nell'ordine indicato. I tre fogli sono stati ridimensionati in proporzione e centrati su tela pergamena da 1536×1024, mantenendo i quattro riquadri in fila.
+
+Verificati ordine dei riquadri, espressioni, presenza di corna, barba, mantello, moneta e remo, stile a china e tratteggio, assenza di testo. Le espressioni e gli accessori principali si distinguono anche nelle anteprime dei busti in riquadri da 120×90 px. Il disegno resta riconoscibile tra i busti, con leggere differenze nella sagoma di barba, cappuccio e toppe. Il bordo inferiore dei busti tronca il mantello e in alcuni riquadri il manico del remo. Nella variante 1 il manico della figura intera può sembrare un secondo attrezzo. Le note per ciascuna variante sono nei rispettivi `.txt`. La resa sul cartellino in gioco resta da verificare.
+
 ## Resoconto di Claude
