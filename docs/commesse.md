@@ -46,7 +46,9 @@ Principi di Sergio che reggono tutto:
   Plutone FABBRO, Flegiàs LEVIATANO, Medusa VUOTO, Minotauro FORNACE, Malacoda
   CORVO. Lucifero non è un cliente. **La famiglia sta scritta sul cartellino**: il
   cliente ne è il volto.
-- Chi non ha clienti ha solo la **commessa del Fabbro**.
+- Chi non ha clienti ha solo la **commessa del Fabbro**. Finché i livelli dei custodi
+  non sono nella campagna nessun cliente arriva nel gioco vero: si aspettano i gironi
+  (Sergio, 23 nov; scartati un cliente ogni 5 partite online e tutti alla chiamata).
 - La **prima commessa di ogni cliente** (di benvenuto, facile e gratis) dà il
   **Buono del Fabbro** insieme al suo premio. Il custode battuto dà solo il
   cliente. La Battaglia della Forgia tiene il Buono del Fabbro.
