@@ -70,4 +70,11 @@ Approvata da Claude il 23 nov: pezzi nuovi per la scheda COMMESSE, niente di Cod
 
 ## Consegna di Codex
 
+- `art/WB-085/cartellino_1.png` e `cartellino_2.png`, con i rispettivi `.txt` — 1536×1024, un tentativo per variante.
+- `art/WB-085/fabbro_al_banco_1.png` e `fabbro_al_banco_2.png`, con i rispettivi `.txt` — 1024×1536, due tentativi per la variante 1 e uno per la variante 2.
+
+Prompt originali eseguiti con ImageGen e riferimenti nell'ordine indicato. I fogli dei cartellini sono stati ridimensionati in proporzione e centrati su tela verde. Entrambi mostrano due fogli vuoti, separati e senza scritte o chiodi, con i fori visibili. Le forme larghe sono vicine al rapporto 3:2. Le forme alte sono più strette del rapporto 3:4 richiesto. Il verde si discosta da #00FF00 e le campiture avorio hanno lievi variazioni tonali.
+
+I due Fabbri guardano verso destra e sono interamente in campo con banco, incudine e martello. L'estensione verticale dei due disegni supera 1400 px. La variante 2 ha una voluta interamente contenuta nella tela. Il fondo pergamena presenta leggere variazioni tonali e non è #F3E3C3 esatto. Lo stiramento dei cartellini e la resa degli asset nell'interfaccia restano da verificare.
+
 ## Resoconto di Claude
