@@ -434,7 +434,7 @@ return {
 		sign_spent = "−%s",
 		light_sign = "ACCENDI LA FIRMA",
 		-- the next level paid with the family's fragments (the Smith's orders): what it costs, how many you hold
-		with_fragments = "COI FRAMMENTI", fragments_cost = "Costa %d · ne hai %d",
+		with_fragments = "COI FRAMMENTI", fragments_cost = "Costa %d · ne hai %d", pick_family = "Scegli un pezzo",
 		sign_cost = "%d ossidiana",
 		sign_needs = "dallo scatto %d",
 		sign_top = "al massimo",
@@ -482,6 +482,7 @@ return {
 		call = "CHIAMA UN CLIENTE",
 		deliver = "CONSEGNA",
 		none_ready = "Niente di pronto",
+		smith_short = "Quella del Fabbro",
 		need_network = "Serve la rete",
 		missing_obsidian = "Ti mancano %d",
 		ready_one = "1 pronta",

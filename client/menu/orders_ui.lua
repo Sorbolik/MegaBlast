@@ -477,7 +477,7 @@ local function open_card(a, o)
 	kit.button(a.buttons, sb, "scambia", { spento = not mat })
 	local can = ready and p.ossidiana >= cost and profile.can_spend()
 	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { size = 42, off = not can })
-	kit.button(a.buttons, act, "consegna1", { main = true, spento = not can })
+	kit.button(a.buttons, act, "consegnala", { main = true, spento = not can })
 end
 
 -- Draft 7: the swap, three of a material for one of the asked one
@@ -571,7 +571,7 @@ local function family(a, o)
 	back_button(a)
 	local can = ready and sel ~= nil and p.ossidiana >= cost and profile.can_spend()
 	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { size = 42, off = not can })
-	kit.button(a.buttons, act, "consegna1", { main = true, spento = not can })
+	kit.button(a.buttons, act, "consegnala", { main = true, spento = not can })
 end
 
 -- Draft 9: the clients' book, and from here the call
@@ -654,7 +654,7 @@ modal_cmd = function(a, kind, x)
 		local mat = o and (o.materiale or (o.poi and o.poi.materiale))
 		if mat and m.sel and profile.act(p, { k = "scambia", da = m.sel, a = mat }) then sound.play("#scaglia") end
 		if m.sel and orders.materials(p, m.sel) < orders.TRADE then m.sel = nil end
-	elseif kind == "consegna1" then
+	elseif kind == "consegnala" then
 		if profile.act(p, { k = "consegna", n = m.n, set = m.k == "famiglia" and m.sel or nil }) then
 			sound.play("#scaglia")
 			a.modal = nil
@@ -734,9 +734,11 @@ function M.board(a)
 		-- (the Smith's own asks a family: it is delivered from its card)
 		if ok and o.cliente then ready, cost = ready + 1, cost + orders.cost(o) end
 	end
+	-- only the Smith's ready (the first time it is the only one): CONSEGNA opens its family choice
+	local _, smith = orders.progress(p, c.fabbro)
 	local net = profile.can_spend()
-	local can = ready > 0 and p.ossidiana >= cost and net
-	local sub = ready == 0 and T.none_ready or (not net and T.need_network)
+	local can = (ready > 0 and p.ossidiana >= cost or ready == 0 and smith) and net
+	local sub = ready == 0 and (smith and T.smith_short or T.none_ready) or (not net and T.need_network)
 		or (p.ossidiana < cost and T.missing_obsidian:format(cost - p.ossidiana))
 		or ((ready == 1 and T.ready_one or T.ready_many:format(ready)) .. " · " .. T.cost:format(cost))
 	a.action = kit.action(a.right, T.deliver, 948, 628, 308, 80, { size = 42, off = not can, sub = kit.upper(sub) })
@@ -766,12 +768,17 @@ function M.cmd(a, kind, x)
 		return true
 	elseif kind == "consegna" then
 		-- every client's order that is ready, the oldest first, while the Ossidiana lasts
+		-- (none, and the Smith's is: its family choice)
 		local list = {}
 		for _, o in ipairs(orders.orders(p)) do
 			local _, ok = orders.progress(p, o)
 			if ok and o.cliente then list[#list + 1] = o.n end
 		end
 		table.sort(list)
+		if #list == 0 and p.commesse.fabbro then
+			a.modal = { k = "famiglia", n = p.commesse.fabbro.n }
+			return true
+		end
 		local done = 0
 		for _, n in ipairs(list) do
 			if profile.act(p, { k = "consegna", n = n }) then done = done + 1 end

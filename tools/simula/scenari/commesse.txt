@@ -58,3 +58,6 @@ aspetta 1
 tocca_bordo 590 53 alto sinistra    # BANCO: lo shop di sempre
 aspetta 4
 foto 06_banco
+tocca_centro 484 293                # un pezzo del giorno: COI FRAMMENTI a sinistra
+aspetta 2
+foto 07_banco_coi_frammenti

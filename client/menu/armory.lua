@@ -20,6 +20,7 @@ local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
 local outline = require "menu.outline"
 local orders_ui = require "menu.orders_ui"
+local orders = require "sim.orders"
 local T = require("lang.text").armory
 local TG = require("lang.text").gear_ui
 local TP = require("lang.text").pieces
@@ -139,6 +140,15 @@ local function shop(a)
 	local vb = kit.secondary(a.low2, T.use_voucher, 430, 640, 270, 62,
 		{ icon = "buono", sub = kit.upper(T.you_have:format(p.buoni)), sub_color = KC.HOT_BOTTOM, off = not usable })
 	kit.button(a.buttons, vb, "buono", { spento = not usable })
+	-- or with its family's fragments, at the full price (docs/commesse.md): only once the Smith has called
+	if p.commesse and p.commesse.aperta then
+		local fcost = w and orders.in_fragments(wallet.price(p, w[1], w[2], false))
+		local have = w and orders.fragments(p, w[1]) or 0
+		local fok = w and not wallet.owns(p, w[1], w[2]) and have >= fcost and net
+		local fb = kit.secondary(a.low, T.with_fragments, 150, 640, 262, 62, { icon = "frammento_" .. (w and w[1] or "fabbro"),
+			sub = w and kit.upper(T.fragments_cost:format(fcost, have)) or kit.upper(T.pick_family), off = not fok })
+		kit.button(a.buttons, fb, "frammenti", { spento = not fok })
+	end
 	local price = w and wallet.price(p, w[1], w[2], w[3])
 	local ok = w and not wallet.owns(p, w[1], w[2]) and p.scaglie >= price and net
 	local sub = not w and TP.pick_ware or (wallet.owns(p, w[1], w[2]) and TP.in_wardrobe) or (not net and TP.need_network)
@@ -171,9 +181,9 @@ local function build(a)
 	if open then
 		kit.tabs(a.head.top_left, a.buttons, TABS_X, 28, { { T.tab_orders, "scheda:commesse" }, { T.tab_bench, "scheda:banco" } },
 			a.tab == "banco" and 2 or 1, KC.PURPLE, true)
-		-- by COMMESSE, how many are ready
+		-- by COMMESSE, how many are ready (the word is smaller when BANCO is open)
 		local ready = orders_ui.news(p)
-		if ready and ready > 0 then orders_ui.badge(a.head.top_left, TABS_X + (#T.tab_orders * 14 + 64) + 13, 28 + 26, ready) end
+		if ready and ready > 0 then orders_ui.badge(a.head.top_left, TABS_X + (#T.tab_orders * 14 + 64) + 13 - (a.tab == "banco" and 21 or 0), 28 + 26, ready) end
 	end
 	a.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(a.wallet, p.buoni or 0)
@@ -233,6 +243,8 @@ local function run_cmd(a, ui_action)
 		a.ware = { s1, s2, offer and wallet.today() or nil }
 	elseif kind == "compra" and a.ware then
 		if profile.act(p, { k = "compra", set = a.ware[1], slot = a.ware[2], offer = a.ware[3] ~= nil }) then sound.play("#scaglia") end
+	elseif kind == "frammenti" and a.ware then
+		if profile.act(p, { k = "compra", set = a.ware[1], slot = a.ware[2], frammenti = true }) then sound.play("#scaglia") end
 	elseif kind == "buono" and a.ware then
 		profile.act(p, { k = "buono", set = a.ware[1], slot = a.ware[2] })
 	end
