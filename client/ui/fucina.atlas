@@ -1,4 +1,76 @@
 images {
+  image: "/assets/fucina/az_annulla.png"
+}
+images {
+  image: "/assets/fucina/az_cambia.png"
+}
+images {
+  image: "/assets/fucina/az_chiama.png"
+}
+images {
+  image: "/assets/fucina/az_consegna.png"
+}
+images {
+  image: "/assets/fucina/az_elenco.png"
+}
+images {
+  image: "/assets/fucina/az_esci.png"
+}
+images {
+  image: "/assets/fucina/az_gioca.png"
+}
+images {
+  image: "/assets/fucina/az_indossa.png"
+}
+images {
+  image: "/assets/fucina/az_mira.png"
+}
+images {
+  image: "/assets/fucina/az_potenzia.png"
+}
+images {
+  image: "/assets/fucina/az_profilo.png"
+}
+images {
+  image: "/assets/fucina/az_pronto.png"
+}
+images {
+  image: "/assets/fucina/az_prova.png"
+}
+images {
+  image: "/assets/fucina/az_rileggi.png"
+}
+images {
+  image: "/assets/fucina/az_ripristina.png"
+}
+images {
+  image: "/assets/fucina/az_riprova.png"
+}
+images {
+  image: "/assets/fucina/az_salta.png"
+}
+images {
+  image: "/assets/fucina/az_salva.png"
+}
+images {
+  image: "/assets/fucina/az_scambia.png"
+}
+images {
+  image: "/assets/fucina/az_tasti.png"
+}
+images {
+  image: "/assets/fucina/az_torna.png"
+}
+images {
+  image: "/assets/fucina/az_uno_contro_uno.png"
+}
+images {
+  image: "/assets/fucina/az_vedi.png"
+}
+images {
+  image: "/assets/fucina/az_via.png"
+}
+images {
   image: "/assets/fucina/barra_brace_cx.png"
 }
 images {
@@ -24,6 +96,15 @@ images {
 }
 images {
   image: "/assets/fucina/barra_gelo_sx.png"
+}
+images {
+  image: "/assets/fucina/barra_stendardo_chiara_cx.png"
+}
+images {
+  image: "/assets/fucina/barra_stendardo_chiara_dx.png"
+}
+images {
+  image: "/assets/fucina/barra_stendardo_chiara_sx.png"
 }
 images {
   image: "/assets/fucina/barra_stendardo_cx.png"
@@ -1089,6 +1170,15 @@ images {
 }
 images {
   image: "/assets/fucina/slot_vuoto.png"
+}
+images {
+  image: "/assets/fucina/solco_cx.png"
+}
+images {
+  image: "/assets/fucina/solco_dx.png"
+}
+images {
+  image: "/assets/fucina/solco_sx.png"
 }
 images {
   image: "/assets/fucina/spunta_verde.png"

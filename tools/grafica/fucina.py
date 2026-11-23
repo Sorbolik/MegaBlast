@@ -89,7 +89,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara", "barra_stendardo") and not nome.startswith("primario"):    # (sfumati, e il primario: il suo spazio e' misurato, SPAZI_PRIMARIO)
+    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara", "barra_stendardo", "barra_stendardo_chiara", "solco") and not nome.startswith("primario"):    # (sfumati, e il primario: il suo spazio e' misurato, SPAZI_PRIMARIO)
         SPAZI[nome] = spazio(im)
 
 
@@ -312,6 +312,31 @@ def fai_stendardo():
     intero("stendardo", st[2], 224)
     barra = sorted(pezzi(senza_verde(os.path.join(p, "barra_2.png"))), key=lambda t: t[0])
     tre("barra_stendardo", barra[1][2], 16, 0.03)
+    # la stessa striscia senza tinta: il gioco le da' il colore (gelo, menta, viola)
+    tre("barra_stendardo_chiara", neutro(barra[1][2]), 16, 0.03)
+    fai_solco()
+
+
+def fai_solco():
+    """Il solco di tutte le barre (Sergio, 23 nov: «tutte le barre di progresso devono essere
+    lineari, prendendo esattamente l'asset [...] dell'esperienza»): l'incavo dello stendardo
+    della home ridisegnato in vettori, da solo, per allungarlo. Misure in sedicesimi
+    dell'altezza come nel disegno di WB-075: contorno d'inchiostro, il gradino chiaro in
+    alto dentro, il fondo scuro dove sta la striscia (da 8 a 27 su 32), il labbro chiaro
+    sotto. Il gioco lo usa con kit.bar."""
+    S, U = 4, 4                     # quattro volte, e 4 pixel per unita' (alto 32 unita')
+    W, G = 160, 32
+    k = S * U
+    im = Image.new("RGBA", (W * k, G * k), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    def pill(x0, y0, x1, y1, col):
+        d.rounded_rectangle((x0 * k, y0 * k, x1 * k - 1, y1 * k - 1), (y1 - y0) / 2 * k, fill=col)
+    pill(0, 3, W, 32, (0x74, 0x5F, 0x76, 255))        # il labbro sotto
+    pill(0, 0, W, 29, (0x00, 0x00, 0x00, 255))        # l'inchiostro
+    pill(2, 2, W - 2, 27, (0x3A, 0x2E, 0x3E, 255))    # il gradino
+    pill(2, 8, W - 2, 27, (0x17, 0x10, 0x16, 255))    # il fondo
+    im = im.resize((W * U, G * U), Image.LANCZOS)
+    tre("solco", np.asarray(im), G * U, 0.1)
 
 
 def fai_secondario():
@@ -363,6 +388,40 @@ def fai_secondario():
     # incontri cosi' male in punta, e che sia ben definito il <»): un pezzo solo, la punta
     # unita ad angolo vivo, i capi tondi, niente contorno
     fai_freccina()
+    fai_azioni()
+
+
+# le icone delle azioni (WB-088, Sergio 23 nov: «ogni singolo tasto deve avere la sua
+# iconcina alla sinistra»): (nome, foglio, variante, posto da 0 a 7 nella griglia 4 x 2).
+# Scelta di Claude fra le due varianti, icona per icona
+AZIONI = [
+    ("gioca", 1, 2, 0), ("indossa", 1, 1, 1), ("potenzia", 1, 2, 2), ("consegna", 1, 1, 3),
+    ("pronto", 1, 1, 4), ("salva", 1, 1, 5), ("torna", 1, 2, 6), ("esci", 1, 2, 7),
+    ("chiama", 2, 2, 0), ("scambia", 2, 1, 1), ("cambia", 2, 1, 2), ("prova", 2, 2, 3),
+    ("riprova", 2, 1, 4), ("elenco", 2, 2, 5), ("salta", 2, 2, 6), ("vedi", 2, 2, 7),
+    ("mira", 3, 2, 0), ("rileggi", 3, 2, 1), ("tasti", 3, 1, 2), ("profilo", 3, 1, 3),
+    ("annulla", 3, 1, 4), ("ripristina", 3, 1, 5), ("uno_contro_uno", 3, 1, 6), ("via", 3, 1, 7),
+]
+
+
+def fai_azioni():
+    p = os.path.join(ART, "WB-088")
+    fogli = {}
+    for nome, foglio, var, posto in AZIONI:
+        k = (foglio, var)
+        if k not in fogli:
+            fogli[k] = senza_verde(os.path.join(p, "azioni_%d_%d.png" % k))
+        o = fogli[k]
+        h, w = o.shape[0] // 2, o.shape[1] // 4
+        cella = o[(posto // 4) * h:(posto // 4 + 1) * h, (posto % 4) * w:(posto % 4 + 1) * w]
+        ys, xs = np.nonzero(cella[..., 3] > 40)
+        pezzo = cella[max(0, ys.min() - 4):ys.max() + 5, max(0, xs.min() - 4):xs.max() + 5]
+        # quadrato, il disegno in mezzo: tutte le icone della stessa grandezza sul pulsante
+        lato = max(pezzo.shape[:2])
+        q = np.zeros((lato, lato, 4), np.uint8)
+        y0, x0 = (lato - pezzo.shape[0]) // 2, (lato - pezzo.shape[1]) // 2
+        q[y0:y0 + pezzo.shape[0], x0:x0 + pezzo.shape[1]] = pezzo
+        intero("az_" + nome, q, 160)
 
 
 def fai_freccina():

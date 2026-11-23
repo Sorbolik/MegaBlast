@@ -198,10 +198,10 @@ function M.footer(s, low2, right, sel)
 		local why = nxt.proof_done < nxt.proof and TP.proof_first or p.scaglie < nxt.cost
 			and TP.missing:format(coins.format(nxt.cost - p.scaglie)) or not net and TP.need_network or nil
 		kit.text(right, kit.upper(why or TP.price_for:format(nxt.level)), px, 692, 16, why and KC.RED or KC.MUTE, "end", 0.5)
-		s.action = kit.action(right, TP.upgrade, 948, 628, 308, 80, { size = 44, off = not ok })
+		s.action = kit.action(right, TP.upgrade, 948, 628, 308, 80, { icon = "az_potenzia", size = 44, off = not ok })
 		kit.button(s.buttons, s.action, "potenzia", { main = true, spento = not ok })
 	else
-		s.action = kit.action(right, TP.upgrade, 948, 628, 308, 80, { size = 44, off = true, sub = kit.upper(TP.at_max) })
+		s.action = kit.action(right, TP.upgrade, 948, 628, 308, 80, { icon = "az_potenzia", size = 44, off = true, sub = kit.upper(TP.at_max) })
 	end
 end
 

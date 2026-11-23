@@ -722,7 +722,7 @@ function M.open(v, pages, pad)
 		dx, dy = rx + 9, by
 	end
 	view.pad = pad
-	view.next = kit.action({ node = view.paper, ox = 0, oy = 0 }, "", nx - nw / 2, -by - NEXT_H / 2, nw, NEXT_H, { size = 28 })
+	view.next = kit.action({ node = view.paper, ox = 0, oy = 0 }, "", nx - nw / 2, -by - NEXT_H / 2, nw, NEXT_H, { icon = "az_via", size = 28 })
 	view.skip = box(sx, sy, 160, 40, c(0, 0, 0, 0), view.paper)
 	ink(pad and T.close_pad or T.close, -60, 12, 0.55, INK_SOFT, nil, view.skip)
 	gui.set_enabled(view.skip, #pages > 1)

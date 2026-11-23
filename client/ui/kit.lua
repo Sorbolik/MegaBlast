@@ -574,16 +574,33 @@ end
 -- A bar filled to f (0..1): the iron trough and in it a strip of ember (warm
 -- colors), of frost (cold ones) or, any other color, the plain strip tinted.
 -- M.bar_fill(b, f) changes how full it is
+-- The bars (Sergio, 23 Nov, docs/ui-catalogo.md, purpose 10): every bar is the
+-- groove and the strip of the home's experience (WB-075): the groove drawn in
+-- vectors (solco), the strip ember as it is drawn or, for the other colors, its
+-- colorless twin tinted. The strip fills the dark bottom of the groove: from 8
+-- to 27 of its 32 sixteenths
+local GROOVE_TOP, GROOVE_IN, GROOVE_END = 8 / 32, 19 / 32, 3 / 32
 local function strip_of(color)
-	if color == C.HOT or color == C.HOT_BOTTOM or color == C.HOT_TOP or color == C.STAR then return "barra_brace" end
-	if color == C.ICE or color == C.STEEL or color == C.FROST then return "barra_gelo" end
-	return "barra_chiara"
+	if color == C.HOT or color == C.HOT_BOTTOM or color == C.HOT_TOP or color == C.STAR then
+		return "barra_stendardo"
+	end
+	return "barra_stendardo_chiara"
+end
+
+-- The groove around the box x..x+w, y..y+h (the strip's place)
+function M.groove(g, x, y, w, h)
+	local gh = h / GROOVE_IN
+	local pad = gh * GROOVE_END
+	local cy = y - gh * GROOVE_TOP + gh / 2
+	local n = empty(x + w / 2 - g.ox, g.oy - cy, 0, 0, g.node)
+	three(n, "solco", w + 2 * pad, gh)
+	return n
 end
 
 function M.bar_fill(b, f)
 	f = math.max(0, math.min(1, f))
 	gui.set_enabled(b.front.node, f > 0.005)
-	local w = math.max(b.h * 1.3, b.w * f)
+	local w = math.max(b.h, b.w * f)
 	three_fit(b.front.parts, b.strip, w, b.h)
 	gui.set_position(b.front.node, vec(b.x + w / 2 - b.g.ox, b.g.oy - (b.y + b.h / 2)))
 end
@@ -591,13 +608,34 @@ end
 function M.bar(g, x, y, w, h, f, color)
 	local b = { g = g, x = x, y = y, w = w, h = h, color = color, strip = strip_of(color) }
 	local cx, cy = x + w / 2 - g.ox, g.oy - (y + h / 2)
-	b.back = { node = empty(cx, cy, 0, 0, g.node) }
-	three(b.back.node, "guscio", w + h * 1.1, h * 1.9)
+	b.back = { node = M.groove(g, x, y, w, h) }
 	b.front = { node = empty(cx, cy, 0, 0, g.node) }
 	b.front.parts = three(b.front.node, b.strip, w, h)
-	if b.strip == "barra_chiara" then tint(b.front.parts, color) end
+	if b.strip == "barra_stendardo_chiara" then tint(b.front.parts, color) end
 	M.bar_fill(b, f)
 	return b
+end
+
+-- A bar in parts (the stats: base, level, pieces, Sigilli): one strip from 0 to
+-- the last part's end, each part its own color. parts: { { x1, x2, color }, ... }
+-- in pixels from x, in order. The ends are the strip's round caps
+function M.bar_parts(g, x, y, w, h, parts)
+	M.groove(g, x, y, w, h)
+	local last = 0
+	for _, q in ipairs(parts) do last = math.max(last, q[2]) end
+	if last <= 0 then return end
+	local m = P.barra_stendardo_chiara
+	local cw = math.min(m.c * h / m.h, last / 2)
+	for i, q in ipairs(parts) do
+		local x1, x2 = q[1], q[2]
+		if x2 > x1 then
+			-- the middle of the strip over this part, the caps at the two ends
+			local a, z = math.max(x1, cw), math.min(x2, last - cw)
+			if z > a then gui.set_color(pic("barra_stendardo_chiara_cx", x + (a + z) / 2 - g.ox, g.oy - (y + h / 2), z - a + 0.5, h, g.node), q[3]) end
+			if x1 < cw then gui.set_color(pic("barra_stendardo_chiara_sx", x + cw / 2 - g.ox, g.oy - (y + h / 2), cw, h, g.node), q[3]) end
+			if x2 > last - cw then gui.set_color(pic("barra_stendardo_chiara_dx", x + last - cw / 2 - g.ox, g.oy - (y + h / 2), cw, h, g.node), q[3]) end
+		end
+	end
 end
 
 -- ---------------------------------------------------------------- buttons

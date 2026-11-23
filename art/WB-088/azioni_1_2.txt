@@ -1,0 +1,17 @@
+Image 1 shows icons of our game, a cartoon turn-based artillery game played by little red horned devils: a calendar, a key, a hammer, two devil masks, a small flame, a gold scale coin. They are the STYLE to copy exactly: thick slightly irregular pure black ink outline, flat colors (ivory #F4ECE1 as the main color, with small touches of ember orange #F26419, gold #FFB703 or ice blue #38B6FF only where the meaning needs it), one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic, bold and readable. Image 2 shows our buttons: a long dark iron slab with an icon sticking out of its left end, big and slightly tilted. Image 3 shows how big the icons are on the phone screen: about 70 pixels, so each icon must be ONE bold silhouette that reads at a glance, no thin details, no text.
+
+Draw EIGHT separate icons on one sheet, in two rows of four, well apart, all the same visual size, each fitting a square, on plain green (#00FF00):
+1. GIOCA (play): a short flaming sword pointing up-right, ivory blade, ember flame along the edge.
+2. INDOSSA (wear): a horned helmet seen from the front, ivory with a gold band, with a small ivory down-arrow above it, as if it is being put on.
+3. POTENZIA (upgrade): a small anvil with a hammer striking it and three orange sparks.
+4. CONSEGNA (deliver): a paper ticket with a dog-ear corner and a round hole at the top, tied with a string, a gold tick on it.
+5. PRONTO (ready): a big bold check mark, ivory with an ember glow line along its bottom edge.
+6. SALVA (save): a stone tablet with a gold seal pressed in the middle.
+7. TORNA AI MENU (back to the menus): a small arched wooden door, half open, with a curved arrow going into it.
+8. ESCI (quit): an open door with an arrow coming out of it, toward the right.
+No letters, no numbers, no shadow on the ground, no glow outside the ink. Background plain green #00FF00 so it can be cut out.
+
+Riferimenti in ordine: art/WB-088/riferimenti/R3_icone_di_oggi.png, art/WB-088/riferimenti/R1_pulsanti_proposti.png, art/WB-088/riferimenti/R2_zaino_proposto.png
+Variante 2. Un tentativo con ImageGen. Uscita 1774×887 ridimensionata in proporzione e centrata su tela verde da 1536×1024.
+Otto simboli in ordine. Le due porte condividono la sagoma ad arco. Il sigillo della tavoletta ha due nastri aggiunti.
+Verde campionato a (5, 5): #02F806. Il fondo non è #00FF00 esatto. Alcuni bordi e campiture presentano lievi variazioni tonali.

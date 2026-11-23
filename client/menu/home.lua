@@ -209,7 +209,7 @@ function M.new(color)
 	h.tops[#h.tops + 1] = br.node
 	h.play_g = br
 	-- the main action, like on every other screen (Sergio, 23 Nov: also the home's GIOCA)
-	h.play = kit.action(br, common.play, 0, 640, 0, 0, { sub = T.play_sub })
+	h.play = kit.action(br, common.play, 0, 640, 0, 0, { icon = "az_gioca", sub = T.play_sub })
 	h.play_b = kit.button(h.buttons, h.play, "online", { main = true })
 	local bl = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	h.tops[#h.tops + 1] = bl.node

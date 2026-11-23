@@ -236,7 +236,7 @@ local function build(b)
 	-- the one action: GIOCA, the event shown
 	b.play = play and play.coda
 	local sub = play and (o and kit.upper(where(play)) or kit.upper(play.nome)) or kit.upper(T.no_event)
-	b.action = kit.action(b.right, common.play, 948, 628, 308, 80, { size = 44, off = not play, sub = sub })
+	b.action = kit.action(b.right, common.play, 948, 628, 308, 80, { icon = "az_gioca", size = 44, off = not play, sub = sub })
 	kit.button(b.buttons, b.action, "gioca", { main = true, spento = not play })
 end
 

@@ -436,7 +436,7 @@ local function build_map(c)
 		kit.zone(tr, c.buttons, 1120, y - step / 2, 160, step, "girone:" .. i)
 	end
 	c.play = nil
-	c.action = kit.action(c.right, common.play, 930, 572, 270, 84, { size = 54, sub = T.coming_sub:format(T.rings[RING_AT][2]), off = true })
+	c.action = kit.action(c.right, common.play, 930, 572, 270, 84, { icon = "az_gioca", size = 54, sub = T.coming_sub:format(T.rings[RING_AT][2]), off = true })
 	kit.button(c.buttons, c.action, "gioca", { main = true, spento = true })
 end
 
@@ -521,7 +521,7 @@ local function build(c)
 		act.sub = kit.upper(T.done_count:format(done, tot))
 	end
 	c.play = act.id
-	c.action = kit.action(c.right, common.play, 930, 560, 270, 84, { size = 54, sub = act.sub, off = act.off })
+	c.action = kit.action(c.right, common.play, 930, 560, 270, 84, { icon = "az_gioca", size = 54, sub = act.sub, off = act.off })
 	kit.button(c.buttons, c.action, "gioca", { main = true, spento = act.off })
 end
 

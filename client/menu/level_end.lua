@@ -121,7 +121,7 @@ function M.new(o, sound)
 		kit.button(f.buttons, list, "indietro")
 	end
 	local label = o.avanti and common.next or common.campaign
-	local go = kit.action(f.right, label, 930, 560, 270, 84, { size = #label > 6 and 40 or 50 })
+	local go = kit.action(f.right, label, 930, 560, 270, 84, { icon = "az_via", size = #label > 6 and 40 or 50 })
 	kit.button(f.buttons, go, "avanti", { main = true })
 	if o.gain then f.receipt = receipt.new(o.gain, o.prof, 170, f.buttons, f.radice) end
 	return f

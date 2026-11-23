@@ -68,7 +68,7 @@ local function build_choice(c)
 	-- the one action: ENTRA, when the code is whole
 	local missing = M.DIGITS - #c.code
 	local off = c.busy or missing > 0
-	c.action = kit.action(c.right, T.join, 930, 560, 270, 84, { size = 54, off = off,
+	c.action = kit.action(c.right, T.join, 930, 560, 270, 84, { icon = "az_via", size = 54, off = off,
 		sub = missing > 0 and (missing == 1 and T.missing_one or T.missing:format(missing)) or nil })
 	kit.button(c.buttons, c.action, "entra", { main = true, spento = off })
 end
@@ -152,7 +152,7 @@ local function build_room(c)
 
 	local sub = not host and T.wait_host or podium and T.wait_podium or T.go_sub:format(common.modes[room.mode] or "", bots)
 	local off = not host or podium
-	c.action = kit.action(c.right, T.go, 930, 560, 270, 84, { size = 60, off = off, sub = kit.upper(sub) })
+	c.action = kit.action(c.right, T.go, 930, 560, 270, 84, { icon = "az_via", size = 60, off = off, sub = kit.upper(sub) })
 	kit.button(c.buttons, c.action, "via", { main = true, spento = off })
 end
 

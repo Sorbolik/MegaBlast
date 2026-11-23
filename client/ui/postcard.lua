@@ -86,7 +86,7 @@ function M.open(id, titolo, from, tipo, line, o)
 	if o.record then kit.text(g, T.record_points:format(o.record), 1000, 430, 16, KC.STAR, "middle", 1.5) end
 	p.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	top(p.right.node)
-	p.go_plate = kit.action(p.right, common.play, 930, 560, 270, 84, { size = 54 })
+	p.go_plate = kit.action(p.right, common.play, 930, 560, 270, 84, { icon = "az_gioca", size = 54 })
 	p.next = p.go_plate.node
 	-- the plate with the picture, in a node of its own: the zoom from the card you tapped
 	p.card = top(gui.new_box_node(vec(CX, 720 - CY), vec(0, 0)))

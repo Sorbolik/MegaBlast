@@ -272,7 +272,7 @@ local function refresh(s)
 
 	-- PRONTO: dark while a weapon is missing and, online, once pressed (the
 	-- others are awaited; a different pick lights it again)
-	local opt = { size = 54 }
+	local opt = { size = 54, icon = s.guidata and "az_gioca" or "az_pronto" }
 	if missing_n > 0 then
 		opt.off = true
 		opt.sub = missing_n > 1 and T.missing_two or T.missing_one:format(NAME_STEP[first_missing])

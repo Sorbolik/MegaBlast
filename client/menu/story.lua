@@ -132,7 +132,7 @@ function M.new(pages, can_skip)
 	end
 	s.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	s.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	local go = kit.action(s.right, common.next, 930, 610, 270, 76, { size = 50 })
+	local go = kit.action(s.right, common.next, 930, 610, 270, 76, { icon = "az_salta", size = 50 })
 	s.go = go
 	kit.button(s.buttons, go, "avanti", { main = true })
 	if can_skip then

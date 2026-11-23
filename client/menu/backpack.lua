@@ -275,9 +275,9 @@ local function inventory(s)
 		-- POTENZIA: the plate of the secondary actions (as ACCENDI LA FIRMA in the armory)
 		local nxt = wallet.next(p, set, slot)
 		local ub = kit.secondary(s.right, TP.upgrade_here, UP_X, 640, UP_W, 62,
-			{ icon = "scaglia", sub_color = KC.HOT, sub = kit.upper(nxt and T.up_line:format(level, nxt.level) or TP.at_max) })
+			{ icon = "az_potenzia", sub_color = KC.HOT, sub = kit.upper(nxt and T.up_line:format(level, nxt.level) or TP.at_max) })
 		kit.button(s.buttons, ub, "scheda", {})
-		s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { size = 44, off = worn })
+		s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { icon = "az_indossa", size = 44, off = worn })
 		kit.button(s.buttons, s.action, "indossa", { main = true, spento = worn })
 	end
 end
@@ -508,7 +508,7 @@ local function seals_tab(s)
 	else
 		kit.foot_text(s.low, kit.upper(T.pick_hint), 140, 674, 19, KC.MUTE, room, 0.5)
 	end
-	s.action = kit.action(s.right, T.save, 980, 628, 276, 80, { size = 48, off = not changed, sub = not changed and kit.upper(T.saved) or nil })
+	s.action = kit.action(s.right, T.save, 980, 628, 276, 80, { icon = "az_salva", size = 48, off = not changed, sub = not changed and kit.upper(T.saved) or nil })
 	kit.button(s.buttons, s.action, "salva", { main = true, spento = not changed })
 end
 

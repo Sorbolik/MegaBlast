@@ -202,7 +202,7 @@ function M.new(results, giocatori, me, my_gain, prof, number)
 		kit.text(again.g, common.replay, 724 + 95, 628 + 41, 22, KC.SAND, "middle", 0.5)
 		kit.button(p.buttons, again, "rivedi")
 	end
-	local go = kit.action(p.right, T.go_on, 930, 560, 270, 84, { size = 44 })
+	local go = kit.action(p.right, T.go_on, 930, 560, 270, 84, { icon = "az_via", size = 44 })
 	kit.button(p.buttons, go, "continua", { main = true })
 	return p
 end

@@ -368,16 +368,12 @@ function M.bar(g, x, y, w, h, parts, now, after, k, colors)
 		end
 		return stub + (w - stub) * math.min(1, (v - b) / math.max(mx - b, 1e-9))
 	end
-	kit.rect(g, x - 2, y - 2, w + 4, h + 4, KC.INK)
-	kit.rect(g, x, y, w, h, KC.TRACK)
 	local solid = math.min(now, type(after) == "number" and after or now)
-	-- the base, then level, pieces and Sigilli above it, up to the value
-	local v, edge = b, 0
+	-- the base, then level, pieces and Sigilli above it, up to the value: one strip
+	-- in the groove of every bar (kit.bar_parts), each part its color
+	local v, list = b, {}
 	local function seg(x1, x2, color)
-		if x2 > x1 then
-			kit.rect(g, x + x1, y, x2 - x1, h, color)
-			kit.rect(g, x + x2 - 1, y, 2, h, KC.INK)
-		end
+		if x2 > x1 then list[#list + 1] = { x1, x2, color } end
 	end
 	seg(0, at(math.min(b, solid)), colors[1])
 	for i = 2, 4 do
@@ -386,6 +382,7 @@ function M.bar(g, x, y, w, h, parts, now, after, k, colors)
 			v = v + parts[i]
 		end
 	end
+	kit.bar_parts(g, x, y, w, h, list)
 	if type(after) == "number" and after ~= now then
 		local x1, x2 = at(math.min(now, after)), at(math.max(now, after))
 		x2 = math.max(x2, x1 + M.DELTA_MIN)

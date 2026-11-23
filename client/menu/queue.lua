@@ -118,7 +118,7 @@ local function build(c)
 	end
 
 	-- the one action: GIOCA starts the chosen queue
-	c.action = kit.action(c.right, common.play, 948, 628, 308, 80, { size = 44, sub = names[c.sel] })
+	c.action = kit.action(c.right, common.play, 948, 628, 308, 80, { icon = "az_gioca", size = 44, sub = names[c.sel] })
 	kit.button(c.buttons, c.action, "cerca", { main = true })
 end
 

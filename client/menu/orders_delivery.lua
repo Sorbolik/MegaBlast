@@ -412,10 +412,10 @@ function M.draw_receipt(a, h, s, n)
 	end
 	-- the band: POTENZIA (when the fragments pay a level), OK
 	if s.upgrade then
-		local b = kit.secondary(a.mlow, TP.upgrade_here, 160, 640, 230, 62, {})
+		local b = kit.secondary(a.mlow, TP.upgrade_here, 160, 640, 230, 62, { icon = "az_potenzia" })
 		kit.button(a.buttons, b, "scena:potenzia")
 	end
-	local ok = kit.action(a.mright, T.ok, 948, 628, 308, 80, { size = 42 })
+	local ok = kit.action(a.mright, T.ok, 948, 628, 308, 80, { icon = "az_pronto", size = 42 })
 	kit.button(a.buttons, ok, "scena:ok", { main = true })
 end
 

@@ -87,7 +87,7 @@ function M.new(showcases, title)
 	-- (under the thread, where every screen has its hint: on the painting it was hard to read)
 	kit.foot_text(low, T.tap_to_pick, 40, 674, 19, KC.MUTE, 660, 0.5)
 	local right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	local go = kit.action(right, T.weapons, 930, 560, 270, 84, { size = 54, sub = T.weapons_in:format(0, 0) })
+	local go = kit.action(right, T.weapons, 930, 560, 270, 84, { icon = "az_mira", size = 54, sub = T.weapons_in:format(0, 0) })
 	s.tally = go.sub
 	s.angoli = { top_left.node, low.node, right.node }
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))

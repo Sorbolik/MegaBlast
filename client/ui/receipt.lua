@@ -243,13 +243,18 @@ function M.new(gain, prof, top, buttons, parent)
 	alpha(r.level, 0)
 	kit.text(g, math.floor(prof.xp) .. " / " .. profile.xp_level(prof.livello), AMOUNT_X, y + 25, 16, KC.MUTE, "end", 1)
 	local bar_x, bar_y = (NAME_X + AMOUNT_X) / 2, 720 - (y + 44)
-	r.bar = ui.bar(bar_x, bar_y, AMOUNT_X - NAME_X, 10, BAR, p)
-	gui.set_color(r.bar.nodo, KC.TRACK)
+	-- the bar of every bar (kit.bar: the home's groove and strip), in a node of its own
+	-- for the swell
+	local bn = gui.new_box_node(vec(bar_x, bar_y), vec(0, 0))
+	gui.set_visible(bn, false)
+	gui.set_parent(bn, p)
+	r.kbar = kit.bar({ node = bn, ox = bar_x, oy = y + 44 }, NAME_X, y + 39, AMOUNT_X - NAME_X, 10, 0, BAR)
+	r.bar = { nodo = bn, full = r.kbar.front.parts, w = AMOUNT_X - NAME_X }
 	r.level_up, r.bar_x, r.bar_y = level_up, bar_x, bar_y
 	local before = (prof.xp - gain.xp) / profile.xp_level(gain.level_before)
 	if level_up or braci > 0 then before = 0 end
 	r.bar_from, r.bar_to = math.max(0, before), prof.xp / profile.xp_level(prof.livello)
-	ui.bar_value(r.bar, r.bar_from)
+	kit.bar_fill(r.kbar, r.bar_from)
 	y = y + LEVEL_H
 	-- what the new level gives: a row in an empty node of its own (the pop animates that)
 	r.after = {}
@@ -295,9 +300,11 @@ local function pulse(r, strong)
 	gui.cancel_animations(b.nodo, "scale")
 	gui.set_scale(b.nodo, vec(1, strong and 2.6 or 1.9))
 	gui.animate(b.nodo, "scale", vec(1, 1), gui.EASING_OUTQUAD, strong and 0.4 or 0.18)
-	gui.cancel_animations(b.full, "color")
-	gui.set_color(b.full, vmath.vector4(1, 0.95, 0.8, 1))
-	gui.animate(b.full, "color", BAR, gui.EASING_INQUAD, strong and 0.5 or 0.25)
+	for _, n in ipairs(b.full) do
+		gui.cancel_animations(n, "color")
+		gui.set_color(n, vmath.vector4(1, 0.95, 0.8, 1))
+		gui.animate(n, "color", vmath.vector4(1, 1, 1, 1), gui.EASING_INQUAD, strong and 0.5 or 0.25)
+	end
 end
 
 -- the coins leave the totals for the pill: some Scaglie, then the Ossidiana
@@ -337,7 +344,7 @@ local function spark_land(r, f, i, xp, coin, quiet)
 	f.landed[i] = true
 	if f.nodes[i] then gui.delete_node(f.nodes[i]); f.nodes[i] = nil end
 	local frac = r.bar_from + (r.bar_to - r.bar_from) * i / f.n
-	ui.bar_value(r.bar, frac)
+	kit.bar_fill(r.kbar, frac)
 	local last = i == f.n
 	if quiet then
 		if last then sparks_done(r, coin) end
