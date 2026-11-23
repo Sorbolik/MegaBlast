@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Il manifest di Defold 1.14.0 (builtins/manifests/android), uguale tranne il tema
-     della finestra: @style/Avvio (client/vibra/res/android/res/values*/avvio.xml), la
-     schermata di avvio col fondo Ruggine e Favilla che si sdraia (Sergio, 23 nov).
-     Quando si aggiorna Defold, si riprende il suo manifest e si rimette solo il tema. -->
+<!-- Il manifest di Defold 1.14.0 (builtins/manifests/android), uguale tranne la finestra
+     del gioco: com.sorbolik.megablast.Avvio (client/vibra, la DefoldActivity col pannello
+     Ruggine sopra il secondo di nero) e il tema @style/Avvio (values*/avvio.xml: avvio
+     del telefono sul Ruggine con Favilla). Sergio, 23 nov. Quando si aggiorna Defold, si
+     riprende il suo manifest e si rimettono solo queste due righe. -->
 <!-- BEGIN_INCLUDE(manifest) -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
@@ -32,7 +33,7 @@
         <meta-data android:name="android.max_aspect" android:value="2.1" />
         <meta-data android:name="android.notch_support" android:value="true"/>
 
-        <activity android:name="com.dynamo.android.DefoldActivity"
+        <activity android:name="com.sorbolik.megablast.Avvio"
                 android:label="{{project.title}}"
                 android:configChanges="fontScale|keyboard|keyboardHidden|locale|mcc|mnc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|touchscreen|uiMode"
                 android:theme="@style/Avvio"
