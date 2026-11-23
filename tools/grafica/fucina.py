@@ -89,7 +89,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara", "barra_stendardo", "barra_stendardo_chiara", "solco"):    # (sfumati)
+    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara", "barra_stendardo", "barra_stendardo_chiara", "solco", "filo_fondo", "filo_bordo"):    # (sfumati)
         SPAZI[nome] = spazio(im)
 
 
@@ -389,6 +389,7 @@ def fai_secondario():
     fai_freccina()
     fai_azioni()
     fai_card_filo()
+    fai_filo_corto()
 
 
 # le icone delle azioni (WB-088, Sergio 23 nov: «ogni singolo tasto deve avere la sua
@@ -454,6 +455,23 @@ def fai_card_filo():
             r2 = raggio - 3
             d.ellipse(((cx - r2) * S, (cy - r2) * S, (cx + r2) * S, (cy + r2) * S), fill=punto + (255,))
         nove(nome, np.asarray(im), L, C / L)
+
+
+def fai_filo_corto():
+    """Le etichette e i filtri (Sergio, 23 nov, scopo 7 di docs/ui-catalogo.md): un filo
+    sottile intorno alla parola, sul fondo scuro della card minimale, al posto delle
+    piastrine. Due pezzi in tre parti: il fondo e il filo bianco, che il gioco tinge."""
+    S, W, H = 4, 256, 64
+    for nome, filo in (("filo_fondo", False), ("filo_bordo", True)):
+        im = Image.new("RGBA", (W * S, H * S), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        if filo:
+            d.rounded_rectangle((2 * S, 2 * S, (W - 2) * S - 1, (H - 2) * S - 1), 18 * S,
+                                outline=(255, 255, 255, 255), width=4 * S)
+        else:
+            d.rounded_rectangle((2 * S, 2 * S, (W - 2) * S - 1, (H - 2) * S - 1), 18 * S,
+                                fill=(0x18, 0x14, 0x1C, 235))
+        tre(nome, np.asarray(im.resize((W, H), Image.LANCZOS)), H, 0.125)
 
 
 def fai_freccina():

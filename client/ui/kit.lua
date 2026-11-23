@@ -855,6 +855,9 @@ end
 -- ZAINO, Sergio 18 Nov): the open word cold, in two halves along a slanted line, the
 -- others whole (Sergio, 19 Nov: only INVENTARIO); cut[i] = { top, bottom, top_text, bottom_text, mid }
 function M.tabs(g, list_of, x, y, tabs, active, accent, tag, cut)
+	-- every tab is the incandescent word (Sergio, 23 Nov: Campagna and Allenamento too,
+	-- docs/ui-catalogo.md purpose 5); the plates below stay only for the record
+	tag = true
 	local h, cx = tag and 50 or 58, x
 	local key = tag and tabs[1] and tabs[1][2]
 	for i, tab in ipairs(tabs) do
@@ -906,8 +909,7 @@ function M.tabs(g, list_of, x, y, tabs, active, accent, tag, cut)
 	return cx
 end
 
--- CHOICES: a small label and the options in a row on a thin line, the light
--- plate behind the chosen one. opts: { { label, ui_action }, ... }; w: an
+-- CHOICES: a small label and the options in a row, the chosen one red-hot. opts: { { label, ui_action }, ... }; w: an
 -- option's width; off: dim, nothing to tap
 function M.choice(g, list_of, x, y, label, opts, active, w, off)
 	local h = 58
@@ -917,13 +919,16 @@ function M.choice(g, list_of, x, y, label, opts, active, w, off)
 	for i, o in ipairs(opts) do
 		local ox = x + (i - 1) * w
 		local on = i == active and not off
-		-- every option is a small plate: the chosen one light, the others iron
-		local name = on and "piastrina_chiara" or "piastrina"
-		local parts = three(empty(ox + w / 2 - 4 - g.ox, g.oy - (y + h / 2), 0, 0, g.node), name, w - 8, h)
-		if off then tint(parts, vmath.vector4(1, 1, 1, 0.4)) end
-		local box = room(name, ox + w / 2 - 4, y + h / 2, w - 8, h)
-		M.text({ node = g.node, ox = g.ox, oy = g.oy, box = box }, o[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 8, 22,
-			on and C.INK or with_alpha(C.SAND, off and 0.35 or 0.8), "middle")
+		-- every option is a word like the tabs (Sergio, 23 Nov, no light plates): the
+		-- chosen one red-hot over its ember glow, the others cold
+		local mid = ox + w / 2 - 4
+		if on then
+			local glow = shape("alone", mid - g.ox, g.oy - (y + h / 2 - 4), #o[1] * 18 + 70, 60, with_alpha(C.HOT_BOTTOM, 0.5), g.node)
+			gui.set_blend_mode(glow, gui.BLEND_ADD)
+		end
+		local t = M.text(g, o[1], mid, y + h / 2 + (on and 9 or 7), on and 26 or 21,
+			on and TAB_HOT or with_alpha(TAB_COLD, off and 0.4 or 1), "middle", 1)
+		if M.width(t) > w - 12 then gui.set_scale(t, gui.get_scale(t) * ((w - 12) / M.width(t))); M.check_small(t) end
 		if not off then M.zone(g, list_of, ox, y - 4, w, h + 8, o[2]) end
 	end
 end
@@ -1004,15 +1009,22 @@ function M.label_width(t)
 	return math.ceil(m.width * 16 / FONT_SIZE) + 40
 end
 
+-- A thin thread around a word on the dark (Sergio, 23 Nov: labels and filters, no
+-- plates): the box x..x+w, y..y+h, the thread in color. Returns its node
+function M.thread_chip(g, x, y, w, h, color)
+	local n = empty(x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
+	three(n, "filo_fondo", w, h)
+	tint(three(n, "filo_bordo", w, h), color)
+	return n
+end
+
 function M.label(g, x, y, t, color, backed)
 	if backed then
-		-- on a picture: a small iron plate, the word in its room
-		local w, h = M.label_width(t), 32
-		local cx, cy = x - 8 + w / 2, y - 1 + h / 2
-		local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
-		three(n, "piastrina", w, h)
-		local box = room("piastrina", cx, cy, w, h)
-		return M.text({ node = n, ox = cx, oy = cy, box = box }, t, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 6, 16, color, "middle", 1)
+		-- on a picture: the word in a thin thread of its color
+		local w, h = M.label_width(t) - 8, 30
+		local cx, cy = x - 8 + w / 2, y + h / 2
+		local n = M.thread_chip(g, x - 8, y, w, h, color)
+		return M.text({ node = n, ox = cx, oy = cy }, t, cx, cy + 6, 16, color, "middle", 1)
 	end
 	return M.text(g, t, x, y + 18, 16, color, "start", 1.2)
 end

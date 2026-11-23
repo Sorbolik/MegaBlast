@@ -53,6 +53,8 @@ return {
 	fabbro_al_banco = { w = 651, h = 1000 },
 	fascia_indossato = { w = 317, h = 64 },
 	fiamma = { w = 92, h = 120 },
+	filo_bordo = { w = 256, h = 64, c = 32 },
+	filo_fondo = { w = 256, h = 64, c = 32 },
 	frammento_corvo = { w = 192, h = 192 },
 	frammento_fabbro = { w = 192, h = 192 },
 	frammento_fornace = { w = 192, h = 192 },

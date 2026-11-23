@@ -293,6 +293,24 @@ images {
   image: "/assets/fucina/filo.png"
 }
 images {
+  image: "/assets/fucina/filo_bordo_cx.png"
+}
+images {
+  image: "/assets/fucina/filo_bordo_dx.png"
+}
+images {
+  image: "/assets/fucina/filo_bordo_sx.png"
+}
+images {
+  image: "/assets/fucina/filo_fondo_cx.png"
+}
+images {
+  image: "/assets/fucina/filo_fondo_dx.png"
+}
+images {
+  image: "/assets/fucina/filo_fondo_sx.png"
+}
+images {
   image: "/assets/fucina/frammento_corvo.png"
 }
 images {

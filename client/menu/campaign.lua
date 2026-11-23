@@ -489,8 +489,7 @@ local function build(c)
 	local tabs_end = kit.tabs(g, c.buttons, 440, 104, tabs, active, KC.HOT)
 	-- the story seen so far, to read again: a small plate after the tabs
 	if c.storia then
-		local p = kit.plate(g, tabs_end + 30, 104, 190, 58, KC.ROSE, { sk = 0, d = 4, piece = "piastrina" })
-		kit.text(p.g, TS.read_again, tabs_end + 30 + 95, 140, 19, KC.SAND, "middle", 0.5)
+		local p = kit.secondary(g, TS.read_again, tabs_end + 40, 102, 210, 52, { icon = "az_rileggi" })
 		kit.button(c.buttons, p, "storia")
 	end
 	guide(c, chosen)

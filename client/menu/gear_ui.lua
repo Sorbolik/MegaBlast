@@ -593,7 +593,7 @@ function M.chips(s, g, x, y, list, active, maxw)
 		end
 	end
 	local pad, gap, size = 30, 8, 19
-	local least = kit.least("piastrina", 48)
+	local least = 48
 	local function row(p, k)
 		local t = gap * (#list - 1)
 		for i = 1, #list do t = t + math.max(widths[i] * k + p, least) end
@@ -610,7 +610,8 @@ function M.chips(s, g, x, y, list, active, maxw)
 	for i, c in ipairs(list) do
 		local on = i == active
 		local w = math.max(widths[i] * k + pad, least)
-		kit.strip(g, on and "piastrina_calda" or "piastrina", cx, y, w, 48)
+		-- a thin thread around it, gold the chosen one (kit.thread_chip)
+		kit.thread_chip(g, cx, y + 2, w, 44, on and KC.HOT or KC.LINE)
 		if c.slot then
 			local icon = fit(g, TYPE[c.slot], cx + (w - ICON) / 2, y + 24 - ICON / 2 - 2, ICON, ICON)
 			local t = M.TINT[c.slot]
