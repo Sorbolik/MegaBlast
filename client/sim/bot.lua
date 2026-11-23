@@ -150,6 +150,17 @@ local function copy(t)
 	return o
 end
 
+-- A copy whose tables (a shot's hit list, a pool's lit) are copies too, all the way down: the
+-- copy of the match must never write into the real one. Shared, the bot trying
+-- its moves marked robots of the real match as hit or burned, and the server's
+-- match (where the bots think) split from the phones' (Sergio, 23 Nov: the
+-- loop of reconnections, "stato diverso")
+local function copy2(t)
+	local o = {}
+	for k, v in pairs(t) do o[k] = type(v) == "table" and copy2(v) or v end
+	return o
+end
+
 -- dst becomes a copy of src (its old keys go): reusing dst instead of a new
 -- table, the thinking doesn't fill Lua's memory with garbage (about 10 KB per
 -- copy of the match, hundreds of copies per second; docs/prestazioni.md, Fase 2)
@@ -170,21 +181,36 @@ local function own(t, fresh)
 	end
 	return o
 end
-local function robot_parts() return { ammo = {}, life_damage = {}, status = {}, hooked = {}, hook_shot = {} } end
+local function robot_parts() return { status = {} } end
 
--- A robot's copy; into: a copy made before, to overwrite
+-- A robot's copy; into: a copy made before, to overwrite. Every table of the
+-- robot (ammo, status, who a swing already hit, the cannon...) is its own in the
+-- copy, in a reused table; only stats, never written, is shared
 local function clone(rb, into)
 	local c = into or {}
 	local o = own(c, robot_parts)
 	refill(c, rb)
-	c.ammo = refill(o.ammo, rb.ammo)
-	c.life_damage = refill(o.life_damage, rb.life_damage)
-	local st = o.status
-	for k in pairs(st) do st[k] = nil end
-	for k, v in pairs(rb.status) do st[k] = copy(v) end
-	c.status = st
-	if rb.hooked then c.hooked = refill(o.hooked, rb.hooked) end
-	if rb.hook_shot then c.hook_shot = refill(o.hook_shot, rb.hook_shot) end
+	for k, v in pairs(rb) do
+		if type(v) == "table" and k ~= "stats" then
+			if k == "status" then
+				local st = o.status
+				for s in pairs(st) do st[s] = nil end
+				for s, e in pairs(v) do st[s] = type(e) == "table" and copy2(e) or e end
+				c.status = st
+			else
+				local d = o[k]
+				if not d then
+					d = {}
+					o[k] = d
+				end
+				c[k] = refill(d, v)
+				-- and what is inside it (the cannon's list of who it hit)
+				for kk, vv in pairs(d) do
+					if type(vv) == "table" then d[kk] = copy2(vv) end
+				end
+			end
+		end
+	end
 	return c
 end
 
@@ -202,7 +228,7 @@ end
 -- a list of copies of src's items, in the reused list dst
 local function copies(dst, src)
 	for i = #dst, #src + 1, -1 do dst[i] = nil end
-	for i, v in ipairs(src) do dst[i] = copy(v) end
+	for i, v in ipairs(src) do dst[i] = copy2(v) end
 	return dst
 end
 
@@ -241,15 +267,19 @@ function M.world(g, into)
 	w.robots = robots
 	w.orbs = copies(o.orbs, g.orbs)
 	w.placed = copies(o.placed, g.placed)
+	-- a pool's lit (who has burned this turn) is its own in the copy: shared,
+	-- the bot trying a move marked robots of the real match as burned, and the
+	-- server's match (where the bots think) split from the phones' (Sergio, 23
+	-- Nov: the loop of reconnections, "stato diverso")
 	w.pools = copies(o.pools, g.pools)
 	w.pool_id = g.pool_id
 	local shards = o.shards
 	for i = 1, game.SHARD_COUNT do
-		shards[i] = g.shards[i] and copy(g.shards[i]) or nil
+		shards[i] = g.shards[i] and copy2(g.shards[i]) or nil
 	end
 	w.shards = shards
-	w.projectile = g.projectile and copy(g.projectile)
-	w.burst = g.burst and copy(g.burst)
+	w.projectile = g.projectile and copy2(g.projectile)
+	w.burst = g.burst and copy2(g.burst)
 	w.explode = no_crater
 	-- the Trapano's tunnel doesn't dig either
 	w.dig = function() return 0, 0 end

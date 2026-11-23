@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -436,6 +437,42 @@ func TestHelloWrongVersion(t *testing.T) {
 	}
 	if !c.closed() {
 		t.Fatal("the connection should have closed")
+	}
+}
+
+// A phone with another simulation is told to update (simtree.go); with the
+// server's own, or none (the simulator), it gets in
+func TestHelloOtherSimulation(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	c := dial(t, ctx, url)
+	c.send(fmt.Sprintf(`{"t":"hello","v":%d,"mode":"1v1","sim":"0123456789abcdef"}`, protocolVersion))
+	if m := c.waitFor(`"error"`); m["e"] != "sim" {
+		t.Fatalf("unexpected answer: %v", m)
+	}
+	if !c.closed() {
+		t.Fatal("the connection should have closed")
+	}
+	ok := dial(t, ctx, url)
+	ok.send(fmt.Sprintf(`{"t":"hello","v":%d,"mode":"1v1","sim":%q}`, protocolVersion, simTree))
+	if m := ok.waitFor(`"wait"`); m["t"] != "wait" {
+		t.Fatalf("unexpected answer: %v", m)
+	}
+}
+
+// The fingerprint is the one git gives the folder (what apk.yml puts in the
+// APK), when client/sim has nothing left to commit
+func TestSimTreeIsGit(t *testing.T) {
+	if exec.Command("git", "diff", "--quiet", "HEAD", "--", "../client/sim").Run() != nil {
+		t.Skip("client/sim ha modifiche non salvate, o manca git")
+	}
+	out, err := exec.Command("git", "rev-parse", "HEAD:client/sim").Output()
+	if err != nil {
+		t.Skip("git non risponde: ", err)
+	}
+	if got := strings.TrimSpace(string(out)); got != simTree {
+		t.Fatalf("git dice %s, il server %s", got, simTree)
 	}
 }
 

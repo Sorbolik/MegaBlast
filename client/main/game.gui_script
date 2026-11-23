@@ -64,6 +64,12 @@ local TW, TH = game.GRID_W, game.WORLD_H / game.CELL
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Protocol version, equal to protocolVersion in server/server.go
 local PROTOCOL = 11
+-- The fingerprint of this build's simulation (git rev-parse HEAD:client/sim,
+-- written by apk.yml and tools/web/build.sh): the server turns away a phone whose
+-- simulation is not its own (server/simtree.go), its matches would split from the
+-- server's. Nil (the simulator, the editor): not checked
+local SIM = sys.get_config_string("megablast.sim", "")
+SIM = SIM ~= "" and SIM or nil
 -- If the connection drops in a match we retry for a while (the server keeps
 -- the seat for 20 seconds)
 -- for the whole match (ten minutes): the server keeps our seat to the end and
@@ -1723,7 +1729,10 @@ CP.FF_BUDGET = 0.04
 function CP.net_new(self, resume)
 	-- coming back (resume) all the keys arrive first: nothing is played before them
 	self.net = { q = {}, qn = 0, led = {}, fp = {}, want = {}, out = {}, out0 = 0, starved = true,
-		ff = resume or false, log = resume or false }
+		ff = resume or false, log = resume or false,
+		-- back after a split (CP.resync): splitting again before a check agrees, we stop
+		split = resume and self.net_split or nil }
+	self.net_split = nil
 	self.remote_aim, self.net_over = nil, nil
 end
 
@@ -1743,7 +1752,7 @@ function CP.net_keys(self, m)
 			local mine = n.led[t]
 			if mine ~= nil then
 				n.led[t] = nil
-				if mine ~= code then return CP.resync(self, "tasti diversi al tick " .. t .. " (" .. mine .. " / " .. code .. ")") end
+				if mine ~= code then return CP.resync(self, "tasti diversi al tick " .. t .. " (" .. mine .. " / " .. code .. ")", true) end
 			end
 		elseif t == n.qn then
 			n.q[t], n.qn = code, t + 1
@@ -1768,7 +1777,11 @@ function CP.net_check(self, s)
 	if s.n <= g.tick then
 		local mine = n.fp[s.n]
 		n.fp[s.n] = nil
-		if mine and mine ~= s.fp then CP.resync(self, "stato diverso al tick " .. s.n) end
+		if mine and mine ~= s.fp then
+			CP.resync(self, "stato diverso al tick " .. s.n, true)
+		elseif mine then
+			CP.net_agreed(self)
+		end
 	else
 		n.want[s.n] = s.fp
 	end
@@ -1799,7 +1812,11 @@ function CP.net_step(self, code, quiet)
 	local want = n.want[g.tick]
 	if want then
 		n.want[g.tick] = nil
-		if want ~= g:fingerprint() then CP.resync(self, "stato diverso al tick " .. g.tick) end
+		if want ~= g:fingerprint() then
+			CP.resync(self, "stato diverso al tick " .. g.tick, true)
+		else
+			CP.net_agreed(self)
+		end
 	elseif g.tick % CP.CHECK_EVERY == 0 then
 		n.fp[g.tick] = g:fingerprint()
 	end
@@ -1858,12 +1875,44 @@ end
 -- match again (start with resume, then all the keys).
 CP.STALL = 8
 
-function CP.resync(self, why)
+function CP.resync(self, why, split)
+	if not self.conn then return end
+	-- the match split from the server's (split): coming back replays all the keys
+	-- from the start and fixes a key or a message lost on the way. If it splits
+	-- again before any check has agreed, the replay brings it to the same place:
+	-- coming back again would drop every few seconds to the end (Sergio, 23 Nov,
+	-- 17 times in two minutes). We stop: the server keeps the seat and a bot
+	-- plays it (server/room.go standIn), we say why and go back to the menu
+	if split and self.net.split then
+		CP.net_note(self, "la partita resta diversa dopo il rientro: " .. why)
+		for _, what in ipairs(self.net_notes or {}) do send(self, { t = "nota", w = what }) end
+		self.net_notes = nil
+		CP.give_up(self)
+		return
+	end
 	local now = socket.gettime()
-	if not self.conn or (self.resync_at and now - self.resync_at < CP.STALL) then return end
+	if self.resync_at and now - self.resync_at < CP.STALL then return end
 	self.resync_at, self.state_at = now, now
 	CP.net_note(self, "mi ricollego: " .. why)
+	self.net_split = split or nil
 	ws.disconnect(self.conn)
+end
+
+-- A check of the match agreed with the server's: a later split is a new one
+function CP.net_agreed(self)
+	self.net.split, self.net_split = nil, nil
+end
+
+-- The match can't follow the server's any more: off the match, to the menu, with
+-- the seat to a bot (no "leave": the others keep seeing our robot)
+function CP.give_up(self)
+	local conn = self.conn
+	self.conn, self.tok = nil, nil
+	if conn then ws.disconnect(conn) end
+	self.queue = nil
+	set_controls_visible(self, false)
+	self.mode = "ended"
+	show_message(self, TM.back_to_menu:format(TM.out_of_sync), true)
 end
 
 -- What went wrong online, with where the match was: kept (the last few) and
@@ -2063,19 +2112,19 @@ on_socket = function(self, conn, data)
 	if data.event == ws.EVENT_CONNECTED then
 		-- the first message states the version: in the queue, or back in the match
 		if self.tok then
-			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
+			send(self, { t = "hello", v = PROTOCOL, tok = self.tok, sim = SIM })
 			-- and why we had dropped (CP.net_note)
 			for _, what in ipairs(self.net_notes or {}) do send(self, { t = "nota", w = what }) end
 			self.net_notes = nil
 		elseif self.privata then
 			-- the private match (menu/private.lua): a new room or a code
-			send(self, { t = "hello", v = PROTOCOL, privata = self.privata, profilo = CP.account.key(profile.test ~= false), prova = CP.test_eq(self) })
+			send(self, { t = "hello", v = PROTOCOL, sim = SIM, privata = self.privata, profilo = CP.account.key(profile.test ~= false), prova = CP.test_eq(self) })
 		else
 			CP.wait(self, TM.waiting)
 			-- the queue picked in GIOCA ONLINE (menu/queue.lua): 2v2, 1v1 or an event,
 			-- and the guest profile: the server takes the tag and the pieces from
 			-- its own, and gives it the prizes (main/account.lua)
-			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2", profilo = CP.account.key(profile.test ~= false), prova = CP.test_eq(self) })
+			send(self, { t = "hello", v = PROTOCOL, sim = SIM, mode = self.coda or "2v2", profilo = CP.account.key(profile.test ~= false), prova = CP.test_eq(self) })
 		end
 	elseif data.event == ws.EVENT_MESSAGE and conn == self.mute then
 		-- prova_muta: nothing arrives any more

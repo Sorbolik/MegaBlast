@@ -66,6 +66,46 @@ end
 check(shots > 3, "i bot hanno sparato (" .. shots .. " colpi)")
 check(same and server:fingerprint() == phone:fingerprint(), "il telefono coi soli codici ha la stessa partita del server (tick " .. server.tick .. ")")
 
+-- The copy of the match a bot tries its moves on (bot.world) never writes into
+-- the real one: on the server the bots think, on the phones they don't, and a
+-- shared table (a pool's lit, who a swing or the cannon hit) made the server's
+-- match split from the phones' (Sergio, 23 Nov: the loop of reconnections)
+do
+	local g = new()
+	local rb = g.robots[2]
+	rb.melee_hit, rb.cannon = { [1] = true }, { wait = 3, hit = { [3] = true } }
+	g.pools[1] = { id = 1, x = 10, y = 10, r = 60, turns = 3, owner = 1, team = 1, lit = { [2] = 1 } }
+	g.projectile = { x = 1, y = 2, hit = { [4] = true } }
+	local function dump(t, seen)
+		seen = seen or {}
+		if type(t) ~= "table" then return tostring(t) end
+		if seen[t] then return "@" end
+		seen[t] = true
+		local keys = {}
+		for k in pairs(t) do keys[#keys + 1] = k end
+		table.sort(keys, function(a, b) return tostring(a) < tostring(b) end)
+		local out = {}
+		for _, k in ipairs(keys) do
+			if k ~= "terrain" and k ~= "stats" and type(t[k]) ~= "function" then out[#out + 1] = tostring(k) .. "=" .. dump(t[k], seen) end
+		end
+		return "{" .. table.concat(out, ",") .. "}"
+	end
+	local before = dump({ g.robots, g.pools, g.projectile, g.orbs, g.placed })
+	local w = bot.world(g)
+	-- every table of the copy written over
+	local function scribble(t, depth)
+		if depth > 4 then return end
+		for k, v in pairs(t) do
+			if type(v) == "table" and k ~= "stats" then
+				scribble(v, depth + 1)
+				v.scritto = true
+			end
+		end
+	end
+	scribble({ w.robots, w.pools, w.projectile, w.orbs, w.placed }, 0)
+	check(dump({ g.robots, g.pools, g.projectile, g.orbs, g.placed }) == before, "la copia del bot non scrive nella partita vera")
+end
+
 if failures > 0 then
 	print(failures .. " controlli falliti")
 	os.exit(1)
