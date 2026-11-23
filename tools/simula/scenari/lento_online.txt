@@ -1,0 +1,23 @@
+# Online un telefono lento non rallenta la partita (Sergio, 23 nov: nel Safari
+# di Gabri 14 FPS e "il tempo diventava più lento per tutta la lobby"). Il
+# motore non dà mai un dt più lungo di 1/30 s: sotto i 30 FPS il nostro turno,
+# che guida il server e tutti gli altri, andava piano. Qui ogni frame dura 45 ms
+# in più (circa 20 FPS) e nel nostro turno i tick devono seguire l'orologio vero:
+# ogni 3 s il gioco scrive ritmo_giusto (o ritmo_lento, e lo scenario fallisce).
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_lento 45
+imposta prova_fps 1
+imposta prova_vignette no
+aspetta 1
+server 2v2 0 bot_dopo=3s
+aspetta_stato modo=menu 10
+aspetta 1.5
+tocca_bordo 175 52 basso destra     # GIOCA
+aspetta 1
+tocca_bordo 175 52 basso destra     # GIOCA ONLINE: CERCA (2 contro 2)
+aspetta_stato modo=scelta_online 20
+aspetta_stato modo=online 30
+aspetta_stato modo=online turno=1 fase=aim 30
+aspetta_evento ritmo_giusto 8
+foto 01_turno_lento
+aspetta_evento ritmo_giusto 8

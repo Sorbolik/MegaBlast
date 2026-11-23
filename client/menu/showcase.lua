@@ -81,10 +81,7 @@ end
 function M.from_eq(eq, nome, team, under)
 	local loadout = require "sim.loadout"
 	local v = M.simple(nome, team, under, eq.liv)
-	for i, s in ipairs(equip.SLOTS) do
-		local set = eq.gear and eq.gear[s.id]
-		if set then v.pezzi[i] = { slot = s.id, set = set, livello = eq.lv[s.id], tier = equip.tier(eq.lv[s.id]) } end
-	end
+	M.with_pieces(v, eq)
 	local a = { tree = {} }
 	for k, n in pairs(eq.tree or {}) do
 		if k == "pick" then
@@ -101,6 +98,18 @@ function M.from_eq(eq, nome, team, under)
 	for i, r in ipairs(skills.PATHS) do v.albero[i] = skills.spent(a.tree, r.id) end
 	v.punti = skills.points(eq.liv)
 	v.stats = copy_stats(loadout.net_stats(eq, game.base_stats()))
+	return v
+end
+
+-- The pieces of an eq (checked by the server: what really counts in the
+-- match) in place of those of the card: online everyone sees the others'
+-- pieces even when their card has none (a test profile; Sergio, 23 Nov)
+function M.with_pieces(v, eq)
+	for i, s in ipairs(equip.SLOTS) do
+		local set = eq.gear and eq.gear[s.id]
+		local l = set and eq.lv and eq.lv[s.id] or 1
+		v.pezzi[i] = set and { slot = s.id, set = set, livello = l, tier = equip.tier(l) } or v.pezzi[i]
+	end
 	return v
 end
 

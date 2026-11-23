@@ -40,7 +40,11 @@ func main() {
 		// secondo forgiato: il server li taglia al livello 20, server/accounts.go):
 		// il cartellino e le statistiche del robot online vengono da lì
 		vetrina := ""
-		if len(famiglie) > 0 {
+		if len(famiglie) > 0 && strings.HasPrefix(famiglie[i%len(famiglie)], "prova:") {
+			// "prova:corvo": il profilo di prova delle IMPOSTAZIONI (FINE GIOCO), senza
+			// profilo sul server: manda col saluto quello che indossa e nessun cartellino
+			vetrina = prova(strings.TrimPrefix(famiglie[i%len(famiglie)], "prova:"))
+		} else if len(famiglie) > 0 {
 			f, liv := famiglie[i%len(famiglie)], 1+29*(i%2)
 			id, err := profilo(*url, f, liv, 5+i)
 			if err != nil {
@@ -58,6 +62,16 @@ func main() {
 		time.Sleep(100 * time.Millisecond)
 	}
 	wg.Wait()
+}
+
+// prova: il saluto di un profilo di prova coi quattro pezzi di una famiglia al 30
+func prova(famiglia string) string {
+	var gear, lv []string
+	for _, p := range []string{"mask", "chest", "legs", "cloak"} {
+		gear = append(gear, fmt.Sprintf(`%q:%q`, p, famiglia))
+		lv = append(lv, fmt.Sprintf(`%q:30`, p))
+	}
+	return fmt.Sprintf(`,"prova":{"liv":30,"gear":{%s},"lv":{%s}}`, strings.Join(gear, ","), strings.Join(lv, ","))
 }
 
 // profilo crea sul server il profilo ospite di un finto (POST /profilo/nuovo,
