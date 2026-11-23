@@ -72,7 +72,7 @@ return {
 			regalo = {
 				s_regalo = {
 					{ "fabbro", "Te li sei guadagnati. Mettili, laggiù il pavimento brucia." },
-					{ "didascalia", "Gli stivali sono nel tuo ZAINO. E ora si apre l'ARMERIA." },
+					{ "didascalia", "Gli stivali sono nel tuo ZAINO. E ora si apre la BOTTEGA." },
 				},
 			},
 			insieme = {
@@ -479,12 +479,16 @@ return {
 		shelf = "SCAFFALE",
 		shelf_materials = "MATERIALI",
 		shelf_fragments = "FRAMMENTI",
-		call = "CHIAMA UN CLIENTE",
+		call = "I TUOI CLIENTI",
 		deliver = "CONSEGNA",
 		none_ready = "Niente di pronto",
 		smith_short = "Quella del Fabbro",
 		need_network = "Serve la rete",
 		missing_obsidian = "Ti mancano %d",
+		-- the lineup before an online match (menu/lineup.lua): your orders and what drops here
+		lineup_title = "LE TUE COMMESSE",
+		lineup_drop = "QUI CADE",
+		lineup_row = "%s · %s",
 		ready_one = "1 pronta",
 		ready_many = "%d pronte",
 		cost = "costa %d",
@@ -650,6 +654,9 @@ return {
 		level_short = "LIV %s",
 		xp = "%s / %s XP",
 		next_to_name = "ACCANTO AL TUO NOME",
+		-- the clients' badges (at 10 pearls of trust, docs/commesse.md)
+		clients_badges = "CLIENTI DI FIDUCIA",
+		clients_none = "A 10 PERLE IL CLIENTE TI DÀ IL SUO BADGE",
 		won_share = "%s%% delle partite vinte",
 		-- the modes, short, as chips
 		mode_short = { tutte = "TUTTE", ["2v2"] = "2V2", ["1v1"] = "1V1", torneo = "TORNEO", campagna = "CAMPAGNA" },

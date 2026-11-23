@@ -524,6 +524,10 @@ func TestOnlineMatch(t *testing.T) {
 	if sa["you"].(float64) != 1 || sb["you"].(float64) != 2 || sa["seed"] != sb["seed"] {
 		t.Fatalf("unexpected start: %v %v", sa, sb)
 	}
+	// the draft already says the match's map (the lineup shows what drops there)
+	if d["map"] == nil || d["map"] != sa["map"] {
+		t.Fatalf("the draft's map %v is not the match's %v", d["map"], sa["map"])
+	}
 
 	// The match waits for the phone of whoever is on turn (robot 1, during the
 	// 3-2-1 too: 3 s, game.INTRO_TICKS), which plays at once and sends its keys:
