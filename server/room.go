@@ -76,6 +76,8 @@ type clientMsg struct {
 	// with the greeting from a test profile (FINE GIOCO, DA ZERO: no "profilo"),
 	// what it wears; it counts online until the launch (Sergio, 22 Nov), no prizes
 	Test json.RawMessage `json:"prova"`
+	// with the greeting: the fingerprint of the phone's simulation (simtree.go)
+	Sim string `json:"sim"`
 }
 
 // equipMax: the longest "eq" that is read (a full one is under 1 KB)

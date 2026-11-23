@@ -23,6 +23,8 @@ printf "[project]\ndependencies#0 =\n%s\n\n[native_extension]\napp_manifest =\n"
 # il codice della versione (si vede nelle IMPOSTAZIONI del gioco); PROVA fuori da main
 RAMO="${GITHUB_REF_NAME:-$(git -C "$REPO" branch --show-current)}"
 printf "\n[megablast]\nversion = %s\ntest = %s\n" "$(git -C "$REPO" log -1 --format=%h)" "$([ "$RAMO" = main ] && echo 0 || echo 1)" >> "$TMP/web.ini"
+# l'impronta della simulazione (server/simtree.go): la sua, se client/sim non ha modifiche da salvare
+git -C "$REPO" diff --quiet HEAD -- client/sim && printf "sim = %s\n" "$(git -C "$REPO" rev-parse HEAD:client/sim)" >> "$TMP/web.ini"
 # SERVER_URL=ws://… : il server di questa build (quella sul VPS); senza, quello di game.project
 [ -n "${SERVER_URL:-}" ] && printf "server_url = %s\n" "$SERVER_URL" >> "$TMP/web.ini"
 "$JAVA" -jar "$CACHE/bob.jar" --root "$REPO/simulazione/web_client" --output build/web/default --settings "$TMP/web.ini" \

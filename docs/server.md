@@ -256,7 +256,13 @@ mostrarli sui cartellini, online non cambiano ancora le statistiche, e senza pro
 può sapere se il giocatore li possiede; un client vecchio non manda `pz` e ignora quello degli altri,
 la versione del protocollo resta 9). Se la
 versione non è quella del server la risposta è `{"t":"error","e":"version"}` e
-il client chiede di aggiornare il gioco. La versione (`protocolVersion` in
+il client chiede di aggiornare il gioco. **Stessa simulazione** (23 nov): l'APK e la build web
+portano l'impronta della loro `client/sim` (`git rev-parse HEAD:client/sim`, scritta da
+`apk.yml` e `tools/web/build.sh` in `megablast.sim`) e la mandano nel saluto (`"sim":"…"`); il
+server calcola la sua dai file che incorpora (`server/simtree.go`, è lo stesso hash di git) e, se
+sono diverse, risponde `{"t":"error","e":"sim"}`: il telefono dice di aggiornare il gioco invece di
+entrare in una partita che si separerebbe da quella del server. Chi non manda `sim` (simulatore,
+build dall'editor) non è controllato. La versione (`protocolVersion` in
 `server.go`, `PROTOCOL` nel client) va alzata quando i messaggi cambiano in un
 modo che un client vecchio non capirebbe. Gli altri messaggi sono in
 [design.md](design.md#5-rete-e-protocollo).
@@ -286,7 +292,12 @@ dal seed e li rigioca senza disegnarli (un pezzo per frame), poi riprende da dov
 il gioco chiude la connessione e rientra così (`CP.resync`): non resta mai fermo
 né su una partita diversa da quella del server. Al rientro dice al server perché era caduto
 (`{"t":"nota","w":"…"}`: motivo, turno, tick, coda), e il server lo scrive nel log insieme a
-«ha perso la connessione» e «è tornato dopo N s».
+«ha perso la connessione» e «è tornato dopo N s». Questi log si leggono senza entrare sul VPS: Actions >
+«Log del server» > Run workflow (`log.yml`; testo `nota del client`, oppure la data, per esempio
+`2026-11-23`, per avere tutte le righe). **Mai un giro di rientri** (Sergio, 23 nov: 17 cadute in
+due minuti, sempre «stato diverso»): se la partita torna diversa dopo un rientro, prima che un
+controllo sia andato bene, rientrare la rigiocherebbe di nuovo fino allo stesso punto; il telefono
+allora si ferma, manda la nota, lascia il posto a un bot e torna al menu (`CP.give_up`).
 
 ## Numeri
 

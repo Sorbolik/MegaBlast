@@ -247,6 +247,12 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 		p.Send(fmt.Appendf(nil, `{"t":"error","e":"version","v":%d}`, protocolVersion))
 		return false
 	}
+	// same messages, another simulation: the match would split from ours (simtree.go)
+	if m.Sim != "" && m.Sim != simTree {
+		log.Printf("telefono con un'altra simulazione (%.12s, il server ha %.12s): deve aggiornare", m.Sim, simTree)
+		p.Send([]byte(`{"t":"error","e":"sim"}`))
+		return false
+	}
 	if m.Tok != "" {
 		v, ok := s.sessions.Load(m.Tok)
 		if !ok {

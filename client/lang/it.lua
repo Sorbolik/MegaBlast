@@ -1050,6 +1050,7 @@ return {
 		-- the server's errors (server/room.go), then the line that closes them
 		server_errors = {
 			version = "C'è una versione nuova di MegaBlast:\naggiorna il gioco",
+			sim = "Il gioco sul telefono è diverso da quello del server:\naggiorna il gioco",
 			expired = "La partita è finita",
 			draining = "Il server si sta aggiornando,\nriprova tra poco",
 			evento = "L'evento è appena finito",
@@ -1111,6 +1112,7 @@ return {
 		waiting = "Connesso, in attesa...",
 		reconnecting = "Connessione persa, mi riconnetto...",
 		connection_lost = "Connessione persa",
+		out_of_sync = "La partita non torna più con quella del server:\nun bot gioca al tuo posto",
 		no_websocket = "Manca l'estensione WebSocket\nIn Defold: Project > Fetch Libraries",
 		-- under each player's card at the start
 		roles = { you = "TU", dummy = "BERSAGLIO", mate = "COMPAGNO", opponent = "AVVERSARIO" },
