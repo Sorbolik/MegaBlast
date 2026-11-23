@@ -6,5 +6,7 @@
 	"name": "megablast",
 	"main": "worker.js",
 	"compatibility_date": "2026-10-01",
-	"assets": { "directory": "dist", "binding": "ASSETS" }
+	"assets": { "directory": "dist", "binding": "ASSETS" },
+	// serve a `wrangler preview` (build dei rami non di produzione): può restare vuoto
+	"previews": {}
 }
