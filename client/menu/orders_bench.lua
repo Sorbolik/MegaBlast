@@ -84,6 +84,12 @@ function M.lucky(p)
 	return orders.lucky(p)
 end
 
+-- "The pieces go back to the shop": the test profile no longer owns these
+-- pieces (wallet keys), so the BANCO shows their prices again
+function M.give_back(p, keys)
+	for _, k in ipairs(keys) do p.posseduti[k] = nil end
+end
+
 -- "Start over": the orders as on a new profile (the first time: the Smith calls
 -- after the fifth match)
 function M.reset(p)

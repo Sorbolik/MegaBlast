@@ -40,21 +40,37 @@ aspetta 1
 tocca_bordo 275 49 basso sinistra   # PROVA: il banco di prova al posto del Fabbro
 aspetta 2
 foto 02_banco_di_prova
-tocca_bordo 214 189 alto sinistra   # PARTITA FINTA VINTA
+tocca_bordo 214 187 alto sinistra   # PARTITA FINTA VINTA
 aspetta 1
-tocca_bordo 214 189 alto sinistra
+tocca_bordo 214 187 alto sinistra
 aspetta 1
-tocca_bordo 214 189 alto sinistra
+tocca_bordo 214 187 alto sinistra
 aspetta 2
 foto 03_tre_partite_finte
-tocca_bordo 178 52 basso destra     # CONSEGNA
-aspetta 3
+tocca_bordo 214 432 alto sinistra   # PROSSIMO COLPO BUONO
+aspetta 1
+tocca_bordo 178 52 basso destra     # CONSEGNA: la scena della consegna (proposta A)
+aspetta 0.3
+foto 04a_i_cartellini_volano
+aspetta 1.15
+foto 04b_martellate
+aspetta 0.75
+foto 04c_il_cliente_fiero
+aspetta 1.6
+foto 04d_scontrino
+tocca_bordo 178 52 basso destra     # OK
+aspetta 1
 foto 04_consegnate
-tocca_bordo 214 297 alto sinistra   # PASSA UN GIORNO
+tocca_bordo 214 285 alto sinistra   # PASSA UN GIORNO
 aspetta 2
 foto 05_il_giorno_dopo
+tocca_bordo 214 481 alto sinistra   # RIDAI I PEZZI DEL BANCO: si vedono i prezzi
+aspetta 1
 tocca_bordo 275 49 basso sinistra   # PROVA: torna il Fabbro
 aspetta 1
 tocca_bordo 590 53 alto sinistra    # BANCO: lo shop di sempre
 aspetta 4
 foto 06_banco
+tocca_centro 484 293                # un pezzo del giorno: COI FRAMMENTI a sinistra
+aspetta 2
+foto 07_banco_coi_frammenti

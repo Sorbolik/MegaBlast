@@ -1,6 +1,6 @@
 # Le Commesse dalla prima volta (profilo di prova DA ZERO): la bottega ancora chiusa col
 # banco di prova, cinque partite finte e il Fabbro chiama, la prima consegna, poi nello
-# ZAINO la scheda del pezzo col pulsante COI FRAMMENTI.
+# BANCO e nello ZAINO il pulsante COI FRAMMENTI.
 imposta prova_test risorse
 
 aspetta 4
@@ -31,9 +31,23 @@ aspetta 0.6
 tocca_bordo 214 189 alto sinistra
 aspetta 1
 foto 03_prime_commesse_pronte
-tocca_bordo 178 52 basso destra     # CONSEGNA
+tocca_bordo 178 52 basso destra     # CONSEGNA: solo quella del Fabbro, si sceglie la famiglia
+aspetta 2
+tocca_centro 379 390                # FABBRO
+aspetta 1
+foto 04_famiglia_della_prima
+tocca_bordo 178 52 basso destra     # CONSEGNA: la scena della consegna
 aspetta 2
 foto 04_prima_consegna
+aspetta 1.5
+foto 04_prima_consegna_scontrino
+tocca_bordo 178 52 basso destra     # OK
+aspetta 1
+tocca_bordo 590 53 alto sinistra    # BANCO
+aspetta 3
+tocca_centro 484 293                # un pezzo del giorno: COI FRAMMENTI
+aspetta 2
+foto 04_banco_coi_frammenti
 tocca_bordo 72 60 basso sinistra    # indietro: la home
 aspetta 4
 tocca_centro 640 300               # l'apprendista: lo ZAINO

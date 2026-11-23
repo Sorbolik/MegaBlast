@@ -412,6 +412,10 @@ check(orders.upgrade(p, "corvo", "mask") == nil, "its level wants fragments of t
 check(orders.fragments(p, "fornace") == 500, "the other families' fragments don't pay it")
 p.commesse.frammenti.corvo = 10
 local need = orders.level_cost(p, "corvo", "mask")
+check(orders.upgradable(p, "corvo") == "mask", "enough for a level: the receipt offers POTENZIA")
+p.commesse.frammenti.corvo = need - 1
+check(orders.upgradable(p, "corvo") == nil and orders.upgradable(p, "fornace") == nil, "one short, or no piece: no POTENZIA")
+p.commesse.frammenti.corvo = 10
 check(need == orders.in_fragments(equip.cost(2)), "level 2 in fragments: its price in Scaglie turned into fragments")
 check(orders.upgrade(p, "corvo", "mask") == 2 and orders.fragments(p, "corvo") == 10 - need and p.scaglie == 0,
 	"fragments pay the level, the Scaglie stay")
@@ -508,6 +512,13 @@ do
 	check(bench.today(p, R) == R and bench.days(p, R, 1) == "2026-11-24" and bench.days(p, R, 7) == "2026-12-01",
 		"a day and a week pass")
 	check(bench.lucky(p) and orders.lucky(p), "the next delivery is a lucky strike")
+	do
+		-- and it is: the Smith's own order, made ready, delivered with its lucky row
+		local f = p.commesse.fabbro
+		f.fatti = f.quanti
+		local got = orders.deliver(p, f.n, "corvo")
+		check(got and row(got, "lucky"), "the bench's lucky strike falls on the very next delivery")
+	end
 	for _ = 1, 12 do bench.match(p, R) end
 	local all = true
 	for _, m in ipairs(orders.MATERIALS) do all = all and orders.materials(p, m.id) > 0 end

@@ -11,6 +11,7 @@
 --   ill.release(id, kind)                         -- when nothing shows it anymore
 --   local tex = ill.story(id)  /  ill.story_release(id)   -- a panel of the story
 --   local tex = ill.map_mini(map)  /  ill.map_mini_release(map)   -- a map in the history
+--   local tex = ill.client(id, face)  /  ill.client_release(id, face)   -- a client's bust
 
 local M = {}
 
@@ -76,6 +77,16 @@ end
 
 function M.map_mini_release(id)
 	release("mini_" .. id)
+end
+
+-- A client's bust of the Smith's orders (WB-086, WB-087; tools/grafica/fucina.py):
+-- /paintings/clients/<id>_<face>.jpg, face "chiede", "contento" or "fiero", 366 x 485
+function M.client(id, face)
+	return load("cliente_" .. id .. "_" .. face, "/paintings/clients/" .. id .. "_" .. face .. ".jpg")
+end
+
+function M.client_release(id, face)
+	release("cliente_" .. id .. "_" .. face)
 end
 
 return M

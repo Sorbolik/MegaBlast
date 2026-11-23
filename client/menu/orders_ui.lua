@@ -25,6 +25,7 @@ local illustrations = require "ui.illustrations"
 local screen = require "ui.screen"
 local bench = require "menu.orders_bench"
 local T = require("lang.text").orders
+local delivery = require "menu.orders_delivery"
 
 local M = {}
 
@@ -46,7 +47,7 @@ local WEEK_W = 300
 local SMITH_W = 3 * CARD_W + 2 * GAP - WEEK_W - GAP
 
 -- (defined further down, used by the board and its taps)
-local smith_at_counter, find, modal, modal_cmd
+local smith_at_counter, find, modal, modal_cmd, deliver
 
 -- the clients' busts (WB-086, WB-087): where the face is, from the top of the
 -- bust (a fraction of its height), for the strip on the board's cards
@@ -82,8 +83,23 @@ local function mini(a, g, map, x, y, w, h)
 	gui.set_parent(img, clip)
 end
 
+-- A client's bust (a JPEG loaded while it shows, ui/illustrations.lua) w x h
+-- centered at (x, y) on a parent node; a.busts keeps it, to let it go (M.release)
+local BUST_W, BUST_H = 366, 485
+local function bust_node(a, parent, id, face, x, y, w, h)
+	local tex = illustrations.client(id, face)
+	if not tex then return end
+	a.busts[#a.busts + 1] = { id, face }
+	local n = gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(w, h, 0))
+	gui.set_adjust_mode(n, gui.ADJUST_FIT)
+	gui.set_texture(n, tex)
+	gui.set_parent(n, parent)
+	return n
+end
+M.bust_node = bust_node
+
 -- A strip of a client's bust (the face) filling the Figma box, cut to it, with an ink rim
-local function face_strip(g, id, x, y, w, h)
+local function face_strip(a, g, id, x, y, w, h)
 	kit.rect(g, x - 3, y - 3, w + 6, h + 6, KC.INK)
 	local cx, cy = x + w / 2, y + h / 2
 	local clip = gui.new_box_node(vmath.vector3(cx - g.ox, g.oy - cy, 0), vmath.vector3(w, h, 0))
@@ -91,9 +107,9 @@ local function face_strip(g, id, x, y, w, h)
 	gui.set_clipping_mode(clip, gui.CLIPPING_MODE_STENCIL)
 	gui.set_parent(clip, g.node)
 	-- the bust as wide as the strip, its face in the middle
-	local bh = w * 485 / 366
+	local bh = w * BUST_H / BUST_W
 	local top = cy - FACE[id] * bh
-	kit.piece({ node = clip, ox = cx, oy = cy }, "cliente_" .. id .. "_chiede", cx, top + bh / 2, bh)
+	bust_node(a, clip, id, "chiede", 0, cy - top - bh / 2, w, bh)
 end
 
 -- a panel filling the Figma box, and the group to write on it
@@ -170,7 +186,7 @@ local function client_card(a, g, o, x, y)
 	local client = orders.CLIENT[o.cliente]
 	local c = panel(g, x, y, CARD_W, CARD_H, "carta")
 	local ix, iw = x + PAD, CARD_W - 2 * PAD
-	face_strip(c, o.cliente, ix + 3, y + PAD + 3 + 14, iw - 6, 42)
+	face_strip(a, c, o.cliente, ix + 3, y + PAD + 3 + 14, iw - 6, 42)
 	nail(g, x, y, CARD_W)
 	fit(kit.text(c, kit.upper(T.clients[o.cliente]), ix, y + 100, 21, KC.INK, "start", 0.5), iw)
 	family_tag(c, client.set, ix, y + 108)
@@ -281,9 +297,9 @@ end
 
 -- The test bench, in the Smith's place: every state without playing or waiting
 local BENCH = { { "vinta", "bench_won" }, { "persa", "bench_lost" }, { "giorno", "bench_day1" }, { "settimana", "bench_week" },
-	{ "cliente", "bench_client" }, { "colpo", "bench_lucky" }, { "capo", "bench_reset" } }
+	{ "cliente", "bench_client" }, { "colpo", "bench_lucky" }, { "pezzi", "bench_pieces" }, { "capo", "bench_reset" } }
 local BENCH_TEXT = { bench_won = T.bench_won, bench_lost = T.bench_lost, bench_day1 = T.bench_day1, bench_week = T.bench_week,
-	bench_client = T.bench_client, bench_lucky = T.bench_lucky, bench_reset = T.bench_reset }
+	bench_client = T.bench_client, bench_lucky = T.bench_lucky, bench_pieces = T.bench_pieces, bench_reset = T.bench_reset }
 
 local function bench_panel(a, g)
 	local p = a.prof
@@ -293,9 +309,9 @@ local function bench_panel(a, g)
 	kit.text(c, T.bench_title, ix, y + PAD + 18, 22, KC.HOT, "start", 1)
 	fit(kit.text(c, T.bench_day:format((day(a):gsub("(%d+)-(%d+)-(%d+)", "%3/%2/%1"))), ix, y + PAD + 40, 16, KC.MUTE, "start", 0.5), iw)
 	for i, b in ipairs(BENCH) do
-		local by = y + 70 + (i - 1) * 54
-		local plate = kit.card(c, ix, by, iw, 46, KC.ROSE)
-		kit.text(plate.g, BENCH_TEXT[b[2]], ix + iw / 2, by + 30, 18, KC.SAND, "middle", 0.5)
+		local by = y + 70 + (i - 1) * 49
+		local plate = kit.card(c, ix, by, iw, 42, KC.ROSE)
+		kit.text(plate.g, BENCH_TEXT[b[2]], ix + iw / 2, by + 28, 18, KC.SAND, "middle", 0.5)
 		kit.button(a.buttons, plate, "prova:" .. b[1])
 	end
 	local t = p.commesse.prova or { partite = 0 }
@@ -303,8 +319,8 @@ local function bench_panel(a, g)
 end
 
 -- The Smith at his counter (WB-085), on the left of the board: 500 tall (drawn at 1000)
-smith_at_counter = function(g)
-	kit.piece(g, "fabbro_al_banco", 215, 350, 500)
+smith_at_counter = function(a, g)
+	a.smith_node = kit.piece(g, "fabbro_al_banco", 215, 350, 500)
 end
 
 -- Windows over the board (the drafts Sergio approved on 23 Nov: 6 the open
@@ -332,7 +348,7 @@ end
 local function portrait(a, g, id, x, y, w, h)
 	if FACE[id] then
 		kit.rect(g, x - 3, y - 3, w + 6, h + 6, KC.INK)
-		kit.piece(g, "cliente_" .. id .. "_chiede", x + w / 2, y + h / 2, h)
+		bust_node(a, g.node, id, "chiede", x + w / 2 - g.ox, g.oy - (y + h / 2), h * BUST_W / BUST_H, h)
 	else
 		mini(a, g, MAP_OF[orders.CLIENT[id].material], x, y, w, h)
 	end
@@ -368,6 +384,10 @@ local function window(a, base)
 	a.mlow = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	a.mright = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 end
+
+-- what the delivery's scene borrows from the board (menu/orders_delivery.lua)
+local HELP = { panel = function(...) return panel(...) end, nail = nail, fit = fit, pearls = pearls,
+	trust_next = trust_next, bust_node = function(...) return M.bust_node(...) end }
 
 -- the window's sheet: paper or iron, the nail on the paper, and a zone that keeps its taps
 local function sheet(a, x, y, w, h, paper)
@@ -477,7 +497,7 @@ local function open_card(a, o)
 	kit.button(a.buttons, sb, "scambia", { spento = not mat })
 	local can = ready and p.ossidiana >= cost and profile.can_spend()
 	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { size = 42, off = not can })
-	kit.button(a.buttons, act, "consegna1", { main = true, spento = not can })
+	kit.button(a.buttons, act, "consegnala", { main = true, spento = not can })
 end
 
 -- Draft 7: the swap, three of a material for one of the asked one
@@ -571,7 +591,7 @@ local function family(a, o)
 	back_button(a)
 	local can = ready and sel ~= nil and p.ossidiana >= cost and profile.can_spend()
 	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { size = 42, off = not can })
-	kit.button(a.buttons, act, "consegna1", { main = true, spento = not can })
+	kit.button(a.buttons, act, "consegnala", { main = true, spento = not can })
 end
 
 -- Draft 9: the clients' book, and from here the call
@@ -654,11 +674,8 @@ modal_cmd = function(a, kind, x)
 		local mat = o and (o.materiale or (o.poi and o.poi.materiale))
 		if mat and m.sel and profile.act(p, { k = "scambia", da = m.sel, a = mat }) then sound.play("#scaglia") end
 		if m.sel and orders.materials(p, m.sel) < orders.TRADE then m.sel = nil end
-	elseif kind == "consegna1" then
-		if profile.act(p, { k = "consegna", n = m.n, set = m.k == "famiglia" and m.sel or nil }) then
-			sound.play("#scaglia")
-			a.modal = nil
-		end
+	elseif kind == "consegnala" then
+		deliver(a, { { n = m.n, set = m.k == "famiglia" and m.sel or nil } }, true)
 	elseif kind == "chiama" then
 		if m.sel then profile.act(p, { k = "chiama", cliente = m.sel }) end
 	else
@@ -689,10 +706,11 @@ function M.board(a)
 	-- (the buttons before the board's: the header's, kept under a window)
 	local base = #a.buttons
 	a.minis = a.minis or {}
+	a.busts = a.busts or {}
 	orders.init(p)
 	if not p.commesse.aperta then
 		-- (test profiles only: the Smith has not called yet, the bench makes the matches)
-		if a.bench then bench_panel(a, a.left) else smith_at_counter(a.left) end
+		if a.bench then bench_panel(a, a.left) else smith_at_counter(a, a.left) end
 		local n = kit.text(a.mid, T.closed:format(orders.OPEN_AFTER, p.commesse.online, orders.OPEN_AFTER), 716, 330, 22, KC.MUTE, "middle", 0.5)
 		fit(n, 560)
 		local pb = kit.secondary(a.low, T.bench, 160, 640, 230, 62, {})
@@ -704,7 +722,8 @@ function M.board(a)
 	local g = a.mid
 	local c = p.commesse
 	-- on the left the Smith at his counter (WB-085), or the test bench in his place
-	if a.bench then bench_panel(a, a.left) else smith_at_counter(a.left) end
+	a.smith_node = nil
+	if a.bench then bench_panel(a, a.left) else smith_at_counter(a, a.left) end
 	-- the clients' places: as many as you have earned, always three columns
 	local places = orders.places(p)
 	for i = 1, 3 do
@@ -734,14 +753,46 @@ function M.board(a)
 		-- (the Smith's own asks a family: it is delivered from its card)
 		if ok and o.cliente then ready, cost = ready + 1, cost + orders.cost(o) end
 	end
+	-- only the Smith's ready (the first time it is the only one): CONSEGNA opens its family choice
+	local _, smith = orders.progress(p, c.fabbro)
 	local net = profile.can_spend()
-	local can = ready > 0 and p.ossidiana >= cost and net
-	local sub = ready == 0 and T.none_ready or (not net and T.need_network)
+	local can = (ready > 0 and p.ossidiana >= cost or ready == 0 and smith) and net
+	local sub = ready == 0 and (smith and T.smith_short or T.none_ready) or (not net and T.need_network)
 		or (p.ossidiana < cost and T.missing_obsidian:format(cost - p.ossidiana))
 		or ((ready == 1 and T.ready_one or T.ready_many:format(ready)) .. " · " .. T.cost:format(cost))
 	a.action = kit.action(a.right, T.deliver, 948, 628, 308, 80, { size = 42, off = not can, sub = kit.upper(sub) })
 	kit.button(a.buttons, a.action, "consegna", { main = true, spento = not can })
-	if a.modal then modal(a, base) end
+	if a.scene then
+		window(a, base)
+		delivery.draw(a, HELP)
+	elseif a.modal then
+		modal(a, base)
+	end
+end
+
+-- Where an order's ticket hangs on the board (its middle, Figma), for its flight to the counter
+local function card_at(p, o)
+	local c = p.commesse
+	for i, b in ipairs(c.bacheca) do
+		if b == o then return { X0 + (i - 1) * (CARD_W + GAP) + CARD_W / 2, Y0 + CARD_H / 2 } end
+	end
+	if o == c.settimana then return { X0 + WEEK_W / 2, ROW2_Y + ROW2_H / 2 } end
+	return { X0 + (c.settimana and WEEK_W + GAP or 0) + SMITH_W / 2, ROW2_Y + ROW2_H / 2 }
+end
+
+-- Delivers orders (n, the Smith's family) and starts the scene with what came.
+-- from_window: the ticket flies from the open window, not from the board
+deliver = function(a, list, from_window)
+	local p = a.prof
+	local done = {}
+	for _, it in ipairs(list) do
+		local o = find(p, it.n)
+		local from = from_window and { 640, 330 } or (o and card_at(p, o))
+		local rows = o and profile.act(p, { k = "consegna", n = it.n, set = it.set })
+		if rows then done[#done + 1] = { order = o, rows = rows, from = from } end
+	end
+	delivery.start(a, done)
+	return #done > 0
 end
 
 -- A tap of this tab (kind, x: the action's two halves). Returns true if it was one of its own
@@ -759,6 +810,12 @@ function M.cmd(a, kind, x)
 			bench.client(p, real)
 		elseif x == "colpo" then
 			bench.lucky(p)
+		elseif x == "pezzi" then
+			-- the BANCO's pieces of the day go back to the shop, to see their prices
+			local wallet = require "sim.wallet"
+			local keys = {}
+			for _, it in ipairs(wallet.day(real)) do keys[#keys + 1] = wallet.key(it[1], it[2]) end
+			bench.give_back(p, keys)
 		elseif x == "capo" then
 			bench.reset(p)
 		end
@@ -766,17 +823,23 @@ function M.cmd(a, kind, x)
 		return true
 	elseif kind == "consegna" then
 		-- every client's order that is ready, the oldest first, while the Ossidiana lasts
+		-- (none, and the Smith's is: its family choice)
 		local list = {}
 		for _, o in ipairs(orders.orders(p)) do
 			local _, ok = orders.progress(p, o)
 			if ok and o.cliente then list[#list + 1] = o.n end
 		end
 		table.sort(list)
-		local done = 0
-		for _, n in ipairs(list) do
-			if profile.act(p, { k = "consegna", n = n }) then done = done + 1 end
+		if #list == 0 and p.commesse.fabbro then
+			a.modal = { k = "famiglia", n = p.commesse.fabbro.n }
+			return true
 		end
-		if done > 0 then sound.play("#scaglia") end
+		local them = {}
+		for _, n in ipairs(list) do them[#them + 1] = { n = n } end
+		deliver(a, them, false)
+		return true
+	elseif kind == "scena" then
+		a.leave = delivery.cmd(a, x)
 		return true
 	elseif kind == "cartellino" then
 		local o = find(p, tonumber(x))
@@ -797,9 +860,16 @@ function M.cmd(a, kind, x)
 end
 
 -- Gives back the miniatures loaded for the tab
+-- Every frame (the delivery's scene): true when the screen must be made again
+function M.update(a, dt)
+	return delivery.update(a, dt)
+end
+
 function M.release(a)
 	for _, id in ipairs(a.minis or {}) do illustrations.map_mini_release(id) end
 	a.minis = {}
+	for _, b in ipairs(a.busts or {}) do illustrations.client_release(b[1], b[2]) end
+	a.busts = {}
 end
 
 return M

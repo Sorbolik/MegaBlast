@@ -11,6 +11,7 @@
 #       dei gironi (art/WB-026)
 #   client/paintings/backdrops/*.jpg, client/ui/backdrops.lua   gli sfondi dei menu
 #       (art/WB-028 e la campagna di art/WB-027)
+#   client/paintings/clients/*.jpg     i busti dei clienti delle Commesse (WB-086, WB-087)
 #   client/ui/pieces.lua                le misure di ogni pezzo (generato)
 #   client/ui/fucina.atlas              l'atlante (generato)
 # Servono numpy, scipy e Pillow.
@@ -67,6 +68,7 @@ def salva(im, nome):
 
 
 MISURE = {}
+BUSTI = os.path.join(RADICE, "client", "paintings", "clients")
 
 
 def intero(nome, arr, h):
@@ -276,11 +278,12 @@ def fai_bottega():
         scuro = np.asarray(cs.convert("RGB")).astype(int).sum(axis=2) < 360
         righe = np.where(scuro[:, 400:750].sum(axis=1) > 245)[0]
         alto = int(righe.min()) + 4
-        # (per ora solo chi chiede: contento e fiero, x 777 e 1160, entreranno con la consegna)
-        for nome, x in (("chiede", 394),):
-            im = cs.crop((x, alto, x + 366, alto + 485))
-            salva(im, "cliente_%s_%s" % (cliente, nome))
-            MISURE["cliente_%s_%s" % (cliente, nome)] = im.size
+        # chiede (i cartellini), contento e fiero (la scena della consegna, 23 nov): non
+        # nell'atlante (sarebbe salito a 8192) ma JPEG in client/paintings/clients/, caricati
+        # solo quando si vedono (ui/illustrations.lua): il fondo del busto e' carta piena
+        for nome, x in (("chiede", 394), ("contento", 777), ("fiero", 1160)):
+            im = cs.crop((x, alto, x + 366, alto + 485)).convert("RGB")
+            im.save(os.path.join(BUSTI, "%s_%s.jpg" % (cliente, nome)), quality=92)
 
 
 def fai_perle():
@@ -845,6 +848,7 @@ def fai_misure():
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
+    os.makedirs(BUSTI, exist_ok=True)
     fai_pezzi()
     fai_monete()
     fai_commesse()
