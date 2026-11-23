@@ -7,6 +7,6 @@ return {
 	max_hp = 388,
 	walk_speed = 99.225,
 	jump_height = 103.194,
-	air_speed = 98.071,
+	air_speed = 99.225,
 	blast_push = 4.64,
 }

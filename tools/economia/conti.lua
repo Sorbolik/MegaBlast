@@ -35,7 +35,7 @@ local GIOCATORI = {
 local TEMPI = {
 	primo_scatto = { 4, 8 },
 	pezzo = { 100, 160 },
-	livello_max = { 200, 280 },
+	livello_max = { 320, 420 },
 }
 
 local function somma(righe, campo)

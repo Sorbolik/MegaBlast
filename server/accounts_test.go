@@ -72,7 +72,7 @@ func TestGuestProfiles(t *testing.T) {
 	luaEval(t, `
 		local p = require("sim.replay").read(`+luaQuote(a.Profile)+`)
 		return { p.livello, p.scaglie, p.ossidiana, p.pezzi.corvo_mask, p.loadouts[1].gear.mask or "", p.loadouts[1].gear.chest or "", p.impostazioni.mira or "", p.nome }`, &got)
-	want := []any{30.0, 20000.0, 12.0, 20.0, "corvo", "", "", a.Name}
+	want := []any{30.0, 30000.0, 12.0, 20.0, "corvo", "", "", a.Name}
 	for i := range want {
 		if got[i] != want[i] {
 			t.Fatalf("import: %v, attesi %v", got, want)
@@ -102,7 +102,7 @@ func TestGuestProfiles(t *testing.T) {
 		json.Unmarshal(body, &back)
 		var sc float64
 		luaEval(t, `return require("sim.replay").read(`+luaQuote(back.Profile)+`).scaglie`, &sc)
-		if back.Last != 2 || sc != 20000-7200 {
+		if back.Last != 2 || sc != 30000-7200 {
 			t.Fatalf("azioni %d: ultima %d, %v Scaglie", i, back.Last, sc)
 		}
 	}

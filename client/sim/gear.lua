@@ -118,7 +118,7 @@ M.CAP_ALL = { power = 3.64, move = 1.56, less = 0.70 }
 -- at level 30; it lights up at the step 10 (half), grows at 20 (three
 -- quarters) and at 30 (all). desc: %d is the value in percent. 30% more
 -- since 23 Nov, but Cappa da forgia (already all the push) and Brace addosso
--- (it is on or off).
+-- (how strong the burn it gives is: whole at 30).
 M.SIGNS = {
 	sig_sword = { max = 0.26, name = "Mano del mestiere", desc = "La Lama fa il %d%% di danno in più" },
 	sig_self = { max = 0.65, name = "Guscio di bottega", desc = "Le tue esplosioni ti fanno il %d%% di danno in meno" },
@@ -129,10 +129,10 @@ M.SIGNS = {
 	sig_soft = { max = 0.65, name = "Atterraggio morbido", desc = "Cadi senza farti male da un'altezza più grande del %d%%" },
 	sig_glide = { max = 0.33, name = "Planata", desc = "Scendendo in aria cadi il %d%% più piano" },
 	sig_first = { max = 0.20, name = "Primo sangue", desc = "Il primo colpo del tuo turno fa il %d%% di danno in più" },
-	sig_thorns = { max = 1.00, name = "Brace addosso", desc = "Chi ti colpisce da vicino (Lama, Maglio, Pugno, Affondo) prende la bruciatura" },
+	sig_thorns = { max = 1.00, name = "Brace addosso", desc = "Chi ti colpisce da vicino (Lama, Maglio, Pugno, Affondo) prende la bruciatura, che gli toglie il %d%% del solito" },
 	sig_stomp = { max = 1.30, name = "Pestone", desc = "Atterrando da una caduta lunga spingi via chi ti sta vicino (forza %d%%)" },
 	sig_air_fire = { max = 0.13, name = "Coda di fuoco", desc = "Se sei in aria quando il tuo colpo arriva fa il %d%% di danno in più" },
-	sig_fury = { max = 0.20, name = "Furia", desc = "Sotto 30 di vita fai il %d%% di danno in più" },
+	sig_fury = { max = 0.20, name = "Furia", desc = "Sotto il 30% della tua vita fai il %d%% di danno in più" },
 	sig_first_guard = { max = 0.26, name = "Pelle dura", desc = "Il primo colpo che prendi in ogni turno nemico fa il %d%% in meno" },
 	sig_rooted = { max = 0.39, name = "Piedi piantati", desc = "A terra le spinte ti spostano il %d%% in meno" },
 	sig_ballast = { max = 0.33, name = "Zavorra", desc = "In aria le spinte ti spostano il %d%% in meno" },
@@ -205,13 +205,15 @@ M.SETS = {
 		pair = { stat = "knockback_mul" },
 		style = { a = "Ancora: se finisci il turno senza muoverti prendi metà spinta fino al tuo turno, corsa -5%",
 			b = "Scaglie dure: il primo colpo di ogni turno nemico ti fa 3 in meno, corsa -5%" } },
+	-- (the teleport only on helmet, armor and boots: with the pair they reach
+	-- the cap of the pieces, nothing is wasted: Sergio, 23 Nov)
 	{ id = "vuoto", name = "VUOTO", style_name = "Inganno", color = "c49cff",
 		pieces = {
 			mask = { "teleport_ticks", { "attack", "walk_speed" }, "defense", "sig_ambush" },
 			chest = { "knockback_mul", { "teleport_ticks", "defense" }, "max_hp", "sig_blink_guard" },
 			legs = { "walk_speed", { "teleport_ticks", "jump_height" }, "defense", "sig_blink_run" },
-			cloak = { "air_speed", { "teleport_ticks", "walk_speed" }, "max_hp", "sig_far_orb" },
-			gloves = { "blast_push", { "attack", "teleport_ticks" }, "max_hp", "sig_void_push" },
+			cloak = { "air_speed", { "jump_height", "walk_speed" }, "max_hp", "sig_far_orb" },
+			gloves = { "blast_push", { "attack", "air_speed" }, "max_hp", "sig_void_push" },
 		},
 		pair = { stat = "teleport_ticks" },
 		style = { a = "Senza scia: gli avversari non vedono la tua mira né dove va il globo, vita -5",

@@ -346,7 +346,7 @@ C.STATS = {
 	crate_bonus = 0,         -- more shots of each crate weapon you pick up
 	double_traps = 0,        -- 1: a trap from a crate counts two
 	double_springs = 0,      -- 1: a trampoline from a crate counts two
-	finisher = 0,            -- 1: your explosions push twice as far whoever has less than FINISHER_HP
+	finisher = 0,            -- 1: your explosions push twice as far whoever has less than FINISHER_HP of their life
 	burn_mul = 1,            -- how much the burning you give takes
 	-- Attack and Defense (Sergio, 14 Nov): damage = weapon x (100 + Attack) / (100 + Defense)
 	-- of whoever is hit; equal points cancel out, every point of Defense is 1% more life
@@ -362,10 +362,10 @@ C.STATS = {
 }
 -- Signatures: how much higher than its target the Dall'alto attacker must be,
 -- the life under which Furia hits harder, the Pestone's reach and push
-C.SIG = { high = 48, fury_hp = 30, stomp = { r = 0, damage_r = 70, damage = 0, impulse = 10 } }
+C.SIG = { high = 48, fury_hp = 0.3, stomp = { r = 0, damage_r = 70, damage = 0, impulse = 10 } }
 -- the weapons that hit up close (Brace addosso)
 C.MELEE = { sword = true, mallet = true, punch = true, lunge = true }
--- Colpo di grazia (sim/skills.lua): below this life your explosions push twice as far
-C.FINISHER_HP = 20
+-- Colpo di grazia (sim/skills.lua): below this share of their life your explosions push twice as far
+C.FINISHER_HP = 0.2
 
 return C

@@ -148,6 +148,21 @@ a.gear = { mask = "leviatano", chest = "leviatano" }
 local k19 = loadout.stats(BASE, a, { mask = 19, chest = 19 }).knockback_mul
 local k20 = loadout.stats(BASE, a, { mask = 20, chest = 20 }).knockback_mul
 check(k20 < k19 * (1 - 0.039), "two gold Leviatano pieces: their bonus too")
+-- the whole Vuoto: its teleport stops right at the cap of the pieces, nothing wasted
+a.gear = {}
+for _, sl in ipairs(equip.SLOTS) do a.gear[sl.id] = "vuoto" end
+local tele = 0
+for _, sl in ipairs(equip.SLOTS) do
+	for _, e in ipairs(equip.piece("vuoto", sl.id, 30)) do
+		if e.stat == "teleport_ticks" and e.good > 0 then tele = tele + e.good end
+	end
+end
+check(near(tele + R.less.pair, equip.CAP_PIECES.less), "the whole Vuoto: teleport at the cap of the pieces")
+-- Piedi di gatto: twice the safe height, and the pieces on the fall damage still count
+a.gear, a.tree = { cloak = "fabbro" }, { wings = 20, pick = { wings = { 1, 1, 1, 2 } } }
+st = loadout.stats(BASE, a, { cloak = 30 })
+check(st.sig_soft == 1 and near(st.fall_damage_mul, BASE.fall_damage_mul * (1 - R.less.main)), "Piedi di gatto and the Fabbro's cape together")
+a.tree = {}
 check(#equip.pairs_on({ mask = "corvo", chest = "corvo", cloak = "vuoto", legs = "vuoto" },
 	{ mask = 20, chest = 25, cloak = 30, legs = 20 }) == 2, "two plus two: two family bonuses")
 -- the level by itself: nothing at 1, Attack, Defense and life +46 and movement +19.5% at 50, a jump every ten levels
@@ -185,6 +200,27 @@ check(hp - r2.hp == 40, "...only the Lama")
 g, r1, r2 = duel({}, { sig_thorns = 1 })
 g:hurt(r2, 10, r1, nil, "mallet")
 check(r1.status.burn ~= nil, "Brace addosso: who hits up close burns")
+g, r1, r2 = duel({}, { sig_thorns = 0.5 })
+g:hurt(r2, 10, r1, nil, "mallet")
+check(r1.status.burn.power == 0.5, "...at half strength while the signature is at half")
+g:add_status(r1, "burn", r2)
+check(r1.status.burn.power == nil, "a whole burn on top of a weak one: whole")
+-- what nobody's hand does grows with the life (Sergio, 23 Nov): a fall, a hazard, a heal
+g, r1, r2 = duel({ max_hp = 300 }, {})
+g:hurt(r1, 20, nil, "fall")
+g:hurt(r2, 20, nil, "fall")
+check(r1.hp == 300 - 60 and r2.hp == BASE.max_hp - 20, "a fall takes the same share of life from everybody")
+r1.hp, g.heals = 100, { { id = 1, x = r1.x, y = r1.y } }
+g:apply_heals()
+check(r1.hp == 100 + 3 * require("sim.config").HEAL.hp, "a heal gives the same share too")
+-- Furia: below 30% of your own life
+g, r1, r2 = duel({ sig_fury = 0.2, max_hp = 300 }, {})
+r1.hp, hp = 80, r2.hp
+g:hurt(r2, 40, r1)
+check(hp - r2.hp == 48, "Furia: below 30% of your life")
+r1.hp, hp = 100, r2.hp
+g:hurt(r2, 40, r1)
+check(hp - r2.hp == 40, "...not above")
 g, r1, r2 = duel({ sig_self = 0.5 }, {})
 hp = r1.hp
 g:hurt(r1, 40, r1)
