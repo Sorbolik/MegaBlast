@@ -1,6 +1,6 @@
 # WB-088 · Le icone delle azioni (ogni pulsante con la sua)
 
-- **Stato:** PROPOSTA (si approva col sì di Sergio alla direzione della pagina «Interfaccia lineare»)
+- **Stato:** APPROVATA (Sergio, 23 nov: «mi piace tutto»)
 - **Data:** 2026-11-23
 - **Ramo della scheda:** `claude/project-thread-5nnzn0` (Codex la esegue da qui: `git fetch origin claude/project-thread-5nnzn0`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-088`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-088` senza chiedere conferma (il repository è privato).
@@ -101,7 +101,7 @@ No letters, no numbers, no shadow on the ground, no glow outside the ink. Backgr
 
 ## Decisione
 
-(in attesa: Sergio approva la direzione della pagina «Interfaccia lineare»)
+Sergio, 23 nov, sulla pagina «Interfaccia lineare»: «Ok, mi piace tutto». Approvata.
 
 Claude, 23 nov: pulsanti, card minimale, pillola e solco della barra li disegna il gioco a vettori
 in `tools/grafica/fucina.py`, come il «Ferro liscio» approvato il 18 nov (linee pulite, «senza bump
