@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: la schermata di avvio del telefono tutta nera, senza icona: dura un
+     attimo e il telefono gira lo schermo proprio lì (Sergio, 23 nov). -->
+<resources>
+    <style name="Avvio" parent="@android:style/Theme.NoTitleBar.Fullscreen">
+        <item name="android:windowSplashScreenBackground">@android:color/black</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+    </style>
+</resources>
