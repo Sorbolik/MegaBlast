@@ -141,8 +141,18 @@ Principi di Sergio che reggono tutto:
   comprare.
 - Il server paga e registra il premio prima della scena: se cade la rete non si
   perde niente e non si paga due volte.
-- **L'animazione è di Gabriella** (lavoro con Blender, altro thread): qui sono
-  fissate solo le regole.
+- **La scena è la proposta A** (Sergio, 23 nov: «va bene A»), al banco del Fabbro,
+  circa due secondi, un tocco salta allo scontrino:
+  1. il cartellino si stacca e vola sul banco, l'Ossidiana cade sull'incudine;
+  2. il Fabbro batte tre volte (al colpo buono la terza è più forte, lo schermo trema);
+  3. il busto del cliente entra da destra, contento (fiero col colpo buono e alla quinta e
+     alla decima perla) con una sua battuta, e il premio salta fuori dall'incudine;
+  4. lo scontrino di carta: Scaglie, frammenti, fiducia con le perle, OK e, se i
+     frammenti bastano per un livello di un pezzo della famiglia, POTENZIA (apre lo ZAINO).
+  CONSEGNA TUTTE: una martellata per cartellino, più veloce, e uno scontrino solo.
+- **Le martellate del Fabbro sono di Gabriella**: finché non arrivano, il Fabbro al
+  banco di WB-085 sobbalza a ogni colpo (provvisorio). I busti contento e fiero sono di
+  WB-086 e WB-087.
 
 ## Fiducia (passo 7)
 

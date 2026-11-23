@@ -639,13 +639,14 @@ function M.deliver(p, n, set, lucky)
 	p.scaglie = p.scaglie + size.scaglie
 	rows[#rows + 1] = { key = "scaglie", n = size.scaglie }
 
+	-- (drawn before this delivery is counted: the bench's "next one" is this one)
+	if lucky == nil then lucky = M.lucky(p) end
 	c.consegne = c.consegne + 1
 	local trust = client and c.clienti[client.id]
 	local frags = size.frammenti
 	if trust and trust.fiducia >= M.TRUST_BONUS then frags = frags + 1 end
 	add_fragments(p, family, frags)
 	rows[#rows + 1] = { key = "fragments", set = family, n = frags }
-	if lucky == nil then lucky = M.lucky(p) end
 	if lucky then
 		add_fragments(p, family, frags)
 		rows[#rows + 1] = { key = "lucky", set = family, n = frags }
@@ -712,6 +713,18 @@ end
 function M.level_cost(p, set, slot)
 	local n = wallet.next(p, set, slot)
 	return n and M.in_fragments(n.cost)
+end
+
+-- The first piece of a family (gear.SLOTS order) whose next level its fragments
+-- pay now (owned, Proof done): its slot, or nil. The delivery's receipt shows
+-- POTENZIA for it
+function M.upgradable(p, set)
+	for _, s in ipairs(equip.SLOTS) do
+		if wallet.owns(p, set, s.id) then
+			local n = wallet.next(p, set, s.id)
+			if n and n.proof_done >= n.proof and M.fragments(p, set) >= M.in_fragments(n.cost) then return s.id end
+		end
+	end
 end
 
 -- Buys the next level of a piece with its family's fragments (the Proof of a

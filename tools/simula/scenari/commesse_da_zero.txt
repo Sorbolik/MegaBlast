@@ -36,9 +36,13 @@ aspetta 2
 tocca_centro 379 390                # FABBRO
 aspetta 1
 foto 04_famiglia_della_prima
-tocca_bordo 178 52 basso destra     # CONSEGNA
+tocca_bordo 178 52 basso destra     # CONSEGNA: la scena della consegna
 aspetta 2
 foto 04_prima_consegna
+aspetta 1.5
+foto 04_prima_consegna_scontrino
+tocca_bordo 178 52 basso destra     # OK
+aspetta 1
 tocca_bordo 590 53 alto sinistra    # BANCO
 aspetta 3
 tocca_centro 484 293                # un pezzo del giorno: COI FRAMMENTI

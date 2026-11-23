@@ -6224,6 +6224,12 @@ function PAD.on_input(self, action_id, action)
 				close_screen(self)
 				open_screen(self, menu.backpack, self.profilo, "sigilli", TEAM_COLORS[1])
 			end)
+		elseif end_of == "potenzia" then
+			-- POTENZIA on the receipt of the Smith's orders: the ZAINO, where the pieces level up
+			CP.iris(self, function()
+				close_screen(self)
+				open_screen(self, menu.backpack, self.profilo, "inventario", TEAM_COLORS[1])
+			end)
 		elseif end_of and self.schermata.mod == menu.level_end then
 			after_level_end(self, end_of)
 		elseif end_of and self.schermata.mod == menu.story then

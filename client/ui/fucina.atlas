@@ -197,30 +197,6 @@ images {
   image: "/assets/fucina/chiodo.png"
 }
 images {
-  image: "/assets/fucina/cliente_caronte_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_cerbero_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_flegias_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_malacoda_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_medusa_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_minosse_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_minotauro_chiede.png"
-}
-images {
-  image: "/assets/fucina/cliente_plutone_chiede.png"
-}
-images {
   image: "/assets/fucina/corona.png"
 }
 images {
