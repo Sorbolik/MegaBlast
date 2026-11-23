@@ -88,6 +88,11 @@ La storia delle decisioni (prese, scartate, aperte) è in [docs/decisioni/](docs
 leggi [regole.md](docs/decisioni/regole.md) e **solo il file dell'area che tocchi**; quando
 decidi o scarti qualcosa, aggiorna quel file e `cronologia.md` nella stessa PR.
 
+Le Commesse del Fabbro (come si spende l'Ossidiana: clienti, materiali, bacheca, frammenti di
+famiglia, fiducia, la porta BOTTEGA con COMMESSE e BANCO) hanno le regole in
+[docs/commesse.md](docs/commesse.md): leggilo prima di toccare valute, premi, pezzi, podio, shop o
+sblocchi della campagna, e se una scelta nuova lo contraddice dillo a Sergio e aggiornalo.
+
 Per progettare, valutare, bilanciare e implementare meccaniche ci sono le skill
 in [.claude/skills/](.claude/skills/README.md).
 

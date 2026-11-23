@@ -266,12 +266,16 @@ end
 -- sim/replay.lua text): Go gives it to the profile of whoever sat there
 -- (accounts.go, Award); "" for the bots' seats
 local awards = require "sim.awards"
+local orders = require "sim.orders"
 function CMD.prizes(c)
 	local rm = room(c)
 	local g = rm.g
 	local res = g:results()
 	local per_robot, mvp = awards.assign(res.ranking), awards.mvp(res.ranking)
 	local raws = {}
+	-- the people who started the match (the Smith's orders count only with company)
+	local humans = 0
+	for _ in pairs(rm.tallies or {}) do humans = humans + 1 end
 	for i = 1, #g.robots do
 		local t = rm.tallies and rm.tallies[i]
 		local mine
@@ -285,7 +289,8 @@ function CMD.prizes(c)
 			raws[i] = replay_text.write({ k = "partita",
 				r = { points = mine.points, won = won, second = res.mode == "ffa" and mine.place == 2, mvp = mvp == i,
 					awards = per_robot[i], online = true },
-				conta = { gruppo = res.mode, valori = s.valori, armi = s.armi, won = s.won } })
+				conta = { gruppo = res.mode, valori = s.valori, armi = s.armi, won = s.won },
+				commesse = orders.summary(res, i, g.map, humans, #(per_robot[i] or {}), s.valori) })
 		else
 			raws[i] = ""
 		end

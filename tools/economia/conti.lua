@@ -29,12 +29,13 @@ local GIOCATORI = {
 -- i tempi decisi da Sergio, in ore del giocatore forte: { da, a }. Dal 23 nov
 -- (statistiche massime più forti del 30%, strada più lunga: pagina
 -- https://claude.ai/artifact/KPmyMJNKCJ5WCZc6FArdKe, opzione B) un pezzo al 30
--- chiede circa 150 ore coi premi di oggi e circa 108 quando arrivano le Commesse
--- (il 39% di Scaglie in più): quando entrano nel gioco vanno contate in ora() e
--- questi tempi stretti intorno a 108
+-- chiede circa 150 ore coi soli premi delle partite e circa 112 spendendo tutta
+-- l'Ossidiana nelle Commesse (client/sim/orders.lua: 7 Scaglie di valore per ogni
+-- Ossidiana, metà in Scaglie e metà in frammenti che pagano i livelli)
 local TEMPI = {
 	primo_scatto = { 4, 8 },
 	pezzo = { 100, 160 },
+	pezzo_commesse = { 95, 130 },
 	livello_max = { 320, 420 },
 }
 
@@ -100,6 +101,11 @@ for _, f in ipairs(equip.SETS) do
 	end
 end
 
+-- il cambio delle Commesse: Scaglie di valore (Scaglie più frammenti) per Ossidiana, sulla commessa media
+local orders = require "sim.orders"
+local media = orders.SIZES.media
+local cambio = (media.scaglie + media.frammenti * orders.fragment_value()) / media.cost
+
 local controlla = arg[1] == "--controlla"
 local falliti = {}
 for _, g in ipairs(GIOCATORI) do
@@ -107,6 +113,7 @@ for _, g in ipairs(GIOCATORI) do
 	local righe = {
 		{ "primo_scatto", "un pezzo al primo scatto (livello 10)", costo_pezzo(10) / s },
 		{ "pezzo", "un pezzo al livello " .. equip.LIVELLO_MAX, costo_pezzo(equip.LIVELLO_MAX) / s },
+		{ "pezzo_commesse", "lo stesso, con tutta l'Ossidiana nelle Commesse", costo_pezzo(equip.LIVELLO_MAX) / (s + o * cambio) },
 		{ "set", posti .. " pezzi al massimo (quelli addosso)", posti * costo_pezzo(equip.LIVELLO_MAX) / s },
 		{ "tutti", "tutti i " .. pezzi .. " pezzi al massimo", pezzi * costo_pezzo(equip.LIVELLO_MAX) / s },
 		{ "bottega", "un pezzo in offerta in Bottega", wallet.PRICE_SHOP / s },

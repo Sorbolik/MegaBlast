@@ -174,6 +174,115 @@ def fai_monete():
     intero("buono", secondo[1][2], 120)
 
 
+def fai_commesse():
+    """I frammenti di famiglia e i materiali delle Commesse (WB-084, 23 nov): frammenti_1
+    (fabbro, corvo, fornace, leviatano, vuoto), materiali_a_1 (due file da tre) e materiali_b_2.
+    Il verde si toglie solo fuori dalla china (l'Acqua dello Stige e il Leviatano sono verdi
+    dentro). Ognuno al centro di un quadrato, cosi' in una griglia hanno tutti lo stesso
+    ingombro: 192 px, il doppio della misura piu' grande sullo schermo (96)."""
+    p = os.path.join(ART, "WB-084")
+
+    def fuori(percorso):
+        rgb = np.array(Image.open(percorso).convert("RGB"))
+        o = senza_verde(percorso)
+        lab, _ = ndi.label(o[..., 3] < 255)
+        bordo = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+        sfondo = np.isin(lab, bordo[bordo > 0])
+        o[~sfondo, :3] = rgb[~sfondo]
+        o[~sfondo, 3] = 255
+        return o
+
+    def quadrato(nome, arr, lato=192):
+        im = Image.fromarray(arr, "RGBA")
+        k = (lato - 4) / max(im.size)
+        im = im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)
+        q = Image.new("RGBA", (lato, lato), (0, 0, 0, 0))
+        q.paste(im, ((lato - im.size[0]) // 2, (lato - im.size[1]) // 2))
+        salva(q, nome)
+        MISURE[nome] = (lato, lato)
+
+    fr = sorted(pezzi(fuori(os.path.join(p, "frammenti_1.png"))), key=lambda t: t[1])
+    assert len(fr) == 5, len(fr)
+    for nome, t in zip(FAMIGLIE, fr):
+        quadrato("frammento_" + nome, t[2])
+    a = pezzi(fuori(os.path.join(p, "materiali_a_1.png")))
+    assert len(a) == 6, len(a)
+    ymid = np.mean([t[0] for t in a])
+    a = sorted([t for t in a if t[0] < ymid], key=lambda t: t[1]) + sorted([t for t in a if t[0] >= ymid], key=lambda t: t[1])
+    b = sorted(pezzi(fuori(os.path.join(p, "materiali_b_2.png"))), key=lambda t: t[1])
+    assert len(b) == 5, len(b)
+    nomi = ["scoria", "piuma", "vento", "grandine", "scheggia", "stige", "tomba", "sangue", "sabbia", "pece", "ghiaccio"]
+    for nome, t in zip(nomi, a + b):
+        quadrato("materiale_" + nome, t[2])
+
+
+def fai_bottega():
+    """La carta dei cartellini e il Fabbro al banco delle Commesse (WB-085, 23 nov).
+    Il cartellino e' il foglio largo di cartellino_1 in nove parti, con gli angoli quadrati
+    presi alla misura di Codex (100 px: sullo schermo 34, il doppio e' 68) cosi' la china
+    e l'orecchia non si deformano; il lato alto viene dal tratto liscio prima del rinforzo
+    del foro, e il rinforzo e' un pezzo a parte (cartellino_foro) che il gioco mette al
+    centro, sotto il chiodo. Il Fabbro e' la variante 1, senza la pergamena del fondo
+    (tolta solo dove tocca il bordo del foglio: i baffi hanno quasi lo stesso colore),
+    alto 1000: sullo schermo 500."""
+    p = os.path.join(ART, "WB-085")
+    o = senza_verde(os.path.join(p, "cartellino_1.png"))
+    x0, y0, x1, y1, c = 799, 302, 1430, 718, 100
+    xs = [(x0, x0 + c), (x0 + c, 1060), (x1 - c, x1)]
+    ys = [(y0, y0 + c), (y0 + c, y1 - c), (y1 - c, y1)]
+    k = 1
+    for r, (ya, yb) in enumerate(ys):
+        for q, (xa, xb) in enumerate(xs):
+            # (sotto e in mezzo il tratto intero: solo in alto c'e' il rinforzo da saltare)
+            if q == 1 and r > 0:
+                xb = x1 - c
+            salva(Image.fromarray(o[ya:yb, xa:xb], "RGBA"), "cartellino_%d" % k)
+            k += 1
+    MISURE["cartellino"] = (x1 - x0, y1 - y0, c)
+    foro = Image.fromarray(o[y0:372, 1064:1176], "RGBA")
+    salva(foro, "cartellino_foro")
+    MISURE["cartellino_foro"] = foro.size
+
+    rgb = np.array(Image.open(os.path.join(p, "fabbro_al_banco_1.png")).convert("RGB")).astype(float)
+    fondo = np.median(np.concatenate([rgb[:8].reshape(-1, 3), rgb[-8:].reshape(-1, 3)]), axis=0)
+    dist = np.abs(rgb - fondo).sum(axis=2)
+    lab, _ = ndi.label(dist < 60)
+    bordo = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+    # (e la pergamena chiusa fra il braccio destro e il fianco)
+    fuori = np.isin(lab, bordo[bordo > 0]) | (lab == lab[895, 746])
+    # il contorno: i pixel fra pergamena e china, sfumati e ripuliti dal colore del fondo
+    vicino = ndi.binary_dilation(fuori, iterations=3) & ~fuori
+    alfa = np.where(fuori, 0.0, 1.0)
+    alfa[vicino] = np.clip((255 - rgb[vicino].mean(axis=1)) / 200, 0, 1)
+    col = rgb.copy()
+    m = vicino & (alfa > 0.02)
+    col[m] = np.clip((rgb[m] - (1 - alfa[m])[:, None] * fondo) / alfa[m][:, None], 0, 255)
+    arr = np.dstack([col, alfa * 255]).astype(np.uint8)
+    ys_, xs_ = np.where(arr[..., 3] > 20)
+    intero("fabbro_al_banco", arr[ys_.min():ys_.max() + 1, xs_.min():xs_.max() + 1], 1000)
+
+    # i busti dei clienti (WB-086: Caronte, variante 2 scelta da Sergio il 23 nov): chiede,
+    # contento, fiero; dentro la cornice di china (il gioco la ridisegna), alla misura di
+    # Codex (366 x 485: il ritratto piu' grande sullo schermo e' 180 x 240)
+    # e gli altri sette (WB-087, 23 nov): le varianti consigliate da Claude, da confermare
+    # con Sergio. I riquadri dei busti stanno sempre da x 390, 773, 1156 (373 di larghezza);
+    # l'alto della cornice si cerca (la riga di china piu' lunga), poi 485 in giu': stessa
+    # misura per tutti, il taglio sotto e' il petto
+    fogli = {"caronte": ("WB-086", 2), "minosse": ("WB-087", 2), "cerbero": ("WB-087", 1),
+             "plutone": ("WB-087", 1), "flegias": ("WB-087", 1), "medusa": ("WB-087", 1),
+             "minotauro": ("WB-087", 1), "malacoda": ("WB-087", 2)}
+    for cliente, (scheda, variante) in fogli.items():
+        cs = Image.open(os.path.join(ART, scheda, "%s_%d.png" % (cliente, variante))).convert("RGBA")
+        scuro = np.asarray(cs.convert("RGB")).astype(int).sum(axis=2) < 360
+        righe = np.where(scuro[:, 400:750].sum(axis=1) > 245)[0]
+        alto = int(righe.min()) + 4
+        # (per ora solo chi chiede: contento e fiero, x 777 e 1160, entreranno con la consegna)
+        for nome, x in (("chiede", 394),):
+            im = cs.crop((x, alto, x + 366, alto + 485))
+            salva(im, "cliente_%s_%s" % (cliente, nome))
+            MISURE["cliente_%s_%s" % (cliente, nome)] = im.size
+
+
 def fai_perle():
     """Le perle del livello e lo slot della firma di WB-074 (Sergio, 18 nov: il modo ufficiale
     di mostrare gli upgrade). Dal foglio perle_2: sopra le tre perline (vuota, piena grigia che
@@ -738,6 +847,8 @@ if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     fai_pezzi()
     fai_monete()
+    fai_commesse()
+    fai_bottega()
     fai_perle()
     fai_stendardo()
     fai_secondario()

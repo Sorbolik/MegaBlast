@@ -24,7 +24,7 @@ return {
 		training = "ALLENAMENTO",
 		armory = "ARMERIA",
 		-- the Smith's shop, the home's door that was ARMERIA (18 Nov)
-		shop = "SHOP",
+		shop = "BOTTEGA",
 		stats = "STATISTICHE",
 		replay = "RIVEDI",
 	},
@@ -402,6 +402,8 @@ return {
 
 	-- menu/armory.lua (the SHOP) and menu/bench.lua (the ARMERIA in the ZAINO)
 	armory = {
+		-- the two tabs of the BOTTEGA: the Smith's orders and the shop
+		tab_orders = "COMMESSE", tab_bench = "BANCO",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
 			attack = "Attacco", defense = "Difesa",
@@ -431,6 +433,8 @@ return {
 		-- the Ossidiana spent lighting it, jumping under the balance
 		sign_spent = "−%s",
 		light_sign = "ACCENDI LA FIRMA",
+		-- the next level paid with the family's fragments (the Smith's orders): what it costs, how many you hold
+		with_fragments = "COI FRAMMENTI", fragments_cost = "Costa %d · ne hai %d",
 		sign_cost = "%d ossidiana",
 		sign_needs = "dallo scatto %d",
 		sign_top = "al massimo",
@@ -441,12 +445,125 @@ return {
 		-- the SHOP
 		yours = "tuo",
 		offers = "OFFERTE DEL FABBRO",
-		-- the time until midnight
+		-- the time until the day turns (5 in the morning)
 		change_in = "cambiano tra %s",
 		day = "PEZZI DEL GIORNO",
 		day_line = "cambiano domani",
 		use_voucher = "USA UN BUONO",
 		you_have = "ne hai %d",
+	},
+	-- menu/orders_ui.lua: the COMMESSE tab of the BOTTEGA (docs/commesse.md)
+	orders = {
+		clients = { caronte = "Caronte", minosse = "Minosse", cerbero = "Cerbero", plutone = "Plutone",
+			flegias = "Flegiàs", medusa = "Medusa", minotauro = "Minotauro", malacoda = "Malacoda" },
+		-- the materials, as a request names them: "6 Piume del Limbo"
+		materials = { scoria = "Scorie", piuma = "Piume del Limbo", vento = "Venti in bottiglia", grandine = "Chicchi di grandine",
+			scheggia = "Schegge di masso", stige = "Acque dello Stige", tomba = "Polveri di tomba", sangue = "Sangue bollente",
+			sabbia = "Sabbie roventi", pece = "Pece", ghiaccio = "Ghiacci di Cocito" },
+		request_material = "%d %s",
+		-- the feats (%s: how many)
+		feats = { partite = "Gioca %s partite online", vinte = "Vinci %s partite online", vinte_2v2 = "Vinci %s partite 2 contro 2",
+			punti = "Fate %s punti di squadra", nel_vuoto = "Buttate %s nemici nel vuoto", danno = "Fate %s danni di squadra",
+			mvp = "Sii il migliore in campo %s volte", casse = "Apri %s casse", teletrasporti = "Teletrasportati %s volte",
+			premi = "Prendi %s premi di fine partita" },
+		ready = "PRONTA",
+		progress = "%s su %s",
+		free = "GRATIS",
+		welcome = "Benvenuto!",
+		empty_place = "POSTO LIBERO",
+		empty_when = "Domani alle 5",
+		week = "DELLA SETTIMANA · %s",
+		week_ends = "Scade domenica",
+		smith = "LA COMMESSA DEL FABBRO",
+		smith_line = "Sempre aperta, la famiglia la scegli tu.",
+		shelf = "SCAFFALE",
+		shelf_materials = "MATERIALI",
+		shelf_fragments = "FRAMMENTI",
+		call = "CHIAMA UN CLIENTE",
+		deliver = "CONSEGNA",
+		none_ready = "Niente di pronto",
+		need_network = "Serve la rete",
+		missing_obsidian = "Ti mancano %d",
+		ready_one = "1 pronta",
+		ready_many = "%d pronte",
+		cost = "costa %d",
+		-- ui/receipt.lua: the orders' part of the podium's receipt
+		receipt_title = "COMMESSE",
+		receipt_smith = "Il Fabbro",
+		receipt_open = "Il Fabbro ti aspetta in bottega",
+		-- the test bench (test profiles only: menu/orders_bench.lua)
+		closed = "Il Fabbro ti chiama dopo %d partite online: fatte %d su %d",
+		bench = "PROVA",
+		bench_title = "BANCO DI PROVA",
+		bench_day = "GIORNO FINTO: %s",
+		bench_won = "PARTITA FINTA VINTA",
+		bench_lost = "PARTITA FINTA PERSA",
+		bench_day1 = "PASSA UN GIORNO",
+		bench_week = "PASSA UNA SETTIMANA",
+		bench_client = "ARRIVA UN CLIENTE",
+		bench_lucky = "PROSSIMO COLPO BUONO",
+		bench_reset = "RICOMINCIA DA CAPO",
+		bench_state = "%d PARTITE FINTE · %d CLIENTI · %d CONSEGNE",
+		-- the windows over the board (menu/orders_ui.lua): the open card
+		back = "INDIETRO",
+		-- what each client says when it asks (to review with Sergio)
+		lines = {
+			caronte = "«Le anime mi pagano una moneta. Tu portami quello che chiedo: il remo non si muove da solo.»",
+			minosse = "«Giudico tutti, ogni giorno. Portami quello che chiedo e stavolta ti giudico bene.»",
+			cerbero = "«Tre teste, tre fami. Sbrigati, che la terza morde.»",
+			plutone = "«Ogni cosa ha un prezzo, e il mio lo conosci. Portamelo tutto.»",
+			flegias = "«Ti porto io dall'altra parte della palude. Prima però portami il mio carico.»",
+			medusa = "«Guardami pure, ma solo dopo avermi portato quello che chiedo.»",
+			minotauro = "«Il labirinto è lungo e io ho fame. Muoviti.»",
+			malacoda = "«Io e i miei diavoli abbiamo un lavoretto per te. Niente scherzi.»",
+		},
+		trust = "FIDUCIA · %d",
+		pearl = "%d perla",
+		pearls = "%d perle",
+		trust_bonus = "Ancora %s e le sue commesse danno un frammento in più.",
+		trust_gift = "Ancora %s e ti regala %d frammenti %s.",
+		asks = "CHIEDE",
+		prize = "PREMIO",
+		fragment = "frammento %s",
+		fragments = "frammenti %s",
+		-- where a material drops: "Cade giocando online nel Limbo, ..."
+		drops = "Cade giocando online %s, con almeno un'altra persona.",
+		drop_place = { scoria = "nella Forgia", piuma = "nel Limbo", vento = "nella Lussuria", grandine = "nella Gola",
+			scheggia = "nell'Avarizia", stige = "nell'Ira", tomba = "nell'Eresia", sangue = "nel Flegetonte",
+			sabbia = "nel Sabbione", pece = "nelle Malebolge", ghiaccio = "nel Cocito" },
+		feat_hint = "Conta in ogni partita online con almeno un'altra persona.",
+		cost_upper = "COSTA %d",
+		missing = "NE MANCANO %d",
+		missing_one = "NE MANCA %d",
+		not_ready = "NON ANCORA PRONTA",
+		change = "CAMBIA",
+		change_free = "GRATIS, UNA AL GIORNO",
+		change_tomorrow = "DI NUOVO DOMANI",
+		change_never = "QUESTA NON SI CAMBIA",
+		swap = "SCAMBIA",
+		swap_sub = "3 MATERIALI PER 1",
+		swap_none = "CHIEDE UN'IMPRESA",
+		-- the swap
+		material_one = { scoria = "Scoria", piuma = "Piuma del Limbo", vento = "Vento in bottiglia", grandine = "Chicco di grandine",
+			scheggia = "Scheggia di masso", stige = "Acqua dello Stige", tomba = "Polvere di tomba", sangue = "Sangue bollente",
+			sabbia = "Sabbia rovente", pece = "Pece", ghiaccio = "Ghiaccio di Cocito" },
+		swap_title = "TRE PER UNO · %s",
+		swap_line = "Scegli cosa dare: ne dai %d e prendi 1 %s. La Scoria non si scambia: vale già per tutto.",
+		swap_pick = "Scegli cosa dare",
+		swap_full = "Ne hai già 99",
+		you_have = "NE HAI %s",
+		-- the Smith's order: the family
+		smith_ready = "LA COMMESSA DEL FABBRO È PRONTA",
+		family_line = "Il Fabbro lavora per chi vuoi tu: scegli la famiglia dei frammenti.",
+		-- the clients' book
+		book_title = "I TUOI CLIENTI",
+		book_line = "Una perla per ogni consegna. A 5 perle un frammento in più, a 10 trenta frammenti.",
+		book_detail = "%s, fiducia %d. %s",
+		book_none = "Nessun cliente ancora: arrivano battendo i custodi dei gironi.",
+		call_short = "CHIAMA",
+		call_when = "Domani alle 5 trovi una commessa di %s.",
+		call_done = "Chiamato: domani alle 5 arriva %s.",
+		call_yesterday = "%s è venuto ieri: chiamalo domani.",
 	},
 
 
@@ -529,6 +646,8 @@ return {
 		play_sub = "ONLINE",
 		training_sub = "CONTRO I BOT",
 		armory_sub = "IL FABBRO",
+		-- on the BOTTEGA's door, the Smith's orders ready to deliver
+		orders_ready_one = "1 PRONTA", orders_ready = "%d PRONTE",
 	},
 
 	-- menu/gear_ui.lua: what the ZAINO and the ARMERIA share

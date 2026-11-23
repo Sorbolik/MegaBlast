@@ -12,7 +12,7 @@
 --   bench.ingots(g, x, y, w, h, level, lit)       -- the beads of the level (ui/ingots.lua)
 --   bench.draw(s, g, sel)                         -- the panel and the slot's other pieces
 --   bench.footer(s, low2, right, sel)             -- the signature's plate, the price, +1 LIVELLO
---   bench.run(s, kind, sel) -> true               -- "potenzia" / "firma" (false: not the bench's)
+--   bench.run(s, kind, sel) -> true               -- "potenzia" / "firma" / "frammenti" (false: not the bench's)
 --   bench.after(s)                                -- after the screen is built: the blow, the scene
 --   bench.update(s, dt) / bench.input(s, action_id, action) -> true while the scene runs
 --   bench.delete(s)
@@ -28,6 +28,7 @@ local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
 local step_scene = require "ui.step_scene"
 local sign_light = require "ui.sign_light"
+local orders = require "sim.orders"
 local T = require("lang.text").armory
 local TP = require("lang.text").pieces
 
@@ -173,6 +174,18 @@ function M.footer(s, low2, right, sel)
 	local sb = kit.secondary(low2, T.light_sign, 430, 640, 270, 62, { icon = "gemma", sub = kit.upper(note), sub_color = KC.OBSIDIAN, off = not can })
 	kit.button(s.buttons, sb, "firma", { spento = not can })
 
+	-- the next level paid with the family's fragments (the Smith's orders,
+	-- docs/commesse.md), on the left of the signature: only once the Smith has called
+	local fcost = p.commesse and p.commesse.aperta and orders.level_cost(p, set, slot)
+	if fcost and s.low then
+		local have = orders.fragments(p, set)
+		local nx = wallet.next(p, set, slot)
+		local fok = have >= fcost and nx.proof_done >= nx.proof and net
+		local fb = kit.secondary(s.low, T.with_fragments, 150, 640, 262, 62,
+			{ icon = "frammento_" .. set, sub = kit.upper(T.fragments_cost:format(fcost, have)), off = not fok })
+		kit.button(s.buttons, fb, "frammenti", { spento = not fok })
+	end
+
 	-- the price and +1 LIVELLO: the price stuck to the button, on its left, with
 	-- what it buys under it (Sergio, 18 Nov: alone in the middle it said nothing);
 	-- why it can't be done, in place of that line
@@ -195,10 +208,10 @@ end
 -- +1 LIVELLO and ACCENDI LA FIRMA on the piece sel
 function M.run(s, kind, sel)
 	local p = s.prof
-	if not sel or (kind ~= "potenzia" and kind ~= "firma") then return false end
-	if kind == "potenzia" then
+	if not sel or (kind ~= "potenzia" and kind ~= "firma" and kind ~= "frammenti") then return false end
+	if kind == "potenzia" or kind == "frammenti" then
 		local before = equip.tier(wallet.level(p, sel[1], sel[2]))
-		local level = profile.act(p, { k = "potenzia", set = sel[1], slot = sel[2] })
+		local level = profile.act(p, { k = "potenzia", set = sel[1], slot = sel[2], frammenti = kind == "frammenti" or nil })
 		if level then
 			sound.play("#scaglia")
 			if equip.tier(level) > before then

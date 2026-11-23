@@ -1,0 +1,45 @@
+# Le Commesse dalla prima volta (profilo di prova DA ZERO): la bottega ancora chiusa col
+# banco di prova, cinque partite finte e il Fabbro chiama, la prima consegna, poi nello
+# ZAINO la scheda del pezzo col pulsante COI FRAMMENTI.
+imposta prova_test risorse
+
+aspetta 4
+tocca_bordo 210 170 mezzo destra    # la porta BOTTEGA
+aspetta 8
+tocca_bordo 388 53 alto sinistra    # COMMESSE
+aspetta 2
+foto 01_bottega_chiusa
+tocca_bordo 275 49 basso sinistra   # PROVA
+aspetta 1
+tocca_bordo 214 189 alto sinistra   # PARTITA FINTA VINTA, sei volte
+aspetta 0.6
+tocca_bordo 214 189 alto sinistra
+aspetta 0.6
+tocca_bordo 214 189 alto sinistra
+aspetta 0.6
+tocca_bordo 214 189 alto sinistra
+aspetta 0.6
+tocca_bordo 214 189 alto sinistra
+aspetta 1
+foto 02_il_fabbro_ha_chiamato
+tocca_bordo 214 189 alto sinistra
+aspetta 0.6
+tocca_bordo 214 189 alto sinistra
+aspetta 0.6
+tocca_bordo 214 189 alto sinistra
+aspetta 0.6
+tocca_bordo 214 189 alto sinistra
+aspetta 1
+foto 03_prime_commesse_pronte
+tocca_bordo 178 52 basso destra     # CONSEGNA
+aspetta 2
+foto 04_prima_consegna
+tocca_bordo 72 60 basso sinistra    # indietro: la home
+aspetta 4
+tocca_centro 640 300               # l'apprendista: lo ZAINO
+aspetta 2
+tocca_bordo 70 240 alto sinistra    # l'ELMO indossato
+aspetta 1
+tocca_bordo 480 50 basso destra     # POTENZIA
+aspetta 2
+foto 05_coi_frammenti

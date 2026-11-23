@@ -1649,7 +1649,10 @@ local function open_podium(self)
 		-- online the server counts it and sends what it gave (CP "premio"); if
 		-- it hasn't arrived yet (or there is no profile on the server) the same
 		-- sums here, only on the phone: the server's profile comes back anyway
-		gain = self.online_gain or profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c) }, true)
+		-- (with the Smith's orders' numbers, as the server makes them: a test profile
+		-- lives only here, and so its orders move too)
+		gain = self.online_gain or profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c),
+			commesse = CP.orders_summary(self, res, my_own, per_robot, c, self.online_humans or 1) }, true)
 		CP.expect(self, nil)
 		if self.online_gain then
 			self.verdict = "ok"
@@ -1660,7 +1663,12 @@ local function open_podium(self)
 		self.online_gain = nil
 	else
 		local _, n
-		gain, _, n = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
+		-- prova_commesse 1: the match counts for the Smith's orders as an online one
+		-- with a mate (scenari/podio_commesse.txt: their rows on the receipt)
+		local as_online = SIMULATE and config_int("megablast.prova_commesse", 0) == 1
+		if as_online then r.online = true end
+		gain, _, n = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c), ricetta = CP.recipe_text(self),
+			commesse = as_online and CP.orders_summary(self, res, my_own, per_robot, c, 2) or nil })
 		CP.expect(self, n)
 	end
 	local number = CP.record(self, c)
@@ -1949,6 +1957,11 @@ local function on_server_message(self, m)
 		self.g:pop_events()
 		self.online_teams = {}
 		for i, rb in ipairs(self.g.robots) do self.online_teams[i] = rb.team end
+		-- the people in the match (the Smith's orders ask for two: sim/orders.lua)
+		self.online_humans = 0
+		for _, pl in ipairs(m.players) do
+			if not pl.bot then self.online_humans = self.online_humans + 1 end
+		end
 		self.me, self.tok, self.tries = m.you, m.tok, 0
 		CP.begin(self, m.you, m.vetrine or {}, nil, false)
 		self.mode = "online"
@@ -2629,6 +2642,12 @@ function CP.tally_end(self, res)
 	if not c or not res then return nil end
 	return CP.conta.finish(c, self.g, res, { gruppo = self.cp_group or res.mode, mappa = self.g.map,
 		quando = os.time(), giocatori = self.match_showcases })
+end
+
+-- The match's numbers for the Smith's orders (sim/orders.lua summary), as the
+-- server makes them in worker.lua. humans: the people in the match
+function CP.orders_summary(self, res, me, per_robot, c, humans)
+	return require("sim.orders").summary(res, me, self.g and self.g.map, humans, #(per_robot[me] or {}), c and c.valori)
 end
 
 -- what of the summary goes into the stats (sim/progress.lua)

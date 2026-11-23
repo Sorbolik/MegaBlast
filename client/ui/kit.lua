@@ -221,6 +221,18 @@ function M.piece(g, name, cx, cy, h)
 	return whole(name, cx - g.ox, g.oy - cy, h, g.node)
 end
 
+-- A paper ticket of the Smith's orders (WB-085) w x h centered on a node: the sheet
+-- in nine parts, the corners 34 (the dog-ear whole), and the reinforced hole in
+-- the middle of the top, where the nail goes (its middle 10 under the top)
+function M.paper(parent, w, h)
+	local c = math.min(34, h * 0.3, w * 0.3)
+	local parts = nine(parent, "cartellino", w, h, c)
+	local k = c / P.cartellino.c
+	local hole = P.cartellino_foro.h * k
+	parts.hole = whole("cartellino_foro", 0, h / 2 - hole / 2, hole, parent)
+	return parts
+end
+
 -- A long piece in three parts filling the Figma box x..x+w, y..y+h (a row, a
 -- bar): the ends whole, the middle stretched. Returns { node, parts, g }
 function M.strip(g, name, x, y, w, h)

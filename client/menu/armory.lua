@@ -19,6 +19,7 @@ local profile = require "menu.profile"
 local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
 local outline = require "menu.outline"
+local orders_ui = require "menu.orders_ui"
 local T = require("lang.text").armory
 local TG = require("lang.text").gear_ui
 local TP = require("lang.text").pieces
@@ -27,6 +28,8 @@ local common = require("lang.text").common
 local M = {}
 
 local KC = kit.C
+-- where the tabs start, as in the ZAINO
+local TABS_X = 300
 
 local function copy(t)
 	if type(t) ~= "table" then return t end
@@ -83,9 +86,9 @@ local function ware(a, x, y, w, h, set, slot, price, o)
 	if not o.owned then kit.zone(g, a.buttons, x, y, w, h, "merce:" .. set .. ":" .. slot) end
 end
 
--- time until the shop changes (midnight)
-local function until_midnight()
-	local t = os.date("*t")
+-- time until the shop changes: the day turns at wallet.DAY_HOUR in the morning
+local function until_change()
+	local t = os.date("*t", os.time() - wallet.DAY_HOUR * 3600)
 	local left = (23 - t.hour) * 60 + (59 - t.min)
 	return string.format("%dH %dM", math.floor(left / 60), left % 60)
 end
@@ -106,7 +109,7 @@ local function shop(a)
 	gui.play_flipbook(img, "fabbro_calma")
 	gui.set_parent(img, face)
 	kit.text(g, T.offers, x + 60, 120, 26, KC.HOT, "start", 1)
-	kit.text(g, kit.upper(T.change_in:format(until_midnight())), x + 62, 143, 18, KC.MUTE, "start", 0.5)
+	kit.text(g, kit.upper(T.change_in:format(until_change())), x + 62, 143, 18, KC.MUTE, "start", 0.5)
 	local offers = wallet.shop(p, today)
 	local full = wallet.PRICE_CATALOG
 	local i = 0
@@ -147,7 +150,7 @@ end
 
 -- Screen ----------------------------------------------------------------------------
 
-local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over" }
+local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over", "mlow", "mright" }
 
 local function build(a)
 	if a.head then kit.header_delete(a.head) end
@@ -157,8 +160,21 @@ local function build(a)
 	end
 	a.buttons, a.figure, a.action = {}, nil, nil
 	a.outline = nil
+	orders_ui.release(a)
 	local p = a.prof
 	a.head = kit.header(a.buttons, common.shop, KC.PURPLE, "indietro", a.from or common.home)
+	-- the two tabs, once the Smith has called: COMMESSE (his orders) and BANCO (the shop)
+	-- (a test profile sees them at once: the test bench is in COMMESSE)
+	local open = (p.commesse and p.commesse.aperta) or profile.test
+	if not open then a.tab = "banco" end
+	a.tab = a.tab or "commesse"
+	if open then
+		kit.tabs(a.head.top_left, a.buttons, TABS_X, 28, { { T.tab_orders, "scheda:commesse" }, { T.tab_bench, "scheda:banco" } },
+			a.tab == "banco" and 2 or 1, KC.PURPLE, true)
+		-- by COMMESSE, how many are ready
+		local ready = orders_ui.news(p)
+		if ready and ready > 0 then orders_ui.badge(a.head.top_left, TABS_X + (#T.tab_orders * 14 + 64) + 13, 28 + 26, ready) end
+	end
 	a.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(a.wallet, p.buoni or 0)
 	a.left = kit.anchor(0, 0, gui.ANCHOR_LEFT)
@@ -167,6 +183,11 @@ local function build(a)
 	a.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	a.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
+	if a.tab == "commesse" then
+		outline.off()
+		orders_ui.board(a)
+		return
+	end
 	local act = profile.active_loadout(p)
 	gear_ui.devil(a, a.left, 215, 600, 395)
 	local try, focus
@@ -200,7 +221,11 @@ local function run_cmd(a, ui_action)
 	local kind, x = ui_action:match("^(%a+):?(.*)$")
 	local p = a.prof
 	local s1, s2 = x:match("^([^:]*):?(.*)$")
-	if kind == "foglio" then
+	if orders_ui.cmd(a, kind, x) then
+		-- (a tap of the COMMESSE tab)
+	elseif kind == "scheda" then
+		a.tab, a.sheet, a.modal = x, nil, nil
+	elseif kind == "foglio" then
 		a.sheet = not a.sheet
 	elseif kind == "merce" then
 		-- an offer is bought at the shop's price; the day's pieces at the full one
@@ -221,13 +246,20 @@ end
 
 function M.on_input(a, action_id, action)
 	local ui_action = ui.touch(a.buttons, action_id, action)
-	if ui_action == "indietro" then return "indietro" end
+	if ui_action == "indietro" then
+		-- (a window of the COMMESSE closes first)
+		if not a.modal then return "indietro" end
+		a.modal = nil
+		build(a)
+		return nil
+	end
 	if ui_action then run_cmd(a, ui_action) end
 	return nil
 end
 
 function M.destroy(a)
 	outline.off()
+	orders_ui.release(a)
 	kit.header_delete(a.head)
 	for _, k in ipairs(GROUPS) do
 		if a[k] then gui.delete_node(a[k].node) end

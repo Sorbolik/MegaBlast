@@ -250,9 +250,11 @@ var errNoProfile = errors.New("profilo sconosciuto o chiave sbagliata")
 // a profile blocked from the panel (recovery.go): no actions, no prizes
 var errBlocked = errors.New("profilo bloccato")
 
-// the day of the rules (the first win, the bots' matches, the BOTTEGA) is
-// Italy's (rome, events.go), never the phone's clock
-func today(now time.Time) string { return now.In(rome).Format("2006-01-02") }
+// the day of the rules (the first win, the bots' matches, the BANCO, the
+// Smith's orders) is Italy's (rome, events.go), never the phone's clock, and
+// it turns at 5 in the morning, not at midnight (Sergio, 23 Nov: nobody should
+// stay up for it; sim/wallet.lua DAY_HOUR)
+func today(now time.Time) string { return now.In(rome).Add(-5 * time.Hour).Format("2006-01-02") }
 
 // Do does the phone's actions (actions: sim/replay.lua text, { azioni = {
 // { n, k, ... } } }; empty: none) on the profile of id if key is its key, and
