@@ -485,6 +485,10 @@ return {
 		ready_one = "1 pronta",
 		ready_many = "%d pronte",
 		cost = "costa %d",
+		-- ui/receipt.lua: the orders' part of the podium's receipt
+		receipt_title = "COMMESSE",
+		receipt_smith = "Il Fabbro",
+		receipt_open = "Il Fabbro ti aspetta in bottega",
 		-- the test bench (test profiles only: menu/orders_bench.lua)
 		bench = "PROVA",
 		bench_title = "BANCO DI PROVA",
