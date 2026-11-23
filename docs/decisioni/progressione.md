@@ -116,4 +116,5 @@ futuro in [../roadmap.md](../roadmap.md) (aree 9, 10).
   - Il tetto di Attacco, Difesa e Vita (+364) non si raggiunge: il massimo vero è +300 (la quota della Tempra, che non c'è ancora). Il movimento invece il tetto lo tocca.
   - Il profilo ospite portato sul server tiene al massimo 20.000 Scaglie: coi prezzi nuovi sono meno di tre pezzi del giorno.
   - Il livello 50 del diavoletto (circa 245 ore) non è cambiato: ora arriva molto prima di un set al massimo (750 ore).
+  - Nella scheda del pezzo un livello dei primi può mostrare «+0» (il guadagno è sotto 0,5).
   - Il pezzo nuovo coi frammenti (120 → 180) e le Commesse non sono ancora nel gioco: i loro numeri vanno messi nel thread delle Commesse.
