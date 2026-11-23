@@ -8,7 +8,9 @@ disegno grande (mai ingrandito):
   sicura, fuori trasparente), sfondo 432 x 432 pieno, monocromo (solo la sagoma
   di Favilla, per le icone a tema) nella risorsa dell'estensione client/vibra;
 - icona classica (telefoni vecchi) da 36 a 192 px: fondo a quadrato arrotondato
-  col disco sopra, in client/assets/icona/ (game.project, [android] app_icon_*).
+  col disco sopra, in client/assets/icona/ (game.project, [android] app_icon_*);
+- avvio (Sergio, 23 nov): il disco da 160 dp (avvio_disco.png) che si sdraia sul
+  pannello Ruggine sopra il secondo in cui il motore si accende (Avvio.java).
 
     python3 tools/grafica/icona.py               # scrive i file del gioco
     python3 tools/grafica/icona.py --in CARTELLA # solo i PNG, in CARTELLA
@@ -31,6 +33,8 @@ CARTA = (240, 230, 209)
 DISCO_ADATTIVA = 66 / 108
 DISCO_CLASSICA = 0.80
 MISURE_CLASSICHE = (36, 48, 72, 96, 144, 192)
+# il disco del pannello di avvio, a xxxhdpi (4 px per dp): 160 dp
+AVVIO_DISCO = 160 * 4
 
 
 def disegno():
@@ -121,6 +125,8 @@ def main():
     mono.save(uscite["icon_monocromo.png"], optimize=True)
     for lato in MISURE_CLASSICHE:
         classica(tinto, lato).save(os.path.join(cla, "icona_%d.png" % lato), optimize=True)
+    cartella = a.cartella or os.path.join(RES, "drawable-xxxhdpi")
+    disco_a(tinto, AVVIO_DISCO).save(os.path.join(cartella, "avvio_disco.png"), optimize=True)
     print("ok")
 
 

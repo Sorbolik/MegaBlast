@@ -3,6 +3,7 @@
 //   vibra.colpo(ms, forza)   la vibrazione di un'esplosione (forza da 1 a 255)
 //   vibra.alta_frequenza()   lo schermo a 90/120 Hz, se li ha
 //   vibra.modo_gioco()       0 non c'è, 1 normale, 2 prestazioni, 3 risparmio batteria
+// e, da solo, chiude il pannello di avvio (Avvio.java) quando il gioco ha disegnato.
 #define EXTENSION_NAME Vibra
 #define LIB_NAME "Vibra"
 #define MODULE_NAME "vibra"
@@ -40,6 +41,33 @@ static int CallVibra(const char* name, const char* sig, int a, int b, bool with_
     if (env->ExceptionCheck())
         env->ExceptionClear();
     return out;
+}
+
+// The engine has drawn a few frames: fade out the launch panel (Avvio.pronto)
+static int g_Frames = 0;
+static void LaunchPanelReady()
+{
+    dmAndroid::ThreadAttacher thread;
+    JNIEnv* env = thread.GetEnv();
+    if (!env)
+        return;
+    jclass cls = dmAndroid::LoadClass(env, "com.sorbolik.megablast.Avvio");
+    if (cls)
+    {
+        jmethodID m = env->GetStaticMethodID(cls, "pronto", "()V");
+        if (m)
+            env->CallStaticVoidMethod(cls, m);
+        env->DeleteLocalRef(cls);
+    }
+    if (env->ExceptionCheck())
+        env->ExceptionClear();
+}
+
+static dmExtension::Result OnUpdate(dmExtension::Params* params)
+{
+    if (g_Frames < 3 && ++g_Frames == 3)
+        LaunchPanelReady();
+    return dmExtension::RESULT_OK;
 }
 
 static int Tocco(lua_State* L)
@@ -85,6 +113,11 @@ static dmExtension::Result Initialize(dmExtension::Params* params)
 {
     return dmExtension::RESULT_OK;
 }
+
+static dmExtension::Result OnUpdate(dmExtension::Params* params)
+{
+    return dmExtension::RESULT_OK;
+}
 #endif
 
 static dmExtension::Result AppInitialize(dmExtension::AppParams* params)
@@ -102,4 +135,4 @@ static dmExtension::Result Finalize(dmExtension::Params* params)
     return dmExtension::RESULT_OK;
 }
 
-DM_DECLARE_EXTENSION(EXTENSION_NAME, LIB_NAME, AppInitialize, AppFinalize, Initialize, 0, 0, Finalize)
+DM_DECLARE_EXTENSION(EXTENSION_NAME, LIB_NAME, AppInitialize, AppFinalize, Initialize, OnUpdate, 0, Finalize)

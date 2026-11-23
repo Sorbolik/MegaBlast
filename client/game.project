@@ -28,6 +28,7 @@ show_made_with_defold = 0
 
 [android]
 package = com.sorbolik.megablast
+manifest = /android/AndroidManifest.xml
 immersive_mode = 1
 display_cutout = 0
 app_icon_36x36 = /assets/icona/icona_36.png
