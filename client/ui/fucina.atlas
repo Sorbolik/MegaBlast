@@ -317,9 +317,6 @@ images {
   image: "/assets/fucina/gemma.png"
 }
 images {
-  image: "/assets/fucina/gioca_sigillo.png"
-}
-images {
   image: "/assets/fucina/guscio_cx.png"
 }
 images {
@@ -608,6 +605,33 @@ images {
   image: "/assets/fucina/pannello_9.png"
 }
 images {
+  image: "/assets/fucina/pannello_brace_1.png"
+}
+images {
+  image: "/assets/fucina/pannello_brace_2.png"
+}
+images {
+  image: "/assets/fucina/pannello_brace_3.png"
+}
+images {
+  image: "/assets/fucina/pannello_brace_4.png"
+}
+images {
+  image: "/assets/fucina/pannello_brace_5.png"
+}
+images {
+  image: "/assets/fucina/pannello_brace_6.png"
+}
+images {
+  image: "/assets/fucina/pannello_brace_7.png"
+}
+images {
+  image: "/assets/fucina/pannello_brace_8.png"
+}
+images {
+  image: "/assets/fucina/pannello_brace_9.png"
+}
+images {
   image: "/assets/fucina/pannello_caldo_1.png"
 }
 images {
@@ -660,6 +684,60 @@ images {
 }
 images {
   image: "/assets/fucina/pannello_chiaro_9.png"
+}
+images {
+  image: "/assets/fucina/pannello_gelo_1.png"
+}
+images {
+  image: "/assets/fucina/pannello_gelo_2.png"
+}
+images {
+  image: "/assets/fucina/pannello_gelo_3.png"
+}
+images {
+  image: "/assets/fucina/pannello_gelo_4.png"
+}
+images {
+  image: "/assets/fucina/pannello_gelo_5.png"
+}
+images {
+  image: "/assets/fucina/pannello_gelo_6.png"
+}
+images {
+  image: "/assets/fucina/pannello_gelo_7.png"
+}
+images {
+  image: "/assets/fucina/pannello_gelo_8.png"
+}
+images {
+  image: "/assets/fucina/pannello_gelo_9.png"
+}
+images {
+  image: "/assets/fucina/pannello_spento_1.png"
+}
+images {
+  image: "/assets/fucina/pannello_spento_2.png"
+}
+images {
+  image: "/assets/fucina/pannello_spento_3.png"
+}
+images {
+  image: "/assets/fucina/pannello_spento_4.png"
+}
+images {
+  image: "/assets/fucina/pannello_spento_5.png"
+}
+images {
+  image: "/assets/fucina/pannello_spento_6.png"
+}
+images {
+  image: "/assets/fucina/pannello_spento_7.png"
+}
+images {
+  image: "/assets/fucina/pannello_spento_8.png"
+}
+images {
+  image: "/assets/fucina/pannello_spento_9.png"
 }
 images {
   image: "/assets/fucina/pedana.png"
@@ -767,33 +845,6 @@ images {
   image: "/assets/fucina/porta_shop.png"
 }
 images {
-  image: "/assets/fucina/primario_acceso_cx.png"
-}
-images {
-  image: "/assets/fucina/primario_acceso_dx.png"
-}
-images {
-  image: "/assets/fucina/primario_acceso_sx.png"
-}
-images {
-  image: "/assets/fucina/primario_premuto_cx.png"
-}
-images {
-  image: "/assets/fucina/primario_premuto_dx.png"
-}
-images {
-  image: "/assets/fucina/primario_premuto_sx.png"
-}
-images {
-  image: "/assets/fucina/primario_spento_cx.png"
-}
-images {
-  image: "/assets/fucina/primario_spento_dx.png"
-}
-images {
-  image: "/assets/fucina/primario_spento_sx.png"
-}
-images {
   image: "/assets/fucina/principale_acceso_cx.png"
 }
 images {
@@ -879,234 +930,6 @@ images {
 }
 images {
   image: "/assets/fucina/scaglia.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_1.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_2.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_3.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_4.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_5.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_6.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_7.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_8.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_9.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_fregio.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_scelta_1.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_scelta_2.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_scelta_3.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_scelta_4.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_scelta_5.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_scelta_6.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_scelta_7.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_scelta_8.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_scelta_9.png"
-}
-images {
-  image: "/assets/fucina/scheda_brace_scelta_fregio.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_1.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_2.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_3.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_4.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_5.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_6.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_7.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_8.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_9.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_scelta_1.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_scelta_2.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_scelta_3.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_scelta_4.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_scelta_5.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_scelta_6.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_scelta_7.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_scelta_8.png"
-}
-images {
-  image: "/assets/fucina/scheda_ferro_scelta_9.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_1.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_2.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_3.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_4.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_5.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_6.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_7.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_8.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_9.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_fregio.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_scelta_1.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_scelta_2.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_scelta_3.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_scelta_4.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_scelta_5.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_scelta_6.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_scelta_7.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_scelta_8.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_scelta_9.png"
-}
-images {
-  image: "/assets/fucina/scheda_gelo_scelta_fregio.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_1.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_2.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_3.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_4.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_5.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_6.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_7.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_8.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_9.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_scelta_1.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_scelta_2.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_scelta_3.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_scelta_4.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_scelta_5.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_scelta_6.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_scelta_7.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_scelta_8.png"
-}
-images {
-  image: "/assets/fucina/scheda_spenta_scelta_9.png"
 }
 images {
   image: "/assets/fucina/scheggia_cx.png"

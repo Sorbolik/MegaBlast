@@ -89,7 +89,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara", "barra_stendardo", "barra_stendardo_chiara", "solco") and not nome.startswith("primario"):    # (sfumati, e il primario: il suo spazio e' misurato, SPAZI_PRIMARIO)
+    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara", "barra_stendardo", "barra_stendardo_chiara", "solco"):    # (sfumati)
         SPAZI[nome] = spazio(im)
 
 
@@ -140,9 +140,8 @@ def fai_pezzi():
     # (il lingotto di WB-022 non c'e' piu': il pulsante primario e' quello di WB-052)
     tre("scheggia", pezzi(senza_verde(os.path.join(p, "pezzo_ghiaccio.png")))[0][2], 200, 0.2)
     pan = pezzi(senza_verde(os.path.join(p, "pezzo_pannello.png")))[0][2]
-    nove("pannello", pan, 480)
-    # il bordo caldo di una carta scelta e la targa chiara alta (un ritratto)
-    nove("pannello_caldo", caldo(pan), 480)
+    # (pannello e pannello_caldo: la card minimale disegnata in vettori, fai_card_filo;
+    # di questo foglio resta la targa chiara alta, un ritratto)
     # (il pannello e' piu' scuro delle piastre: schiarito prima, cosi' viene avorio)
     su = pan.astype(float)
     su[..., :3] = np.where(su[..., :3].mean(axis=2, keepdims=True) > 18, su[..., :3] + 30, su[..., :3])
@@ -389,6 +388,7 @@ def fai_secondario():
     # unita ad angolo vivo, i capi tondi, niente contorno
     fai_freccina()
     fai_azioni()
+    fai_card_filo()
 
 
 # le icone delle azioni (WB-088, Sergio 23 nov: «ogni singolo tasto deve avere la sua
@@ -422,6 +422,38 @@ def fai_azioni():
         y0, x0 = (lato - pezzo.shape[0]) // 2, (lato - pezzo.shape[1]) // 2
         q[y0:y0 + pezzo.shape[0], x0:x0 + pezzo.shape[1]] = pezzo
         intero("az_" + nome, q, 160)
+
+
+def fai_card_filo():
+    """La card minimale (Sergio, 23 nov: «minimale, magari con dei fili nelle cornici e dei
+    punti negli angoli», al posto del pannello coi quattro chiodini): il fondo scuro, un filo
+    sottile dentro la cornice e un punto in ogni angolo, colori pieni e niente aloni (come
+    il Ferro liscio). Il colore del filo dice lo stato: ferro (riposo), oro (scelta, il tuo),
+    gelo (un evento), brace, spento (chiusa). In nove parti, gli angoli 48 su 192: il gioco
+    li disegna a circa 22, la meta'."""
+    S, L, C = 4, 192, 48
+    fondo = (0x18, 0x14, 0x1C)
+    stati = {
+        # nome: (filo, punto, spessore del filo, raggio del punto, opacita' del fondo)
+        "pannello": ((0x4A, 0x45, 0x50), (0xF4, 0xEC, 0xE1), 4, 8, 240),
+        "pannello_caldo": ((0xFF, 0xB7, 0x03), (0xFF, 0xB7, 0x03), 6, 10, 245),
+        "pannello_gelo": ((0x38, 0xB6, 0xFF), (0x38, 0xB6, 0xFF), 5, 9, 240),
+        "pannello_brace": ((0xF2, 0x64, 0x19), (0xF2, 0x64, 0x19), 5, 9, 240),
+        "pannello_spento": ((0x34, 0x30, 0x38), (0x4A, 0x45, 0x50), 4, 8, 170),
+    }
+    for nome, (filo, punto, spessore, raggio, alfa) in stati.items():
+        im = Image.new("RGBA", (L * S, L * S), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        d.rounded_rectangle((0, 0, L * S - 1, L * S - 1), 10 * S, fill=fondo + (alfa,))
+        i = 5
+        d.rounded_rectangle((i * S, i * S, (L - i) * S - 1, (L - i) * S - 1), 6 * S,
+                            outline=filo + (255,), width=spessore * S)
+        c = i + spessore / 2
+        for cx, cy in ((c, c), (L - c, c), (c, L - c), (L - c, L - c)):
+            d.ellipse(((cx - raggio) * S, (cy - raggio) * S, (cx + raggio) * S, (cy + raggio) * S), fill=(0x0A, 0x08, 0x0B, 255))
+            r2 = raggio - 3
+            d.ellipse(((cx - r2) * S, (cy - r2) * S, (cx + r2) * S, (cy + r2) * S), fill=punto + (255,))
+        nove(nome, np.asarray(im), L, C / L)
 
 
 def fai_freccina():
@@ -589,7 +621,6 @@ MENU_INTERI = [
     # lo SHOP al posto di ARMERIA (WB-080, Sergio 18 nov: il banco col tendone), accorciato
     # nel mezzo liscio per avere l'ingombro della porta di ARMERIA di WB-046
     ("porta_shop", "porta_shop", 226, "WB-080"),
-    ("gioca_sigillo", "gioca_sigillo", 166, "WB-046"),
     ("pedana", "pedana_griglia_1", 266, "WB-050"),
     ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
     # le caselle dei pezzi, dritte (WB-078, Sergio 18 nov: al posto di quelle di WB-044 in
@@ -632,16 +663,6 @@ SPAZI_MISURATI = {
     "porta_allenamento": (225, 44, 166, 37),
     "porta_eventi": (185, 52, 252, 58),   # (a destra 12 px dal medaglione, come ARMERIA)
     "porta_shop": (214, 52, 240, 58),
-    "gioca_sigillo": (180, 28, 149, 48),
-}
-# dove si scrive sul pulsante primario (la gemma di WB-054): la faccia piena davanti, senza
-# la fiamma a sinistra e i cristalli a destra; sullo spento solo la parte grigia, prima del
-# ghiaccio (Sergio, 17 nov: la scritta mai sopra i disegni del tasto). Misurati con spazio()
-# sul disegno intero, con la tinta presa dalla faccia.
-SPAZI_PRIMARIO = {
-    "primario_acceso": (99, 79, 79, 48),
-    "primario_premuto": (71, 62, 78, 33),
-    "primario_spento": (59, 78, 178, 39),
 }
 # i pezzi lunghi in tre parti (nome, file, altezza, capo, cartella): si allunga solo il mezzo
 MENU_TRE = [
@@ -708,19 +729,6 @@ def scheda(nome, arr, fregio=None):
         SPAZI[nome + "_fregio"] = fuori
 
 
-def fai_schede():
-    """Le schede di GIOCA ONLINE (WB-060): brace, ferro, gelo e ferro spento, normali
-    e scelte (col bordo acceso). Tenuti i fogli 1: china piu' pulita e lati piu' dritti."""
-    p = os.path.join(ART, "WB-060")
-    fregi = {"brace": ("fiamma", 235, 170), "gelo": ("cristalli", 200, 95), "gelo_scelta": ("cristalli", 250, 95)}
-    for foglio, coda in (("schede_modalita_1", ""), ("schede_scelte_1", "_scelta")):
-        cs = griglia(os.path.join(p, foglio + ".png"), [2, 2], 20000)
-        # in ordine di lettura: brace e ferro sopra, gelo e spenta sotto
-        for tipo, a in zip(["brace", "ferro", "gelo", "spenta"], cs):
-            n = tipo + coda
-            scheda("scheda_" + n, a, fregi.get(n) or fregi.get(tipo))
-
-
 def fai_segni():
     """I segni di chi sale e chi scende (WB-061, foglio 1: piatto, senza il riflesso
     bianco): avorio, il gioco li tinge."""
@@ -751,20 +759,7 @@ def fai_menu():
     intero("spunta_verde", verde(ritaglio("WB-044", "spunta")), 56)
     for nome, f, h, c, d in MENU_TRE:
         tre(nome, ritaglio(d, f), h, c)
-    # il pulsante primario dei menu: la gemma di brace di WB-054 (E, Sergio 15 nov),
-    # acceso, premuto e spento, in tre parti (si allunga solo il mezzo). Alti come nel
-    # disegno rispetto all'acceso: il premuto e' piu' basso apposta. PRIMARIO=tizzone,
-    # crosta (le altre di WB-054) o brace (la C di WB-052) per rivederne un'altra
-    scelta = os.environ.get("PRIMARIO", "gemma")
-    if scelta == "brace":
-        for stato, h in (("acceso", 200), ("premuto", 130), ("spento", 165)):
-            tre("primario_" + stato, ritaglio("WB-052", "primario_%s_1" % stato), h, 0.3)
-    else:
-        acceso_h = ritaglio("WB-054", "primario_%s_acceso" % scelta).shape[0]
-        for stato in ("acceso", "premuto", "spento"):
-            r = ritaglio("WB-054", "primario_%s_%s" % (scelta, stato))
-            tre("primario_" + stato, r, round(200 * r.shape[0] / acceso_h), 0.3)
-            SPAZI["primario_" + stato] = SPAZI_PRIMARIO["primario_" + stato]
+    # (il pulsante primario e' il Ferro liscio in ferro rovente: fai_secondario)
     # le icone dei pezzi (WB-043): base e forgiata per famiglia e posto; il posto vuoto
     for f in FAMIGLIE:
         for p in POSTI:
@@ -953,7 +948,6 @@ if __name__ == "__main__":
     fai_secondario()
     fai_piccoli()
     fai_menu()
-    fai_schede()
     fai_segni()
     fai_bivio()
     fai_profilo()

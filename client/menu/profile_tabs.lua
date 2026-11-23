@@ -115,10 +115,12 @@ local function sheet_stats(s)
 	-- won and lost: one bar, ember and ice
 	kit.text(g, kit.upper(thousands(won) .. " " .. T.won), 50, 390, 18, KC.HOT, "start", 0.4)
 	kit.text(g, kit.upper(thousands(matches - won) .. " " .. T.lost), 310, 390, 18, KC.STEEL, "end", 0.4)
-	kit.strip(g, "riga_scura", 50, 400, 260, 24)
+	-- (the bar of every bar: kit.bar_parts, the home's groove and strip)
 	local wf = matches > 0 and won / matches or 0
-	if matches > won then kit.strip(g, "barra_gelo", 52, 402, 256, 20) end
-	if won > 0 then kit.strip(g, "barra_brace", 52, 402, math.max(20, 256 * wf), 20) end
+	local parts = {}
+	if won > 0 then parts[#parts + 1] = { 0, math.max(16, 256 * wf), KC.HOT } end
+	if matches > won then parts[#parts + 1] = { won > 0 and math.max(16, 256 * wf) or 0, 256, KC.ICE } end
+	kit.bar_parts(g, 52, 404, 256, 16, parts)
 	kit.text(g, kit.upper(T.won_share:format(math.floor(wf * 100 + 0.5))), 180, 448, 16, KC.MUTE, "middle", 0.4)
 	-- best streak and stars
 	for i, b in ipairs({ { thousands(st.serie or 0), T.best_streak, KC.HOT }, { thousands(profile.total_stars(p)), T.stars, KC.SAND } }) do
@@ -172,9 +174,8 @@ local function sheet_stats(s)
 	kit.text(r, T.damage_by_weapon, x + 24, 140, 22, KC.HOT, "start", 1)
 	-- what the two colours of the bars say (Sergio, 17 Nov)
 	local lx = x + 24
-	for _, l in ipairs({ { "barra_brace", T.legend_primary }, { "barra_gelo", T.legend_secondary } }) do
-		kit.strip(r, "riga_scura", lx, 154, 30, 16)
-		kit.strip(r, l[1], lx + 2, 156, 26, 12)
+	for _, l in ipairs({ { KC.HOT, T.legend_primary }, { KC.ICE, T.legend_secondary } }) do
+		kit.bar(r, lx + 2, 157, 26, 10, 1, l[1])
 		lx = lx + 38
 		lx = lx + kit.width(kit.text(r, l[2], lx, 168, 16, KC.MUTE, "start", 0.3)) + 22
 	end
@@ -198,8 +199,7 @@ local function sheet_stats(s)
 		gui.play_flipbook(ic, a.w .. "_icona")
 		fit(kit.text(r, kit.upper(T.weapons[a.w] or a.w), x + 76, y + 14, 18, KC.SAND), 220)
 		kit.text(r, thousands(a.n), x + w - 24, y + 14, 18, KC.MUTE, "end")
-		kit.strip(r, "riga_scura", x + 76, y + 22, w - 100, 22)
-		kit.strip(r, game.SECONDARY[a.w] and "barra_gelo" or "barra_brace", x + 78, y + 24, math.max(18, (w - 104) * a.n / first), 18)
+		kit.bar(r, x + 80, y + 26, w - 108, 14, a.n / first, game.SECONDARY[a.w] and KC.ICE or KC.HOT)
 	end
 end
 

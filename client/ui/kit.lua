@@ -125,7 +125,7 @@ end
 -- whole and 70% of the middle (the step stays under half a pixel). The
 -- simulator fails on a narrower one (tools/simula/simula.py)
 local SLANTED = { piastrina = true, piastrina_calda = true, piastrina_chiara = true, piastra_storta = true,
-	piastra_calda = true, scheggia = true, primario_acceso = true, primario_premuto = true, primario_spento = true }
+	piastra_calda = true, scheggia = true }
 function M.least(name, h)
 	local m = P[name]
 	if not SLANTED[name] then return 0 end
@@ -629,11 +629,14 @@ function M.bar_parts(g, x, y, w, h, parts)
 	for i, q in ipairs(parts) do
 		local x1, x2 = q[1], q[2]
 		if x2 > x1 then
-			-- the middle of the strip over this part, the caps at the two ends
+			-- the middle of the strip over this part, the caps at the two ends (ember
+			-- as drawn, the other colors on the colorless strip)
+			local name = strip_of(q[3])
+			local color = name == "barra_stendardo" and vmath.vector4(1, 1, 1, 1) or q[3]
 			local a, z = math.max(x1, cw), math.min(x2, last - cw)
-			if z > a then gui.set_color(pic("barra_stendardo_chiara_cx", x + (a + z) / 2 - g.ox, g.oy - (y + h / 2), z - a + 0.5, h, g.node), q[3]) end
-			if x1 < cw then gui.set_color(pic("barra_stendardo_chiara_sx", x + cw / 2 - g.ox, g.oy - (y + h / 2), cw, h, g.node), q[3]) end
-			if x2 > last - cw then gui.set_color(pic("barra_stendardo_chiara_dx", x + last - cw / 2 - g.ox, g.oy - (y + h / 2), cw, h, g.node), q[3]) end
+			if z > a then gui.set_color(pic(name .. "_cx", x + (a + z) / 2 - g.ox, g.oy - (y + h / 2), z - a + 0.5, h, g.node), color) end
+			if x1 < cw then gui.set_color(pic(name .. "_sx", x + cw / 2 - g.ox, g.oy - (y + h / 2), cw, h, g.node), color) end
+			if x2 > last - cw then gui.set_color(pic(name .. "_dx", x + last - cw / 2 - g.ox, g.oy - (y + h / 2), cw, h, g.node), color) end
 		end
 	end
 end
@@ -932,55 +935,21 @@ function M.card(g, x, y, w, h, color, opt)
 	local cx, cy = x + w / 2, y + h / 2
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
 	local k = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
-	-- chosen: the same panel in ember, a little bigger, under it (a rim drawn by hand)
-	if opt.sel then nine(n, "pannello_caldo", w + 12, h + 12, math.min(26, h * 0.34)) end
-	local parts = nine(n, "pannello", w, h, math.min(22, h * 0.3))
-	if opt.off then tint(parts, vmath.vector4(0.62, 0.62, 0.7, 0.8)) end
+	-- the minimal card (tools/grafica/fucina.py, fai_card_filo): its thread says the
+	-- state, gold the chosen one, ice an event, ember, off a closed one
+	local name = opt.sel and "pannello_caldo" or opt.off and "pannello_spento"
+		or opt.kind and "pannello_" .. opt.kind or "pannello"
+	k.parts = nine(n, name, w, h, math.min(22, h * 0.3))
 	return k
 end
 
--- MODE CARDS (WB-060): the cards of GIOCA ONLINE, shaped by what they are:
--- kind "brace" (the usual mode: ember, the flame out of the bottom left corner),
--- "ferro" (a plain mode), "gelo" (an event: iron with the ice edge, crystals out
--- of the top right corner), "spenta" (not yet open). In nine parts, the corners
--- always at the drawing's scale; the flame and the crystals are a whole piece on
--- their corner (pieces.lua: box says how far it sticks out of the body).
--- opt.sel: the chosen one (its bright rim). Returns { node, g } like M.card
-local MODE_SCALE = 0.44
+-- The cards of GIOCA ONLINE: the minimal card like every other (Sergio, 23 Nov),
+-- its thread by what they are: kind "brace" and "ferro" (a mode: iron at rest),
+-- "gelo" (an event: ice), "spenta" (not yet open). opt.sel: the chosen one (gold)
+local MODE_KIND = { brace = nil, ferro = nil, gelo = "gelo" }
 function M.mode_card(g, x, y, w, h, kind, opt)
 	opt = opt or {}
-	local cx, cy = x + w / 2, y + h / 2
-	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
-	local k = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
-	local name = "scheda_" .. kind .. (opt.sel and "_scelta" or "")
-	local m = P[name]
-	local s = math.min(MODE_SCALE, 0.34 * h / m.c)
-	local c = m.c * s
-	-- how far the flame (bottom left) or the crystals (top right) come inside the body:
-	-- the sides next to them start where they end
-	local f = P[name .. "_fregio"]
-	local flame = f and (f.box[1] > 0 or f.box[4] > 0)
-	local fw, fh = f and f.w * s or 0, f and f.h * s or 0
-	local in_w = f and fw - (flame and f.box[1] or f.box[3]) * s or c
-	local in_h = f and fh - (flame and f.box[4] or f.box[2]) * s or c
-	-- a part filling the box from (xa, ya) to (xb, yb), measured from the top left corner
-	local function part(i, xa, ya, xb, yb)
-		return pic(name .. "_" .. i, -w / 2 + (xa + xb) / 2, h / 2 - (ya + yb) / 2, xb - xa + 1, yb - ya + 1, n)
-	end
-	k.parts = {
-		part(5, c, c, w - c, h - c),
-		part(2, c, 0, f and not flame and w - in_w or w - c, c),
-		part(8, flame and in_w or c, h - c, w - c, h),
-		part(4, 0, c, c, flame and h - in_h or h - c),
-		part(6, w - c, f and not flame and in_h or c, w, h - c),
-		part(1, 0, 0, c, c), part(3, w - c, 0, w, c), part(7, 0, h - c, c, h), part(9, w - c, h - c, w, h),
-	}
-	if flame then
-		pic(name .. "_fregio", -w / 2 - f.box[1] * s + fw / 2, -h / 2 - f.box[4] * s + fh / 2, fw, fh, n)
-	elseif f then
-		pic(name .. "_fregio", w / 2 + f.box[3] * s - fw / 2, h / 2 + f.box[2] * s - fh / 2, fw, fh, n)
-	end
-	return k
+	return M.card(g, x, y, w, h, nil, { sel = opt.sel, off = kind == "spenta", kind = MODE_KIND[kind] })
 end
 
 -- A picture at the top of a card, `tall` pixels, cut to the card's corner
