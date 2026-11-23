@@ -67,7 +67,7 @@ Principi di Sergio che reggono tutto:
 - **2 a partita online finita, 3 se vinci**, solo se in partita c'è almeno
   un'altra persona. Chi esce prima non prende niente. Allenamento, stesso
   telefono e campagna: niente.
-- **Lo scambio**: 3 di un materiale per 1 di un altro (la Scoria 1 a 1). Non c'entra
+- **Lo scambio**: 3 di un materiale per 1 di un altro (la Scoria non si scambia: vale già da sola per qualunque materiale). Non c'entra
   con la lezione «Il baratto del Fabbro».
 - Massimo 99 per tipo. Si vedono sullo scontrino del podio, sullo scaffale della
   bottega e sui cartellini: non nello ZAINO.
