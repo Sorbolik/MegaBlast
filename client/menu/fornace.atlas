@@ -1,0 +1,93 @@
+images {
+  image: "/assets/fornace/catena.png"
+}
+images {
+  image: "/assets/fornace/goccia.png"
+}
+images {
+  image: "/assets/fornace/pavimento.png"
+}
+images {
+  image: "/assets/fornace/schizzo.png"
+}
+images {
+  image: "/assets/fornace/secchio.png"
+}
+images {
+  image: "/assets/fornace/sporgenza.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_pieni_arancio.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_pieni_azzurro.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_pieni_ferro.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_pieni_oro.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_pieni_verde.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_pieni_viola.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_arancio.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_azzurro.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_ferro.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_oro.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_verde.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_viola.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_pieni_arancio.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_pieni_azzurro.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_pieni_ferro.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_pieni_oro.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_pieni_verde.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_pieni_viola.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_arancio.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_azzurro.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_ferro.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_oro.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_verde.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_viola.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0
