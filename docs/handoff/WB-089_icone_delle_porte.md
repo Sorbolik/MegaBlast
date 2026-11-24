@@ -79,4 +79,11 @@ Proposte da far vedere a Sergio (Claude, 24 nov): si sceglie un foglio o un'icon
 
 ## Consegna di Codex
 
+- `art/WB-089/porte_oggetti_1.png` e `porte_oggetti_2.png`, con i rispettivi `.txt`.
+- `art/WB-089/porte_scenette_1.png` e `porte_scenette_2.png`, con i rispettivi `.txt`.
+
+Quattro fogli da 1536×1024, un tentativo per variante con ImageGen. Prompt originali e riferimenti nell'ordine R2, R1, R3. I fogli sono stati ridimensionati in proporzione e centrati su tela verde.
+
+Controllati ordine (Campagna, Allenamento, Eventi, Bottega), separazione, contorni, assenza di scritte e di medaglioni. I soggetti restano leggibili nelle anteprime a circa 120 px per icona. Nelle due versioni a oggetti il cartello ha piccoli frammenti di fiamma staccati. L'ingombro visivo è simile, con qualche differenza di larghezza fra i soggetti. Il fondo verde si discosta da #00FF00 e bordi e campiture mostrano lievi variazioni tonali. Ritaglio e resa sulla home restano da verificare.
+
 ## Resoconto di Claude
