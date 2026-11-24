@@ -7,17 +7,35 @@
 // CP.hand.ASH; Sergio, 23 nov). L'alfa resta quella del nodo.
 // Le immagini rimpicciolite (mipmap) un po' più grandi del solito (-0,5): da
 // lontano il diavoletto resta più nitido (Sergio, 2 nov; come pieces.fp)
+// La costante band (per nodo, gui.set) accesa (w 1) fa invece la fascia lucente che
+// passa sul piedistallo della home (menu/home.lua), sommata sopra il disegno: x il
+// mezzo della fascia in pixel della finestra, y mezza larghezza, z quanto è forte.
+// Dritta e piena come col ritaglio di prima, ma col bordo di un pixel sfumato: scorre
+// liscia anche fra un pixel e l'altro (Sergio, 24 nov).
 
 in mediump vec2 var_texcoord0;
 in mediump vec4 var_color;
+in highp vec2 var_pos;
 
 out vec4 out_fragColor;
 
 uniform mediump sampler2D texture_sampler;
 
+uniform fs_uniforms
+{
+    highp vec4 band;
+};
+
+const mediump vec3 LUCE = vec3(1.0, 0.72, 0.3);
+
 void main()
 {
     mediump vec4 t = texture(texture_sampler, var_texcoord0.xy, -0.5);
+    if (band.w > 0.5) {
+        mediump float k = clamp(band.y - abs(var_pos.x - band.x) + 0.5, 0.0, 1.0);
+        out_fragColor = vec4(t.rgb * LUCE * (k * band.z) * var_color.a, 0.0);
+        return;
+    }
     mediump float a = max(var_color.a, 0.0001);
     mediump float l = dot(t.rgb, vec3(0.299, 0.587, 0.114));
     mediump vec3 c = mix(vec3(l), t.rgb, var_color.b / a) * (var_color.r / a);
