@@ -669,16 +669,21 @@ function M.secondary(g, label, x, y, w, h, opt)
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
 	local p = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
 	local k = h / P[kind .. "acceso"].h
-	local looks = {}
-	for _, state in ipairs({ "acceso", "chiaro", "premuto", "spento" }) do
+	-- one slab of three nodes: a state change swaps its drawings (four looks of
+	-- nodes each filled the GUI's buffer in the ZAINO, Sergio 24 Nov)
+	local slab, parts = empty(0, 0, 0, 0, n), nil
+	local function look(state)
 		local name = kind .. state
-		local s = empty(0, 0, 0, 0, n)
 		local sh = P[name].h * k
-		gui.set_position(s, vec(0, (sh - h) / 2))
-		three(s, name, w, sh)
-		gui.set_enabled(s, state == (opt.off and "spento" or "acceso"))
-		looks[state] = s
+		gui.set_position(slab, vec(0, (sh - h) / 2))
+		if not parts then
+			parts = three(slab, name, w, sh)
+			return
+		end
+		for i, part in ipairs({ "_cx", "_sx", "_dx" }) do gui.play_flipbook(parts[i], name .. part) end
+		three_fit(parts, name, w, sh)
 	end
+	look(opt.off and "spento" or "acceso")
 	-- the face: what moves down when pressed (the icon and the words)
 	p.face_node = empty(0, 0, 0, 0, n)
 	local f = { node = p.face_node, ox = cx, oy = cy }
@@ -717,10 +722,10 @@ function M.secondary(g, label, x, y, w, h, opt)
 	end
 	if not opt.off then
 		local down_now, lit_now = false, false
+		local shown = "acceso"
 		local function show()
-			gui.set_enabled(looks.acceso, not down_now and not lit_now)
-			gui.set_enabled(looks.chiaro, not down_now and lit_now)
-			gui.set_enabled(looks.premuto, down_now)
+			local state = down_now and "premuto" or lit_now and "chiaro" or "acceso"
+			if state ~= shown then shown = state; look(state) end
 		end
 		p.on_press = function(down)
 			down_now = down

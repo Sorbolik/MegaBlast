@@ -460,7 +460,9 @@ già 120 FPS.
 ## Nodi della GUI
 
 La GUI del gioco (`client/main/game.gui`) ha `max_nodes: 8192` (24 nov): con i pulsanti a lastra
-(quattro aspetti per pulsante) lo ZAINO del profilo di prova, ricostruito a ogni pezzo scelto, restava
+lo ZAINO del profilo di prova, ricostruito a ogni pezzo scelto, restava
 con circa 400 nodi liberi su 4096 e sul telefono li finiva (scritte e INDOSSA mancanti in basso).
+Ogni pulsante a lastra è una sola lastra di tre nodi: cambiando stato (acceso, chiaro, premuto)
+cambia i disegni, non accende altri nodi. Uscendo dallo ZAINO i suoi nodi tornano liberi (misurato).
 Se la GUI scrive `Could not create the node since the buffer is full`, la simulazione fallisce:
 scenario `zaino_fine_gioco.txt`.
