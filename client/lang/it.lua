@@ -627,7 +627,7 @@ return {
 		melt_one_sub = "+%d scaglie",
 		melt_family = "IN UN'ALTRA FAMIGLIA",
 		melt_four = "FONDINE %d",
-		melt_four_sub = "+%d della famiglia scelta",
+		melt_four_sub = "ne fai %d",
 	},
 
 	pieces = {

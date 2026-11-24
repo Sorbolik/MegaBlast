@@ -1008,9 +1008,12 @@ function M.input(a, action_id, action)
 		if action.pressed and action.ui == "indietro" and fx.phase == "aim" and not fx.aiming then close(a) end
 		return true
 	end
-	if fx.phase ~= "aim" or action_id ~= ui.TOUCH then return true end
+	if action_id ~= ui.TOUCH then return true end
+	-- (a finger put down a moment before the aim comes back starts aiming then)
+	if action.pressed then fx.finger = true elseif action.released then fx.finger = false end
+	if fx.phase ~= "aim" then return true end
 	local x, y = screen.from_touch(action.x, action.y)
-	if action.pressed then
+	if action.pressed or (fx.finger and not fx.aiming) then
 		fx.aiming = true
 		if fx.hint then gui.set_enabled(fx.hint, false) end
 		aim_at(a, x, y)

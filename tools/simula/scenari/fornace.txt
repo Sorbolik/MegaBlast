@@ -28,7 +28,7 @@ aspetta 0.9
 foto 08_centro
 aspetta 2
 trascina 300 300 360 360 0.4
-aspetta 3.5
+aspetta 5
 trascina 300 300 300 420 0.4
 aspetta 2.4
 foto 09_tre_su_tre
