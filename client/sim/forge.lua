@@ -65,7 +65,10 @@ end
 -- and 6 of fragments (255 Scaglie and 8 fragments): the farther it is, the more it
 -- gives, the far ones are small. Each one: centre of the opening (x), its rim (y),
 -- width, chain length (drawn only: the high ones hang).
-local B, P = 78, 52
+-- (Sergio, 24 Nov: «allargare leggermente tutti i bersagli, giusto un pelo») the
+-- moulds 6% wider than at first, drawing included
+M.GROW = 1.06
+local B, P = 78 * M.GROW, 52 * M.GROW
 M.PRIZES = {   -- from the nearest to the farthest
 	{ w = B, scaglie = 15 }, { w = B, frammenti = 1 }, { w = B, scaglie = 20 }, { w = P, frammenti = 1 },
 	{ w = B, scaglie = 30 }, { w = P, frammenti = 2 }, { w = B, frammenti = 1 }, { w = B, scaglie = 50 },
@@ -154,7 +157,7 @@ function M.layout(key, seed, lucky)
 		if ok then
 			picked[#picked + 1] = sp
 			local probe = {}
-			for i, q in ipairs(picked) do probe[i] = { slot = i, x = q.x, y = q.y, w = B, inner = P * 0.36, depth = B * 0.78 } end
+			for i, q in ipairs(picked) do probe[i] = { slot = i, x = q.x, y = q.y, w = B, inner = B * 0.36, depth = B * 0.78 } end
 			for i = 1, #picked do
 				if not M.reachable(probe, i) then ok = false; break end
 			end
@@ -226,6 +229,18 @@ M.SLIDE = 0.92           -- of the speed along the iron, what stays at each boun
 M.BELLY = 0.4            -- the belly's radius, of the mould's width (its top at the rim, its bottom at the drawing's)
 M.LIP = 0.07             -- the rim lips' radius, of the mould's width
 M.STILL = 90             -- ticks almost still (resting on a lip): it drips down, a miss
+-- The catch (Sergio, 24 Nov, on https://claude.ai/artifact/Gjq7oJAtJP1yXvLshSxXAa: «al 30%»):
+-- the line that takes the drop sits on top of the rim lips and covers the opening and
+-- CATCH of the lips plus the drop (0 = up to the lips, 1 = all of them and the drop's
+-- radius): a drop coming down on the inner part of a lip falls in, on the outer part
+-- it bounces out
+M.CATCH = 0.3
+
+-- where the drop is taken by mould m: the line's height and half width
+function M.catch(m)
+	local lip = m.w * M.LIP
+	return m.y + lip + M.DROP_R * 0.5, m.inner + M.CATCH * (2 * lip + M.DROP_R)
+end
 
 -- the round iron of mould m: { cx, cy, r }
 local function irons(m)
@@ -278,14 +293,15 @@ function M.fly(angle, power, wall, full, points)
 		local hit = false
 		for _, m in ipairs(wall) do
 			-- through the opening, going down: in (or on the metal of a full one)
-			if y >= m.y and ny < m.y then
-				local cx = x + (nx - x) * (y - m.y) / (y - ny)
-				if math.abs(cx - m.x) <= m.inner - M.DROP_R * 0.5 then
+			local ly, half = M.catch(m)
+			if y >= ly and ny < ly then
+				local cx = x + (nx - x) * (y - ly) / (y - ny)
+				if math.abs(cx - m.x) <= half then
 					if not full[m.slot] then
-						if path then path[#path + 1] = { cx, m.y } end
+						if path then path[#path + 1] = { cx, ly } end
 						return { esito = "stampo", slot = m.slot, ticks = t, rimbalzi = hits }, path
 					end
-					nx, ny = cx, m.y + 0.01
+					nx, ny = cx, ly + 0.01
 					if vy < -30 then hit = true end
 					if vy < 0 then vx, vy = vx * M.SLIDE, -vy * M.BOUNCE end
 				end

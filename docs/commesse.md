@@ -200,6 +200,11 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   stampo pieno non paga due volte: una goccia che lo prende è come il ferro, va nel secchio.
   Una colata cominciata resta sul suo muro anche se intanto il muro cambia; non si torna mai
   a un muro vecchio.
+- **Stampi un pelo più larghi e bordo che prende al 30%** (Sergio, 24 nov, sulla pagina
+  https://claude.ai/artifact/Gjq7oJAtJP1yXvLshSxXAa): gli stampi sono il 6% più larghi, disegno
+  compreso; la riga che prende la goccia sta sopra i bordi e copre la bocca più il 30% dei bordi:
+  una goccia che scende sulla parte interna di un bordo cade dentro, sulla parte esterna rimbalza
+  fuori (`forge.CATCH`, da ritarare giocando).
 - **La goccia entra solo dall'alto**: deve passare dentro l'orlo scendendo. **Sul ferro rimbalza**
   (Sergio, 24 nov: «finché non tocca terra è valido»): la goccia è una palla, la pancia e i due
   bordi di ogni stampo la fanno rimbalzare (rende metà della velocità contro il ferro) e può finire
