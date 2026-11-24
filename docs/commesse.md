@@ -212,7 +212,7 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   ricco. I totali del muro non cambiano (`forge.ease`, `forge.by_ease`).
 - **Il jackpot del muro pieno** (Sergio, 24 nov, «Medaglia + 500 Scaglie»): chi riempie tutti
   i 12 stampi di un muro prende **500 Scaglie** ogni volta e, la prima volta, la medaglia
-  **Jackpot della Fornace** (`forge.JACKPOT`, il conto in `fornace.jackpot`). Scartati: un
+  **Jackpot della Fornace** (`forge.JACKPOT`, il conto in `fornace.jackpot`). La medaglia è un badge del profilo, d'oro, nella casella dei clienti di fiducia: si mette accanto al nome come gli altri (`orders.badges`). Scartati: un
   frammento per famiglia e una colata gratis.
 - **Quando la goccia entra e quando lo stampo è preso** (Sergio, 24 nov, sulla pagina
   https://claude.ai/artifact/LcTuEFuH5XKmmmeDPgtGN2): entrando, **la fiammata**, una colonna di

@@ -117,6 +117,8 @@ function M.valid(b)
 	local s = M.BY_ID[b.id]
 	local g = tonumber(b.grado)
 	-- a client's badge (sim/orders.lua badges): a known client, grades 1 to 4
+	-- the Forge's jackpot medal: gold, one only
+	if b.id == "fornace_jackpot" then return g == 3 and { id = b.id, grado = 3 } or nil end
 	local cl = type(b.id) == "string" and b.id:match("^cl_(%a+)$")
 	if cl then
 		if not (M.CLIENTS[cl] and g and g >= 1 and g <= 4 and g % 1 == 0) then return nil end

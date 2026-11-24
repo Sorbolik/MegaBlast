@@ -183,11 +183,12 @@ end
 -- badge for the sheet, next to the stats' ones (sim/milestones.lua shown); its grade is
 -- the metal of the trust's thread (1 bronze ... 4 ember, the pieces' grades).
 M.BADGE = "cl_"
+M.JACKPOT_BADGE = "fornace_jackpot"
 function M.badge_grade(trust)
 	return math.min(4, math.floor((trust - 1) / M.TRUST_LAP) + 1)
 end
 
--- { { id = "cl_caronte", grado }, ... } in the clients' order
+-- { { id = "cl_caronte", grado }, ... } in the clients' order, then the Forge's medal
 function M.badges(p)
 	local out = {}
 	local c = p.commesse
@@ -196,6 +197,8 @@ function M.badges(p)
 		local t = c.clienti[cl.id] and c.clienti[cl.id].fiducia or 0
 		if t >= M.TRUST_LAP then out[#out + 1] = { id = M.BADGE .. cl.id, grado = M.badge_grade(t) } end
 	end
+	-- the Forge's jackpot medal (Sergio, 24 Nov: the first full wall), gold
+	if p.fornace and (p.fornace.jackpot or 0) > 0 then out[#out + 1] = { id = M.JACKPOT_BADGE, grado = 3 } end
 	return out
 end
 

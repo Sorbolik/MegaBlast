@@ -144,6 +144,7 @@ return {
 	medaglia = { w = 99, h = 128 },
 	medaglia_argento = { w = 81, h = 80 },
 	medaglia_bronzo = { w = 80, h = 80 },
+	medaglia_jackpot = { w = 128, h = 131 },
 	medaglia_oro = { w = 81, h = 80 },
 	medaglia_vuota = { w = 81, h = 80 },
 	nastro_sconfitta = { w = 301, h = 96, c = 90, box = { 13, 36, 84, 19 } },

@@ -126,9 +126,21 @@ function M.client_badge(id, grade, x, y, d, parent)
 	return root_node
 end
 
+-- The Forge's jackpot medal (WB-094, Sergio 24 Nov: the first full wall): the gold
+-- medal itself, d wide
+function M.jackpot_badge(x, y, d, parent)
+	local m = P.medaglia_jackpot
+	local n = gui.new_box_node(vec(x, y), vec(d * 1.08, d * 1.08 * m.h / m.w))
+	gui.set_texture(n, "fucina")
+	gui.play_flipbook(n, "medaglia_jackpot")
+	gui.set_parent(n, parent)
+	return n
+end
+
 -- A badge: the stat's shape in the grade's color, with the grade written inside
 -- (a client's: M.client_badge)
 function M.badge(b, x, y, d, parent)
+	if b.id == "fornace_jackpot" then return M.jackpot_badge(x, y, d, parent) end
 	local cl = b.id:match("^cl_(%a+)$")
 	if cl then return M.client_badge(cl, b.grado, x, y, d, parent) end
 	local s = milestones.BY_ID[b.id]

@@ -337,6 +337,19 @@ def fai_badge_clienti():
         SPAZI["badge_" + cliente] = (CX - x0, CY - y0, x1 - CX, H - CY)
 
 
+def fai_medaglia_jackpot():
+    """La medaglia del jackpot della Fornace (WB-094, Sergio 24 nov): un badge del profilo,
+    il disco d'oro intero largo 128 (2x il badge più grande, 64 nel profilo), ritagliato
+    come i pezzi della Fornace (tools/grafica/fornace.py)."""
+    import sys
+    sys.path.insert(0, QUI)
+    from fornace import ritaglia, stretto
+    im = stretto(ritaglia(os.path.join(ART, "WB-094", "medaglia_jackpot_1.png")))
+    im = im.resize((128, round(im.size[1] * 128 / im.size[0])), Image.LANCZOS)
+    salva(im, "medaglia_jackpot")
+    MISURE["medaglia_jackpot"] = im.size
+
+
 def fai_perle():
     """Le perle del livello e lo slot della firma di WB-074 (Sergio, 18 nov: il modo ufficiale
     di mostrare gli upgrade). Dal foglio perle_2: sopra le tre perline (vuota, piena grigia che
@@ -1064,6 +1077,7 @@ if __name__ == "__main__":
     fai_sfondi()
     fai_filo()
     fai_badge_clienti()
+    fai_medaglia_jackpot()
     fai_misure()
     fai_atlante()
     print("OK")

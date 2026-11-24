@@ -113,9 +113,10 @@ local function sheet_stats(s)
 				kit.text(g, ROMAN[b.grade], x + 38, 298, 16, KC.INK, "middle")
 				fit(kit.text(g, b.t.badge, x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
 			else
+				tag.badge({ id = b.id, grado = b.grade }, x + 38 - g.ox, g.oy - 298, 40, g.node)
 				local cl = b.id:sub(#orders.BADGE + 1)
-				tag.client_badge(cl, b.grade, x + 38 - g.ox, g.oy - 298, 40, g.node)
-				fit(kit.text(g, kit.upper(TO.clients[cl]), x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
+				local name = b.id == orders.JACKPOT_BADGE and T.jackpot_badge or kit.upper(TO.clients[cl])
+				fit(kit.text(g, name, x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
 			end
 			kit.zone(g, s.buttons, x, 264, 76, 80, "badge:" .. b.id)
 		else
@@ -190,13 +191,14 @@ local function sheet_stats(s)
 			-- up to four: a row and under it the name, like the records'; from five, two rows
 			local two = #list > 4
 			local d = two and 26 or 34
-			if not two then fit(kit.text(g, T.clients_badges, x + 14, y + 57, 16, KC.SAND, "start", 0.3), cw - 28) end
+			local label = #list == 1 and list[1].id == orders.JACKPOT_BADGE and T.jackpot_badge_long or T.clients_badges
+			if not two then fit(kit.text(g, label, x + 14, y + 57, 16, KC.SAND, "start", 0.3), cw - 28) end
 			for k, b in ipairs(list) do
 				local col, row = (k - 1) % 4, two and math.floor((k - 1) / 4) or 0
 				local bx = x + 14 + d / 2 + col * ((cw - 28 - d) / 3)
 				local by = y + (two and 22 + row * 32 or 26)
 				if picked[b.id] then kit.dot(g, bx, by, d + 10, GOLD) end
-				tag.client_badge(b.id:sub(#orders.BADGE + 1), b.grado, bx - g.ox, g.oy - by, d, g.node)
+				tag.badge(b, bx - g.ox, g.oy - by, d, g.node)
 				kit.zone(g, s.buttons, bx - (d + 8) / 2, by - (d + 8) / 2, d + 8, d + 8, "badge:" .. b.id)
 			end
 		end

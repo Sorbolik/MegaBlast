@@ -193,6 +193,11 @@ local before = p.scaglie or 0
 r = forge.throw(p, ja[1], ja[2])
 check(r.jackpot == forge.JACKPOT and r.medal and p.fornace.jackpot == 1
 	and p.scaglie == before + jw[1].scaglie + forge.JACKPOT, "muro pieno: jackpot e medaglia la prima volta")
+local medal
+for _, b in ipairs(orders.badges(p)) do if b.id == orders.JACKPOT_BADGE then medal = b end end
+local milestones = require "sim.milestones"
+check(medal and milestones.valid(medal) and not milestones.valid({ id = orders.JACKPOT_BADGE, grado = 4 }),
+	"la medaglia del jackpot è un badge del profilo (oro)")
 
 -- melting
 p = new()

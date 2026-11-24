@@ -688,6 +688,8 @@ return {
 		next_to_name = "ACCANTO AL TUO NOME",
 		-- the clients' badges (at 10 pearls of trust, docs/commesse.md)
 		clients_badges = "CLIENTI DI FIDUCIA",
+		jackpot_badge = "JACKPOT",
+		jackpot_badge_long = "JACKPOT DELLA FORNACE",
 		clients_none = "A 10 PERLE IL CLIENTE TI DÀ IL SUO BADGE",
 		won_share = "%s%% delle partite vinte",
 		-- the modes, short, as chips
