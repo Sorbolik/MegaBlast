@@ -156,4 +156,7 @@ sotto una cornice a stampo (in vetrina la cornice del muro, mentre si tira tutto
 | i TIRI in alto a sinistra: una goccia per tiro, quelle usate spente | FORNACE | ✅ |
 | la mira: la stessa della battaglia, disegno e conti (`battle/aim.lua`: lancetta, numeri, dal dito ad angolo e forza; col controller la levetta di mira e SPARA di `battle/sticks.lua`) più i puntini del primo tratto del volo | FORNACE | ✅ |
 | la levetta di mira del telefono: lo stesso pezzo della battaglia (`battle/stick_pad.lua`, disco velato col bordo azzurro, rosso quando lasciando si tira), in basso a destra | FORNACE, BATTAGLIA | ✅ |
+| il coperchio dello stampo preso: per ora il disegno dello stampo scurito con l'icona del premio sulla bocca, che scende rimbalzando (segnaposto fino al coperchio di Codex WB-094) | FORNACE | ⚠️ |
+| la fiammata quando la goccia entra: per ora quattro schizzi che salgono e la scossa (segnaposto fino ai fotogrammi di Codex WB-094) | FORNACE | ⚠️ |
+| il riepilogo della colata: `kit.card` sul velo, titolo incandescente, una riga per premio (icona, nome, numero) che entra una alla volta, COLA ANCORA (`kit.secondary` con la gemma) e CHIUDI (`kit.secondary`) | FORNACE | ✅ |
 | le scritte che saltano (3 SU 3!, DOPPIO!, NEL SECCHIO): parola incandescente con l'ombra d'inchiostro | FORNACE | ✅ |

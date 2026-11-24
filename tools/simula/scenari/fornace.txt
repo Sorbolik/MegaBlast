@@ -45,7 +45,8 @@ foto 10a_mira_col_controller
 pad rt                              # ...e SPARA
 pad_lascia sx_destra+sx_su
 aspetta 6
-foto 10_ritorno
+foto 10_riepilogo
+pad b                               # CHIUDI (il tasto indietro)
 aspetta 3
 foto 11_di_nuovo_in_vetrina
 tocca_bordo 291 49 basso sinistra   # FONDI I FRAMMENTI
