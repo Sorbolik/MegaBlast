@@ -1,9 +1,11 @@
 # La Fornace del Fabbro (docs/commesse.md "La Fornace"): i pezzi della fucina dai
 # disegni di Codex scelti da Sergio (art/WB-092: cielo 1, lontano 1, medio 2, sporgenza 1,
-# goccia e secchio 1; art/WB-093: mestolo 1 e gli stampi 1).
+# goccia e secchio 1; art/WB-093: mestolo 1 e gli stampi vuoti 1; art/WB-094: coperchi 1,
+# fiammata 1, medaglia del jackpot 1).
 #   python3 tools/grafica/fornace.py
 # Scrive:
-#   client/assets/fornace/*.png       stampi (6 colori x grande/piccolo x vuoto/pieno),
+#   client/assets/fornace/*.png       stampi vuoti (6 colori x grande/piccolo), coperchi,
+#                                     i 4 fotogrammi della fiammata, la medaglia del jackpot,
 #                                     goccia, schizzo, secchio, catena, sporgenza, pavimento
 #   client/menu/fornace.atlas         l'atlante (fuori da /ui/: ha le mipmap, perché la
 #                                     fucina si vede a tanti zoom)
@@ -25,6 +27,7 @@ QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.join(QUI, "..", "..")
 A92 = os.path.join(RADICE, "art", "WB-092")
 A93 = os.path.join(RADICE, "art", "WB-093")
+A94 = os.path.join(RADICE, "art", "WB-094")
 OUT = os.path.join(RADICE, "client", "assets", "fornace")
 ATLAS = os.path.join(RADICE, "client", "menu", "fornace.atlas")
 LUA = os.path.join(RADICE, "client", "menu", "forge_pieces.lua")
@@ -103,13 +106,11 @@ COLORI = ["oro", "azzurro", "arancio", "verde", "viola", "ferro"]
 SCATOLE = {
     "stampi_grandi_vuoti_1": [(69, 32, 456, 433), (574, 32, 962, 433), (1079, 32, 1466, 433),
                               (69, 546, 456, 946), (574, 546, 962, 946), (1079, 546, 1466, 946)],
-    "stampi_grandi_pieni_1": [(94, 16, 462, 461), (584, 16, 952, 461), (1075, 16, 1443, 461),
-                              (94, 514, 463, 960), (584, 514, 953, 960), (1075, 514, 1443, 961)],
     "stampi_piccoli_vuoti_1": [(112, 96, 465, 450), (591, 96, 945, 450), (1072, 96, 1424, 450),
                                (112, 578, 465, 932), (591, 578, 945, 932), (1072, 578, 1424, 931)],
-    "stampi_piccoli_pieni_1": [(125, 36, 468, 469), (595, 36, 937, 469), (1064, 37, 1408, 469),
-                               (126, 515, 468, 949), (596, 515, 938, 949), (1067, 515, 1409, 949)],
 }
+# (lo stampo pieno di metallo di WB-093 non si usa più: la goccia rimbalza come una palla,
+# lo stampo preso lo chiude il coperchio di WB-094; Sergio, 24 nov)
 # larghezza nel mondo (forge.lua: grandi 78, piccoli 52; il pieno ha la colata che sborda)
 LARGO = {"grandi": 78, "piccoli": 52}
 
@@ -120,6 +121,35 @@ def fai_stampi():
         _, misura_, stato, _ = foglio.split("_")
         for col, box in zip(COLORI, scatole):
             salva(f"stampo_{misura_}_{stato}_{col}", im.crop(box), LARGO[misura_] * 1.05)
+
+
+def fai_wb094():
+    # i coperchi dello stampo preso (larghi come l'orlo dello stampo più un poco)
+    cp = ritaglia(os.path.join(A94, "coperchi_1.png"))
+    salva("coperchio_grandi", cp.crop((87, 326, 732, 703)), LARGO["grandi"] * 1.0)
+    salva("coperchio_piccoli", cp.crop((948, 368, 1438, 677)), LARGO["piccoli"] * 1.0)
+    # i 4 fotogrammi della fiammata, tutti sulla stessa tela con la bocca in basso al
+    # centro: ogni fotogramma tiene solo i pixel del suo quarto del foglio
+    fi = ritaglia(os.path.join(A94, "fiammata_1.png"))
+    a = np.asarray(fi)
+    alto, mezzo = 945, 180
+    for q in range(4):
+        tutto = a.copy()
+        tutto[:, : q * 384, 3] = 0
+        tutto[:, (q + 1) * 384:, 3] = 0
+        quarto = tutto[:, q * 384:(q + 1) * 384, 3] > 40
+        fondo = np.where(quarto.any(1))[0].max()
+        base = np.where(quarto[fondo - 3])[0]
+        cx = q * 384 + (base.min() + base.max()) // 2
+        tela = Image.fromarray(tutto).crop((cx - mezzo, fondo + 3 - alto, cx + mezzo, fondo + 3))
+        # alta tre stampi grandi: larga così nel mondo
+        im = misura(tela, 3 * LARGO["grandi"] * 2 * mezzo / alto)
+        nome = f"fiammata_{q + 1}"
+        im.save(os.path.join(OUT, nome + ".png"), optimize=True)
+        MISURE[nome] = (im.width, im.height)
+    # la medaglia del jackpot: grande al centro dello schermo (circa 200 px)
+    md = ritaglia(os.path.join(A94, "medaglia_jackpot_1.png"))
+    salva("medaglia_jackpot", md, 400 / PX)
 
 
 def fai_fucina():
@@ -160,6 +190,7 @@ def main():
         if f.endswith(".png"):
             os.remove(os.path.join(OUT, f))
     fai_stampi()
+    fai_wb094()
     fai_fucina()
     fai_sfondi()
     fai_mestolo()

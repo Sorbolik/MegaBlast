@@ -218,7 +218,7 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   https://claude.ai/artifact/LcTuEFuH5XKmmmeDPgtGN2): entrando, **la fiammata**, una colonna di
   fuoco di Ossidiana dalla bocca; lo stampo preso lo chiude **un coperchio di ferro** che scende
   con sopra l'icona del premio preso. Lo stampo che si riempie di metallo non si usa più (la
-  goccia è una palla). Disegni da Codex WB-094; fino ad allora segnaposti. Scartati: risucchio,
+  goccia è una palla). Disegni di Codex WB-094 (coperchi 1, fiammata 1, medaglia 1). Scartati: risucchio,
   campana, incandescente e bollo.
 - **Il riepilogo della colata** (Sergio, 24 nov): finiti i tiri, prima di uscire, una card «LA
   COLATA» con le Scaglie, i frammenti per famiglia, il tiro in più, il jackpot e la medaglia;

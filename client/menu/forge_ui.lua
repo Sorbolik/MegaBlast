@@ -303,19 +303,35 @@ local function tag(fx, m)
 	fx.tags[m.slot] = t
 end
 
--- the sealed look of a taken mould (Sergio, 24 Nov, «coperchio sigillato»; the lid of
--- WB-094 to come): the empty drawing shaded and the prize stamped on the mouth
-local SEALED = vmath.vector4(0.55, 0.5, 0.52, 1)
+-- the lid of a taken mould (Sergio, 24 Nov, «coperchio sigillato», art WB-094): the
+-- iron lid sits on the mouth, the prize taken on its boss
+local LID_W, LID_Y, BOSS_Y, BOSS_W = 1.02, -0.11, 0.66, 0.3
 local function seal(fx, m)
-	local n = fx.moulds[m.slot]
-	if not n then return end
-	gui.set_color(n, SEALED)
 	if fx.seals[m.slot] then gui.delete_node(fx.seals[m.slot]) end
-	local s = empty(fx.wall_root, m.x, m.y + m.w * 0.02)
+	local name = "coperchio_" .. (m.small and "piccoli" or "grandi")
+	local w = m.w * LID_W
+	local h = w * PIECES[name].h / PIECES[name].w
+	local s = empty(fx.wall_root, m.x, m.y + m.w * LID_Y)
+	piece(s, name, 0, 0, w, gui.PIVOT_S)
 	local g = { node = s, ox = 0, oy = 0 }
-	kit.piece(g, m.scaglie and "scaglia" or "frammento_" .. m.set, 0, 0, m.w * 0.42)
+	kit.piece(g, m.scaglie and "scaglia" or "frammento_" .. m.set, 0, -h * BOSS_Y, w * BOSS_W)
 	fx.seals[m.slot] = s
 	return s
+end
+
+-- the flame from the mouth when the drop goes in (art WB-094): four frames, three
+-- moulds tall, then it falls back and fades
+local FLAME_FRAMES = { 0.07, 0.1, 0.12, 0.14 }
+local function flame(fx, m)
+	local w = m.w * 3 * PIECES.fiammata_1.w / PIECES.fiammata_1.h
+	local n = piece(fx.splash, "fiammata_1", m.x, m.y - m.w * 0.04, w, gui.PIVOT_S)
+	local t = 0
+	for i = 2, #FLAME_FRAMES do
+		t = t + FLAME_FRAMES[i - 1]
+		gui.animate(n, "color.w", 1, gui.EASING_LINEAR, 0.001, t, function() gui.play_flipbook(n, "fiammata_" .. i) end)
+	end
+	t = t + FLAME_FRAMES[#FLAME_FRAMES]
+	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.15, t, function() gui.delete_node(n) end)
 end
 
 local function draw_mould(fx, m, full)
@@ -333,18 +349,21 @@ local function draw_mould(fx, m, full)
 	if full then seal(fx, m) else tag(fx, m) end
 end
 
--- fills a mould on the wall (a hit): the full drawing, a pop, the tag goes
+-- fills a mould on the wall (a hit): a pop, the flame, then the lid comes down on the
+-- mouth with a bounce; the tag goes
 local function fill_mould(fx, m)
 	local n = fx.moulds[m.slot]
 	if not n then return end
 	gui.set_scale(n, vmath.vector3(1.3, 0.75, 1))
 	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.35)
-	-- the seal comes down on the mouth a moment later, with a bounce
+	flame(fx, m)
 	local s = seal(fx, m)
-	gui.set_scale(s, vmath.vector3(2.2, 2.2, 1))
-	gui.set_color(s, vmath.vector4(1, 1, 1, 0))
-	gui.animate(s, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBOUNCE, 0.4, 0.45)
-	gui.animate(s, "color.w", 1, gui.EASING_LINEAR, 0.12, 0.45)
+	local p = gui.get_position(s)
+	gui.set_position(s, p + vec(0, m.w * 1.6))
+	-- hidden (scale 0, which its children take too) until the flame has burst
+	gui.set_scale(s, vmath.vector3(0.001, 0.001, 1))
+	gui.animate(s, "scale", vmath.vector3(1, 1, 1), gui.EASING_LINEAR, 0.01, 0.42)
+	gui.animate(s, "position.y", p.y, gui.EASING_OUTBOUNCE, 0.4, 0.42)
 	if fx.tags[m.slot] then
 		gui.delete_node(fx.tags[m.slot])
 		fx.tags[m.slot] = nil
@@ -746,23 +765,23 @@ local function land(a)
 		fx.freeze, fx.shake = FREEZE, SHAKE
 		fx.focus = { m.x, m.y }
 		fill_mould(fx, m)
-		-- the flame from the mouth (WB-094 to come): splashes rising one over the other
 		fx.shake = SHAKE * 1.6
-		for i = 0, 3 do
-			local sp = piece(fx.splash, "schizzo", m.x, m.y, m.w * (1.3 - i * 0.18), gui.PIVOT_S)
-			gui.set_color(sp, vmath.vector4(1, 1, 1, 0))
-			local up = m.y + m.w * (0.5 + i * 0.75)
-			gui.animate(sp, "color.w", 1, gui.EASING_LINEAR, 0.05, i * 0.06)
-			gui.animate(sp, "position.y", up, gui.EASING_OUTQUAD, 0.35, i * 0.06)
-			gui.animate(sp, "color.w", 0, gui.EASING_INQUAD, 0.3, 0.3 + i * 0.06, function() gui.delete_node(sp) end)
-		end
 		sound.play("#martello")
 		if r.jackpot then
 			-- the whole wall filled: JACKPOT, a rain of Scaglie, the medal the first time
 			fx.hold = JACKPOT_T
 			fx.shake = SHAKE * 3
 			shout(a, T.jackpot, 470, KC.HOT, JACKPOT_T)
-			if r.medal then shout(a, T.medal, 400, KC.SAND, JACKPOT_T) end
+			if r.medal then
+				shout(a, T.medal, 400, KC.SAND, JACKPOT_T)
+				-- the medal of WB-094 jumps out in the middle, turns a little and goes
+				local md = piece(fx.hud, "medaglia_jackpot", (screen.x0 + screen.x1) / 2, 215, 200)
+				gui.set_scale(md, vmath.vector3(0.1, 0.1, 1))
+				gui.animate(md, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.45, 0.2)
+				gui.set_rotation(md, vmath.vector3(0, 0, -25))
+				gui.animate(md, "rotation.z", 0, gui.EASING_OUTBACK, 0.6, 0.2)
+				gui.animate(md, "color.w", 0, gui.EASING_INQUAD, 0.3, JACKPOT_T - 0.3, function() gui.delete_node(md) end)
+			end
 			local cx = (screen.x0 + screen.x1) / 2
 			coins.fly(fx.purse, "scaglia", in_purse(fx, cx, 520), 14, r.jackpot,
 				function(i) if i % 4 == 1 then sound.play("#scaglia") end end)
@@ -836,7 +855,7 @@ function recap(a)
 	end
 	if got.bonus then rows[#rows + 1] = { icon = "goccia_hud", label = T.recap_bonus, value = "", color = KC.HOT } end
 	if got.jackpot then rows[#rows + 1] = { icon = "scaglia", label = T.recap_jackpot, value = "+" .. coins.format(got.jackpot), color = KC.HOT } end
-	if got.medal then rows[#rows + 1] = { label = T.medal, value = "", color = KC.HOT } end
+	if got.medal then rows[#rows + 1] = { icon = "medaglia_jackpot", label = T.medal, value = "", color = KC.HOT } end
 	local h = 96 + #rows * RECAP_ROW + 104
 	local cx, cy = (screen.x0 + screen.x1) / 2, 360
 	local x0, y0 = cx - RECAP_W / 2, cy - h / 2
@@ -853,8 +872,9 @@ function recap(a)
 		local y = y0 + 96 + (i - 1) * RECAP_ROW + RECAP_ROW / 2
 		local row = empty(root, 0, 0)
 		local rg = { node = row, ox = 0, oy = 720 }
-		if r.icon and r.icon ~= "goccia_hud" then kit.piece(rg, r.icon, x0 + 52, y, 34) end
-		if r.icon == "goccia_hud" then piece(row, "goccia", x0 + 52, 720 - y, 30) end
+		if r.icon == "goccia_hud" then piece(row, "goccia", x0 + 52, 720 - y, 30)
+		elseif r.icon == "medaglia_jackpot" then piece(row, "medaglia_jackpot", x0 + 52, 720 - y, 40)
+		elseif r.icon then kit.piece(rg, r.icon, x0 + 52, y, 34) end
 		fit(kit.text(rg, r.label, x0 + (r.icon and 84 or 34), y + 7, 19, KC.SAND, "start", 0.4), RECAP_W - 210)
 		if r.value ~= "" then kit.text(rg, r.value, x0 + RECAP_W - 34, y + 9, 26, r.color, "end") end
 		-- one after the other

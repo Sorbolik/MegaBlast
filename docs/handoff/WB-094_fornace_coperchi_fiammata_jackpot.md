@@ -1,6 +1,6 @@
 # WB-094 · La Fornace: il coperchio dello stampo preso, la fiammata e la medaglia del jackpot
 
-- **Stato:** APPROVATA (Claude, 24 nov: pezzi nuovi scelti da Sergio sulla pagina https://claude.ai/artifact/LcTuEFuH5XKmmmeDPgtGN2, «ok le consigliate»; non sostituiscono disegni già nel gioco)
+- **Stato:** IMPLEMENTATA (prima: APPROVATA (Claude, 24 nov: pezzi nuovi scelti da Sergio sulla pagina https://claude.ai/artifact/LcTuEFuH5XKmmmeDPgtGN2, «ok le consigliate»; non sostituiscono disegni già nel gioco))
 - **Data:** 2026-11-24
 - **Ramo della scheda:** `claude/project-thread-ft5von` (Codex la esegue da qui: `git fetch origin claude/project-thread-ft5von`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-094`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-094` senza chiedere conferma (il repository è privato).
@@ -100,3 +100,15 @@ Prompt originali eseguiti con ImageGen e riferimenti nell'ordine indicato. R4 è
 Controllati numero, separazione, assenza di scritte e misure. I coperchi hanno il centro vuoto e la cucitura luminosa in basso, con larghezze sopra 400 e 280 px rispettivamente. Le medaglie superano 700 px di larghezza. Le fiammate hanno quattro pose con basi allineate. I fotogrammi centrali a piena altezza misurano circa 869–941 px. Apertura e chiusura sono più corte secondo il prompt e non raggiungono il criterio di 700 px per ogni sagoma. Nella seconda variante, le pose occupano solo la parte centrale della larghezza della tela. Il fondo è verde, con scostamenti da #00FF00. Restano da verificare l'accoppiamento dei coperchi agli stampi e la resa in gioco della sequenza.
 
 ## Resoconto di Claude
+
+24 nov, Claude. Le sei immagini sono pulite. Ho scelto:
+- `coperchi_1`: bombato, si posa sulla bocca degli stampi come quelli di R1;
+- `fiammata_1`: più piena della 2, che è sottile;
+- `medaglia_jackpot_1`.
+
+Le ha ritagliate `tools/grafica/fornace.py` nell'atlante `fornace`, al doppio della misura sullo schermo e mai ingrandite. Le usa `client/menu/forge_ui.lua`:
+- il coperchio scende sullo stampo preso, con l'icona del premio;
+- i quattro fotogrammi della fiammata partono quando la goccia entra;
+- la medaglia salta fuori al primo jackpot ed è l'icona della sua riga nel riepilogo.
+
+Tolti gli stampi pieni di WB-093. Simulatore: `fornace.txt`, `fornace_jackpot.txt`, `fornace_fiammata.txt`. Resta da fare la medaglia nella schermata del profilo.
