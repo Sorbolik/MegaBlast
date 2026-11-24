@@ -88,3 +88,29 @@ func TestDayAtFive(t *testing.T) {
 		t.Fatalf("alle 5:00 il giorno è %s, atteso oggi", d)
 	}
 }
+
+// The Forge (sim/forge.lua, docs/commesse.md "La Fornace") runs in the server's
+// Lua: the phone says the wall, then angle and power of each throw; the drop's
+// flight and the prize are computed here, the same as on the phone.
+func TestForgeRules(t *testing.T) {
+	var got []float64
+	luaEval(t, `
+		local profile = require "sim.profile"
+		local progress = require "sim.progress"
+		local p = profile.new()
+		p.ossidiana = 25
+		local today = "2026-11-24"
+		local ok = progress.act(p, { k = "colata", muro = today .. "#1" }, today)
+		local r = progress.act(p, { k = "tiro", angolo = math.rad(45), forza = 0.1 }, today)
+		local old = progress.act(p, { k = "colata", muro = "2026-11-23#2" }, today)
+		return { ok and 1 or 0, p.ossidiana, r and r.scaglie or -1, p.fornace.tiri, old and 1 or 0 }`, &got)
+	want := []float64{1, 5, 20, 2, 0}
+	if len(got) != len(want) {
+		t.Fatalf("fornace sul server: %v, attesa %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("fornace sul server: %v, attesa %v", got, want)
+		}
+	}
+}
