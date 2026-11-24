@@ -9,10 +9,12 @@ imposta comandi telefono
 aspetta 2
 tocca 220 172                      # ALLENAMENTO
 aspetta 1
-tocca 547 470                       # 1 CONTRO 1
-tocca 840 382                       # DIFFICILE
+tocca_bordo 520 55 alto sinistra   # 1 CONTRO 1
+tocca 846 542                       # DIFFICILE
 aspetta 1
-tocca 1151 249                       # LA FOSSA DEL FABBRO
+trascina 1100 328 388 328 0.6          # la fila delle mappe a sinistra
+aspetta 0.3
+tocca 972 328                       # LA FOSSA DEL FABBRO
 aspetta 0.3
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5

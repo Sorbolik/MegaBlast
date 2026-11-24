@@ -928,19 +928,21 @@ function M.choice(g, list_of, x, y, label, opts, active, w, off)
 	-- the label nearer its own row than the one above (Sergio, 17 Nov)
 	M.text(g, label, x + 6, y - 6, 16, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
 	for i, o in ipairs(opts) do
-		local ox = x + (i - 1) * w
+		-- the words start at the label's left, one column w wide each, so the
+		-- first one is aligned with its label and the rows of a page in columns (Sergio, 24 Nov)
+		local ox = x + 6 + (i - 1) * w
 		local on = i == active and not off
 		-- every option is a word like the tabs (Sergio, 23 Nov, no light plates): the
 		-- chosen one red-hot over its ember glow, the others cold
-		local mid = ox + w / 2 - 4
+		local t = M.text(g, o[1], ox, y + h / 2 + (on and 9 or 7), on and 26 or 21,
+			on and TAB_HOT or with_alpha(TAB_COLD, off and 0.4 or 1), "start", 1)
+		if M.width(t) > w - 24 then gui.set_scale(t, gui.get_scale(t) * ((w - 24) / M.width(t))); M.check_small(t) end
 		if on then
-			local glow = shape("alone", mid - g.ox, g.oy - (y + h / 2 - 4), #o[1] * 18 + 70, 60, with_alpha(C.HOT_BOTTOM, 0.5), g.node)
+			local glow = shape("alone", ox + M.width(t) / 2 - g.ox, g.oy - (y + h / 2 - 4), M.width(t) + 70, 60, with_alpha(C.HOT_BOTTOM, 0.5), g.node)
 			gui.set_blend_mode(glow, gui.BLEND_ADD)
+			gui.move_below(glow, t)
 		end
-		local t = M.text(g, o[1], mid, y + h / 2 + (on and 9 or 7), on and 26 or 21,
-			on and TAB_HOT or with_alpha(TAB_COLD, off and 0.4 or 1), "middle", 1)
-		if M.width(t) > w - 12 then gui.set_scale(t, gui.get_scale(t) * ((w - 12) / M.width(t))); M.check_small(t) end
-		if not off then M.zone(g, list_of, ox, y - 4, w, h + 8, o[2]) end
+		if not off then M.zone(g, list_of, ox - 12, y - 4, w, h + 8, o[2]) end
 	end
 end
 

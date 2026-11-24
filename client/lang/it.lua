@@ -130,17 +130,13 @@ return {
 		back_to_pick = "Torna su una scelta",
 	},
 
-	-- menu/training.lua: ALLENAMENTO, mode and bots, then the map
+	-- menu/training.lua: ALLENAMENTO, the mode (tabs), the difficulty, then the map
 	training = {
-		mode = "MODO",
+		difficulty = "DIFFICOLTÀ",
 		levels = { facile = "FACILE", normale = "NORMALE", difficile = "DIFFICILE" },
-		who = "CHI C'È",
-		vs_bots = "CONTRO I BOT",
-		same_phone = "STESSO TELEFONO",
 		offline = "SENZA RETE",
 		map = "MAPPA",
 		mode_and_bot = "%s · BOT %s",
-		mode_same = "%s · STESSO TELEFONO",
 		random = "A CASO",
 	},
 

@@ -7,7 +7,7 @@ imposta prova_scelta 1
 aspetta 4
 tocca 220 172                      # ALLENAMENTO
 aspetta 1
-tocca 761 470                      # 2 CONTRO 2
+tocca_bordo 731 55 alto sinistra  # 2 CONTRO 2
 aspetta 0.3
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5

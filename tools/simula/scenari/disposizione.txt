@@ -35,8 +35,8 @@ premi Escape                        # di nuovo alla home
 aspetta 1.2
 tocca 220 172                       # ALLENAMENTO
 aspetta 1
-tocca 547 470                       # 1 CONTRO 1
-tocca 840 382                       # DIFFICILE
+tocca_bordo 520 55 alto sinistra   # 1 CONTRO 1
+tocca 846 542                       # DIFFICILE
 aspetta 1
 tocca_bordo 175 52 basso destra     # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5

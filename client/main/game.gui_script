@@ -2849,12 +2849,12 @@ local function start_local(self, against)
 	local seed = os.time()
 	for i, p in ipairs(gconfig.MODES[modo]) do
 		-- against the bots the player is the first robot, the others are bots
-		opts.players[i] = { team = p.team, bot = (against and not against.stesso and i > 1) and against.livello or nil }
+		opts.players[i] = { team = p.team, bot = (against and i > 1) and against.livello or nil }
 	end
 	-- against the bots everyone wears as much as the player (Sergio, 18 Nov): the
 	-- player's eq and the bots' built from it with the match's seed, in the recipe
 	-- (sim/loadout.lua dress_bots; the server builds them again, server/verify.lua)
-	local mine = against and not against.stesso and profile.equip(self.profilo)
+	local mine = against and profile.equip(self.profilo)
 	if mine then
 		opts.players[1].eq = mine
 		require("sim.loadout").dress_bots(opts.players, seed)
@@ -5602,7 +5602,7 @@ local function retry_match(self)
 	elseif self.ritorno == "allenamento" then
 		-- the same map, also when it came out A CASO
 		local against = self.against_bot
-		start_local(self, { modo = against.modo, livello = against.livello, mappa = self.local_map or against.mappa, stesso = against.stesso })
+		start_local(self, { modo = against.modo, livello = against.livello, mappa = self.local_map or against.mappa })
 	else
 		start_local(self, nil)
 	end
