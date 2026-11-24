@@ -1159,8 +1159,9 @@ function M.update(s, dt, st)
 	if st.posa ~= s.posa_name then s.posa_name, s.posa_t = st.posa, 0 end
 	if posing then s.posa_t = s.posa_t + dt end
 	-- st.lancio: the weapon's throw clip (lancio_mestolo, the Forge), played once from
-	-- the start with the weapon in hand; a new value starts it again
-	local throwing = st.lancio and s.armed[s.chosen_weapon] and s.armed[s.chosen_weapon].lancio
+	-- the start with the weapon in hand; a new value starts it again. Never nil: in_hand
+	-- must end false, or visible() keeps the weapon shown at the feet (home, 24 Nov)
+	local throwing = st.lancio and s.armed[s.chosen_weapon] and s.armed[s.chosen_weapon].lancio or false
 	if st.lancio ~= s.lancio_name then s.lancio_name, s.lancio_t = st.lancio, 0 end
 	if throwing then s.lancio_t = s.lancio_t + dt end
 	local in_hand = (st.turno or st.aim ~= nil or s.holding_weapon or throwing) and not s.morte and not st.vittoria and not para
