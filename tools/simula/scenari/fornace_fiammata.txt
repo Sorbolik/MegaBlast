@@ -1,0 +1,61 @@
+# La Fornace: la fiammata e il coperchio da vicino (foto fitte dopo un centro).
+imposta prova_test prova
+imposta prova_fornace_centra 1
+
+aspetta 4
+tocca_bordo 210 170 mezzo destra    # la porta BOTTEGA
+aspetta 8
+tocca_bordo 556 50 alto sinistra    # FORNACE
+aspetta 3
+tocca_bordo 178 49 basso destra     # COLA
+aspetta 4.5
+trascina 300 300 330 380 0.4
+aspetta 1.6
+foto f01
+aspetta 0.1
+foto f02
+aspetta 0.1
+foto f03
+aspetta 0.1
+foto f04
+aspetta 0.1
+foto f05
+aspetta 0.1
+foto f06
+aspetta 0.1
+foto f07
+aspetta 0.1
+foto f08
+aspetta 0.1
+foto f09
+aspetta 0.1
+foto f10
+aspetta 0.1
+foto f11
+aspetta 0.1
+foto f12
+aspetta 0.1
+foto f13
+aspetta 0.1
+foto f14
+aspetta 0.1
+foto f15
+aspetta 0.1
+foto f16
+aspetta 0.1
+foto f17
+aspetta 0.1
+foto f18
+aspetta 0.1
+foto f19
+aspetta 0.1
+foto f20
+aspetta 0.1
+foto f21
+aspetta 0.1
+foto f22
+aspetta 0.1
+foto f23
+aspetta 0.1
+foto f24
+aspetta 0.1

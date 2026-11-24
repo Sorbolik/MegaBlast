@@ -200,6 +200,29 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   stampo pieno non paga due volte: una goccia che lo prende è come il ferro, va nel secchio.
   Una colata cominciata resta sul suo muro anche se intanto il muro cambia; non si torna mai
   a un muro vecchio.
+- **Stampi un pelo più larghi e bordo che prende al 30%** (Sergio, 24 nov, sulla pagina
+  https://claude.ai/artifact/Gjq7oJAtJP1yXvLshSxXAa): gli stampi sono il 6% più larghi, disegno
+  compreso; la riga che prende la goccia sta sopra i bordi e copre la bocca più il 30% dei bordi:
+  una goccia che scende sulla parte interna di un bordo cade dentro, sulla parte esterna rimbalza
+  fuori (`forge.CATCH`, da ritarare giocando).
+- **Premi secondo la difficoltà vera** (Sergio, 24 nov: «quelli con altri davanti e quelli in
+  basso sono difficili»): quando appende il muro il gioco prova 600 tiri (30 angoli per 20
+  forze) e conta quanti finiscono in ogni stampo; i premi si scambiano fra gli stampi dello
+  stesso tipo (Scaglie con Scaglie, frammenti con frammenti) così il più difficile ha il più
+  ricco. I totali del muro non cambiano (`forge.ease`, `forge.by_ease`).
+- **Il jackpot del muro pieno** (Sergio, 24 nov, «Medaglia + 500 Scaglie»): chi riempie tutti
+  i 12 stampi di un muro prende **500 Scaglie** ogni volta e, la prima volta, la medaglia
+  **Jackpot della Fornace** (`forge.JACKPOT`, il conto in `fornace.jackpot`). Scartati: un
+  frammento per famiglia e una colata gratis.
+- **Quando la goccia entra e quando lo stampo è preso** (Sergio, 24 nov, sulla pagina
+  https://claude.ai/artifact/LcTuEFuH5XKmmmeDPgtGN2): entrando, **la fiammata**, una colonna di
+  fuoco di Ossidiana dalla bocca; lo stampo preso lo chiude **un coperchio di ferro** che scende
+  con sopra l'icona del premio preso. Lo stampo che si riempie di metallo non si usa più (la
+  goccia è una palla). Disegni di Codex WB-094 (coperchi 1, fiammata 1, medaglia 1). Scartati: risucchio,
+  campana, incandescente e bollo.
+- **Il riepilogo della colata** (Sergio, 24 nov): finiti i tiri, prima di uscire, una card «LA
+  COLATA» con le Scaglie, i frammenti per famiglia, il tiro in più, il jackpot e la medaglia;
+  COLA ANCORA (se c'è Ossidiana e il muro non è pieno) o CHIUDI.
 - **La goccia entra solo dall'alto**: deve passare dentro l'orlo scendendo. **Sul ferro rimbalza**
   (Sergio, 24 nov: «finché non tocca terra è valido»): la goccia è una palla, la pancia e i due
   bordi di ogni stampo la fanno rimbalzare (rende metà della velocità contro il ferro) e può finire

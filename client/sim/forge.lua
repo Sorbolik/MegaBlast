@@ -28,6 +28,10 @@ M.COST = 20              -- Ossidiana per pour
 M.THROWS = 3             -- throws per pour
 M.BONUS = 1              -- extra throws for a perfect pour (all hits)
 M.MISS = 20              -- Scaglie for a drop that misses (it falls in the bucket)
+-- the jackpot (Sergio, 24 Nov: «se qualcuno riempie tutti quelli di un muro ha un premio
+-- speciale»): every mould of a wall filled gives JACKPOT Scaglie, and the first time the
+-- «Jackpot della Fornace» medal (p.fornace.jackpot counts them)
+M.JACKPOT = 500
 -- what a pour is worth on average, in Scaglie of value (a fragment = 60): the
 -- design's aim, ~0.8x to 1.2x from worst to best (tools/economia/conti.lua)
 M.AVERAGE = 130
@@ -65,7 +69,10 @@ end
 -- and 6 of fragments (255 Scaglie and 8 fragments): the farther it is, the more it
 -- gives, the far ones are small. Each one: centre of the opening (x), its rim (y),
 -- width, chain length (drawn only: the high ones hang).
-local B, P = 78, 52
+-- (Sergio, 24 Nov: «allargare leggermente tutti i bersagli, giusto un pelo») the
+-- moulds 6% wider than at first, drawing included
+M.GROW = 1.06
+local B, P = 78 * M.GROW, 52 * M.GROW
 M.PRIZES = {   -- from the nearest to the farthest
 	{ w = B, scaglie = 15 }, { w = B, frammenti = 1 }, { w = B, scaglie = 20 }, { w = P, frammenti = 1 },
 	{ w = B, scaglie = 30 }, { w = P, frammenti = 2 }, { w = B, frammenti = 1 }, { w = B, scaglie = 50 },
@@ -121,6 +128,45 @@ function M.reachable(wall, i)
 	return false
 end
 
+-- How easy each mould of a wall is (Sergio, 24 Nov: a mould with others in front of
+-- it in the drop's way, or a low one where the dots stop high, is harder even when it
+-- is not the farthest): of EASE_A x EASE_P throws over every angle and power, how many
+-- end in it (bounces too). Returns { [slot] = count }
+M.EASE_A, M.EASE_P = 30, 20
+function M.ease(wall)
+	local n = {}
+	for _, m in ipairs(wall) do n[m.slot] = 0 end
+	for i = 0, M.EASE_A - 1 do
+		local a = math.rad(2 + 84 * (i + 0.5) / M.EASE_A)
+		for j = 0, M.EASE_P - 1 do
+			local r = M.fly(a, 0.1 + 0.9 * (j + 0.5) / M.EASE_P, wall, {})
+			if r.esito == "stampo" then n[r.slot] = n[r.slot] + 1 end
+		end
+	end
+	return n
+end
+
+-- The prizes by how hard the moulds really are: the sizes stay (the far ones small),
+-- the Scaglie moulds swap their amounts and the fragment ones their counts so the
+-- harder one always gives more (same totals per wall)
+function M.by_ease(wall)
+	local n = M.ease(wall)
+	local function hardest_last(a, b)
+		if n[a.slot] ~= n[b.slot] then return n[a.slot] > n[b.slot] end
+		return a.slot < b.slot
+	end
+	for _, field in ipairs({ "scaglie", "n" }) do
+		local ms, vals = {}, {}
+		for _, m in ipairs(wall) do
+			if m[field] then ms[#ms + 1] = m; vals[#vals + 1] = m[field] end
+		end
+		table.sort(vals)
+		table.sort(ms, hardest_last)
+		for i, m in ipairs(ms) do m[field] = vals[i] end
+	end
+	for _, m in ipairs(wall) do m.ease = n[m.slot] end
+end
+
 -- The wall of key for seed (lucky: the slot of the double mould, or nil):
 -- { { slot, x, y, w, inner, depth, chain, small, scaglie | set + n, lucky } }
 local LAYOUTS, LAYOUTS_N = {}, 0
@@ -154,7 +200,7 @@ function M.layout(key, seed, lucky)
 		if ok then
 			picked[#picked + 1] = sp
 			local probe = {}
-			for i, q in ipairs(picked) do probe[i] = { slot = i, x = q.x, y = q.y, w = B, inner = P * 0.36, depth = B * 0.78 } end
+			for i, q in ipairs(picked) do probe[i] = { slot = i, x = q.x, y = q.y, w = B, inner = B * 0.36, depth = B * 0.78 } end
 			for i = 1, #picked do
 				if not M.reachable(probe, i) then ok = false; break end
 			end
@@ -175,10 +221,13 @@ function M.layout(key, seed, lucky)
 			small = pz.w < B, scaglie = pz.scaglie, lucky = lucky == i or nil }
 		if sp.y > 100 then m.chain = M.CEILING - sp.y end
 		if pz.frammenti then m.set, m.n = equip.SETS[hash(seed, key, i, "famiglia") % #equip.SETS + 1].id, pz.frammenti end
+		out[i] = m
+	end
+	M.by_ease(out)
+	for _, m in ipairs(out) do
 		if m.lucky then
 			if m.scaglie then m.scaglie = m.scaglie * 2 else m.n = m.n * 2 end
 		end
-		out[i] = m
 	end
 	-- (a few walls kept: the same one is asked at every throw and every frame)
 	if LAYOUTS_N > 16 then LAYOUTS, LAYOUTS_N = {}, 0 end
@@ -226,6 +275,18 @@ M.SLIDE = 0.92           -- of the speed along the iron, what stays at each boun
 M.BELLY = 0.4            -- the belly's radius, of the mould's width (its top at the rim, its bottom at the drawing's)
 M.LIP = 0.07             -- the rim lips' radius, of the mould's width
 M.STILL = 90             -- ticks almost still (resting on a lip): it drips down, a miss
+-- The catch (Sergio, 24 Nov, on https://claude.ai/artifact/Gjq7oJAtJP1yXvLshSxXAa: «al 30%»):
+-- the line that takes the drop sits on top of the rim lips and covers the opening and
+-- CATCH of the lips plus the drop (0 = up to the lips, 1 = all of them and the drop's
+-- radius): a drop coming down on the inner part of a lip falls in, on the outer part
+-- it bounces out
+M.CATCH = 0.3
+
+-- where the drop is taken by mould m: the line's height and half width
+function M.catch(m)
+	local lip = m.w * M.LIP
+	return m.y + lip + M.DROP_R * 0.5, m.inner + M.CATCH * (2 * lip + M.DROP_R)
+end
 
 -- the round iron of mould m: { cx, cy, r }
 local function irons(m)
@@ -278,14 +339,15 @@ function M.fly(angle, power, wall, full, points)
 		local hit = false
 		for _, m in ipairs(wall) do
 			-- through the opening, going down: in (or on the metal of a full one)
-			if y >= m.y and ny < m.y then
-				local cx = x + (nx - x) * (y - m.y) / (y - ny)
-				if math.abs(cx - m.x) <= m.inner - M.DROP_R * 0.5 then
+			local ly, half = M.catch(m)
+			if y >= ly and ny < ly then
+				local cx = x + (nx - x) * (y - ly) / (y - ny)
+				if math.abs(cx - m.x) <= half then
 					if not full[m.slot] then
-						if path then path[#path + 1] = { cx, m.y } end
+						if path then path[#path + 1] = { cx, ly } end
 						return { esito = "stampo", slot = m.slot, ticks = t, rimbalzi = hits }, path
 					end
-					nx, ny = cx, m.y + 0.01
+					nx, ny = cx, ly + 0.01
 					if vy < -30 then hit = true end
 					if vy < 0 then vx, vy = vx * M.SLIDE, -vy * M.BOUNCE end
 				end
@@ -325,6 +387,7 @@ function M.init(p)
 	f.centri = f.centri or 0
 	f.colate = f.colate or 0
 	f.senza = f.senza or 0
+	f.jackpot = f.jackpot or 0
 	return p
 end
 
@@ -376,6 +439,15 @@ function M.throw(p, angle, power)
 		r.scaglie = M.MISS
 	end
 	if r.scaglie then p.scaglie = (p.scaglie or 0) + r.scaglie end
+	if r.esito == "stampo" then
+		local all = true
+		for _, m in ipairs(wall) do if not f.pieni[m.slot] then all = false; break end end
+		if all then
+			f.jackpot = f.jackpot + 1
+			p.scaglie = (p.scaglie or 0) + M.JACKPOT
+			r.jackpot, r.medal = M.JACKPOT, f.jackpot == 1 or nil
+		end
+	end
 	if f.lanci == M.THROWS and f.centri == M.THROWS then
 		f.tiri = f.tiri + M.BONUS
 		r.bonus = M.BONUS

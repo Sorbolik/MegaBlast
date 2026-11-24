@@ -101,6 +101,7 @@ local THROW_CAM = { x = 30, y = 40, s = 1.9 }
 local BOWL = { 94.3, -5.8 }
 -- a hit: the frozen moment, the shake; then the pause before the next aim
 local FREEZE, SHAKE, SHAKE_PX, AFTER, BONUS_T = 0.09, 0.28, 7, 0.7, 1.3
+local JACKPOT_T = 2.4  -- how long the jackpot holds the next step
 local DOTS_PAST = 1.5 -- the dots: up to the top and half as far again, fading after the top
 -- only in the simulator (imposta prova_fornace_centra 1): every throw goes into the
 -- nearest empty mould, to see the hits (tools/simula/scenari/fornace.txt)
@@ -302,8 +303,39 @@ local function tag(fx, m)
 	fx.tags[m.slot] = t
 end
 
+-- the lid of a taken mould (Sergio, 24 Nov, «coperchio sigillato», art WB-094): the
+-- iron lid sits on the mouth, the prize taken on its boss
+local LID_W, LID_Y, BOSS_Y, BOSS_W = 1.02, -0.11, 0.66, 0.3
+local function seal(fx, m)
+	if fx.seals[m.slot] then gui.delete_node(fx.seals[m.slot]) end
+	local name = "coperchio_" .. (m.small and "piccoli" or "grandi")
+	local w = m.w * LID_W
+	local h = w * PIECES[name].h / PIECES[name].w
+	local s = empty(fx.wall_root, m.x, m.y + m.w * LID_Y)
+	piece(s, name, 0, 0, w, gui.PIVOT_S)
+	local g = { node = s, ox = 0, oy = 0 }
+	kit.piece(g, m.scaglie and "scaglia" or "frammento_" .. m.set, 0, -h * BOSS_Y, w * BOSS_W)
+	fx.seals[m.slot] = s
+	return s
+end
+
+-- the flame from the mouth when the drop goes in (art WB-094): four frames, three
+-- moulds tall, then it falls back and fades
+local FLAME_FRAMES = { 0.07, 0.1, 0.12, 0.14 }
+local function flame(fx, m)
+	local w = m.w * 3 * PIECES.fiammata_1.w / PIECES.fiammata_1.h
+	local n = piece(fx.splash, "fiammata_1", m.x, m.y - m.w * 0.04, w, gui.PIVOT_S)
+	local t = 0
+	for i = 2, #FLAME_FRAMES do
+		t = t + FLAME_FRAMES[i - 1]
+		gui.animate(n, "color.w", 1, gui.EASING_LINEAR, 0.001, t, function() gui.play_flipbook(n, "fiammata_" .. i) end)
+	end
+	t = t + FLAME_FRAMES[#FLAME_FRAMES]
+	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.15, t, function() gui.delete_node(n) end)
+end
+
 local function draw_mould(fx, m, full)
-	local name = mould_name(m, full)
+	local name = mould_name(m, false)
 	if m.chain then
 		local h = CHAIN_W * PIECES.catena.h / PIECES.catena.w
 		local top_img = m.y - RIM * m.w + IMG_W * m.w * PIECES[name].h / PIECES[name].w
@@ -314,19 +346,24 @@ local function draw_mould(fx, m, full)
 		end
 	end
 	fx.moulds[m.slot] = piece(fx.wall_root, name, m.x, m.y - RIM * m.w, m.w * IMG_W, gui.PIVOT_S)
-	if not full then tag(fx, m) end
+	if full then seal(fx, m) else tag(fx, m) end
 end
 
--- fills a mould on the wall (a hit): the full drawing, a pop, the tag goes
+-- fills a mould on the wall (a hit): a pop, the flame, then the lid comes down on the
+-- mouth with a bounce; the tag goes
 local function fill_mould(fx, m)
 	local n = fx.moulds[m.slot]
 	if not n then return end
-	local name = mould_name(m, true)
-	gui.play_flipbook(n, name)
-	local w = m.w * IMG_W
-	gui.set_size(n, vec(w, w * PIECES[name].h / PIECES[name].w))
 	gui.set_scale(n, vmath.vector3(1.3, 0.75, 1))
 	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.35)
+	flame(fx, m)
+	local s = seal(fx, m)
+	local p = gui.get_position(s)
+	gui.set_position(s, p + vec(0, m.w * 1.6))
+	-- hidden (scale 0, which its children take too) until the flame has burst
+	gui.set_scale(s, vmath.vector3(0.001, 0.001, 1))
+	gui.animate(s, "scale", vmath.vector3(1, 1, 1), gui.EASING_LINEAR, 0.01, 0.42)
+	gui.animate(s, "position.y", p.y, gui.EASING_OUTBOUNCE, 0.4, 0.42)
 	if fx.tags[m.slot] then
 		gui.delete_node(fx.tags[m.slot])
 		fx.tags[m.slot] = nil
@@ -338,7 +375,7 @@ local function make_world(a)
 	local fx = a.fx or {}
 	a.fx = fx
 	fx.phase = fx.phase or "vetrina"
-	fx.tags, fx.moulds = {}, {}
+	fx.tags, fx.moulds, fx.seals = {}, {}, {}
 	fx.top = empty(nil, 0, 0)
 	fx.clip = box(fx.top, 0, 0, 10, 10)
 	gui.set_color(fx.clip, KC.SOOT)
@@ -632,6 +669,7 @@ local function start(a, poured)
 	local p = a.prof
 	fx.phase, fx.t = "open", 0
 	fx.poured = poured
+	fx.got = { scaglie = 0, fr = {}, hits = 0 }
 	travel(fx, full_view(), CLOSE, OPEN)
 	-- the throws' things over the whole screen: the wallet and the throws
 	fx.hud = empty(nil, 0, 0)
@@ -695,6 +733,14 @@ local function launch(a)
 	local r = profile.act(p, { k = "tiro", angolo = fx.angle, forza = fx.power })
 	if not r then to_aim(a); return end
 	fx.result, fx.path, fx.wall, fx.hit_i = r, path, wall, 1
+	local got = fx.got
+	if got then
+		got.scaglie = got.scaglie + (r.scaglie or 0)
+		if r.set then got.fr[r.set] = (got.fr[r.set] or 0) + r.n end
+		if r.esito == "stampo" then got.hits = got.hits + 1 end
+		if r.bonus then got.bonus = true end
+		if r.jackpot then got.jackpot, got.medal = r.jackpot, r.medal end
+	end
 	-- the drop leaves from the ladle's bowl and joins the rules' path in a moment
 	local bx, by = bowl(fx)
 	fx.off = { bx - path[1][1], by - path[1][2] }
@@ -704,7 +750,7 @@ local function launch(a)
 	fx.phase, fx.t = "fly", 0
 end
 
-local missed, after_throw
+local missed, after_throw, recap
 
 -- where the flight ended: the prize, the splash, the coins
 local function land(a)
@@ -719,8 +765,27 @@ local function land(a)
 		fx.freeze, fx.shake = FREEZE, SHAKE
 		fx.focus = { m.x, m.y }
 		fill_mould(fx, m)
-		splash(fx, m.x, m.y, m.w * 1.1)
+		fx.shake = SHAKE * 1.6
 		sound.play("#martello")
+		if r.jackpot then
+			-- the whole wall filled: JACKPOT, a rain of Scaglie, the medal the first time
+			fx.hold = JACKPOT_T
+			fx.shake = SHAKE * 3
+			shout(a, T.jackpot, 470, KC.HOT, JACKPOT_T)
+			if r.medal then
+				shout(a, T.medal, 400, KC.SAND, JACKPOT_T)
+				-- the medal of WB-094 jumps out in the middle, turns a little and goes
+				local md = piece(fx.hud, "medaglia_jackpot", (screen.x0 + screen.x1) / 2, 215, 200)
+				gui.set_scale(md, vmath.vector3(0.1, 0.1, 1))
+				gui.animate(md, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.45, 0.2)
+				gui.set_rotation(md, vmath.vector3(0, 0, -25))
+				gui.animate(md, "rotation.z", 0, gui.EASING_OUTBACK, 0.6, 0.2)
+				gui.animate(md, "color.w", 0, gui.EASING_INQUAD, 0.3, JACKPOT_T - 0.3, function() gui.delete_node(md) end)
+			end
+			local cx = (screen.x0 + screen.x1) / 2
+			coins.fly(fx.purse, "scaglia", in_purse(fx, cx, 520), 14, r.jackpot,
+				function(i) if i % 4 == 1 then sound.play("#scaglia") end end)
+		end
 		local sx, sy = to_screen(fx, m.x, m.y + m.w * 0.6)
 		if r.scaglie then
 			coins.fly(fx.purse, "scaglia", in_purse(fx, sx, sy), math.min(10, math.max(3, math.floor(r.scaglie / 8))), r.scaglie,
@@ -774,6 +839,73 @@ after_throw = function(a)
 	throws_row(a)
 end
 
+-- The pour's recap (Sergio, 24 Nov: «un riepilogo delle ricompense ... prima di chiudere
+-- la partita»): what the throws brought, row by row, then COLA ANCORA and CHIUDI
+local RECAP_W, RECAP_ROW = 480, 52
+function recap(a)
+	local fx, p = a.fx, a.prof
+	local got = fx.got
+	fx.phase, fx.t = "recap", 0
+	if fx.stick then gui.set_enabled(fx.stick.base, false) end
+	local rows = {}
+	rows[#rows + 1] = { icon = "scaglia", label = T.recap_scaglie, value = "+" .. coins.format(got.scaglie), color = KC.SAND }
+	for _, set in ipairs(equip.SETS) do
+		local n = got.fr[set.id]
+		if n then rows[#rows + 1] = { icon = "frammento_" .. set.id, label = T.recap_fragments:format(set.name), value = "+" .. n, color = color_of(set.id) } end
+	end
+	if got.bonus then rows[#rows + 1] = { icon = "goccia_hud", label = T.recap_bonus, value = "", color = KC.HOT } end
+	if got.jackpot then rows[#rows + 1] = { icon = "scaglia", label = T.recap_jackpot, value = "+" .. coins.format(got.jackpot), color = KC.HOT } end
+	if got.medal then rows[#rows + 1] = { icon = "medaglia_jackpot", label = T.medal, value = "", color = KC.HOT } end
+	local h = 96 + #rows * RECAP_ROW + 104
+	local cx, cy = (screen.x0 + screen.x1) / 2, 360
+	local x0, y0 = cx - RECAP_W / 2, cy - h / 2
+	local root = empty(fx.hud, 0, 0)
+	fx.recap = root
+	-- the veil, then the card
+	local veil = box(root, cx, 360, screen.width() + 4, 724)
+	gui.set_color(veil, VEIL)
+	local g = { node = root, ox = 0, oy = 720 }
+	kit.card(g, x0, y0, RECAP_W, h, KC.HOT, { sel = true })
+	kit.text(g, T.recap_title, cx, y0 + 50, 30, KC.HOT, "middle", 1)
+	kit.rect(g, x0 + 28, y0 + 74, RECAP_W - 56, 2, KC.LINE)
+	for i, r in ipairs(rows) do
+		local y = y0 + 96 + (i - 1) * RECAP_ROW + RECAP_ROW / 2
+		local row = empty(root, 0, 0)
+		local rg = { node = row, ox = 0, oy = 720 }
+		if r.icon == "goccia_hud" then piece(row, "goccia", x0 + 52, 720 - y, 30)
+		elseif r.icon == "medaglia_jackpot" then piece(row, "medaglia_jackpot", x0 + 52, 720 - y, 40)
+		elseif r.icon then kit.piece(rg, r.icon, x0 + 52, y, 34) end
+		fit(kit.text(rg, r.label, x0 + (r.icon and 84 or 34), y + 7, 19, KC.SAND, "start", 0.4), RECAP_W - 210)
+		if r.value ~= "" then kit.text(rg, r.value, x0 + RECAP_W - 34, y + 9, 26, r.color, "end") end
+		-- one after the other
+		gui.set_color(row, vmath.vector4(1, 1, 1, 0))
+		gui.set_position(row, vec(30, 0))
+		gui.animate(row, "position.x", 0, gui.EASING_OUTCUBIC, 0.3, 0.25 + i * 0.22)
+		gui.animate(row, "color.w", 1, gui.EASING_LINEAR, 0.2, 0.25 + i * 0.22)
+	end
+	-- COLA ANCORA (while the wall has prizes and there is Ossidiana) and CHIUDI
+	local f = p.fornace
+	local left = 0
+	for _, m in ipairs(forge.wall(p, wall_key(p))) do if not f.pieni[m.slot] or f.muro ~= wall_key(p) then left = left + 1 end end
+	local can = left > 0 and (p.ossidiana or 0) >= forge.COST and profile.can_spend()
+	local by, bw, bh = y0 + h - 84, (RECAP_W - 72) / 2, 60
+	kit.secondary(g, T.recap_again, x0 + 28, by, bw, bh, { main = true, off = not can, icon = "gemma" })
+	kit.secondary(g, T.recap_close, x0 + 44 + bw, by, bw, bh)
+	fx.recap_btns = { { x = x0 + 28, y = by, w = bw, h = bh, cmd = can and "again" or nil }, { x = x0 + 44 + bw, y = by, w = bw, h = bh, cmd = "close" } }
+	gui.set_scale(root, vmath.vector3(0.9, 0.9, 1))
+	gui.animate(root, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3)
+	gui.move_above(fx.hud, nil)
+end
+
+local function recap_do(a, what)
+	local fx = a.fx
+	if not what then return end
+	fx.recap_btns = nil
+	if fx.recap then gui.delete_node(fx.recap); fx.recap = nil end
+	if what == "again" then fx.again = true end
+	close(a)
+end
+
 -- an angle and power that fill the nearest empty mould (the simulator's sure aim)
 local function sure_aim(p)
 	local f = p.fornace
@@ -794,6 +926,13 @@ local function sure_aim(p)
 					end
 				end
 			end
+		end
+	end
+	-- no straight shot: any throw that ends in an empty mould (after a bounce too)
+	for deg = 4, 86, 2 do
+		for pw = 10, 100 do
+			local r = forge.fly(math.rad(deg), pw / 100, wall, f.pieni)
+			if r.esito == "stampo" then return math.rad(deg), pw / 100 end
 		end
 	end
 end
@@ -1085,7 +1224,8 @@ function M.update(a, dt)
 			shout(a, T.bonus, 420, KC.HOT, BONUS_T)
 			fx.t = AFTER - BONUS_T
 		end
-		if fx.t >= AFTER and not fx.bonus_at and not coins.busy(fx.purse) then
+		if fx.t >= AFTER + (fx.hold or 0) and not fx.bonus_at and not coins.busy(fx.purse) then
+			fx.hold = nil
 			if f.tiri > 0 then
 				-- the next one: molten Ossidiana in the ladle again
 				to_aim(a)
@@ -1095,11 +1235,20 @@ function M.update(a, dt)
 		end
 	elseif fx.phase == "end" then
 		if fx.t >= 0.5 then
-			close(a)
-			return true
+			if fx.got then recap(a) else close(a); return true end
 		end
+	elseif fx.phase == "recap" then
+		-- (waiting for COLA ANCORA or CHIUDI, M.input)
 	elseif fx.phase == "close" then
-		if moved then fx.phase = "vetrina" end
+		if moved then
+			fx.phase = "vetrina"
+			-- COLA ANCORA from the recap: the next pour, as the button of the vetrina
+			if fx.again then
+				fx.again = nil
+				M.cmd(a, "cola")
+				return true
+			end
+		end
 	end
 	follow(a, dt)
 	apply(fx)
@@ -1123,6 +1272,20 @@ end
 function M.input(a, action_id, action)
 	local fx = a.fx
 	if not fx or fx.phase == "vetrina" then return false end
+	if fx.phase == "recap" then
+		if action_id == ui.PAD and action.pressed then
+			local c = controller.current_value
+			if action.ui == "indietro" then recap_do(a, "close")
+			elseif c and action.nome and action.nome == controller.key_of(c, "spara") then recap_do(a, fx.recap_btns and fx.recap_btns[1].cmd or "close") end
+		elseif action_id == ui.TOUCH and action.released and fx.recap_btns and fx.t > 0.4 then
+			local x, y = screen.from_touch(action.x, action.y)
+			y = 720 - y
+			for _, b in ipairs(fx.recap_btns) do
+				if x >= b.x and x <= b.x + b.w and y >= b.y and y <= b.y + b.h then recap_do(a, b.cmd); break end
+			end
+		end
+		return true
+	end
 	if action_id == ui.PAD then
 		local c = controller.current_value
 		if action.pressed and fx.phase == "aim" and fx.pad and c and action.nome
