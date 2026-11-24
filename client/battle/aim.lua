@@ -257,7 +257,15 @@ local function move(n, x, y, scale)
 	gui.set_scale(n, S)
 end
 
-function M.trajectory(m, pts, n, s)
+-- fade (0..1, optional): from that part of the dots on they fade out to the end
+-- (the Forge, docs/commesse.md: the dots go a little past the top and fade)
+local FADED = vmath.vector4()
+local function fade_dot(n, c, a)
+	FADED.x, FADED.y, FADED.z, FADED.w = c.x, c.y, c.z, c.w * a
+	gui.set_color(n, FADED)
+end
+
+function M.trajectory(m, pts, n, s, fade)
 	local k = M.lay_dots(pts, n, M.STEP / s, M.POINTS, m.out)
 	local scale = 1 / s
 	for i = 1, M.POINTS do
@@ -268,8 +276,15 @@ function M.trajectory(m, pts, n, s)
 			local o = m.out[i]
 			move(m.shadows[i], o.x, o.y, scale)
 			move(m.lights[i], o.x, o.y, scale)
+			if fade or m.faded then
+				local a = 1
+				if fade and i / k > fade then a = math.max(0, 1 - (i / k - fade) / (1 - fade)) end
+				fade_dot(m.shadows[i], SHADOW, a)
+				fade_dot(m.lights[i], LIGHT, a)
+			end
 		end
 	end
+	m.faded = fade and true or nil
 end
 
 function M.crosshair(m, x, y, angle_deg, s, strength, color)

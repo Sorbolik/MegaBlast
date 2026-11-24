@@ -183,8 +183,10 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   della stessa grandezza sullo schermo a ogni zoom; la placca dello stampo ha il colore della
   famiglia, ferro per le Scaglie. Quando la goccia entra il gioco si ferma un attimo, la camera
   trema e il premio vola al contatore.
-- **La traiettoria è quasi tutta** (Sergio, 24 nov): i puntini della mira si vedono per circa l'80%
-  del volo, non fino in fondo: l'ultimo tratto, dove la goccia cade nello stampo, lo indovini tu.
+- **La traiettoria arriva fino alla cima e un po' oltre** (Sergio, 24 nov, scelta sul prototipo
+  https://claude.ai/artifact/4Zyv54v6i7epW4eVjpawst): i puntini fanno la salita e un altro mezzo
+  tratto dopo la cima, dove sfumano; mai oltre il primo rimbalzo. La discesa nello stampo la
+  indovini tu, così gli stampi lontani non sono più difficili di quelli vicini.
 - **Gli stampi**: 12 sul muro, 6 di Scaglie (15, 20, 30, 50, 60, 80) e 6 di frammenti (x1 o
   x2), **255 Scaglie e 8 frammenti per muro**. Più lontano e più in alto, più rende; quelli
   lontani sono piccoli e chiedono quasi tutta la forza. Mirando scegli la famiglia che ti

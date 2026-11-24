@@ -101,7 +101,7 @@ local THROW_CAM = { x = 30, y = 40, s = 1.9 }
 local BOWL = { 94.3, -5.8 }
 -- a hit: the frozen moment, the shake; then the pause before the next aim
 local FREEZE, SHAKE, SHAKE_PX, AFTER, BONUS_T = 0.09, 0.28, 7, 0.7, 1.3
-local DOTS = 0.8      -- the part of the flight the dots show
+local DOTS_PAST = 1.5 -- the dots: up to the top and half as far again, fading after the top
 -- only in the simulator (imposta prova_fornace_centra 1): every throw goes into the
 -- nearest empty mould, to see the hits (tools/simula/scenari/fornace.txt)
 local SURE = sys.get_config_int("megablast.simula", 0) == 1 and sys.get_config_int("megablast.prova_fornace_centra", 0) == 1
@@ -874,13 +874,22 @@ local function draw_aim(a)
 	local wall = forge.layout(f.muro, f.seme, f.fortunato)
 	local _, path = forge.fly(fx.angle, fx.power, wall, f.pieni, true)
 	fx.pts = fx.pts or {}
-	local n = math.max(2, math.floor(#path * DOTS))
+	-- up to the top and a little past it, fading there (Sergio, 24 Nov); never past
+	-- the first bounce
+	local top = 1
+	for i = 2, #path do if path[i][2] > path[top][2] then top = i end end
+	local n = math.min(#path, math.floor(top * DOTS_PAST))
+	if path.hits and path.hits[1] then n = math.min(n, path.hits[1]) end
+	n = math.max(2, n)
+	local len, at_top = 0, 0
 	for i = 1, n do
 		local q = fx.pts[i] or {}
 		q.x, q.y = path[i][1], path[i][2]
 		fx.pts[i] = q
+		if i > 1 then len = len + math.sqrt((q.x - path[i - 1][1]) ^ 2 + (q.y - path[i - 1][2]) ^ 2) end
+		if i == top then at_top = len end
 	end
-	aim.trajectory(fx.aim, fx.pts, n, s)
+	aim.trajectory(fx.aim, fx.pts, n, s, len > 0 and math.min(0.95, at_top / len) or 0.95)
 end
 
 -- The camera while throwing (docs/commesse.md: it comes closer while the ladle
