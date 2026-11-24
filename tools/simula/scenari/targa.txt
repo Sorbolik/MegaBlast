@@ -4,7 +4,7 @@
 imposta prova_vita 30
 
 aspetta 3
-tocca 222 148                      # STESSO TELEFONO
+tocca 222 148                      # PARTITA DI PROVA (zona nascosta della home)
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 3
 zoom 01_targa 3

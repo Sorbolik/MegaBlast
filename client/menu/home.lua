@@ -9,7 +9,7 @@
 --   sides      the doors drawn by Codex (WB-046), the shield toward the screen's edge:
 --              CAMPAGNA and ALLENAMENTO on the left, EVENTI and ARMERIA on the right
 --   bottom     the settings' wheel on the left; GIOCA (online), the molten seal, on the right
--- STESSO TELEFONO is in ALLENAMENTO.
+-- The match of two people on the same phone is gone from the game (Sergio, 24 Nov).
 --
 -- Use (from the gui_script, which has the textures and the titolo font):
 --   local home = require "menu.home"
@@ -235,9 +235,9 @@ function M.new(color)
 	-- what shakes at a thud: the sides (not the pieces that are arriving)
 	h.shaken = { right.node, left.node, tl.node }
 
-	-- STESSO TELEFONO is in ALLENAMENTO now; the scenarios of the simulator
-	-- (tools/simula) still start their match from here, with a tap on the
-	-- old place (now on ALLENAMENTO): an invisible zone, only there, last in
+	-- the scenarios of the simulator (tools/simula) start their test match of
+	-- people on the same phone (gone from the game, Sergio 24 Nov) from here, with
+	-- a tap on its old place (now on ALLENAMENTO): an invisible zone, only there, last in
 	-- the list (ui.touch looks from the last: it wins over the door under it)
 	if sys.get_config_int("megablast.simula", 0) == 1 then
 		local sim = kit.anchor(0, 360, gui.ANCHOR_LEFT)

@@ -1,16 +1,26 @@
-# La scelta della mappa in ALLENAMENTO (Sergio, 3 nov): sotto modo e livello ci sono
-# le carte delle mappe (A CASO, il cortile dell'Addestramento, poi le mappe dei gironi); si sceglie
-# il cortile e si gioca lì. Va su ogni schermo: provalo anche con --schermo 1600x720 e 960x720.
-aspetta 2
+# La scelta della mappa in ALLENAMENTO (Sergio, 3 nov; 24 nov: i modi sono i tab della
+# pagina, DIFFICOLTÀ allineata col suo titolo, le mappe grandi in una fila che scorre col
+# dito, senza frecce): si trascina la fila, si sceglie il cortile e si gioca lì.
+# Va su ogni schermo: provalo anche con --schermo 1600x720 e 960x720.
+aspetta 4
 tocca_bordo 220 172 mezzo sinistra    # ALLENAMENTO
 aspetta 1
 foto 01_scegli_la_mappa
-tocca_bordo 739 471 alto centro     # IL CORTILE
+tocca_bordo 731 55 alto sinistra    # 2 CONTRO 2
+tocca_bordo 477 178 alto centro                       # FACILE
 aspetta 0.3
-foto 02_cortile_scelto
-tocca_bordo 175 52 basso destra    # GIOCA
+foto 02_due_contro_due_facile
+trascina 1000 328 388 328 0.6       # la fila scorre: non sceglie niente
+aspetta 0.3
+foto 03_fila_scorsa
+trascina 500 328 1100 328 0.6       # e torna indietro
+aspetta 0.3
+tocca_bordo 969 392 alto centro                       # IL CORTILE
+aspetta 0.3
+foto 04_cortile_scelto
+tocca_bordo 175 52 basso destra     # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
 premi z                             # tutta la mappa: è il cortile
 aspetta 2
-foto 04_partita_nel_cortile
+foto 05_partita_nel_cortile
