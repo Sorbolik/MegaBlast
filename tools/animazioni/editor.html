@@ -597,7 +597,7 @@ const CANALI = [
 ];
 // le clip con l'arma in mano (battle/scoria.lua) e quelle solo per un'arma,
 // che il gioco usa al posto loro con quell'arma (fermo_arma_mallet, mira_mallet)
-const ARMATE = ["fermo_arma", "corsa_arma", "aria_arma", "sale_arma", "scende_arma", "mira"];
+const ARMATE = ["fermo_arma", "corsa_arma", "aria_arma", "sale_arma", "scende_arma", "mira", "lancio"];
 const NOMI_ARMI = new Set(Object.keys(leggiDati(DATI.armi, CAMPI.armi).armi));
 function variante(n) {
 	for (const b of ARMATE) if (n.startsWith(b + "_") && NOMI_ARMI.has(n.slice(b.length + 1))) return { base: b, arma: n.slice(b.length + 1) };
@@ -655,6 +655,7 @@ const CLIP = [
 		["sale_arma", "Si somma ad <b>aria arma</b> salendo. Qui la vedi sopra aria arma.", "aria_arma"],
 		["scende_arma", "Si somma ad <b>aria arma</b> scendendo. Qui la vedi sopra aria arma.", "aria_arma"],
 		["mira", "Fermo mentre mira: l'arma va dove si mira (prova col cursore <b>mira</b>), la testa la segue. Correndo o in aria mirando si usano corsa arma e aria arma."],
+		["lancio", "Il tiro di un'arma a braccio, una volta dall'inizio: per ora solo il Mestolo della Fornace (\"con mestolo\"). L'arma resta in mano e la gira solo \"Arma, gira\" (non la mira): la goccia parte nel tratto in cui l'arma va più veloce in avanti, e la telecamera la segue."],
 	]],
 ];
 const INFO = {};

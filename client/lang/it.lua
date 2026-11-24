@@ -617,6 +617,7 @@ return {
 		throws = "TIRI",
 		hint = "Tieni il dito e trascina per mirare, lascia per tirare",
 		hint_pad = "Muovi la levetta di mira, premi %s per tirare",
+		hint_stick = "Trascina la levetta di mira a destra, lascia per tirare",
 		bonus = "3 SU 3! UN TIRO IN PIÙ",
 		lucky = "DOPPIO",
 		lucky_hit = "DOPPIO!",

@@ -29,6 +29,8 @@ local scoria = require "battle.scoria"
 local aim = require "battle.aim"
 local sticks = require "battle.sticks"
 local controller = require "ui.controller"
+local SP = require "battle.stick_pad"
+local phone = require "main.phone"
 local game = require "sim.game"
 local forge = require "sim.forge"
 local orders = require "sim.orders"
@@ -88,9 +90,15 @@ local TRAIL_EVERY, TRAIL_LIFE = 0.03, 0.3
 -- the pour (seconds): the frame opens, the gems fly one every GEM_GAP, each
 -- GEM_FLY long, they melt, the throws appear, the camera opens on the wall
 local OPEN, GEM_START, GEM_GAP, GEM_FLY, MELT, SHOTS, PAN = 0.75, 0.1, 0.04, 0.42, 0.25, 0.45, 0.8
--- the throw: the ladle goes back over the head, then forward and the drop leaves
-local BACK, FORTH = 0.22, 0.1
-local SWING_BACK = 1.7
+-- the throw (Sergio, 24 Nov: «molto più lunga, plateale»): let go, the camera comes
+-- close on the apprentice (WINDUP s), the ladle's throw clip plays (lancio_mestolo,
+-- from the animation editor) and the drop leaves where the ladle is fastest; the
+-- camera follows it as in battle
+local WINDUP = 0.35   -- the camera to the apprentice, when the finger lifts
+local JOIN = 0.12     -- the drop from the bowl onto the rules' path
+local THROW_CAM = { x = 30, y = 40, s = 1.9 }
+-- the molten drop's place in the ladle's bowl (the weapon's units, tools/grafica/armi.py)
+local BOWL = { 94.3, -5.8 }
 -- a hit: the frozen moment, the shake; then the pause before the next aim
 local FREEZE, SHAKE, SHAKE_PX, AFTER, BONUS_T = 0.09, 0.28, 7, 0.7, 1.3
 local DOTS = 0.8      -- the part of the flight the dots show
@@ -364,6 +372,10 @@ local function make_world(a)
 	scoria.set_weapon(dev, "mestolo")
 	scoria.set_enabled(dev, true)
 	fx.dev = dev
+	-- a point in the ladle's bowl: it follows the ladle (the molten drop sits there)
+	fx.bowl_pt = gui.new_box_node(vec(BOWL[1], BOWL[2]), vec(1, 1))
+	gui.set_color(fx.bowl_pt, vmath.vector4(0, 0, 0, 0))
+	gui.set_parent(fx.bowl_pt, scoria.weapon_joint(dev, "mestolo"))
 	fx.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true }
 	scoria.update(dev, 0, fx.st)
 	-- the molten Ossidiana in the ladle (after the pour), the drop, the aim
@@ -373,6 +385,7 @@ local function make_world(a)
 	gui.set_enabled(fx.drop, false)
 	fx.aim = aim.new()
 	fx.pad_st, fx.pad, fx.clock = sticks.new(), false, 0
+	fx.thumb_st = sticks.new()
 	for _, n in ipairs(fx.aim.nodi) do gui.set_parent(n, fx.world) end
 	gui.set_parent(fx.aim.sign, fx.world)
 	fx.splash = empty(fx.world)
@@ -562,9 +575,9 @@ local function menu(a, on)
 end
 
 -- where the drop leaves: the rules' muzzle (forge.launch)
-local function bowl(angle)
-	local x, y = forge.launch(angle, 1)
-	return x, y
+local function bowl(fx)
+	local p = screen.node_pos(fx.bowl_pt)
+	return to_world(fx, p.x, p.y)
 end
 
 -- the throws, top left: one drop each, the used ones dim
@@ -624,6 +637,11 @@ local function start(a, poured)
 	fx.hud = empty(nil, 0, 0)
 	fx.purse_parent = empty(fx.hud, screen.x1 - 170, 720 - 44)
 	fx.purse = coins.wallet(p.scaglie or 0, (p.ossidiana or 0) + (poured and forge.COST or 0), fx.purse_parent, 0, 0)
+	-- the phone's aim stick, on the right as in battle (battle/stick_pad.lua)
+	SP.arrange(screen.x0, screen.y0, screen.x1, screen.y1)
+	fx.stick = SP.new(SP.AIM_PAD, SP.AIM_IDLE)
+	gui.set_parent(fx.stick.base, fx.hud)
+	gui.set_enabled(fx.stick.base, false)
 	gui.set_enabled(fx.hud, false)
 	gui.move_above(fx.top, nil)
 	a.melt = nil
@@ -632,6 +650,9 @@ end
 local function pad_off(fx)
 	sticks.reset(fx.pad_st)
 	fx.pad = false
+	-- the phone's stick back to its place
+	if fx.stick and fx.stick.id then SP.release(fx.stick, SP.AIM_IDLE) end
+	sticks.reset(fx.thumb_st)
 end
 
 local function aim_off(fx)
@@ -644,7 +665,8 @@ local function to_aim(a)
 	fx.phase, fx.t = "aim", 0
 	fx.aiming = false
 	pad_off(fx)
-	fx.st.aim = fx.angle or math.rad(40)
+	fx.st.lancio = nil
+	if fx.stick then gui.set_enabled(fx.stick.base, SP.on()) end
 	if fx.hint then gui.set_enabled(fx.hint, a.prof.fornace.lanci == 0) end
 end
 
@@ -652,7 +674,8 @@ local function close(a)
 	local fx = a.fx
 	aim_off(fx)
 	gui.set_enabled(fx.molten, false)
-	fx.st.aim = nil
+	fx.st.lancio = nil
+	fx.stick = nil
 	if fx.purse then coins.finish(fx.purse); coins.delete(fx.purse); fx.purse = nil end
 	if fx.hud then gui.delete_node(fx.hud); fx.hud = nil end
 	fx.row, fx.hint = nil, nil
@@ -671,10 +694,12 @@ local function launch(a)
 	local _, path = forge.fly(fx.angle, fx.power, wall, full, true)
 	local r = profile.act(p, { k = "tiro", angolo = fx.angle, forza = fx.power })
 	if not r then to_aim(a); return end
-	fx.result, fx.path, fx.wall = r, path, wall
+	fx.result, fx.path, fx.wall, fx.hit_i = r, path, wall, 1
+	-- the drop leaves from the ladle's bowl and joins the rules' path in a moment
+	local bx, by = bowl(fx)
+	fx.off = { bx - path[1][1], by - path[1][2] }
 	gui.set_enabled(fx.molten, false)
 	gui.set_enabled(fx.drop, true)
-	scoria.fire(fx.dev, "missile")
 	sound.play("#colpo")
 	fx.phase, fx.t = "fly", 0
 end
@@ -714,14 +739,6 @@ local function land(a)
 			sound.play("#scaglia")
 		end
 		if r.lucky then shout(a, T.lucky_hit, 470, KC.HOT, 1.1) end
-	elseif r.esito == "ferro" then
-		-- on the iron: a splash there, then the drop falls to the floor
-		splash(fx, last[1], last[2] - 6, 34)
-		sound.play("#martello")
-		gui.set_enabled(fx.drop, true)
-		fx.phase, fx.t = "fall", 0
-		fx.fall = { x = last[1], y = last[2], vy = 60 }
-		return
 	else
 		missed(a, last[1], last[2])
 		return
@@ -799,7 +816,27 @@ local function throw(a)
 		local an, pw = sure_aim(a.prof)
 		if an then fx.angle, fx.power = an, pw end
 	end
-	fx.phase, fx.t = "swing", 0
+	-- the finger lifts: the camera comes close to the apprentice, then the swing
+	if fx.stick then gui.set_enabled(fx.stick.base, false) end
+	fx.phase, fx.t = "windup", 0
+	travel(fx, fx.view, THROW_CAM, WINDUP)
+end
+
+-- when the drop leaves the ladle in the throw clip (tools/animazioni: lancio_mestolo):
+-- in the middle of the fastest forward stretch of its arma track, so a retouched
+-- clip keeps the drop in the bowl
+local function release_time(clip)
+	local k = clip and clip.tracks and clip.tracks.arma
+	if not k then return 0.9 end
+	local best, at = 0, (clip.duration or 1) * 0.6
+	for i = 1, #k - 3, 3 do
+		local dt = k[i + 3] - k[i]
+		if dt > 0 then
+			local v = (k[i + 4] - k[i + 1]) / dt
+			if -v > best then best, at = -v, (k[i] + k[i + 3]) / 2 end
+		end
+	end
+	return at
 end
 
 -- Every frame of the aim, the controller's aim stick, as in battle (PAD.aim in
@@ -821,14 +858,13 @@ local function pad_aim(a)
 	elseif fx.pad then
 		pad_off(fx)
 		aim_off(fx)
-		fx.st.aim = fx.angle
 	end
 end
 
 local function draw_aim(a)
 	local fx = a.fx
 	local s = fx.cam.s
-	local x, y = bowl(fx.angle)
+	local x, y = 0, game.DISEGNO_H / 2
 	local color = ui.C.SQUADRA[1]
 	aim.needle(fx.aim, x, y, fx.angle, s, fx.power, color)
 	aim.tag(fx.aim, x, y, fx.angle, s, aim.degrees(fx.angle), fx.power)
@@ -851,20 +887,24 @@ end
 -- loads, follows the drop and stops on the mould): a little closer than the whole
 -- wall, eased toward where things happen, and back to the whole wall to aim
 local CAM_EASE = 5
+local FLY_EASE, FLY_ZOOM = 9, 1.5
 local function follow(a, dt)
 	local fx = a.fx
-	if fx.tr or not (fx.phase == "aim" or fx.phase == "swing" or fx.phase == "fly" or fx.phase == "fall" or fx.phase == "after") then return end
+	if fx.tr or not (fx.phase == "aim" or fx.phase == "swing" or fx.phase == "fly" or fx.phase == "after") then return end
 	local base = full_cam(fx.view)
 	local tx, ty, ts = base.x, base.y, base.s
+	local ease = CAM_EASE
 	if fx.phase == "swing" then
-		tx, ty, ts = lerp(base.x, 0, 0.3), lerp(base.y, 30, 0.3), base.s * 1.25
-	elseif fx.phase == "fly" or fx.phase == "fall" then
+		tx, ty, ts = THROW_CAM.x, THROW_CAM.y, THROW_CAM.s
+	elseif fx.phase == "fly" then
+		-- as in battle: close on the drop, and quick to keep it in the middle
 		local d = gui.get_position(fx.drop)
-		tx, ty, ts = lerp(base.x, d.x, 0.25), lerp(base.y, math.max(forge.FLOOR, d.y), 0.15), base.s * 1.1
+		tx, ty, ts = d.x, math.max(forge.FLOOR + 60, d.y), math.max(base.s * FLY_ZOOM, math.min(THROW_CAM.s, fx.cam.s))
+		ease = FLY_EASE
 	elseif fx.phase == "after" and fx.focus and fx.t < AFTER then
 		tx, ty, ts = lerp(base.x, fx.focus[1], 0.3), lerp(base.y, fx.focus[2], 0.3), base.s * 1.2
 	end
-	local k = 1 - math.exp(-dt * CAM_EASE)
+	local k = 1 - math.exp(-dt * ease)
 	local c = fx.cam
 	fx.cam = { x = c.x + (tx - c.x) * k, y = c.y + (ty - c.y) * k, s = math.exp(math.log(c.s) + (math.log(ts) - math.log(c.s)) * k) }
 end
@@ -902,7 +942,6 @@ function M.update(a, dt)
 	end
 	local moved = travel_step(fx, dt)
 	if fx.phase == "open" then
-		fx.st.aim = -0.25 + 0.03 * math.sin(fx.t * 3)
 		if moved then
 			menu(a, false)
 			gui.set_enabled(fx.hud, true)
@@ -920,10 +959,9 @@ function M.update(a, dt)
 			end
 		end
 	elseif fx.phase == "gems" then
-		fx.st.aim = -0.25 + 0.03 * math.sin(fx.t * 3)
 		-- from the wallet's gem to the ladle, on a curve, one after the other
 		local wx, wy = screen.node_pos(fx.purse_parent).x - 60, 720 - 44
-		local bx, by = to_screen(fx, bowl(fx.st.aim))
+		local bx, by = to_screen(fx, bowl(fx))
 		local landed = 0
 		for i, gm in ipairs(fx.gems) do
 			local t0 = GEM_START + (i - 1) * GEM_GAP
@@ -951,7 +989,7 @@ function M.update(a, dt)
 		local done = GEM_START + (forge.COST - 1) * GEM_GAP + GEM_FLY
 		if fx.t >= done then
 			-- it melts: the splash in the ladle, the molten drop stays in it
-			local x, y = bowl(fx.st.aim)
+			local x, y = bowl(fx)
 			splash(fx, x, y - 2, 26)
 			sound.play("#scaglia")
 			fx.phase, fx.t = "shots", 0
@@ -959,16 +997,12 @@ function M.update(a, dt)
 			throws_row(a)
 		end
 	elseif fx.phase == "shots" then
-		fx.st.aim = -0.25 + 0.03 * math.sin(fx.t * 3)
 		if fx.t >= (fx.poured and MELT + SHOTS or 0.1) then
 			fx.phase, fx.t = "pan", 0
 			local v = full_view()
 			travel(fx, v, full_cam(v), PAN)
-			fx.from_aim = fx.st.aim
 		end
 	elseif fx.phase == "pan" then
-		local k = eio(clamp(fx.t / PAN))
-		fx.st.aim = lerp(fx.from_aim, fx.angle or math.rad(40), k)
 		if moved then
 			-- the hint, the first time
 			if f.colate <= 2 and f.lanci == 0 and not fx.hint then
@@ -976,7 +1010,8 @@ function M.update(a, dt)
 				local g = { node = fx.hint, ox = 0, oy = 0 }
 				-- with a controller, its stick and its SPARA button
 				local c = controller.current_value
-				local hint = c and c.connected and T.hint_pad:format(controller.name_of("spara") or "") or T.hint
+				local hint = c and c.connected and T.hint_pad:format(controller.name_of("spara") or "")
+					or (SP.on() and T.hint_stick) or T.hint
 				kit.text(g, hint, 2, 2, 20, KC.INK, "middle", 0.5)
 				kit.text(g, hint, 0, 0, 20, KC.SAND, "middle", 0.5)
 			end
@@ -984,19 +1019,19 @@ function M.update(a, dt)
 		end
 	elseif fx.phase == "aim" then
 		pad_aim(a)
-		if fx.aiming or fx.pad then
-			fx.st.aim = fx.angle
-			draw_aim(a)
+		if fx.aiming or fx.pad or (fx.stick and fx.stick.id and fx.thumb_st.active) then draw_aim(a) end
+	elseif fx.phase == "windup" then
+		-- close on the apprentice: the throw clip starts (it ends with the drop away)
+		if moved then
+			fx.phase, fx.t = "swing", 0
+			fx.lancio_n = (fx.lancio_n or 0) + 1
+			fx.st.lancio = fx.lancio_n
+			fx.release = release_time(scoria.throw_clip(fx.dev))
 		end
 	elseif fx.phase == "swing" then
-		-- back over the head, then forward: the drop leaves at the aim
-		local t = fx.t
-		if t < BACK then
-			fx.st.aim = fx.angle + SWING_BACK * eo(t / BACK)
-		else
-			local k = clamp((t - BACK) / FORTH)
-			fx.st.aim = fx.angle + SWING_BACK * (1 - k * k)
-			if k >= 1 then launch(a) end
+		-- the ladle goes back, trembles full, and whips forward: the drop leaves
+		if fx.t >= fx.release then
+			launch(a)
 		end
 	elseif fx.phase == "fly" then
 		local i = fx.t / game.DT + 1
@@ -1013,7 +1048,18 @@ function M.update(a, dt)
 			local i0 = math.floor(i)
 			local q0, q1 = fx.path[i0], fx.path[i0 + 1]
 			local k = i - i0
-			gui.set_position(fx.drop, vec(lerp(q0[1], q1[1], k), lerp(q0[2], q1[2], k)))
+			local o = 1 - clamp(fx.t / JOIN)
+			o = o * o
+			gui.set_position(fx.drop, vec(lerp(q0[1], q1[1], k) + fx.off[1] * o, lerp(q0[2], q1[2], k) + fx.off[2] * o))
+			-- on the iron it bounces (the rules' ball, forge.fly): a splash and a clang
+			local hits = fx.path.hits
+			fx.hit_i = fx.hit_i or 1
+			if hits and hits[fx.hit_i] and i0 >= hits[fx.hit_i] then
+				local h = fx.path[hits[fx.hit_i] + 1] or q0
+				splash(fx, h[1], h[2], 22)
+				sound.play("#martello")
+				fx.hit_i = fx.hit_i + 1
+			end
 			gui.set_rotation(fx.drop, vmath.vector3(0, 0, fx.t * 400))
 			-- a short trail of embers behind it: it reads on the dark forge
 			fx.trail = (fx.trail or 0) - dt
@@ -1023,15 +1069,6 @@ function M.update(a, dt)
 				gui.animate(e, "size", vec(2, 2), gui.EASING_INQUAD, TRAIL_LIFE)
 				gui.animate(e, "color.w", 0, gui.EASING_INQUAD, TRAIL_LIFE, 0, function() gui.delete_node(e) end)
 			end
-		end
-	elseif fx.phase == "fall" then
-		local d = fx.fall
-		d.vy = d.vy - game.GRAVITY * game.MISSILE_GRAVITY * dt
-		d.y = d.y + d.vy * dt
-		gui.set_position(fx.drop, vec(d.x, d.y))
-		if d.y <= FLOOR_TOP then
-			gui.set_enabled(fx.drop, false)
-			missed(a, d.x, FLOOR_TOP)
 		end
 	elseif fx.phase == "after" then
 		if fx.bonus_at and fx.t >= fx.bonus_at then
@@ -1056,15 +1093,16 @@ function M.update(a, dt)
 		if moved then fx.phase = "vetrina" end
 	end
 	follow(a, dt)
-	-- the molten drop rides the ladle while there is one to throw
-	local hot = (fx.phase == "aim" or fx.phase == "swing" or fx.phase == "pan" or fx.phase == "shots")
-		and f.tiri > 0 and fx.st.aim
-	gui.set_enabled(fx.molten, hot and true or false)
+	apply(fx)
+	-- the molten drop rides the ladle while there is one to throw (after the camera:
+	-- the bowl is read on the screen)
+	local hot = (fx.phase == "aim" or fx.phase == "windup" or fx.phase == "swing" or fx.phase == "pan" or fx.phase == "shots")
+		and f.tiri > 0
+	gui.set_enabled(fx.molten, hot)
 	if hot then
-		local x, y = bowl(fx.st.aim)
+		local x, y = bowl(fx)
 		gui.set_position(fx.molten, vec(x, y + 1))
 	end
-	apply(fx)
 	if fx.rebuild then
 		fx.rebuild = nil
 		return true
@@ -1096,6 +1134,37 @@ function M.input(a, action_id, action)
 	if action.pressed then fx.finger = true elseif action.released then fx.finger = false end
 	if fx.phase ~= "aim" then return true end
 	local x, y = screen.from_touch(action.x, action.y)
+	-- on the phone the aim stick on the right, as in battle (game.gui_script
+	-- aim_pad_drag / aim_pad_release): lit past AIM_ON it aims, lifting the thumb throws
+	local pad = fx.stick
+	if pad and SP.on() then
+		local st = fx.thumb_st
+		if action.pressed and not pad.id and x > SP.ZONE.dx and y < SP.ZONE.y then
+			if fx.hint then gui.set_enabled(fx.hint, false) end
+			SP.press(pad, 0, x, y)
+		end
+		if not pad.id then return true end
+		if action.released then
+			local h = sticks.on_release(st, fx.clock)
+			local fire = h and h.active or st.active
+			if fire then fx.angle, fx.power = sticks.shot(st, fx.clock, fx.angle, fx.power) end
+			pad_off(fx)
+			aim_off(fx)
+			if fire then throw(a) end
+		else
+			local was = st.active
+			sticks.aim(st, SP.drag(pad, x, y))
+			if st.active then
+				fx.angle, fx.power = st.angle, aim.stick_power(st.f)
+				if not was then phone.tap() end
+			elseif was then
+				aim_off(fx)
+			end
+			sticks.record(st, fx.clock, fx.angle, fx.power, st.active)
+			SP.color(pad, st.active and SP.AIM_LIVE or SP.AIM_IDLE)
+		end
+		return true
+	end
 	if action.pressed or (fx.finger and not fx.aiming) then
 		fx.aiming = true
 		if fx.hint then gui.set_enabled(fx.hint, false) end
@@ -1105,11 +1174,7 @@ function M.input(a, action_id, action)
 		fx.aiming = false
 		aim_at(a, x, y)
 		aim_off(fx)
-		if (fx.dist or 0) > aim.CANCEL_R then
-			throw(a)
-		else
-			fx.st.aim = fx.angle
-		end
+		if (fx.dist or 0) > aim.CANCEL_R then throw(a) end
 	elseif fx.aiming then
 		aim_at(a, x, y)
 	end

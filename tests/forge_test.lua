@@ -79,6 +79,44 @@ local wa, wb = forge.layout(TODAY .. "#0", 1), forge.layout(TODAY .. "#0", 2)
 check(wa[1].x ~= wb[1].x or wa[1].y ~= wb[1].y, "ogni giocatore ha i suoi muri")
 check(forge.fly(math.rad(45), 0.1, wa, {}).esito == "secchio", "una goccia corta cade nel secchio")
 
+-- the drop is a ball: it bounces off the iron and still counts until it touches
+-- the floor (Sergio, 24 Nov); it always ends, on the floor or in a mould
+do
+	local bounced_in, bounced, ended = 0, 0, true
+	for deg = 10, 85, 1 do
+		for pw = 10, 100, 2 do
+			local r, path = forge.fly(math.rad(deg), pw / 100, wa, {}, true)
+			if r.ticks >= forge.MAX_TICKS then ended = false end
+			if r.rimbalzi > 0 then
+				bounced = bounced + 1
+				if r.esito == "stampo" then bounced_in = bounced_in + 1 end
+			end
+			local last = path[#path]
+			if r.esito == "secchio" and last[2] - forge.DROP_R >= forge.FLOOR and last[1] > -400 and last[1] < 2000
+				and r.ticks < forge.MAX_TICKS then
+				-- (or still on a lip, dripping)
+			end
+		end
+	end
+	check(ended, "ogni goccia finisce, a terra o in uno stampo")
+	check(bounced > 50, "la goccia rimbalza sul ferro (" .. bounced .. " tiri)")
+	check(bounced_in > 5, "e dopo un rimbalzo può entrare in uno stampo (" .. bounced_in .. " tiri)")
+	-- a full mould is closed: the drop bounces off its metal
+	local m = wa[1]
+	for deg = 20, 80, 2 do
+		for pw = 10, 100, 1 do
+			local r = forge.fly(math.rad(deg), pw / 100, wa, {})
+			if r.esito == "stampo" and r.slot == 1 and r.rimbalzi == 0 then
+				local r2 = forge.fly(math.rad(deg), pw / 100, wa, { [1] = true })
+				check(r2.slot ~= 1 and r2.rimbalzi > 0, "uno stampo pieno è chiuso: la goccia ci rimbalza sopra")
+				m = nil
+				break
+			end
+		end
+		if not m then break end
+	end
+end
+
 -- the lucky mould: about one wall in 8, for sure within 15
 do
 	local q = new(1e6)

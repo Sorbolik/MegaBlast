@@ -22,15 +22,21 @@ foto 04_i_tre_tiri
 aspetta 1.6
 foto 05_tutto_il_muro
 trascina 300 300 330 380 0.6 06_mira
-aspetta 0.7
-foto 07_in_volo
-aspetta 0.9
+aspetta 0.3
+foto 07a_zoom_su_di_te
+aspetta 0.5
+foto 07b_il_mestolo_carica
+aspetta 0.5
+foto 07c_il_lancio
+aspetta 0.5
+foto 07d_in_volo
+aspetta 1.2
 foto 08_centro
 aspetta 2
 trascina 300 300 360 360 0.4
 aspetta 5
 trascina 300 300 300 420 0.4
-aspetta 2.4
+aspetta 3.6
 foto 09_tre_su_tre
 aspetta 5
 pad_tieni sx_destra+sx_su           # il quarto col controller: la levetta di mira...

@@ -489,7 +489,7 @@ local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
 	punch = -0.9, eagle = -0.6, hook = -0.4, bellows = -0.3,
 	boomerang = -0.5, tar = -0.5, drill = -0.3, vortex = -0.4, cannon = -0.3, petard = -0.5,
-	mestolo = -0.4,  -- the Forge's ladle (menu/forge_ui.lua)
+	mestolo = 2.5,  -- the Forge's ladle (menu/forge_ui.lua): back over the shoulder, held like the sword
 	mallet = 2,  -- on the shoulder: as long as it is, pointing down it would go into the terrain
 	lunge = 1.3,  -- straight up: pointing down it would go into the terrain
 }
@@ -633,6 +633,8 @@ local function make_armed(anim)
 			sale = with_weapon("sale"),
 			scende = with_weapon("scende"),
 			mira = anim["mira_" .. name] or anim.mira,
+			-- the throw of a weapon swung by the arm (the Forge's ladle: lancio_mestolo)
+			lancio = anim["lancio_" .. name] or anim.lancio,
 		}
 	end
 	return armed
@@ -1156,7 +1158,13 @@ function M.update(s, dt, st)
 	local posing = st.posa and s.A[st.posa]
 	if st.posa ~= s.posa_name then s.posa_name, s.posa_t = st.posa, 0 end
 	if posing then s.posa_t = s.posa_t + dt end
-	local in_hand = (st.turno or st.aim ~= nil or s.holding_weapon) and not s.morte and not st.vittoria and not para and not posing
+	-- st.lancio: the weapon's throw clip (lancio_mestolo, the Forge), played once from
+	-- the start with the weapon in hand; a new value starts it again
+	local throwing = st.lancio and s.armed[s.chosen_weapon] and s.armed[s.chosen_weapon].lancio
+	if st.lancio ~= s.lancio_name then s.lancio_name, s.lancio_t = st.lancio, 0 end
+	if throwing then s.lancio_t = s.lancio_t + dt end
+	local in_hand = (st.turno or st.aim ~= nil or s.holding_weapon or throwing) and not s.morte and not st.vittoria and not para
+		and not posing
 	local aim_name = st.aim ~= nil and not s.morte and not para
 	-- the clips: with the weapon in hand the _arma ones, aiming while still mira
 	-- (the weapon's own if any)
@@ -1205,6 +1213,8 @@ function M.update(s, dt, st)
 		pose.add(po, s.A.vittoria, s.t, 1)
 	elseif posing then
 		pose.add(po, posing, s.posa_t, 1)
+	elseif throwing then
+		pose.add(po, throwing, s.lancio_t, 1)
 	elseif not st.turno and not aim_name and not st.fermo then
 		-- idle, not their turn: a skit now and then
 		waiting(s, dt)
@@ -1245,6 +1255,9 @@ function M.update(s, dt, st)
 	-- plus the clip
 	if in_hand and aim_name then
 		s.weapon_a = a - s.x[LEAN] - po.corpo
+	elseif throwing then
+		-- the throw's whip: the clip's angle at once, no chasing
+		s.weapon_a = ARMI[s.chosen_weapon] + po.arma
 	else
 		s.weapon_a = s.weapon_a + (ARMI[s.chosen_weapon] + po.arma - s.weapon_a) * follow
 	end
@@ -1361,6 +1374,18 @@ function M.hit(s, dx)
 	s.v[TAIL] = s.v[TAIL] + 4 * d
 	if s.cloth then CLOTH.push(s.cloth, (dx and dx ~= 0) and (dx > 0 and 1 or -1) * CT.hit * s.h or 0, CT.hit * s.h * 0.4) end
 	s.ui_action, s.action_t = "colpito", 0
+end
+
+-- The weapon in hand's joint (its origin at the pivot, x along the weapon): a node
+-- parented here follows it (the Forge's molten drop in the ladle's bowl)
+function M.weapon_joint(s, name)
+	return s.armi[name or s.chosen_weapon]
+end
+
+-- The throw clip of the weapon in hand (st.lancio), or nil
+function M.throw_clip(s)
+	local armed = s.armed[s.chosen_weapon]
+	return armed and armed.lancio
 end
 
 -- Shot fired: the weapon recoils along its axis (the body neither bends nor
