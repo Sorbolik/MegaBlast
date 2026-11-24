@@ -161,6 +161,16 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
 - **L'apprendista** (Sergio, 24 nov): è il personaggio indossato, grande come in battaglia, con
   le animazioni di sempre della mira; **non si muove** (niente camminata né salto). La goccia vola
   come il Lanciarune senza potenziamenti, la telecamera è quella della battaglia.
+- **L'arma è il Mestolo** (Sergio, 24 nov, fra tre proposte animate): un mestolo da colata col
+  manico lungo, la goccia nella coppa. Al tiro lo porta indietro sopra la testa (la coppa
+  gocciola scintille), trema un attimo e lo frusta in avanti; la goccia parte lungo la mira.
+  L'anticipazione è solo da vedere: angolo e potenza sono quelli scelti. La telecamera si
+  avvicina mentre carica, segue la goccia e si ferma sullo stampo. Disegni: WB-093.
+- **I premi si leggono sul muro** (Sergio, 24 nov): sopra ogni stampo l'icona del premio e la
+  quantità (moneta delle Scaglie col numero, o il frammento della famiglia con x1 o x2), sempre
+  della stessa grandezza sullo schermo a ogni zoom; la placca dello stampo ha il colore della
+  famiglia, ferro per le Scaglie. Quando la goccia entra il gioco si ferma un attimo, la camera
+  trema e il premio vola al contatore.
 - **La traiettoria è quasi tutta** (Sergio, 24 nov): i puntini della mira si vedono per circa l'80%
   del volo, non fino in fondo: l'ultimo tratto, dove la goccia cade nello stampo, lo indovini tu.
 - **Gli stampi**: alcuni di Scaglie, altri di frammenti di una famiglia. Quelli piccoli,
