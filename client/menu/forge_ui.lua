@@ -5,7 +5,8 @@
 -- grows to the whole screen and comes close on the apprentice, the 20 gems fly
 -- from the wallet into his ladle and melt, the three throws appear and the camera
 -- opens on the whole wall. You aim like in battle (the finger from the apprentice:
--- direction and power), let go and the ladle swings over the head and throws the
+-- direction and power; with the controller the aim stick and SPARA, as in battle:
+-- battle/aim.lua and battle/sticks.lua), let go and the ladle swings over the head and throws the
 -- drop; the flight is the rules' own (forge.fly). After the last throw the camera
 -- goes back into the frame. FONDI I FRAMMENTI opens the melting window.
 --
@@ -26,6 +27,8 @@ local coins = require "ui.coins"
 local screen = require "ui.screen"
 local scoria = require "battle.scoria"
 local aim = require "battle.aim"
+local sticks = require "battle.sticks"
+local controller = require "ui.controller"
 local game = require "sim.game"
 local forge = require "sim.forge"
 local orders = require "sim.orders"
@@ -61,6 +64,10 @@ local CLOSE = { x = 50, y = 36, s = 2.2 }
 -- the paintings (client/paintings/fornace, tools/grafica/fornace.py): the sky
 -- fixed behind the frame, the far and the middle layers in the world, a little
 -- slower than it when the camera moves (the far one more)
+-- slower than it when the camera moves (the far one more). Coming close (the pour)
+-- they zoom only up to their own pixels (Codex's 1536 over their width, or what the
+-- whole wall already shows): never enlarged, they stay as far as a backdrop, kept
+-- covering the view (place_layer)
 local FAR = { x = -264, y = -187, w = 2120, k = 0.6 }
 local MID = { x = -172, y = -158, w = 1936, k = 0.3 }
 local FLOOR_TOP, FLOOR_W = -132, 560
@@ -86,8 +93,6 @@ local BACK, FORTH = 0.22, 0.1
 local SWING_BACK = 1.7
 -- a hit: the frozen moment, the shake; then the pause before the next aim
 local FREEZE, SHAKE, SHAKE_PX, AFTER, BONUS_T = 0.09, 0.28, 7, 0.7, 1.3
-local AIM_RANGE = 220 -- the finger's distance for full power, as in battle
-local AIM_LEAST = 24  -- let go closer than this: no throw
 local DOTS = 0.8      -- the part of the flight the dots show
 -- only in the simulator (imposta prova_fornace_centra 1): every throw goes into the
 -- nearest empty mould, to see the hits (tools/simula/scenari/fornace.txt)
@@ -197,6 +202,29 @@ local function full_cam(v)
 	return { x = WALL_X, y = forge.FLOOR - 120 / s + v.h / (2 * s), s = s }
 end
 
+-- a painting layer: where the parallax puts it, at most at its own pixels on the
+-- screen (or at the zoom of the whole wall, most), and then moved to cover the view
+local function place_layer(fx, node, L, most)
+	local v, c = fx.view, fx.cam
+	local dim = fx.layer_px and fx.layer_px[node]
+	if not dim then return end
+	local s = math.min(c.s, math.max(dim.w / L.w, most))
+	local z = s / c.s
+	local w, h = L.w * s, L.w * dim.h / dim.w * s
+	-- on the screen, around the camera's middle
+	local left = v.cx + (L.x + (c.x - WALL_X) * L.k - c.x) * s
+	local bottom = v.cy + (L.y - c.y) * s
+	if z < 1 then
+		local l0, r0, b0 = v.cx - v.w / 2, v.cx + v.w / 2, v.cy - v.h / 2
+		if left > l0 then left = l0 end
+		if left + w < r0 then left = r0 - w end
+		if bottom > b0 then bottom = b0 end
+		if bottom + h < b0 + v.h * 0.6 then bottom = b0 + v.h * 0.6 - h end
+	end
+	gui.set_position(node, vec(c.x + (left - v.cx) / c.s, c.y + (bottom - v.cy) / c.s))
+	gui.set_scale(node, vmath.vector3(z, z, 1))
+end
+
 local function apply(fx)
 	local v, c = fx.view, fx.cam
 	gui.set_position(fx.clip, vec(v.cx, v.cy))
@@ -205,8 +233,9 @@ local function apply(fx)
 	gui.set_size(fx.sky, vec(fx.sky_w * k, fx.sky_h * k))
 	gui.set_position(fx.world, vec(-c.x * c.s + (fx.sx or 0), -c.y * c.s + (fx.sy or 0)))
 	gui.set_scale(fx.world, vmath.vector3(c.s, c.s, 1))
-	gui.set_position(fx.far, vec(FAR.x + (c.x - WALL_X) * FAR.k, FAR.y))
-	gui.set_position(fx.mid, vec(MID.x + (c.x - WALL_X) * MID.k, MID.y))
+	local most = full_cam(v).s
+	place_layer(fx, fx.far, FAR, most)
+	place_layer(fx, fx.mid, MID, most)
 	local ts = vmath.vector3(1 / c.s, 1 / c.s, 1)
 	for _, t in pairs(fx.tags) do gui.set_scale(t, ts) end
 end
@@ -313,6 +342,7 @@ local function make_world(a)
 	fx.world = empty(fx.clip)
 	fx.far = painting(a, fx.world, "lontano", "lontano.png", FAR.x, FAR.y, FAR.w)
 	fx.mid = painting(a, fx.world, "medio", "medio.png", MID.x, MID.y, MID.w)
+	fx.layer_px = { [fx.far] = a.forge_tex.fornace_lontano, [fx.mid] = a.forge_tex.fornace_medio }
 	-- the floor's slab, and the dark under it
 	local fh = FLOOR_W * PIECES.pavimento.h / PIECES.pavimento.w
 	local under = box(fx.world, WALL_X, FLOOR_TOP - fh + 2 - 1500, 6000, 3000)
@@ -342,6 +372,7 @@ local function make_world(a)
 	fx.drop = piece(fx.world, "goccia", 0, 0, DROP_W)
 	gui.set_enabled(fx.drop, false)
 	fx.aim = aim.new()
+	fx.pad_st, fx.pad, fx.clock = sticks.new(), false, 0
 	for _, n in ipairs(fx.aim.nodi) do gui.set_parent(n, fx.world) end
 	gui.set_parent(fx.aim.sign, fx.world)
 	fx.splash = empty(fx.world)
@@ -598,6 +629,11 @@ local function start(a, poured)
 	a.melt = nil
 end
 
+local function pad_off(fx)
+	sticks.reset(fx.pad_st)
+	fx.pad = false
+end
+
 local function aim_off(fx)
 	aim.clear(fx.aim)
 	if fx.hint then gui.set_enabled(fx.hint, false) end
@@ -607,6 +643,7 @@ local function to_aim(a)
 	local fx = a.fx
 	fx.phase, fx.t = "aim", 0
 	fx.aiming = false
+	pad_off(fx)
 	fx.st.aim = fx.angle or math.rad(40)
 	if fx.hint then gui.set_enabled(fx.hint, a.prof.fornace.lanci == 0) end
 end
@@ -749,12 +786,43 @@ end
 local function aim_at(a, x, y)
 	local fx = a.fx
 	local cx, cy = to_screen(fx, 0, game.DISEGNO_H / 2)
-	local dx, dy = x - cx, y - cy
-	local d = math.sqrt(dx * dx + dy * dy)
+	local an, d, pw = aim.from_finger(x - cx, y - cy, 1)
 	fx.dist = d
 	if d < 1 then return end
-	fx.angle = math.atan2(dy, dx)
-	fx.power = game.aim_power(d / AIM_RANGE)
+	fx.angle, fx.power = an, pw
+end
+
+-- the ladle swings: the throw leaves (with the simulator's sure aim, into a mould)
+local function throw(a)
+	local fx = a.fx
+	if SURE then
+		local an, pw = sure_aim(a.prof)
+		if an then fx.angle, fx.power = an, pw end
+	end
+	fx.phase, fx.t = "swing", 0
+end
+
+-- Every frame of the aim, the controller's aim stick, as in battle (PAD.aim in
+-- game.gui_script): lit past 20% of the travel it aims, brought back to the
+-- center it goes off and nothing leaves; SPARA throws (M.input)
+local function pad_aim(a)
+	local fx = a.fx
+	local c = controller.current_value
+	if fx.aiming or not c then return end
+	local l = c[controller.side("mira")]
+	if not l then return end
+	local st = fx.pad_st
+	sticks.aim(st, l.x, l.y)
+	if st.active then
+		if not fx.pad and fx.hint then gui.set_enabled(fx.hint, false) end
+		fx.pad = true
+		fx.angle, fx.power = st.angle, aim.stick_power(st.f)
+		sticks.record(st, fx.clock, fx.angle, fx.power, true)
+	elseif fx.pad then
+		pad_off(fx)
+		aim_off(fx)
+		fx.st.aim = fx.angle
+	end
 end
 
 local function draw_aim(a)
@@ -819,6 +887,7 @@ function M.update(a, dt)
 		return false
 	end
 	fx.t = fx.t + dt
+	fx.clock = fx.clock + dt
 	-- the frozen moment of a hit and the shake
 	if fx.freeze and fx.freeze > 0 then
 		fx.freeze = fx.freeze - dt
@@ -905,13 +974,17 @@ function M.update(a, dt)
 			if f.colate <= 2 and f.lanci == 0 and not fx.hint then
 				fx.hint = empty(fx.hud, 640, (screen.y0 or 0) + 40)
 				local g = { node = fx.hint, ox = 0, oy = 0 }
-				kit.text(g, T.hint, 2, 2, 20, KC.INK, "middle", 0.5)
-				kit.text(g, T.hint, 0, 0, 20, KC.SAND, "middle", 0.5)
+				-- with a controller, its stick and its SPARA button
+				local c = controller.current_value
+				local hint = c and c.connected and T.hint_pad:format(controller.name_of("spara") or "") or T.hint
+				kit.text(g, hint, 2, 2, 20, KC.INK, "middle", 0.5)
+				kit.text(g, hint, 0, 0, 20, KC.SAND, "middle", 0.5)
 			end
 			to_aim(a)
 		end
 	elseif fx.phase == "aim" then
-		if fx.aiming then
+		pad_aim(a)
+		if fx.aiming or fx.pad then
 			fx.st.aim = fx.angle
 			draw_aim(a)
 		end
@@ -1004,8 +1077,18 @@ function M.input(a, action_id, action)
 	local fx = a.fx
 	if not fx or fx.phase == "vetrina" then return false end
 	if action_id == ui.PAD then
-		-- the way back: out of the aim, back to the vetrina (the throws stay)
-		if action.pressed and action.ui == "indietro" and fx.phase == "aim" and not fx.aiming then close(a) end
+		local c = controller.current_value
+		if action.pressed and fx.phase == "aim" and fx.pad and c and action.nome
+			and action.nome == controller.key_of(c, "spara") then
+			-- SPARA with the stick lit: the aim from a moment earlier, as in battle
+			fx.angle, fx.power = sticks.shot(fx.pad_st, fx.clock, fx.angle, fx.power)
+			pad_off(fx)
+			aim_off(fx)
+			throw(a)
+		elseif action.pressed and action.ui == "indietro" and fx.phase == "aim" and not fx.aiming and not fx.pad then
+			-- the way back: out of the aim, back to the vetrina (the throws stay)
+			close(a)
+		end
 		return true
 	end
 	if action_id ~= ui.TOUCH then return true end
@@ -1022,12 +1105,8 @@ function M.input(a, action_id, action)
 		fx.aiming = false
 		aim_at(a, x, y)
 		aim_off(fx)
-		if SURE then
-			local an, pw = sure_aim(a.prof)
-			if an then fx.angle, fx.power = an, pw end
-		end
-		if (fx.dist or 0) >= AIM_LEAST then
-			fx.phase, fx.t = "swing", 0
+		if (fx.dist or 0) > aim.CANCEL_R then
+			throw(a)
 		else
 			fx.st.aim = fx.angle
 		end

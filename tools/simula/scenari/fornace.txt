@@ -1,7 +1,7 @@
 # La Fornace (docs/commesse.md "La Fornace"): la scheda FORNACE della BOTTEGA col muro
 # in vetrina, COLA che allarga il muro e cola le gemme nel mestolo, i tiri (con
 # prova_fornace_centra ogni tiro va nello stampo vuoto più vicino: 3 su 3 e il tiro in
-# più) e il ritorno alla vetrina; poi la finestra che fonde i frammenti.
+# più, l'ultimo col controller) e il ritorno alla vetrina; poi la finestra che fonde i frammenti.
 # Gira anche con --schermo 1600x720 e 960x720. (tocca_centro: Y dal basso)
 imposta prova_test prova
 imposta prova_fornace_centra 1
@@ -33,7 +33,11 @@ trascina 300 300 300 420 0.4
 aspetta 2.4
 foto 09_tre_su_tre
 aspetta 5
-trascina 300 300 400 330 0.4
+pad_tieni sx_destra+sx_su           # il quarto col controller: la levetta di mira...
+aspetta 0.6
+foto 10a_mira_col_controller
+pad rt                              # ...e SPARA
+pad_lascia sx_destra+sx_su
 aspetta 6
 foto 10_ritorno
 aspetta 3

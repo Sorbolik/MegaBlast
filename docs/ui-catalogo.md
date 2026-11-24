@@ -151,8 +151,8 @@ sotto una cornice a stampo (in vetrina la cornice del muro, mentre si tira tutto
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| i disegni di Codex WB-092 e WB-093 nell'atlante `fornace` (`client/menu/fornace.atlas`, con le mipmap: si vede a tanti zoom) e i dipinti `client/paintings/fornace/` (`tools/grafica/fornace.py`) | FORNACE | ✅ |
+| i disegni di Codex WB-092 e WB-093 nell'atlante `fornace` (`client/menu/fornace.atlas`, con le mipmap: si vede a tanti zoom) e i dipinti `client/paintings/fornace/` (`tools/grafica/fornace.py`; da vicino, nella colata, i dipinti si avvicinano solo fino ai loro pixel: mai ingranditi) | FORNACE | ✅ |
 | il cartellino del premio sopra lo stampo: l'icona (scaglia o frammento della famiglia) e il numero, sempre grandi uguali sullo schermo; lo stampo fortunato col numero oro e DOPPIO | FORNACE | ✅ |
 | i TIRI in alto a sinistra: una goccia per tiro, quelle usate spente | FORNACE | ✅ |
-| la mira: la stessa della battaglia (`battle/aim.lua`, lancetta e numeri) più i puntini del primo tratto del volo | FORNACE | ✅ |
+| la mira: la stessa della battaglia, disegno e conti (`battle/aim.lua`: lancetta, numeri, dal dito ad angolo e forza; col controller la levetta di mira e SPARA di `battle/sticks.lua`) più i puntini del primo tratto del volo | FORNACE | ✅ |
 | le scritte che saltano (3 SU 3!, DOPPIO!, NEL SECCHIO): parola incandescente con l'ombra d'inchiostro | FORNACE | ✅ |

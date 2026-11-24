@@ -149,9 +149,9 @@ local SNIPER_EULER, SNIPER_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1
 -- points of the whole trajectory (one every 4 ticks), shown only in the
 -- Training lessons
 local HELP_POINTS = 45
-local AIM_RANGE = 220 -- finger distance matching maximum power
 -- bringing the finger back onto the robot and leaving it there cancels the shot
-local CANCEL_R = 28
+-- (the finger's range for full power is in battle/aim.lua, shared with the Forge)
+local CANCEL_R = aim_name.CANCEL_R
 
 local function fit(node)
 	gui.set_adjust_mode(node, gui.ADJUST_FIT)
@@ -3431,11 +3431,8 @@ local function aim_from(self, x, y, snap)
 	local rb = current_robot(self)
 	self.aim_left, self.aim_sy = x, y
 	local wx, wy = camera.to_world(self.cam, x, y)
-	local dx, dy = wx - rb.x, wy - (rb.y + game.DISEGNO_H / 2)
-	self.aim_target = math.atan2(dy, dx)
+	self.aim_target, self.aim_dist, self.aim_power = aim_name.from_finger(wx - rb.x, wy - (rb.y + game.DISEGNO_H / 2), self.cam.s)
 	if snap or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = self.aim_target end
-	self.aim_dist = math.sqrt(dx * dx + dy * dy) * self.cam.s
-	self.aim_power = game.aim_power(self.aim_dist / AIM_RANGE)
 end
 
 local function smooth_aim(self, dt)
@@ -3631,7 +3628,7 @@ local function aim_pad_drag(self, x, y)
 	self.aim_target = st.angle
 	-- as soon as it lights up the aim jumps onto the stick, then chases it
 	if (st.active and not was) or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
-	self.aim_power = math.max(0.1, st.f ^ game.AIM_EXPONENT)
+	self.aim_power = aim_name.stick_power(st.f)
 	self.aim_dist = math.huge
 	self.aiming = st.active
 	pad_color(self.aim_pad, st.active and AIM_LIVE or AIM_IDLE)
@@ -5909,7 +5906,7 @@ function PAD.aim(self)
 		if not previous or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
 		local f = st.f
 		if trigger then f = math.max(0, math.min(1, (PAD.trigger(self) - PAD.THRESHOLD) / (0.95 - PAD.THRESHOLD))) end
-		self.aim_power = math.max(0.1, f ^ game.AIM_EXPONENT)
+		self.aim_power = aim_name.stick_power(f)
 		self.aim_dist = math.huge
 		-- to fire with the aim from a moment earlier (PAD.COMMANDS.spara)
 		sticks.record(st, self.clock, self.aim_angle, self.aim_power, true)

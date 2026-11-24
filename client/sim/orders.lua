@@ -1,7 +1,7 @@
 -- The Smith's orders, "Le Commesse del Fabbro" (Sergio, 23 Nov; rules in
 -- docs/commesse.md, page https://claude.ai/artifact/MKh9TW93vC3V4FzKYdrsiW).
 -- The custodi of the gironi become clients; an order is done playing online,
--- delivered paying Ossidiana, and pays Scaglie and the fragments of the
+-- delivered for free (the Ossidiana goes to the Forge, sim/forge.lua), and pays Scaglie and the fragments of the
 -- client's family, which buy pieces and their levels.
 --
 -- Pure Lua in the shared rules (sim/), like sim/wallet.lua: the phone and the

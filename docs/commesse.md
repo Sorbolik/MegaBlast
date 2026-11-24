@@ -157,8 +157,9 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
 - **Nel gioco** (`client/menu/forge_ui.lua`, foto `tools/simula/scenari/fornace.txt`): la mira si fa
   vedendo tutto il muro; mentre il mestolo carica la telecamera si avvicina un po', poi segue la
   goccia e si ferma sullo stampo preso, e torna su tutto il muro per il tiro dopo. Per la colata
-  la telecamera è vicina all'apprendista (zoom 2,2): lì i dipinti di fondo (WB-092, 1536 px) sono
-  un po' ingranditi, da rifare più grandi se si vedono morbidi.
+  la telecamera è vicina all'apprendista (zoom 2,2): lì i dipinti di fondo (WB-092, 1536 px) si
+  avvicinano solo fino ai loro pixel e restano lontani come un fondale, mai ingranditi.
+  Col controller si mira con la levetta di mira e si tira con SPARA, come in battaglia.
 - **Come si gioca**: l'apprendista tira una goccia di Ossidiana fusa con **la stessa mira
   della battaglia** (trascini, vedi l'inizio della traiettoria, lasci) negli stampi sul muro
   della fucina. **Tre tiri per colata.**

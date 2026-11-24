@@ -810,7 +810,7 @@ function M.cmd(a, kind, x)
 		profile.save(p)
 		return true
 	elseif kind == "consegna" then
-		-- every client's order that is ready, the oldest first, while the Ossidiana lasts
+		-- every client's order that is ready, the oldest first (the delivery is free)
 		-- (none, and the Smith's is: its family choice)
 		local list = {}
 		for _, o in ipairs(orders.orders(p)) do
