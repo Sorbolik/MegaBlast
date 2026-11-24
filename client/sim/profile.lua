@@ -183,7 +183,7 @@ end
 
 -- The badges next to the name: the chosen ones, then the highest (menu/milestones.lua)
 function M.badge(p)
-	return milestones.shown(M.statistics(p, "tutte"), p.badge)
+	return milestones.shown(M.statistics(p, "tutte"), p.badge, p.commesse and require("sim.orders").badges(p))
 end
 
 -- Tap a badge on the sheet: if it is among the chosen ones it is removed,

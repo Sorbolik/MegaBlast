@@ -67,7 +67,8 @@ end
 -- Sigilli on one line (Sergio, 16 Nov)
 local PLACES = { [2] = { 393, 887 }, [4] = { 135, 393, 887, 1145 } }
 
-function M.new(showcases, title)
+-- orders: { p = profile, map, humans } in an online match (the Smith's orders in the band)
+function M.new(showcases, title, orders)
 	local s = { vetrine = showcases, card_list = {}, t = config.LINEUP_SECONDS }
 	local squads = {}
 	for i, v in ipairs(showcases) do squads[i] = v.squadra end
@@ -84,8 +85,11 @@ function M.new(showcases, title)
 		gui.set_scale(name, vec(sc.x * 270 / wide, sc.y * 270 / wide))
 	end
 	local low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	-- (under the thread, where every screen has its hint: on the painting it was hard to read)
-	kit.foot_text(low, T.tap_to_pick, 40, 674, 19, KC.MUTE, 660, 0.5)
+	-- (under the thread, where every screen has its hint: on the painting it was hard to read);
+	-- online the band holds your Smith's orders instead (Sergio, 23 Nov), up to the time's line
+	local band = orders and require("menu.orders_ui").lineup(low, orders.p, orders.map, orders.humans, 24,
+		math.min(720, screen.width() - 558))
+	if not band then kit.foot_text(low, T.tap_to_pick, 40, 674, 19, KC.MUTE, 660, 0.5) end
 	local right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	local go = kit.action(right, T.weapons, 930, 560, 270, 84, { icon = "az_mira", size = 54, sub = T.weapons_in:format(0, 0) })
 	s.tally = go.sub

@@ -72,9 +72,22 @@ function M.earned(values)
 	return out
 end
 
--- The badges to show: the chosen ones (still earned), then the highest, up to SHOWN
-function M.shown(values, picked_ones)
+-- The badges to show: the chosen ones (still earned), then the highest, up to SHOWN.
+-- more: other badges earned (the clients', sim/orders.lua badges), after the stats'
+-- ones of the same grade
+function M.shown(values, picked_ones, more)
 	local taken = M.earned(values)
+	if more and #more > 0 then
+		local all = {}
+		for i, b in ipairs(taken) do all[#all + 1] = { b = b, k = i } end
+		for i, b in ipairs(more) do all[#all + 1] = { b = b, k = 1000 + i } end
+		table.sort(all, function(a, b)
+			if a.b.grado ~= b.b.grado then return a.b.grado > b.b.grado end
+			return a.k < b.k
+		end)
+		taken = {}
+		for i, e in ipairs(all) do taken[i] = e.b end
+	end
 	local by_id = {}
 	for _, b in ipairs(taken) do by_id[b.id] = b end
 	local out, placed = {}, {}
@@ -94,11 +107,21 @@ function M.shown(values, picked_ones)
 	return out
 end
 
+-- the clients that give a badge: sim/orders.lua fills it (it can't be required from
+-- here: orders needs wallet, which needs this)
+M.CLIENTS = {}
+
 -- A badge arriving from outside (online, from the others): valid or nil
 function M.valid(b)
 	if type(b) ~= "table" then return nil end
 	local s = M.BY_ID[b.id]
 	local g = tonumber(b.grado)
+	-- a client's badge (sim/orders.lua badges): a known client, grades 1 to 4
+	local cl = type(b.id) == "string" and b.id:match("^cl_(%a+)$")
+	if cl then
+		if not (M.CLIENTS[cl] and g and g >= 1 and g <= 4 and g % 1 == 0) then return nil end
+		return { id = b.id, grado = g }
+	end
 	if not (s and s.thresholds and g and g >= 1 and g <= #s.thresholds and g % 1 == 0) then return nil end
 	return { id = b.id, grado = g }
 end

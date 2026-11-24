@@ -6,10 +6,11 @@ https://claude.ai/artifact/MKh9TW93vC3V4FzKYdrsiW (bozze e scelte numerate).
 o campagna lo legge prima. Le regole possono cambiare, ma si cambiano qui, con la
 data, e con una riga in [decisioni/progressione.md](decisioni/progressione.md).
 
-Stato (23 nov): regole, logica, server, banco di prova e la scheda COMMESSE della BOTTEGA
-(cartellini di **carta**, scelta di Sergio); mancano il cartellino aperto, CHIAMA UN CLIENTE, il libro
-dei CLIENTI, la porta in home, lo scontrino del podio e i frammenti in POTENZIA. Il minigioco della forgia (poker
-«Cinque Fiamme», martello a tempo) è un lavoro a parte, dopo.
+Stato (23 nov, sera): tutto quello che dice questo file è nel gioco, tranne quello che
+aspetta altri: le martellate di Gabriella, le battute dei custodi da rivedere con Sergio,
+i clienti veri (arrivano coi gironi) e la porta BOTTEGA chiusa prima di Forgia 6 (Sergio
+non ha ancora deciso: per ora è aperta). Il minigioco della forgia (poker «Cinque Fiamme»,
+martello a tempo) è un lavoro a parte, dopo.
 
 ## A cosa servono
 
@@ -46,7 +47,9 @@ Principi di Sergio che reggono tutto:
   Plutone FABBRO, Flegiàs LEVIATANO, Medusa VUOTO, Minotauro FORNACE, Malacoda
   CORVO. Lucifero non è un cliente. **La famiglia sta scritta sul cartellino**: il
   cliente ne è il volto.
-- Chi non ha clienti ha solo la **commessa del Fabbro**.
+- Chi non ha clienti ha solo la **commessa del Fabbro**. Finché i livelli dei custodi
+  non sono nella campagna nessun cliente arriva nel gioco vero: si aspettano i gironi
+  (Sergio, 23 nov; scartati un cliente ogni 5 partite online e tutti alla chiamata).
 - La **prima commessa di ogni cliente** (di benvenuto, facile e gratis) dà il
   **Buono del Fabbro** insieme al suo premio. Il custode battuto dà solo il
   cliente. La Battaglia della Forgia tiene il Buono del Fabbro.
@@ -89,7 +92,10 @@ Principi di Sergio che reggono tutto:
 - Lunghezze: benvenuto 2-3 partite, piccola 3-4, media 6-8, settimana circa 20.
   Da ritarare per il 2 contro 2 (vedi sotto).
 - Si seguono sulla schermata delle squadre prima della partita e sullo scontrino
-  del podio. **Niente nell'HUD.**
+  del podio. **Niente nell'HUD.** Sulle squadre (Sergio, 23 nov, 1A): nella striscia in
+  basso, su carta, al posto di «tocca per scegliere le armi», le commesse che la partita
+  fa avanzare (al massimo due, prima la più vicina a finire) e il materiale che cade sulla
+  mappa (il server la manda già con la scelta delle armi). Solo online con un'altra persona.
 - **In 2 contro 2 le imprese contano i numeri della squadra** (passo 8): nemici
   buttati giù, danno, punti. La commessa con un amico arriverà con inviti e
   squadre fisse.
@@ -162,7 +168,16 @@ Principi di Sergio che reggono tutto:
   frammenti della sua famiglia e il suo cartellino per la scheda. Poi il filo
   ricomincia: 10 frammenti ogni 10 consegne.
 - **La fiducia è un numero che non si ferma mai** (al centesimo filo: 1.000) e
-  dice a che filo sei; il filo cambia metallo coi giri.
+  dice a che filo sei; il filo cambia metallo coi giri: le perle piene sono di bronzo,
+  poi d'argento, d'oro e di brace per sempre, i colori dei gradi dei pezzi (Sergio, 23 nov).
+- **Il libro I TUOI CLIENTI** (Sergio, 23 nov): il pulsante in basso nelle COMMESSE si
+  chiama I TUOI CLIENTI; dentro, sulla foto di ogni cliente, nell'angolo, il numero della
+  fiducia nel metallo del suo filo; si sceglie un cliente e lo si chiama col pulsante CHIAMA
+  (uno solo, per chiamare chi vuoi).
+- **Il badge del cliente** (il «cartellino per la scheda» dei 10 perle, Sergio 23 nov): il
+  busto del cliente in un cerchio, come il tondo del profilo: la testa parte dalla base e
+  sopra o di lato può uscire; l'anello è del metallo del suo filo. Si sceglie nel PROFILO,
+  nella casella dopo i record, come gli altri badge, e lo vedono tutti, anche online.
 
 ## Dove sta nel gioco (passo 9)
 

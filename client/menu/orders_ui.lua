@@ -16,6 +16,7 @@
 -- frammento_<family>, 192 px squares in the fucina atlas). Until Codex draws
 -- the clients (WB-086, WB-087) a client shows the miniature of its map.
 
+local ui = require "ui.ui"
 local kit = require "ui.kit"
 local coins = require "ui.coins"
 local equip = require "sim.gear"
@@ -354,13 +355,30 @@ local function portrait(a, g, id, x, y, w, h)
 	end
 end
 
--- the pearls of trust in a row: the lap's (10), the next one lit
+-- The metal of a trust's thread: bronze, silver, gold, then ember for good, the
+-- grades' colors of the pieces (Sergio, 23 Nov: "il filo cambia metallo coi giri")
+local function metal(trust)
+	return ui.C.GRADI[math.min(#ui.C.GRADI, math.max(1, math.floor((trust - 1) / orders.TRUST_LAP) + 1))]
+end
+M.metal = metal
+
+-- the pearls of trust in a row: the lap's (10) in the lap's metal, the next one lit
 local function pearls(g, trust, x, y, d)
 	local lap = trust == 0 and 0 or (trust - 1) % orders.TRUST_LAP + 1
+	local tint = metal(trust)
 	for i = 1, orders.TRUST_LAP do
 		local name = i <= lap and "perla_piena" or (i == lap + 1 and "perla_prossima" or "perla_vuota")
-		kit.piece(g, name, x + (i - 0.5) * d, y, d - 2)
+		local n = kit.piece(g, name, x + (i - 0.5) * d, y, d - 2)
+		if i <= lap then gui.set_color(n, tint) end
 	end
+end
+
+-- the trust's number in a round of the thread's metal, on the corner of a portrait
+local function trust_chip(g, trust, cx, cy)
+	local d = trust >= 100 and 40 or 32
+	kit.dot(g, cx, cy, d + 6, KC.INK)
+	kit.dot(g, cx, cy, d, trust > 0 and metal(trust) or PAPER_MUTE)
+	kit.text(g, tostring(trust), cx, cy + 7, trust >= 100 and 16 or 19, KC.INK, "middle")
 end
 
 -- what the next pearls bring: "Ancora 2 e ..." (for the book and the open card)
@@ -386,7 +404,7 @@ local function window(a, base)
 end
 
 -- what the delivery's scene borrows from the board (menu/orders_delivery.lua)
-local HELP = { panel = function(...) return panel(...) end, nail = nail, fit = fit, pearls = pearls,
+local HELP = { panel = function(...) return panel(...) end, nail = nail, fit = fit, pearls = pearls, metal = metal,
 	trust_next = trust_next, bust_node = function(...) return M.bust_node(...) end }
 
 -- the window's sheet: paper or iron, the nail on the paper, and a zone that keeps its taps
@@ -612,6 +630,7 @@ local function book(a)
 			kit.rect(c, x - 3, y - 3, 264, 98, PAPER)
 		end
 		portrait(a, c, cl.id, x, y, 70, 92)
+		trust_chip(c, orders.trust(p, cl.id), x + 6, y + 6)
 		fit(kit.text(c, kit.upper(T.clients[cl.id]), x + 84, y + 20, 20, KC.INK, "start", 0.5), 170)
 		family_tag(c, cl.set, x + 84, y + 30)
 		pearls(c, orders.trust(p, cl.id), x + 84, y + 76, 16)
@@ -870,6 +889,59 @@ function M.release(a)
 	a.minis = {}
 	for _, b in ipairs(a.busts or {}) do illustrations.client_release(b[1], b[2]) end
 	a.busts = {}
+end
+
+-- The lineup before an online match (Sergio, 23 Nov, 1A): in the band at the
+-- bottom, on paper, the orders this match moves (at most two, the nearest to
+-- done first) and what drops on its map. Only with the bottega open and
+-- another person in the match; nil when there is nothing to show.
+-- g: the band's group (Figma coordinates), x..x+w the room, map: the match's map
+function M.lineup(g, p, map, humans, x, w)
+	if not (p and p.commesse and p.commesse.aperta) or (humans or 0) < orders.MIN_HUMANS then return nil end
+	local list = {}
+	for _, o in ipairs(orders.orders(p)) do
+		local rows, ready = orders.progress(p, o)
+		if not ready then
+			local r = rows[1].done < rows[1].asked and 1 or 2
+			local req = r == 1 and o or o.poi
+			local f = rows[r].done / rows[r].asked
+			list[#list + 1] = { o = o, req = req, done = rows[r].done, asked = rows[r].asked, f = f }
+		end
+	end
+	table.sort(list, function(a, b) return a.f > b.f or (a.f == b.f and a.o.n < b.o.n) end)
+	local drop = map and orders.MATERIAL_OF[map]
+	if #list == 0 and not drop then return nil end
+	local y, h = 614, 100
+	local box = panel(g, x, y, w, h, "carta")
+	nail(g, x, y, w)
+	local wide = w >= 600
+	local col = wide and w - 316 or w - 40
+	local ix = x + 20
+	kit.text(g, T.lineup_title, ix, y + 30, 16, PAPER_HEAD, "start", 1.5)
+	for i = 1, math.min(2, #list) do
+		local l = list[i]
+		local ry = y + 30 + i * 28
+		local set = l.o.cliente and orders.CLIENT[l.o.cliente].set or "fabbro"
+		kit.piece(g, "frammento_" .. set, ix + 11, ry - 7, 24)
+		local who = l.o.cliente and T.clients[l.o.cliente] or T.receipt_smith
+		local cn = kit.text(g, T.progress:format(coins.format(l.done), coins.format(l.asked)), ix + col, ry, 18, PAPER_MUTE, "end")
+		fit(kit.text(g, T.lineup_row:format(who, request_text(l.req)), ix + 30, ry, 18, KC.INK), col - 30 - kit.width(cn) - 14)
+	end
+	if drop then
+		if wide then
+			local dx = x + w - 250
+			kit.rect(g, dx - 18, y + 16, 3, h - 32, PAPER_MUTE)
+			kit.text(g, T.lineup_drop, dx, y + 30, 16, PAPER_HEAD, "start", 1.5)
+			kit.piece(g, "materiale_" .. drop, dx + 20, y + 62, 40)
+			fit(kit.text(g, T.material_one[drop], dx + 50, y + 69, 18, KC.INK), 180)
+		else
+			-- narrow (4:3): on the heading's line, at its right end
+			kit.piece(g, "materiale_" .. drop, x + w - 34, y + 24, 30)
+			local dn = kit.text(g, T.lineup_drop, x + w - 56, y + 30, 16, PAPER_HEAD, "end", 1.5)
+			fit(dn, w - 240)
+		end
+	end
+	return box
 end
 
 return M

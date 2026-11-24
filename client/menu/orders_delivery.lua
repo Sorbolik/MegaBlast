@@ -396,7 +396,8 @@ function M.draw_receipt(a, h, s, n)
 	h.fit(kit.text(c, table.concat(sub, " · "), x, top + 98, 16, INK_MUTE), w)
 	local y = top + 140
 	for _, l in ipairs(list) do
-		kit.piece(c, l.icon, x + 16, y - 7, l.r.key == "trust" and 24 or 30)
+		local icon = kit.piece(c, l.icon, x + 16, y - 7, l.r.key == "trust" and 24 or 30)
+		if l.r.key == "trust" and l.r.total then gui.set_color(icon, h.metal(l.r.total)) end
 		h.fit(kit.text(c, l.label, x + 42, y, 20, KC.INK), w - 42 - 70)
 		kit.text(c, l.value, x + w, y, 20, l.r.key == "ossidiana" and INK_MUTE or KC.INK, "end")
 		y = y + 38

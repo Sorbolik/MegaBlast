@@ -71,6 +71,30 @@ images {
   image: "/assets/fucina/az_via.png"
 }
 images {
+  image: "/assets/fucina/badge_caronte.png"
+}
+images {
+  image: "/assets/fucina/badge_cerbero.png"
+}
+images {
+  image: "/assets/fucina/badge_flegias.png"
+}
+images {
+  image: "/assets/fucina/badge_malacoda.png"
+}
+images {
+  image: "/assets/fucina/badge_medusa.png"
+}
+images {
+  image: "/assets/fucina/badge_minosse.png"
+}
+images {
+  image: "/assets/fucina/badge_minotauro.png"
+}
+images {
+  image: "/assets/fucina/badge_plutone.png"
+}
+images {
   image: "/assets/fucina/barra_stendardo_chiara_cx.png"
 }
 images {

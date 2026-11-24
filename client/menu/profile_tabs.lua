@@ -34,6 +34,8 @@ local maps = require "sim.maps"
 local profile = require "menu.profile"
 local milestones = require "menu.milestones"
 local tag = require "ui.tag_card"
+local orders = require "sim.orders"
+local TO = require("lang.text").orders
 local T = require("lang.text").profile_tabs
 local TH = require("lang.text").home
 local common = require("lang.text").common
@@ -92,21 +94,30 @@ local function sheet_stats(s)
 	fit(kit.text(g, T.xp:format(thousands(p.xp or 0), thousands(need)), 164, 190, 16, KC.MUTE, "start", 0.4), 148)
 	-- the medals next to your name: the chosen ones, then an empty place
 	kit.text(g, T.next_to_name, 50, 250, 16, KC.HOT, "start", 0.6)
+	-- (the clients' badges too: sim/orders.lua badges)
+	local client_grade = {}
+	for _, b in ipairs(orders.badges(p)) do client_grade[b.id] = b.grado end
 	local shown = {}
 	for _, id in ipairs(p.badge) do
 		local t = milestones.BY_ID[id]
-		local grade = t and t.thresholds and milestones.grade(t, all[id] or 0) or 0
-		if grade > 0 and #shown < milestones.SHOWN then shown[#shown + 1] = { t = t, grade = grade } end
+		local grade = t and t.thresholds and milestones.grade(t, all[id] or 0) or client_grade[id] or 0
+		if grade > 0 and #shown < milestones.SHOWN then shown[#shown + 1] = { id = id, t = t, grade = grade } end
 	end
 	for i = 1, milestones.SHOWN do
 		local x = 50 + (i - 1) * 88
 		local b = shown[i]
 		if b then
 			kit.card(g, x, 264, 76, 80, KC.ROSE, { sel = true })
-			kit.piece(g, MEDALS[b.grade], x + 38, 292, 36)
-			kit.text(g, ROMAN[b.grade], x + 38, 298, 16, KC.INK, "middle")
-			fit(kit.text(g, b.t.badge, x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
-			kit.zone(g, s.buttons, x, 264, 76, 80, "badge:" .. b.t.id)
+			if b.t then
+				kit.piece(g, MEDALS[b.grade], x + 38, 292, 36)
+				kit.text(g, ROMAN[b.grade], x + 38, 298, 16, KC.INK, "middle")
+				fit(kit.text(g, b.t.badge, x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
+			else
+				local cl = b.id:sub(#orders.BADGE + 1)
+				tag.client_badge(cl, b.grade, x + 38 - g.ox, g.oy - 298, 40, g.node)
+				fit(kit.text(g, kit.upper(TO.clients[cl]), x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
+			end
+			kit.zone(g, s.buttons, x, 264, 76, 80, "badge:" .. b.id)
 		else
 			kit.card(g, x, 264, 76, 80, KC.ROSE, { off = true })
 			kit.text(g, "+", x + 38, 316, 34, KC.MUTE, "middle")
@@ -162,6 +173,32 @@ local function sheet_stats(s)
 			local nw = kit.width(n)
 			fit(kit.text(g, "/ " .. thousands(milestones.next(t, tot)), x + 66 + nw, y + 34, 16, KC.MUTE, "start", 0.3),
 				math.max(10, cw - 102 - nw))
+		end
+	end
+	-- the clients' badges (Sergio, 23 Nov: chosen here like the others), in the place
+	-- after the records: a row of up to four, two rows from five
+	if p.commesse and p.commesse.aperta then
+		local i = #milestones.WHITELIST
+		local x = 350 + (i % 2) * (cw + 14)
+		local y = 160 + math.floor(i / 2) * (ch + 12)
+		local list = orders.badges(p)
+		kit.card(g, x, y, cw, ch, KC.ROSE, { off = #list == 0 })
+		if #list == 0 then
+			local lines = kit.wrap(g, T.clients_none, 16, cw - 24)
+			for k = 1, math.min(2, #lines) do kit.text(g, lines[k], x + cw / 2, y + 30 + (k - 1) * 20, 16, KC.MUTE, "middle", 0.3) end
+		else
+			-- up to four: a row and under it the name, like the records'; from five, two rows
+			local two = #list > 4
+			local d = two and 26 or 34
+			if not two then fit(kit.text(g, T.clients_badges, x + 14, y + 57, 16, KC.SAND, "start", 0.3), cw - 28) end
+			for k, b in ipairs(list) do
+				local col, row = (k - 1) % 4, two and math.floor((k - 1) / 4) or 0
+				local bx = x + 14 + d / 2 + col * ((cw - 28 - d) / 3)
+				local by = y + (two and 22 + row * 32 or 26)
+				if picked[b.id] then kit.dot(g, bx, by, d + 10, GOLD) end
+				tag.client_badge(b.id:sub(#orders.BADGE + 1), b.grado, bx - g.ox, g.oy - by, d, g.node)
+				kit.zone(g, s.buttons, bx - (d + 8) / 2, by - (d + 8) / 2, d + 8, d + 8, "badge:" .. b.id)
+			end
 		end
 	end
 	-- how the medals work: at the foot, where there is room to read it

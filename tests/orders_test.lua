@@ -544,6 +544,23 @@ do
 	check(orders.trust(e, "minotauro") == 23 and orders.trust(e, "medusa") == 0, "trust from none to beyond two laps")
 end
 
+-- the clients' badges at 10 pearls: the grade is the thread's metal; shown with the stats' ones, valid online
+do
+	local milestones = require "sim.milestones"
+	local q = new()
+	orders.open(q)
+	q.commesse.clienti.caronte = { fiducia = 9 }
+	q.commesse.clienti.minosse = { fiducia = 10 }
+	q.commesse.clienti.cerbero = { fiducia = 34 }
+	local b = orders.badges(q)
+	check(#b == 2 and b[1].id == "cl_minosse" and b[1].grado == 1 and b[2].id == "cl_cerbero" and b[2].grado == 4,
+		"badges from 10 pearls, the grade from the lap (10: bronze, 34: ember)")
+	local shown = milestones.shown({}, { "cl_minosse" }, b)
+	check(#shown == 2 and shown[1].id == "cl_minosse" and shown[2].id == "cl_cerbero", "a chosen client badge comes first")
+	check(milestones.valid({ id = "cl_cerbero", grado = 4 }) and not milestones.valid({ id = "cl_lucifero", grado = 1 })
+		and not milestones.valid({ id = "cl_caronte", grado = 5 }), "an online client badge: known client, grade 1 to 4")
+end
+
 if failures > 0 then
 	print(failures .. " FAILED")
 	os.exit(1)

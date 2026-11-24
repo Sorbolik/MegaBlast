@@ -28,6 +28,7 @@
 
 local equip = require "sim.gear"
 local wallet = require "sim.wallet"
+local milestones = require "sim.milestones"
 
 local M = {}
 
@@ -127,6 +128,7 @@ M.CLIENT = {}
 for i, c in ipairs(M.CLIENTS) do
 	c.i = i
 	M.CLIENT[c.id] = c
+	milestones.CLIENTS[c.id] = true
 end
 -- the Smith's own order: always open, redone at once, the family is yours to pick
 M.SMITH = { impresa = "partite", quanti = 2 }
@@ -177,6 +179,26 @@ function M.init(p)
 	c.n = c.n or 0
 	c.consegne = c.consegne or 0
 	return p
+end
+
+-- The clients' badges (Sergio, 23 Nov): at TRUST_LAP pearls a client gives its own
+-- badge for the sheet, next to the stats' ones (sim/milestones.lua shown); its grade is
+-- the metal of the trust's thread (1 bronze ... 4 ember, the pieces' grades).
+M.BADGE = "cl_"
+function M.badge_grade(trust)
+	return math.min(4, math.floor((trust - 1) / M.TRUST_LAP) + 1)
+end
+
+-- { { id = "cl_caronte", grado }, ... } in the clients' order
+function M.badges(p)
+	local out = {}
+	local c = p.commesse
+	if not c then return out end
+	for _, cl in ipairs(M.CLIENTS) do
+		local t = c.clienti[cl.id] and c.clienti[cl.id].fiducia or 0
+		if t >= M.TRUST_LAP then out[#out + 1] = { id = M.BADGE .. cl.id, grado = M.badge_grade(t) } end
+	end
+	return out
 end
 
 function M.materials(p, id) return p.commesse.materiali[id] or 0 end
