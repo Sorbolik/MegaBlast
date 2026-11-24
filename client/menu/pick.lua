@@ -113,7 +113,7 @@ function M.new(icons, name_list, effects, commands)
 	-- the wheel: a tap opens ESCI next to it, another closes it again
 	s.fixed = {}
 	s.rotellina = ui.settings_button(s.fixed, "rotellina")
-	s.esci = ui.button(s.fixed, 32 + 12 + 80, 0, 160, 64, common.quit, "esci", nil, s.rotellina)
+	s.esci = kit.button_at(s.fixed, 32 + 12 + 70 + 90, 0, 180, 62, common.quit, "esci", "az_esci", s.rotellina)
 	s.buttons = {}
 	s.tops = { s.veil, s.root, s.tl.node, s.low.node, s.right.node, s.rotellina }
 	for _, n in ipairs(s.tops) do gui.set_enabled(n, false) end

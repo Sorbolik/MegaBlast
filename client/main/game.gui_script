@@ -525,8 +525,8 @@ local function open_wheel(self, is_open)
 	gui.set_enabled(self.btn_quit, is_open)
 	gui.set_enabled(self.btn_aim, is_open)
 	gui.set_enabled(self.btn_reread, is_open and self.mode == "local" and self.missione ~= nil and #self.vign_pages > 0)
-	gui.set_text(self.btn_aim_text, TM.aim_mode:format(string.upper(profile.setting(self.profilo, "mira"))))
-	gui.set_text(self.rotellina[2].testo, self.mode == "connecting" and TM.quit_search or TM.quit_match)
+	self.btn_aim_plate.set_label(TM.aim_mode:format(string.upper(profile.setting(self.profilo, "mira"))))
+	self.btn_quit_plate.set_label(self.mode == "connecting" and TM.quit_search or TM.quit_match)
 end
 
 local function set_controls_visible(self, visible)
@@ -5141,12 +5141,12 @@ function init(self)
 	self.btn_menu = ui.settings_button({}, "menu")
 	-- (in a list, for the controller light)
 	self.rotellina = {}
-	self.btn_retry = ui.button(self.rotellina, 32 + 12 + 80, 0, 160, 64, common.retry, "riprova", nil, self.btn_menu)
-	self.btn_quit = ui.button(self.rotellina, 32 + 12 + 160 + 12 + 130, 0, 260, 64, TM.quit_match, "esci", nil, self.btn_menu)
-	self.btn_aim = ui.button(self.rotellina, 32 + 12 + 130, -76, 260, 64, TM.aim, "mira", nil, self.btn_menu)
-	self.btn_aim_text = self.rotellina[3].testo
+	-- (the secondary buttons of the menus, each with its icon: Sergio, 23 Nov)
+	self.btn_retry = menu.kit.button_at(self.rotellina, 32 + 12 + 70 + 90, 0, 180, 62, common.retry, "riprova", "az_riprova", self.btn_menu)
+	self.btn_quit, self.btn_quit_plate = menu.kit.button_at(self.rotellina, 32 + 12 + 70 + 180 + 44 + 130, 0, 260, 62, TM.quit_match, "esci", "az_esci", self.btn_menu)
+	self.btn_aim, self.btn_aim_plate = menu.kit.button_at(self.rotellina, 32 + 12 + 70 + 130, -76, 260, 62, TM.aim, "mira", "az_mira", self.btn_menu)
 	-- RILEGGI: the big vignettes of this mission again (battle/vignette.lua)
-	self.btn_reread = ui.button(self.rotellina, 32 + 12 + 260 + 12 + 90, -76, 180, 64, TM.reread, "rileggi", nil, self.btn_menu)
+	self.btn_reread = menu.kit.button_at(self.rotellina, 32 + 12 + 70 + 260 + 44 + 100, -76, 200, 62, TM.reread, "rileggi", "az_rileggi", self.btn_menu)
 	gui.set_enabled(self.btn_reread, false)
 	-- the strip of the vignettes, above the match and its HUD
 	self.vign = CP.vignette.new()

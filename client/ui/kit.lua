@@ -748,6 +748,14 @@ function M.action(g, label, x, y, w, h, opt)
 	return M.secondary(g, label, x, y, w, h, o)
 end
 
+-- A secondary button centered at (x, y) of a node (GUI coordinates, like the old
+-- ui.button: the wheel of the battle, ESCI of the draft). Returns its node and plate
+function M.button_at(list_of, x, y, w, h, label, ui_action, icon, parent)
+	local p = M.secondary({ node = parent, ox = 0, oy = 0 }, label, x - w / 2, -y - h / 2, w, h, { icon = icon })
+	M.button(list_of, p, ui_action)
+	return p.node, p
+end
+
 -- A plate goes down when pressed, and comes back
 function M.press(p, down)
 	-- (the slabs have their own pressed drawing: M.secondary, on_press)
@@ -825,6 +833,17 @@ end
 -- the new one
 local tab_line = {}
 local TAB_HOT, TAB_COLD = vmath.vector4(1, 0.76, 0.23, 1), vmath.vector4(0.56, 0.64, 0.7, 1)
+
+-- One word like an open or closed tab, centered at mid, its baseline at base: red-hot
+-- over a flat ember glow, or cold (the choices, the loadouts: no light plates)
+function M.hot_word(g, t, mid, base, on, size_on, size_off)
+	if on then
+		local glow = shape("alone", mid - g.ox, g.oy - (base - size_on * 0.36), #t * size_on * 0.7 + 60, size_on * 2.2,
+			with_alpha(C.HOT_BOTTOM, 0.5), g.node)
+		gui.set_blend_mode(glow, gui.BLEND_ADD)
+	end
+	return M.text(g, t, mid, base, on and size_on or size_off, on and TAB_HOT or TAB_COLD, "middle", 1)
+end
 M.TAB_HOT, M.TAB_COLD = TAB_HOT, TAB_COLD
 
 -- the slant of the blade's cut across the tags (degrees, up to the right)
@@ -891,17 +910,6 @@ function M.tabs(g, list_of, x, y, tabs, active, accent, tag, cut)
 			end
 			M.zone(g, list_of, cx, y, slot, h, tab[2])
 			cx = cx + slot + 8 + (g.air and M.air(0.1) or 0)
-		else
-			local w = #tab[1] * 16 + 64
-			local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
-			local name = on and "piastrina_chiara" or "piastrina"
-			three(n, name, w, h)
-			local box = room(name, cx + w / 2, y + h / 2, w, h)
-			local size = 24
-			M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + size * 0.37, size,
-				on and C.INK or M.with_alpha(C.SAND, 0.85), "middle", 0.5)
-			list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
-			cx = cx + w + 8 + (g.air and M.air(0.1) or 0)
 		end
 	end
 	return cx

@@ -554,8 +554,8 @@ end
 -- a loadout's chip: never narrower than kit.least (Sergio, 19 Nov)
 local CHIP_W, CHIP_H = 84, 46
 
--- The three loadouts at (x, y): the label, then 1 2 3 on small plates, the
--- active one light; a closed one says from which level. Tapping: "<prefix>:<i>"
+-- The three loadouts at (x, y): the label, then 1 2 3 like tabs, the active one
+-- red-hot; a closed one says from which level. Tapping: "<prefix>:<i>"
 function M.loadouts(s, g, x, y, active, prefix, label)
 	kit.text(g, label, x, y + 14, 18, KC.MUTE, "start", 1)
 	local n = 0
@@ -563,8 +563,8 @@ function M.loadouts(s, g, x, y, active, prefix, label)
 		local bx = x + n * (CHIP_W + 10)
 		if loadout.open(i, s.prof.livello) then
 			local on = i == active
-			kit.strip(g, on and "piastrina_chiara" or "piastrina", bx, y + 24, CHIP_W, CHIP_H)
-			kit.text(g, tostring(i), bx + CHIP_W / 2, y + 57, 28, on and KC.INK or KC.SAND, "middle")
+			-- the number like a tab, red-hot the active one (Sergio, 23 Nov: no light plates)
+			kit.hot_word(g, tostring(i), bx + CHIP_W / 2, y + 60, on, 36, 28)
 			kit.zone(g, s.buttons, bx - 5, y + 18, CHIP_W + 10, CHIP_H + 12, prefix .. ":" .. i)
 			n = n + 1
 		else

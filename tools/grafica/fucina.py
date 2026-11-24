@@ -89,7 +89,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara", "barra_stendardo", "barra_stendardo_chiara", "solco", "filo_fondo", "filo_bordo"):    # (sfumati)
+    if nome not in ("barra_stendardo", "barra_stendardo_chiara", "solco", "filo_fondo", "filo_bordo"):    # (sfumati)
         SPAZI[nome] = spazio(im)
 
 
@@ -525,11 +525,8 @@ def fai_piccoli():
     for nome, a in zip(["stella", "stella_spenta", "medaglia", "ingranaggio", "corona", "freccia"], segni):
         intero(nome, a, 128)
     barre = griglia(os.path.join(p, "pezzo_barre_1.png"), [1, 1, 1, 1, 1], 600)
-    # (alto il doppio: la targa del profilo della home lo disegna a 76, Sergio 17 nov)
-    tre("guscio", barre[0], 128, 0.12)
-    tre("barra_brace", barre[1], 44, 0.1)
-    tre("barra_gelo", barre[2], 44, 0.1)
-    tre("barra_chiara", neutro(barre[1]), 44, 0.1)
+    # (guscio e barre di questo foglio non si usano piu': le barre sono il solco della
+    # home, fai_solco, Sergio 23 nov)
     intero("tacca", barre[3], 72)
     tondi = griglia(os.path.join(p, "pezzo_tondi_1.png"), [2, 2])
     for nome, a in zip(["tondo_ferro", "tondo_oro"], tondi):
@@ -684,7 +681,6 @@ SPAZI_MISURATI = {
 }
 # i pezzi lunghi in tre parti (nome, file, altezza, capo, cartella): si allunga solo il mezzo
 MENU_TRE = [
-    ("riga_scura", "riga_scura", 140, 0.08, "WB-044"),
     ("pillola", "pillola", 104, 0.2, "WB-044"),
 ]
 FAMIGLIE = ["fabbro", "corvo", "fornace", "leviatano", "vuoto"]

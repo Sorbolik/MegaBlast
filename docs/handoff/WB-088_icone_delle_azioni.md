@@ -110,4 +110,14 @@ e senza sporcizie»); a Codex vanno solo le icone, che sono disegni. Le icone ch
 
 ## Consegna di Codex
 
+Sei fogli (`azioni_1_1` ... `azioni_3_2`, ramo `design/WB-088`, 23 nov).
+
 ## Resoconto di Claude
+
+Nessuna icona scartata: china, avorio e tocchi piatti come R3, leggibili a 48 px. Scelte una per
+una fra le due varianti (`AZIONI` in `tools/grafica/fucina.py`, tagliate dalla griglia 4 × 2 e
+messe in un quadrato, `az_<nome>` a 160 px): dal foglio 2 della prima serie la spada di GIOCA,
+l'incudine avorio di POTENZIA, le porte di TORNA ed ESCI; la campanella oro, il bersaglio, il
+rotolo, i triangoli e l'occhio della seconda; il mirino e il libro con la freccia indietro della
+terza; le altre dalla variante 1. Per COMPRA della BOTTEGA resta la scaglia (non c'era un'icona).
+Simulazione su 16:9, 20:9 e 4:3: le icone sporgono dal capo sinistro come in R1.
