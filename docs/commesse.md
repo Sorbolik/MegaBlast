@@ -173,14 +173,14 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   entra nella Fornace (se no la Fornace diventa «compro Scaglie»), oppure l'Ossidiana non si
   vende.
 
-### Le commesse con la Fornace (proposta A, Claude, in attesa di conferma di Sergio)
+### Le commesse con la Fornace (proposta A, confermata da Sergio il 24 nov)
 
 - La consegna è **gratis**. Il premio è solo **frammenti della famiglia e fiducia**:
   piccola 1, media 2, settimana 6; la commessa del Fabbro 1 frammento della famiglia che
   scegli. Le Scaglie arrivano dalla Fornace.
 - Il **colpo buono** sparisce: la fortuna e l'abilità stanno nella Fornace.
 - Restano come sono: perle, benvenuto col Buono, chiamata, bacheca, scambio, cambio gratis.
-- Scartata per ora (B): consegna gratis col premio intero, perché sarebbe un regalo in più a
+- Scartata (B): consegna gratis col premio intero, perché sarebbe un regalo in più a
   ogni consegna e costringerebbe ad alzare ancora i prezzi.
 
 ## Consegna (passo 6)
