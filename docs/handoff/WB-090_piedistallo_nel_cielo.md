@@ -66,4 +66,11 @@ Sergio, 24 nov: il piedistallo nuovo lo disegna Codex (non le bozze di Claude), 
 
 ## Consegna di Codex
 
+- `art/WB-090/piedistalli_cielo_1.png` e `piedistalli_cielo_1.txt` — filetto chiaro principalmente interno.
+- `art/WB-090/piedistalli_cielo_2.png` e `piedistalli_cielo_2.txt` — filetto chiaro principalmente esterno.
+
+Due PNG nativi da 1536×1024. Tre tentativi per variante con ImageGen, selezionato il terzo in entrambi i casi. Prompt originale e riferimenti nell'ordine R1, R2, R3, R4.
+
+Ogni foglio contiene quattro piedistalli interi e separati con un piano libero, senza personaggio, scritte, terreno o ombra a terra. In anteprima i contorni si distinguono sui cinque colori campionati da R4, anche nel cielo più scuro. Il verde di fondo si discosta da #00FF00 e le campiture mostrano lievi variazioni tonali. Restano da verificare la resa nella home con l'apprendista e il ricalco vettoriale.
+
 ## Resoconto di Claude
