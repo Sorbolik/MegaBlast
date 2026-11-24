@@ -128,6 +128,45 @@ function M.reachable(wall, i)
 	return false
 end
 
+-- How easy each mould of a wall is (Sergio, 24 Nov: a mould with others in front of
+-- it in the drop's way, or a low one where the dots stop high, is harder even when it
+-- is not the farthest): of EASE_A x EASE_P throws over every angle and power, how many
+-- end in it (bounces too). Returns { [slot] = count }
+M.EASE_A, M.EASE_P = 30, 20
+function M.ease(wall)
+	local n = {}
+	for _, m in ipairs(wall) do n[m.slot] = 0 end
+	for i = 0, M.EASE_A - 1 do
+		local a = math.rad(2 + 84 * (i + 0.5) / M.EASE_A)
+		for j = 0, M.EASE_P - 1 do
+			local r = M.fly(a, 0.1 + 0.9 * (j + 0.5) / M.EASE_P, wall, {})
+			if r.esito == "stampo" then n[r.slot] = n[r.slot] + 1 end
+		end
+	end
+	return n
+end
+
+-- The prizes by how hard the moulds really are: the sizes stay (the far ones small),
+-- the Scaglie moulds swap their amounts and the fragment ones their counts so the
+-- harder one always gives more (same totals per wall)
+function M.by_ease(wall)
+	local n = M.ease(wall)
+	local function hardest_last(a, b)
+		if n[a.slot] ~= n[b.slot] then return n[a.slot] > n[b.slot] end
+		return a.slot < b.slot
+	end
+	for _, field in ipairs({ "scaglie", "n" }) do
+		local ms, vals = {}, {}
+		for _, m in ipairs(wall) do
+			if m[field] then ms[#ms + 1] = m; vals[#vals + 1] = m[field] end
+		end
+		table.sort(vals)
+		table.sort(ms, hardest_last)
+		for i, m in ipairs(ms) do m[field] = vals[i] end
+	end
+	for _, m in ipairs(wall) do m.ease = n[m.slot] end
+end
+
 -- The wall of key for seed (lucky: the slot of the double mould, or nil):
 -- { { slot, x, y, w, inner, depth, chain, small, scaglie | set + n, lucky } }
 local LAYOUTS, LAYOUTS_N = {}, 0
@@ -182,10 +221,13 @@ function M.layout(key, seed, lucky)
 			small = pz.w < B, scaglie = pz.scaglie, lucky = lucky == i or nil }
 		if sp.y > 100 then m.chain = M.CEILING - sp.y end
 		if pz.frammenti then m.set, m.n = equip.SETS[hash(seed, key, i, "famiglia") % #equip.SETS + 1].id, pz.frammenti end
+		out[i] = m
+	end
+	M.by_ease(out)
+	for _, m in ipairs(out) do
 		if m.lucky then
 			if m.scaglie then m.scaglie = m.scaglie * 2 else m.n = m.n * 2 end
 		end
-		out[i] = m
 	end
 	-- (a few walls kept: the same one is asked at every throw and every frame)
 	if LAYOUTS_N > 16 then LAYOUTS, LAYOUTS_N = {}, 0 end
