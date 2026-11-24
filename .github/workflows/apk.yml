@@ -115,10 +115,10 @@ jobs:
           if [ "$GRANDE" = "true" ]; then
             printf '\n⚠️ APK oltre i 50 MB di Telegram: scaricalo da %s (Artifacts)\n' "$RUN_URL" >> "$RUNNER_TEMP/didascalia.txt"
             curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \
-              -F "chat_id=$CHAT" -F "text=<$RUNNER_TEMP/didascalia.txt"
+              -F "chat_id=$CHAT" -F 'link_preview_options={"is_disabled":true}' -F "text=<$RUNNER_TEMP/didascalia.txt"
           else
             curl -fsS -o /dev/null "$API/bot$TOKEN/sendDocument" \
               -F "chat_id=$CHAT" -F "caption=<$RUNNER_TEMP/didascalia.txt" -F "document=@$RUNNER_TEMP/MegaBlast.apk"
           fi
           curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \
-            -F "chat_id=$CHAT" -F "text=<$RUNNER_TEMP/novita.txt"
+            -F "chat_id=$CHAT" -F 'link_preview_options={"is_disabled":true}' -F "text=<$RUNNER_TEMP/novita.txt"
