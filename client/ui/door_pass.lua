@@ -164,7 +164,8 @@ end
 local function home_on(h, on)
 	h.under = on
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, on) end
-	gui.set_enabled(h.slit, false)
+	gui.set_enabled(h.ped_light, false)
+	h.sheen = false
 end
 
 -- DOORS ---------------------------------------------------------------------------

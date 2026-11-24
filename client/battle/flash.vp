@@ -1,0 +1,26 @@
+#version 140
+
+// I vertici del lampo (battle/flash.fp): come la GUI di sempre, più il punto in
+// pixel della finestra (lo spazio di gui.get_screen_position) per la fascia lucente
+// del piedistallo della home (menu/home.lua).
+
+in highp vec3 position;
+in mediump vec2 texcoord0;
+in mediump vec4 color;
+
+out mediump vec2 var_texcoord0;
+out mediump vec4 var_color;
+out highp vec2 var_pos;
+
+uniform vs_uniforms
+{
+    highp mat4 view_proj;
+};
+
+void main()
+{
+    var_texcoord0 = texcoord0;
+    var_color = vec4(color.rgb * color.a, color.a);
+    var_pos = position.xy;
+    gl_Position = view_proj * vec4(position.xyz, 1.0);
+}
