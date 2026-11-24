@@ -91,4 +91,12 @@ Approvata da Claude il 24 nov: Sergio ha scelto la fiammata, il coperchio sigill
 
 ## Consegna di Codex
 
+- `art/WB-094/coperchi_1.png` e `coperchi_2.png`, con i rispettivi `.txt` — 1536×1024, un tentativo per variante.
+- `art/WB-094/fiammata_1.png` e `fiammata_2.png`, con i rispettivi `.txt` — 1536×1024, un tentativo per la prima variante e tre per la seconda (selezionato il terzo).
+- `art/WB-094/medaglia_jackpot_1.png` e `medaglia_jackpot_2.png`, con i rispettivi `.txt` — 1024×1024, un tentativo per variante.
+
+Prompt originali eseguiti con ImageGen e riferimenti nell'ordine indicato. R4 è il ritratto di una cliente, anche se la scheda lo descrive come esempio di medaglia su disco. È stato allegato come indicato. Ho ridimensionato coperchi e fiammate in proporzione e centrato i fogli su verde. Per le medaglie ho ritagliato solo il verde laterale.
+
+Controllati numero, separazione, assenza di scritte e misure. I coperchi hanno il centro vuoto e la cucitura luminosa in basso, con larghezze sopra 400 e 280 px rispettivamente. Le medaglie superano 700 px di larghezza. Le fiammate hanno quattro pose con basi allineate. I fotogrammi centrali a piena altezza misurano circa 869–941 px. Apertura e chiusura sono più corte secondo il prompt e non raggiungono il criterio di 700 px per ogni sagoma. Nella seconda variante, le pose occupano solo la parte centrale della larghezza della tela. Il fondo è verde, con scostamenti da #00FF00. Restano da verificare l'accoppiamento dei coperchi agli stampi e la resa in gioco della sequenza.
+
 ## Resoconto di Claude

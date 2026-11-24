@@ -1,0 +1,13 @@
+Image 1 is a rough draft: in the top middle a column of fire bursts up from the mouth of a mould when a drop of molten obsidian falls in (the draft fire is only a placeholder for the idea and the size). Image 2 shows the drop of molten obsidian of our cartoon game: a violet-black ball with glowing magenta-orange cracks; its colors are the colors of this fire.
+
+Draw FOUR frames of a short burst of OBSIDIAN FIRE shooting straight UP, in the style of a cartoon comic (thick slightly irregular black ink outline, flat colors, flat highlights), on plain green (#00FF00), side by side from left to right, each frame in its own quarter of the image, each frame as TALL as the image (at least 700 px) and about a third as wide as tall, all four with the same BASE: a flat narrow mouth at the bottom center of each quarter, as wide as a quarter of its frame, where the fire comes out.
+- frame 1: the fire just bursts out, a short fat tongue of flame, one third of the height;
+- frame 2: a tall column at full height, narrow at the base and wider at the top, with curling tongues on the sides;
+- frame 3: the column at full height breaking up at the top into flying tongues and sparks;
+- frame 4: the column falling back, only the lower half left, thin and broken, a few sparks.
+The fire is white-yellow at its core (#FFF1C2), then bright orange (#FF7A1A) and gold (#FFB703), with violet and magenta tongues and edges (#C24BFF, #FF3DA5) like the cracks of the drop of image 2. A few round sparks in the same colors around it.
+Nothing else: no mould, no ground, no smoke clouds, no letters, no glow halo, no background color other than the green.
+
+Riferimenti in ordine: art/WB-094/riferimenti/R2_bozze_animate.png, art/WB-094/riferimenti/R3_goccia.png
+ImageGen. Un tentativo. Foglio ridimensionato in proporzione e centrato su verde. Sagome alte circa 333, 941, 933 e 603 px, scintille incluse. Basi allineate, con lieve variazione di larghezza. Verde campionato #03FA02.
+Il verde differisce da #00FF00 esatto.
