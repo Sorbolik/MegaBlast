@@ -147,6 +147,12 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
 - **L'unico posto dove l'Ossidiana diventa valuta.** Una scheda **FORNACE** nella BOTTEGA,
   fra COMMESSE e BANCO. Una **colata costa 20 Ossidiana** e la paghi tu col pulsante, ogni
   volta: niente colate automatiche, niente inviti a comprare.
+- **La scheda FORNACE è il muro in vetrina** (Sergio, 24 nov, proposte A e A su
+  https://claude.ai/artifact/NtdiVrugGEEvKiBsyifAv2): il Fabbro al banco, il muro di oggi in
+  piccolo coi premi, cosa resta e fra quanto arriva il muro nuovo, FONDI e COLA. Con COLA il
+  muro si allarga a tutto schermo, le 20 gemme volano dal contatore nel mestolo e si fondono
+  nella goccia, compaiono i tiri; finiti i tiri si torna alla vetrina e si può colare ancora
+  finché il muro ha premi.
 - **Come si gioca**: l'apprendista tira una goccia di Ossidiana fusa con **la stessa mira
   della battaglia** (trascini, vedi l'inizio della traiettoria, lasci) negli stampi sul muro
   della fucina. **Tre tiri per colata.**
@@ -165,12 +171,16 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   trema e il premio vola al contatore.
 - **La traiettoria è quasi tutta** (Sergio, 24 nov): i puntini della mira si vedono per circa l'80%
   del volo, non fino in fondo: l'ultimo tratto, dove la goccia cade nello stampo, lo indovini tu.
-- **Gli stampi**: 12 sul muro, sempre negli stessi posti; 6 di Scaglie (15, 20, 30, 50, 60,
-  80) e 6 di frammenti (x1 o x2), **255 Scaglie e 8 frammenti per muro**. Quelli piccoli,
-  lontani o appesi alle catene rendono di più; il più lontano chiede circa il 96% della forza.
-  Mirando scegli la famiglia che ti serve. Le catene per ora stanno ferme.
-- **Il muro cambia tre volte al giorno, alle 5, alle 13 e alle 21** (idea di Sergio): le
-  famiglie degli stampi di frammenti cambiano, e gli stampi riempiti tornano vuoti. Uno
+- **Gli stampi**: 12 sul muro, 6 di Scaglie (15, 20, 30, 50, 60, 80) e 6 di frammenti (x1 o
+  x2), **255 Scaglie e 8 frammenti per muro**. Più lontano e più in alto, più rende; quelli
+  lontani sono piccoli e chiedono quasi tutta la forza. Mirando scegli la famiglia che ti
+  serve. Le catene (degli stampi alti) per ora stanno ferme.
+- **Il muro cambia tre volte al giorno, alle 5, alle 13 e alle 21** (idea di Sergio) e
+  **ogni muro nuovo mette gli stampi in posti nuovi** (Sergio, 24 nov), diversi per ogni
+  giocatore (un seme suo): sempre staccati e tutti centrabili (il gioco lo controlla
+  quando li appende). Le famiglie cambiano e gli stampi riempiti tornano vuoti.
+- **Lo stampo fortunato** (Sergio, 24 nov): ogni tanto un muro ha uno stampo che dà il
+  doppio, circa un muro su 8 e di sicuro entro 15 muri (il conto dei muri senza è nel profilo). Uno
   stampo pieno non paga due volte: una goccia che lo prende è come il ferro, va nel secchio.
   Una colata cominciata resta sul suo muro anche se intanto il muro cambia; non si torna mai
   a un muro vecchio.
