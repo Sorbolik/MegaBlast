@@ -9,8 +9,13 @@ data, e con una riga in [decisioni/progressione.md](decisioni/progressione.md).
 Stato (23 nov, sera): tutto quello che dice questo file è nel gioco, tranne quello che
 aspetta altri: le martellate di Gabriella, le battute dei custodi da rivedere con Sergio,
 i clienti veri (arrivano coi gironi) e la porta BOTTEGA chiusa prima di Forgia 6 (Sergio
-non ha ancora deciso: per ora è aperta). Il minigioco della forgia (poker «Cinque Fiamme»,
-martello a tempo) è un lavoro a parte, dopo.
+non ha ancora deciso: per ora è aperta).
+
+**24 nov, cambio di Sergio**: l'Ossidiana non si paga più alla consegna. Si spende solo
+nella **Fornace**, il minigioco del Fabbro (Il Tiro nella Fucina, sezione più sotto):
+«è strano pagare per aver finito una missione, il minigioco invece è una scelta
+consapevole». Le parti di questo file che parlano di Ossidiana alla consegna, del cambio
+e del colpo buono valgono finché la Fornace non è nel gioco.
 
 ## A cosa servono
 
@@ -32,6 +37,8 @@ Principi di Sergio che reggono tutto:
 - I conti si fanno in **ore di un giocatore forte** (`tools/economia/conti.lua`).
 
 ## Il giro
+
+(Dal 24 nov: al punto 2 la consegna è gratis, e l'Ossidiana va nella Fornace.)
 
 1. Giochi online: le commesse in bacheca avanzano da sole (niente «accetta»).
 2. Quando una è pronta la consegni nella BOTTEGA e paghi la sua Ossidiana.
@@ -137,6 +144,44 @@ Principi di Sergio che reggono tutto:
   minigioco, che prenderà quel posto.
 - Il **Lingotto** delle prime bozze non esiste più.
 - L'Ossidiana data al Fabbro non va nelle firme: è una scelta vera fra le due.
+
+## La Fornace: Il Tiro nella Fucina (24 nov)
+
+Scelto da Sergio il 24 nov fra tre proposte (https://claude.ai/artifact/JSm7FyZ8HkhchARfBT8LTU:
+scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a tempo).
+
+- **L'unico posto dove l'Ossidiana diventa valuta.** Una scheda **FORNACE** nella BOTTEGA,
+  fra COMMESSE e BANCO. Una **colata costa 20 Ossidiana** e la paghi tu col pulsante, ogni
+  volta: niente colate automatiche, niente inviti a comprare.
+- **Come si gioca**: l'apprendista tira una goccia di Ossidiana fusa con **la stessa mira
+  della battaglia** (trascini, vedi l'inizio della traiettoria, lasci) negli stampi sul muro
+  della fucina. **Tre tiri per colata.**
+- **Gli stampi**: alcuni di Scaglie, altri di frammenti di una famiglia. Quelli piccoli,
+  lontani o appesi alle catene che dondolano rendono di più. A ogni colata cambiano posto.
+  Mirando scegli la famiglia che ti serve.
+- **Mai zero**: una goccia fuori dagli stampi cade nel secchio (20 Scaglie). Tre centri
+  su tre danno un tiro in più.
+- **Il cambio**: una colata rende in media circa **130 Scaglie di valore** (frammento = 60),
+  dal peggio al meglio circa da 0,8 a 1,2 volte la media. Da ritarare coi conti delle ore
+  (`tools/economia/conti.lua`) quando c'è il codice.
+- **Il server decide**: il telefono manda i tre tiri (angolo e forza), il server rifà la
+  colata con la stessa simulazione (seme del server) e paga. Il risultato non lo dice il
+  telefono.
+- **Arte**: stampi, goccia, catene e secchio da Codex (scheda in `docs/handoff/`); lo sfondo
+  è quello della fucina che c'è già.
+- **Da decidere prima di vendere l'Ossidiana**: l'Ossidiana comprata con soldi veri non
+  entra nella Fornace (se no la Fornace diventa «compro Scaglie»), oppure l'Ossidiana non si
+  vende.
+
+### Le commesse con la Fornace (proposta A, Claude, in attesa di conferma di Sergio)
+
+- La consegna è **gratis**. Il premio è solo **frammenti della famiglia e fiducia**:
+  piccola 1, media 2, settimana 6; la commessa del Fabbro 1 frammento della famiglia che
+  scegli. Le Scaglie arrivano dalla Fornace.
+- Il **colpo buono** sparisce: la fortuna e l'abilità stanno nella Fornace.
+- Restano come sono: perle, benvenuto col Buono, chiamata, bacheca, scambio, cambio gratis.
+- Scartata per ora (B): consegna gratis col premio intero, perché sarebbe un regalo in più a
+  ogni consegna e costringerebbe ad alzare ancora i prezzi.
 
 ## Consegna (passo 6)
 
