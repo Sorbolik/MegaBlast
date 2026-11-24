@@ -9,8 +9,9 @@
 // lontano il diavoletto resta più nitido (Sergio, 2 nov; come pieces.fp)
 // La costante band (per nodo, gui.set) accesa (w 1) fa invece la fascia lucente che
 // passa sul piedistallo della home (menu/home.lua), sommata sopra il disegno: x il
-// mezzo della fascia in pixel della finestra (contato su x + 0,35 y), y mezza
-// larghezza, z quanto è forte. I bordi sfumano: niente scatti al pixel (Sergio, 24 nov).
+// mezzo della fascia in pixel della finestra, y mezza larghezza, z quanto è forte.
+// Dritta e piena come col ritaglio di prima, ma col bordo di un pixel sfumato: scorre
+// liscia anche fra un pixel e l'altro (Sergio, 24 nov).
 
 in mediump vec2 var_texcoord0;
 in mediump vec4 var_color;
@@ -31,8 +32,7 @@ void main()
 {
     mediump vec4 t = texture(texture_sampler, var_texcoord0.xy, -0.5);
     if (band.w > 0.5) {
-        highp float d = abs(var_pos.x + 0.35 * var_pos.y - band.x) / max(band.y, 1.0);
-        mediump float k = 1.0 - smoothstep(0.0, 1.0, d);
+        mediump float k = clamp(band.y - abs(var_pos.x - band.x) + 0.5, 0.0, 1.0);
         out_fragColor = vec4(t.rgb * LUCE * (k * band.z) * var_color.a, 0.0);
         return;
     }

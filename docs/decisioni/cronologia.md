@@ -368,4 +368,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 24 nov | **Allenamento**: i modi come tab della pagina, DIFFICOLTÀ allineata, mappe grandi a scorrimento; tolta la partita sullo stesso telefono. (Sergio; dettagli Claude) | interfaccia.md, questa PR |
 | 24 nov | **Porte della home** colorate con le icone di WB-089, e un padding solo per le scritte di tutti i pulsanti. (Sergio; dettagli Claude) | interfaccia.md, questa PR |
 | 24 nov | **Home: la roccia del Limbo al posto della grata e dello zainetto (WB-090 2B) e il cielo all'ora del telefono**: mattina, mezzogiorno, pomeriggio con i loro dettagli in aria, la sera di prima, la notte con la luna; passaggio di 3 s. (Sergio; dettagli Claude) | interfaccia.md, questa PR |
-| 24 nov | **Home: piedistallo e apprendista un po' più in basso, la fascia lucente sul piedistallo liscia e sfumata** (Sergio) | interfaccia.md, questa PR |
+| 24 nov | **Home: piedistallo e apprendista un po' più in basso, la fascia lucente sul piedistallo dritta come prima ma liscia** (Sergio) | interfaccia.md, questa PR |

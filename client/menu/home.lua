@@ -57,8 +57,9 @@ local PED_X = 640 - PED_W / 2
 local FEET = PED_TOP + 0.17 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
--- half the width of the light band that runs over the pedestal
-local SHEEN_HALF = 46
+-- half the width of the light band that runs over the pedestal (straight and even, as
+-- the old slit: Sergio, 24 Nov, "mi piaceva lineare")
+local SHEEN_HALF = 35
 local SHEEN = vmath.vector4()
 -- the profile's banner (WB-075): its height on screen, its width per unit of height,
 -- and where its parts are on the drawing, as fractions of its width and height:
@@ -136,8 +137,8 @@ function M.new(color)
 	h.mid = mid
 	h.ped = kit.pic(mid, "piedistallo", PED_X, PED_TOP, PED_W, PED_H)
 	-- the light that runs over the pedestal: a copy added on top whose shader shows only a
-	-- soft band (the flash's "band", battle/flash.fp), placed in window pixels by two marks
-	-- that ride along (Sergio, 24 Nov: the band seen through a moving cut stuttered)
+	-- straight band (the flash's "band", battle/flash.fp), placed in window pixels by two
+	-- marks that ride along (Sergio, 24 Nov: the band seen through a moving cut stuttered)
 	h.ped_light = kit.pic(mid, "piedistallo", PED_X, PED_TOP, PED_W, PED_H)
 	gui.set_material(h.ped_light, "lampo")
 	gui.set_blend_mode(h.ped_light, gui.BLEND_ADD)
@@ -254,10 +255,10 @@ local function glint(h)
 	-- where it is
 	local cy = PED_H / 2
 	gui.cancel_animations(h.sheen_at, "position.x")
-	gui.set_position(h.sheen_at, vmath.vector3(PED_X - 640 - SHEEN_HALF, cy, 0))
+	gui.set_position(h.sheen_at, vmath.vector3(PED_X - 640 - 40, cy, 0))
 	gui.set_enabled(h.ped_light, true)
 	h.sheen = true
-	gui.animate(h.sheen_at, "position.x", PED_X - 640 + PED_W + SHEEN_HALF, gui.EASING_INOUTSINE, 1.4, 0, function()
+	gui.animate(h.sheen_at, "position.x", PED_X - 640 + PED_W + 40, gui.EASING_INOUTSINE, 1.3, 0, function()
 		h.sheen = false
 		gui.set_enabled(h.ped_light, false)
 	end)
@@ -454,12 +455,9 @@ function M.update(h, dt)
 	-- (scoria takes the flash down by dt * 6 and shows 0.85 * 1.5 of what is left)
 	if h.glow > 0 then h.corpo.flash = h.glow / 1.275 + dt * 6 end
 	if h.sheen then
-		-- the band in window pixels (as the shader sees the vertices), soft at both ends
+		-- the band in window pixels (as the shader sees the vertices), every frame
 		local p, e = gui.get_screen_position(h.sheen_at), gui.get_screen_position(h.sheen_edge)
-		local x = gui.get_position(h.sheen_at).x
-		local u = (x - (PED_X - 640 - SHEEN_HALF)) / (PED_W + 2 * SHEEN_HALF)
-		SHEEN.x, SHEEN.y = p.x + 0.35 * p.y, math.abs(e.x - p.x)
-		SHEEN.z, SHEEN.w = 0.5 * math.sin(math.pi * math.min(1, math.max(0, u))), 1
+		SHEEN.x, SHEEN.y, SHEEN.z, SHEEN.w = p.x, math.abs(e.x - p.x), 0.45, 1
 		gui.set(h.ped_light, "band", SHEEN)
 	end
 	scoria.update(h.corpo, dt, h.st)
