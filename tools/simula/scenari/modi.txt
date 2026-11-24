@@ -3,10 +3,10 @@
 # 2 contro 2 i quattro cartellini dello schieramento finivano i nodi della GUI
 # (erano 2048), lo script si fermava e la partita non partiva.
 # Allenamento 2 contro 2, tutti contro tutti e 1 contro 1 (lo schieramento
-# finisce da solo, poi Rosso 1 sceglie e i bot pure), poi stesso telefono
-# 2 contro 2 (lo schieramento si chiude con un tocco). La campagna è in
+# finisce da solo, poi Rosso 1 sceglie e i bot pure), poi la partita di prova
+# degli scenari (due persone sullo stesso telefono) 2 contro 2 (lo schieramento si chiude con un tocco). La campagna è in
 # scelta_forgia.txt, l'online in scelta_online.txt.
-# Allenamento: MODO 1v1 547 470, 2v2 761 470, ffa 1110 470; GIOCA in basso a destra.
+# Allenamento: i modi sono i tab in alto (1v1 520, 2v2 731, ffa 999 a 55 dall'alto); GIOCA in basso a destra.
 # Con la striscia di quattro cartellini la rotellina della scelta scende (62 608).
 imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_profilo 1
@@ -16,7 +16,7 @@ imposta giocatori 2v2
 aspetta 4
 tocca 220 172                      # ALLENAMENTO
 aspetta 1
-tocca 761 470                       # 2 CONTRO 2
+tocca_bordo 731 55 alto sinistra   # 2 CONTRO 2
 aspetta 0.3
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
@@ -36,7 +36,7 @@ tocca 62 658                        # rotellina
 aspetta 0.3
 tocca 408 658                       # ESCI: all'allenamento
 aspetta 1
-tocca 1110 470                      # TUTTI CONTRO TUTTI
+tocca_bordo 999 55 alto sinistra  # TUTTI CONTRO TUTTI
 aspetta 0.3
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
@@ -55,7 +55,7 @@ tocca 62 658
 aspetta 0.3
 tocca 408 658
 aspetta 1
-tocca 547 470                       # 1 CONTRO 1
+tocca_bordo 520 55 alto sinistra   # 1 CONTRO 1
 aspetta 0.3
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
@@ -74,9 +74,10 @@ tocca 62 658
 aspetta 0.3
 tocca 408 658
 aspetta 1
-tocca 761 551                       # STESSO TELEFONO (nell'allenamento, dal 14 nov)
-aspetta 0.3
-tocca 761 470                       # 2 CONTRO 2
+tocca 36 60                         # indietro: alla home
+aspetta_stato modo=menu 3
+aspetta 0.6
+tocca 222 148                       # PARTITA DI PROVA (zona nascosta della home), 2 contro 2
 aspetta 0.3
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5

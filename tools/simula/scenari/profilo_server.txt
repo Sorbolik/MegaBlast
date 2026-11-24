@@ -12,7 +12,7 @@ server 2v2 0
 aspetta 1
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca 222 148                      # STESSO TELEFONO
+tocca 222 148                      # PARTITA DI PROVA (zona nascosta della home)
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 mira 150 100 0.4

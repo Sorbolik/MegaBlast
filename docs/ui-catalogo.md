@@ -67,13 +67,13 @@ tasti, profilo, annulla, ripristina, uno_contro_uno, via.
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| `kit.tabs`: la scritta incandescente, l'aperta oro con l'alone (sempre: le piastrine non ci sono più) | ZAINO, BOTTEGA, PROFILO, EVENTI, CAMPAGNA (ADDESTRAMENTO, LA FORGIA, LA STORIA) | ✅ |
+| `kit.tabs`: la scritta incandescente, l'aperta oro con l'alone (sempre: le piastrine non ci sono più) | ZAINO, BOTTEGA, PROFILO, EVENTI, CAMPAGNA (ADDESTRAMENTO, LA FORGIA, LA STORIA), ALLENAMENTO (i modi, accanto al titolo) | ✅ |
 
 ## 6. Scelta (una fra poche opzioni)
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| `kit.choice`: le parole in fila, la scelta incandescente (`kit.hot_word`) | ALLENAMENTO (CHI C'È, MODO, BOT), stanza privata, IMPOSTAZIONI | ✅ |
+| `kit.choice`: le parole in fila, la prima allineata alla sua etichetta, una colonna larga `w` ciascuna; la scelta incandescente (`kit.hot_word`) | ALLENAMENTO (DIFFICOLTÀ), stanza privata, IMPOSTAZIONI | ✅ |
 | `gear_ui.loadouts`: 1 2 3 come parole (`kit.hot_word`) | ZAINO (ASSETTO) | ✅ |
 
 ## 7. Filtro ed etichetta
@@ -88,7 +88,7 @@ tasti, profilo, annulla, ripristina, uno_contro_uno, via.
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| card minimale (`pannello`, a vettori in `fai_card_filo`): fondo scuro, un filo nella cornice, un punto in ogni angolo. Il filo dice lo stato: ferro (riposo), oro `pannello_caldo` (scelta, il tuo), gelo, brace, spento | `kit.card`, `kit.panel`, `kit.mode_card` (GIOCA ONLINE): mappe, missioni, armi, posti, record, partite, statistiche, eventi, impostazioni, cartellini dei giocatori (il tuo in oro), conto | ✅ |
+| card minimale (`pannello`, a vettori in `fai_card_filo`): fondo scuro, un filo nella cornice, un punto in ogni angolo. Il filo dice lo stato: ferro (riposo), oro `pannello_caldo` (scelta, il tuo), gelo, brace, spento | `kit.card`, `kit.panel`, `kit.mode_card` (GIOCA ONLINE): mappe (ALLENAMENTO: grandi, in una fila che scorre col dito, la rotella o la luce del controller, senza frecce), missioni, armi, posti, record, partite, statistiche, eventi, impostazioni, cartellini dei giocatori (il tuo in oro), conto | ✅ |
 | caselle dei pezzi `casella/casella_scelta` | ZAINO, BOTTEGA BANCO | ✅ (oggetti) |
 | `kit.drawn_plate("bivio_piastra_*")` (WB-062) | ZAINO SIGILLI | ✅ |
 | `kit.paper`: il cartellino di carta col chiodo (WB-085) | COMMESSE | ✅ (oggetto del Fabbro) |

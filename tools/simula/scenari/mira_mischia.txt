@@ -8,7 +8,7 @@ imposta prova_vicino 60
 imposta zoom 1
 
 aspetta 4
-tocca 222 148                      # STESSO TELEFONO
+tocca 222 148                      # PARTITA DI PROVA (zona nascosta della home)
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1.5
 premi 3                             # Mantice

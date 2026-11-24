@@ -1,5 +1,5 @@
 # Home: GIOCA ONLINE (nella build di prova manca l'estensione WebSocket, quindi
-# compare il messaggio), ritorno alla home e STESSO TELEFONO (nell'ALLENAMENTO).
+# compare il messaggio), ritorno alla home e ALLENAMENTO.
 # (21 nov: GIOCA ONLINE sta in basso a destra nella home e apre la sua pagina,
 # con GIOCA nello stesso posto)
 
@@ -18,7 +18,6 @@ aspetta 0.6
 foto 04_di_nuovo_home
 tocca 220 172                       # ALLENAMENTO
 aspetta 1
-tocca 761 551                       # STESSO TELEFONO
 aspetta 0.3
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 8
