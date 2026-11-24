@@ -216,45 +216,101 @@ function M.launch(angle, power)
 		math.cos(angle) * speed, math.sin(angle) * speed
 end
 
--- Is (x, y) inside the iron of mould m (its body below the rim, or the rim's
--- edges beside the opening)?
-local function in_iron(m, x, y)
-	local dx = math.abs(x - m.x)
-	if dx > m.w / 2 + M.DROP_R then return false end
-	if y > m.y + M.DROP_R or y < m.y - m.depth then return false end
-	return dx > m.inner or y < m.y - M.DROP_R
+-- The drop is a ball (Sergio, 24 Nov: «se la colata prende un bordo e rimbalza, deve
+-- poter arrivare in un altro contenitore più in basso, finché non tocca terra è
+-- valido»): it bounces off the moulds' iron and counts until it touches the floor.
+-- Each mould is a round belly (a circle under the rim, as wide as the mould) and two
+-- round rim lips beside the opening; a full mould is closed by its metal at the rim.
+M.BOUNCE = 0.5           -- of the speed into the iron, what comes back
+M.SLIDE = 0.92           -- of the speed along the iron, what stays at each bounce
+M.BELLY = 0.4            -- the belly's radius, of the mould's width (its top at the rim, its bottom at the drawing's)
+M.LIP = 0.07             -- the rim lips' radius, of the mould's width
+M.STILL = 90             -- ticks almost still (resting on a lip): it drips down, a miss
+
+-- the round iron of mould m: { cx, cy, r }
+local function irons(m)
+	local out = m.irons
+	if not out then
+		local lip = m.w * M.LIP
+		out = {
+			{ m.x, m.y - m.w * M.BELLY, m.w * M.BELLY },
+			{ m.x - m.inner - lip, m.y, lip },
+			{ m.x + m.inner + lip, m.y, lip },
+		}
+		m.irons = out
+	end
+	return out
+end
+
+-- the drop at (x, y) going (vx, vy) against a circle: pushed out and bounced
+-- (nil when it doesn't touch)
+local function bounce(c, x, y, vx, vy)
+	local dx, dy = x - c[1], y - c[2]
+	local rr = c[3] + M.DROP_R
+	local d2 = dx * dx + dy * dy
+	if d2 >= rr * rr or d2 == 0 then return nil end
+	local d = math.sqrt(d2)
+	local nx, ny = dx / d, dy / d
+	local vn = vx * nx + vy * ny
+	x, y = c[1] + nx * rr, c[2] + ny * rr
+	local hard = vn < -30
+	if vn < 0 then
+		local tx, ty = vx - vn * nx, vy - vn * ny
+		vx = tx * M.SLIDE - vn * M.BOUNCE * nx
+		vy = ty * M.SLIDE - vn * M.BOUNCE * ny
+	end
+	return x, y, vx, vy, hard
 end
 
 -- The flight of a throw against the moulds of a wall (full: the slots already
--- filled, they are iron). Returns { esito = "stampo" | "ferro" | "secchio", slot,
--- ticks } and, when points is true, the drop's positions tick by tick (for drawing).
+-- filled, closed at the rim). Returns { esito = "stampo" | "secchio", slot, ticks,
+-- rimbalzi } and, when points is true, the drop's positions tick by tick (for
+-- drawing) and the ticks of the bounces (path.hits).
 function M.fly(angle, power, wall, full, points)
 	full = full or {}
 	local x, y, vx, vy = M.launch(angle, power)
 	local g = game.GRAVITY * game.MISSILE_GRAVITY
-	local path = points and { { x, y } } or nil
+	local path = points and { { x, y }, hits = {} } or nil
+	local hits, still = 0, 0
 	for t = 1, M.MAX_TICKS do
 		vy = vy - g * game.DT
 		local nx, ny = x + vx * game.DT, y + vy * game.DT
+		local hit = false
 		for _, m in ipairs(wall) do
-			-- through the opening, going down
-			if not full[m.slot] and y >= m.y and ny < m.y then
+			-- through the opening, going down: in (or on the metal of a full one)
+			if y >= m.y and ny < m.y then
 				local cx = x + (nx - x) * (y - m.y) / (y - ny)
 				if math.abs(cx - m.x) <= m.inner - M.DROP_R * 0.5 then
-					if path then path[#path + 1] = { cx, m.y } end
-					return { esito = "stampo", slot = m.slot, ticks = t }, path
+					if not full[m.slot] then
+						if path then path[#path + 1] = { cx, m.y } end
+						return { esito = "stampo", slot = m.slot, ticks = t, rimbalzi = hits }, path
+					end
+					nx, ny = cx, m.y + 0.01
+					if vy < -30 then hit = true end
+					if vy < 0 then vx, vy = vx * M.SLIDE, -vy * M.BOUNCE end
 				end
 			end
-			if in_iron(m, nx, ny) or (full[m.slot] and math.abs(nx - m.x) <= m.w / 2 and ny <= m.y and ny >= m.y - m.depth) then
-				if path then path[#path + 1] = { nx, ny } end
-				return { esito = "ferro", slot = m.slot, ticks = t }, path
+			for _, c in ipairs(irons(m)) do
+				local bx, by, bvx, bvy, hard = bounce(c, nx, ny, vx, vy)
+				if bx then
+					nx, ny, vx, vy = bx, by, bvx, bvy
+					if hard then hit = true end
+				end
 			end
 		end
+		if hit then
+			hits = hits + 1
+			if path then path.hits[#path.hits + 1] = t end
+		end
+		-- resting on a lip: it drips down on the outside
+		if vx * vx + vy * vy < 400 then still = still + 1 else still = 0 end
 		x, y = nx, ny
 		if path then path[#path + 1] = { x, y } end
-		if y < M.FLOOR or x < -400 or x > 2000 then return { esito = "secchio", ticks = t }, path end
+		if y - M.DROP_R < M.FLOOR or x < -400 or x > 2000 or still > M.STILL then
+			return { esito = "secchio", ticks = t, rimbalzi = hits }, path
+		end
 	end
-	return { esito = "secchio", ticks = M.MAX_TICKS }, path
+	return { esito = "secchio", ticks = M.MAX_TICKS, rimbalzi = hits }, path
 end
 
 -- The profile --------------------------------------------------------------------------

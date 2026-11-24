@@ -155,4 +155,5 @@ sotto una cornice a stampo (in vetrina la cornice del muro, mentre si tira tutto
 | il cartellino del premio sopra lo stampo: l'icona (scaglia o frammento della famiglia) e il numero, sempre grandi uguali sullo schermo; lo stampo fortunato col numero oro e DOPPIO | FORNACE | ✅ |
 | i TIRI in alto a sinistra: una goccia per tiro, quelle usate spente | FORNACE | ✅ |
 | la mira: la stessa della battaglia, disegno e conti (`battle/aim.lua`: lancetta, numeri, dal dito ad angolo e forza; col controller la levetta di mira e SPARA di `battle/sticks.lua`) più i puntini del primo tratto del volo | FORNACE | ✅ |
+| la levetta di mira del telefono: lo stesso pezzo della battaglia (`battle/stick_pad.lua`, disco velato col bordo azzurro, rosso quando lasciando si tira), in basso a destra | FORNACE, BATTAGLIA | ✅ |
 | le scritte che saltano (3 SU 3!, DOPPIO!, NEL SECCHIO): parola incandescente con l'ombra d'inchiostro | FORNACE | ✅ |

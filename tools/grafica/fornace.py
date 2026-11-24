@@ -145,7 +145,9 @@ def fai_mestolo():
     # alla misura dell'arma in mano) e la sua icona
     im = ritaglia(os.path.join(A93, "mestolo_1.png"))
     vuoto = stretto(im.crop((115, 290, 1422, 484)))
-    vuoto.save(os.path.join(ARMI, "mestolo.png"), optimize=True)
+    # in mano è capovolto (Sergio, 24 nov): l'apprendista lo tiene all'indietro sopra la
+    # spalla e la bocca della coppa guarda i premi, poi la frustata lo porta avanti
+    vuoto.transpose(Image.FLIP_TOP_BOTTOM).save(os.path.join(ARMI, "mestolo.png"), optimize=True)
     lato = max(vuoto.width, vuoto.height)
     tela = Image.new("RGBA", (lato, lato), (0, 0, 0, 0))
     tela.alpha_composite(vuoto, (0, (lato - vuoto.height) // 2))

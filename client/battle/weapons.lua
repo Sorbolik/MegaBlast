@@ -22,7 +22,7 @@ return {
 		vortex = { img = "vortex", tint = "vortex_tinta", x = 4.50, y = 2.25, w = 11.00, h = 11.13 },
 		cannon = { img = "cannon", tint = "cannon_tinta", x = 4.38, y = -1.00, w = 23.25, h = 18.75 },
 		petard = { img = "petard", tint = "petard_tinta", x = 4.25, y = 3.25, w = 10.34, h = 19.38 },
-		mestolo = { img = "mestolo", tint = "mestolo_tinta", x = 12.00, y = -0.30, w = 44.00, h = 6.18 },
+		mestolo = { img = "mestolo", tint = "mestolo_tinta", x = 44.46, y = 1.36, w = 126.00, h = 17.71 },
 	},
 	pieces = {
 		uncino = { img = "uncino", tint = nil, x = 5.25, y = 0.00, w = 14.50, h = 7.27 },

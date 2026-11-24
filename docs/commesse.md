@@ -154,12 +154,16 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   nella goccia, compaiono i tiri; finiti i tiri si torna alla vetrina e si può colare ancora
   finché il muro ha premi. Se esci a metà (il tasto indietro mentre miri) i tiri restano: in
   vetrina COLA diventa **TIRA** e riparti da dove eri, senza pagare.
-- **Nel gioco** (`client/menu/forge_ui.lua`, foto `tools/simula/scenari/fornace.txt`): la mira si fa
-  vedendo tutto il muro; mentre il mestolo carica la telecamera si avvicina un po', poi segue la
-  goccia e si ferma sullo stampo preso, e torna su tutto il muro per il tiro dopo. Per la colata
+- **Nel gioco** (`client/menu/forge_ui.lua`, foto `tools/simula/scenari/fornace.txt` e
+  `fornace_telefono.txt`): la mira si fa vedendo tutto il muro; quando lasci il dito la telecamera
+  torna vicina sull'apprendista (zoom 1,9) e parte il tiro, poi segue la goccia da vicino come in
+  battaglia, si ferma sullo stampo preso e torna su tutto il muro per il tiro dopo. Per la colata
   la telecamera è vicina all'apprendista (zoom 2,2): lì i dipinti di fondo (WB-092, 1536 px) si
   avvicinano solo fino ai loro pixel e restano lontani come un fondale, mai ingranditi.
-  Col controller si mira con la levetta di mira e si tira con SPARA, come in battaglia.
+  **La mira è quella della partita** (Sergio, 24 nov): sul telefono la levetta di mira a destra
+  (lo stesso disegno e le stesse regole della battaglia, `battle/stick_pad.lua` e `battle/sticks.lua`:
+  si accende oltre il 20% della corsa, lasciando il pollice parte il tiro); sul computer si trascina
+  dall'apprendista; col controller la levetta di mira e SPARA.
 - **Come si gioca**: l'apprendista tira una goccia di Ossidiana fusa con **la stessa mira
   della battaglia** (trascini, vedi l'inizio della traiettoria, lasci) negli stampi sul muro
   della fucina. **Tre tiri per colata.**
@@ -167,17 +171,22 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   le animazioni di sempre della mira; **non si muove** (niente camminata né salto). La goccia vola
   come il Lanciarune senza potenziamenti, la telecamera è quella della battaglia.
 - **L'arma è il Mestolo** (Sergio, 24 nov, fra tre proposte animate): un mestolo da colata col
-  manico lungo, la goccia nella coppa. Al tiro lo porta indietro sopra la testa (la coppa
-  gocciola scintille), trema un attimo e lo frusta in avanti; la goccia parte lungo la mira.
-  L'anticipazione è solo da vedere: angolo e potenza sono quelli scelti. La telecamera si
-  avvicina mentre carica, segue la goccia e si ferma sullo stampo. Disegni: WB-093.
+  manico lungo, la goccia nella coppa, **grande** (quasi il doppio della prima versione: spiega la
+  lentezza del tiro). Si impugna **come la spada**, rivolto indietro sopra la spalla anche mentre
+  si riempie, con la bocca della coppa dal lato dei premi. Il tiro è la clip `lancio_mestolo` di
+  ogni personaggio (circa un secondo e mezzo: indietro, trema pieno, frustata, saltello), che
+  Sergio ritocca nell'editor delle animazioni («con mestolo»); la goccia parte dalla coppa nel
+  momento in cui il mestolo va più veloce in quella clip, così resta giusta anche dopo i ritocchi.
+  L'anticipazione è solo da vedere: angolo e potenza sono quelli scelti. Disegni: WB-093.
 - **I premi si leggono sul muro** (Sergio, 24 nov): sopra ogni stampo l'icona del premio e la
   quantità (moneta delle Scaglie col numero, o il frammento della famiglia con x1 o x2), sempre
   della stessa grandezza sullo schermo a ogni zoom; la placca dello stampo ha il colore della
   famiglia, ferro per le Scaglie. Quando la goccia entra il gioco si ferma un attimo, la camera
   trema e il premio vola al contatore.
-- **La traiettoria è quasi tutta** (Sergio, 24 nov): i puntini della mira si vedono per circa l'80%
-  del volo, non fino in fondo: l'ultimo tratto, dove la goccia cade nello stampo, lo indovini tu.
+- **La traiettoria arriva fino alla cima e un po' oltre** (Sergio, 24 nov, scelta sul prototipo
+  https://claude.ai/artifact/4Zyv54v6i7epW4eVjpawst): i puntini fanno la salita e un altro mezzo
+  tratto dopo la cima, dove sfumano; mai oltre il primo rimbalzo. La discesa nello stampo la
+  indovini tu, così gli stampi lontani non sono più difficili di quelli vicini.
 - **Gli stampi**: 12 sul muro, 6 di Scaglie (15, 20, 30, 50, 60, 80) e 6 di frammenti (x1 o
   x2), **255 Scaglie e 8 frammenti per muro**. Più lontano e più in alto, più rende; quelli
   lontani sono piccoli e chiedono quasi tutta la forza. Mirando scegli la famiglia che ti
@@ -191,8 +200,11 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   stampo pieno non paga due volte: una goccia che lo prende è come il ferro, va nel secchio.
   Una colata cominciata resta sul suo muro anche se intanto il muro cambia; non si torna mai
   a un muro vecchio.
-- **La goccia entra solo dall'alto**: deve passare dentro l'orlo scendendo. Sul ferro dello
-  stampo rimbalza via e va nel secchio.
+- **La goccia entra solo dall'alto**: deve passare dentro l'orlo scendendo. **Sul ferro rimbalza**
+  (Sergio, 24 nov: «finché non tocca terra è valido»): la goccia è una palla, la pancia e i due
+  bordi di ogni stampo la fanno rimbalzare (rende metà della velocità contro il ferro) e può finire
+  in un altro stampo più in basso; conta solo quando tocca terra. Uno stampo pieno è chiuso dal
+  metallo e la fa rimbalzare via (`client/sim/forge.lua`, `fly`).
 - **Mai zero**: una goccia fuori dagli stampi cade nel secchio (20 Scaglie). Tre centri
   su tre danno un tiro in più (uno solo per colata).
 - **Il cambio**: una colata rende in media circa **130 Scaglie di valore** (frammento = 60),
