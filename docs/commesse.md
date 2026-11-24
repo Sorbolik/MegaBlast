@@ -152,7 +152,13 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   piccolo coi premi, cosa resta e fra quanto arriva il muro nuovo, FONDI e COLA. Con COLA il
   muro si allarga a tutto schermo, le 20 gemme volano dal contatore nel mestolo e si fondono
   nella goccia, compaiono i tiri; finiti i tiri si torna alla vetrina e si può colare ancora
-  finché il muro ha premi.
+  finché il muro ha premi. Se esci a metà (il tasto indietro mentre miri) i tiri restano: in
+  vetrina COLA diventa **TIRA** e riparti da dove eri, senza pagare.
+- **Nel gioco** (`client/menu/forge_ui.lua`, foto `tools/simula/scenari/fornace.txt`): la mira si fa
+  vedendo tutto il muro; mentre il mestolo carica la telecamera si avvicina un po', poi segue la
+  goccia e si ferma sullo stampo preso, e torna su tutto il muro per il tiro dopo. Per la colata
+  la telecamera è vicina all'apprendista (zoom 2,2): lì i dipinti di fondo (WB-092, 1536 px) sono
+  un po' ingranditi, da rifare più grandi se si vedono morbidi.
 - **Come si gioca**: l'apprendista tira una goccia di Ossidiana fusa con **la stessa mira
   della battaglia** (trascini, vedi l'inizio della traiettoria, lasci) negli stampi sul muro
   della fucina. **Tre tiri per colata.**

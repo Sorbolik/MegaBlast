@@ -399,7 +399,7 @@ return {
 	-- menu/armory.lua (the SHOP) and menu/bench.lua (the ARMERIA in the ZAINO)
 	armory = {
 		-- the two tabs of the BOTTEGA: the Smith's orders and the shop
-		tab_orders = "COMMESSE", tab_bench = "BANCO",
+		tab_orders = "COMMESSE", tab_forge = "FORNACE", tab_bench = "BANCO",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
 			attack = "Attacco", defense = "Difesa",
@@ -596,6 +596,40 @@ return {
 
 
 	-- menu/armory.lua and ui/step_scene.lua: the pieces' levels in Scaglie
+	-- menu/forge_ui.lua: the FORNACE tab of the BOTTEGA (docs/commesse.md "La Fornace")
+	forge = {
+		on_wall = "SUL MURO",
+		filled = "%d su %d pieni",
+		of_total = "su %s",
+		fragments = "FRAMMENTI",
+		new_wall = "MURO NUOVO FRA",
+		rule = "Una colata = 3 tiri.",
+		rule_sub = "Fai %d su %d e il Fabbro te ne regala un altro.",
+		rule_lucky = "Su questo muro c'è uno stampo che dà il DOPPIO.",
+		melt = "FONDI I FRAMMENTI",
+		pour = "COLA",
+		pour_sub = "%d tiri · costa %d",
+		missing = "ti mancano %d",
+		wall_done = "muro finito",
+		throw = "TIRA",
+		left = "ti restano %d tiri",
+		one_left = "ti resta 1 tiro",
+		throws = "TIRI",
+		hint = "Tieni il dito e trascina per mirare, lascia per tirare",
+		bonus = "3 SU 3! UN TIRO IN PIÙ",
+		lucky = "DOPPIO",
+		lucky_hit = "DOPPIO!",
+		miss = "NEL SECCHIO",
+		melt_title = "FONDI I FRAMMENTI",
+		melt_pick = "Scegli la famiglia da fondere",
+		melt_scaglie = "IN SCAGLIE",
+		melt_one = "FONDINE 1",
+		melt_one_sub = "+%d scaglie",
+		melt_family = "IN UN'ALTRA FAMIGLIA",
+		melt_four = "FONDINE %d",
+		melt_four_sub = "+%d della famiglia scelta",
+	},
+
 	pieces = {
 		grades = { "bronzo", "argento", "oro", "brace" },
 		at_max = "AL MASSIMO",

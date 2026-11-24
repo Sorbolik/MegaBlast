@@ -1,0 +1,45 @@
+# La Fornace (docs/commesse.md "La Fornace"): la scheda FORNACE della BOTTEGA col muro
+# in vetrina, COLA che allarga il muro e cola le gemme nel mestolo, i tiri (con
+# prova_fornace_centra ogni tiro va nello stampo vuoto più vicino: 3 su 3 e il tiro in
+# più) e il ritorno alla vetrina; poi la finestra che fonde i frammenti.
+# Gira anche con --schermo 1600x720 e 960x720. (tocca_centro: Y dal basso)
+imposta prova_test prova
+imposta prova_fornace_centra 1
+
+aspetta 4
+tocca_bordo 210 170 mezzo destra    # la porta BOTTEGA
+aspetta 8
+tocca_bordo 556 50 alto sinistra    # FORNACE
+aspetta 3
+foto 01_vetrina
+tocca_bordo 178 49 basso destra     # COLA
+aspetta 0.4
+foto 02_il_muro_si_allarga
+aspetta 0.9
+foto 03_le_gemme_nel_mestolo
+aspetta 1.1
+foto 04_i_tre_tiri
+aspetta 1.6
+foto 05_tutto_il_muro
+trascina 300 300 330 380 0.6 06_mira
+aspetta 0.7
+foto 07_in_volo
+aspetta 0.9
+foto 08_centro
+aspetta 2
+trascina 300 300 360 360 0.4
+aspetta 3.5
+trascina 300 300 300 420 0.4
+aspetta 2.4
+foto 09_tre_su_tre
+aspetta 5
+trascina 300 300 400 330 0.4
+aspetta 6
+foto 10_ritorno
+aspetta 3
+foto 11_di_nuovo_in_vetrina
+tocca_bordo 291 49 basso sinistra   # FONDI I FRAMMENTI
+aspetta 1
+tocca_centro 489 488                # la prima famiglia
+aspetta 1
+foto 12_fondi

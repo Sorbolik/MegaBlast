@@ -136,7 +136,7 @@ function M.layout(key, seed, lucky)
 			-- never on the bucket, always within reach (the top of the arc at full power,
 			-- with some room: the farthest need almost all the power)
 			local reach = M.TOP - sx * sx / M.REACH - M.REACH_ROOM
-			if not (math.abs(sx - M.BUCKET_X) < 90 and sy < 10) and sy <= reach then
+			if not (math.abs(sx - M.BUCKET_X) < 125 and sy < 30) and sy <= reach then
 				spots[#spots + 1] = { x = sx, y = sy, k = hash(seed, key, x, y) }
 			end
 		end
