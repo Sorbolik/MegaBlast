@@ -197,7 +197,8 @@ local function sheet_stats(s)
 				local col, row = (k - 1) % 4, two and math.floor((k - 1) / 4) or 0
 				local bx = x + 14 + d / 2 + col * ((cw - 28 - d) / 3)
 				local by = y + (two and 22 + row * 32 or 26)
-				if picked[b.id] then kit.dot(g, bx, by, d + 10, GOLD) end
+				-- (the jackpot's is already a gold medal: no gold disc behind it, Sergio 24 Nov)
+				if picked[b.id] and b.id ~= orders.JACKPOT_BADGE then kit.dot(g, bx, by, d + 10, GOLD) end
 				tag.badge(b, bx - g.ox, g.oy - by, d, g.node)
 				kit.zone(g, s.buttons, bx - (d + 8) / 2, by - (d + 8) / 2, d + 8, d + 8, "badge:" .. b.id)
 			end
