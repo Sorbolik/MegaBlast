@@ -1,0 +1,51 @@
+# La Fornace: tre colate da 3 su 3 (4 tiri ciascuna, con prova_fornace_centra ogni tiro va
+# nello stampo vuoto più vicino) riempiono i 12 stampi del muro: il JACKPOT, la medaglia la
+# prima volta, il riepilogo della colata; COLA ANCORA dal riepilogo (SPARA, rt) e CHIUDI (b).
+imposta prova_test prova
+imposta prova_fornace_centra 1
+
+aspetta 4
+tocca_bordo 210 170 mezzo destra    # la porta BOTTEGA
+aspetta 8
+tocca_bordo 556 50 alto sinistra    # FORNACE
+aspetta 3
+tocca_bordo 178 49 basso destra     # COLA
+aspetta 4.5
+trascina 300 300 330 380 0.4
+aspetta 5.5
+trascina 300 300 330 380 0.4
+aspetta 5.5
+trascina 300 300 330 380 0.4
+aspetta 6
+foto 01_sigillati
+trascina 300 300 330 380 0.4
+aspetta 6
+foto 02_riepilogo
+pad rt                              # COLA ANCORA
+aspetta 9
+trascina 300 300 330 380 0.4
+aspetta 5.5
+trascina 300 300 330 380 0.4
+aspetta 5.5
+trascina 300 300 330 380 0.4
+aspetta 5.5
+trascina 300 300 330 380 0.4
+aspetta 6
+pad rt                              # COLA ANCORA
+aspetta 9
+trascina 300 300 330 380 0.4
+aspetta 7
+trascina 300 300 330 380 0.4
+aspetta 7
+trascina 300 300 330 380 0.4
+aspetta 7
+trascina 300 300 330 380 0.4
+aspetta 1.6
+foto 03_ultimo_tiro
+aspetta 5
+foto 04_jackpot
+aspetta 4
+foto 05_riepilogo_col_jackpot
+pad b                               # CHIUDI
+aspetta 3
+foto 06_muro_pieno_in_vetrina

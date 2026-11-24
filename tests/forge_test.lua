@@ -177,13 +177,30 @@ check(r.bonus == 1 and p.fornace.tiri == 1, "tre centri su tre: un tiro in più"
 r = forge.throw(p, AIMS[10][1], AIMS[10][2])
 check(r.esito == "stampo" and not r.bonus and p.fornace.tiri == 0, "il tiro in più si gioca, una volta sola")
 
+-- the jackpot: the last empty mould of a wall filled
+p = new()
+forge.pour(p, TODAY .. "#0", TODAY)
+local jw = forge.wall(p, TODAY .. "#0")
+for i = 2, 12 do p.fornace.pieni[i] = true end
+local ja
+for deg = 5, 85 do
+	for pw = 20, 100 do
+		local rr = forge.fly(math.rad(deg), pw / 100, jw, p.fornace.pieni)
+		if not ja and rr.esito == "stampo" and rr.slot == 1 then ja = { math.rad(deg), pw / 100 } end
+	end
+end
+local before = p.scaglie or 0
+r = forge.throw(p, ja[1], ja[2])
+check(r.jackpot == forge.JACKPOT and r.medal and p.fornace.jackpot == 1
+	and p.scaglie == before + jw[1].scaglie + forge.JACKPOT, "muro pieno: jackpot e medaglia la prima volta")
+
 -- melting
 p = new()
 p.commesse.frammenti.corvo = 5
 check(not forge.melt(p, "corvo", "corvo"), "non si fonde nella stessa famiglia")
 check(forge.melt(p, "corvo", "vuoto") and p.commesse.frammenti.corvo == 1 and p.commesse.frammenti.vuoto == 1, "4 frammenti per 1 di un'altra famiglia")
 check(not forge.melt(p, "corvo", "vuoto"), "servono 4 frammenti")
-local before = p.scaglie
+before = p.scaglie
 check(forge.melt(p, "corvo") and p.scaglie == before + 20 and p.commesse.frammenti.corvo == 0, "1 frammento per 20 Scaglie")
 check(not forge.melt(p, "drago"), "famiglia sconosciuta")
 

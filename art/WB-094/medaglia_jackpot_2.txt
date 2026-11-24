@@ -1,0 +1,8 @@
+Image 1 shows a medal of our cartoon game: a drawing in the middle of a round disc, thick slightly irregular black ink outline, flat colors, one flat highlight. Image 2 shows the casting moulds of the forge of our game. Image 3 shows the drop of molten obsidian of our game.
+
+Draw the JACKPOT MEDAL of the forge, in the style of image 1, on plain green (#00FF00), centered, as big as most of the image (at least 700 px wide): a round GOLD medal (#FFB703, highlight #FFE08A, shadow #C98A00) with a thick raised rim and a ring of small round studs on the rim; in the middle, in relief, ONE mould like the moulds of image 2, seen from the front, overflowing with the violet obsidian fire of image 3, with three little drops jumping out of it and a starburst of short gold rays behind it, like a slot-machine jackpot.
+Nothing else: no ribbon, no letters, no numbers, no shadow on the ground, no glow halo around the medal.
+
+Riferimenti in ordine: art/WB-094/riferimenti/R4_medaglia_di_un_cliente.png, art/WB-094/riferimenti/R1_stampi_vuoti.png, art/WB-094/riferimenti/R3_goccia.png
+ImageGen. Un tentativo. Foglio adattato a quadrato ritagliando solo le fasce verdi laterali. Medaglia larga circa 989 px. Tre gocce sopra lo stampo e raggi dorati. Verde campionato #02F902.
+Il verde differisce da #00FF00 esatto.
