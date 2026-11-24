@@ -746,9 +746,6 @@ images {
   image: "/assets/fucina/pannello_spento_9.png"
 }
 images {
-  image: "/assets/fucina/pedana.png"
-}
-images {
   image: "/assets/fucina/perla_piena.png"
 }
 images {
@@ -819,6 +816,9 @@ images {
 }
 images {
   image: "/assets/fucina/piastrina_sx.png"
+}
+images {
+  image: "/assets/fucina/piedistallo.png"
 }
 images {
   image: "/assets/fucina/pillola_cx.png"
@@ -1173,9 +1173,6 @@ images {
 }
 images {
   image: "/assets/fucina/vuoto_stivali.png"
-}
-images {
-  image: "/assets/fucina/zainetto.png"
 }
 margin: 2
 extrude_borders: 2

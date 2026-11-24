@@ -734,9 +734,10 @@ def fai_sfondi():
 # grande a cui lo mostra il Figma (1280 x 720), cosi' resta nitido fino a 2560 x 1440.
 # (nome nell'atlante, file, altezza in pixel, cartella)
 MENU_INTERI = [
-    # la home: pedana e zainetto (le porte: fai_porte)
-    ("pedana", "pedana_griglia_1", 266, "WB-050"),
-    ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
+    # la home: il piedistallo (le porte: fai_porte)
+    # il piedistallo dell'apprendista nel cielo del Limbo (WB-090, Sergio 24 nov: la 2B, la
+    # roccia coi due sassolini; al posto della grata di WB-050 e dello zainetto di WB-048)
+    ("piedistallo", "piedistallo_roccia_2", 399, "WB-090"),
     # le caselle dei pezzi, dritte (WB-078, Sergio 18 nov: al posto di quelle di WB-044 in
     # ogni posto): la cornice, la linguetta del tipo in alto a sinistra col suo simbolo,
     # la fascia INDOSSATO in basso; i simboli rifatti in WB-079 dalle icone dei nostri pezzi

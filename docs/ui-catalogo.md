@@ -62,6 +62,8 @@ tasti, profilo, annulla, ripristina, uno_contro_uno, via.
 | Pezzo | Dove | Oggi |
 |---|---|---|
 | `kit.secondary` con `kind = "porta_<id>_"` e `door`: il Ferro liscio tinto del colore del posto (`fai_porte` in `fucina.py`), l'icona grande di WB-089 senza cornice sul capo verso il bordo, le scritte contro l'altro capo; tutte larghe uguali | HOME (CAMPAGNA, ALLENAMENTO, EVENTI, BOTTEGA) | ✅ (la bancarella aspetta WB-091, per ora i buchi chiusi di legno scuro) |
+| il piedistallo dell'apprendista: la roccia del Limbo coi due sassolini (`piedistallo`, WB-090 2B; via la grata di WB-050 e lo zainetto di WB-048) | HOME | ✅ |
+| il cielo della home all'ora del telefono (`ui/limbo_sky.lua`: mattina, mezzogiorno, pomeriggio, sera, notte; strati bianchi colorati dal gioco, da `tools/grafica/cielo.py`) | HOME | ✅ |
 
 ## 5. Tab (le sezioni di una schermata)
 
