@@ -61,7 +61,8 @@ local PAD = 14
 
 -- the world: what the vetrina shows (x from -150 to 1590, the floor's slab at the
 -- bottom), the whole wall while playing, close on the apprentice for the pour
-local WALL_X, WALL_W = 720, 1660
+-- (the back wall at forge.BACK_X in the view too)
+local WALL_X, WALL_W = 790, 1800
 local CLOSE = { x = 50, y = 36, s = 2.2 }
 -- the paintings (client/paintings/fornace, tools/grafica/fornace.py): the sky
 -- fixed behind the frame, the far and the middle layers in the world, a little
@@ -74,6 +75,7 @@ local FAR = { x = -264, y = -187, w = 2120, k = 0.6 }
 local MID = { x = -172, y = -158, w = 1936, k = 0.3 }
 local FLOOR_TOP, FLOOR_W = -132, 560
 local LEDGE = { x = -90, y = 2, w = 150 }
+local BACK_W = 150
 local BUCKET = { x = forge.BUCKET_X, y = -150, w = 120 }
 -- the moulds' plates by family (WB-093), the Scaglie ones in iron
 local PLATE = { fabbro = "oro", corvo = "azzurro", fornace = "arancio", leviatano = "verde", vuoto = "viola" }
@@ -101,7 +103,7 @@ local THROW_CAM = { x = 30, y = 40, s = 1.9 }
 local BOWL = { 94.3, -5.8 }
 -- a hit: the frozen moment, the shake; then the pause before the next aim
 local FREEZE, SHAKE, SHAKE_PX, AFTER, BONUS_T = 0.09, 0.28, 7, 0.7, 1.3
-local JACKPOT_T = 2.4  -- how long the jackpot holds the next step
+local JACKPOT_T = 5  -- how long the jackpot holds the next step
 local DOTS_PAST = 1.5 -- the dots: up to the top and half as far again, fading after the top
 -- only in the simulator (imposta prova_fornace_centra 1): every throw goes into the
 -- nearest empty mould, to see the hits (tools/simula/scenari/fornace.txt)
@@ -207,7 +209,7 @@ end
 
 -- the whole wall on the screen, the floor 120 pixels over the bottom
 local function full_cam(v)
-	local s = math.min(v.w / 1840, v.h / 860)
+	local s = math.min(v.w / 1900, v.h / 860)
 	return { x = WALL_X, y = forge.FLOOR - 120 / s + v.h / (2 * s), s = s }
 end
 
@@ -230,7 +232,9 @@ local function place_layer(fx, node, L, most)
 		if bottom > b0 then bottom = b0 end
 		if bottom + h < b0 + v.h * 0.6 then bottom = b0 + v.h * 0.6 - h end
 	end
-	gui.set_position(node, vec(c.x + (left - v.cx) / c.s, c.y + (bottom - v.cy) / c.s))
+	-- (on a mirrored wall the layer's origin is its right edge on the screen)
+	local x = (fx.mir or 1) < 0 and c.x - (left + w - v.cx) / c.s or c.x + (left - v.cx) / c.s
+	gui.set_position(node, vec(x, c.y + (bottom - v.cy) / c.s))
 	gui.set_scale(node, vmath.vector3(z, z, 1))
 end
 
@@ -240,24 +244,26 @@ local function apply(fx)
 	gui.set_size(fx.clip, vec(v.w, v.h))
 	local k = math.max(v.w / fx.sky_w, v.h / fx.sky_h)
 	gui.set_size(fx.sky, vec(fx.sky_w * k, fx.sky_h * k))
-	gui.set_position(fx.world, vec(-c.x * c.s + (fx.sx or 0), -c.y * c.s + (fx.sy or 0)))
-	gui.set_scale(fx.world, vmath.vector3(c.s, c.s, 1))
+	-- a mirrored wall (forge.mirrored) is the same world seen from behind
+	local mir = fx.mir or 1
+	gui.set_position(fx.world, vec(-mir * c.x * c.s + (fx.sx or 0), -c.y * c.s + (fx.sy or 0)))
+	gui.set_scale(fx.world, vmath.vector3(mir * c.s, c.s, 1))
 	local most = full_cam(v).s
 	place_layer(fx, fx.far, FAR, most)
 	place_layer(fx, fx.mid, MID, most)
-	local ts = vmath.vector3(1 / c.s, 1 / c.s, 1)
+	local ts = vmath.vector3(mir / c.s, 1 / c.s, 1)
 	for _, t in pairs(fx.tags) do gui.set_scale(t, ts) end
 end
 
 -- a world point on the screen (game coordinates), and back
 local function to_screen(fx, x, y)
 	local v, c = fx.view, fx.cam
-	return v.cx + (x - c.x) * c.s + (fx.sx or 0), v.cy + (y - c.y) * c.s + (fx.sy or 0)
+	return v.cx + (fx.mir or 1) * (x - c.x) * c.s + (fx.sx or 0), v.cy + (y - c.y) * c.s + (fx.sy or 0)
 end
 
 local function to_world(fx, x, y)
 	local v, c = fx.view, fx.cam
-	return c.x + (x - v.cx - (fx.sx or 0)) / c.s, c.y + (y - v.cy - (fx.sy or 0)) / c.s
+	return c.x + (fx.mir or 1) * (x - v.cx - (fx.sx or 0)) / c.s, c.y + (y - v.cy - (fx.sy or 0)) / c.s
 end
 
 -- a move of the camera (and of the frame) over d seconds
@@ -321,17 +327,153 @@ end
 
 -- the flame from the mouth when the drop goes in (art WB-094): four frames, three
 -- moulds tall, then it falls back and fades
-local FLAME_FRAMES = { 0.07, 0.1, 0.12, 0.14 }
+-- The effects of a hit and of the jackpot, as on the page Sergio chose
+-- (https://claude.ai/artifact/LcTuEFuH5XKmmmeDPgtGN2, «la fiammata» and «il jackpot del
+-- muro pieno»; Sergio, 24 Nov: «falla in quel modo»)
+
+local GOLD, MAGENTA, VIOLET, EMBER = vmath.vector4(1, 0.82, 0.48, 1), vmath.vector4(1, 0.24, 0.65, 1),
+	vmath.vector4(0.76, 0.29, 1, 1), vmath.vector4(1, 0.48, 0.1, 1)
+
+-- sparks: round embers flying up and falling (world units, moved in M.update)
+local function sparks(fx, parent, x, y, n, spread, speed, size, grav, colors)
+	fx.parts = fx.parts or {}
+	for i = 1, n do
+		local an = math.pi / 2 + (math.random() - 0.5) * spread
+		local v = speed * (0.5 + math.random())
+		local d = size * (0.6 + math.random() * 0.8)
+		local s = ui.disc(x, y, d, colors[i % #colors + 1], parent)
+		fx.parts[#fx.parts + 1] = { node = s, x = x, y = y, vx = math.cos(an) * v, vy = math.sin(an) * v,
+			g = grav, t = 0, life = 0.6 + math.random() * 0.6 }
+	end
+end
+
+local function parts_step(fx, dt)
+	local ps = fx.parts
+	if not ps then return end
+	for i = #ps, 1, -1 do
+		local q = ps[i]
+		q.t = q.t + dt
+		if q.t >= q.life then
+			gui.delete_node(q.node)
+			table.remove(ps, i)
+		else
+			q.vy = q.vy - q.g * dt
+			q.x, q.y = q.x + q.vx * dt, q.y + q.vy * dt
+			gui.set_position(q.node, vec(q.x, q.y))
+			if q.spin then gui.set_rotation(q.node, vmath.vector3(0, 0, q.t * q.spin)) end
+			if not q.keep then
+				local c = gui.get_color(q.node)
+				c.w = 1 - q.t / q.life
+				gui.set_color(q.node, c)
+			end
+		end
+	end
+end
+
+-- a golden shock ring on the floor of the mould, growing and fading
+local function shock(fx, x, y, w)
+	local r = ui.disc(x, y, w, GOLD, fx.splash)
+	ui.ring(r, w, w * 0.06, w * 0.42)
+	gui.set_scale(r, vmath.vector3(0.3, 0.3, 1))
+	gui.animate(r, "scale", vmath.vector3(4.5, 4.5, 1), gui.EASING_OUTCUBIC, 0.5)
+	gui.animate(r, "color.w", 0, gui.EASING_LINEAR, 0.5, 0, function() gui.delete_node(r) end)
+end
+
+-- the mould glowing hot (its own drawing, added in ember on top) for d seconds
+local function glow(fx, m, d, a)
+	local n = fx.moulds[m.slot]
+	if not n then return end
+	local h = gui.new_box_node(vec(0, 0), gui.get_size(n))
+	gui.set_texture(h, "fornace")
+	gui.play_flipbook(h, mould_name(m, false))
+	gui.set_pivot(h, gui.PIVOT_S)
+	gui.set_blend_mode(h, gui.BLEND_ADD)
+	gui.set_parent(h, n)
+	local c = vmath.vector4(EMBER.x, EMBER.y, EMBER.z, a or 0.9)
+	gui.set_color(h, c)
+	if d then gui.animate(h, "color.w", 0, gui.EASING_INQUAD, d, 0, function() gui.delete_node(h) end) end
+	return h
+end
+
+-- the mould trembling on its chain, less and less
+local function tremble(fx, m, d)
+	fx.trembles = fx.trembles or {}
+	fx.trembles[m.slot] = { t = 0, d = d }
+end
+
+local function trembles_step(fx, dt)
+	if not fx.trembles then return end
+	for slot, q in pairs(fx.trembles) do
+		q.t = q.t + dt
+		local n = fx.moulds[slot]
+		local k = 1 - q.t / q.d
+		if k <= 0 or not n then
+			if n then gui.set_rotation(n, vmath.vector3(0, 0, 0)) end
+			fx.trembles[slot] = nil
+		else
+			gui.set_rotation(n, vmath.vector3(0, 0, math.sin(q.t * 47) * 5 * k))
+		end
+	end
+end
+
+-- something to do in d seconds (stepped in M.update, so it waits through the freeze)
+local function later(fx, d, fn)
+	fx.timers = fx.timers or {}
+	fx.timers[#fx.timers + 1] = { t = d, fn = fn }
+end
+
+local function timers_step(fx, dt)
+	local ts = fx.timers
+	if not ts then return end
+	local due = {}
+	for i = #ts, 1, -1 do
+		ts[i].t = ts[i].t - dt
+		if ts[i].t <= 0 then
+			due[#due + 1] = ts[i].fn
+			table.remove(ts, i)
+		end
+	end
+	for i = #due, 1, -1 do due[i]() end
+end
+
+-- the whole screen dimmed or lit for a moment (a0 to nothing in d seconds)
+local function veil(fx, color, a0, d)
+	local n = box(fx.hud, 640, 360, screen.x1 - screen.x0 + 40, screen.y1 - screen.y0 + 40)
+	gui.set_position(n, vec((screen.x0 + screen.x1) / 2, (screen.y0 + screen.y1) / 2))
+	gui.set_color(n, vmath.vector4(color.x, color.y, color.z, a0))
+	gui.animate(n, "color.w", 0, gui.EASING_OUTQUAD, d, 0, function() gui.delete_node(n) end)
+	return n
+end
+local WARM = vmath.vector4(1, 0.92, 0.78, 1)
+
+-- the column of Obsidian fire from the mouth (WB-094's four frames): it shoots up,
+-- burns at full height flickering, breaks up and falls back
+local FLAME_UP, FLAME_HOLD, FLAME_DOWN = 0.18, 0.62, 0.35
 local function flame(fx, m)
 	local w = m.w * 3 * PIECES.fiammata_1.w / PIECES.fiammata_1.h
 	local n = piece(fx.splash, "fiammata_1", m.x, m.y - m.w * 0.04, w, gui.PIVOT_S)
-	local t = 0
-	for i = 2, #FLAME_FRAMES do
-		t = t + FLAME_FRAMES[i - 1]
-		gui.animate(n, "color.w", 1, gui.EASING_LINEAR, 0.001, t, function() gui.play_flipbook(n, "fiammata_" .. i) end)
+	gui.set_scale(n, vmath.vector3(0.7, 0.05, 1))
+	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTCUBIC, FLAME_UP)
+	-- the frames: the burst, then the full column and its top breaking (one and the
+	-- other, a flicker), then falling back (by the timers: animations on one property
+	-- would cancel each other)
+	local t, k = 0.06, 0
+	later(fx, t, function() gui.play_flipbook(n, "fiammata_2") end)
+	while t < FLAME_UP + FLAME_HOLD do
+		t, k = t + 0.09, k + 1
+		local f = k % 2 == 0 and "fiammata_2" or "fiammata_3"
+		later(fx, t, function() gui.play_flipbook(n, f) end)
 	end
-	t = t + FLAME_FRAMES[#FLAME_FRAMES]
-	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.15, t, function() gui.delete_node(n) end)
+	later(fx, t, function()
+		gui.play_flipbook(n, "fiammata_4")
+		gui.animate(n, "scale", vmath.vector3(1, 0.5, 1), gui.EASING_INQUAD, FLAME_DOWN)
+		gui.animate(n, "color.w", 0, gui.EASING_INQUAD, FLAME_DOWN, 0, function() gui.delete_node(n) end)
+	end)
+	-- the embers, the ring, the mould hot and trembling
+	sparks(fx, fx.splash, m.x, m.y, 60, 0.9, 300, m.w * 0.09, 420, { GOLD, MAGENTA, VIOLET, EMBER })
+	shock(fx, m.x, m.y - m.w * 0.15, m.w * 0.9)
+	glow(fx, m, 1.6, 0.9)
+	tremble(fx, m, 0.75)
 end
 
 local function draw_mould(fx, m, full)
@@ -351,6 +493,7 @@ end
 
 -- fills a mould on the wall (a hit): a pop, the flame, then the lid comes down on the
 -- mouth with a bounce; the tag goes
+local LID_AT = 0.85 -- the lid comes down once the column has burned
 local function fill_mould(fx, m)
 	local n = fx.moulds[m.slot]
 	if not n then return end
@@ -362,8 +505,8 @@ local function fill_mould(fx, m)
 	gui.set_position(s, p + vec(0, m.w * 1.6))
 	-- hidden (scale 0, which its children take too) until the flame has burst
 	gui.set_scale(s, vmath.vector3(0.001, 0.001, 1))
-	gui.animate(s, "scale", vmath.vector3(1, 1, 1), gui.EASING_LINEAR, 0.01, 0.42)
-	gui.animate(s, "position.y", p.y, gui.EASING_OUTBOUNCE, 0.4, 0.42)
+	gui.animate(s, "scale", vmath.vector3(1, 1, 1), gui.EASING_LINEAR, 0.01, LID_AT)
+	gui.animate(s, "position.y", p.y, gui.EASING_OUTBOUNCE, 0.4, LID_AT)
 	if fx.tags[m.slot] then
 		gui.delete_node(fx.tags[m.slot])
 		fx.tags[m.slot] = nil
@@ -376,6 +519,7 @@ local function make_world(a)
 	a.fx = fx
 	fx.phase = fx.phase or "vetrina"
 	fx.tags, fx.moulds, fx.seals = {}, {}, {}
+	fx.parts, fx.trembles, fx.timers = nil, nil, nil
 	fx.top = empty(nil, 0, 0)
 	fx.clip = box(fx.top, 0, 0, 10, 10)
 	gui.set_color(fx.clip, KC.SOOT)
@@ -395,6 +539,13 @@ local function make_world(a)
 	for x = -900, 2600, FLOOR_W - 4 do piece(fx.world, "pavimento", x, FLOOR_TOP, FLOOR_W, gui.PIVOT_NW) end
 	piece(fx.world, "secchio", BUCKET.x, BUCKET.y, BUCKET.w, gui.PIVOT_S)
 	piece(fx.world, "sporgenza", LEDGE.x, LEDGE.y, LEDGE.w, gui.PIVOT_NW)
+	-- the back wall (forge.BACK_X): the ledge's stone blocks one on the other, up
+	-- out of the view (placeholder until its own drawing)
+	local bh = BACK_W * PIECES.sporgenza.h / PIECES.sporgenza.w
+	for y = FLOOR_TOP + bh - 6, 1400, bh - 6 do
+		local b = piece(fx.world, "sporgenza", forge.BACK_X + BACK_W, y, BACK_W, gui.PIVOT_NW)
+		gui.set_scale(b, vmath.vector3(-1, 1, 1))
+	end
 	-- the wall: chains behind the moulds, the tags on top of everything
 	fx.chains = empty(fx.world)
 	fx.wall_root = empty(fx.world)
@@ -402,6 +553,10 @@ local function make_world(a)
 	local f = p.fornace
 	local full = key == f.muro and f.pieni or {}
 	fx.key = key
+	fx.mir = forge.mirrored(key) and -1 or 1
+	-- (in the simulator: imposta prova_fornace_specchio si | no)
+	local force = sys.get_config_int("megablast.simula", 0) == 1 and sys.get_config_string("megablast.prova_fornace_specchio", "")
+	if force == "si" then fx.mir = -1 elseif force == "no" then fx.mir = 1 end
 	for _, m in ipairs(forge.wall(p, key)) do draw_mould(fx, m, full[m.slot]) end
 	-- the apprentice on the ledge, the ladle in his hand
 	local dev = scoria.new(a.colore or ui.C.SQUADRA[1], scoria.player)
@@ -639,16 +794,19 @@ local function throws_row(a)
 end
 
 -- a word in the middle of the screen that pops and fades (3 SU 3!, DOPPIO!)
-local function shout(a, t, y, color, life)
+local function shout(a, t, y, color, life, size)
 	local fx = a.fx
+	size = size or 40
 	local n = empty(fx.hud, 640, y)
 	local g = { node = n, ox = 0, oy = 0 }
-	kit.text(g, t, 3, 4, 40, KC.INK, "middle", 1)
-	kit.text(g, t, 0, 0, 40, color or KC.HOT, "middle", 1)
+	local o = math.max(3, size * 0.08)
+	kit.text(g, t, o, o * 1.3, size, KC.INK, "middle", 1)
+	kit.text(g, t, 0, 0, size, color or KC.HOT, "middle", 1)
 	gui.set_scale(n, vmath.vector3(0.3, 0.3, 1))
 	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3)
 	gui.animate(n, "position.y", y + 30, gui.EASING_OUTQUAD, life, 0)
 	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.3, life - 0.3, function() gui.delete_node(n) end)
+	return n
 end
 
 -- the orange splash where molten Ossidiana lands (world units)
@@ -716,6 +874,8 @@ local function close(a)
 	fx.stick = nil
 	if fx.purse then coins.finish(fx.purse); coins.delete(fx.purse); fx.purse = nil end
 	if fx.hud then gui.delete_node(fx.hud); fx.hud = nil end
+	-- the effects still going belong to the hud and the wall, which go
+	fx.parts, fx.trembles, fx.timers = nil, nil, nil
 	fx.row, fx.hint = nil, nil
 	fx.phase, fx.t = "close", 0
 	travel(fx, frame_view(), frame_cam(frame_view()), OPEN)
@@ -728,11 +888,11 @@ local function launch(a)
 	local f = p.fornace
 	local full = {}
 	for k, v in pairs(f.pieni) do full[k] = v end
-	local wall = forge.layout(f.muro, f.seme, f.fortunato)
+	local wall = forge.wall(p, f.muro)
 	local _, path = forge.fly(fx.angle, fx.power, wall, full, true)
 	local r = profile.act(p, { k = "tiro", angolo = fx.angle, forza = fx.power })
 	if not r then to_aim(a); return end
-	fx.result, fx.path, fx.wall, fx.hit_i = r, path, wall, 1
+	fx.result, fx.path, fx.wall, fx.hit_i, fx.wall_i = r, path, wall, 1, 1
 	local got = fx.got
 	if got then
 		got.scaglie = got.scaglie + (r.scaglie or 0)
@@ -752,6 +912,95 @@ end
 
 local missed, after_throw, recap
 
+-- The whole wall filled (the page's «jackpot del muro pieno»): once the last flame has
+-- burned the moulds light up one after another like a row of lamps, a flash, the
+-- camera shakes, JACKPOT! huge and wobbling, a rain of Scaglie and fragments over the
+-- screen; the Scaglie into the wallet and, the first time, the medal
+local LAMPS_AT, LAMP_GAP, BANG_AT = 1.2, 0.1, 2.4
+local RAIN = { "scaglia", "scaglia", "scaglia", "frammento_fabbro", "scaglia", "scaglia", "scaglia", "frammento_corvo",
+	"scaglia", "scaglia", "scaglia", "frammento_fornace", "scaglia", "scaglia", "scaglia", "frammento_leviatano",
+	"scaglia", "scaglia", "scaglia", "frammento_vuoto" }
+local function banner(a, t, y, size, color, life)
+	local fx = a.fx
+	local n = shout(a, t, y, color, life, size)
+	gui.cancel_animations(n, "position.y")
+	gui.set_scale(n, vmath.vector3(0.4, 0.4, 1))
+	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.4)
+	gui.animate(n, "position.y", y + 8, gui.EASING_INOUTSINE, 0.5, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
+	gui.set_rotation(n, vmath.vector3(0, 0, -1.7))
+	gui.animate(n, "euler.z", 1.7, gui.EASING_INOUTSINE, 1, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
+	return n
+end
+
+local function jackpot(a, r)
+	local fx = a.fx
+	fx.hold = JACKPOT_T
+	local ms = {}
+	for _, m in ipairs(fx.wall) do ms[#ms + 1] = m end
+	table.sort(ms, function(p, q) if p.x ~= q.x then return p.x < q.x end return p.slot < q.slot end)
+	local lamps = {}
+	for i, m in ipairs(ms) do
+		later(fx, LAMPS_AT + (i - 1) * LAMP_GAP, function()
+			local h = glow(fx, m, nil, 0.9)
+			if h then
+				gui.animate(h, "color.w", 0.45, gui.EASING_INOUTSINE, 0.4, 0.15, nil, gui.PLAYBACK_LOOP_PINGPONG)
+				lamps[#lamps + 1] = h
+			end
+			-- the golden light on the lid's top
+			local e = ui.disc(m.x, m.y + m.w * (LID_Y + 0.08), m.w * 0.9, GOLD, fx.splash)
+			gui.set_size(e, vec(m.w * 0.9, m.w * 0.2))
+			gui.set_blend_mode(e, gui.BLEND_ADD)
+			gui.set_scale(e, vmath.vector3(0.2, 0.2, 1))
+			gui.animate(e, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.15)
+			lamps[#lamps + 1] = e
+			sound.play("#scaglia")
+		end)
+	end
+	later(fx, BANG_AT, function()
+		veil(fx, WARM, 0.7, 0.12)
+		fx.shake = SHAKE * 3
+		sound.play("#martello")
+		local cx = (screen.x0 + screen.x1) / 2
+		banner(a, T.jackpot, 400, 120, GOLD, JACKPOT_T - BANG_AT + 0.6)
+		later(fx, 0.15, function() shout(a, T.wall_full, 300, KC.HOT, JACKPOT_T - BANG_AT + 0.4, 34) end)
+		-- the rain, from above the screen over its whole width
+		fx.parts = fx.parts or {}
+		local wide = screen.x1 - screen.x0
+		for i = 1, 40 do
+			later(fx, math.random() * 1.2, function()
+				local n = empty(fx.hud, screen.x0 + wide * math.random(), screen.y1 + 40)
+				kit.piece({ node = n, ox = 0, oy = 0 }, RAIN[i % #RAIN + 1], 0, 0, 30 + 16 * math.random())
+				local p = gui.get_position(n)
+				fx.parts[#fx.parts + 1] = { node = n, x = p.x, y = p.y, vx = (math.random() - 0.5) * 60,
+					vy = -(260 + 200 * math.random()), g = 600, t = 0, life = 2.2, spin = (math.random() - 0.5) * 360, keep = true }
+			end)
+		end
+		later(fx, 0.4, function()
+			coins.fly(fx.purse, "scaglia", in_purse(fx, cx, 360), 14, r.jackpot,
+				function(i) if i % 4 == 1 then sound.play("#scaglia") end end)
+		end)
+		if r.medal then
+			later(fx, 0.7, function()
+				shout(a, T.medal, 150, KC.SAND, JACKPOT_T - BANG_AT - 0.7, 30)
+				-- the medal of WB-094 jumps out under the words, turns a little and goes
+				local md = piece(fx.hud, "medaglia_jackpot", cx, 215, 170)
+				local life = JACKPOT_T - BANG_AT - 0.7
+				gui.set_scale(md, vmath.vector3(0.1, 0.1, 1))
+				gui.animate(md, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.45)
+				gui.set_rotation(md, vmath.vector3(0, 0, -25))
+				gui.animate(md, "euler.z", 0, gui.EASING_OUTBACK, 0.6)
+				gui.animate(md, "color.w", 0, gui.EASING_INQUAD, 0.3, life - 0.3, function() gui.delete_node(md) end)
+			end)
+		end
+	end)
+	-- the lamps go out as the recap comes
+	later(fx, JACKPOT_T + AFTER - 0.4, function()
+		for _, h in ipairs(lamps) do
+			gui.animate(h, "color.w", 0, gui.EASING_INQUAD, 0.4, 0, function() gui.delete_node(h) end)
+		end
+	end)
+end
+
 -- where the flight ended: the prize, the splash, the coins
 local function land(a)
 	local fx = a.fx
@@ -760,6 +1009,8 @@ local function land(a)
 	gui.set_enabled(fx.drop, false)
 	fx.phase, fx.t = "after", 0
 	fx.focus = nil
+	-- a record of knocks on the moulds' iron in one throw (6, 10: the medals)
+	if r.knocks then shout(a, T.knocks:format(r.knocks), 540, KC.SAND, 1.6, 44) end
 	if r.esito == "stampo" then
 		local m = fx.wall[r.slot]
 		fx.freeze, fx.shake = FREEZE, SHAKE
@@ -767,25 +1018,13 @@ local function land(a)
 		fill_mould(fx, m)
 		fx.shake = SHAKE * 1.6
 		sound.play("#martello")
-		if r.jackpot then
-			-- the whole wall filled: JACKPOT, a rain of Scaglie, the medal the first time
-			fx.hold = JACKPOT_T
-			fx.shake = SHAKE * 3
-			shout(a, T.jackpot, 470, KC.HOT, JACKPOT_T)
-			if r.medal then
-				shout(a, T.medal, 400, KC.SAND, JACKPOT_T)
-				-- the medal of WB-094 jumps out in the middle, turns a little and goes
-				local md = piece(fx.hud, "medaglia_jackpot", (screen.x0 + screen.x1) / 2, 215, 200)
-				gui.set_scale(md, vmath.vector3(0.1, 0.1, 1))
-				gui.animate(md, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.45, 0.2)
-				gui.set_rotation(md, vmath.vector3(0, 0, -25))
-				gui.animate(md, "rotation.z", 0, gui.EASING_OUTBACK, 0.6, 0.2)
-				gui.animate(md, "color.w", 0, gui.EASING_INQUAD, 0.3, JACKPOT_T - 0.3, function() gui.delete_node(md) end)
-			end
-			local cx = (screen.x0 + screen.x1) / 2
-			coins.fly(fx.purse, "scaglia", in_purse(fx, cx, 520), 14, r.jackpot,
-				function(i) if i % 4 == 1 then sound.play("#scaglia") end end)
-		end
+		-- the page's «fiammata»: the screen dark for the moment the drop goes in, then a
+		-- warm flash as the column bursts, and CENTRO! big at the top
+		veil(fx, KC.INK, 0.35, FREEZE + 0.25)
+		later(fx, 0, function() veil(fx, WARM, 0.5, 0.12) end)
+		if not r.jackpot then shout(a, T.hit, 610, GOLD, 1.4, 64) end
+		fx.hold = 0.5
+		if r.jackpot then jackpot(a, r) end
 		local sx, sy = to_screen(fx, m.x, m.y + m.w * 0.6)
 		if r.scaglie then
 			coins.fly(fx.purse, "scaglia", in_purse(fx, sx, sy), math.min(10, math.max(3, math.floor(r.scaglie / 8))), r.scaglie,
@@ -909,7 +1148,7 @@ end
 -- an angle and power that fill the nearest empty mould (the simulator's sure aim)
 local function sure_aim(p)
 	local f = p.fornace
-	local wall = forge.layout(f.muro, f.seme, f.fortunato)
+	local wall = forge.wall(p, f.muro)
 	local g = game.GRAVITY * game.MISSILE_GRAVITY
 	for _, m in ipairs(wall) do
 		if not f.pieni[m.slot] then
@@ -942,7 +1181,7 @@ end
 local function aim_at(a, x, y)
 	local fx = a.fx
 	local cx, cy = to_screen(fx, 0, game.DISEGNO_H / 2)
-	local an, d, pw = aim.from_finger(x - cx, y - cy, 1)
+	local an, d, pw = aim.from_finger((fx.mir or 1) * (x - cx), y - cy, 1)
 	fx.dist = d
 	if d < 1 then return end
 	fx.angle, fx.power = an, pw
@@ -992,7 +1231,7 @@ local function pad_aim(a)
 	if st.active then
 		if not fx.pad and fx.hint then gui.set_enabled(fx.hint, false) end
 		fx.pad = true
-		fx.angle, fx.power = st.angle, aim.stick_power(st.f)
+		fx.angle, fx.power = (fx.mir or 1) < 0 and math.pi - st.angle or st.angle, aim.stick_power(st.f)
 		sticks.record(st, fx.clock, fx.angle, fx.power, true)
 	elseif fx.pad then
 		pad_off(fx)
@@ -1007,10 +1246,17 @@ local function draw_aim(a)
 	local color = ui.C.SQUADRA[1]
 	aim.needle(fx.aim, x, y, fx.angle, s, fx.power, color)
 	aim.tag(fx.aim, x, y, fx.angle, s, aim.degrees(fx.angle), fx.power)
+	if (fx.mir or 1) < 0 then
+		-- the numbers read the right way, on the outer side of the tip
+		gui.set_scale(fx.aim.sign, vmath.vector3(-1 / s, 1 / s, 1))
+		local c = fx.aim.c
+		local flip = { [gui.PIVOT_W] = gui.PIVOT_E, [gui.PIVOT_E] = gui.PIVOT_W }
+		if flip[c.pivot] then c.pivot = flip[c.pivot]; gui.set_pivot(c.text_n, c.pivot) end
+	end
 	-- the dots over the first part of the flight
 	local p = a.prof
 	local f = p.fornace
-	local wall = forge.layout(f.muro, f.seme, f.fortunato)
+	local wall = forge.wall(p, f.muro)
 	local _, path = forge.fly(fx.angle, fx.power, wall, f.pieni, true)
 	fx.pts = fx.pts or {}
 	-- up to the top and a little past it, fading there (Sergio, 24 Nov); never past
@@ -1035,6 +1281,7 @@ end
 -- loads, follows the drop and stops on the mould): a little closer than the whole
 -- wall, eased toward where things happen, and back to the whole wall to aim
 local CAM_EASE = 5
+local FOCUS_T = 1.2 -- on the hit mould while its flame burns
 local FLY_EASE, FLY_ZOOM = 9, 1.5
 local function follow(a, dt)
 	local fx = a.fx
@@ -1049,7 +1296,7 @@ local function follow(a, dt)
 		local d = gui.get_position(fx.drop)
 		tx, ty, ts = d.x, math.max(forge.FLOOR + 60, d.y), math.max(base.s * FLY_ZOOM, math.min(THROW_CAM.s, fx.cam.s))
 		ease = FLY_EASE
-	elseif fx.phase == "after" and fx.focus and fx.t < AFTER then
+	elseif fx.phase == "after" and fx.focus and fx.t < FOCUS_T then
 		tx, ty, ts = lerp(base.x, fx.focus[1], 0.3), lerp(base.y, fx.focus[2], 0.3), base.s * 1.2
 	end
 	local k = 1 - math.exp(-dt * ease)
@@ -1081,6 +1328,9 @@ function M.update(a, dt)
 		fx.freeze = fx.freeze - dt
 		return false
 	end
+	parts_step(fx, dt)
+	trembles_step(fx, dt)
+	timers_step(fx, dt)
 	if fx.shake and fx.shake > 0 then
 		fx.shake = fx.shake - dt
 		local k = clamp(fx.shake / SHAKE) * SHAKE_PX
@@ -1208,6 +1458,14 @@ function M.update(a, dt)
 				sound.play("#martello")
 				fx.hit_i = fx.hit_i + 1
 			end
+			-- on the back wall: a toc, and back
+			local walls = fx.path.walls
+			fx.wall_i = fx.wall_i or 1
+			if walls and walls[fx.wall_i] and i0 >= walls[fx.wall_i] then
+				sound.play("#toc")
+				fx.shake = math.max(fx.shake or 0, SHAKE * 0.5)
+				fx.wall_i = fx.wall_i + 1
+			end
 			gui.set_rotation(fx.drop, vmath.vector3(0, 0, fx.t * 400))
 			-- a short trail of embers behind it: it reads on the dark forge
 			fx.trail = (fx.trail or 0) - dt
@@ -1327,7 +1585,7 @@ function M.input(a, action_id, action)
 			local was = st.active
 			sticks.aim(st, SP.drag(pad, x, y))
 			if st.active then
-				fx.angle, fx.power = st.angle, aim.stick_power(st.f)
+				fx.angle, fx.power = (fx.mir or 1) < 0 and math.pi - st.angle or st.angle, aim.stick_power(st.f)
 				if not was then phone.tap() end
 			elseif was then
 				aim_off(fx)

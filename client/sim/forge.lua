@@ -13,10 +13,10 @@
 -- new places. A filled mould stays full until the next wall.
 --
 -- The profile's field (added by M.init): fornace = { muro, pieni[slot], tiri,
--- lanci, centri, colate, seme, fortunato, senza }: the wall of the last pour, the
--- moulds filled on it, the throws left, the throws and hits of the pour, the
--- pours made, the seed of the player's walls, the lucky mould of the wall, the
--- walls since the last lucky one.
+-- lanci, centri, colate, fortunato, jackpot, rintocchi }: the wall of the last pour,
+-- the moulds filled on it, the throws left, the throws and hits of the pour, the
+-- pours made, the lucky mould of the wall, the full walls, the most knocks on the
+-- moulds in one throw. (Old profiles may still have seme and senza: unused.)
 
 local game = require "sim.game"
 local equip = require "sim.gear"
@@ -32,6 +32,10 @@ M.MISS = 20              -- Scaglie for a drop that misses (it falls in the buck
 -- speciale»): every mould of a wall filled gives JACKPOT Scaglie, and the first time the
 -- «Jackpot della Fornace» medal (p.fornace.jackpot counts them)
 M.JACKPOT = 500
+-- the medals of the knocks (Sergio, 24 Nov: «una medaglia per aver fatto 6 rintocchi
+-- sulle coppe e una per 10»): the drop knocking on the moulds' iron so many times in
+-- one throw
+M.KNOCKS = { 6, 10 }
 -- what a pour is worth on average, in Scaglie of value (a fragment = 60): the
 -- design's aim, ~0.8x to 1.2x from worst to best (tools/economia/conti.lua)
 M.AVERAGE = 130
@@ -65,7 +69,8 @@ end
 
 -- The moulds. Every wall puts them in new places (Sergio, 24 Nov: «le posizioni
 -- sempre randomiche ogni volta che il muro si rigenera»), drawn from the wall's key
--- and the player's own seed, so each player has his walls. 12 moulds, 6 of Scaglie
+-- only: the same wall for everyone (Sergio, 24 Nov: «uguale per tutti quanti, crea
+-- più unione tra la gente»). 12 moulds, 6 of Scaglie
 -- and 6 of fragments (255 Scaglie and 8 fragments): the farther it is, the more it
 -- gives, the far ones are small. Each one: centre of the opening (x), its rim (y),
 -- width, chain length (drawn only: the high ones hang).
@@ -93,17 +98,45 @@ M.REACH_ROOM = 70
 -- about one wall in LUCKY_CHANCE and for sure within LUCKY_PITY walls
 M.LUCKY_CHANCE, M.LUCKY_PITY = 8, 15
 
--- The player's seed for his walls (fixed at his first pour)
-function M.seed(p)
-	local f = p.fornace
-	return f and f.seme or hash(p.nome or "", p.livello or 1, p.xp or 0)
+-- The walls' seed: the same for everyone (it was the player's own until 24 Nov)
+M.SEED = 0
+function M.seed() return M.SEED end
+
+-- the days from 1970-01-01 of a date "YYYY-MM-DD" (the civil calendar, no clock)
+local function day_number(date)
+	local y, m, d = tostring(date):match("^(%d+)%-(%d+)%-(%d+)")
+	y, m, d = tonumber(y), tonumber(m), tonumber(d)
+	if not y then return 0 end
+	if m <= 2 then y = y - 1 end
+	local era = math.floor(y / 400)
+	local yoe = y - era * 400
+	local doy = math.floor((153 * (m + (m > 2 and -3 or 9)) + 2) / 5) + d - 1
+	local doe = yoe * 365 + math.floor(yoe / 4) - math.floor(yoe / 100) + doy
+	return era * 146097 + doe - 719468
 end
 
--- Is the next new wall lucky, and which mould (from the counter of walls without)?
-local function lucky_slot(seed, key, without)
-	if without + 1 >= M.LUCKY_PITY or hash(seed, key, "fortuna") % M.LUCKY_CHANCE == 0 then
-		return hash(seed, key, "quale") % #M.PRIZES + 1
+-- the wall's number since 1970 (three a day)
+function M.wall_number(key)
+	return day_number(key:sub(1, 10)) * 3 + (tonumber(key:sub(12, 12)) or 0)
+end
+
+-- Is the wall lucky, and which mould? The same for everyone: one wall in every
+-- LUCKY_CHANCE in a row, at a place drawn for that run (so two lucky walls are at
+-- most 2 * LUCKY_CHANCE - 1 apart, within LUCKY_PITY)
+function M.lucky_slot(key)
+	if not key_ok(key) then return nil end
+	local n = M.wall_number(key)
+	local run = math.floor(n / M.LUCKY_CHANCE)
+	if n % M.LUCKY_CHANCE == hash(run, "fortuna") % M.LUCKY_CHANCE then
+		return hash(key, "quale") % #M.PRIZES + 1
 	end
+end
+
+-- Is the wall mirrored (Sergio, 24 Nov: «ogni tanto il muro specchiato, con
+-- l'apprendista dall'altro lato, a destra nel 50% dei casi»)? Only the drawing: the
+-- rules see every wall from the left
+function M.mirrored(key)
+	return key_ok(key) and hash(key, "specchio") % 2 == 1
 end
 
 -- Can mould i of wall be hit? Tries the arcs from flat to high, each with the
@@ -240,8 +273,7 @@ end
 function M.wall(p, key)
 	M.init(p)
 	local f = p.fornace
-	if key == f.muro then return M.layout(key, M.seed(p), f.fortunato) end
-	return M.layout(key, M.seed(p), lucky_slot(M.seed(p), key, f.senza))
+	return M.layout(key, M.SEED, M.lucky_slot(key))
 end
 
 -- What is still on the wall for key: Scaglie, fragments by family, moulds left
@@ -282,15 +314,29 @@ M.STILL = 90             -- ticks almost still (resting on a lip): it drips down
 -- it bounces out
 M.CATCH = 0.3
 
+-- The lid of a full mould (Sergio, 24 Nov: «l'hitbox del coperchio un pochino più
+-- coerente col coperchio»): the drawn lid's dome (WB-094, client/menu/forge_ui.lua
+-- seal: 1.02 of the mould wide, from 0.11 under the rim to 0.48 over it) as a circle
+M.LID_R, M.LID_Y = 0.54, -0.08
+
+-- The back wall (Sergio, 24 Nov: «in fondo a destra un muro, ad un po' di distanza
+-- dall'ultimo vaso, raggiungibile col tiro, fa rimbalzare la palla con un toc, come
+-- se sbattesse su della plastica»): a wall from the floor up, at BACK_X (the farthest
+-- moulds end by 1510; at full power the drop gets there at about -50); it sends the
+-- drop back with BACK_BOUNCE of its speed
+M.BACK_X = 1640
+M.BACK_BOUNCE = 0.85
+
 -- where the drop is taken by mould m: the line's height and half width
 function M.catch(m)
 	local lip = m.w * M.LIP
 	return m.y + lip + M.DROP_R * 0.5, m.inner + M.CATCH * (2 * lip + M.DROP_R)
 end
 
--- the round iron of mould m: { cx, cy, r }
-local function irons(m)
-	local out = m.irons
+-- the round iron of mould m: { cx, cy, r } (closed: with its lid on)
+local function irons(m, closed)
+	local k = closed and "lidded" or "irons"
+	local out = m[k]
 	if not out then
 		local lip = m.w * M.LIP
 		out = {
@@ -298,7 +344,8 @@ local function irons(m)
 			{ m.x - m.inner - lip, m.y, lip },
 			{ m.x + m.inner + lip, m.y, lip },
 		}
-		m.irons = out
+		if closed then out[4] = { m.x, m.y + m.w * M.LID_Y, m.w * M.LID_R } end
+		m[k] = out
 	end
 	return out
 end
@@ -324,39 +371,44 @@ local function bounce(c, x, y, vx, vy)
 end
 
 -- The flight of a throw against the moulds of a wall (full: the slots already
--- filled, closed at the rim). Returns { esito = "stampo" | "secchio", slot, ticks,
--- rimbalzi } and, when points is true, the drop's positions tick by tick (for
--- drawing) and the ticks of the bounces (path.hits).
+-- filled, closed by their lid). Returns { esito = "stampo" | "secchio", slot, ticks,
+-- rimbalzi (the knocks on the moulds' iron: the «rintocchi»), sponde (on the back
+-- wall) } and, when points is true, the drop's positions tick by tick (for drawing)
+-- and the ticks of the bounces (path.hits, and path.walls for the back wall).
 function M.fly(angle, power, wall, full, points)
 	full = full or {}
 	local x, y, vx, vy = M.launch(angle, power)
 	local g = game.GRAVITY * game.MISSILE_GRAVITY
-	local path = points and { { x, y }, hits = {} } or nil
-	local hits, still = 0, 0
+	local path = points and { { x, y }, hits = {}, walls = {} } or nil
+	local hits, still, walls = 0, 0, 0
 	for t = 1, M.MAX_TICKS do
 		vy = vy - g * game.DT
 		local nx, ny = x + vx * game.DT, y + vy * game.DT
 		local hit = false
+		-- (a mould's iron and opening are all within 2 widths of its mouth: the far
+		-- ones are skipped, same result, faster)
+		local reach = math.abs(vx * game.DT) + math.abs(vy * game.DT) + M.DROP_R
 		for _, m in ipairs(wall) do
-			-- through the opening, going down: in (or on the metal of a full one)
-			local ly, half = M.catch(m)
-			if y >= ly and ny < ly then
-				local cx = x + (nx - x) * (y - ly) / (y - ny)
-				if math.abs(cx - m.x) <= half then
-					if not full[m.slot] then
+			local near = math.abs(nx - m.x) < 2 * m.w + reach and math.abs(ny - m.y) < 2 * m.w + reach
+			-- through the opening, going down: in (a full one has its lid on)
+			local closed = full[m.slot]
+			if near and not closed then
+				local ly, half = M.catch(m)
+				if y >= ly and ny < ly then
+					local cx = x + (nx - x) * (y - ly) / (y - ny)
+					if math.abs(cx - m.x) <= half then
 						if path then path[#path + 1] = { cx, ly } end
-						return { esito = "stampo", slot = m.slot, ticks = t, rimbalzi = hits }, path
+						return { esito = "stampo", slot = m.slot, ticks = t, rimbalzi = hits, sponde = walls }, path
 					end
-					nx, ny = cx, ly + 0.01
-					if vy < -30 then hit = true end
-					if vy < 0 then vx, vy = vx * M.SLIDE, -vy * M.BOUNCE end
 				end
 			end
-			for _, c in ipairs(irons(m)) do
-				local bx, by, bvx, bvy, hard = bounce(c, nx, ny, vx, vy)
-				if bx then
-					nx, ny, vx, vy = bx, by, bvx, bvy
-					if hard then hit = true end
+			if near then
+				for _, c in ipairs(irons(m, closed)) do
+					local bx, by, bvx, bvy, hard = bounce(c, nx, ny, vx, vy)
+					if bx then
+						nx, ny, vx, vy = bx, by, bvx, bvy
+						if hard then hit = true end
+					end
 				end
 			end
 		end
@@ -364,15 +416,21 @@ function M.fly(angle, power, wall, full, points)
 			hits = hits + 1
 			if path then path.hits[#path.hits + 1] = t end
 		end
+		-- the back wall: back with a toc
+		if nx + M.DROP_R > M.BACK_X and vx > 0 then
+			nx, vx, vy = M.BACK_X - M.DROP_R, -vx * M.BACK_BOUNCE, vy * M.SLIDE
+			walls = walls + 1
+			if path then path.walls[#path.walls + 1] = t end
+		end
 		-- resting on a lip: it drips down on the outside
 		if vx * vx + vy * vy < 400 then still = still + 1 else still = 0 end
 		x, y = nx, ny
 		if path then path[#path + 1] = { x, y } end
-		if y - M.DROP_R < M.FLOOR or x < -400 or x > 2000 or still > M.STILL then
-			return { esito = "secchio", ticks = t, rimbalzi = hits }, path
+		if y - M.DROP_R < M.FLOOR or x < -400 or still > M.STILL then
+			return { esito = "secchio", ticks = t, rimbalzi = hits, sponde = walls }, path
 		end
 	end
-	return { esito = "secchio", ticks = M.MAX_TICKS, rimbalzi = hits }, path
+	return { esito = "secchio", ticks = M.MAX_TICKS, rimbalzi = hits, sponde = walls }, path
 end
 
 -- The profile --------------------------------------------------------------------------
@@ -386,8 +444,8 @@ function M.init(p)
 	f.lanci = f.lanci or 0
 	f.centri = f.centri or 0
 	f.colate = f.colate or 0
-	f.senza = f.senza or 0
 	f.jackpot = f.jackpot or 0
+	f.rintocchi = f.rintocchi or 0
 	return p
 end
 
@@ -402,9 +460,7 @@ function M.pour(p, key, today)
 	if not key_ok(key) or key:sub(1, 10) ~= tostring(today) or key < f.muro then return nil, "muro" end
 	if (p.ossidiana or 0) < M.COST then return nil, "ossidiana" end
 	if key ~= f.muro then
-		f.seme = M.seed(p)
-		f.fortunato = lucky_slot(f.seme, key, f.senza)
-		f.senza = f.fortunato and 0 or f.senza + 1
+		f.fortunato = M.lucky_slot(key)
 		f.muro, f.pieni = key, {}
 	end
 	p.ossidiana = p.ossidiana - M.COST
@@ -420,7 +476,7 @@ function M.throw(p, angle, power)
 	local f = p.fornace
 	if f.tiri <= 0 then return nil, "tiri" end
 	if type(angle) ~= "number" or type(power) ~= "number" or angle ~= angle or power ~= power then return nil, "tiro" end
-	local wall = M.layout(f.muro, f.seme, f.fortunato)
+	local wall = M.wall(p, f.muro)
 	local r = M.fly(angle, power, wall, f.pieni)
 	f.tiri, f.lanci = f.tiri - 1, f.lanci + 1
 	if r.esito == "stampo" then
@@ -439,6 +495,11 @@ function M.throw(p, angle, power)
 		r.scaglie = M.MISS
 	end
 	if r.scaglie then p.scaglie = (p.scaglie or 0) + r.scaglie end
+	-- the knocks' medals, the first time
+	for _, k in ipairs(M.KNOCKS) do
+		if r.rimbalzi >= k and f.rintocchi < k then r.knocks = k end
+	end
+	f.rintocchi = math.max(f.rintocchi, r.rimbalzi)
 	if r.esito == "stampo" then
 		local all = true
 		for _, m in ipairs(wall) do if not f.pieni[m.slot] then all = false; break end end

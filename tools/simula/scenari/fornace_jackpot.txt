@@ -6,45 +6,86 @@ imposta prova_fornace_centra 1
 
 aspetta 4
 tocca_bordo 210 170 mezzo destra    # la porta BOTTEGA
-aspetta 8
+aspetta 9
 tocca_bordo 556 50 alto sinistra    # FORNACE
 aspetta 3
 tocca_bordo 178 49 basso destra     # COLA
 aspetta 4.5
 trascina 300 300 330 380 0.4
-aspetta 5.5
+aspetta 9
 trascina 300 300 330 380 0.4
-aspetta 5.5
+aspetta 9
 trascina 300 300 330 380 0.4
-aspetta 6
+aspetta 9
 foto 01_sigillati
 trascina 300 300 330 380 0.4
-aspetta 6
+aspetta 9
 foto 02_riepilogo
 pad rt                              # COLA ANCORA
+aspetta 10
+trascina 300 300 330 380 0.4
 aspetta 9
 trascina 300 300 330 380 0.4
-aspetta 5.5
+aspetta 9
 trascina 300 300 330 380 0.4
-aspetta 5.5
+aspetta 9
 trascina 300 300 330 380 0.4
-aspetta 5.5
-trascina 300 300 330 380 0.4
-aspetta 6
+aspetta 9
 pad rt                              # COLA ANCORA
+aspetta 10
+trascina 300 300 330 380 0.4
 aspetta 9
 trascina 300 300 330 380 0.4
-aspetta 7
+aspetta 9
 trascina 300 300 330 380 0.4
-aspetta 7
+aspetta 9
 trascina 300 300 330 380 0.4
-aspetta 7
-trascina 300 300 330 380 0.4
-aspetta 1.6
-foto 03_ultimo_tiro
-aspetta 5
-foto 04_jackpot
-aspetta 4
+aspetta 1.2
+foto 04_jackpot_01
+aspetta 0.25
+foto 04_jackpot_02
+aspetta 0.25
+foto 04_jackpot_03
+aspetta 0.25
+foto 04_jackpot_04
+aspetta 0.25
+foto 04_jackpot_05
+aspetta 0.25
+foto 04_jackpot_06
+aspetta 0.25
+foto 04_jackpot_07
+aspetta 0.25
+foto 04_jackpot_08
+aspetta 0.25
+foto 04_jackpot_09
+aspetta 0.25
+foto 04_jackpot_10
+aspetta 0.25
+foto 04_jackpot_11
+aspetta 0.25
+foto 04_jackpot_12
+aspetta 0.25
+foto 04_jackpot_13
+aspetta 0.25
+foto 04_jackpot_14
+aspetta 0.25
+foto 04_jackpot_15
+aspetta 0.25
+foto 04_jackpot_16
+aspetta 0.25
+foto 04_jackpot_17
+aspetta 0.25
+foto 04_jackpot_18
+aspetta 0.25
+foto 04_jackpot_19
+aspetta 0.25
+foto 04_jackpot_20
+aspetta 0.25
+foto 04_jackpot_21
+aspetta 0.25
+foto 04_jackpot_22
+aspetta 0.25
+aspetta 3.5
 foto 05_riepilogo_col_jackpot
 pad b                               # CHIUDI
 aspetta 3
