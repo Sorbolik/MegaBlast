@@ -839,16 +839,124 @@ images {
   image: "/assets/fucina/podio_3.png"
 }
 images {
-  image: "/assets/fucina/porta_allenamento.png"
+  image: "/assets/fucina/porta_allenamento_acceso_cx.png"
 }
 images {
-  image: "/assets/fucina/porta_campagna.png"
+  image: "/assets/fucina/porta_allenamento_acceso_dx.png"
 }
 images {
-  image: "/assets/fucina/porta_eventi.png"
+  image: "/assets/fucina/porta_allenamento_acceso_sx.png"
 }
 images {
-  image: "/assets/fucina/porta_shop.png"
+  image: "/assets/fucina/porta_allenamento_chiaro_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_allenamento_chiaro_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_allenamento_chiaro_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_allenamento_premuto_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_allenamento_premuto_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_allenamento_premuto_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_armeria_acceso_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_armeria_acceso_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_armeria_acceso_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_armeria_chiaro_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_armeria_chiaro_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_armeria_chiaro_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_armeria_premuto_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_armeria_premuto_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_armeria_premuto_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_campagna_acceso_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_campagna_acceso_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_campagna_acceso_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_campagna_chiaro_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_campagna_chiaro_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_campagna_chiaro_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_campagna_premuto_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_campagna_premuto_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_campagna_premuto_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_eventi_acceso_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_eventi_acceso_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_eventi_acceso_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_eventi_chiaro_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_eventi_chiaro_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_eventi_chiaro_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_eventi_premuto_cx.png"
+}
+images {
+  image: "/assets/fucina/porta_eventi_premuto_dx.png"
+}
+images {
+  image: "/assets/fucina/porta_eventi_premuto_sx.png"
+}
+images {
+  image: "/assets/fucina/porta_icona_allenamento.png"
+}
+images {
+  image: "/assets/fucina/porta_icona_armeria.png"
+}
+images {
+  image: "/assets/fucina/porta_icona_campagna.png"
+}
+images {
+  image: "/assets/fucina/porta_icona_eventi.png"
 }
 images {
   image: "/assets/fucina/principale_acceso_cx.png"

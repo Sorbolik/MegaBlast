@@ -660,11 +660,18 @@ end
 -- At the bottom right, under the thread: the main action's place on every screen
 local FOOT = { x = 948, y = 640, w = 308, h = 62 }
 
+-- the words of a button: this far from the slab's border, and after the icon (x its height)
+M.BUTTON_PAD, M.BUTTON_GAP = 0.4, 0.2
+
 -- (x, y) its top left, w x h. opt: icon, sub, sub_color, off, main, size (of the
--- label). Returns the plate for M.button
+-- label), kind (another slab's drawings: the home's doors, "porta_<id>_"), door
+-- ({ side, size, dy }: the home's door, its big icon straight on the outer end, -1
+-- the left one, 1 the right one, the words against the other end). Returns the
+-- plate for M.button
 function M.secondary(g, label, x, y, w, h, opt)
 	opt = opt or {}
-	local kind = opt.main and "principale_" or "secondario_"
+	local kind = opt.kind or (opt.main and "principale_" or "secondario_")
+	local door = opt.door
 	local cx, cy = x + w / 2, y + h / 2
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
 	local p = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
@@ -689,7 +696,10 @@ function M.secondary(g, label, x, y, w, h, opt)
 	local f = { node = p.face_node, ox = cx, oy = cy }
 	-- the coin or icon sticks out of the left end, big and a little crooked, with
 	-- its flat ink shadow on the iron (Sergio, 18 Nov: «moneta che sporge»)
-	if opt.icon then
+	if opt.icon and door then
+		-- a door's icon: big, straight, its middle on the slab's outer end (Sergio, 24 Nov)
+		M.piece(f, opt.icon, door.side < 0 and x or x + w, y + h / 2 + (door.dy or 0), door.size)
+	elseif opt.icon then
 		local ix, iy, ih = x + h * 0.36, y + h * 0.44, h * 1.18
 		local sh = M.piece(f, opt.icon, ix + 3, iy + 4, ih)
 		gui.set_color(sh, C.INK)
@@ -697,12 +707,22 @@ function M.secondary(g, label, x, y, w, h, opt)
 		for _, n in ipairs({ sh, ic }) do gui.set_rotation(n, vmath.vector3(0, 0, 10)) end
 		if opt.off then gui.set_color(ic, vmath.vector4(0.45, 0.45, 0.5, 1)) end
 	end
-	-- the words after the icon; without one (its icon still to come) in the middle
-	local box = room(kind .. "acceso", cx, cy, w, h)
-	local x0 = opt.icon and box and box.x0 or x + h * 0.4
-	local x1 = box and box.x1 or x + w - 12
-	local room_w = x1 - x0
+	-- the words after the icon; without one (its icon still to come) in the middle.
+	-- One padding for every button (Sergio, 24 Nov: «i padding a cazzo di cane»): the
+	-- words BUTTON_PAD x h from the slab's border, BUTTON_GAP x h after the icon
+	local x0 = opt.icon and x + h * (0.95 + M.BUTTON_GAP) or x + h * M.BUTTON_PAD
+	local x1 = x + w - h * M.BUTTON_PAD
 	local tx, align = opt.icon and x0 or (x0 + x1) / 2, opt.icon and "start" or "middle"
+	if door then
+		-- the words against the end away from the icon, clear of the icon on the other side
+		local free = door.size / 2 + h * M.BUTTON_GAP
+		if door.side < 0 then
+			x0, x1, tx, align = x + free, x + w - h * M.BUTTON_PAD, x + w - h * M.BUTTON_PAD, "end"
+		else
+			x0, x1, tx, align = x + h * M.BUTTON_PAD, x + w - free, x + h * M.BUTTON_PAD, "start"
+		end
+	end
+	local room_w = x1 - x0
 	local ink = opt.off and with_alpha(C.SAND, 0.45) or C.SAND
 	local size = math.max(M.MIN_TEXT, math.min(opt.size or 20, h * (opt.sub and 0.34 or 0.42)))
 	local lt = M.text(f, label, tx, opt.sub and y + h * 0.48 or y + h / 2 + size * 0.36, size, ink, align, 0.5)
@@ -717,7 +737,14 @@ function M.secondary(g, label, x, y, w, h, opt)
 	p.label = lt
 	if opt.sub then
 		local st = M.text(f, opt.sub, tx, y + h * 0.8, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or (opt.main and C.HOT or C.MUTE), align, 0.5)
-		if M.width(st) > room_w then gui.set_scale(st, gui.get_scale(st) * (room_w / M.width(st))) end
+		local sub_full = gui.get_scale(st)
+		-- another short line (the home's doors: what is new there)
+		p.set_sub = function(t)
+			gui.set_text(st, t)
+			gui.set_scale(st, sub_full)
+			if M.width(st) > room_w then gui.set_scale(st, sub_full * (room_w / M.width(st))); M.check_small(st) end
+		end
+		p.set_sub(opt.sub)
 		p.sub = st
 	end
 	if not opt.off then

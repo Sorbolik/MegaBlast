@@ -41,7 +41,7 @@ Stati: acceso, chiaro (mouse o luce del controller sopra: `ui.lua`, `on_light`),
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| `kit.secondary`: `secondario_acceso/chiaro/premuto/spento` + icona a sinistra | accanto all'azione in ogni menù (POTENZIA, PROVA, CHIAMA UN CLIENTE, CAMBIA, SCAMBIA, CALENDARIO, COI FRAMMENTI, USA UN BUONO, ACCENDI LA FIRMA, RIPROVA, ELENCO, SALTA, RIVEDI, RILEGGI, TORNA AI MENU · RESTI IN CODA, RIPRISTINA, IMPOSTAZIONI, CREA, i tasti del codice della stanza privata) | ✅ |
+| `kit.secondary`: `secondario_acceso/chiaro/premuto/spento` + icona a sinistra; le scritte a `kit.BUTTON_PAD` (0,4 × altezza) dal bordo e `kit.BUTTON_GAP` (0,2) dopo l'icona, uguale per tutti | accanto all'azione in ogni menù (POTENZIA, PROVA, CHIAMA UN CLIENTE, CAMBIA, SCAMBIA, CALENDARIO, COI FRAMMENTI, USA UN BUONO, ACCENDI LA FIRMA, RIPROVA, ELENCO, SALTA, RIVEDI, RILEGGI, TORNA AI MENU · RESTI IN CODA, RIPRISTINA, IMPOSTAZIONI, CREA, i tasti del codice della stanza privata) | ✅ |
 | `kit.button_at`: lo stesso, al centro di un nodo | menu della rotellina in battaglia (RIPROVA, ESCI, MIRA, RILEGGI), scelta armi (ESCI) | ✅ |
 | `kit.plate` (`piastrina`) in fondo | CAMPAGNA gironi: i capitoli fatti | ⚠️ |
 | `kit.card` usato come pulsante | ZAINO e BOTTEGA (VEDI TUTTE sotto le statistiche) | ⚠️ |
@@ -61,7 +61,7 @@ tasti, profilo, annulla, ripristina, uno_contro_uno, via.
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| `kit.sign("porta_campagna" / "porta_allenamento" / "porta_eventi" / "porta_shop")` (WB-046, WB-080) | HOME | ✅ (disegni, restano) |
+| `kit.secondary` con `kind = "porta_<id>_"` e `door`: il Ferro liscio tinto del colore del posto (`fai_porte` in `fucina.py`), l'icona grande di WB-089 senza cornice sul capo verso il bordo, le scritte contro l'altro capo; tutte larghe uguali | HOME (CAMPAGNA, ALLENAMENTO, EVENTI, BOTTEGA) | ✅ (la bancarella aspetta WB-091, per ora i buchi chiusi di legno scuro) |
 
 ## 5. Tab (le sezioni di una schermata)
 

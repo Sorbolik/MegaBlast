@@ -1,0 +1,13 @@
+Image 1 shows icons of our game, a cartoon turn-based artillery game played by little red horned devils. They are the STYLE to copy exactly: thick slightly irregular pure black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic, bold and readable. Image 2 shows the four round medallions we use today for the four places of the home screen: keep their subjects, but we do NOT want the round frame, the rivets or the round background any more. Image 3 shows the home screen: each place is a long colored iron slab, and its icon will stick out of the slab's outer end, big, about twice the size of the other icons.
+
+Draw FOUR separate icons on one sheet, in one row, well apart, all the same visual size, each fitting a square, on plain green (#00FF00). Each is a tiny self-contained scene cut out on its own irregular ground (a small rock or a patch of floor under it), with NO frame and NO circle around it, the whole shape outlined in thick black ink so it reads as one silhouette at 120 pixels:
+1. CAMPAGNA: a winding sand path going down into a rocky crater with ember flames #E0402A rising from the bottom, seen from slightly above.
+2. ALLENAMENTO: a round straw target on a wooden post with an arrow in the bullseye, a small tuft of grass at its foot, teal #2FB59A arrow fletching.
+3. EVENTI: a gold crown #FFB703 resting on a small red velvet cushion with gold tassels.
+4. BOTTEGA: a tiny wooden market stall with a striped orange and ivory awning and an iron anvil on the counter.
+No letters, no numbers, no glow outside the ink. Background plain green #00FF00 so it can be cut out.
+
+Riferimenti in ordine: art/WB-089/riferimenti/R2_icone_delle_azioni.png, art/WB-089/riferimenti/R1_medaglioni_di_oggi.png, art/WB-089/riferimenti/R3_porte_proposta_B.png
+Variante 2. Un tentativo con ImageGen. Uscita 2172×724 ridimensionata in proporzione e centrata su tela verde da 1536×1024.
+Il cratere e la bottega risultano più larghi del bersaglio e della corona.
+Verde campionato a (5, 5): #03F906. Il fondo non è #00FF00 esatto. Alcuni bordi e campiture presentano lievi variazioni tonali.

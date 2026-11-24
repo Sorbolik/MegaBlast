@@ -397,8 +397,6 @@ def fai_secondario():
     un po' storta (Sergio, 18 nov, «moneta che sporge»). Disegnato qui in vettori (quattro volte piu' grande, poi
     ridotto), in tre parti come gli altri pezzi lunghi. Premuto: la faccia scende e lo
     spessore sparisce; spento: ferro freddo grigio-blu."""
-    S = 4                       # il disegno a quattro volte, ridotto: bordi lisci
-    W, FACE, R, INK = 520, 108, 30, 7
     stati = {
         # nome: (altezza in tutto, ferro, luce). «chiaro»: col mouse o la luce del controller
         # sopra (Sergio, 23 nov: «all'hover cambino sfumatura di colore»), una tinta piatta
@@ -413,24 +411,8 @@ def fai_secondario():
         "principale_premuto": (114, (0x44, 0x27, 0x1F), (0x5B, 0x29, 0x1C)),
         "principale_spento": (120, (0x4A, 0x55, 0x60), (0x5C, 0x67, 0x72)),
     }
-    nero = (0x0A, 0x08, 0x0B, 255)
     for nome, (h, ferro, luce) in stati.items():
-        im = Image.new("RGBA", (W * S, h * S), (0, 0, 0, 0))
-        d = ImageDraw.Draw(im)
-        top = 0                 # la faccia in alto, sotto lo spessore (12, premuto 6)
-        # lo spessore: l'inchiostro sotto la faccia
-        d.rounded_rectangle((0, top * S + 8 * S, W * S - 1, h * S - 1), R * S, fill=nero)
-        # la faccia: contorno, ferro, la luce in alto (solo dentro il ferro)
-        d.rounded_rectangle((0, top * S, W * S - 1, (top + FACE) * S - 1), R * S, fill=nero)
-        dentro = (INK * S, (top + INK) * S, (W - INK) * S - 1, (top + FACE - INK) * S - 1)
-        d.rounded_rectangle(dentro, (R - INK) * S, fill=ferro + (255,))
-        maschera = Image.new("L", im.size, 0)
-        ImageDraw.Draw(maschera).rounded_rectangle(dentro, (R - INK) * S, fill=255)
-        banda = Image.new("L", im.size, 0)
-        ImageDraw.Draw(banda).rectangle((0, 0, W * S, (top + INK + (FACE - 2 * INK) * 0.34) * S), fill=255)
-        im.paste(Image.new("RGBA", im.size, luce + (255,)), (0, 0), ImageChops.multiply(maschera, banda))
-        im = im.resize((W, h), Image.LANCZOS)
-        tre(nome, np.asarray(im), h, 0.26)
+        lastra(nome, h, ferro, luce)
     # le scritte dopo la moneta, lontano dai bordi
     SPAZI["secondario_acceso"] = (118, 14, 26, 24)
     SPAZI["principale_acceso"] = (118, 14, 26, 24)
@@ -438,6 +420,80 @@ def fai_secondario():
     # incontri cosi' male in punta, e che sia ben definito il <»): un pezzo solo, la punta
     # unita ad angolo vivo, i capi tondi, niente contorno
     fai_freccina()
+
+
+def lastra(nome, h, ferro, luce):
+    """La lastra del Ferro liscio (fai_secondario) coi colori dati, alta h (premuta 114)."""
+    S = 4                       # il disegno a quattro volte, ridotto: bordi lisci
+    W, FACE, R, INK = 520, 108, 30, 7
+    nero = (0x0A, 0x08, 0x0B, 255)
+    im = Image.new("RGBA", (W * S, h * S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    top = 0                 # la faccia in alto, sotto lo spessore (12, premuto 6)
+    # lo spessore: l'inchiostro sotto la faccia
+    d.rounded_rectangle((0, top * S + 8 * S, W * S - 1, h * S - 1), R * S, fill=nero)
+    # la faccia: contorno, ferro, la luce in alto (solo dentro il ferro)
+    d.rounded_rectangle((0, top * S, W * S - 1, (top + FACE) * S - 1), R * S, fill=nero)
+    dentro = (INK * S, (top + INK) * S, (W - INK) * S - 1, (top + FACE - INK) * S - 1)
+    d.rounded_rectangle(dentro, (R - INK) * S, fill=ferro + (255,))
+    maschera = Image.new("L", im.size, 0)
+    ImageDraw.Draw(maschera).rounded_rectangle(dentro, (R - INK) * S, fill=255)
+    banda = Image.new("L", im.size, 0)
+    ImageDraw.Draw(banda).rectangle((0, 0, W * S, (top + INK + (FACE - 2 * INK) * 0.34) * S), fill=255)
+    im.paste(Image.new("RGBA", im.size, luce + (255,)), (0, 0), ImageChops.multiply(maschera, banda))
+    im = im.resize((W, h), Image.LANCZOS)
+    tre(nome, np.asarray(im), h, 0.26)
+
+
+# Le porte della home (Sergio, 24 nov: proposta B, «i pulsanti riempiti col colore»): il
+# Ferro liscio tinto del colore del posto, e la sua icona grande di WB-089 senza cornice
+# che sporge dal capo verso il bordo. (porta, colore, foglio, posto da 0 a 3 nella riga)
+PORTE = [
+    ("campagna", (214, 62, 42), "porte_scenette_2", 0),
+    ("allenamento", (90, 200, 170), "porte_oggetti_2", 1),
+    ("eventi", (240, 190, 60), "porte_scenette_1", 2),
+    ("armeria", (176, 124, 70), "porte_oggetti_2", 3),
+]
+
+
+def tinta(rgb, col, quanto=0.75):
+    """Il ferro tinto: mescolato al colore del posto (come la proposta B approvata)."""
+    base = np.array(rgb, float)
+    chiaro = base + (255 - base) * 0.35
+    molt = chiaro * np.array(col, float) / 255
+    return tuple(int(round(v)) for v in base + (molt - base) * quanto)
+
+
+def fai_porte():
+    for porta, col, foglio, posto in PORTE:
+        for stato, (h, ferro, luce) in {
+            "acceso": (120, (0x3A, 0x33, 0x40), (0x50, 0x48, 0x5A)),
+            "chiaro": (120, (0x46, 0x3E, 0x4E), (0x61, 0x57, 0x6D)),
+            "premuto": (114, (0x33, 0x2D, 0x39), (0x44, 0x3D, 0x4C)),
+        }.items():
+            lastra("porta_%s_%s" % (porta, stato), h, tinta(ferro, col), tinta(luce, col))
+        # l'icona: il verde tolto come per le icone delle azioni, via i puntini staccati
+        o = senza_verde(os.path.join(ART, "WB-089", foglio + ".png"))
+        w = o.shape[1] // 4
+        cella = o[:, posto * w:(posto + 1) * w].copy()
+        lab, n = ndi.label(cella[..., 3] > 40)
+        if n:
+            grandi = ndi.sum(np.ones_like(lab), lab, range(1, n + 1))
+            for i, g in enumerate(grandi):
+                if g < 400:
+                    cella[lab == i + 1, 3] = 0
+        if porta == "armeria":
+            # la bancarella aperta mostrava la home dietro (Sergio, 24 nov): i buchi chiusi
+            # di legno scuro finche' Codex non la rifa' col fondo di assi (WB-091)
+            dentro = cella[..., 3] > 40
+            lab, _ = ndi.label(~dentro)
+            fuori = set(lab[0, :]) | set(lab[-1, :]) | set(lab[:, 0]) | set(lab[:, -1])
+            buchi = ~dentro & ~np.isin(lab, list(fuori))
+            cella[buchi] = (58, 34, 24, 255)
+        ys, xs = np.nonzero(cella[..., 3] > 40)
+        pezzo = cella[max(0, ys.min() - 4):ys.max() + 5, max(0, xs.min() - 4):xs.max() + 5]
+        # alta il doppio di come la mostra la home (136 px a 1280 x 720): nitida fino a 2560
+        intero("porta_icona_" + porta, pezzo, 280)
     fai_azioni()
     fai_card_filo()
     fai_filo_corto()
@@ -678,15 +734,7 @@ def fai_sfondi():
 # grande a cui lo mostra il Figma (1280 x 720), cosi' resta nitido fino a 2560 x 1440.
 # (nome nell'atlante, file, altezza in pixel, cartella)
 MENU_INTERI = [
-    # la home: le porte (WB-046, a destra lo scudo verso il bordo), GIOCA, pedana e zainetto
-    ("porta_campagna", "porta_campagna", 236, "WB-046"),
-    ("porta_allenamento", "porta_allenamento", 226, "WB-046"),
-    # lo striscione EVENTI: il nastro con la piega di WB-061 (Sergio, 15 nov; fra tre
-    # idee), accorciato nel mezzo liscio per avere l'ingombro di quello di WB-046
-    ("porta_eventi", "porta_eventi_piega", 236, "WB-061"),
-    # lo SHOP al posto di ARMERIA (WB-080, Sergio 18 nov: il banco col tendone), accorciato
-    # nel mezzo liscio per avere l'ingombro della porta di ARMERIA di WB-046
-    ("porta_shop", "porta_shop", 226, "WB-080"),
+    # la home: pedana e zainetto (le porte: fai_porte)
     ("pedana", "pedana_griglia_1", 266, "WB-050"),
     ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
     # le caselle dei pezzi, dritte (WB-078, Sergio 18 nov: al posto di quelle di WB-044 in
@@ -721,15 +769,9 @@ MENU_INTERI = [
     # il cartello ARMERIA che scende dal taglio delle schede dello zaino (WB-080)
     ("cartello_armeria", "cartello_armeria", 180, "WB-080"),
 ]
-# dove si scrive sulle porte e su GIOCA: la striscia piena fra lo scudo (o il sigillo) e la
-# punta, misurata sul disegno a quell'altezza (margini sinistra, alto, destra, basso). Le
-# porte hanno sfumature e graffi apposta, e la misura automatica (spazio) non le trova.
-SPAZI_MISURATI = {
-    "porta_campagna": (240, 50, 189, 51),
-    "porta_allenamento": (225, 44, 166, 37),
-    "porta_eventi": (185, 52, 252, 58),   # (a destra 12 px dal medaglione, come ARMERIA)
-    "porta_shop": (214, 52, 240, 58),
-}
+# dove si scrive su un pezzo, misurato sul disegno (margini sinistra, alto, destra, basso),
+# quando la misura automatica (spazio) non lo trova
+SPAZI_MISURATI = {}
 # i pezzi lunghi in tre parti (nome, file, altezza, capo, cartella): si allunga solo il mezzo
 MENU_TRE = [
     ("pillola", "pillola", 104, 0.2, "WB-044"),
@@ -1011,6 +1053,7 @@ if __name__ == "__main__":
     fai_perle()
     fai_stendardo()
     fai_secondario()
+    fai_porte()
     fai_piccoli()
     fai_menu()
     fai_segni()

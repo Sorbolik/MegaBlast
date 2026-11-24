@@ -6,8 +6,8 @@
 --              on its step (WB-048): the apprentice, the pedestal or the backpack open the
 --              ZAINO. Three signs say it can be touched: now and then a light runs over the
 --              pedestal and an ember glint over the apprentice; a tap makes it breathe
---   sides      the doors drawn by Codex (WB-046), the shield toward the screen's edge:
---              CAMPAGNA and ALLENAMENTO on the left, EVENTI and ARMERIA on the right
+--   sides      the doors: slabs in the place's color, the big icon toward the screen's edge
+--              (WB-089): CAMPAGNA and ALLENAMENTO on the left, EVENTI and BOTTEGA on the right
 --   bottom     the settings' wheel on the left; GIOCA (online), the molten seal, on the right
 -- The match of two people on the same phone is gone from the game (Sergio, 24 Nov).
 --
@@ -43,7 +43,6 @@ local M = {}
 
 local W, H = 1280, 720
 local C = kit.C
-local hex = kit.hex
 
 -- The pedestal and the apprentice (the Figma's geometry, Sergio 14 Nov 23:55: the pedestal
 -- does not cross the thread, everything keeps its room): PED_W wide, its foot on PED_BOTTOM,
@@ -79,36 +78,28 @@ local function put_face(h)
 	h.face = score.face(h.top_left.node, h.face_at[1], -(h.face_at[2] - FACE_UP), FACE_D, h.color, scoria.player, true)
 end
 
--- the doors: x, y, width, piece, side, color of the writing, size of the name
+-- The doors (Sergio, 24 Nov, proposal B): the buttons' slab filled with the place's
+-- color (tools/grafica/fucina.py fai_porte, "porta_<id>_"), its big icon of WB-089 on
+-- the end toward the screen's edge, the words against the other end. All the same
+-- size; x, y the slab's top left, side, the icon's height and how far its middle
+-- goes from the slab's (the drawings' ink centered, not their boxes)
+local DOOR_W, DOOR_H, DOOR_SIZE = 330, 84, 136
 local DOORS = {
-	campagna = { 22, 354, 396, "porta_campagna", -1, hex("2a1206"), 29 },
-	allenamento = { 22, 476, 376, "porta_allenamento", -1, hex("1d1a20"), 24 },
-	eventi = { 862, 354, 396, "porta_eventi", 1, hex("3a1a05"), 29 },
-	armeria = { 882, 476, 376, "porta_shop", 1, hex("f4ece1"), 29 },
+	campagna = { 82, 344, -1, DOOR_SIZE, -8 },
+	allenamento = { 82, 478, -1, DOOR_SIZE, 1 },
+	-- (the crown a little out of the slab's bottom, Sergio 24 Nov)
+	eventi = { 1198 - DOOR_W, 344, 1, DOOR_SIZE, -14 },
+	armeria = { 1198 - DOOR_W, 478, 1, DOOR_SIZE * 0.9, -2 },
 }
 
 local V = vmath.vector3()
 
--- A door's drawing with its name and a line under it, written in the room of
--- the drawing between the shield and the tip (left on the left, right on the
--- right), its top left at (x, y) of g
-local function draw_door(g, id, x, y, name, sub)
-	local o = DOORS[id]
-	local p = kit.sign(g, o[4], x, y, o[3])
-	local side, color = o[5], o[6]
-	local b = p.box
-	local cy = (b.y0 + b.y1) / 2
-	local tx = side < 0 and b.x0 + 4 or b.x1 - 4
-	local anchor = side < 0 and "start" or "end"
-	local name_n = kit.text(p.g, name, tx, cy + o[7] * 0.28, o[7], color, anchor)
-	local sub_n = kit.text(p.g, sub or "", tx, cy + o[7] * 0.28 + 20, 16, kit.with_alpha(color, 0.85), anchor, 1)
-	return p, name_n, sub_n, tx, anchor
-end
-
 local function door(h, g, id, name)
 	local o = DOORS[id]
-	local p, name_n, sub_n, x, anchor = draw_door(g, id, o[1], o[2], name)
-	local d = { p = p, side = o[5], color = o[6], id = id, name = name_n, sub = sub_n, x = x, anchor = anchor }
+	local p = kit.secondary(g, name, o[1], o[2], DOOR_W, DOOR_H, { kind = "porta_" .. id .. "_",
+		icon = "porta_icona_" .. id, door = { side = o[3], size = o[4], dy = o[5] }, size = 30, sub = "",
+		sub_color = kit.with_alpha(kit.C.SAND, 0.85) })
+	local d = { p = p, side = o[3], id = id, name = p.label, sub = p.sub, color = kit.C.SAND }
 	d.b = kit.button(h.buttons, p, id)
 	h.doors[#h.doors + 1] = d
 	h.door_by_id[id] = d
@@ -120,15 +111,13 @@ end
 function M.door_info(h, id)
 	local d = h.door_by_id[id]
 	local o = DOORS[id]
-	return { p = d.p, id = id, side = o[5], x = o[1], y = o[2], w = d.p.w, h = d.p.h, cy = o[2] + d.p.h / 2,
+	return { p = d.p, id = id, side = o[3], x = o[1], y = o[2], w = d.p.w, h = d.p.h, cy = o[2] + d.p.h / 2,
 		name = gui.get_text(d.name), sub = gui.get_text(d.sub) }
 end
 
 -- the small line of a door: never past its room (a long one shrinks)
 local function set_sub(d, txt)
-	gui.set_text(d.sub, txt)
-	local b = d.p.box
-	kit.keep_in(d.sub, b, d.p.g, d.x, (b.y0 + b.y1) / 2 + 28, kit.MIN_TEXT, d.anchor)
+	d.p.set_sub(txt)
 end
 
 function M.new(color)
@@ -397,9 +386,11 @@ function M.profile(h, p)
 	h.orders_badge = nil
 	set_sub(h.armory, ready and ready > 0 and (ready == 1 and T.orders_ready_one or T.orders_ready:format(ready)) or T.armory_sub)
 	if ready and (ready > 0 or new) then
+		-- (on the icon's top corner toward the screen's edge)
 		local d = h.armory.p
-		h.orders_badge = kit.group(d.g, DOORS.armeria[1] + d.w - 18, DOORS.armeria[2] + 10)
-		orders_ui.badge(h.orders_badge, DOORS.armeria[1] + d.w - 18, DOORS.armeria[2] + 10, ready)
+		local bx, by = DOORS.armeria[1] + d.w + DOORS.armeria[4] * 0.38, DOORS.armeria[2] - 4
+		h.orders_badge = kit.group(d.g, bx, by)
+		orders_ui.badge(h.orders_badge, bx, by, ready)
 	end
 end
 
