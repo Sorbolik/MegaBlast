@@ -45,7 +45,7 @@ Draw FOUR different proposals for a small floating thing the devil stands on in 
 2. LIMBO ROCK: a small floating island of dark grey-violet stone (#4A4360, highlight #6E6690), flat on top, its underside a few chunky rock points, with two tiny pebbles floating under it.
 3. BROKEN COLUMN: the top of an old ruined stone column (a capital with a simple scroll) in pale grey stone (#A8A2B8, shadow #7C7690), cut flat and slightly cracked, floating, a small comic cloud wrapped around its foot.
 4. CLOUD AND EMBERS: a small flat cloud (#B9B2D6, shadow #8A82B4) with a short row of three tiny flat ember sparks (#F26419, #FFB703) drifting up from its right side, nothing else.
-All four are calm and a little desaturated, so the red devil stays the star and the pedestal never looks brighter than him.
+All four are calm and a little desaturated, so the red devil stays the star and the pedestal never looks brighter than him. IMPORTANT: every pedestal must have a CLEAR, well readable edge against a very dark night sky: right inside the black ink outline, all around the shape, run an even pale rim line (#D8D2EE, about as thick as the outline) and keep the top surface a little lighter than the sides, so the silhouette pops out of the dark like a cut-out sticker.
 
 Thick black ink outline, cartoon comic style like image 3. Flat colors only, at most five per pedestal, no detail thinner than the outline, so they can be traced into vectors. No texture, no soft gradients, no glow, no drop shadow. No text, letters or numbers. Do not draw the devil. Flat pure green background (#00FF00). The pedestals do not touch each other and are not cut by the border of the picture.
 ```
@@ -54,6 +54,7 @@ Thick black ink outline, cartoon comic style like image 3. Flat colors only, at 
 
 - [ ] quattro proposte separate, intere, su verde pulito, contorno nero spesso, nessuna scritta
 - [ ] il piano di sopra è piatto e vuoto (ci stanno i piedi), niente terreno sotto
+- [ ] il bordo si vede chiaro sul cielo scuro: filo chiaro dentro il contorno nero, tutto intorno (Sergio, 24 nov: «basta che il suo bordo sia ben chiaro come quello che hai disegnato tu»)
 - [ ] colori calmi: su R4 il piedistallo si legge su tutti e cinque i cieli e non ruba la scena
 - [ ] nessun bagliore, sfumatura o ombra a terra
 
@@ -61,7 +62,7 @@ Thick black ink outline, cartoon comic style like image 3. Flat colors only, at 
 
 ## Decisione
 
-(Sergio sceglie fra queste e le bozze di Claude)
+Sergio, 24 nov: il piedistallo nuovo lo disegna Codex (non le bozze di Claude), col bordo ben chiaro come nelle bozze.
 
 ## Consegna di Codex
 
