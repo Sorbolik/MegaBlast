@@ -46,16 +46,20 @@ local C = kit.C
 
 -- The pedestal and the apprentice (Sergio 14 Nov 23:55: the pedestal does not cross the
 -- thread, everything keeps its room): the rock (WB-090) PED_W wide in the middle, the
--- lowest pebble on PED_BOTTOM, the apprentice's feet at FEET (the middle of its flat top),
+-- lowest pebble on PED_BOTTOM (Sergio, 24 Nov: a little lower, just above the thread),
+-- the apprentice's feet at FEET (the middle of its flat top),
 -- 380 tall like in the Figma
 local PED_W = 300
 local PED_H = PED_W * 399 / 577
-local PED_BOTTOM = 598
+local PED_BOTTOM = 640
 local PED_TOP = PED_BOTTOM - PED_H
 local PED_X = 640 - PED_W / 2
 local FEET = PED_TOP + 0.17 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
+-- half the width of the light band that runs over the pedestal
+local SHEEN_HALF = 46
+local SHEEN = vmath.vector4()
 -- the profile's banner (WB-075): its height on screen, its width per unit of height,
 -- and where its parts are on the drawing, as fractions of its width and height:
 -- the ring's centre, the groove (from, to, middle) and the coin's centre
@@ -131,15 +135,19 @@ function M.new(color)
 	h.tops[#h.tops + 1] = mid.node
 	h.mid = mid
 	h.ped = kit.pic(mid, "piedistallo", PED_X, PED_TOP, PED_W, PED_H)
-	-- the light that runs over the pedestal: a brighter copy seen through a moving slit
-	h.slit = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(70, PED_H + 20, 0))
-	gui.set_clipping_mode(h.slit, gui.CLIPPING_MODE_STENCIL)
-	gui.set_clipping_visible(h.slit, false)
-	gui.set_parent(h.slit, mid.node)
-	h.ped_light = kit.pic({ node = h.slit, ox = 0, oy = 0 }, "piedistallo", PED_X - 640, PED_TOP - PED_BOTTOM, PED_W, PED_H)
+	-- the light that runs over the pedestal: a copy added on top whose shader shows only a
+	-- soft band (the flash's "band", battle/flash.fp), placed in window pixels by two marks
+	-- that ride along (Sergio, 24 Nov: the band seen through a moving cut stuttered)
+	h.ped_light = kit.pic(mid, "piedistallo", PED_X, PED_TOP, PED_W, PED_H)
+	gui.set_material(h.ped_light, "lampo")
 	gui.set_blend_mode(h.ped_light, gui.BLEND_ADD)
-	gui.set_color(h.ped_light, vmath.vector4(1, 0.72, 0.3, 0.45))
-	gui.set_enabled(h.slit, false)
+	gui.set_enabled(h.ped_light, false)
+	h.sheen_at = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(h.sheen_at, false)
+	gui.set_parent(h.sheen_at, mid.node)
+	h.sheen_edge = gui.new_box_node(vmath.vector3(SHEEN_HALF, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(h.sheen_edge, false)
+	gui.set_parent(h.sheen_edge, h.sheen_at)
 	-- the apprentice, its feet on the rock
 	h.posa = gui.new_box_node(vmath.vector3(0, PED_BOTTOM - FEET, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(h.posa, false)
@@ -242,14 +250,17 @@ end
 -- The two signs that the apprentice can be touched (Sergio, 14 Nov 23:40): a slow
 -- light across the pedestal, then an ember glint down the apprentice
 local function glint(h)
-	-- the slit runs over the pedestal, the light copy stays still inside it (mid's space)
-	local cx, cy = PED_X - 640 + PED_W / 2, PED_H / 2
-	local from, to = PED_X - 640 - 40, PED_X - 640 + PED_W + 40
-	gui.set_enabled(h.slit, true)
-	gui.set_position(h.slit, vmath.vector3(from, cy, 0))
-	gui.set_position(h.ped_light, vmath.vector3(cx - from, 0, 0))
-	gui.animate(h.slit, "position.x", to, gui.EASING_INOUTSINE, 1.3, 0, function() gui.set_enabled(h.slit, false) end)
-	gui.animate(h.ped_light, "position.x", cx - to, gui.EASING_INOUTSINE, 1.3)
+	-- the band's mark runs over the pedestal (mid's space); M.update hands the shader
+	-- where it is
+	local cy = PED_H / 2
+	gui.cancel_animations(h.sheen_at, "position.x")
+	gui.set_position(h.sheen_at, vmath.vector3(PED_X - 640 - SHEEN_HALF, cy, 0))
+	gui.set_enabled(h.ped_light, true)
+	h.sheen = true
+	gui.animate(h.sheen_at, "position.x", PED_X - 640 + PED_W + SHEEN_HALF, gui.EASING_INOUTSINE, 1.4, 0, function()
+		h.sheen = false
+		gui.set_enabled(h.ped_light, false)
+	end)
 	-- then a soft light on the apprentice, there and gone: its own hit flash
 	-- (battle/flash.fp), barely (a copy seen through a slit had a hard edge and
 	-- showed its pieces overlapping)
@@ -317,7 +328,8 @@ end
 -- quiet: no entrance (a door's passage brought it back)
 function M.show(h, without_veil, quiet)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, true) end
-	gui.set_enabled(h.slit, false)
+	gui.set_enabled(h.ped_light, false)
+	h.sheen = false
 	kit.scene_show(h.scene, true)
 	-- the home is kept: the backdrop goes back under it
 	kit.scene_place(h.scene, "below", h.tops[1])
@@ -441,6 +453,15 @@ function M.update(h, dt)
 	end
 	-- (scoria takes the flash down by dt * 6 and shows 0.85 * 1.5 of what is left)
 	if h.glow > 0 then h.corpo.flash = h.glow / 1.275 + dt * 6 end
+	if h.sheen then
+		-- the band in window pixels (as the shader sees the vertices), soft at both ends
+		local p, e = gui.get_screen_position(h.sheen_at), gui.get_screen_position(h.sheen_edge)
+		local x = gui.get_position(h.sheen_at).x
+		local u = (x - (PED_X - 640 - SHEEN_HALF)) / (PED_W + 2 * SHEEN_HALF)
+		SHEEN.x, SHEEN.y = p.x + 0.35 * p.y, math.abs(e.x - p.x)
+		SHEEN.z, SHEEN.w = 0.5 * math.sin(math.pi * math.min(1, math.max(0, u))), 1
+		gui.set(h.ped_light, "band", SHEEN)
+	end
 	scoria.update(h.corpo, dt, h.st)
 	kit.scene_fit()
 	if h.t >= h.glint_at then
