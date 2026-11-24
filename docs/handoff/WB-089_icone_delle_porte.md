@@ -1,6 +1,6 @@
 # WB-089 · Le icone delle porte della home (grandi, senza cornice tonda)
 
-- **Stato:** APPROVATA (Sergio, 24 nov: «possiamo fare delle proposte con codex?»; sono proposte, si sceglie dopo)
+- **Stato:** IMPLEMENTATA (Sergio, 24 nov: scelte una per una)
 - **Data:** 2026-11-24
 - **Ramo della scheda:** `claude/project-thread-5nnzn0` (Codex la esegue da qui: `git fetch origin claude/project-thread-5nnzn0`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-089`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-089` senza chiedere conferma (il repository è privato).
@@ -80,3 +80,9 @@ Proposte da far vedere a Sergio (Claude, 24 nov): si sceglie un foglio o un'icon
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Sergio ha scelto un'icona per porta (24 nov): CAMPAGNA il falò col sentiero (`porte_scenette_2`), ALLENAMENTO il
+bersaglio (`porte_oggetti_2`), EVENTI la corona sul cuscino (`porte_scenette_1`), BOTTEGA la bancarella
+(`porte_oggetti_2`). I tre fogli sono in `art/WB-089/`. `fai_porte` in `tools/grafica/fucina.py` le ritaglia col verde
+tolto come le icone delle azioni e le salva alte 280. La bancarella aperta mostrava la home dietro: i buchi
+sono chiusi di legno scuro finché non arriva WB-091. Scartati i cartelli con le fiamme staccate e le altre varianti.

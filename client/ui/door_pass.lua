@@ -36,8 +36,8 @@ M.GROW, M.SHRINK = 0.42, 0.32
 M.BOUNCE = 14
 -- forward, the part of the drag before the button starts going out with the line
 M.LEAVE = 0.5
--- the shield's middle sits this far inside the screen's border
-local EDGE = 17
+-- the door's icon's middle sits this far inside the screen's border (the icon all in)
+local EDGE = 70
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
@@ -174,7 +174,7 @@ end
 local function measure(h, id)
 	local d = home.door_info(h, id)
 	local ox = d.side < 0 and screen.x0 or screen.x1 - 1280
-	local shield = d.side < 0 and 0.15 or 0.85   -- the shield's middle, along it
+	local shield = d.side < 0 and 0 or 1   -- the icon's middle: on the slab's outer end
 	d.edge_x = d.side < 0 and screen.x0 + EDGE or screen.x1 - EDGE
 	d.dx = d.edge_x - (d.x + ox + shield * d.w)
 	d.node = d.p.node
