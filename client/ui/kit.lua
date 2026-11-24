@@ -662,6 +662,8 @@ local FOOT = { x = 948, y = 640, w = 308, h = 62 }
 
 -- the words of a button: this far from the slab's border, and after the icon (x its height)
 M.BUTTON_PAD, M.BUTTON_GAP = 0.4, 0.2
+-- a capital letter's height, as a part of the text's size (Lilita One)
+M.CAP = 0.72
 
 -- (x, y) its top left, w x h. opt: icon, sub, sub_color, off, main, size (of the
 -- label), kind (another slab's drawings: the home's doors, "porta_<id>_"), door
@@ -725,7 +727,14 @@ function M.secondary(g, label, x, y, w, h, opt)
 	local room_w = x1 - x0
 	local ink = opt.off and with_alpha(C.SAND, 0.45) or C.SAND
 	local size = math.max(M.MIN_TEXT, math.min(opt.size or 20, h * (opt.sub and 0.34 or 0.42)))
-	local lt = M.text(f, label, tx, opt.sub and y + h * 0.48 or y + h / 2 + size * 0.36, size, ink, align, 0.5)
+	-- the words in the middle of the slab's face (inside its ink, above its thickness:
+	-- tools/grafica/fucina.py lastra, 7 and 101 of 120), the same room above and below
+	-- (Sergio, 24 Nov: «la distanza dal bordo di sotto»); M.CAP: a capital's height
+	local face0, face1 = y + h * 7 / 120, y + h * 101 / 120
+	local sub_gap = size * 0.3
+	local block = opt.sub and M.CAP * size + sub_gap + M.CAP * 16 or M.CAP * size
+	local base = (face0 + face1) / 2 - block / 2 + M.CAP * size
+	local lt = M.text(f, label, tx, base, size, ink, align, 0.5)
 	local full = gui.get_scale(lt)
 	-- another label on the same button (the vignette: AVANTI, then VAI!)
 	p.set_label = function(t)
@@ -736,7 +745,7 @@ function M.secondary(g, label, x, y, w, h, opt)
 	p.set_label(label)
 	p.label = lt
 	if opt.sub then
-		local st = M.text(f, opt.sub, tx, y + h * 0.8, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or (opt.main and C.HOT or C.MUTE), align, 0.5)
+		local st = M.text(f, opt.sub, tx, base + sub_gap + M.CAP * 16, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or (opt.main and C.HOT or C.MUTE), align, 0.5)
 		local sub_full = gui.get_scale(st)
 		-- another short line (the home's doors: what is new there)
 		p.set_sub = function(t)

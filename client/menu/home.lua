@@ -84,12 +84,13 @@ end
 -- size; x, y the slab's top left, side, the icon's height and how far its middle
 -- goes from the slab's (the drawings' ink centered, not their boxes)
 local DOOR_W, DOOR_H, DOOR_SIZE = 330, 84, 136
+-- (the same air between the two doors of a side and under the lower one, down to the thread: 48)
 local DOORS = {
 	campagna = { 82, 344, -1, DOOR_SIZE, -8 },
-	allenamento = { 82, 478, -1, DOOR_SIZE, 1 },
+	allenamento = { 82, 476, -1, DOOR_SIZE, 1 },
 	-- (the crown a little out of the slab's bottom, Sergio 24 Nov)
 	eventi = { 1198 - DOOR_W, 344, 1, DOOR_SIZE, -14 },
-	armeria = { 1198 - DOOR_W, 478, 1, DOOR_SIZE * 0.9, -2 },
+	armeria = { 1198 - DOOR_W, 476, 1, DOOR_SIZE * 0.9, -2 },
 }
 
 local V = vmath.vector3()

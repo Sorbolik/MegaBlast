@@ -41,7 +41,7 @@ Stati: acceso, chiaro (mouse o luce del controller sopra: `ui.lua`, `on_light`),
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| `kit.secondary`: `secondario_acceso/chiaro/premuto/spento` + icona a sinistra; le scritte a `kit.BUTTON_PAD` (0,4 × altezza) dal bordo e `kit.BUTTON_GAP` (0,2) dopo l'icona, uguale per tutti | accanto all'azione in ogni menù (POTENZIA, PROVA, CHIAMA UN CLIENTE, CAMBIA, SCAMBIA, CALENDARIO, COI FRAMMENTI, USA UN BUONO, ACCENDI LA FIRMA, RIPROVA, ELENCO, SALTA, RIVEDI, RILEGGI, TORNA AI MENU · RESTI IN CODA, RIPRISTINA, IMPOSTAZIONI, CREA, i tasti del codice della stanza privata) | ✅ |
+| `kit.secondary`: `secondario_acceso/chiaro/premuto/spento` + icona a sinistra; le scritte a `kit.BUTTON_PAD` (0,4 × altezza) dal bordo e `kit.BUTTON_GAP` (0,2) dopo l'icona, uguale per tutti; in verticale il blocco di scritte (altezza delle maiuscole, `kit.CAP`) sta al centro della faccia della lastra, con la stessa aria sopra e sotto | accanto all'azione in ogni menù (POTENZIA, PROVA, CHIAMA UN CLIENTE, CAMBIA, SCAMBIA, CALENDARIO, COI FRAMMENTI, USA UN BUONO, ACCENDI LA FIRMA, RIPROVA, ELENCO, SALTA, RIVEDI, RILEGGI, TORNA AI MENU · RESTI IN CODA, RIPRISTINA, IMPOSTAZIONI, CREA, i tasti del codice della stanza privata) | ✅ |
 | `kit.button_at`: lo stesso, al centro di un nodo | menu della rotellina in battaglia (RIPROVA, ESCI, MIRA, RILEGGI), scelta armi (ESCI) | ✅ |
 | `kit.plate` (`piastrina`) in fondo | CAMPAGNA gironi: i capitoli fatti | ⚠️ |
 | `kit.card` usato come pulsante | ZAINO e BOTTEGA (VEDI TUTTE sotto le statistiche) | ⚠️ |
