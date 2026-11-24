@@ -122,7 +122,9 @@ Principi di Sergio che reggono tutto:
 - **Chiama un cliente** (regola di Sergio): oggi lo chiami, domani c'è una sua
   commessa; **mai lo stesso due giorni di fila**. Con la bacheca piena aspetta il
   primo posto libero.
-- I frammenti **non si convertono** fra famiglie.
+- I frammenti **si fondono nella Fornace**, sempre in perdita (Sergio, 24 nov; prima non si
+  convertivano): **4 frammenti di una famiglia per 1 di un'altra**, oppure **20 Scaglie l'uno**
+  (un terzo del loro valore). Conviene sempre usarli nella loro famiglia.
 
 ## Costo e premi (passo 5 e 10)
 
