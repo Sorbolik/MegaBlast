@@ -26,6 +26,9 @@ M.COST = 20              -- Ossidiana per pour
 M.THROWS = 3             -- throws per pour
 M.BONUS = 1              -- extra throws for a perfect pour (all hits)
 M.MISS = 20              -- Scaglie for a drop that misses (it falls in the bucket)
+-- what a pour is worth on average, in Scaglie of value (a fragment = 60): the
+-- design's aim, ~0.8x to 1.2x from worst to best (tools/economia/conti.lua)
+M.AVERAGE = 130
 M.MELT_IN, M.MELT_OUT = 4, 1   -- fragments of a family for one of another
 M.MELT_SCAGLIE = 20      -- Scaglie for one fragment
 M.SHIFT_HOURS = 8        -- a new wall every 8 hours of the game day (5, 13, 21)

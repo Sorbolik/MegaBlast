@@ -73,17 +73,6 @@ function M.client(p, real)
 	end
 end
 
--- "The next delivery is a lucky strike": moves the draw's counter up to one
-function M.lucky(p)
-	notes(p)
-	local c = p.commesse
-	for _ = 1, 10 * orders.LUCKY_EVERY do
-		if orders.lucky(p) then return true end
-		c.consegne = c.consegne + 1
-	end
-	return orders.lucky(p)
-end
-
 -- "The pieces go back to the shop": the test profile no longer owns these
 -- pieces (wallet keys), so the BANCO shows their prices again
 function M.give_back(p, keys)

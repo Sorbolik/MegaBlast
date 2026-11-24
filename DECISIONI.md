@@ -84,3 +84,4 @@ Le più recenti in fondo.
 - 2026-11-24 · Scheda WB-089 (Claude): icone delle porte della home senza cornice tonda, due fogli di proposte; approvata perché reversibile, sceglie Sergio.
 - 2026-11-24 · Scheda WB-091 (Claude): la bancarella della BOTTEGA col fondo chiuso di assi (Sergio: «fa vedere quello che c'è dietro»); approvata perché reversibile.
 - 2026-11-24 · Scheda WB-093 (Claude): il Mestolo della Fornace (scelto da Sergio fra tre armi animate) e gli stampi di WB-092 in tutti i colori e nelle due misure, al doppio della grandezza sullo schermo; approvata perché sono pezzi nuovi che non sostituiscono disegni nel gioco.
+- 2026-11-24 · Fornace (Claude): il telefono manda il muro che vede (data#turno) e il server lo accetta se è di oggi e non più vecchio dell'ultimo; scelto per non cambiare il protocollo col server (al massimo si anticipa il muro delle 13 o delle 21, poi si resta lì fino a domani).

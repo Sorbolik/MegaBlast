@@ -101,10 +101,9 @@ for _, f in ipairs(equip.SETS) do
 	end
 end
 
--- il cambio delle Commesse: Scaglie di valore (Scaglie più frammenti) per Ossidiana, sulla commessa media
-local orders = require "sim.orders"
-local media = orders.SIZES.media
-local cambio = (media.scaglie + media.frammenti * orders.fragment_value()) / media.cost
+-- il cambio della Fornace: Scaglie di valore (Scaglie più frammenti) per Ossidiana, colata media
+local forge = require "sim.forge"
+local cambio = forge.AVERAGE / forge.COST
 
 local controlla = arg[1] == "--controlla"
 local falliti = {}
@@ -113,7 +112,7 @@ for _, g in ipairs(GIOCATORI) do
 	local righe = {
 		{ "primo_scatto", "un pezzo al primo scatto (livello 10)", costo_pezzo(10) / s },
 		{ "pezzo", "un pezzo al livello " .. equip.LIVELLO_MAX, costo_pezzo(equip.LIVELLO_MAX) / s },
-		{ "pezzo_commesse", "lo stesso, con tutta l'Ossidiana nelle Commesse", costo_pezzo(equip.LIVELLO_MAX) / (s + o * cambio) },
+		{ "pezzo_commesse", "lo stesso, con tutta l'Ossidiana nella Fornace", costo_pezzo(equip.LIVELLO_MAX) / (s + o * cambio) },
 		{ "set", posti .. " pezzi al massimo (quelli addosso)", posti * costo_pezzo(equip.LIVELLO_MAX) / s },
 		{ "tutti", "tutti i " .. pezzi .. " pezzi al massimo", pezzi * costo_pezzo(equip.LIVELLO_MAX) / s },
 		{ "bottega", "un pezzo in offerta in Bottega", wallet.PRICE_SHOP / s },
