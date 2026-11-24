@@ -158,6 +158,11 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
 - **Come si gioca**: l'apprendista tira una goccia di Ossidiana fusa con **la stessa mira
   della battaglia** (trascini, vedi l'inizio della traiettoria, lasci) negli stampi sul muro
   della fucina. **Tre tiri per colata.**
+- **L'apprendista** (Sergio, 24 nov): è il personaggio indossato, grande come in battaglia, con
+  le animazioni di sempre della mira; **non si muove** (niente camminata né salto). La goccia vola
+  come il Lanciarune senza potenziamenti, la telecamera è quella della battaglia.
+- **La traiettoria è quasi tutta** (Sergio, 24 nov): i puntini della mira si vedono per circa l'80%
+  del volo, non fino in fondo: l'ultimo tratto, dove la goccia cade nello stampo, lo indovini tu.
 - **Gli stampi**: alcuni di Scaglie, altri di frammenti di una famiglia. Quelli piccoli,
   lontani o appesi alle catene che dondolano rendono di più. A ogni colata cambiano posto.
   Mirando scegli la famiglia che ti serve.
