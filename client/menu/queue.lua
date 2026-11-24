@@ -26,8 +26,6 @@ local M = {}
 local KC = kit.C
 
 -- how many running events fit on the right
--- the small line on the ember card: a dark brown, read on the orange
-local EMBER_SUB = kit.hex("4a1c06")
 local MAX_EVENTS = 2
 -- each kind's icon (the modifiers, like the Maglio's, have the hammer)
 local ICON = { mod = "ic_maglio", torneo = "ic_torneo" }
@@ -41,12 +39,12 @@ end
 
 -- a queue to play: a card with its icon ih tall on the left, the name, a line
 -- and an information under it; a tap chooses its queue (o.action "coda:ID": the
--- chosen one has the bright rim), or goes somewhere (the arrow). The card has the shape of what it is (WB-060, o.kind): "brace" the usual
--- 2 vs 2, "ferro" a plain mode, "gelo" an event; on the ember the writing is ink
+-- chosen one has the gold thread), or goes somewhere (the arrow). The minimal card's thread
+-- says what it is (kit.mode_card, o.kind): "brace" the usual 2 vs 2, "ferro" a plain mode,
+-- "gelo" an event
 local function card(c, g, x, y, w, h, o)
 	local goes = not o.action:find("^coda:")
 	local k = kit.mode_card(g, x, y, w, h, o.kind, { sel = o.action == "coda:" .. c.sel })
-	local ember = o.kind == "brace"
 	local f = k.g
 	-- (no icon yet: the text starts where the icon would)
 	local ih = o.ih
@@ -54,10 +52,10 @@ local function card(c, g, x, y, w, h, o)
 	local tx = o.icon and x + 62 + ih or x + 36
 	local size = o.size
 	local top = y + h / 2 - (size * 0.9 + (o.info and 44 or 22)) / 2 + size * 0.8
-	fit(kit.text(f, o.name, tx, top, size, ember and KC.INK or KC.SAND), x + w - 70 - tx)
-	if o.sub then fit(kit.text(f, kit.upper(o.sub), tx + 2, top + 26, 16, ember and EMBER_SUB or KC.MUTE, "start", 0.5), x + w - 70 - tx) end
-	if o.info then fit(kit.text(f, kit.upper(o.info), tx + 2, top + 50, 16, ember and KC.INK or KC.HOT_TOP, "start", 0.5), x + w - 70 - tx) end
-	if goes then kit.text(f, "›", x + w - 30, y + h / 2 + size * 0.45, size * 1.3, ember and KC.INK or KC.SAND, "middle") end
+	fit(kit.text(f, o.name, tx, top, size, KC.SAND), x + w - 70 - tx)
+	if o.sub then fit(kit.text(f, kit.upper(o.sub), tx + 2, top + 26, 16, KC.MUTE, "start", 0.5), x + w - 70 - tx) end
+	if o.info then fit(kit.text(f, kit.upper(o.info), tx + 2, top + 50, 16, KC.HOT_TOP, "start", 0.5), x + w - 70 - tx) end
+	if goes then kit.text(f, "›", x + w - 30, y + h / 2 + size * 0.45, size * 1.3, KC.SAND, "middle") end
 	kit.button(c.buttons, k, o.action)
 end
 
@@ -118,7 +116,7 @@ local function build(c)
 	end
 
 	-- the one action: GIOCA starts the chosen queue
-	c.action = kit.action(c.right, common.play, 948, 628, 308, 80, { size = 44, sub = names[c.sel] })
+	c.action = kit.action(c.right, common.play, 948, 628, 308, 80, { icon = "az_gioca", size = 44, sub = names[c.sel] })
 	kit.button(c.buttons, c.action, "cerca", { main = true })
 end
 

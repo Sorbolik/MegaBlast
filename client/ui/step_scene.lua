@@ -149,7 +149,7 @@ function M.new(o)
 	end
 	-- the way on (a tap anywhere does the same)
 	sc.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	kit.action(sc.right, go_on, 930, 560, 270, 84, { size = 44 })
+	kit.action(sc.right, go_on, 930, 560, 270, 84, { icon = "az_via", size = 44 })
 	sc.go_pos = gui.get_position(sc.right.node)
 	gui.set_position(sc.right.node, sc.go_pos - vec(0, 200))
 	sc.flash = sheet(vmath.vector4(1, 1, 1, 0))

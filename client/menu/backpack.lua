@@ -73,23 +73,6 @@ end
 
 -- INVENTARIO ------------------------------------------------------------------------
 
--- A piece's effects ("+5% CORSA  +2 DIFESA ...") on lines `room` wide at the
--- smallest size, cut between two effects; past the second line the rest stays on it
-local function effect_lines(g, effects, room)
-	local lines = {}
-	for e in (effects .. "  "):gmatch("(.-)  ") do
-		local try = lines[#lines] and (lines[#lines] .. "  " .. e)
-		local fits = #lines >= 2
-		if try and not fits then
-			local n = kit.text(g, try, 0, 0, kit.MIN_TEXT, nil, "start", 0.5)
-			fits = kit.width(n) <= room
-			gui.delete_node(n)
-		end
-		if try and fits then lines[#lines] = try else lines[#lines + 1] = e end
-	end
-	return lines
-end
-
 -- The grid of the pieces in a window (VIEW, Figma), moved by s.scroll: the slots are
 -- cut at its edges (stencil) and their zones work only inside it
 local VIEW = { x = 418, y = 160, w = 612, h = 400 }
@@ -252,16 +235,9 @@ local function inventory(s)
 		local effects = kit.upper(gear_ui.effects(set, slot, level))
 		-- the room of the lines: up to POTENZIA, which sits left of the action
 		local room = screen.width() - (1280 - UP_X) - 14 - 220
-		if kit.in_queue then room = math.min(room, kit.PILL_X0 - 16 - (220 + screen.x0)) end
-		if kit.in_queue then
-			local lines = effect_lines(s.low, effects, room)
-			for i = 1, math.min(2, #lines) do
-				local n = kit.text(s.low, lines[i], 220, 650 + i * 22, kit.MIN_TEXT, KC.MUTE, "start", 0.5)
-				local wide = kit.width(n)
-				if wide > room then gui.set_scale(n, gui.get_scale(n) * (room / wide)) end
-			end
-		else
+		do
 			-- the level and grade beside the name, the beads under it across the band
+			-- (the queue's pill sits on the thread: the band is free, Sergio 23 Nov)
 			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 220 + kit.width(name) + 16, 646, 17,
 				ui.C.GRADI[tier], "start", 0.5)
 			bench.ingots(s.low, 220, 656, math.min(460, room), 20, level, wallet.sign(p, set, slot))
@@ -275,9 +251,9 @@ local function inventory(s)
 		-- POTENZIA: the plate of the secondary actions (as ACCENDI LA FIRMA in the armory)
 		local nxt = wallet.next(p, set, slot)
 		local ub = kit.secondary(s.right, TP.upgrade_here, UP_X, 640, UP_W, 62,
-			{ icon = "scaglia", sub_color = KC.HOT, sub = kit.upper(nxt and T.up_line:format(level, nxt.level) or TP.at_max) })
+			{ icon = "az_potenzia", sub_color = KC.HOT, sub = kit.upper(nxt and T.up_line:format(level, nxt.level) or TP.at_max) })
 		kit.button(s.buttons, ub, "scheda", {})
-		s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { size = 44, off = worn })
+		s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { icon = "az_indossa", size = 44, off = worn })
 		kit.button(s.buttons, s.action, "indossa", { main = true, spento = worn })
 	end
 end
@@ -508,7 +484,7 @@ local function seals_tab(s)
 	else
 		kit.foot_text(s.low, kit.upper(T.pick_hint), 140, 674, 19, KC.MUTE, room, 0.5)
 	end
-	s.action = kit.action(s.right, T.save, 980, 628, 276, 80, { size = 48, off = not changed, sub = not changed and kit.upper(T.saved) or nil })
+	s.action = kit.action(s.right, T.save, 980, 628, 276, 80, { icon = "az_salva", size = 48, off = not changed, sub = not changed and kit.upper(T.saved) or nil })
 	kit.button(s.buttons, s.action, "salva", { main = true, spento = not changed })
 end
 

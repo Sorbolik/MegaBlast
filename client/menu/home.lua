@@ -208,13 +208,8 @@ function M.new(color)
 	local br = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	h.tops[#h.tops + 1] = br.node
 	h.play_g = br
-	local gw = 420
-	local gh = gw * 166 / 849
-	h.play = kit.sign(br, "gioca_sigillo", W - 20 - gw, 664 - gh / 2, gw)
-	local b = h.play.box
-	local base = (b.y0 + b.y1) / 2 + 15
-	kit.text(h.play.g, common.play, b.x0 + 10, base, 44, hex("1a0c04"))
-	kit.text(h.play.g, T.play_sub, b.x0 + 150, base - 1, 20, hex("1a0c04", 0.85), "start", 1)
+	-- the main action, like on every other screen (Sergio, 23 Nov: also the home's GIOCA)
+	h.play = kit.action(br, common.play, 0, 640, 0, 0, { icon = "az_gioca", sub = T.play_sub })
 	h.play_b = kit.button(h.buttons, h.play, "online", { main = true })
 	local bl = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	h.tops[#h.tops + 1] = bl.node

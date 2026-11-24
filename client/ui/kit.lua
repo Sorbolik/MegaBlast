@@ -125,7 +125,7 @@ end
 -- whole and 70% of the middle (the step stays under half a pixel). The
 -- simulator fails on a narrower one (tools/simula/simula.py)
 local SLANTED = { piastrina = true, piastrina_calda = true, piastrina_chiara = true, piastra_storta = true,
-	piastra_calda = true, scheggia = true, primario_acceso = true, primario_premuto = true, primario_spento = true }
+	piastra_calda = true, scheggia = true }
 function M.least(name, h)
 	local m = P[name]
 	if not SLANTED[name] then return 0 end
@@ -487,9 +487,8 @@ function M.keep_in(n, box, g, x, y, size, anchor)
 	M.check_small(n)
 end
 
--- The queue's pill under the thread in the menus (ui/pill.lua, "foot") starts
--- here; game.gui_script says when you are in the queue (M.in_queue)
-M.PILL_X0 = 534
+-- game.gui_script says when you are in the queue (M.in_queue); the pill sits on
+-- the thread (ui/pill.lua), the band under it stays free
 M.in_queue = false
 
 -- A line of the footer, left of the action, starting at x of g (stuck to the
@@ -497,7 +496,6 @@ M.in_queue = false
 -- and goes on a second line under it (Sergio, 15 Nov). Returns the lines
 function M.foot_text(g, t, x, y, size, color, wide, spacing)
 	local room = wide
-	if M.in_queue then room = math.min(wide, M.PILL_X0 - 16 - (x + screen.x0)) end
 	local function one(txt, ly)
 		local n = M.text(g, txt, x, ly, size, color, "start", spacing)
 		local w = M.width(n)
@@ -574,16 +572,33 @@ end
 -- A bar filled to f (0..1): the iron trough and in it a strip of ember (warm
 -- colors), of frost (cold ones) or, any other color, the plain strip tinted.
 -- M.bar_fill(b, f) changes how full it is
+-- The bars (Sergio, 23 Nov, docs/ui-catalogo.md, purpose 10): every bar is the
+-- groove and the strip of the home's experience (WB-075): the groove drawn in
+-- vectors (solco), the strip ember as it is drawn or, for the other colors, its
+-- colorless twin tinted. The strip fills the dark bottom of the groove: from 8
+-- to 27 of its 32 sixteenths
+local GROOVE_TOP, GROOVE_IN, GROOVE_END = 8 / 32, 19 / 32, 3 / 32
 local function strip_of(color)
-	if color == C.HOT or color == C.HOT_BOTTOM or color == C.HOT_TOP or color == C.STAR then return "barra_brace" end
-	if color == C.ICE or color == C.STEEL or color == C.FROST then return "barra_gelo" end
-	return "barra_chiara"
+	if color == C.HOT or color == C.HOT_BOTTOM or color == C.HOT_TOP or color == C.STAR then
+		return "barra_stendardo"
+	end
+	return "barra_stendardo_chiara"
+end
+
+-- The groove around the box x..x+w, y..y+h (the strip's place)
+function M.groove(g, x, y, w, h)
+	local gh = h / GROOVE_IN
+	local pad = gh * GROOVE_END
+	local cy = y - gh * GROOVE_TOP + gh / 2
+	local n = empty(x + w / 2 - g.ox, g.oy - cy, 0, 0, g.node)
+	three(n, "solco", w + 2 * pad, gh)
+	return n
 end
 
 function M.bar_fill(b, f)
 	f = math.max(0, math.min(1, f))
 	gui.set_enabled(b.front.node, f > 0.005)
-	local w = math.max(b.h * 1.3, b.w * f)
+	local w = math.max(b.h, b.w * f)
 	three_fit(b.front.parts, b.strip, w, b.h)
 	gui.set_position(b.front.node, vec(b.x + w / 2 - b.g.ox, b.g.oy - (b.y + b.h / 2)))
 end
@@ -591,13 +606,37 @@ end
 function M.bar(g, x, y, w, h, f, color)
 	local b = { g = g, x = x, y = y, w = w, h = h, color = color, strip = strip_of(color) }
 	local cx, cy = x + w / 2 - g.ox, g.oy - (y + h / 2)
-	b.back = { node = empty(cx, cy, 0, 0, g.node) }
-	three(b.back.node, "guscio", w + h * 1.1, h * 1.9)
+	b.back = { node = M.groove(g, x, y, w, h) }
 	b.front = { node = empty(cx, cy, 0, 0, g.node) }
 	b.front.parts = three(b.front.node, b.strip, w, h)
-	if b.strip == "barra_chiara" then tint(b.front.parts, color) end
+	if b.strip == "barra_stendardo_chiara" then tint(b.front.parts, color) end
 	M.bar_fill(b, f)
 	return b
+end
+
+-- A bar in parts (the stats: base, level, pieces, Sigilli): one strip from 0 to
+-- the last part's end, each part its own color. parts: { { x1, x2, color }, ... }
+-- in pixels from x, in order. The ends are the strip's round caps
+function M.bar_parts(g, x, y, w, h, parts)
+	M.groove(g, x, y, w, h)
+	local last = 0
+	for _, q in ipairs(parts) do last = math.max(last, q[2]) end
+	if last <= 0 then return end
+	local m = P.barra_stendardo_chiara
+	local cw = math.min(m.c * h / m.h, last / 2)
+	for i, q in ipairs(parts) do
+		local x1, x2 = q[1], q[2]
+		if x2 > x1 then
+			-- the middle of the strip over this part, the caps at the two ends (ember
+			-- as drawn, the other colors on the colorless strip)
+			local name = strip_of(q[3])
+			local color = name == "barra_stendardo" and vmath.vector4(1, 1, 1, 1) or q[3]
+			local a, z = math.max(x1, cw), math.min(x2, last - cw)
+			if z > a then gui.set_color(pic(name .. "_cx", x + (a + z) / 2 - g.ox, g.oy - (y + h / 2), z - a + 0.5, h, g.node), color) end
+			if x1 < cw then gui.set_color(pic(name .. "_sx", x + cw / 2 - g.ox, g.oy - (y + h / 2), cw, h, g.node), color) end
+			if x2 > last - cw then gui.set_color(pic(name .. "_dx", x + last - cw / 2 - g.ox, g.oy - (y + h / 2), cw, h, g.node), color) end
+		end
+	end
 end
 
 -- ---------------------------------------------------------------- buttons
@@ -610,103 +649,41 @@ function M.button(list_of, p, ui_action, opt)
 	return b
 end
 
--- The main action: the gold plate between fire and ice (WB-052, C · brace e
--- gelo; Sergio, 15 Nov: one primary button, the same on every screen) and,
--- at its left, a line saying what it starts. Three drawings: lit, pressed
--- (while the finger is on it) and off (it can't be done now: grey and frozen,
--- and the line says why). opt: size (of the label), sub, off. Under the thread
--- (y from 540) it takes its place in the band; higher (the vignette, a weapon's
--- sheet) it is drawn where asked, h tall
-local function sub_y(y, h)
-	-- under it, or over it when the thread is there
-	return y + h + 30 > 640 and y - 10 or y + h + 30
-end
-local LIT_H = 104   -- the lit drawing on the screen; the others as tall as drawn next to it
-local FACE_PAD = 6  -- between the label and the ends of the gem's free face
+-- The buttons (Sergio, 23 Nov, docs/ui-catalogo.md, purposes 1 and 2): one slab
+-- for all, the «Ferro liscio» drawn in tools/grafica/fucina.py, the same height
+-- side by side, each with its big icon sticking out of its left end. The main
+-- action is the same slab in red-hot iron (principale_*), the others dark iron
+-- (secondario_*). Four drawings: lit, lighter (the mouse or the controller's
+-- light on it: ui.lua, on_light), pressed (the finger on it), off (cold grey
+-- iron: it can't be done now, and the short line under the label says why).
 
-function M.action(g, label, x, y, w, h, opt)
-	opt = opt or {}
-	local size = opt.size or math.min(92, (w - 60) / (#label * 0.56))
-	-- an action at the bottom right goes under the thread, in the band, the
-	-- way back on the other side (Sergio, 12 Nov); its line at its left
-	local foot = y >= 540
-	if foot then
-		x, y, w, h = 926, M.THREAD + 10, 300, 88
-		size = math.min(size, 44)
-	end
-	local cx, cy = x + w / 2, y + h / 2
-	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
-	local p = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
-	local k = (foot and LIT_H or h * 1.18) / P.primario_acceso.h
-	local looks = {}
-	for _, state in ipairs({ "acceso", "premuto", "spento" }) do
-		local name = "primario_" .. state
-		local s = empty(0, 0, 0, 0, n)
-		three(s, name, w, P[name].h * k)
-		gui.set_enabled(s, state == (opt.off and "spento" or "acceso"))
-		looks[state] = s
-	end
-	-- the label in the middle of the free face of the gem, away from the flame
-	-- on the left and the crystals on the right; off, on the grey part before
-	-- the ice (pieces.lua, box; Sergio, 17 Nov: never over the button's drawings).
-	-- As big as fits both faces: lit or off, the same label has the same size
-	local function face(state)
-		local f = room("primario_" .. state, cx, cy, w, P["primario_" .. state].h * k)
-		f.wide, f.tall = f.x1 - f.x0 - 2 * FACE_PAD, f.y1 - f.y0
-		return f
-	end
-	local lit, off = face("acceso"), face("spento")
-	local where = opt.off and off or lit
-	size = math.max(M.MIN_TEXT, math.min(size, lit.tall / 0.72, off.tall / 0.72))
-	local ink = opt.off and with_alpha(C.INK, 0.55) or C.INK
-	p.label = M.text(p.g, label, (where.x0 + where.x1) / 2, (where.y0 + where.y1) / 2 + size * 0.36, size, ink, "middle")
-	local full = gui.get_scale(p.label)
-	-- another label on the same button (the vignette: AVANTI, then VAI!)
-	p.set_label = function(t)
-		gui.set_text(p.label, t)
-		gui.set_scale(p.label, full)
-		local lw = M.width(p.label)
-		local fit = math.min(1, lit.wide / lw, off.wide / lw)
-		if fit < 1 then gui.set_scale(p.label, full * fit); M.check_small(p.label) end
-	end
-	p.set_label(label)
-	local muted = opt.off and C.FROST or C.MUTE
-	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, cy + 7, 19, muted, "end", 0.6)
-	elseif opt.sub then p.sub = M.text(g, opt.sub, cx, sub_y(y, h), 16, muted, "middle", 1.2) end
-	-- the finger on it: the pressed drawing (ui.ui, premi)
-	if not opt.off then
-		local at = gui.get_position(p.label)
-		p.on_press = function(down)
-			gui.set_enabled(looks.acceso, not down)
-			gui.set_enabled(looks.premuto, down)
-			gui.set_position(p.label, vec(at.x, at.y - (down and 4 or 0)))
-		end
-	end
-	return p
-end
+-- At the bottom right, under the thread: the main action's place on every screen
+local FOOT = { x = 948, y = 640, w = 308, h = 62 }
 
--- The secondary action (WB-071, Sergio 18 Nov: never the light plates for a
--- button): a slab of dark iron, ember on its bottom left and frost on its top
--- right, with a round socket on the left for the action's icon (a piece of the
--- fucina atlas), its label in sand and under it a short line (the cost, why
--- not). Three drawings like the main one: lit, pressed, off (cold grey iron).
--- (x, y) its top left, w x h. opt: icon, sub, off. Returns the plate for M.button
+-- (x, y) its top left, w x h. opt: icon, sub, sub_color, off, main, size (of the
+-- label). Returns the plate for M.button
 function M.secondary(g, label, x, y, w, h, opt)
 	opt = opt or {}
+	local kind = opt.main and "principale_" or "secondario_"
 	local cx, cy = x + w / 2, y + h / 2
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
 	local p = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
-	local k = h / P.secondario_acceso.h
-	local looks = {}
-	for _, state in ipairs({ "acceso", "premuto", "spento" }) do
-		local name = "secondario_" .. state
-		local s = empty(0, 0, 0, 0, n)
+	local k = h / P[kind .. "acceso"].h
+	-- one slab of three nodes: a state change swaps its drawings (four looks of
+	-- nodes each filled the GUI's buffer in the ZAINO, Sergio 24 Nov)
+	local slab, parts = empty(0, 0, 0, 0, n), nil
+	local function look(state)
+		local name = kind .. state
 		local sh = P[name].h * k
-		gui.set_position(s, vec(0, (sh - h) / 2))
-		three(s, name, w, sh)
-		gui.set_enabled(s, state == (opt.off and "spento" or "acceso"))
-		looks[state] = s
+		gui.set_position(slab, vec(0, (sh - h) / 2))
+		if not parts then
+			parts = three(slab, name, w, sh)
+			return
+		end
+		for i, part in ipairs({ "_cx", "_sx", "_dx" }) do gui.play_flipbook(parts[i], name .. part) end
+		three_fit(parts, name, w, sh)
 	end
+	look(opt.off and "spento" or "acceso")
 	-- the face: what moves down when pressed (the icon and the words)
 	p.face_node = empty(0, 0, 0, 0, n)
 	local f = { node = p.face_node, ox = cx, oy = cy }
@@ -720,28 +697,74 @@ function M.secondary(g, label, x, y, w, h, opt)
 		for _, n in ipairs({ sh, ic }) do gui.set_rotation(n, vmath.vector3(0, 0, 10)) end
 		if opt.off then gui.set_color(ic, vmath.vector4(0.45, 0.45, 0.5, 1)) end
 	end
-	local box = room("secondario_acceso", cx, cy, w, h)
-	local tx = box and box.x0 or x + h
+	-- the words after the icon; without one (its icon still to come) in the middle
+	local box = room(kind .. "acceso", cx, cy, w, h)
+	local x0 = opt.icon and box and box.x0 or x + h * 0.4
+	local x1 = box and box.x1 or x + w - 12
+	local room_w = x1 - x0
+	local tx, align = opt.icon and x0 or (x0 + x1) / 2, opt.icon and "start" or "middle"
 	local ink = opt.off and with_alpha(C.SAND, 0.45) or C.SAND
-	local room_w = (box and box.x1 or x + w - 12) - tx
-	local lt = M.text(f, label, tx, opt.sub and y + h * 0.46 or y + h * 0.6, 20, ink, "start", 0.5)
-	if M.width(lt) > room_w then gui.set_scale(lt, gui.get_scale(lt) * (room_w / M.width(lt))) end
+	local size = math.max(M.MIN_TEXT, math.min(opt.size or 20, h * (opt.sub and 0.34 or 0.42)))
+	local lt = M.text(f, label, tx, opt.sub and y + h * 0.48 or y + h / 2 + size * 0.36, size, ink, align, 0.5)
+	local full = gui.get_scale(lt)
+	-- another label on the same button (the vignette: AVANTI, then VAI!)
+	p.set_label = function(t)
+		gui.set_text(lt, t)
+		gui.set_scale(lt, full)
+		if M.width(lt) > room_w then gui.set_scale(lt, full * (room_w / M.width(lt))); M.check_small(lt) end
+	end
+	p.set_label(label)
+	p.label = lt
 	if opt.sub then
-		local st = M.text(f, opt.sub, tx, y + h * 0.78, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or C.MUTE, "start", 0.5)
+		local st = M.text(f, opt.sub, tx, y + h * 0.8, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or (opt.main and C.HOT or C.MUTE), align, 0.5)
 		if M.width(st) > room_w then gui.set_scale(st, gui.get_scale(st) * (room_w / M.width(st))) end
+		p.sub = st
 	end
 	if not opt.off then
+		local down_now, lit_now = false, false
+		local shown = "acceso"
+		local function show()
+			local state = down_now and "premuto" or lit_now and "chiaro" or "acceso"
+			if state ~= shown then shown = state; look(state) end
+		end
 		p.on_press = function(down)
-			gui.set_enabled(looks.acceso, not down)
-			gui.set_enabled(looks.premuto, down)
+			down_now = down
+			show()
 			gui.set_position(p.face_node, vec(0, down and -3 or 0))
+		end
+		p.on_light = function(on)
+			lit_now = on
+			show()
 		end
 	end
 	return p
 end
 
+-- The main action: the red-hot slab. At the bottom right (y from 540) it takes
+-- its place under the thread, as tall as the others beside it; higher (the
+-- vignette, a weapon's sheet) it is drawn where asked, w x h
+function M.action(g, label, x, y, w, h, opt)
+	opt = opt or {}
+	if y >= 540 then x, y, w, h = FOOT.x, FOOT.y, FOOT.w, FOOT.h end
+	local o = {}
+	for k, v in pairs(opt) do o[k] = v end
+	o.main = true
+	o.size = opt.size and math.min(opt.size, 30) or 30
+	return M.secondary(g, label, x, y, w, h, o)
+end
+
+-- A secondary button centered at (x, y) of a node (GUI coordinates, like the old
+-- ui.button: the wheel of the battle, ESCI of the draft). Returns its node and plate
+function M.button_at(list_of, x, y, w, h, label, ui_action, icon, parent)
+	local p = M.secondary({ node = parent, ox = 0, oy = 0 }, label, x - w / 2, -y - h / 2, w, h, { icon = icon })
+	M.button(list_of, p, ui_action)
+	return p.node, p
+end
+
 -- A plate goes down when pressed, and comes back
 function M.press(p, down)
+	-- (the slabs have their own pressed drawing: M.secondary, on_press)
+	if not p.d then return end
 	local d = down and p.d * 0.75 or 0
 	gui.animate(p.face_node, "position", vec(0, -d), gui.EASING_OUTQUAD, 0.06)
 end
@@ -770,8 +793,8 @@ function M.header(list_of, label, accent, back_action, from)
 		local bn = empty(74, 62, 114, 76, bl.node)
 		h.back = { node = bn, face_node = empty(0, 0, 0, 0, bn), d = 5, g = { node = bn, ox = 74, oy = 658 } }
 		whole("indietro", 0, 0, 76, h.back.face_node)
-		gui.set_parent(M.line(h.back.g, 82, 642, 64, 658, 7, C.SAND), h.back.face_node, true)
-		gui.set_parent(M.line(h.back.g, 64, 658, 82, 674, 7, C.SAND), h.back.face_node, true)
+		-- the little white arrow, one piece with a clean tip (tools/grafica/fucina.py, freccina)
+		whole("freccina", -2, 0, 36, h.back.face_node)
 		M.text(bl, from or "", 74, 713, 16, C.MUTE, "middle", 1)
 		-- the whole corner takes the tap
 		local zone = empty(76, M.BAND / 2, 152, M.BAND, bl.node)
@@ -815,6 +838,17 @@ end
 -- the new one
 local tab_line = {}
 local TAB_HOT, TAB_COLD = vmath.vector4(1, 0.76, 0.23, 1), vmath.vector4(0.56, 0.64, 0.7, 1)
+
+-- One word like an open or closed tab, centered at mid, its baseline at base: red-hot
+-- over a flat ember glow, or cold (the choices, the loadouts: no light plates)
+function M.hot_word(g, t, mid, base, on, size_on, size_off)
+	if on then
+		local glow = shape("alone", mid - g.ox, g.oy - (base - size_on * 0.36), #t * size_on * 0.7 + 60, size_on * 2.2,
+			with_alpha(C.HOT_BOTTOM, 0.5), g.node)
+		gui.set_blend_mode(glow, gui.BLEND_ADD)
+	end
+	return M.text(g, t, mid, base, on and size_on or size_off, on and TAB_HOT or TAB_COLD, "middle", 1)
+end
 M.TAB_HOT, M.TAB_COLD = TAB_HOT, TAB_COLD
 
 -- the slant of the blade's cut across the tags (degrees, up to the right)
@@ -843,6 +877,9 @@ end
 -- ZAINO, Sergio 18 Nov): the open word cold, in two halves along a slanted line, the
 -- others whole (Sergio, 19 Nov: only INVENTARIO); cut[i] = { top, bottom, top_text, bottom_text, mid }
 function M.tabs(g, list_of, x, y, tabs, active, accent, tag, cut)
+	-- every tab is the incandescent word (Sergio, 23 Nov: Campagna and Allenamento too,
+	-- docs/ui-catalogo.md purpose 5); the plates below stay only for the record
+	tag = true
 	local h, cx = tag and 50 or 58, x
 	local key = tag and tabs[1] and tabs[1][2]
 	for i, tab in ipairs(tabs) do
@@ -878,24 +915,12 @@ function M.tabs(g, list_of, x, y, tabs, active, accent, tag, cut)
 			end
 			M.zone(g, list_of, cx, y, slot, h, tab[2])
 			cx = cx + slot + 8 + (g.air and M.air(0.1) or 0)
-		else
-			local w = #tab[1] * 16 + 64
-			local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
-			local name = on and "piastrina_chiara" or "piastrina"
-			three(n, name, w, h)
-			local box = room(name, cx + w / 2, y + h / 2, w, h)
-			local size = 24
-			M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + size * 0.37, size,
-				on and C.INK or M.with_alpha(C.SAND, 0.85), "middle", 0.5)
-			list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
-			cx = cx + w + 8 + (g.air and M.air(0.1) or 0)
 		end
 	end
 	return cx
 end
 
--- CHOICES: a small label and the options in a row on a thin line, the light
--- plate behind the chosen one. opts: { { label, ui_action }, ... }; w: an
+-- CHOICES: a small label and the options in a row, the chosen one red-hot. opts: { { label, ui_action }, ... }; w: an
 -- option's width; off: dim, nothing to tap
 function M.choice(g, list_of, x, y, label, opts, active, w, off)
 	local h = 58
@@ -905,13 +930,16 @@ function M.choice(g, list_of, x, y, label, opts, active, w, off)
 	for i, o in ipairs(opts) do
 		local ox = x + (i - 1) * w
 		local on = i == active and not off
-		-- every option is a small plate: the chosen one light, the others iron
-		local name = on and "piastrina_chiara" or "piastrina"
-		local parts = three(empty(ox + w / 2 - 4 - g.ox, g.oy - (y + h / 2), 0, 0, g.node), name, w - 8, h)
-		if off then tint(parts, vmath.vector4(1, 1, 1, 0.4)) end
-		local box = room(name, ox + w / 2 - 4, y + h / 2, w - 8, h)
-		M.text({ node = g.node, ox = g.ox, oy = g.oy, box = box }, o[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 8, 22,
-			on and C.INK or with_alpha(C.SAND, off and 0.35 or 0.8), "middle")
+		-- every option is a word like the tabs (Sergio, 23 Nov, no light plates): the
+		-- chosen one red-hot over its ember glow, the others cold
+		local mid = ox + w / 2 - 4
+		if on then
+			local glow = shape("alone", mid - g.ox, g.oy - (y + h / 2 - 4), #o[1] * 18 + 70, 60, with_alpha(C.HOT_BOTTOM, 0.5), g.node)
+			gui.set_blend_mode(glow, gui.BLEND_ADD)
+		end
+		local t = M.text(g, o[1], mid, y + h / 2 + (on and 9 or 7), on and 26 or 21,
+			on and TAB_HOT or with_alpha(TAB_COLD, off and 0.4 or 1), "middle", 1)
+		if M.width(t) > w - 12 then gui.set_scale(t, gui.get_scale(t) * ((w - 12) / M.width(t))); M.check_small(t) end
 		if not off then M.zone(g, list_of, ox, y - 4, w, h + 8, o[2]) end
 	end
 end
@@ -923,55 +951,21 @@ function M.card(g, x, y, w, h, color, opt)
 	local cx, cy = x + w / 2, y + h / 2
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
 	local k = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
-	-- chosen: the same panel in ember, a little bigger, under it (a rim drawn by hand)
-	if opt.sel then nine(n, "pannello_caldo", w + 12, h + 12, math.min(26, h * 0.34)) end
-	local parts = nine(n, "pannello", w, h, math.min(22, h * 0.3))
-	if opt.off then tint(parts, vmath.vector4(0.62, 0.62, 0.7, 0.8)) end
+	-- the minimal card (tools/grafica/fucina.py, fai_card_filo): its thread says the
+	-- state, gold the chosen one, ice an event, ember, off a closed one
+	local name = opt.sel and "pannello_caldo" or opt.off and "pannello_spento"
+		or opt.kind and "pannello_" .. opt.kind or "pannello"
+	k.parts = nine(n, name, w, h, math.min(22, h * 0.3))
 	return k
 end
 
--- MODE CARDS (WB-060): the cards of GIOCA ONLINE, shaped by what they are:
--- kind "brace" (the usual mode: ember, the flame out of the bottom left corner),
--- "ferro" (a plain mode), "gelo" (an event: iron with the ice edge, crystals out
--- of the top right corner), "spenta" (not yet open). In nine parts, the corners
--- always at the drawing's scale; the flame and the crystals are a whole piece on
--- their corner (pieces.lua: box says how far it sticks out of the body).
--- opt.sel: the chosen one (its bright rim). Returns { node, g } like M.card
-local MODE_SCALE = 0.44
+-- The cards of GIOCA ONLINE: the minimal card like every other (Sergio, 23 Nov),
+-- its thread by what they are: kind "brace" and "ferro" (a mode: iron at rest),
+-- "gelo" (an event: ice), "spenta" (not yet open). opt.sel: the chosen one (gold)
+local MODE_KIND = { brace = nil, ferro = nil, gelo = "gelo" }
 function M.mode_card(g, x, y, w, h, kind, opt)
 	opt = opt or {}
-	local cx, cy = x + w / 2, y + h / 2
-	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
-	local k = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
-	local name = "scheda_" .. kind .. (opt.sel and "_scelta" or "")
-	local m = P[name]
-	local s = math.min(MODE_SCALE, 0.34 * h / m.c)
-	local c = m.c * s
-	-- how far the flame (bottom left) or the crystals (top right) come inside the body:
-	-- the sides next to them start where they end
-	local f = P[name .. "_fregio"]
-	local flame = f and (f.box[1] > 0 or f.box[4] > 0)
-	local fw, fh = f and f.w * s or 0, f and f.h * s or 0
-	local in_w = f and fw - (flame and f.box[1] or f.box[3]) * s or c
-	local in_h = f and fh - (flame and f.box[4] or f.box[2]) * s or c
-	-- a part filling the box from (xa, ya) to (xb, yb), measured from the top left corner
-	local function part(i, xa, ya, xb, yb)
-		return pic(name .. "_" .. i, -w / 2 + (xa + xb) / 2, h / 2 - (ya + yb) / 2, xb - xa + 1, yb - ya + 1, n)
-	end
-	k.parts = {
-		part(5, c, c, w - c, h - c),
-		part(2, c, 0, f and not flame and w - in_w or w - c, c),
-		part(8, flame and in_w or c, h - c, w - c, h),
-		part(4, 0, c, c, flame and h - in_h or h - c),
-		part(6, w - c, f and not flame and in_h or c, w, h - c),
-		part(1, 0, 0, c, c), part(3, w - c, 0, w, c), part(7, 0, h - c, c, h), part(9, w - c, h - c, w, h),
-	}
-	if flame then
-		pic(name .. "_fregio", -w / 2 - f.box[1] * s + fw / 2, -h / 2 - f.box[4] * s + fh / 2, fw, fh, n)
-	elseif f then
-		pic(name .. "_fregio", w / 2 + f.box[3] * s - fw / 2, h / 2 + f.box[2] * s - fh / 2, fw, fh, n)
-	end
-	return k
+	return M.card(g, x, y, w, h, nil, { sel = opt.sel, off = kind == "spenta", kind = MODE_KIND[kind] })
 end
 
 -- A picture at the top of a card, `tall` pixels, cut to the card's corner
@@ -1026,15 +1020,22 @@ function M.label_width(t)
 	return math.ceil(m.width * 16 / FONT_SIZE) + 40
 end
 
+-- A thin thread around a word on the dark (Sergio, 23 Nov: labels and filters, no
+-- plates): the box x..x+w, y..y+h, the thread in color. Returns its node
+function M.thread_chip(g, x, y, w, h, color)
+	local n = empty(x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
+	three(n, "filo_fondo", w, h)
+	tint(three(n, "filo_bordo", w, h), color)
+	return n
+end
+
 function M.label(g, x, y, t, color, backed)
 	if backed then
-		-- on a picture: a small iron plate, the word in its room
-		local w, h = M.label_width(t), 32
-		local cx, cy = x - 8 + w / 2, y - 1 + h / 2
-		local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
-		three(n, "piastrina", w, h)
-		local box = room("piastrina", cx, cy, w, h)
-		return M.text({ node = n, ox = cx, oy = cy, box = box }, t, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 6, 16, color, "middle", 1)
+		-- on a picture: the word in a thin thread of its color
+		local w, h = M.label_width(t) - 8, 30
+		local cx, cy = x - 8 + w / 2, y + h / 2
+		local n = M.thread_chip(g, x - 8, y, w, h, color)
+		return M.text({ node = n, ox = cx, oy = cy }, t, cx, cy + 6, 16, color, "middle", 1)
 	end
 	return M.text(g, t, x, y + 18, 16, color, "start", 1.2)
 end

@@ -169,7 +169,6 @@ function M.new(v, x, y, opt, parent)
 	gui.set_visible(c.root, false)
 	gui.set_scale(c.root, vmath.vector3(k, k, 1))
 	kit.panel(c.root, W, H, opt.tu and "pannello_caldo" or "pannello")
-	if opt.tu then kit.panel(c.root, W - 10, H - 10, "pannello") end
 	-- the kit's coordinates on the card: x from its left, y from its top
 	local g = { node = c.root, ox = W / 2, oy = H / 2 }
 	local sx, wide = PAD, W - 2 * PAD

@@ -416,7 +416,7 @@ local function sheet(a, x, y, w, h, paper)
 end
 
 local function back_button(a)
-	local b = kit.secondary(a.mlow, T.back, 160, 640, 214, 62, {})
+	local b = kit.secondary(a.mlow, T.back, 160, 640, 214, 62, { icon = "az_torna" })
 	kit.button(a.buttons, b, "modale:indietro")
 end
 
@@ -508,13 +508,13 @@ local function open_card(a, o)
 	local can_change = on_board and o.taglia ~= "benvenuto" and orders.can_change(p, today)
 	local change_sub = not (on_board and o.taglia ~= "benvenuto") and T.change_never
 		or (can_change and T.change_free or T.change_tomorrow)
-	local cb = kit.secondary(a.mlow, T.change, 160, 640, 214, 62, { off = not can_change, sub = change_sub })
+	local cb = kit.secondary(a.mlow, T.change, 160, 640, 214, 62, { icon = "az_cambia", off = not can_change, sub = change_sub })
 	kit.button(a.buttons, cb, "cambia", { spento = not can_change })
 	local mat = o.materiale or (o.poi and o.poi.materiale)
-	local sb = kit.secondary(a.mlow, T.swap, 390, 640, 214, 62, { off = not mat, sub = mat and T.swap_sub or T.swap_none })
+	local sb = kit.secondary(a.mlow, T.swap, 390, 640, 214, 62, { icon = "az_scambia", off = not mat, sub = mat and T.swap_sub or T.swap_none })
 	kit.button(a.buttons, sb, "scambia", { spento = not mat })
 	local can = ready and p.ossidiana >= cost and profile.can_spend()
-	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { size = 42, off = not can })
+	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { icon = "az_consegna", size = 42, off = not can })
 	kit.button(a.buttons, act, "consegnala", { main = true, spento = not can })
 end
 
@@ -559,7 +559,7 @@ local function swap(a, o)
 	kit.text(c, T.you_have:format(orders.materials(p, mat)), X + W - 24, ty, 16, KC.MUTE, "end", 1)
 	back_button(a)
 	local can = sel and orders.materials(p, sel) >= orders.TRADE and not full
-	local act = kit.action(a.mright, T.swap, 948, 628, 308, 80, { size = 42, off = not can })
+	local act = kit.action(a.mright, T.swap, 948, 628, 308, 80, { icon = "az_scambia", size = 42, off = not can })
 	kit.button(a.buttons, act, "baratta", { main = true, spento = not can })
 end
 
@@ -608,7 +608,7 @@ local function family(a, o)
 	end
 	back_button(a)
 	local can = ready and sel ~= nil and p.ossidiana >= cost and profile.can_spend()
-	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { size = 42, off = not can })
+	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { icon = "az_consegna", size = 42, off = not can })
 	kit.button(a.buttons, act, "consegnala", { main = true, spento = not can })
 end
 
@@ -659,7 +659,7 @@ local function book(a)
 	local called = p.commesse.chiamato
 	local done = sel and called and called.cliente == sel and called.giorno == orders.day_number(today)
 	local can = sel ~= nil and not done and orders.can_call(p, sel, today)
-	local act = kit.action(a.mright, T.call_short, 948, 628, 308, 80, { size = 42, off = not can })
+	local act = kit.action(a.mright, T.call_short, 948, 628, 308, 80, { icon = "az_chiama", size = 42, off = not can })
 	kit.button(a.buttons, act, "chiama", { main = true, spento = not can })
 end
 
@@ -732,7 +732,7 @@ function M.board(a)
 		if a.bench then bench_panel(a, a.left) else smith_at_counter(a, a.left) end
 		local n = kit.text(a.mid, T.closed:format(orders.OPEN_AFTER, p.commesse.online, orders.OPEN_AFTER), 716, 330, 22, KC.MUTE, "middle", 0.5)
 		fit(n, 560)
-		local pb = kit.secondary(a.low, T.bench, 160, 640, 230, 62, {})
+		local pb = kit.secondary(a.low, T.bench, 160, 640, 230, 62, { icon = "az_prova" })
 		kit.button(a.buttons, pb, "prova:apri")
 		return
 	end
@@ -759,12 +759,12 @@ function M.board(a)
 	shelf(a, a.rt)
 	-- the band: the bench (test profiles), the call, what is ready and its cost, CONSEGNA
 	if profile.test then
-		local pb = kit.secondary(a.low, T.bench, 160, 640, 230, 62, {})
+		local pb = kit.secondary(a.low, T.bench, 160, 640, 230, 62, { icon = "az_prova" })
 		kit.button(a.buttons, pb, "prova:apri")
 	end
 	-- the call: it opens the clients' book, where you call them (Sergio, 23 Nov: one button)
 	local none = #orders.clients(p) == 0
-	local cb = kit.secondary(a.low2, T.call, 430, 640, 270, 62, { off = none })
+	local cb = kit.secondary(a.low2, T.call, 430, 640, 270, 62, { icon = "az_chiama", off = none })
 	kit.button(a.buttons, cb, "libro", { spento = none })
 	local ready, cost = 0, 0
 	for _, o in ipairs(orders.orders(p)) do
@@ -779,7 +779,7 @@ function M.board(a)
 	local sub = ready == 0 and (smith and T.smith_short or T.none_ready) or (not net and T.need_network)
 		or (p.ossidiana < cost and T.missing_obsidian:format(cost - p.ossidiana))
 		or ((ready == 1 and T.ready_one or T.ready_many:format(ready)) .. " · " .. T.cost:format(cost))
-	a.action = kit.action(a.right, T.deliver, 948, 628, 308, 80, { size = 42, off = not can, sub = kit.upper(sub) })
+	a.action = kit.action(a.right, T.deliver, 948, 628, 308, 80, { icon = "az_consegna", size = 42, off = not can, sub = kit.upper(sub) })
 	kit.button(a.buttons, a.action, "consegna", { main = true, spento = not can })
 	if a.scene then
 		window(a, base)

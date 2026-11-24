@@ -61,6 +61,11 @@ tiene fermo un frame più di 150 ms (300 sotto l'iride): misure, contatore FPS n
 [docs/prestazioni.md](docs/prestazioni.md).
 Dettagli e comandi degli scenari: [tools/simula/README.md](tools/simula/README.md).
 
+Ogni elemento grafico dei menù è catalogato **per scopo** in [docs/ui-catalogo.md](docs/ui-catalogo.md)
+(Sergio, 23 nov: uno scopo = un pezzo del kit = un aspetto; anche su Figma): prima di disegnare un
+pulsante, una card, una barra, un tab o una pillola usa il pezzo del suo scopo, e se aggiungi o
+cambi un elemento aggiorna il catalogo nella stessa PR.
+
 Niente si deve mai deformare (Sergio, 29 ott): ogni nodo GUI è `gui.ADJUST_FIT`, mai
 `ADJUST_STRETCH` (lo controlla `controlla.py`). Il gioco è disegnato a 1280 x 720 al
 centro; su 20:9 o 4:3 lo schermo vero va da `schermo.x0` a `x1` e da `y0` a `y1`

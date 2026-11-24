@@ -91,7 +91,7 @@ function M.new(showcases, title, orders)
 		math.min(720, screen.width() - 558))
 	if not band then kit.foot_text(low, T.tap_to_pick, 40, 674, 19, KC.MUTE, 660, 0.5) end
 	local right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	local go = kit.action(right, T.weapons, 930, 560, 270, 84, { size = 54, sub = T.weapons_in:format(0, 0) })
+	local go = kit.action(right, T.weapons, 930, 560, 270, 84, { icon = "az_mira", size = 54, sub = T.weapons_in:format(0, 0) })
 	s.tally = go.sub
 	s.angoli = { top_left.node, low.node, right.node }
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))

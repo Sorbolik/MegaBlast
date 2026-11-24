@@ -43,8 +43,7 @@ local function build_choice(c)
 	for i, line in ipairs(T.new_room_lines) do
 		kit.text(g, line, 446 - (i - 1) * 2, 246 + (i - 1) * 32, 18, KC.MUTE)
 	end
-	local p = kit.plate(g, 446, 400, 260, 72, KC.HOT, { sk = 0, d = 6, piece = "piastrina_chiara" })
-	kit.text(p.g, T.create, 576, 448, 32, KC.INK, "middle")
+	local p = kit.secondary(g, T.create, 446, 404, 280, 62, { icon = "az_uno_contro_uno", off = c.busy })
 	kit.button(c.buttons, p, "crea", { spento = c.busy })
 	if c.msg then kit.text(g, kit.upper(c.msg), 446, 512, 16, c.busy and KC.MUTE or KC.HOT_TOP, "start", 0.5) end
 
@@ -61,14 +60,15 @@ local function build_choice(c)
 		local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
 		local x, y = 880 + kit.air() + col * 124 - row * 6, 236 + row * 76
 		local off = c.busy or (k == "canc" and #c.code == 0) or (#k == 1 and #c.code >= M.DIGITS)
-		local pl = kit.plate(g, x, y, 114, 66, off and KC.LINE or KC.ROSE, { sk = 0, d = 5, piece = "piastrina" })
-		kit.text(pl.g, k == "canc" and T.delete or k, x + 57, y + 45, k == "canc" and 18 or 34, off and KC.MUTE or KC.SAND, "middle")
+		-- the keys: the secondary slab, the digit in the middle (Sergio, 23 Nov: no plates)
+		local pl = kit.secondary(g, k == "canc" and T.delete or k, x, y + 2, 114, 62,
+			{ off = off, size = k == "canc" and 18 or 30 })
 		kit.button(c.buttons, pl, k == "canc" and "canc" or "n:" .. k, { spento = off })
 	end
 	-- the one action: ENTRA, when the code is whole
 	local missing = M.DIGITS - #c.code
 	local off = c.busy or missing > 0
-	c.action = kit.action(c.right, T.join, 930, 560, 270, 84, { size = 54, off = off,
+	c.action = kit.action(c.right, T.join, 930, 560, 270, 84, { icon = "az_via", size = 54, off = off,
 		sub = missing > 0 and (missing == 1 and T.missing_one or T.missing:format(missing)) or nil })
 	kit.button(c.buttons, c.action, "entra", { main = true, spento = off })
 end
@@ -152,7 +152,7 @@ local function build_room(c)
 
 	local sub = not host and T.wait_host or podium and T.wait_podium or T.go_sub:format(common.modes[room.mode] or "", bots)
 	local off = not host or podium
-	c.action = kit.action(c.right, T.go, 930, 560, 270, 84, { size = 60, off = off, sub = kit.upper(sub) })
+	c.action = kit.action(c.right, T.go, 930, 560, 270, 84, { icon = "az_via", size = 60, off = off, sub = kit.upper(sub) })
 	kit.button(c.buttons, c.action, "via", { main = true, spento = off })
 end
 

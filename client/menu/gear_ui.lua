@@ -368,16 +368,12 @@ function M.bar(g, x, y, w, h, parts, now, after, k, colors)
 		end
 		return stub + (w - stub) * math.min(1, (v - b) / math.max(mx - b, 1e-9))
 	end
-	kit.rect(g, x - 2, y - 2, w + 4, h + 4, KC.INK)
-	kit.rect(g, x, y, w, h, KC.TRACK)
 	local solid = math.min(now, type(after) == "number" and after or now)
-	-- the base, then level, pieces and Sigilli above it, up to the value
-	local v, edge = b, 0
+	-- the base, then level, pieces and Sigilli above it, up to the value: one strip
+	-- in the groove of every bar (kit.bar_parts), each part its color
+	local v, list = b, {}
 	local function seg(x1, x2, color)
-		if x2 > x1 then
-			kit.rect(g, x + x1, y, x2 - x1, h, color)
-			kit.rect(g, x + x2 - 1, y, 2, h, KC.INK)
-		end
+		if x2 > x1 then list[#list + 1] = { x1, x2, color } end
 	end
 	seg(0, at(math.min(b, solid)), colors[1])
 	for i = 2, 4 do
@@ -386,6 +382,7 @@ function M.bar(g, x, y, w, h, parts, now, after, k, colors)
 			v = v + parts[i]
 		end
 	end
+	kit.bar_parts(g, x, y, w, h, list)
 	if type(after) == "number" and after ~= now then
 		local x1, x2 = at(math.min(now, after)), at(math.max(now, after))
 		x2 = math.max(x2, x1 + M.DELTA_MIN)
@@ -557,8 +554,8 @@ end
 -- a loadout's chip: never narrower than kit.least (Sergio, 19 Nov)
 local CHIP_W, CHIP_H = 84, 46
 
--- The three loadouts at (x, y): the label, then 1 2 3 on small plates, the
--- active one light; a closed one says from which level. Tapping: "<prefix>:<i>"
+-- The three loadouts at (x, y): the label, then 1 2 3 like tabs, the active one
+-- red-hot; a closed one says from which level. Tapping: "<prefix>:<i>"
 function M.loadouts(s, g, x, y, active, prefix, label)
 	kit.text(g, label, x, y + 14, 18, KC.MUTE, "start", 1)
 	local n = 0
@@ -566,8 +563,8 @@ function M.loadouts(s, g, x, y, active, prefix, label)
 		local bx = x + n * (CHIP_W + 10)
 		if loadout.open(i, s.prof.livello) then
 			local on = i == active
-			kit.strip(g, on and "piastrina_chiara" or "piastrina", bx, y + 24, CHIP_W, CHIP_H)
-			kit.text(g, tostring(i), bx + CHIP_W / 2, y + 57, 28, on and KC.INK or KC.SAND, "middle")
+			-- the number like a tab, red-hot the active one (Sergio, 23 Nov: no light plates)
+			kit.hot_word(g, tostring(i), bx + CHIP_W / 2, y + 60, on, 36, 28)
 			kit.zone(g, s.buttons, bx - 5, y + 18, CHIP_W + 10, CHIP_H + 12, prefix .. ":" .. i)
 			n = n + 1
 		else
@@ -596,7 +593,7 @@ function M.chips(s, g, x, y, list, active, maxw)
 		end
 	end
 	local pad, gap, size = 30, 8, 19
-	local least = kit.least("piastrina", 48)
+	local least = 48
 	local function row(p, k)
 		local t = gap * (#list - 1)
 		for i = 1, #list do t = t + math.max(widths[i] * k + p, least) end
@@ -613,7 +610,8 @@ function M.chips(s, g, x, y, list, active, maxw)
 	for i, c in ipairs(list) do
 		local on = i == active
 		local w = math.max(widths[i] * k + pad, least)
-		kit.strip(g, on and "piastrina_calda" or "piastrina", cx, y, w, 48)
+		-- a thin thread around it, gold the chosen one (kit.thread_chip)
+		kit.thread_chip(g, cx, y + 2, w, 44, on and KC.HOT or KC.LINE)
 		if c.slot then
 			local icon = fit(g, TYPE[c.slot], cx + (w - ICON) / 2, y + 24 - ICON / 2 - 2, ICON, ICON)
 			local t = M.TINT[c.slot]

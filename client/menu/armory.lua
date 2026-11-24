@@ -153,7 +153,7 @@ local function shop(a)
 	local ok = w and not wallet.owns(p, w[1], w[2]) and p.scaglie >= price and net
 	local sub = not w and TP.pick_ware or (wallet.owns(p, w[1], w[2]) and TP.in_wardrobe) or (not net and TP.need_network)
 		or (p.scaglie < price and TP.missing:format(coins.format(price - p.scaglie))) or TP.price_only:format(coins.format(price))
-	a.action = kit.action(a.right, TP.buy, 948, 628, 308, 80, { size = 46, off = not ok, sub = kit.upper(sub) })
+	a.action = kit.action(a.right, TP.buy, 948, 628, 308, 80, { icon = "scaglia", size = 46, off = not ok, sub = kit.upper(sub) })
 	kit.button(a.buttons, a.action, "compra", { main = true, spento = not ok })
 	return w
 end
