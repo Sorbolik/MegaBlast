@@ -35,6 +35,7 @@
 --   mira.posa(pts, n, step, max, out)              -- where the dots go (no nodes)
 
 local ui = require "ui.ui"
+local game = require "sim.game"
 
 local M = {}
 
@@ -73,6 +74,22 @@ local TRACE_C = vmath.vector4(LIGHT.x, LIGHT.y, LIGHT.z, 0.35)
 local LINE_C, LINE_SHADOW_C = vmath.vector4(LIGHT.x, LIGHT.y, LIGHT.z, 0.7), vmath.vector4(0, 0, 0, 0.35)
 local V, S = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1)
 local E = vmath.vector3(0, 0, 0)
+
+-- From the finger to the aim, the same in battle and in the Forge (menu/forge_ui.lua):
+-- (dx, dy) from the middle of whoever aims, in the world; s the camera's scale.
+-- The direction is taken in the world, the distance (so the power) in screen
+-- pixels, the same at every zoom: RANGE for full power; let go closer than
+-- CANCEL_R and the shot is cancelled.
+M.RANGE = 220
+M.CANCEL_R = 28
+function M.from_finger(dx, dy, s)
+	local d = sqrt(dx * dx + dy * dy) * s
+	return math.atan2(dy, dx), d, game.aim_power(d / M.RANGE)
+end
+-- the aim stick's power (battle/sticks.lua: f from 0 to 1)
+function M.stick_power(f)
+	return max(0.1, f ^ game.AIM_EXPONENT)
+end
 
 -- Whole degrees as the player reads them
 function M.degrees(a)

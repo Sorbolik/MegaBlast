@@ -71,6 +71,8 @@ ARMI = {
     "vortex": (-1.0, -4.5, 10, 9),
     "cannon": (-11.5, -8.5, 16, 6.5),
     "petard": (-1.5, -4.5, 10, 11),
+    # il Mestolo della Fornace (WB-093, tools/grafica/fornace.py): la coppa in fondo
+    "mestolo": (-10, -3.4, 34, 2.8),
 }
 # il lanciarampino si taglia dove finisce l'asta (il resto del foglio è l'uncino)
 SENZA_PUNTA = {"hook": 0.75}

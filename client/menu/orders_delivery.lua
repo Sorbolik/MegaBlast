@@ -3,12 +3,12 @@
 -- already paid (profile.act) when it starts: the scene only shows it, and a tap
 -- skips to the receipt.
 --
---   0.00  the ticket leaves its nail and flies onto the counter; the Ossidiana
---         leaves the wallet and drops on the anvil
+--   0.00  the ticket leaves its nail and flies onto the counter (the delivery is
+--         free since the Forge, docs/commesse.md: it pays fragments and trust)
 --   0.85, 1.18, 1.52  three blows (with CONSEGNA TUTTE one per ticket, quicker,
---         then a last one); the lucky strike makes the last one harder
---   +0.23 the client comes in from the right, happy (proud: the lucky strike, the
---         5th and every 10th pearl), says its line; the prize jumps off the anvil
+--         then a last one)
+--   +0.23 the client comes in from the right, happy (proud: the 5th and every
+--         10th pearl), says its line; the prize jumps off the anvil
 --   +0.9  the paper receipt: what came, the pearls, OK and, when the fragments pay
 --         a level of a piece of the family, POTENZIA (the ZAINO)
 --
@@ -59,7 +59,7 @@ local function eo(k) return 1 - (1 - k) ^ 3 end
 local function ob(k) local c = 1.7; k = k - 1; return 1 + (c + 1) * k ^ 3 + c * k * k end
 
 -- the receipt's rows, added up over every ticket, in the order they are read
-local ORDER = { scaglie = 1, fragments = 2, lucky = 3, gift = 4, trust = 5, voucher = 6, ossidiana = 7 }
+local ORDER = { fragments = 1, gift = 2, trust = 3, voucher = 4 }
 
 local function sum_rows(done)
 	local out, at = {}, {}
@@ -97,19 +97,15 @@ function M.start(a, done)
 	s.reveal = s.blows[#s.blows] + REVEAL_AFTER
 	s.receipt = s.reveal + RECEIPT_AFTER
 	-- who comes to thank: the last client served (the Smith's own: nobody, he speaks)
-	local cost, scaglie, proud = 0, 0, false
+	local proud = false
 	for _, d in ipairs(done) do
 		if d.order.cliente then s.client = d.order.cliente end
 		for _, r in ipairs(d.rows) do
-			if r.key == "ossidiana" then cost = cost - r.n end
-			if r.key == "scaglie" then scaglie = scaglie + r.n end
-			if r.key == "lucky" then s.lucky = true end
 			if r.key == "gift" then proud = true end
 			if r.key == "trust" and r.total - r.n < orders.TRUST_BONUS and r.total >= orders.TRUST_BONUS then proud = true end
 		end
 	end
-	s.face = (s.lucky or proud) and "fiero" or "contento"
-	s.cost, s.scaglie = cost, scaglie
+	s.face = proud and "fiero" or "contento"
 	-- the family whose fragments came: POTENZIA when they pay a level of one of its pieces
 	for _, r in ipairs(s.rows) do
 		if r.key == "fragments" and not s.upgrade and orders.upgradable(p, r.set) then s.upgrade = r.set end
@@ -125,48 +121,15 @@ local function events(a, s, quiet)
 	local function once(id, at)
 		if s.t >= at and not s.fired[id] then s.fired[id] = true; return true end
 	end
-	for i in ipairs(s.done) do
-		if once("gems" .. i, (#s.done == 1 and 0.12 or (i - 1) * EACH + 0.1)) and n and not quiet then
-			local d = s.done[i]
-			local c = 0
-			for _, r in ipairs(d.rows) do if r.key == "ossidiana" then c = -r.n end end
-			if c > 0 then
-				sound.play("#scaglia", { speed = 0.8 })
-				M.gems(n, c)
-			end
-		end
-	end
 	for i, at in ipairs(s.blows) do
 		if once("blow" .. i, at) and n and not quiet then
 			local last = i == #s.blows
-			local hard = last and s.lucky
 			sound.play("#martello", { speed = last and 0.85 or 1 + 0.08 * (i - 1) })
-			if hard then sound.play("#scatto_boom") end
-			M.sparks(n, n.ax, n.ay - 6, hard and 34 or (last and 18 or 12), hard and 330 or 200)
+			M.sparks(n, n.ax, n.ay - 6, last and 18 or 12, 200)
 		end
 	end
 	if once("reveal", s.reveal) and n and not quiet then
 		sound.play("#scaglia")
-		-- the Scaglie into the wallet, from the anvil
-		if s.scaglie > 0 and n.wallet then
-			local from = screen.node_pos(n.anvil) - screen.node_pos(n.wallet_parent)
-			coins.fly(n.wallet, "scaglia", vec(from.x, from.y), math.min(8, 3 + math.floor(s.scaglie / 60)), s.scaglie)
-		end
-	end
-end
-
--- Gems leave the wallet and drop on the anvil
-function M.gems(n, cost)
-	if not n.wallet then return end
-	coins.set(n.wallet, n.wallet.real.scaglie, n.wallet.real.ossidiana - cost)
-	local parent = n.wallet_parent
-	local to = screen.node_pos(n.anvil) - screen.node_pos(parent)
-	local from = gui.get_position(n.wallet.root) + n.wallet.at.ossidiana
-	for i = 1, math.min(6, math.max(1, math.ceil(cost / 10))) do
-		local g = coins.icon("ossidiana", from.x, from.y, 34, parent)
-		local delay = (i - 1) * 0.05
-		gui.animate(g, "position.x", to.x + (i - 3) * 6, gui.EASING_OUTQUAD, 0.42, delay)
-		gui.animate(g, "position.y", to.y + 6, gui.EASING_INQUAD, 0.42, delay, function() gui.delete_node(g) end)
 	end
 end
 
@@ -191,7 +154,7 @@ local function trauma(s, t)
 	for i, at in ipairs(s.blows) do
 		if t >= at then
 			local last = i == #s.blows
-			k = k + (last and (s.lucky and 0.9 or 0.45) or 0.28) * math.exp(-(t - at) / 0.13)
+			k = k + (last and 0.45 or 0.28) * math.exp(-(t - at) / 0.13)
 		end
 	end
 	return clamp(k)
@@ -279,13 +242,10 @@ end
 -- a receipt row: its icon, the words, the number at the right
 local function row_of(s, r)
 	local fam = r.set and equip.BY_ID[r.set] and (equip.BY_ID[r.set].name:sub(1, 1) .. equip.BY_ID[r.set].name:sub(2):lower())
-	if r.key == "scaglie" then return "scaglia", T.r_scaglie, "+" .. coins.format(r.n) end
 	if r.key == "fragments" then return "frammento_" .. r.set, T.r_fragments:format(fam), "+" .. r.n end
-	if r.key == "lucky" then return "frammento_" .. r.set, T.r_lucky:format(fam), "+" .. r.n end
 	if r.key == "gift" then return "frammento_" .. r.set, T.r_gift:format(T.clients[r.cliente], fam), "+" .. r.n end
 	if r.key == "trust" then return "perla_piena", T.r_trust:format(T.clients[r.cliente]), "+" .. r.n end
 	if r.key == "voucher" then return "buono", T.r_voucher, "+1" end
-	if r.key == "ossidiana" then return "gemma", T.r_obsidian, tostring(r.n) end
 end
 
 -- The scene over the board (a.over is already made: the veil, the zone of its taps)
@@ -333,17 +293,13 @@ function M.draw(a, h)
 	end
 	n.say = h.panel(g, SAY_X, SAY_Y, SAY_W, SAY_H, "carta")
 	local sy0 = SAY_Y + 46
-	if s.lucky then
-		kit.heading(n.say, T.lucky_title, SAY_X + 24, SAY_Y + 40, PAPER_HEAD)
-		sy0 = sy0 + 24
-	end
 	local lines = kit.wrap(n.say, words(s), 20, SAY_W - 48)
-	for i = 1, math.min(s.lucky and 2 or 3, #lines) do
+	for i = 1, math.min(3, #lines) do
 		h.fit(kit.text(n.say, lines[i], SAY_X + 24, sy0 + (i - 1) * 26, 20, KC.INK), SAY_W - 48)
 	end
 	-- the prize that jumps off the anvil: the Scaglie fly to the wallet, the fragments hang
 	for _, r in ipairs(s.rows) do
-		if (r.key == "fragments" or r.key == "lucky") and #n.prize < 4 then
+		if r.key == "fragments" and #n.prize < 4 then
 			local x = ax + 60 + #n.prize * 70
 			local grp = kit.group(g, x, ay)
 			kit.piece(grp, "frammento_" .. r.set, x, ay, 72)
@@ -352,13 +308,11 @@ function M.draw(a, h)
 	end
 	-- the receipt (hidden until its time)
 	if s.t >= s.receipt then M.draw_receipt(a, h, s, n) end
-	-- the wallet: before the prize while it plays, then as it is
+	-- the wallet
 	local tr = kit.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
 	a.stop = tr
 	n.wallet_parent = kit.group(tr, 1110, 44).node
-	local before = s.t < s.reveal
-	local gems_gone = s.fired.gems1
-	n.wallet = coins.wallet(p.scaglie - (before and s.scaglie or 0), p.ossidiana + (gems_gone and 0 or s.cost), n.wallet_parent, 0, 0)
+	n.wallet = coins.wallet(p.scaglie, p.ossidiana, n.wallet_parent, 0, 0)
 	coins.vouchers(n.wallet, p.buoni or 0)
 	pose(a, s)
 end
@@ -399,7 +353,7 @@ function M.draw_receipt(a, h, s, n)
 		local icon = kit.piece(c, l.icon, x + 16, y - 7, l.r.key == "trust" and 24 or 30)
 		if l.r.key == "trust" and l.r.total then gui.set_color(icon, h.metal(l.r.total)) end
 		h.fit(kit.text(c, l.label, x + 42, y, 20, KC.INK), w - 42 - 70)
-		kit.text(c, l.value, x + w, y, 20, l.r.key == "ossidiana" and INK_MUTE or KC.INK, "end")
+		kit.text(c, l.value, x + w, y, 20, KC.INK, "end")
 		y = y + 38
 	end
 	-- one client: its pearls, and what the next ones bring

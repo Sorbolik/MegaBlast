@@ -36,6 +36,10 @@ textures {
   texture: "/ui/maps.atlas"
 }
 textures {
+  name: "fornace"
+  texture: "/menu/fornace.atlas"
+}
+textures {
   name: "ritratti"
   texture: "/ui/portraits.atlas"
 }

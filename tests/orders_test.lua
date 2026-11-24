@@ -61,14 +61,12 @@ local rows = orders.match(p, match({ umani = 1 }), D1)
 check(row(rows, "open") and p.commesse.aperta, "after " .. orders.OPEN_AFTER .. " online matches the Smith calls (even alone with bots)")
 local first = p.commesse.fabbro
 local _, ready = orders.progress(p, first)
-check(first and ready and orders.cost(first) == 0, "his first order is already done and free")
+check(first and ready, "his first order is already done")
 check(orders.deliver(p, first.n) == nil, "the Smith's order wants a family")
 check(orders.deliver(p, first.n, "nessuna") == nil, "a real one")
-local got = orders.deliver(p, first.n, "corvo", false)
-check(got and row(got, "scaglie").n == orders.SIZES.fabbro.scaglie and orders.fragments(p, "corvo") == 1,
-	"delivered: his Scaglie and a fragment of the family picked")
-check(not row(got, "ossidiana") and p.ossidiana == 0, "the first costs nothing")
-check(p.commesse.fabbro.n ~= first.n and orders.cost(p.commesse.fabbro) == 20, "his order starts again at once, at 20 Ossidiana")
+local got = orders.deliver(p, first.n, "corvo")
+check(got and orders.fragments(p, "corvo") == 1 and not row(got, "scaglie"), "delivered: a fragment of the family picked")
+check(p.commesse.fabbro.n ~= first.n, "his order starts again at once")
 _, ready = orders.progress(p, p.commesse.fabbro)
 check(not ready, "and from zero")
 
@@ -82,10 +80,8 @@ check(row(rows, "material").n == orders.DROP_WIN and orders.materials(p, "grandi
 _, ready = orders.progress(p, p.commesse.fabbro)
 check(ready, "and the Smith's order (2 matches) is ready")
 check(orders.ready_count(p) == 1, "one order ready")
-check(orders.deliver(p, p.commesse.fabbro.n, "fornace") == nil, "but without Ossidiana it stays there")
-p.ossidiana = 20
-got = orders.deliver(p, p.commesse.fabbro.n, "fornace", false)
-check(got and row(got, "ossidiana").n == -20 and p.ossidiana == 0, "with 20 Ossidiana it goes")
+got = orders.deliver(p, p.commesse.fabbro.n, "fornace")
+check(got and not row(got, "ossidiana") and p.ossidiana == 0, "it goes, free")
 orders.match(p, match({ mappa = "pavimento" }), D1)
 check(orders.materials(p, "scoria") == 3, "the Forge's maps give the Scoria")
 orders.match(p, match({ mappa = "mappa_che_non_esiste" }), D1)
@@ -112,8 +108,8 @@ check(orders.add_client(p, "cerbero") and not orders.add_client(p, "cerbero") an
 orders.refresh(p, D1)
 check(orders.places(p) == 1 and #p.commesse.bacheca == 1, "one client, one place")
 local w = p.commesse.bacheca[1]
-check(w.taglia == "benvenuto" and w.cliente == "cerbero" and w.materiale == "grandine" and orders.cost(w) == 0,
-	"its welcome order is up at once: its own material, free")
+check(w.taglia == "benvenuto" and w.cliente == "cerbero" and w.materiale == "grandine",
+	"its welcome order is up at once: its own material")
 check(orders.change(p, w.n, D1) == nil, "a welcome order can't be torn")
 _, ready = orders.progress(p, w)
 check(not ready, "not ready without the material")
@@ -123,7 +119,7 @@ local prog
 prog, ready = orders.progress(p, w)
 check(ready and prog[1].done == 4, "3 of its material and 1 Scoria make 4")
 local vouchers = p.buoni
-got = orders.deliver(p, w.n, nil, false)
+got = orders.deliver(p, w.n)
 check(got and row(got, "voucher") and p.buoni == vouchers + 1, "the welcome order gives the Smith's voucher")
 check(orders.materials(p, "grandine") == 0 and orders.materials(p, "scoria") == 0, "its own material goes first, then the Scoria")
 check(orders.fragments(p, "fornace") == 1 and orders.trust(p, "cerbero") == 1, "a fragment of the client's family and a pearl of trust")
@@ -161,8 +157,8 @@ for _, o in ipairs(p.commesse.bacheca) do
 end
 check(not twice, "never two orders of the same client")
 check(#p.commesse.attesa == 5, "the other welcome orders wait for a place")
-check(p.commesse.settimana and p.commesse.settimana.taglia == "settimana" and orders.cost(p.commesse.settimana) == 100,
-	"from three clients the week's order, 100 Ossidiana")
+check(p.commesse.settimana and p.commesse.settimana.taglia == "settimana",
+	"from three clients the week's order")
 
 -- Feats: the team's numbers in 2 vs 2 ---------------------------------------------------------
 p = new()
@@ -183,11 +179,9 @@ rows = orders.match(p, match({ modo = "ffa", nel_vuoto = 1, squadra = false }), 
 check(o.fatti == 3 and row(rows, "order").ready, "outside 2 vs 2 your own number: 3 of 3, ready")
 orders.match(p, match({ nel_vuoto = 5 }), D1)
 check(o.fatti == 3, "a done order doesn't go past what it asks")
-check(orders.deliver(p, o.n) == nil, "20 Ossidiana to deliver it")
-p.ossidiana = 50
-got = orders.deliver(p, o.n, nil, false)
-check(got and p.ossidiana == 30 and row(got, "scaglie").n == 80 and row(got, "fragments").n == 1 and row(got, "fragments").set == "fornace",
-	"a small order: 20 Ossidiana for 80 Scaglie and a fragment of the client's family")
+got = orders.deliver(p, o.n)
+check(got and p.ossidiana == 0 and not row(got, "scaglie") and row(got, "fragments").n == 1 and row(got, "fragments").set == "fornace",
+	"a small order: free, a fragment of the client's family (the Ossidiana goes to the Forge)")
 
 -- each feat counts what it says
 local function gain(feat, s)
@@ -232,19 +226,17 @@ orders.add_client(p, "minosse")
 p.commesse.attesa = {}
 p.commesse.giorno = D1
 p.ossidiana = 100000
-local function deliver_small(lucky)
+local function deliver_small()
 	p.commesse.bacheca[1] = { n = 5000 + p.commesse.consegne, cliente = "minosse", taglia = "piccola", impresa = "partite", quanti = 1, fatti = 1 }
-	return orders.deliver(p, p.commesse.bacheca[1].n, nil, lucky or false)
+	return orders.deliver(p, p.commesse.bacheca[1].n)
 end
 for i = 1, 5 do got = deliver_small() end
 check(orders.trust(p, "minosse") == 5 and row(got, "fragments").n == 1, "the fifth delivery still pays 1 fragment")
 got = deliver_small()
 check(row(got, "fragments").n == 2, "from 5 of trust one more fragment, for ever")
+for i = 7, 9 do got = deliver_small() end
+check(not row(got, "lucky"), "no lucky strike any more: luck is in the Forge")
 local before = orders.fragments(p, "corvo")
-got = deliver_small(true)
-check(row(got, "lucky").n == 2 and orders.fragments(p, "corvo") == before + 4, "a lucky strike doubles the fragments")
-for i = 8, 9 do deliver_small() end
-before = orders.fragments(p, "corvo")
 got = deliver_small()
 check(orders.trust(p, "minosse") == 10 and row(got, "gift").n == orders.TRUST_GIFT and row(got, "gift").card
 	and orders.fragments(p, "corvo") == before + 2 + 30, "at 10 of trust the gift: 30 fragments and the client's card")
@@ -258,21 +250,9 @@ got = deliver_small()
 check(row(got, "trust").total == 1000 and row(got, "gift"), "trust never stops: 1,000 at the hundredth lap")
 p.commesse.clienti.minosse.fiducia = 8
 p.commesse.settimana = { n = 7000, cliente = "minosse", taglia = "settimana", settimana = 1, impresa = "partite", quanti = 1, fatti = 1 }
-got = orders.deliver(p, 7000, nil, false)
+got = orders.deliver(p, 7000)
 check(orders.trust(p, "minosse") == 11 and row(got, "trust").n == 3 and row(got, "gift"), "the week's order is worth 3 pearls and can cross a lap")
 check(p.commesse.settimana == nil, "and it leaves its place")
-
--- the lucky strike: about one delivery in eight
-do
-	local q = new()
-	orders.open(q)
-	local n = 0
-	for i = 1, 800 do
-		q.commesse.consegne, q.commesse.n = i, i * 3
-		if orders.lucky(q) then n = n + 1 end
-	end
-	check(n > 60 and n < 140, "the lucky strike comes about once in eight (" .. n .. " of 800)")
-end
 
 -- The call -------------------------------------------------------------------------------
 p = new()
@@ -356,9 +336,8 @@ check(p.commesse.settimana and p.commesse.settimana ~= wk and p.commesse.bacheca
 -- a delivered week's order doesn't come back in the same week
 wk = p.commesse.settimana
 wk.quanti, wk.materiale, wk.impresa, wk.fatti, wk.poi = 1, nil, "partite", 1, nil
-p.ossidiana = 100
-got = orders.deliver(p, wk.n, nil, false)
-check(got and row(got, "scaglie").n == 360 and row(got, "fragments").n == 6 and p.ossidiana == 0, "the week's order: 100 Ossidiana for 360 Scaglie and 6 fragments")
+got = orders.deliver(p, wk.n)
+check(got and row(got, "fragments").n == 6, "the week's order: 6 fragments")
 orders.refresh(p, "2026-12-01")
 check(p.commesse.settimana == nil, "delivered, it doesn't come back this week")
 orders.refresh(p, "2026-12-07")
@@ -430,16 +409,9 @@ p.pezzi.corvo_mask = equip.LIVELLO_MAX
 _, why = orders.upgrade(p, "corvo", "mask")
 check(why == "max" and orders.level_cost(p, "corvo", "mask") == nil, "nothing past the top")
 
--- The exchange rate ---------------------------------------------------------------------------
-do
-	local v = orders.fragment_value()
-	local function rate(s) return (s.scaglie + s.frammenti * v) / s.cost end
-	-- (the fragment follows the pieces' price: 60 Scaglie since the prices of 23 Nov)
-	check(v == 60, "a fragment is worth a 120th of a piece of the Catalogo: 60 Scaglie")
-	check(rate(orders.SIZES.piccola) == 7 and rate(orders.SIZES.media) == 7 and rate(orders.SIZES.settimana) == 7.2,
-		"the clients' orders pay 7 Scaglie of value per Ossidiana (the week's 7.2)")
-	check(rate(orders.SIZES.fabbro) == 6, "the Smith's pays 6")
-end
+-- The fragment's value ------------------------------------------------------------------------
+-- (the fragment follows the pieces' price: 60 Scaglie since the prices of 23 Nov)
+check(orders.fragment_value() == 60, "a fragment is worth a 120th of a piece of the Catalogo: 60 Scaglie")
 
 -- Through the profile's actions (sim/progress.lua): what the phone and the server do
 do
@@ -511,14 +483,6 @@ do
 		and p.commesse.bacheca[1].taglia == "benvenuto", "a client arrives with its welcome order")
 	check(bench.today(p, R) == R and bench.days(p, R, 1) == "2026-11-24" and bench.days(p, R, 7) == "2026-12-01",
 		"a day and a week pass")
-	check(bench.lucky(p) and orders.lucky(p), "the next delivery is a lucky strike")
-	do
-		-- and it is: the Smith's own order, made ready, delivered with its lucky row
-		local f = p.commesse.fabbro
-		f.fatti = f.quanti
-		local got = orders.deliver(p, f.n, "corvo")
-		check(got and row(got, "lucky"), "the bench's lucky strike falls on the very next delivery")
-	end
 	for _ = 1, 12 do bench.match(p, R) end
 	local all = true
 	for _, m in ipairs(orders.MATERIALS) do all = all and orders.materials(p, m.id) > 0 end

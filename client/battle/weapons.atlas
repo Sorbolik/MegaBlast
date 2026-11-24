@@ -161,6 +161,15 @@ images {
   image: "/assets/weapons/petard_icona.png"
 }
 images {
+  image: "/assets/weapons/mestolo.png"
+}
+images {
+  image: "/assets/weapons/mestolo_tinta.png"
+}
+images {
+  image: "/assets/weapons/mestolo_icona.png"
+}
+images {
   image: "/assets/weapons/janus_icona.png"
 }
 images {

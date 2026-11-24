@@ -1,7 +1,7 @@
 -- The Smith's orders, "Le Commesse del Fabbro" (Sergio, 23 Nov; rules in
 -- docs/commesse.md, page https://claude.ai/artifact/MKh9TW93vC3V4FzKYdrsiW).
 -- The custodi of the gironi become clients; an order is done playing online,
--- delivered paying Ossidiana, and pays Scaglie and the fragments of the
+-- delivered for free (the Ossidiana goes to the Forge, sim/forge.lua), and pays Scaglie and the fragments of the
 -- client's family, which buy pieces and their levels.
 --
 -- Pure Lua in the shared rules (sim/), like sim/wallet.lua: the phone and the
@@ -48,20 +48,18 @@ M.PLACES = { { 6, 3 }, { 3, 2 }, { 1, 1 } }
 -- the week's order from this many clients
 M.WEEK_CLIENTS = 3
 
--- Sizes: Ossidiana to pay, Scaglie and fragments paid (the exchange rate: 6
--- Scaglie of value per Ossidiana from the clients, 5 from the Smith; a
--- fragment is worth a 120th of a piece of the Catalogo), pearls of trust
+-- Sizes: fragments paid (a fragment is worth a 120th of a piece of the
+-- Catalogo) and pearls of trust. The delivery is free since the Forge (Sergio,
+-- 24 Nov, proposal A): Ossidiana is spent only there (sim/forge.lua)
 M.SIZES = {
-	benvenuto = { cost = 0, scaglie = 80, frammenti = 1, pearls = 1, voucher = true },
-	piccola = { cost = 20, scaglie = 80, frammenti = 1, pearls = 1 },
-	media = { cost = 40, scaglie = 160, frammenti = 2, pearls = 1 },
-	settimana = { cost = 100, scaglie = 360, frammenti = 6, pearls = 3 },
-	fabbro = { cost = 20, scaglie = 60, frammenti = 1, pearls = 0 },
+	benvenuto = { frammenti = 1, pearls = 1, voucher = true },
+	piccola = { frammenti = 1, pearls = 1 },
+	media = { frammenti = 2, pearls = 1 },
+	settimana = { frammenti = 6, pearls = 3 },
+	fabbro = { frammenti = 1, pearls = 0 },
 }
 -- how many fragments make a piece of the Catalogo
 M.PIECE_FRAGMENTS = 120
--- the lucky strike: one delivery in this many doubles the fragments
-M.LUCKY_EVERY = 8
 -- trust: from TRUST_BONUS deliveries one more fragment per order, at
 -- TRUST_GIFT a gift of fragments (once), then a smaller one every TRUST_LAP
 M.TRUST_BONUS, M.TRUST_LAP = 5, 10
@@ -245,7 +243,7 @@ end
 
 local function smith_order(p, done)
 	return new_order(p, { taglia = "fabbro", impresa = M.SMITH.impresa, quanti = M.SMITH.quanti,
-		fatti = done and M.SMITH.quanti or 0, gratis = done or nil })
+		fatti = done and M.SMITH.quanti or 0 })
 end
 
 local function welcome_order(p, client)
@@ -421,13 +419,6 @@ function M.progress(p, o)
 		if done < asked then ready = false end
 	end
 	return rows, ready
-end
-
--- what an order costs and whose fragments it pays (set: nil for the Smith's,
--- picked at the delivery)
-function M.cost(o)
-	if o.gratis then return 0 end
-	return M.SIZES[o.taglia].cost
 end
 
 function M.ready_count(p)
@@ -617,14 +608,6 @@ end
 
 -- The delivery ------------------------------------------------------------------------
 
--- whether the next delivery is a lucky strike: one in LUCKY_EVERY, drawn from
--- the profile's own counters (deliveries and orders made), the same on the
--- phone and on the server
-function M.lucky(p)
-	local c = p.commesse
-	return hash("colpo", c.consegne, c.n) % M.LUCKY_EVERY == 0
-end
-
 local function take_materials(p, id, n)
 	local own = math.min(n, M.materials(p, id))
 	add_material(p, id, -own)
@@ -632,14 +615,12 @@ local function take_materials(p, id, n)
 end
 
 -- Delivers order n. set: the family of the fragments, for the Smith's order
--- (the clients' is theirs). lucky: nil the draw, true/false to fix it (the
--- test bench; sim/progress.lua never passes it). Returns the rows for the
--- receipt, or nil and why ("commessa", "pronta", "famiglia", "ossidiana"):
--- { { key = "ossidiana", n = -cost } | { key = "scaglie", n } |
---   { key = "fragments", set, n } | { key = "lucky", set, n } |
+-- (the clients' is theirs). Returns the rows for the receipt, or nil and why
+-- ("commessa", "pronta", "famiglia"):
+-- { { key = "fragments", set, n } |
 --   { key = "trust", cliente, n, total } | { key = "gift", set, n, cliente } |
 --   { key = "voucher" } }
-function M.deliver(p, n, set, lucky)
+function M.deliver(p, n, set)
 	local c = p.commesse
 	local o = find(p, n)
 	if not o then return nil, "commessa" end
@@ -648,31 +629,19 @@ function M.deliver(p, n, set, lucky)
 	local client = o.cliente and M.CLIENT[o.cliente]
 	local family = client and client.set or set
 	if not family or not equip.BY_ID[family] then return nil, "famiglia" end
-	local cost = M.cost(o)
-	if p.ossidiana < cost then return nil, "ossidiana" end
 
 	local size = M.SIZES[o.taglia]
 	local rows = {}
-	p.ossidiana = p.ossidiana - cost
-	if cost > 0 then rows[#rows + 1] = { key = "ossidiana", n = -cost } end
 	for _, r in ipairs({ o, o.poi }) do
 		if r.materiale then take_materials(p, r.materiale, r.quanti) end
 	end
-	p.scaglie = p.scaglie + size.scaglie
-	rows[#rows + 1] = { key = "scaglie", n = size.scaglie }
 
-	-- (drawn before this delivery is counted: the bench's "next one" is this one)
-	if lucky == nil then lucky = M.lucky(p) end
 	c.consegne = c.consegne + 1
 	local trust = client and c.clienti[client.id]
 	local frags = size.frammenti
 	if trust and trust.fiducia >= M.TRUST_BONUS then frags = frags + 1 end
 	add_fragments(p, family, frags)
 	rows[#rows + 1] = { key = "fragments", set = family, n = frags }
-	if lucky then
-		add_fragments(p, family, frags)
-		rows[#rows + 1] = { key = "lucky", set = family, n = frags }
-	end
 	if trust then
 		local was = trust.fiducia
 		trust.fiducia = was + size.pearls

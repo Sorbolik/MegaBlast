@@ -399,7 +399,7 @@ return {
 	-- menu/armory.lua (the SHOP) and menu/bench.lua (the ARMERIA in the ZAINO)
 	armory = {
 		-- the two tabs of the BOTTEGA: the Smith's orders and the shop
-		tab_orders = "COMMESSE", tab_bench = "BANCO",
+		tab_orders = "COMMESSE", tab_forge = "FORNACE", tab_bench = "BANCO",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
 			attack = "Attacco", defense = "Difesa",
@@ -464,7 +464,6 @@ return {
 			premi = "Prendi %s premi di fine partita" },
 		ready = "PRONTA",
 		progress = "%s su %s",
-		free = "GRATIS",
 		welcome = "Benvenuto!",
 		empty_place = "POSTO LIBERO",
 		empty_when = "Domani alle 5",
@@ -480,14 +479,12 @@ return {
 		none_ready = "Niente di pronto",
 		smith_short = "Quella del Fabbro",
 		need_network = "Serve la rete",
-		missing_obsidian = "Ti mancano %d",
 		-- the lineup before an online match (menu/lineup.lua): your orders and what drops here
 		lineup_title = "LE TUE COMMESSE",
 		lineup_drop = "QUI CADE",
 		lineup_row = "%s · %s",
 		ready_one = "1 pronta",
 		ready_many = "%d pronte",
-		cost = "costa %d",
 		-- ui/receipt.lua: the orders' part of the podium's receipt
 		receipt_title = "COMMESSE",
 		receipt_smith = "Il Fabbro",
@@ -502,7 +499,6 @@ return {
 		bench_day1 = "PASSA UN GIORNO",
 		bench_week = "PASSA UNA SETTIMANA",
 		bench_client = "ARRIVA UN CLIENTE",
-		bench_lucky = "PROSSIMO COLPO BUONO",
 		bench_pieces = "RIDAI I PEZZI DEL BANCO",
 		bench_reset = "RICOMINCIA DA CAPO",
 		bench_state = "%d PARTITE FINTE · %d CLIENTI · %d CONSEGNE",
@@ -534,17 +530,16 @@ return {
 			scheggia = "nell'Avarizia", stige = "nell'Ira", tomba = "nell'Eresia", sangue = "nel Flegetonte",
 			sabbia = "nel Sabbione", pece = "nelle Malebolge", ghiaccio = "nel Cocito" },
 		feat_hint = "Conta in ogni partita online con almeno un'altra persona.",
-		cost_upper = "COSTA %d",
 		missing = "NE MANCANO %d",
 		missing_one = "NE MANCA %d",
 		not_ready = "NON ANCORA PRONTA",
 		change = "CAMBIA",
-		change_free = "GRATIS, UNA AL GIORNO",
-		change_tomorrow = "DI NUOVO DOMANI",
-		change_never = "QUESTA NON SI CAMBIA",
+		change_free = "1 AL GIORNO",
+		change_tomorrow = "DOMANI",
+		change_never = "NON SI PUÒ",
 		swap = "SCAMBIA",
-		swap_sub = "3 MATERIALI PER 1",
-		swap_none = "CHIEDE UN'IMPRESA",
+		swap_sub = "3 PER 1",
+		swap_none = "È UN'IMPRESA",
 		-- the swap
 		material_one = { scoria = "Scoria", piuma = "Piuma del Limbo", vento = "Vento in bottiglia", grandine = "Chicco di grandine",
 			scheggia = "Scheggia di masso", stige = "Acqua dello Stige", tomba = "Polvere di tomba", sangue = "Sangue bollente",
@@ -567,7 +562,7 @@ return {
 		call_done = "Chiamato: domani alle 5 arriva %s.",
 		call_yesterday = "%s è venuto ieri: chiamalo domani.",
 		-- the delivery (menu/orders_delivery.lua): what the client says, happy and proud
-		-- (the lucky strike, the 5th and every 10th pearl); drafts to review with Sergio
+		-- (the 5th and every 10th pearl); drafts to review with Sergio
 		thanks = {
 			caronte = "«Bel lavoro. Con questo il remo non si impenna più.»",
 			minosse = "«Sentenza: lavoro ben fatto. Puoi andare.»",
@@ -589,22 +584,53 @@ return {
 			malacoda = "«Questo sì che è un lavoro da diavoli. Bravo.»",
 		},
 		smith_done = "«Fatto. La prossima la batto ancora più forte.»",
-		lucky_title = "COLPO BUONO",
 		delivered = "CONSEGNATA",
 		delivered_many = "%d CONSEGNATE",
-		r_scaglie = "Scaglie",
 		r_fragments = "Frammenti %s",
-		r_lucky = "Colpo buono: frammenti %s doppi",
 		r_gift = "Regalo di %s: frammenti %s",
 		r_trust = "Fiducia di %s",
 		r_voucher = "Buono del Fabbro",
-		r_obsidian = "Ossidiana al Fabbro",
 		upgrade_hint = "I frammenti %s bastano per un livello: tocca POTENZIA.",
 		ok = "OK",
 	},
 
 
 	-- menu/armory.lua and ui/step_scene.lua: the pieces' levels in Scaglie
+	-- menu/forge_ui.lua: the FORNACE tab of the BOTTEGA (docs/commesse.md "La Fornace")
+	forge = {
+		on_wall = "SUL MURO",
+		filled = "%d su %d pieni",
+		of_total = "su %s",
+		fragments = "FRAMMENTI",
+		new_wall = "MURO NUOVO FRA",
+		rule = "Una colata = 3 tiri.",
+		rule_sub = "Fai %d su %d e il Fabbro te ne regala un altro.",
+		rule_lucky = "Su questo muro c'è uno stampo che dà il DOPPIO.",
+		melt = "FONDI I FRAMMENTI",
+		pour = "COLA",
+		pour_sub = "%d tiri · costa %d",
+		missing = "ti mancano %d",
+		wall_done = "muro finito",
+		throw = "TIRA",
+		left = "ti restano %d tiri",
+		one_left = "ti resta 1 tiro",
+		throws = "TIRI",
+		hint = "Tieni il dito e trascina per mirare, lascia per tirare",
+		hint_pad = "Muovi la levetta di mira, premi %s per tirare",
+		bonus = "3 SU 3! UN TIRO IN PIÙ",
+		lucky = "DOPPIO",
+		lucky_hit = "DOPPIO!",
+		miss = "NEL SECCHIO",
+		melt_title = "FONDI I FRAMMENTI",
+		melt_pick = "Scegli la famiglia da fondere",
+		melt_scaglie = "IN SCAGLIE",
+		melt_one = "FONDINE 1",
+		melt_one_sub = "+%d scaglie",
+		melt_family = "IN UN'ALTRA FAMIGLIA",
+		melt_four = "FONDINE %d",
+		melt_four_sub = "ne fai %d",
+	},
+
 	pieces = {
 		grades = { "bronzo", "argento", "oro", "brace" },
 		at_max = "AL MASSIMO",

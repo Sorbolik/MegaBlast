@@ -156,7 +156,7 @@ local function family_tag(g, set, x, y)
 	return w
 end
 
--- the last line of a card, on its bottom margin: how far it is, then the cost
+-- the last line of a card, on its bottom margin: how far it is (the voucher at the right)
 local function foot(g, x, y, w, o, prog, ready, paper)
 	local ink = paper and KC.INK or KC.SAND
 	local n
@@ -166,18 +166,8 @@ local function foot(g, x, y, w, o, prog, ready, paper)
 		local last = prog[#prog]
 		n = kit.text(g, T.progress:format(coins.format(last.done), coins.format(last.asked)), x, y, 18, ink)
 	end
-	local cost = orders.cost(o)
-	local right = x + w
-	if cost > 0 then
-		local cn = kit.text(g, tostring(cost), right, y, 18, ink, "end")
-		kit.piece(g, "gemma", right - kit.width(cn) - 13, y - 6, 20)
-	else
-		-- free; the welcome order also brings the Smith's voucher
-		local voucher = orders.SIZES[o.taglia].voucher
-		if voucher then kit.piece(g, "buono", right - 10, y - 6, 20) end
-		-- (on a narrow card that is ready the voucher alone says it: PRONTA needs the room)
-		if not (ready and voucher) then kit.text(g, T.free, right - (voucher and 26 or 0), y, 18, ink, "end") end
-	end
+	-- the welcome order also brings the Smith's voucher
+	if orders.SIZES[o.taglia].voucher then kit.piece(g, "buono", x + w - 10, y - 6, 20) end
 	return n
 end
 
@@ -298,9 +288,9 @@ end
 
 -- The test bench, in the Smith's place: every state without playing or waiting
 local BENCH = { { "vinta", "bench_won" }, { "persa", "bench_lost" }, { "giorno", "bench_day1" }, { "settimana", "bench_week" },
-	{ "cliente", "bench_client" }, { "colpo", "bench_lucky" }, { "pezzi", "bench_pieces" }, { "capo", "bench_reset" } }
+	{ "cliente", "bench_client" }, { "pezzi", "bench_pieces" }, { "capo", "bench_reset" } }
 local BENCH_TEXT = { bench_won = T.bench_won, bench_lost = T.bench_lost, bench_day1 = T.bench_day1, bench_week = T.bench_week,
-	bench_client = T.bench_client, bench_lucky = T.bench_lucky, bench_pieces = T.bench_pieces, bench_reset = T.bench_reset }
+	bench_client = T.bench_client, bench_pieces = T.bench_pieces, bench_reset = T.bench_reset }
 
 local function bench_panel(a, g)
 	local p = a.prof
@@ -464,14 +454,12 @@ local function open_card(a, o)
 	local missing = big_request(c, p, o, rx, y + 8, rw)
 	if o.poi then big_request(c, p, o.poi, rx, y + 78, rw) end
 	y = y + (o.poi and 152 or 82) + 30
-	-- the prize: Scaglie, the fragments of its family (one more from 5 pearls), the voucher
+	-- the prize: the fragments of its family (one more from 5 pearls), the voucher
 	local size = orders.SIZES[o.taglia]
 	local frags = size.frammenti + (trust >= orders.TRUST_BONUS and 1 or 0)
 	kit.heading(c, T.prize, rx, y, PAPER_HEAD)
 	local py = y + 30
-	kit.piece(c, "scaglia", rx + 14, py - 7, 28)
-	local sn = kit.text(c, coins.format(size.scaglie), rx + 34, py, 22, KC.INK)
-	local fx = rx + 34 + kit.width(sn) + 24
+	local fx = rx
 	kit.piece(c, "frammento_" .. client.set, fx + 14, py - 7, 30)
 	local fnn = kit.text(c, tostring(frags), fx + 34, py, 22, KC.INK)
 	local wx = fx + 34 + kit.width(fnn) + 8
@@ -483,19 +471,11 @@ local function open_card(a, o)
 		local hl = kit.wrap(c, hint, 16, rw)
 		for i = 1, math.min(2, #hl) do fit(kit.text(c, hl[i], rx, py + 30 + i * 19, 16, PAPER_MUTE), rw) end
 	end
-	-- at the bottom: ready and its cost, or what is still missing
+	-- at the bottom: ready, or what is still missing
 	local _, ready = orders.progress(p, o)
-	local cost = orders.cost(o)
 	local by = Y + H - 26
 	if ready then
-		local right = X + W - 28
-		if cost > 0 then
-			local cn = kit.text(c, T.cost_upper:format(cost), right - 26, by, 18, KC.INK, "end")
-			kit.piece(c, "gemma", right - 10, by - 6, 22)
-			kit.text(c, T.ready .. " · ", right - 26 - kit.width(cn), by, 18, READY_PAPER, "end", 0.5)
-		else
-			kit.text(c, T.ready .. " · " .. T.free, right, by, 18, READY_PAPER, "end", 0.5)
-		end
+		kit.text(c, T.ready, X + W - 28, by, 18, READY_PAPER, "end", 0.5)
 	else
 		-- (the week's two requests are not counted together: it only says it is not ready)
 		kit.text(c, o.poi and T.not_ready or (missing == 1 and T.missing_one or T.missing):format(missing), X + W - 28, by, 18, RED, "end", 0.5)
@@ -513,7 +493,7 @@ local function open_card(a, o)
 	local mat = o.materiale or (o.poi and o.poi.materiale)
 	local sb = kit.secondary(a.mlow, T.swap, 390, 640, 214, 62, { icon = "az_scambia", off = not mat, sub = mat and T.swap_sub or T.swap_none })
 	kit.button(a.buttons, sb, "scambia", { spento = not mat })
-	local can = ready and p.ossidiana >= cost and profile.can_spend()
+	local can = ready and profile.can_spend()
 	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { icon = "az_consegna", size = 42, off = not can })
 	kit.button(a.buttons, act, "consegnala", { main = true, spento = not can })
 end
@@ -585,29 +565,21 @@ local function family(a, o)
 	local size = orders.SIZES[o.taglia]
 	local py = Y + H - 30
 	kit.heading(c, T.prize, ix, py, KC.HOT_TOP)
-	local px = ix + 90
-	kit.piece(c, "scaglia", px + 14, py - 7, 28)
-	local sn = kit.text(c, coins.format(size.scaglie), px + 34, py, 22, KC.SAND)
-	local fx = px + 34 + kit.width(sn) + 24
+	local fx = ix + 90
 	kit.piece(c, "frammento_" .. (sel or "fabbro"), fx + 14, py - 7, 30)
 	local fnn = kit.text(c, tostring(size.frammenti), fx + 34, py, 22, KC.SAND)
 	if sel then
 		kit.text(c, T.fragment:format(proper(equip.BY_ID[sel].name)), fx + 42 + kit.width(fnn), py, 16, KC.MUTE)
 	end
 	local prog = orders.progress(p, o)
-	local cost = orders.cost(o)
 	local right = X + W - 24
 	if not ready then
 		kit.text(c, (prog[1].asked - prog[1].done == 1 and T.missing_one or T.missing):format(prog[1].asked - prog[1].done), right, py, 18, KC.ROSE, "end", 0.5)
-	elseif cost > 0 then
-		local cn = kit.text(c, T.cost_upper:format(cost), right - 26, py, 18, KC.SAND, "end")
-		kit.piece(c, "gemma", right - 10, py - 6, 22)
-		kit.text(c, T.ready .. " · ", right - 26 - kit.width(cn), py, 18, READY_IRON, "end", 0.5)
 	else
-		kit.text(c, T.ready .. " · " .. T.free, right, py, 18, READY_IRON, "end", 0.5)
+		kit.text(c, T.ready, right, py, 18, READY_IRON, "end", 0.5)
 	end
 	back_button(a)
-	local can = ready and sel ~= nil and p.ossidiana >= cost and profile.can_spend()
+	local can = ready and sel ~= nil and profile.can_spend()
 	local act = kit.action(a.mright, T.deliver, 948, 628, 308, 80, { icon = "az_consegna", size = 42, off = not can })
 	kit.button(a.buttons, act, "consegnala", { main = true, spento = not can })
 end
@@ -757,7 +729,7 @@ function M.board(a)
 	end
 	if c.fabbro then smith_card(a, g, c.fabbro, sx, ROW2_Y) end
 	shelf(a, a.rt)
-	-- the band: the bench (test profiles), the call, what is ready and its cost, CONSEGNA
+	-- the band: the bench (test profiles), the call, what is ready, CONSEGNA
 	if profile.test then
 		local pb = kit.secondary(a.low, T.bench, 160, 640, 230, 62, { icon = "az_prova" })
 		kit.button(a.buttons, pb, "prova:apri")
@@ -766,19 +738,18 @@ function M.board(a)
 	local none = #orders.clients(p) == 0
 	local cb = kit.secondary(a.low2, T.call, 430, 640, 270, 62, { icon = "az_chiama", off = none })
 	kit.button(a.buttons, cb, "libro", { spento = none })
-	local ready, cost = 0, 0
+	local ready = 0
 	for _, o in ipairs(orders.orders(p)) do
 		local _, ok = orders.progress(p, o)
 		-- (the Smith's own asks a family: it is delivered from its card)
-		if ok and o.cliente then ready, cost = ready + 1, cost + orders.cost(o) end
+		if ok and o.cliente then ready = ready + 1 end
 	end
 	-- only the Smith's ready (the first time it is the only one): CONSEGNA opens its family choice
 	local _, smith = orders.progress(p, c.fabbro)
 	local net = profile.can_spend()
-	local can = (ready > 0 and p.ossidiana >= cost or ready == 0 and smith) and net
+	local can = (ready > 0 or smith) and net
 	local sub = ready == 0 and (smith and T.smith_short or T.none_ready) or (not net and T.need_network)
-		or (p.ossidiana < cost and T.missing_obsidian:format(cost - p.ossidiana))
-		or ((ready == 1 and T.ready_one or T.ready_many:format(ready)) .. " · " .. T.cost:format(cost))
+		or (ready == 1 and T.ready_one or T.ready_many:format(ready))
 	a.action = kit.action(a.right, T.deliver, 948, 628, 308, 80, { icon = "az_consegna", size = 42, off = not can, sub = kit.upper(sub) })
 	kit.button(a.buttons, a.action, "consegna", { main = true, spento = not can })
 	if a.scene then
@@ -827,8 +798,6 @@ function M.cmd(a, kind, x)
 			bench.days(p, real, x == "giorno" and 1 or 7)
 		elseif x == "cliente" then
 			bench.client(p, real)
-		elseif x == "colpo" then
-			bench.lucky(p)
 		elseif x == "pezzi" then
 			-- the BANCO's pieces of the day go back to the shop, to see their prices
 			local wallet = require "sim.wallet"
@@ -841,7 +810,7 @@ function M.cmd(a, kind, x)
 		profile.save(p)
 		return true
 	elseif kind == "consegna" then
-		-- every client's order that is ready, the oldest first, while the Ossidiana lasts
+		-- every client's order that is ready, the oldest first (the delivery is free)
 		-- (none, and the Smith's is: its family choice)
 		local list = {}
 		for _, o in ipairs(orders.orders(p)) do

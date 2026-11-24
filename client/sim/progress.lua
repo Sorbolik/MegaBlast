@@ -17,6 +17,7 @@ local wallet = require "sim.wallet"
 local equip = require "sim.gear"
 local campaign = require "sim.campaign"
 local orders = require "sim.orders"
+local forge = require "sim.forge"
 
 local M = {}
 
@@ -203,6 +204,23 @@ function DO.chiama(p, a, today)
 	orders.refresh(p, today)
 	if type(a.cliente) ~= "string" then return nil, "cliente" end
 	return orders.call(p, a.cliente, today)
+end
+
+-- The Forge (sim/forge.lua, docs/commesse.md "La Fornace").
+-- colata: a pour on the wall the phone sees (muro: "date#shift")
+function DO.colata(p, a, today)
+	return forge.pour(p, a.muro, today)
+end
+
+-- tiro: a throw of the pour (angolo in radians, forza 0..1); the result is
+-- computed here, never said by the phone
+function DO.tiro(p, a)
+	return forge.throw(p, a.angolo, a.forza)
+end
+
+-- fondi: 4 fragments of da for 1 of a, or (no a) 1 of da for Scaglie
+function DO.fondi(p, a)
+	return forge.melt(p, a.da, a.a)
 end
 
 -- the ZAINO: the loadouts (pieces worn, Sigilli) and the active ones

@@ -33,7 +33,7 @@ sotto il filo a destra (`kit.action`, posto fisso 948, 640, 308 × 62).
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| `kit.action`: la lastra del secondario in ferro rovente (`principale_acceso/chiaro/premuto/spento`) con l'icona grande a sinistra (`az_*`, WB-088) | tutte le schermate con un'azione, la HOME compresa (GIOCA al posto del sigillo), le vignette e il cartellino dell'arma in battaglia | ✅ |
+| `kit.action`: la lastra del secondario in ferro rovente (`principale_acceso/chiaro/premuto/spento`) con l'icona grande a sinistra (`az_*`, WB-088) | tutte le schermate con un'azione (COLA e TIRA della FORNACE con la gemma), la HOME compresa (GIOCA al posto del sigillo), le vignette e il cartellino dell'arma in battaglia | ✅ |
 
 Stati: acceso, chiaro (mouse o luce del controller sopra: `ui.lua`, `on_light`), premuto, spento.
 
@@ -41,7 +41,7 @@ Stati: acceso, chiaro (mouse o luce del controller sopra: `ui.lua`, `on_light`),
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| `kit.secondary`: `secondario_acceso/chiaro/premuto/spento` + icona a sinistra; le scritte a `kit.BUTTON_PAD` (0,4 × altezza) dal bordo e `kit.BUTTON_GAP` (0,2) dopo l'icona, uguale per tutti; in verticale il blocco di scritte (altezza delle maiuscole, `kit.CAP`) sta al centro della faccia della lastra, con la stessa aria sopra e sotto | accanto all'azione in ogni menù (POTENZIA, PROVA, CHIAMA UN CLIENTE, CAMBIA, SCAMBIA, CALENDARIO, COI FRAMMENTI, USA UN BUONO, ACCENDI LA FIRMA, RIPROVA, ELENCO, SALTA, RIVEDI, RILEGGI, TORNA AI MENU · RESTI IN CODA, RIPRISTINA, IMPOSTAZIONI, CREA, i tasti del codice della stanza privata) | ✅ |
+| `kit.secondary`: `secondario_acceso/chiaro/premuto/spento` + icona a sinistra; le scritte a `kit.BUTTON_PAD` (0,4 × altezza) dal bordo e `kit.BUTTON_GAP` (0,2) dopo l'icona, uguale per tutti; in verticale il blocco di scritte (altezza delle maiuscole, `kit.CAP`) sta al centro della faccia della lastra, con la stessa aria sopra e sotto | accanto all'azione in ogni menù (POTENZIA, PROVA, CHIAMA UN CLIENTE, CAMBIA, SCAMBIA, CALENDARIO, COI FRAMMENTI, FONDI I FRAMMENTI, FONDINE, USA UN BUONO, ACCENDI LA FIRMA, RIPROVA, ELENCO, SALTA, RIVEDI, RILEGGI, TORNA AI MENU · RESTI IN CODA, RIPRISTINA, IMPOSTAZIONI, CREA, i tasti del codice della stanza privata) | ✅ |
 | `kit.button_at`: lo stesso, al centro di un nodo | menu della rotellina in battaglia (RIPROVA, ESCI, MIRA, RILEGGI), scelta armi (ESCI) | ✅ |
 | `kit.plate` (`piastrina`) in fondo | CAMPAGNA gironi: i capitoli fatti | ⚠️ |
 | `kit.card` usato come pulsante | ZAINO e BOTTEGA (VEDI TUTTE sotto le statistiche) | ⚠️ |
@@ -69,7 +69,7 @@ tasti, profilo, annulla, ripristina, uno_contro_uno, via.
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| `kit.tabs`: la scritta incandescente, l'aperta oro con l'alone (sempre: le piastrine non ci sono più) | ZAINO, BOTTEGA, PROFILO, EVENTI, CAMPAGNA (ADDESTRAMENTO, LA FORGIA, LA STORIA), ALLENAMENTO (i modi, accanto al titolo) | ✅ |
+| `kit.tabs`: la scritta incandescente, l'aperta oro con l'alone (sempre: le piastrine non ci sono più) | ZAINO, BOTTEGA (COMMESSE, FORNACE, BANCO), PROFILO, EVENTI, CAMPAGNA (ADDESTRAMENTO, LA FORGIA, LA STORIA), ALLENAMENTO (i modi, accanto al titolo) | ✅ |
 
 ## 6. Scelta (una fra poche opzioni)
 
@@ -90,10 +90,10 @@ tasti, profilo, annulla, ripristina, uno_contro_uno, via.
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| card minimale (`pannello`, a vettori in `fai_card_filo`): fondo scuro, un filo nella cornice, un punto in ogni angolo. Il filo dice lo stato: ferro (riposo), oro `pannello_caldo` (scelta, il tuo), gelo, brace, spento | `kit.card`, `kit.panel`, `kit.mode_card` (GIOCA ONLINE): mappe (ALLENAMENTO: grandi, in una fila che scorre col dito, la rotella o la luce del controller, senza frecce), missioni, armi, posti, record, partite, statistiche, eventi, impostazioni, cartellini dei giocatori (il tuo in oro), conto | ✅ |
+| card minimale (`pannello`, a vettori in `fai_card_filo`): fondo scuro, un filo nella cornice, un punto in ogni angolo. Il filo dice lo stato: ferro (riposo), oro `pannello_caldo` (scelta, il tuo), gelo, brace, spento | `kit.card`, `kit.panel`, `kit.mode_card` (GIOCA ONLINE): la cornice del muro e SUL MURO della FORNACE, le famiglie da fondere, mappe (ALLENAMENTO: grandi, in una fila che scorre col dito, la rotella o la luce del controller, senza frecce), missioni, armi, posti, record, partite, statistiche, eventi, impostazioni, cartellini dei giocatori (il tuo in oro), conto | ✅ |
 | caselle dei pezzi `casella/casella_scelta` | ZAINO, BOTTEGA BANCO | ✅ (oggetti) |
 | `kit.drawn_plate("bivio_piastra_*")` (WB-062) | ZAINO SIGILLI | ✅ |
-| `kit.paper`: il cartellino di carta col chiodo (WB-085) | COMMESSE | ✅ (oggetto del Fabbro) |
+| `kit.paper`: il cartellino di carta col chiodo (WB-085) | COMMESSE, FORNACE (la regola della colata) | ✅ (oggetto del Fabbro) |
 | `kit.plate(..., fill = SAND)` → `pannello_chiaro` | CAMPAGNA (ritratto), storia (didascalie), targhette ROSSO / BLU | ⚠️ piastre chiare |
 | `kit.plate` piastra calda | cartolina della missione, storia (la foto) | ⚠️ |
 
@@ -110,7 +110,7 @@ tasti, profilo, annulla, ripristina, uno_contro_uno, via.
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
-| `coins.wallet`, `coins.vouchers`: piastra + moneta | HOME, ZAINO, BOTTEGA, PROFILO | ⚠️ piastra bombata |
+| `coins.wallet`, `coins.vouchers`: piastra + moneta | HOME, ZAINO, BOTTEGA, PROFILO, i tiri della FORNACE (le gemme partono da qui) | ⚠️ piastra bombata |
 
 ## 12. Stato della coda
 
@@ -143,3 +143,16 @@ tasti, profilo, annulla, ripristina, uno_contro_uno, via.
 |---|---|---|
 | caselle delle armi, anelli, facce del punteggio | battaglia | ✅ (restyle dell'HUD a parte) |
 | avvisi (`ui.panel`) | battaglia | ⚠️ |
+
+## 17. La fucina della FORNACE
+
+Il minigioco della Fornace (`client/menu/forge_ui.lua`, docs/commesse.md «La Fornace»): un mondo suo
+sotto una cornice a stampo (in vetrina la cornice del muro, mentre si tira tutto lo schermo).
+
+| Pezzo | Dove | Oggi |
+|---|---|---|
+| i disegni di Codex WB-092 e WB-093 nell'atlante `fornace` (`client/menu/fornace.atlas`, con le mipmap: si vede a tanti zoom) e i dipinti `client/paintings/fornace/` (`tools/grafica/fornace.py`; da vicino, nella colata, i dipinti si avvicinano solo fino ai loro pixel: mai ingranditi) | FORNACE | ✅ |
+| il cartellino del premio sopra lo stampo: l'icona (scaglia o frammento della famiglia) e il numero, sempre grandi uguali sullo schermo; lo stampo fortunato col numero oro e DOPPIO | FORNACE | ✅ |
+| i TIRI in alto a sinistra: una goccia per tiro, quelle usate spente | FORNACE | ✅ |
+| la mira: la stessa della battaglia, disegno e conti (`battle/aim.lua`: lancetta, numeri, dal dito ad angolo e forza; col controller la levetta di mira e SPARA di `battle/sticks.lua`) più i puntini del primo tratto del volo | FORNACE | ✅ |
+| le scritte che saltano (3 SU 3!, DOPPIO!, NEL SECCHIO): parola incandescente con l'ombra d'inchiostro | FORNACE | ✅ |

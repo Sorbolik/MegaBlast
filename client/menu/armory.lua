@@ -20,6 +20,7 @@ local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
 local outline = require "menu.outline"
 local orders_ui = require "menu.orders_ui"
+local forge_ui = require "menu.forge_ui"
 local orders = require "sim.orders"
 local T = require("lang.text").armory
 local TG = require("lang.text").gear_ui
@@ -173,17 +174,20 @@ local function build(a)
 	orders_ui.release(a)
 	local p = a.prof
 	a.head = kit.header(a.buttons, common.shop, KC.PURPLE, "indietro", a.from or common.home)
-	-- the two tabs, once the Smith has called: COMMESSE (his orders) and BANCO (the shop)
+	-- the three tabs, once the Smith has called: COMMESSE (his orders), FORNACE (the
+	-- Forge, where Ossidiana is spent) and BANCO (the shop)
 	-- (a test profile sees them at once: the test bench is in COMMESSE)
 	local open = (p.commesse and p.commesse.aperta) or profile.test
 	if not open then a.tab = "banco" end
 	a.tab = a.tab or "commesse"
 	if open then
-		kit.tabs(a.head.top_left, a.buttons, TABS_X, 28, { { T.tab_orders, "scheda:commesse" }, { T.tab_bench, "scheda:banco" } },
-			a.tab == "banco" and 2 or 1, KC.PURPLE, true)
-		-- by COMMESSE, how many are ready (the word is smaller when BANCO is open)
+		local at = { commesse = 1, fornace = 2, banco = 3 }
+		kit.tabs(a.head.top_left, a.buttons, TABS_X, 28,
+			{ { T.tab_orders, "scheda:commesse" }, { T.tab_forge, "scheda:fornace" }, { T.tab_bench, "scheda:banco" } },
+			at[a.tab] or 1, KC.PURPLE, true)
+		-- by COMMESSE, how many are ready (the word is smaller when another tab is open)
 		local ready = orders_ui.news(p)
-		if ready and ready > 0 then orders_ui.badge(a.head.top_left, TABS_X + (#T.tab_orders * 14 + 64) + 13 - (a.tab == "banco" and 21 or 0), 28 + 26, ready) end
+		if ready and ready > 0 then orders_ui.badge(a.head.top_left, TABS_X + (#T.tab_orders * 14 + 64) + 13 - (a.tab ~= "commesse" and 21 or 0), 28 + 26, ready) end
 	end
 	a.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(a.wallet, p.buoni or 0)
@@ -193,9 +197,15 @@ local function build(a)
 	a.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	a.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
+	if a.tab ~= "fornace" then forge_ui.release(a) end
 	if a.tab == "commesse" then
 		outline.off()
 		orders_ui.board(a)
+		return
+	elseif a.tab == "fornace" then
+		-- the Forge (docs/commesse.md "La Fornace"): the wall in vetrina, the throws
+		outline.off()
+		forge_ui.board(a)
 		return
 	end
 	local act = profile.active_loadout(p)
@@ -231,10 +241,10 @@ local function run_cmd(a, ui_action)
 	local kind, x = ui_action:match("^(%a+):?(.*)$")
 	local p = a.prof
 	local s1, s2 = x:match("^([^:]*):?(.*)$")
-	if orders_ui.cmd(a, kind, x) then
-		-- (a tap of the COMMESSE tab)
+	if orders_ui.cmd(a, kind, x) or forge_ui.cmd(a, kind, x) then
+		-- (a tap of the COMMESSE or of the FORNACE tab)
 	elseif kind == "scheda" then
-		a.tab, a.sheet, a.modal, a.scene = x, nil, nil, nil
+		a.tab, a.sheet, a.modal, a.scene, a.melt = x, nil, nil, nil, nil
 	elseif kind == "foglio" then
 		a.sheet = not a.sheet
 	elseif kind == "merce" then
@@ -255,15 +265,18 @@ function M.update(a, dt)
 	if a.figure then scoria.update(a.figure, dt, a.st) end
 	-- the delivery's scene: at the receipt the screen is made again, with its buttons
 	if a.tab == "commesse" and orders_ui.update(a, dt) then build(a) end
+	if a.tab == "fornace" and forge_ui.update(a, dt) then build(a) end
 	if a.outline then outline.update(a.outline) end
 end
 
 function M.on_input(a, action_id, action)
+	-- while the Forge plays, the finger is its own
+	if forge_ui.input(a, action_id, action) then return nil end
 	local ui_action = ui.touch(a.buttons, action_id, action)
 	if ui_action == "indietro" then
 		-- (a window of the COMMESSE closes first)
-		if not (a.modal or a.scene) then return "indietro" end
-		a.modal, a.scene = nil, nil
+		if not (a.modal or a.scene or a.melt) then return "indietro" end
+		a.modal, a.scene, a.melt = nil, nil, nil
 		build(a)
 		return nil
 	end
@@ -277,6 +290,7 @@ end
 function M.destroy(a)
 	outline.off()
 	orders_ui.release(a)
+	forge_ui.release(a)
 	kit.header_delete(a.head)
 	for _, k in ipairs(GROUPS) do
 		if a[k] then gui.delete_node(a[k].node) end

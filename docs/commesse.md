@@ -9,14 +9,19 @@ data, e con una riga in [decisioni/progressione.md](decisioni/progressione.md).
 Stato (23 nov, sera): tutto quello che dice questo file è nel gioco, tranne quello che
 aspetta altri: le martellate di Gabriella, le battute dei custodi da rivedere con Sergio,
 i clienti veri (arrivano coi gironi) e la porta BOTTEGA chiusa prima di Forgia 6 (Sergio
-non ha ancora deciso: per ora è aperta). Il minigioco della forgia (poker «Cinque Fiamme»,
-martello a tempo) è un lavoro a parte, dopo.
+non ha ancora deciso: per ora è aperta).
+
+**24 nov, cambio di Sergio**: l'Ossidiana non si paga più alla consegna. Si spende solo
+nella **Fornace**, il minigioco del Fabbro (Il Tiro nella Fucina, sezione più sotto):
+«è strano pagare per aver finito una missione, il minigioco invece è una scelta
+consapevole». Nel codice la consegna è già gratis (solo frammenti e fiducia) e il colpo
+buono non c'è più; le regole della Fornace sono in `client/sim/forge.lua`.
 
 ## A cosa servono
 
-L'Ossidiana prendeva polvere. Le commesse la fanno spendere: i personaggi della
-campagna chiedono un lavoro al Fabbro, tu lo fai **giocando online**, lo consegni
-pagando Ossidiana e il Fabbro ti paga in Scaglie e in frammenti di famiglia.
+L'Ossidiana prendeva polvere. I personaggi della campagna chiedono un lavoro al Fabbro,
+tu lo fai **giocando online**, lo consegni e il Fabbro ti paga in frammenti di famiglia;
+l'Ossidiana la spendi nella Fornace, dove diventa Scaglie e frammenti.
 
 Principi di Sergio che reggono tutto:
 
@@ -34,10 +39,10 @@ Principi di Sergio che reggono tutto:
 ## Il giro
 
 1. Giochi online: le commesse in bacheca avanzano da sole (niente «accetta»).
-2. Quando una è pronta la consegni nella BOTTEGA e paghi la sua Ossidiana.
-3. Il Fabbro forgia (Ossidiana nel bocchettone, colpo, la pancia si apre) e paga
-   subito: Scaglie e frammenti della famiglia del cliente.
+2. Quando una è pronta la consegni nella BOTTEGA, gratis (dal 24 nov).
+3. Il Fabbro forgia e paga subito: frammenti della famiglia del cliente e fiducia.
 4. I frammenti pagano un pezzo nuovo o i livelli dei pezzi di quella famiglia.
+5. L'Ossidiana si spende nella **Fornace**, dove diventa Scaglie e frammenti.
 
 ## Clienti (passo 1)
 
@@ -103,57 +108,129 @@ Principi di Sergio che reggono tutto:
 ## Bacheca (passo 4)
 
 - Posti dei clienti: 1 con 1-2 clienti, 2 da tre clienti, 3 da sei. Mai due
-  commesse dello stesso cliente. Piccole (20 Ossidiana) o medie (40).
-- **Commessa della settimana**: una, da lunedì a domenica, 100 Ossidiana, da tre
+  commesse dello stesso cliente. Piccole (1 frammento) o medie (2).
+- **Commessa della settimana**: una, da lunedì a domenica, 6 frammenti, da tre
   clienti in su. È l'unica che scade.
-- **Commessa del Fabbro**: sempre aperta, si rifà subito, 20 Ossidiana, famiglia
-  dei frammenti a scelta, cambio più basso. È la valvola di chi ha tanta Ossidiana
-  e la bacheca di chi non ha clienti.
+- **Commessa del Fabbro**: sempre aperta, si rifà subito, 1 frammento della famiglia
+  che scegli. È la bacheca di chi non ha clienti.
 - Ricambio: ogni mattina alle **5 ora italiana** (lo decide il server) i posti
   vuoti si riempiono. Una commessa pronta aspetta finché non la consegni.
 - **Un cambio gratis al giorno**: strappi un cartellino e ne arriva un altro.
 - **Chiama un cliente** (regola di Sergio): oggi lo chiami, domani c'è una sua
   commessa; **mai lo stesso due giorni di fila**. Con la bacheca piena aspetta il
   primo posto libero.
-- I frammenti **non si convertono** fra famiglie.
+- I frammenti **si fondono nella Fornace**, sempre in perdita (Sergio, 24 nov; prima non si
+  convertivano): **4 frammenti di una famiglia per 1 di un'altra**, oppure **20 Scaglie l'uno**
+  (un terzo del loro valore). Conviene sempre usarli nella loro famiglia.
 
-## Costo e premi (passo 5 e 10)
+## Premi (passo 5 e 10, consegna gratis dal 24 nov)
 
-- **Il cambio** è il numero che tara tutto: Scaglie di valore per ogni Ossidiana
-  spesa. Le Scaglie dei premi sono fisse; coi prezzi del 23 nov (PR 410, frammento a 60)
-  il cambio è **7 dai clienti (7,2 la settimana), 6 dal Fabbro** (era 6 e 5 coi prezzi
-  vecchi; al passo 5 era 8 e 7).
-- Il premio è **metà Scaglie, metà frammenti**.
+- La consegna è **gratis** e paga **solo frammenti della famiglia del cliente e fiducia**:
+  benvenuto 1 più il Buono, piccola 1, media 2, settimana 6, Fabbro 1 della famiglia che
+  scegli. Da 5 perle di fiducia un frammento in più. Le Scaglie e il cambio dell'Ossidiana
+  stanno nella Fornace.
 - **Un frammento vale un centoventesimo di un pezzo del Catalogo** (oggi 60
   Scaglie, Catalogo a 7.200) e solo sulla sua famiglia: 120 frammenti = un pezzo nuovo. Se i prezzi
   salgono, il frammento li segue.
 - I frammenti pagano **ogni livello e ogni scatto** dei pezzi della loro famiglia,
   in alternativa alle Scaglie (la Mano del Fabbro abbassa anche quel conto). Dopo
   il 30 pagheranno i potenziamenti solo grafici (la Tempra).
-- Al cambio di partenza: piccola 20 Ossidiana = 80 Scaglie e 1 frammento; media 40
-  = 160 e 2; settimana 100 = 360 e 6; Fabbro 20 = 60 e 1. Benvenuto: gratis, premio
-  di una piccola più il Buono.
-- **Colpo buono**: una consegna su otto, frammenti doppi. Resta finché non c'è il
-  minigioco, che prenderà quel posto.
+- Il **colpo buono** (una consegna su otto, frammenti doppi) non c'è più dal 24 nov:
+  la fortuna e l'abilità stanno nella Fornace.
 - Il **Lingotto** delle prime bozze non esiste più.
-- L'Ossidiana data al Fabbro non va nelle firme: è una scelta vera fra le due.
+
+## La Fornace: Il Tiro nella Fucina (24 nov)
+
+Scelto da Sergio il 24 nov fra tre proposte (https://claude.ai/artifact/JSm7FyZ8HkhchARfBT8LTU:
+scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a tempo).
+
+- **L'unico posto dove l'Ossidiana diventa valuta.** Una scheda **FORNACE** nella BOTTEGA,
+  fra COMMESSE e BANCO. Una **colata costa 20 Ossidiana** e la paghi tu col pulsante, ogni
+  volta: niente colate automatiche, niente inviti a comprare.
+- **La scheda FORNACE è il muro in vetrina** (Sergio, 24 nov, proposte A e A su
+  https://claude.ai/artifact/NtdiVrugGEEvKiBsyifAv2): il Fabbro al banco, il muro di oggi in
+  piccolo coi premi, cosa resta e fra quanto arriva il muro nuovo, FONDI e COLA. Con COLA il
+  muro si allarga a tutto schermo, le 20 gemme volano dal contatore nel mestolo e si fondono
+  nella goccia, compaiono i tiri; finiti i tiri si torna alla vetrina e si può colare ancora
+  finché il muro ha premi. Se esci a metà (il tasto indietro mentre miri) i tiri restano: in
+  vetrina COLA diventa **TIRA** e riparti da dove eri, senza pagare.
+- **Nel gioco** (`client/menu/forge_ui.lua`, foto `tools/simula/scenari/fornace.txt`): la mira si fa
+  vedendo tutto il muro; mentre il mestolo carica la telecamera si avvicina un po', poi segue la
+  goccia e si ferma sullo stampo preso, e torna su tutto il muro per il tiro dopo. Per la colata
+  la telecamera è vicina all'apprendista (zoom 2,2): lì i dipinti di fondo (WB-092, 1536 px) si
+  avvicinano solo fino ai loro pixel e restano lontani come un fondale, mai ingranditi.
+  Col controller si mira con la levetta di mira e si tira con SPARA, come in battaglia.
+- **Come si gioca**: l'apprendista tira una goccia di Ossidiana fusa con **la stessa mira
+  della battaglia** (trascini, vedi l'inizio della traiettoria, lasci) negli stampi sul muro
+  della fucina. **Tre tiri per colata.**
+- **L'apprendista** (Sergio, 24 nov): è il personaggio indossato, grande come in battaglia, con
+  le animazioni di sempre della mira; **non si muove** (niente camminata né salto). La goccia vola
+  come il Lanciarune senza potenziamenti, la telecamera è quella della battaglia.
+- **L'arma è il Mestolo** (Sergio, 24 nov, fra tre proposte animate): un mestolo da colata col
+  manico lungo, la goccia nella coppa. Al tiro lo porta indietro sopra la testa (la coppa
+  gocciola scintille), trema un attimo e lo frusta in avanti; la goccia parte lungo la mira.
+  L'anticipazione è solo da vedere: angolo e potenza sono quelli scelti. La telecamera si
+  avvicina mentre carica, segue la goccia e si ferma sullo stampo. Disegni: WB-093.
+- **I premi si leggono sul muro** (Sergio, 24 nov): sopra ogni stampo l'icona del premio e la
+  quantità (moneta delle Scaglie col numero, o il frammento della famiglia con x1 o x2), sempre
+  della stessa grandezza sullo schermo a ogni zoom; la placca dello stampo ha il colore della
+  famiglia, ferro per le Scaglie. Quando la goccia entra il gioco si ferma un attimo, la camera
+  trema e il premio vola al contatore.
+- **La traiettoria è quasi tutta** (Sergio, 24 nov): i puntini della mira si vedono per circa l'80%
+  del volo, non fino in fondo: l'ultimo tratto, dove la goccia cade nello stampo, lo indovini tu.
+- **Gli stampi**: 12 sul muro, 6 di Scaglie (15, 20, 30, 50, 60, 80) e 6 di frammenti (x1 o
+  x2), **255 Scaglie e 8 frammenti per muro**. Più lontano e più in alto, più rende; quelli
+  lontani sono piccoli e chiedono quasi tutta la forza. Mirando scegli la famiglia che ti
+  serve. Le catene (degli stampi alti) per ora stanno ferme.
+- **Il muro cambia tre volte al giorno, alle 5, alle 13 e alle 21** (idea di Sergio) e
+  **ogni muro nuovo mette gli stampi in posti nuovi** (Sergio, 24 nov), diversi per ogni
+  giocatore (un seme suo): sempre staccati e tutti centrabili (il gioco lo controlla
+  quando li appende). Le famiglie cambiano e gli stampi riempiti tornano vuoti.
+- **Lo stampo fortunato** (Sergio, 24 nov): ogni tanto un muro ha uno stampo che dà il
+  doppio, circa un muro su 8 e di sicuro entro 15 muri (il conto dei muri senza è nel profilo). Uno
+  stampo pieno non paga due volte: una goccia che lo prende è come il ferro, va nel secchio.
+  Una colata cominciata resta sul suo muro anche se intanto il muro cambia; non si torna mai
+  a un muro vecchio.
+- **La goccia entra solo dall'alto**: deve passare dentro l'orlo scendendo. Sul ferro dello
+  stampo rimbalza via e va nel secchio.
+- **Mai zero**: una goccia fuori dagli stampi cade nel secchio (20 Scaglie). Tre centri
+  su tre danno un tiro in più (uno solo per colata).
+- **Il cambio**: una colata rende in media circa **130 Scaglie di valore** (frammento = 60),
+  dal peggio al meglio circa da 0,8 a 1,2 volte la media. Da ritarare coi conti delle ore
+  (`tools/economia/conti.lua`) quando c'è il codice.
+- **Il server decide**: il telefono manda il muro che vede, poi angolo e forza di ogni tiro
+  (azioni `colata`, `tiro`, `fondi` del profilo); il server rifà il volo con le stesse regole
+  (`client/sim/forge.lua`) e paga. Il risultato non lo dice il telefono, e niente è a caso.
+- **Arte**: stampi, goccia, catene e secchio da Codex (scheda in `docs/handoff/`); lo sfondo
+  è quello della fucina che c'è già.
+- **Da decidere prima di vendere l'Ossidiana**: l'Ossidiana comprata con soldi veri non
+  entra nella Fornace (se no la Fornace diventa «compro Scaglie»), oppure l'Ossidiana non si
+  vende.
+
+### Le commesse con la Fornace (proposta A, confermata da Sergio il 24 nov)
+
+- La consegna è **gratis**. Il premio è solo **frammenti della famiglia e fiducia**:
+  piccola 1, media 2, settimana 6; la commessa del Fabbro 1 frammento della famiglia che
+  scegli. Le Scaglie arrivano dalla Fornace.
+- Il **colpo buono** sparisce: la fortuna e l'abilità stanno nella Fornace.
+- Restano come sono: perle, benvenuto col Buono, chiamata, bacheca, scambio, cambio gratis.
+- Scartata (B): consegna gratis col premio intero, perché sarebbe un regalo in più a
+  ogni consegna e costringerebbe ad alzare ancora i prezzi.
 
 ## Consegna (passo 6)
 
 - CONSEGNA sul cartellino pronto, oppure CONSEGNA TUTTE in una scena sola.
-- Il colpo buono si scopre alla martellata. Poi lo scontrino, con un pulsante che
-  porta a POTENZIA quando i frammenti bastano per un livello.
-- Senza Ossidiana il pulsante è spento e dice quanta ne manca. Nessun invito a
-  comprare.
+- Dopo le martellate lo scontrino, con un pulsante che porta a POTENZIA quando i
+  frammenti bastano per un livello.
 - Il server paga e registra il premio prima della scena: se cade la rete non si
   perde niente e non si paga due volte.
 - **La scena è la proposta A** (Sergio, 23 nov: «va bene A»), al banco del Fabbro,
   circa due secondi, un tocco salta allo scontrino:
-  1. il cartellino si stacca e vola sul banco, l'Ossidiana cade sull'incudine;
-  2. il Fabbro batte tre volte (al colpo buono la terza è più forte, lo schermo trema);
-  3. il busto del cliente entra da destra, contento (fiero col colpo buono e alla quinta e
-     alla decima perla) con una sua battuta, e il premio salta fuori dall'incudine;
-  4. lo scontrino di carta: Scaglie, frammenti, fiducia con le perle, OK e, se i
+  1. il cartellino si stacca e vola sul banco;
+  2. il Fabbro batte tre volte;
+  3. il busto del cliente entra da destra, contento (fiero alla quinta e alla decima
+     perla) con una sua battuta, e il premio salta fuori dall'incudine;
+  4. lo scontrino di carta: frammenti, fiducia con le perle, OK e, se i
      frammenti bastano per un livello di un pezzo della famiglia, POTENZIA (apre lo ZAINO).
   CONSEGNA TUTTE: una martellata per cartellino, più veloce, e uno scontrino solo.
 - **Le martellate del Fabbro sono di Gabriella**: finché non arrivano, il Fabbro al

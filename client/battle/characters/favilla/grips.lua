@@ -20,6 +20,7 @@ return {
 	eagle = { grip = { 1.6, -1.2 }, pivot = { -7.7, -1.2 }, shoulder = { 32, 110 } },
 	hook = { grip = { 1.8, -3.8 }, pivot = { -4, -2.6 }, shoulder = { 32, 110 } },
 	mallet = { grip = { 6.5, 0 }, pivot = { -2.8, 0 }, shoulder = { 32, 110 } },
+	mestolo = { grip = { -3.5, 0 }, pivot = { -6, 0 }, shoulder = { 32, 110 } },
 	lunge = { grip = { 2, 0 }, pivot = { -7.3, 0 }, shoulder = { 32, 110 } },
 	bellows = { grip = { -1.5, 0 }, pivot = { -10.8, 0 }, shoulder = { 32, 110 } },
 	boomerang = { grip = { -1, -1 }, pivot = { -8, -1 }, shoulder = { 32, 110 } },
