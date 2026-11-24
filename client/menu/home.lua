@@ -2,8 +2,8 @@
 -- Consigliata/1 (Sergio, 14 Nov; docs/menu_nuovi_implementazione.md):
 --   top left   the profile's round (face, name, level and its bar): it opens the PROFILO
 --   top right  the wallet (ui/coins.lua)
---   middle     the apprentice on the forge-grate pedestal (WB-050 n.4), the small backpack
---              on its step (WB-048): the apprentice, the pedestal or the backpack open the
+--   middle     the apprentice on the floating rock of the Limbo (WB-090 2B, Sergio 24 Nov:
+--              no more forge grate nor backpack): the apprentice or the rock open the
 --              ZAINO. Three signs say it can be touched: now and then a light runs over the
 --              pedestal and an ember glint over the apprentice; a tap makes it breathe
 --   sides      the doors drawn by Codex (WB-046), the shield toward the screen's edge:
@@ -45,18 +45,18 @@ local W, H = 1280, 720
 local C = kit.C
 local hex = kit.hex
 
--- The pedestal and the apprentice (the Figma's geometry, Sergio 14 Nov 23:55: the pedestal
--- does not cross the thread, everything keeps its room): PED_W wide, its foot on PED_BOTTOM,
--- the apprentice's feet at FEET, 380 tall like in the Figma
+-- The pedestal and the apprentice (Sergio 14 Nov 23:55: the pedestal does not cross the
+-- thread, everything keeps its room): the rock (WB-090) PED_W wide in the middle, the
+-- lowest pebble on PED_BOTTOM, the apprentice's feet at FEET (the middle of its flat top),
+-- 380 tall like in the Figma
 local PED_W = 300
-local PED_H = PED_W * 266 / 601
+local PED_H = PED_W * 399 / 577
 local PED_BOTTOM = 598
 local PED_TOP = PED_BOTTOM - PED_H
-local PED_X = 640 - 0.37 * PED_W
-local FEET = PED_TOP + 0.30 * PED_H
+local PED_X = 640 - PED_W / 2
+local FEET = PED_TOP + 0.17 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
-local BAG = 46
 -- the profile's banner (WB-075): its height on screen, its width per unit of height,
 -- and where its parts are on the drawing, as fractions of its width and height:
 -- the ring's centre, the groove (from, to, middle) and the coin's centre
@@ -136,21 +136,21 @@ function M.new(color)
 
 	h.scene = kit.scene(640, 350, { bg = "cielo" })
 
-	-- the middle: the pedestal, the apprentice on it and the backpack, all one button
+	-- the middle: the pedestal and the apprentice on it, one button
 	local mid = kit.anchor(640, PED_BOTTOM, nil, gui.ANCHOR_BOTTOM)
 	h.tops[#h.tops + 1] = mid.node
 	h.mid = mid
-	h.ped = kit.pic(mid, "pedana", PED_X, PED_TOP, PED_W, PED_H)
+	h.ped = kit.pic(mid, "piedistallo", PED_X, PED_TOP, PED_W, PED_H)
 	-- the light that runs over the pedestal: a brighter copy seen through a moving slit
 	h.slit = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(70, PED_H + 20, 0))
 	gui.set_clipping_mode(h.slit, gui.CLIPPING_MODE_STENCIL)
 	gui.set_clipping_visible(h.slit, false)
 	gui.set_parent(h.slit, mid.node)
-	h.ped_light = kit.pic({ node = h.slit, ox = 0, oy = 0 }, "pedana", PED_X - 640, PED_TOP - PED_BOTTOM, PED_W, PED_H)
+	h.ped_light = kit.pic({ node = h.slit, ox = 0, oy = 0 }, "piedistallo", PED_X - 640, PED_TOP - PED_BOTTOM, PED_W, PED_H)
 	gui.set_blend_mode(h.ped_light, gui.BLEND_ADD)
 	gui.set_color(h.ped_light, vmath.vector4(1, 0.72, 0.3, 0.45))
 	gui.set_enabled(h.slit, false)
-	-- the apprentice, its feet on the grate
+	-- the apprentice, its feet on the rock
 	h.posa = gui.new_box_node(vmath.vector3(0, PED_BOTTOM - FEET, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(h.posa, false)
 	gui.set_parent(h.posa, mid.node)
@@ -167,7 +167,6 @@ function M.new(color)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	h.glow = 0
-	h.bag = kit.piece(mid, "zainetto", PED_X + 0.88 * PED_W, PED_TOP + 0.52 * PED_H - BAG / 2, BAG)
 	local hy = FEET - 380 - 10
 	h.hero = kit.zone(mid, h.buttons, PED_X - 10, hy, PED_W + 20, PED_BOTTOM + 6 - hy, "zaino")
 
@@ -474,7 +473,6 @@ local function breathe(h)
 			gui.animate(h.posa, "scale", vmath.vector3(1, 1, 1), gui.EASING_INOUTSINE, 0.11)
 		end)
 	end)
-	gui.animate(h.bag, "euler.z", 2, gui.EASING_OUTSINE, 0.13, 0, nil, gui.PLAYBACK_ONCE_PINGPONG)
 end
 
 function M.on_input(h, action_id, action)

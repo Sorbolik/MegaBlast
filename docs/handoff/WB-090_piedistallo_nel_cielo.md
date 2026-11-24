@@ -1,6 +1,6 @@
 # WB-090 · Il piedistallo dell'apprendista nel cielo del Limbo
 
-- **Stato:** APPROVATA (Claude, 24 nov: Sergio ha chiesto proposte anche con Codex; sono solo bozze da scegliere)
+- **Stato:** IMPLEMENTATA (Sergio, 24 nov: «Mi piace il 2b»)
 - **Data:** 2026-11-24
 - **Ramo della scheda:** `claude/project-thread-75blfv` (Codex la esegue da qui: `git fetch origin claude/project-thread-75blfv`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-090`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-090` senza chiedere conferma (il repository è privato).
@@ -62,8 +62,28 @@ Thick black ink outline, cartoon comic style like image 3. Flat colors only, at 
 
 ## Decisione
 
-Sergio, 24 nov: il piedistallo nuovo lo disegna Codex (non le bozze di Claude), col bordo ben chiaro come nelle bozze.
+Sergio, 24 nov: il piedistallo nuovo lo disegna Codex (non le bozze di Claude), col bordo ben chiaro come nelle bozze. Fra le otto proposte messe sulla home (https://claude.ai/artifact/MbTwcfhf5T2BT47VwUJzuM) sceglie la **2B**, la roccia del Limbo della seconda variante.
 
 ## Consegna di Codex
 
+- `art/WB-090/piedistalli_cielo_1.png` e `piedistalli_cielo_1.txt` — filetto chiaro principalmente interno.
+- `art/WB-090/piedistalli_cielo_2.png` e `piedistalli_cielo_2.txt` — filetto chiaro principalmente esterno.
+
+Due PNG nativi da 1536×1024. Tre tentativi per variante con ImageGen, selezionato il terzo in entrambi i casi. Prompt originale e riferimenti nell'ordine R1, R2, R3, R4.
+
+Ogni foglio contiene quattro piedistalli interi e separati con un piano libero, senza personaggio, scritte, terreno o ombra a terra. In anteprima i contorni si distinguono sui cinque colori campionati da R4, anche nel cielo più scuro. Il verde di fondo si discosta da #00FF00 e le campiture mostrano lievi variazioni tonali. Restano da verificare la resa nella home con l'apprendista e il ricalco vettoriale.
+
 ## Resoconto di Claude
+
+Usata la **2B** (`piedistalli_cielo_2.png`, in alto a destra): ritagliata dal verde con `senza_verde`
+di `tools/grafica/fucina.py` in `art/WB-090/ritagli/piedistallo_roccia_2.png` (577×399, la misura
+del disegno, mai ingrandita), entra nell'atlante come `piedistallo` e la home la mostra larga 300
+(il doppio dei pixel a 1280×720: nitida fino a 2560×1440). Il piede dei sassolini sta dove stava
+quello della grata (598); l'apprendista sta sul piano, a 0,17 dell'altezza: sale di 77. Le altre
+sette restano nei fogli. Via lo zainetto (WB-048) e la grata (WB-050): immagini, voci dell'atlante
+e cartelle `art/WB-048` e `art/WB-050`.
+
+Verificato nel simulatore (scenario `cielo_ore.txt`, i cinque cieli) anche a 1600×720: bordo
+chiaro leggibile su tutti i cieli, nessun alone verde. Foto: `docs/handoff/img/WB-090_home_sera.jpg`,
+`WB-090_home_mezzogiorno.jpg`. Non verificato: sul telefono.
+

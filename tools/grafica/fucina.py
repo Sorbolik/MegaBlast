@@ -678,7 +678,7 @@ def fai_sfondi():
 # grande a cui lo mostra il Figma (1280 x 720), cosi' resta nitido fino a 2560 x 1440.
 # (nome nell'atlante, file, altezza in pixel, cartella)
 MENU_INTERI = [
-    # la home: le porte (WB-046, a destra lo scudo verso il bordo), GIOCA, pedana e zainetto
+    # la home: le porte (WB-046, a destra lo scudo verso il bordo), il piedistallo
     ("porta_campagna", "porta_campagna", 236, "WB-046"),
     ("porta_allenamento", "porta_allenamento", 226, "WB-046"),
     # lo striscione EVENTI: il nastro con la piega di WB-061 (Sergio, 15 nov; fra tre
@@ -687,8 +687,9 @@ MENU_INTERI = [
     # lo SHOP al posto di ARMERIA (WB-080, Sergio 18 nov: il banco col tendone), accorciato
     # nel mezzo liscio per avere l'ingombro della porta di ARMERIA di WB-046
     ("porta_shop", "porta_shop", 226, "WB-080"),
-    ("pedana", "pedana_griglia_1", 266, "WB-050"),
-    ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
+    # il piedistallo dell'apprendista nel cielo del Limbo (WB-090, Sergio 24 nov: la 2B, la
+    # roccia coi due sassolini; al posto della grata di WB-050 e dello zainetto di WB-048)
+    ("piedistallo", "piedistallo_roccia_2", 399, "WB-090"),
     # le caselle dei pezzi, dritte (WB-078, Sergio 18 nov: al posto di quelle di WB-044 in
     # ogni posto): la cornice, la linguetta del tipo in alto a sinistra col suo simbolo,
     # la fascia INDOSSATO in basso; i simboli rifatti in WB-079 dalle icone dei nostri pezzi
