@@ -62,6 +62,8 @@ tasti, profilo, annulla, ripristina, uno_contro_uno, via.
 | Pezzo | Dove | Oggi |
 |---|---|---|
 | `kit.sign("porta_campagna" / "porta_allenamento" / "porta_eventi" / "porta_shop")` (WB-046, WB-080) | HOME | ✅ (disegni, restano) |
+| il piedistallo dell'apprendista: la roccia del Limbo coi due sassolini (`piedistallo`, WB-090 2B; via la grata di WB-050 e lo zainetto di WB-048) | HOME | ✅ |
+| il cielo della home all'ora del telefono (`ui/limbo_sky.lua`: mattina, mezzogiorno, pomeriggio, sera, notte; strati bianchi colorati dal gioco, da `tools/grafica/cielo.py`) | HOME | ✅ |
 
 ## 5. Tab (le sezioni di una schermata)
 

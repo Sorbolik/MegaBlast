@@ -154,7 +154,6 @@ return {
 	pannello_chiaro = { w = 480, h = 480, c = 96 },
 	pannello_gelo = { w = 192, h = 192, c = 48 },
 	pannello_spento = { w = 192, h = 192, c = 48 },
-	pedana = { w = 601, h = 266 },
 	perla_piena = { w = 61, h = 64 },
 	perla_prossima = { w = 62, h = 64 },
 	perla_vuota = { w = 63, h = 64 },
@@ -165,6 +164,7 @@ return {
 	piastrina = { w = 231, h = 120, c = 69, box = { 49, 40, 36, 29 } },
 	piastrina_calda = { w = 231, h = 120, c = 69, box = { 49, 40, 37, 29 } },
 	piastrina_chiara = { w = 231, h = 120, c = 69, box = { 49, 40, 37, 29 } },
+	piedistallo = { w = 577, h = 399 },
 	pillola = { w = 580, h = 104, c = 116, box = { 77, 27, 54, 14 } },
 	podio_1 = { w = 302, h = 420 },
 	podio_2 = { w = 300, h = 352 },
@@ -225,5 +225,4 @@ return {
 	vuoto_guanti = { w = 240, h = 240 },
 	vuoto_mantello = { w = 240, h = 240 },
 	vuoto_stivali = { w = 240, h = 240 },
-	zainetto = { w = 123, h = 124 },
 }

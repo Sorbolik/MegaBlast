@@ -1,0 +1,34 @@
+# Il cielo della home all'ora del telefono (Sergio, 24 nov): mattina, mezzogiorno,
+# pomeriggio, sera e notte uno dopo l'altro (8 secondi ciascuno, il passaggio in 3),
+# col piedistallo di WB-090 e senza zainetto. Le foto prendono ogni momento fermo e
+# un passaggio. Con "imposta prova_cielo 13" il cielo resta su un'ora.
+imposta prova_vignette no
+imposta prova_cielo giro
+aspetta 5
+foto 01
+aspetta 3
+foto 02
+aspetta 3
+foto 03
+aspetta 3
+foto 04
+aspetta 3
+foto 05
+aspetta 3
+foto 06
+aspetta 3
+foto 07
+aspetta 3
+foto 08
+aspetta 3
+foto 09
+aspetta 3
+foto 10
+aspetta 3
+foto 11
+aspetta 3
+foto 12
+aspetta 3
+foto 13
+aspetta 3
+foto 14

@@ -1,6 +1,6 @@
 # WB-048 · Lo zaino a terra accanto al diavoletto
 
-- **Stato:** APPROVATA (Sergio, 14 nov 22:58: «proponimene un'altra e mi fai la scheda per codex»)
+- **Stato:** SUPERATA da WB-090 (Sergio, 24 nov: via lo zainetto dalla home; le immagini restano nella storia di git)
 - **Data:** 2026-11-14
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-048`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-048` senza chiedere conferma (il repository è privato).
