@@ -76,15 +76,19 @@ def testata(ramo, pr=None):
     return f"🧪 PROVA, NON È MAIN · ramo {ramo}{numero} · MegaBlast {commit}"
 
 
+# righe di attribuzione che Claude mette nelle PR: su Telegram non servono
+FIRMA = re.compile(r"^\s*(<!--.*-->|_Requested by|🤖 Generated with)|claude\.ai/code|claude\.com/claude-code")
+
+
 def per_telegram(corpo):
     """Sezione "## Per Telegram" del corpo; se manca, il primo paragrafo di testo."""
-    corpo = (corpo or "").replace("\r\n", "\n")
+    corpo = "\n".join(r for r in (corpo or "").replace("\r\n", "\n").split("\n") if not FIRMA.search(r))
     m = re.search(r"^#+\s*Per Telegram\s*\n(.*?)(?=^#+\s|\Z)", corpo, re.S | re.M | re.I)
     if m:
         return m.group(1).strip()
     for blocco in corpo.split("\n\n"):
         b = blocco.strip()
-        if b and not b.startswith(("<!--", "_Requested", "#", "🤖", "https://", "---")):
+        if b and not b.startswith(("#", "---")):
             return b
     return ""
 
