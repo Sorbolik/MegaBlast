@@ -1,0 +1,8 @@
+Image 1 shows the casting moulds of our cartoon game: copy them EXACTLY, same shape, same dark iron, same thick black ink outline, same two little ears with a ring on the top edge, same flat round plate on the front, same flat highlight and flat shadow. Only the size and the plate colors change.
+
+Draw SIX separate BIG EMPTY moulds exactly like the big empty moulds of the top row of image 1, on plain green (#00FF00), in two rows of three, well apart from each other, each one whole and not touching the others, each one as big as possible in its place (at least 340 px wide). The opening is a dark empty hollow. The round plate on the front is EMPTY and one plain flat color: top row from left to right gold (#FFB703), ice blue (#8FD8F5), fire orange (#F26419); bottom row from left to right sea green (#5CDBB8), violet (#C49CFF), plain iron (#5D5560). All six moulds are identical except the plate color.
+Nothing else: no chains, no wall, no icons on the plates, no letters, no numbers, no shadow on the ground, no glow halo.
+
+Riferimenti in ordine: art/WB-093/riferimenti/R1_stampi_scelti.png
+Variante 1. Un tentativo con ImageGen. Uscita nativa 1536×1024. Sei stampi vuoti staccati e placche di colore nell'ordine richiesto. Le placche riprendono i piccoli fissaggi del riferimento. La sagoma e i riflessi sono simili a R1 con variazioni locali.
+Ingombri orizzontali misurati in pixel, per fila: 375, 376, 375, 375, 375, 375. Verde campionato a (5,5): #04FA04, diverso da #00FF00 esatto.

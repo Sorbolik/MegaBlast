@@ -103,4 +103,14 @@ Approvata da Claude il 24 nov: Sergio ha scelto il Mestolo («va bene la consigl
 
 ## Consegna di Codex
 
+- `art/WB-093/mestolo_1.png` e `mestolo_2.png`, con i rispettivi `.txt`.
+- `art/WB-093/stampi_grandi_vuoti_1.png` e `stampi_grandi_vuoti_2.png`, con i rispettivi `.txt`.
+- `art/WB-093/stampi_grandi_pieni_1.png` e `stampi_grandi_pieni_2.png`, con i rispettivi `.txt`.
+- `art/WB-093/stampi_piccoli_vuoti_1.png` e `stampi_piccoli_vuoti_2.png`, con i rispettivi `.txt`.
+- `art/WB-093/stampi_piccoli_pieni_1.png` e `stampi_piccoli_pieni_2.png`, con i rispettivi `.txt`.
+
+Dieci fogli da 1536×1024, un tentativo per variante con ImageGen. Eseguiti i prompt originali con i riferimenti nell'ordine indicato. Gli otto fogli di stampi hanno la misura nativa richiesta. I due fogli del Mestolo sono stati ridimensionati in proporzione e centrati su tela verde.
+
+Controllati numero, ordine dei colori, separazione, orientamento del Mestolo, presenza di goccia e vapore, assenza di scritte. Gli ingombri misurati sono 1294–1320 px per il Mestolo, 349–394 px per gli stampi grandi e 329–380 px per i piccoli. Le placche riprendono i piccoli fissaggi di R1. Sagome e riflessi presentano lievi differenze fra fogli vuoti e pieni, e tra le due pose del Mestolo. Il verde si discosta da #00FF00 esatto. Ritaglio, allineamento delle pose e resa in gioco restano da verificare.
+
 ## Resoconto di Claude

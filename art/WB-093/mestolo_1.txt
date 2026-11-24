@@ -1,0 +1,11 @@
+Image 1 shows the STYLE of the weapons of our cartoon game and our little devil aiming with one: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic. Image 2 is a draft animation: the little devil throws a drop of molten obsidian with a long forge ladle, swinging it back over his head and whipping it forward; the ladle there is only a placeholder that shows the shape and the size compared to the devil. Image 3 shows the drop of molten obsidian of our game (top left, the dark violet ball with the glowing core).
+
+Draw a blacksmith's casting LADLE, the weapon the devil throws with, in the style of image 1, on plain green (#00FF00), lying perfectly STRAIGHT and HORIZONTAL, the handle on the LEFT and the bowl on the RIGHT, seen from the side, as long as most of the image width (at least 1000 px):
+- the handle: a long straight iron rod (#5D5560, highlight #8A8290), with a wooden grip at the left end (#7A4A2A) bound by two thin iron rings, a small ring at the very end;
+- the bowl: a deep round cast-iron cup at the right end (#3A3238, highlight #5D5560), seen from the side and a little from above so its opening is visible, a short pouring lip on its right rim, two rivets where it joins the handle; the inside of the bowl is dark and hot, with a thin orange glow on the inner rim (#FF7A1A).
+Draw it TWICE, one under the other, well apart: on top the ladle EMPTY; below the SAME ladle with the drop of image 3 sitting in the bowl (the drop is the same violet-black ball with the glowing magenta-orange cracks and the white highlight, half sunk in the bowl).
+Nothing else: no devil, no hand, no motion lines, no letters, no shadow on the ground, no glow halo around the ladle.
+
+Riferimenti in ordine: art/WB-093/riferimenti/R4_armi_del_gioco.png, art/WB-093/riferimenti/R3_mestolo_bozza.png, art/WB-093/riferimenti/R2_goccia_scelta.png
+Variante 1. Un tentativo con ImageGen. Uscita 2172×724 ridimensionata in proporzione e centrata su tela verde. Due Mestoli orizzontali con manico a sinistra e coppa a destra. I dettagli della coppa e del riflesso variano leggermente fra le pose.
+Ingombri orizzontali misurati in pixel, per fila: 1294, 1294. Verde campionato a (5,5): #02F902, diverso da #00FF00 esatto.
