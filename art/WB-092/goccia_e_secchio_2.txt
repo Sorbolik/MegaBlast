@@ -1,0 +1,12 @@
+Image 1 is a draft of a minigame of our cartoon game: a little devil throws a drop of molten obsidian into casting moulds hanging on the wall of a forge. Image 2 shows the STYLE of our game: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic.
+
+Draw these separate objects on plain green (#00FF00), well apart from each other, each one whole and not touching the others:
+1. THE DROP: one round drop of molten obsidian, deep violet-black (#2A1438) with a hot magenta-orange glowing core (#FF70D0 and #FF7A1A) seen through cracks, one flat white highlight, a thick black ink outline. Draw it three times in a row: round, stretched in flight (pointing right, with a short tail), squashed flat at impact.
+2. TWO SPLASHES: two small splashes of molten metal, orange-yellow drops flying outwards in a crown shape, one small and one big, flat colors and black outline.
+3. THE BUCKET: a battered old iron bucket full of cooled grey slag and a few lumps, seen from the front, dented, with a bent handle, big enough to be a target on the floor; it is where missed drops fall.
+4. A CHAIN: one straight vertical piece of iron chain of about twelve links, dark iron with black outline, to be repeated by the game; the top and bottom links are cut flat so that pieces join seamlessly.
+No letters, no numbers, no wall, no floor, no shadow on the ground, no glow halo.
+
+Riferimenti in ordine: art/WB-092/riferimenti/R1_bozza_tiro.png, art/WB-092/riferimenti/R2_bottega_oggi.png
+Variante 2. Tentativi con ImageGen: 1. Selezionato il tentativo 1. PNG ridimensionato in proporzione e centrato su tela verde da 1536×1024.
+Tre pose con volo verso destra, due schizzi, secchio e catena separati. Catena verticale; ripetizione senza cuciture non verificata. Verde campionato #03F906.

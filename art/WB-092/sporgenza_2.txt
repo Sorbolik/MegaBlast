@@ -1,0 +1,10 @@
+Image 1 is a draft of a minigame of our cartoon game: a little devil stands on a ledge at the bottom left of a forge and throws drops of molten metal. Image 2 shows the STYLE of our game: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic.
+
+Draw two separate pieces on plain green (#00FF00), well apart, each whole:
+1. THE LEDGE: a sturdy block where the little devil stands to throw, as wide as it is tall: a stack of big dark stone bricks and riveted iron plates (#3A2A24, #5D4A40, iron #3A3238), with a FLAT TOP surface (the devil stands on it) and a thin warm orange rim of light on its left side.
+2. THE FLOOR: a long low strip of the forge floor, four times wider than tall, dark stone slabs with a few iron grates glowing faintly orange, a FLAT TOP edge; its left and right ends are cut straight so the game can repeat it side by side.
+Thick black ink outline on both, flat colors. No characters, no letters, no shadow on the ground, no glow halo.
+
+Riferimenti in ordine: art/WB-092/riferimenti/R1_bozza_tiro.png, art/WB-092/riferimenti/R2_bottega_oggi.png
+Variante 2. Tentativi con ImageGen: 3. Selezionato il tentativo 3. PNG ridimensionato in proporzione e centrato su tela verde da 1536×1024.
+Due pezzi interi e staccati, con grate e piano superiore piatto. Striscia più lunga di 4:1 e giunzione non verificata. Verde campionato #04F805.

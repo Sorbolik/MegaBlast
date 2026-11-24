@@ -1,0 +1,7 @@
+Image 1 shows the layout of a minigame of our game: a little devil stands on a ledge at the bottom left and throws drops of molten metal into casting moulds hanging all over the right part of a big forge room; it only says WHERE things are. Image 2 is one background layer of our game: copy its HAND and its TONES exactly: no black outline at all, big simple flat shapes with soft gradients, very few details, dark and desaturated colors, bright colors only in the lights.
+
+Paint the FARTHEST layer of the background of that forge room, wide (3:2), filling the whole image edge to edge: the far back wall of a huge dark infernal forge hall, a deep dark warm brown-violet (#1E1219 to #3A2224), lit from the BOTTOM LEFT by the warm orange glow of a great furnace (the glow only, the furnace is in another layer) and touched in the TOP RIGHT corner by a thin cold blue-white light falling from a high cracked window of ice. Big soft shapes only: the curve of a vault, the hint of tall arches. The CENTER and the RIGHT half stay calm and dark, because the game draws moulds, chains and the flying drop there. No outlines, no characters, no objects, no letters, no frame.
+
+Riferimenti in ordine: art/WB-092/riferimenti/R4_muro_in_scala.png, client/paintings/backgrounds/forgia_medio_2.png
+Variante 2. Tentativi con ImageGen: 1. Selezionato il tentativo 1. PNG nativo da 1536×1024.
+Parete a tutta tela con archi più leggibili a sinistra e luce fredda più sottile in alto a destra.

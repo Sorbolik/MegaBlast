@@ -126,4 +126,15 @@ Approvata da Claude il 24 nov (sfondo dedicato aggiunto su richiesta di Sergio):
 
 ## Consegna di Codex
 
+- `art/WB-092/fucina_cielo_1.png`, `fucina_cielo_2.png`, `fucina_lontano_1.png`, `fucina_lontano_2.png`, `fucina_medio_1.png`, `fucina_medio_2.png`, `fucina_vicino_1.png`, `fucina_vicino_2.png` — un tentativo ciascuno.
+- `art/WB-092/sporgenza_1.png` e `sporgenza_2.png` — tre tentativi ciascuna, selezionati il secondo e il terzo rispettivamente.
+- `art/WB-092/stampi_1.png` e `stampi_2.png` — tre tentativi ciascuno, selezionato il terzo.
+- `art/WB-092/goccia_e_secchio_1.png` e `goccia_e_secchio_2.png` — due tentativi per la prima variante, selezionato il secondo; un tentativo per la seconda.
+
+Quattordici PNG da 1536×1024 e altrettanti `.txt` con prompt originali, riferimenti in ordine e note per variante. Gli otto piani hanno la misura nativa richiesta. I sei fogli di oggetti sono stati ridimensionati in proporzione e centrati su tela verde.
+
+Verificati entrambi gli insiemi di quattro piani in sovrapposizione statica. Il centro rimane calmo, con luce arancione in basso a sinistra e fredda in alto a destra. I camini più alti risalgono oltre il terzo inferiore. I fondi verdi sono vicini a #00FF00 e si discostano dal valore esatto.
+
+Le sporgenze hanno il piano superiore piatto. Le strisce di pavimento sono più lunghe del rapporto 4:1. I fogli degli stampi contengono dodici pezzi separati con le placche nell'ordine richiesto, con piccoli segni e riflessi su alcune placche. Gli stampi grandi vuoti misurano circa 252–258 px al contorno, sotto il minimo di 300 px. I due fogli degli effetti hanno le tre pose della goccia, gli schizzi, il secchio e la catena separati. Restano da verificare la ripetizione senza cuciture di pavimento e catena e la resa durante il movimento della telecamera in gioco.
+
 ## Resoconto di Claude

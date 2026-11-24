@@ -1,0 +1,7 @@
+Image 2 is one background layer of our game: copy its HAND exactly: no black outline at all, big simple flat shapes, very few details. 
+
+Paint the NEAREST layer of a dark infernal forge room, wide (3:2), on plain green (#00FF00) so it can be cut out: only near, almost black, slightly blurred shapes along the BOTTOM edge and in the two bottom corners: an anvil on the left, a heap of coal and tongs, a wooden crate on the right, a few warm sparks and a thin rim of orange light on their edges. They take at most the bottom fifth of the image. Everything else is green. No outlines, no characters, no letters.
+
+Riferimenti in ordine: art/WB-092/riferimenti/R4_muro_in_scala.png, client/paintings/backgrounds/forgia_medio_2.png
+Variante 2. Tentativi con ImageGen: 1. Selezionato il tentativo 1. PNG nativo da 1536×1024.
+Sagome basse lungo il bordo inferiore, con pochi punti arancioni. Verde campionato #02F804.

@@ -1,0 +1,7 @@
+Image 1 shows the layout of a minigame of our game: a little devil stands on a ledge at the bottom left and throws drops of molten metal into casting moulds hanging all over the right part of a big forge room. Image 2 is one background layer of our game: copy its HAND and its TONES exactly: no black outline at all, big simple flat shapes with soft gradients, few details, dark and desaturated colors.
+
+Paint the MIDDLE layer of that forge room, wide (3:2), on plain green (#00FF00) so it can be cut out: big dark wooden and iron ceiling beams crossing the TOP edge, with a few empty iron hooks hanging from them (the game hangs the moulds and chains itself); on the far LEFT a tall pillar of brick and iron with the warm glow of the furnace on it; on the far RIGHT the edge of a big hanging cauldron and a pulley. The whole middle of the image, from left to right and from the beams down to the bottom, stays EMPTY green: the flight of the drop goes there. No outlines, no moulds, no characters, no letters.
+
+Riferimenti in ordine: art/WB-092/riferimenti/R4_muro_in_scala.png, client/paintings/backgrounds/forgia_medio_2.png
+Variante 1. Tentativi con ImageGen: 1. Selezionato il tentativo 1. PNG nativo da 1536×1024.
+Tre ganci e calderone parziale sui bordi. Il centro rimane libero. Verde centrale campionato #03FA03.
