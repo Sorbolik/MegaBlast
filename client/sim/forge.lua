@@ -28,6 +28,10 @@ M.COST = 20              -- Ossidiana per pour
 M.THROWS = 3             -- throws per pour
 M.BONUS = 1              -- extra throws for a perfect pour (all hits)
 M.MISS = 20              -- Scaglie for a drop that misses (it falls in the bucket)
+-- the jackpot (Sergio, 24 Nov: «se qualcuno riempie tutti quelli di un muro ha un premio
+-- speciale»): every mould of a wall filled gives JACKPOT Scaglie, and the first time the
+-- «Jackpot della Fornace» medal (p.fornace.jackpot counts them)
+M.JACKPOT = 500
 -- what a pour is worth on average, in Scaglie of value (a fragment = 60): the
 -- design's aim, ~0.8x to 1.2x from worst to best (tools/economia/conti.lua)
 M.AVERAGE = 130
@@ -341,6 +345,7 @@ function M.init(p)
 	f.centri = f.centri or 0
 	f.colate = f.colate or 0
 	f.senza = f.senza or 0
+	f.jackpot = f.jackpot or 0
 	return p
 end
 
@@ -392,6 +397,15 @@ function M.throw(p, angle, power)
 		r.scaglie = M.MISS
 	end
 	if r.scaglie then p.scaglie = (p.scaglie or 0) + r.scaglie end
+	if r.esito == "stampo" then
+		local all = true
+		for _, m in ipairs(wall) do if not f.pieni[m.slot] then all = false; break end end
+		if all then
+			f.jackpot = f.jackpot + 1
+			p.scaglie = (p.scaglie or 0) + M.JACKPOT
+			r.jackpot, r.medal = M.JACKPOT, f.jackpot == 1 or nil
+		end
+	end
 	if f.lanci == M.THROWS and f.centri == M.THROWS then
 		f.tiri = f.tiri + M.BONUS
 		r.bonus = M.BONUS
