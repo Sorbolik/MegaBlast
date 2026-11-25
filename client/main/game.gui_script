@@ -63,7 +63,9 @@ local W, H = screen.W, screen.H
 -- the mask covers the grid, the margins beside the map too (CR.OX: where world x 0 sits)
 local TW, TH = game.GRID_W, game.WORLD_H / game.CELL
 
-local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
+-- The real server, the VPS (also editor and PC builds, Sergio 18 Nov: no local
+-- server on the PC); game.project says the same, a build may change it there
+local DEFAULT_SERVER = "ws://49.13.44.34/ws"
 -- Protocol version, equal to protocolVersion in server/server.go
 local PROTOCOL = 11
 -- The fingerprint of this build's simulation (git rev-parse HEAD:client/sim,
@@ -277,19 +279,7 @@ local function touch_device()
 end
 
 local function server_url()
-	local u
-	if sys.get_config_string then
-		u = sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
-	else
-		u = sys.get_config("megablast.server_url", DEFAULT_SERVER)
-	end
-	if html5 then
-		local h = html5.run("window.location.hostname")
-		if h and h ~= "" and h ~= "127.0.0.1" and h ~= "localhost" then
-			u = u:gsub("127%.0%.0%.1", h):gsub("localhost", h)
-		end
-	end
-	return u
+	return sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
 end
 
 -- Terrain -----------------------------------------------------------------------

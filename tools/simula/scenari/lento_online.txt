@@ -4,7 +4,6 @@
 # che guida il server e tutti gli altri, andava piano. Qui ogni frame dura 45 ms
 # in più (circa 20 FPS) e nel nostro turno i tick devono seguire l'orologio vero:
 # ogni 3 s il gioco scrive ritmo_giusto (o ritmo_lento, e lo scenario fallisce).
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_lento 45
 imposta prova_fps 1
 imposta prova_vignette no

@@ -3,7 +3,6 @@
 # contro 2, TORNA AI MENU, ALLENAMENTO contro i bot. I bot riempiono la coda
 # dopo 30 s: la partita si ferma sotto un velo con PARTITA TROVATA · 3 e si
 # annulla, poi lo schieramento della partita online.
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 1 bot_dopo=30s

@@ -2,7 +2,6 @@
 # giocatori finti: la rotellina, ESCI DALLA PARTITA, si torna alla home e il
 # server lo dice subito agli altri ("left" nel log del server, la partita dei
 # tre continua).
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 3

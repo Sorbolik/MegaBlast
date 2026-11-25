@@ -45,4 +45,4 @@ app_manifest = /megablast.appmanifest
 bundle_identifier = com.sorbolik.megablast
 
 [megablast]
-server_url = ws://127.0.0.1:8080/ws
+server_url = ws://49.13.44.34/ws

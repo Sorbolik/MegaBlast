@@ -4,7 +4,6 @@
 # insieme. Il globo in volo e il diavoletto devono andare lisci lo stesso
 # (dal 22 nov i tasti degli altri aspettano qualche tick in coda, CP.net_frame),
 # e il contatore dice RETE.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_rete 120
 imposta prova_fps 1
 aspetta 1

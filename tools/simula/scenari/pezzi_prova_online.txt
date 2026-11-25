@@ -4,7 +4,6 @@
 # server: i pezzi degli altri si prendono da quello che indossano, controllato
 # dal server (eq), come le loro statistiche. I tre finti sono profili di prova
 # coi quattro pezzi del Leviatano al 30 (entrano prima di noi: siamo Blu 2).
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_vignette no
 
 aspetta 3

@@ -4,7 +4,6 @@
 # in uno di quei frame si perdeva (CP.net_frame), e così il salto toccato e gli
 # oggetti. Qui lo schermo va senza vsync (nel simulatore 70-80 fps: abbastanza
 # perché alcuni frame non abbiano tick) e si spara con la levetta in tre turni.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta comandi telefono
 imposta prova_hz 240
 imposta prova_fps 1

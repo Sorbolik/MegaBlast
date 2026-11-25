@@ -3,7 +3,6 @@
 # anche su una rete che trattiene i messaggi fino a 120 ms. Il Rampino tirato in
 # alto si deve vedere in volo con la sua fune, poi cadere; i turni dei bot vanno
 # coi tasti che manda il server.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_rete 120
 imposta prova_vignette no
 aspetta 1

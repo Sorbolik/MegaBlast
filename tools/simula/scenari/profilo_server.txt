@@ -3,7 +3,6 @@
 # «profili: 1 nato da ...»), gioca una partita sullo stesso telefono e a fine
 # partita manda al server cosa ha fatto: il server rifà i conti con le sue
 # regole («profili: 1 da ... ha fatto partita: livello 1, ... Scaglie»).
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_identita 1
 imposta prova_durata 3
 imposta prova_vignette no

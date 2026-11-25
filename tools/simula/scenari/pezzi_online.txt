@@ -2,7 +2,6 @@
 # quattro pezzi del Corvo, i tre finti con quelli della Fornace e del Leviatano
 # (il secondo forgiato, livello 30), arrivati dal server con le vetrine. E contano:
 # il server fa le statistiche di ogni robot da quello che indossa (vita sopra 100).
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_vuoto 1
 imposta prova_famiglia corvo
 

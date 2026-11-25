@@ -3,7 +3,6 @@
 # gli eventi in corso (il Maglio con la coda sua) e il prossimo. Toccare una
 # coda la sceglie soltanto (bordo acceso, il nome accanto a GIOCA; Sergio, 16 nov):
 # parte con GIOCA (scenari/eventi.txt). Gira anche con --schermo 1600x720 e 960x720.
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 3
 server evento:maglio 0 eventi_prova.json
