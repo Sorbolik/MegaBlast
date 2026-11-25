@@ -57,6 +57,8 @@ local PED_X = 640 - PED_W / 2
 local FEET = PED_TOP + 0.17 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
+-- the weapon the apprentice holds on the home (Sergio, 25 Nov: the Lanciarune)
+local HELD = "missile"
 -- half the width of the light band that runs over the pedestal (straight and even, as
 -- the old slit: Sergio, 24 Nov, "mi piaceva lineare")
 local SHEEN_HALF = 35
@@ -159,12 +161,12 @@ function M.new(color)
 	V.x, V.y, V.z = BODY_K, BODY_K, 1
 	gui.set_scale(body_shape, V)
 	h.body_shape = body_shape
-	h.corpo, h.look, h.color = scoria.new(color, scoria.player), scoria.player, color
+	h.corpo, h.look, h.color = scoria.new(color, scoria.player, HELD), scoria.player, color
 	clock.sync(h.corpo)
 	gui.set_parent(h.corpo.root, body_shape)
 	scoria.set_enabled(h.corpo, true)
-	-- idle without a weapon, without skits (Sergio, 2 Nov)
-	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
+	-- idle with the Lanciarune in hand, as on its turn, without skits (Sergio, 25 Nov)
+	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true }
 	h.glow = 0
 	local hy = FEET - 380 - 10
 	h.hero = kit.zone(mid, h.buttons, PED_X - 10, hy, PED_W + 20, PED_BOTTOM + 6 - hy, "zaino")
@@ -424,7 +426,7 @@ function M.wear(h, p)
 	local parent = gui.get_parent(h.corpo.root)
 	local enabled = gui.is_enabled(h.corpo.root)
 	gui.delete_node(h.corpo.root)
-	h.corpo = scoria.new(h.color, scoria.player)
+	h.corpo = scoria.new(h.color, scoria.player, HELD)
 	clock.sync(h.corpo, 1)
 	gui.set_parent(h.corpo.root, parent)
 	scoria.set_enabled(h.corpo, enabled)
