@@ -30,8 +30,8 @@ local M = {}
 
 -- the times: out to the edge, across (forward and back), home again; the
 -- button slipping off the line and back on it (Sergio, 25 Nov: about a third
--- faster, from 0.30, 0.62, 0.52, 0.36, 0.14)
-M.OUT, M.ACROSS, M.ACROSS_BACK, M.IN, M.SLIP = 0.20, 0.42, 0.35, 0.24, 0.10
+-- faster, from 0.30, 0.62, 0.52, 0.36, 0.14; then «ancora leggermente più veloci»)
+M.OUT, M.ACROSS, M.ACROSS_BACK, M.IN, M.SLIP = 0.17, 0.36, 0.30, 0.20, 0.08
 M.GROW, M.SHRINK = 0.42, 0.32
 -- back home, the button's bounce toward its edge as it stops on its place
 M.BOUNCE = 14
@@ -106,7 +106,7 @@ end
 -- its ink and its orange core
 local LINE, CORE = 12, 6
 -- forward, the line comes in from the border to the shield in this time
-M.ENTER = 0.1
+M.ENTER = 0.08
 -- how much of the line lies on the page's edge, so the two are one
 M.FUSE = 0.06
 
@@ -290,10 +290,10 @@ function M.close(dp, h, change)
 		gui.animate(d.node, "position.x", d.rest.x + d.dx - d.p0 + d.back, gui.EASING_INOUTCUBIC, M.ACROSS_BACK)
 		timer.delay(M.ACROSS_BACK * reach((d.p0 - d.dx) / d.back), false, step(dp, function()
 			gui.cancel_animations(d.node, "position.x")
-			gui.animate(d.node, "position.x", d.rest.x + d.side * M.BOUNCE, gui.EASING_OUTQUAD, 0.07)
-			timer.delay(0.07, false, step(dp, function()
-				gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTQUAD, 0.20)
-				timer.delay(0.20, false, step(dp, done))
+			gui.animate(d.node, "position.x", d.rest.x + d.side * M.BOUNCE, gui.EASING_OUTQUAD, 0.06)
+			timer.delay(0.06, false, step(dp, function()
+				gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTQUAD, 0.12)
+				timer.delay(0.12, false, step(dp, done))
 			end))
 		end))
 	end))
