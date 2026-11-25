@@ -277,6 +277,9 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   COLA ANCORA (se c'è Ossidiana e il muro non è pieno) o CHIUDI. **Dopo il jackpot solo CHIUDI**
   (Sergio, 25 nov: con COLA ANCORA il muro nuovo si vedeva coi calderoni del muro vecchio): il
   muro dopo si vede nella vetrina e si cola da lì.
+  **COLA ANCORA resta sul muro** (Sergio, 25 nov: «non c'è bisogno di uscire e rientrare»): paga
+  e le gemme volano nel mestolo come a ogni colata, senza tornare alla vetrina (se intanto alle 5
+  è arrivato il muro nuovo, il riepilogo si chiude sulla vetrina).
 - **La colata va come una partita** (Sergio, 25 nov: «sensibile al calo degli FPS»): dallo zoom
   d'entrata a quello d'uscita il telefono va al massimo dello schermo (90/120 Hz), non ai 60 dei
   menù né ai 30 dopo 12 secondi senza tocchi (`forge_ui.busy`, `main/phone.lua`). La mira calcola
