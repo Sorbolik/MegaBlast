@@ -1,0 +1,11 @@
+Image 1 shows the jackpot medal of the forge of our cartoon game: a round gold medal with a raised studded rim and a drawing in relief in the middle, thick slightly irregular black ink outline, flat colors, one flat highlight. Image 2 shows the iron casting moulds of the same forge.
+
+Draw TWO MEDALS of the same family as image 1, on plain green (#00FF00), side by side and well apart, each as big as almost half the image (at least 600 px wide), round, with the same raised studded rim as image 1. In the middle of each, in relief: a drop of molten obsidian (violet-black with glowing magenta-orange cracks) bouncing between iron moulds like those of image 2, its path drawn as a zigzag line of small sparks, and at every bounce a small starburst of short gold rays, like a bell being rung.
+- on the LEFT the medal of 6 bounces: BRONZE (#C77A3A, highlight #E9A66B, shadow #8A4B1F), the zigzag with SIX bounces;
+- on the RIGHT the medal of 10 bounces: SILVER-WHITE (#D9DEE8, highlight #FFFFFF, shadow #8B93A3) with a violet obsidian inlay on the rim, the zigzag with TEN bounces, a bigger and brighter starburst.
+Nothing else: no ribbon, no letters, no numbers, no shadow on the ground, no glow halo around the medals.
+
+Riferimenti in ordine: art/WB-095/riferimenti/R1_medaglia_jackpot.png, art/WB-095/riferimenti/R2_stampi.png
+ImageGen. Ridimensionato in proporzione e centrato su tela verde da 1536×1024.
+Due tentativi, scelto il secondo per il conteggio degli stampi. Larghezza circa 725 px (bronzo) e 727 px (argento). Traiettorie in fila con 6 e 10 stampi di rintocco. Verde campionato #03FA06.
+Il fondo si discosta da #00FF00 esatto.

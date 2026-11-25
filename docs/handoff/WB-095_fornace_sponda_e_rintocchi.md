@@ -68,3 +68,12 @@ Nothing else: no ribbon, no letters, no numbers, no shadow on the ground, no glo
 ## Decisione
 
 Approvata da Claude il 24 nov sulle richieste di Sergio nella stessa giornata. Finché le immagini non ci sono il gioco usa il segnaposto per la sponda e le medaglie dei rintocchi non compaiono nel profilo (la regola le conta già).
+
+## Consegna di Codex
+
+- `art/WB-095/sponda_1.png` e `sponda_2.png`, con i rispettivi `.txt` — 1024×1536, un tentativo per variante.
+- `art/WB-095/medaglie_rintocchi_1.png` e `medaglie_rintocchi_2.png`, con i rispettivi `.txt` — 1536×1024, un tentativo per la prima variante e due per la seconda, selezionato il secondo.
+
+Prompt originali eseguiti con ImageGen e riferimenti nell'ordine indicato. I quattro PNG sono stati ridimensionati in proporzione e centrati su tela verde.
+
+Le sponde sono intere, senza terreno o scritte, con ferro rivettato e gomma rossa sul lato sinistro. Sono alte circa 1479 e 1493 px. Le sagome sono larghe circa un terzo dell'altezza rispetto al quinto previsto. In entrambi i fogli delle medaglie, il bronzo è a sinistra e l'argento a destra. Ho verificato visivamente i 6 e 10 stampi lungo le traiettorie e larghezze di 717–731 px. Il fondo verde si discosta da #00FF00. La resa sul muro e la leggibilità delle medaglie a 128 px nel profilo restano da verificare.
