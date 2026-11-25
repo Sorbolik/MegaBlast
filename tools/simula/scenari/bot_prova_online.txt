@@ -2,7 +2,6 @@
 # (livello 50) coi quattro pezzi del Corvo forgiati manda quello che indossa col
 # saluto, il server lo usa e i bot di riempimento sono vestiti come lui
 # (sim/loadout.lua dress_bots). Lo schieramento li mostra, in partita li indossano.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_test prova
 imposta prova_vuoto 2
 imposta prova_famiglia corvo

@@ -4,7 +4,6 @@
 # e la CAMPAGNA è spenta. Si va in ARMERIA (la pillola resta sopra), si torna
 # alla sala toccando la pillola, poi di nuovo ai menu. I bot arrivano dopo
 # 14 s: la pillola dice PARTITA TROVATA e dopo 3 s si va allo schieramento.
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 1 bot_dopo=14s

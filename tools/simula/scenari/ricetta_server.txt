@@ -2,7 +2,6 @@
 # la ricetta al server, che la rigioca e scrive nel suo log se torna uguale
 # (simulazione/server.txt: «ricetta da Linux ...: fisica: torna, bot: torna»).
 # Partita da 3 secondi sullo stesso telefono, un colpo a testa per due giri.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_durata 3
 imposta prova_vignette no
 

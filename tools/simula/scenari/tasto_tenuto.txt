@@ -4,7 +4,6 @@
 # turno, quindi il server la teneva ancora premuta: al nostro turno dopo il
 # robot partiva verso destra finché non si ritoccava D. Ora il server lascia
 # i tasti a ogni cambio di turno e il client rimanda il suo stato a inizio turno.
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 3

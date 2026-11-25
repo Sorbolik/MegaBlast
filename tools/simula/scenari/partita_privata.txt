@@ -4,7 +4,6 @@
 # (2 contro 2, i bot negli altri posti) mi sposto in squadra con un bot
 # (QUI), alzo il livello di un bot avversario, provo 1 contro 1 e tutti
 # contro tutti, torno al 2 contro 2 e faccio partire: schieramento e partita.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_vignette no
 
 aspetta 1

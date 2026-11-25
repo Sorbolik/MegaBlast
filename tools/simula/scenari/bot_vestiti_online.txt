@@ -6,7 +6,6 @@
 # famiglia agli stessi livelli e lo stesso livello; Rosso 2 è nudo come noi. Lo
 # schieramento li mostra già vestiti, in partita li indossano e la vita è quella
 # dei loro pezzi.
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 3
 server 2v2 1 bot_dopo=20s pezzi=leviatano

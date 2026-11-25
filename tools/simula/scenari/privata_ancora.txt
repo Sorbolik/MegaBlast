@@ -3,7 +3,6 @@
 # scelta dei bot»): CREA UNA STANZA, 1 contro 1 col bot al livello 10, VIA; il
 # bot vince (io sto fermo), podio, CONTINUA: di nuovo la stessa stanza, stesso
 # codice e stesso bot; VIA fa partire la seconda partita.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_vignette no
 
 aspetta 1

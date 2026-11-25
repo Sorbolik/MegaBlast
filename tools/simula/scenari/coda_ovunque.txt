@@ -1,6 +1,5 @@
 # La pillola della coda nuova, sotto la linea in mezzo, in ogni menu (Sergio, 15 nov:
 # «sempre quella nuova e sempre nella posizione nuova sotto la linea»).
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_profilo 1
 
 aspetta 1

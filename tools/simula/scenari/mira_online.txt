@@ -3,7 +3,6 @@
 # diavoletto punta l'arma dove sta mirando mentre pensa, e dopo al massimo
 # 2 secondi di pensiero tira (server/net.lua THINK_MAX). Chi mira davvero
 # (una persona) manda l'angolo col messaggio "aim": lo prova go test.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_vignette no
 
 aspetta 1

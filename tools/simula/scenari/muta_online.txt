@@ -3,7 +3,6 @@
 # avanti): dopo 8 secondi senza messaggi il gioco chiude e riapre la connessione da
 # solo (CP.resync) e la partita riparte da dov'è. prova_muta 8: da 8 secondi
 # dopo l'inizio i messaggi del server non arrivano più.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_muta 8
 imposta prova_vignette no
 aspetta 1
