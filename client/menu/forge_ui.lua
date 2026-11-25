@@ -855,6 +855,16 @@ local function in_purse(fx, x, y)
 	return vec(x - at.x, y - at.y)
 end
 
+-- the pour's gems: from the wallet to the ladle (phase "gems", M.update)
+local function gems(fx)
+	fx.phase, fx.t = "gems", 0
+	fx.gems = {}
+	for i = 1, forge.COST do
+		fx.gems[i] = { node = kit.piece({ node = fx.hud, ox = 0, oy = 0 }, "gemma", 0, 0, 40) }
+		gui.set_enabled(fx.gems[i].node, false)
+	end
+end
+
 local function start(a, poured)
 	local fx = a.fx
 	local p = a.prof
@@ -1204,7 +1214,15 @@ local function recap_do(a, what)
 	if not what then return end
 	fx.recap_btns = nil
 	if fx.recap then gui.delete_node(fx.recap); fx.recap = nil end
-	if what == "again" then fx.again = true end
+	-- COLA ANCORA stays on the wall (Sergio, 25 Nov: «non c'è bisogno di uscire e
+	-- rientrare»): it pays, and the gems fly into the ladle as at every pour
+	-- (the same wall only: at 5 in the morning a new one comes, and the recap closes on it)
+	if what == "again" and wall_key(a.prof) == fx.key and profile.act(a.prof, { k = "colata", muro = wall_key(a.prof) }) then
+		fx.poured = true
+		fx.got = { scaglie = 0, fr = {}, hits = 0 }
+		gems(fx)
+		return
+	end
 	close(a)
 end
 
@@ -1412,12 +1430,7 @@ function M.update(a, dt)
 			gui.set_enabled(fx.hud, true)
 			gui.move_above(fx.hud, nil)
 			if fx.poured then
-				fx.phase, fx.t = "gems", 0
-				fx.gems = {}
-				for i = 1, forge.COST do
-					fx.gems[i] = { node = kit.piece({ node = fx.hud, ox = 0, oy = 0 }, "gemma", 0, 0, 40) }
-					gui.set_enabled(fx.gems[i].node, false)
-				end
+				gems(fx)
 			else
 				fx.phase, fx.t = "shots", 0
 				throws_row(a)
@@ -1567,12 +1580,6 @@ function M.update(a, dt)
 	elseif fx.phase == "close" then
 		if moved then
 			fx.phase = "vetrina"
-			-- COLA ANCORA from the recap: the next pour, as the button of the vetrina
-			if fx.again then
-				fx.again = nil
-				M.cmd(a, "cola")
-				return true
-			end
 		end
 	end
 	follow(a, dt)

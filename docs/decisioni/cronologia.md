@@ -395,3 +395,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 25 nov | **Fornace: i tre muri del giorno si vedono** (Sergio sceglie «A e B insieme»): I MURI DI OGGI con tre stampi nella vetrina e la regola sul foglio del Fabbro. | commesse.md, ui-catalogo.md, forge_ui.lua, questa PR |
 | 25 nov | **Fornace: tornando alla home il muro esce con la pagina della BOTTEGA** (video di Sergio: restava un attimo sopra la home). | forge_ui.lua, scenario fornace_casa.txt, questa PR |
 | 25 nov | **Porte della home più veloci di circa il 40%** (Sergio, in due passi). | interfaccia.md, door_pass.lua, questa PR |
+| 25 nov | **Fornace: COLA ANCORA resta sul muro** (Sergio): niente zoom fuori e dentro, solo le gemme che volano nel mestolo. | commesse.md, forge_ui.lua, questa PR |

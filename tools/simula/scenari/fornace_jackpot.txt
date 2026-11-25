@@ -22,8 +22,10 @@ foto 01_sigillati
 trascina 300 300 330 380 0.4
 aspetta 9
 foto 02_riepilogo
-pad rt                              # COLA ANCORA
-aspetta 10
+pad rt                              # COLA ANCORA: resta sul muro, le gemme nel mestolo
+aspetta 0.8
+foto 02b_cola_ancora_le_gemme
+aspetta 9.2
 trascina 300 300 330 380 0.4
 aspetta 9
 trascina 300 300 330 380 0.4
