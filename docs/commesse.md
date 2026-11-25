@@ -192,11 +192,22 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   lontani sono piccoli e chiedono quasi tutta la forza. Mirando scegli la famiglia che ti
   serve. Le catene (degli stampi alti) per ora stanno ferme.
 - **Il muro cambia tre volte al giorno, alle 5, alle 13 e alle 21** (idea di Sergio) e
-  **ogni muro nuovo mette gli stampi in posti nuovi** (Sergio, 24 nov), diversi per ogni
-  giocatore (un seme suo): sempre staccati e tutti centrabili (il gioco lo controlla
-  quando li appende). Le famiglie cambiano e gli stampi riempiti tornano vuoti.
+  **ogni muro nuovo mette gli stampi in posti nuovi** (Sergio, 24 nov): sempre staccati e
+  tutti centrabili (il gioco lo controlla quando li appende). Le famiglie cambiano e gli
+  stampi riempiti tornano vuoti.
+- **Il muro è uguale per tutti** (Sergio, 24 nov sera: «sempre randomico, ma uguale per tutti
+  quanti, crea più unione tra la gente»): posti, premi e stampo fortunato vengono solo dal
+  muro di quel momento (`forge.wall`, seme `forge.SEED` uguale per tutti), non più da un seme
+  del giocatore.
+- **Muro specchiato metà delle volte** (Sergio, 24 nov sera): un muro su due, a caso ma uguale
+  per tutti, si vede rovesciato, con l'apprendista a destra (`forge.mirrored`). Le regole lo
+  vedono sempre da sinistra: si gira solo il disegno (e la mira, che resta giusta per il dito).
+- **La sponda in fondo** (Sergio, 24 nov sera): a destra, dopo l'ultimo stampo, un muro che si
+  raggiunge col tiro e rimanda indietro la goccia con un «toc», come una sponda di gomma
+  (`forge.BACK_X`, rende l'85% della velocità). Disegno di Codex WB-095 (sponda 2): ferro
+  rivettato con cinque cuscini di gomma rossa.
 - **Lo stampo fortunato** (Sergio, 24 nov): ogni tanto un muro ha uno stampo che dà il
-  doppio, circa un muro su 8 e di sicuro entro 15 muri (il conto dei muri senza è nel profilo). Uno
+  doppio, un muro ogni 8 di fila (uguale per tutti: sempre entro 15 muri, `forge.lucky_slot`). Uno
   stampo pieno non paga due volte: una goccia che lo prende è come il ferro, va nel secchio.
   Una colata cominciata resta sul suo muro anche se intanto il muro cambia; non si torna mai
   a un muro vecchio.
@@ -212,14 +223,27 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   ricco. I totali del muro non cambiano (`forge.ease`, `forge.by_ease`).
 - **Il jackpot del muro pieno** (Sergio, 24 nov, «Medaglia + 500 Scaglie»): chi riempie tutti
   i 12 stampi di un muro prende **500 Scaglie** ogni volta e, la prima volta, la medaglia
-  **Jackpot della Fornace** (`forge.JACKPOT`, il conto in `fornace.jackpot`). Scartati: un
+  **Jackpot della Fornace** (`forge.JACKPOT`, il conto in `fornace.jackpot`). La medaglia è un badge del profilo, d'oro, nella casella dei clienti di fiducia: si mette accanto al nome come gli altri (`orders.badges`). Scartati: un
   frammento per famiglia e una colata gratis.
+- **Le medaglie dei rintocchi** (Sergio, 24 e 25 nov): un rintocco è un colpo della goccia sul
+  ferro degli stampi nello stesso tiro (solo sugli stampi: la sponda non conta); la prima volta
+  che un tiro ne fa **6**, **8** e **10** si vince una medaglia: bronzo, acciaio, argento con
+  l'Ossidiana (`forge.KNOCKS`, il record in `fornace.rintocchi`). Nel gioco la scritta «6
+  RINTOCCHI!», la medaglia che salta fuori e la sua riga nel riepilogo; nel profilo sono badge come
+  quella del jackpot (`orders.FORGE_BADGES`). Disegni di Codex: 6 e 10 da WB-095, 8 da WB-096 (la
+  regola la conta già; la medaglia compare quando c'è il disegno). Misurato su 611.780 tiri a caso
+  su 20 muri: 6 o più circa 1 tiro su 2.900, 10 mai (il massimo è 8): Sergio la vuole lo stesso.
 - **Quando la goccia entra e quando lo stampo è preso** (Sergio, 24 nov, sulla pagina
   https://claude.ai/artifact/LcTuEFuH5XKmmmeDPgtGN2): entrando, **la fiammata**, una colonna di
   fuoco di Ossidiana dalla bocca; lo stampo preso lo chiude **un coperchio di ferro** che scende
   con sopra l'icona del premio preso. Lo stampo che si riempie di metallo non si usa più (la
   goccia è una palla). Disegni di Codex WB-094 (coperchi 1, fiammata 1, medaglia 1). Scartati: risucchio,
-  campana, incandescente e bollo.
+  campana, incandescente e bollo. Le animazioni sono quelle della pagina (Sergio, 24 nov sera:
+  «falla in quel modo»): lo schermo si scurisce un attimo, lampo caldo, colonna di fuoco con
+  scintille d'oro e viola, onda d'urto, lo stampo incandescente che trema, «CENTRO!» grande;
+  il coperchio scende quando il fuoco è finito. Il jackpot: dopo l'ultima fiammata gli stampi si
+  accendono uno dopo l'altro come lampadine, lampo, il muro trema, «JACKPOT!» enorme che
+  ondeggia, «MURO PIENO», pioggia di Scaglie e frammenti, poi la medaglia.
 - **Il riepilogo della colata** (Sergio, 24 nov): finiti i tiri, prima di uscire, una card «LA
   COLATA» con le Scaglie, i frammenti per famiglia, il tiro in più, il jackpot e la medaglia;
   COLA ANCORA (se c'è Ossidiana e il muro non è pieno) o CHIUDI.
@@ -227,7 +251,8 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   (Sergio, 24 nov: «finché non tocca terra è valido»): la goccia è una palla, la pancia e i due
   bordi di ogni stampo la fanno rimbalzare (rende metà della velocità contro il ferro) e può finire
   in un altro stampo più in basso; conta solo quando tocca terra. Uno stampo pieno è chiuso dal
-  metallo e la fa rimbalzare via (`client/sim/forge.lua`, `fly`).
+  coperchio, che la fa rimbalzare via (un cerchio sul disegno del coperchio, `forge.LID_R`;
+  Sergio, 24 nov sera: «l'hitbox del coperchio più coerente col coperchio»; `fly`).
 - **Mai zero**: una goccia fuori dagli stampi cade nel secchio (20 Scaglie). Tre centri
   su tre danno un tiro in più (uno solo per colata).
 - **Il cambio**: una colata rende in media circa **130 Scaglie di valore** (frammento = 60),

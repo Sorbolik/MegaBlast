@@ -1,6 +1,7 @@
 # Il badge dei clienti a 10 perle (Sergio, 23 nov): nel PROFILO, nella casella dopo i
 # record, i badge dei clienti (la testa esce dal cerchio, l'anello del metallo del filo);
-# un tocco lo mette accanto al nome. Col profilo di prova FINE GIOCO.
+# un tocco lo mette accanto al nome. Dopo i clienti la medaglia del jackpot della Fornace.
+# Col profilo di prova FINE GIOCO.
 imposta prova_test prova
 
 aspetta 4
@@ -10,3 +11,6 @@ foto 01_profilo_badge_clienti
 tocca_bordo 613 514 alto sinistra   # il primo badge dei clienti
 aspetta 0.6
 foto 02_badge_scelto
+tocca_bordo 772 506 alto sinistra   # la medaglia del jackpot della Fornace (WB-094)
+aspetta 0.6
+foto 03_medaglia_jackpot_scelta

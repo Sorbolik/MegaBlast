@@ -26,6 +26,12 @@ images {
   image: "/assets/fornace/medaglia_jackpot.png"
 }
 images {
+  image: "/assets/fornace/medaglia_rintocchi_10.png"
+}
+images {
+  image: "/assets/fornace/medaglia_rintocchi_6.png"
+}
+images {
   image: "/assets/fornace/pavimento.png"
 }
 images {
@@ -33,6 +39,15 @@ images {
 }
 images {
   image: "/assets/fornace/secchio.png"
+}
+images {
+  image: "/assets/fornace/sponda_piede.png"
+}
+images {
+  image: "/assets/fornace/sponda_tratto_1.png"
+}
+images {
+  image: "/assets/fornace/sponda_tratto_2.png"
 }
 images {
   image: "/assets/fornace/sporgenza.png"

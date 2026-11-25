@@ -560,7 +560,16 @@ images {
   image: "/assets/fucina/medaglia_bronzo.png"
 }
 images {
+  image: "/assets/fucina/medaglia_jackpot.png"
+}
+images {
   image: "/assets/fucina/medaglia_oro.png"
+}
+images {
+  image: "/assets/fucina/medaglia_rintocchi_10.png"
+}
+images {
+  image: "/assets/fucina/medaglia_rintocchi_6.png"
 }
 images {
   image: "/assets/fucina/medaglia_vuota.png"

@@ -20,3 +20,6 @@ ffmpeg -y -loglevel error -f lavfi -i "aevalsrc=0.7*sin(2*PI*(70*t+12*(1-exp(-t/
 ffmpeg -y -loglevel error -f lavfi -i "aevalsrc=(0.6*sin(2*PI*1175*t)*exp(-t/0.11)+0.25*sin(2*PI*2350*t)*exp(-t/0.05))*min(1\,t/0.003):d=0.3:s=44100" -af "alimiter=limit=0.8" $Q "$OUT/xp.ogg"
 # livello: arpeggio in alto (do-mi-sol-do) che resta come accordo, il salto di livello
 ffmpeg -y -loglevel error -f lavfi -i "aevalsrc=gte(t\,0)*0.4*sin(2*PI*523*t)*exp(-t/0.5)+gte(t\,0.09)*0.4*sin(2*PI*659*t)*exp(-(t-0.09)/0.5)+gte(t\,0.18)*0.4*sin(2*PI*784*t)*exp(-(t-0.18)/0.5)+gte(t\,0.27)*(0.5*sin(2*PI*1047*t)+0.2*sin(2*PI*2093*t))*exp(-(t-0.27)/0.6):d=1.3:s=44100" -af "alimiter=limit=0.85" $Q "$OUT/livello.ogg"
+# toc: la goccia che sbatte sul muro in fondo alla Fornace (Sergio, 24 nov: «un toc, come se
+# sbattesse su della plastica che rimbalza»): un tocco cavo e corto che scende un poco di tono
+ffmpeg -y -loglevel error -f lavfi -i "aevalsrc=(0.8*sin(2*PI*(520*t-900*t*t))*exp(-t/0.035)+0.3*sin(2*PI*1150*t)*exp(-t/0.015)+0.25*(random(0)*2-1)*exp(-t/0.004))*min(1\,t/0.001):d=0.16:s=44100" -af "alimiter=limit=0.85" $Q "$OUT/toc.ogg"

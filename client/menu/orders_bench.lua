@@ -120,6 +120,9 @@ function M.fill(p, real)
 			end
 		end
 	end
+	-- the Forge's jackpot already won once: its medal on the sheet
+	require("sim.forge").init(p)
+	p.fornace.jackpot = math.max(1, p.fornace.jackpot or 0); p.fornace.rintocchi = math.max(10, p.fornace.rintocchi or 0)
 	return true
 end
 

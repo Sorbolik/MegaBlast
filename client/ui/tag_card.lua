@@ -126,9 +126,22 @@ function M.client_badge(id, grade, x, y, d, parent)
 	return root_node
 end
 
+-- A Forge's medal (the jackpot's, WB-094; the knocks', WB-095): the medal itself, d
+-- wide (fornace_jackpot: medaglia_jackpot, fornace_rintocchi_6: medaglia_rintocchi_6)
+function M.forge_badge(id, x, y, d, parent)
+	local name = "medaglia_" .. id:sub(#"fornace_" + 1)
+	local m = P[name]
+	local n = gui.new_box_node(vec(x, y), vec(d * 1.08, d * 1.08 * m.h / m.w))
+	gui.set_texture(n, "fucina")
+	gui.play_flipbook(n, name)
+	gui.set_parent(n, parent)
+	return n
+end
+
 -- A badge: the stat's shape in the grade's color, with the grade written inside
 -- (a client's: M.client_badge)
 function M.badge(b, x, y, d, parent)
+	if b.id:match("^fornace_") then return M.forge_badge(b.id, x, y, d, parent) end
 	local cl = b.id:match("^cl_(%a+)$")
 	if cl then return M.client_badge(cl, b.grado, x, y, d, parent) end
 	local s = milestones.BY_ID[b.id]

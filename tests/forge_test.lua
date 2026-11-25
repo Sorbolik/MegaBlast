@@ -30,12 +30,12 @@ end
 
 -- an angle and power for each mould of a wall (the first found), and the least
 -- power that reaches each one
-local function aims(wall)
+local function aims(wall, full)
 	local out, least = {}, {}
 	for deg = 5, 85, 1 do
 		for pw = 20, 100 do
 			local a, w = math.rad(deg), pw / 100
-			local r = forge.fly(a, w, wall, {})
+			local r = forge.fly(a, w, wall, full or {})
 			if r.esito == "stampo" then
 				out[r.slot] = out[r.slot] or { a, w }
 				least[r.slot] = math.min(least[r.slot] or 1, w)
@@ -75,8 +75,13 @@ check(places > 60, "a ogni muro gli stampi cambiano posto (" .. places .. " post
 check(strongest > 0.8 and strongest <= 1, "il più lontano chiede quasi tutta la forza (" .. strongest .. ")")
 check(forge.key(TODAY, 0) == TODAY .. "#0" and forge.key(TODAY, 8) == TODAY .. "#1" and forge.key(TODAY, 23) == TODAY .. "#2",
 	"tre muri al giorno (5, 13, 21)")
-local wa, wb = forge.layout(TODAY .. "#0", 1), forge.layout(TODAY .. "#0", 2)
-check(wa[1].x ~= wb[1].x or wa[1].y ~= wb[1].y, "ogni giocatore ha i suoi muri")
+local pa, pb = new(), new()
+pa.nome, pb.nome = "uno", "due"
+local wa, wb = forge.wall(pa, TODAY .. "#0"), forge.wall(pb, TODAY .. "#0")
+check(wa == wb, "il muro è uguale per tutti")
+local mir = 0
+for d = 1, 28 do for s = 0, 2 do if forge.mirrored(string.format("2026-12-%02d#%d", d, s)) then mir = mir + 1 end end end
+check(mir > 25 and mir < 60, "circa metà dei muri specchiati (" .. mir .. " su 84)")
 check(forge.fly(math.rad(45), 0.1, wa, {}).esito == "secchio", "una goccia corta cade nel secchio")
 
 -- the drop is a ball: it bounces off the iron and still counts until it touches
@@ -99,6 +104,17 @@ do
 		end
 	end
 	check(ended, "ogni goccia finisce, a terra o in uno stampo")
+	-- the back wall: reachable, it sends the drop back (sometimes into a mould)
+	local walled, walled_in, most = 0, 0, 0
+	for deg = 5, 85 do
+		for pw = 10, 100, 2 do
+			local r = forge.fly(math.rad(deg), pw / 100, wa, {})
+			if r.sponde > 0 then walled = walled + 1; if r.esito == "stampo" then walled_in = walled_in + 1 end end
+			most = math.max(most, r.rimbalzi)
+		end
+	end
+	check(walled > 20 and walled_in > 0, "il muro in fondo rimbalza la goccia (" .. walled .. " tiri, " .. walled_in .. " poi in uno stampo)")
+	check(most >= 4, "tanti rintocchi in un tiro sono possibili (al più " .. most .. ")")
 	check(bounced > 50, "la goccia rimbalza sul ferro (" .. bounced .. " tiri)")
 	check(bounced_in > 5, "e dopo un rimbalzo può entrare in uno stampo (" .. bounced_in .. " tiri)")
 	-- a full mould is closed: the drop bounces off its metal
@@ -117,12 +133,15 @@ do
 	end
 end
 
--- the lucky mould: about one wall in 8, for sure within 15
+-- the lucky mould: one wall in 8, for sure within 15 (the same for everyone: every
+-- wall of 2027 in a row)
 do
 	local q = new(1e6)
+	local keys, LEN = {}, { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+	for mo = 1, 12 do for d = 1, LEN[mo] do for s = 0, 2 do keys[#keys + 1] = string.format("2027-%02d-%02d#%d", mo, d, s) end end end
 	local gaps, last, lucky, worst = 0, 0, 0, 0
 	for i = 1, 400 do
-		local key = string.format("2027-%02d-%02d#%d", 1 + math.floor(i / 84) % 12, 1 + math.floor(i / 3) % 28, i % 3)
+		local key = keys[i]
 		if key > q.fornace.muro then
 			forge.pour(q, key, key:sub(1, 10))
 			if q.fornace.fortunato then
@@ -174,6 +193,7 @@ AIMS = aims(forge.wall(p, TODAY .. "#2"))
 -- three hits out of three: one throw more
 for _, i in ipairs({ 3, 5, 8 }) do r = forge.throw(p, AIMS[i][1], AIMS[i][2]) end
 check(r.bonus == 1 and p.fornace.tiri == 1, "tre centri su tre: un tiro in più")
+AIMS = aims(forge.wall(p, TODAY .. "#2"), p.fornace.pieni)
 r = forge.throw(p, AIMS[10][1], AIMS[10][2])
 check(r.esito == "stampo" and not r.bonus and p.fornace.tiri == 0, "il tiro in più si gioca, una volta sola")
 
@@ -193,6 +213,17 @@ local before = p.scaglie or 0
 r = forge.throw(p, ja[1], ja[2])
 check(r.jackpot == forge.JACKPOT and r.medal and p.fornace.jackpot == 1
 	and p.scaglie == before + jw[1].scaglie + forge.JACKPOT, "muro pieno: jackpot e medaglia la prima volta")
+local medal
+for _, b in ipairs(orders.badges(p)) do if b.id == orders.JACKPOT_BADGE then medal = b end end
+local milestones = require "sim.milestones"
+check(medal and milestones.valid(medal) and not milestones.valid({ id = orders.JACKPOT_BADGE, grado = 4 }),
+	"la medaglia del jackpot è un badge del profilo (oro)")
+p.fornace.rintocchi = 8
+local ids = {}
+for _, b in ipairs(orders.badges(p)) do ids[b.id] = milestones.valid(b) and b.grado end
+check(ids.fornace_rintocchi_6 == 1 and not ids.fornace_rintocchi_10
+	and milestones.valid({ id = "fornace_rintocchi_10", grado = 4 }) and not milestones.valid({ id = "fornace_rintocchi_6", grado = 2 }),
+	"le medaglie dei rintocchi sono badge del profilo, una misura sola ciascuna")
 
 -- melting
 p = new()
