@@ -522,6 +522,9 @@ local function make_world(a)
 	fx.tags, fx.moulds, fx.seals = {}, {}, {}
 	fx.parts, fx.trembles, fx.timers = nil, nil, nil
 	fx.top = empty(nil, 0, 0)
+	-- one of the screen's top nodes: the home's door drags it with the page (ui/door_pass.lua;
+	-- left out, the wall stayed on the home for a moment: Sergio's video, 25 Nov)
+	if kit.tracking then kit.tracking[#kit.tracking + 1] = fx.top end
 	fx.clip = box(fx.top, 0, 0, 10, 10)
 	gui.set_color(fx.clip, KC.SOOT)
 	gui.set_clipping_mode(fx.clip, gui.CLIPPING_MODE_STENCIL)
