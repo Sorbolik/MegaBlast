@@ -35,7 +35,9 @@ local GIOCATORI = {
 local TEMPI = {
 	primo_scatto = { 4, 8 },
 	pezzo = { 100, 160 },
-	pezzo_commesse = { 95, 130 },
+	-- (Sergio, 25 nov: colata a 15 Ossidiana, 30 Scaglie a ogni goccia anche a segno:
+	-- ~88 ore, «va bene così»)
+	pezzo_commesse = { 85, 130 },
 	livello_max = { 320, 420 },
 }
 

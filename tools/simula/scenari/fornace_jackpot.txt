@@ -1,6 +1,7 @@
 # La Fornace: tre colate da 3 su 3 (4 tiri ciascuna, con prova_fornace_centra ogni tiro va
 # nello stampo vuoto più vicino) riempiono i 12 stampi del muro: il JACKPOT, la medaglia la
 # prima volta, il riepilogo della colata; COLA ANCORA dal riepilogo (SPARA, rt) e CHIUDI (b).
+# Dopo il jackpot in vetrina c'è il secondo muro del giorno (MURO 2 DI 3, premi x1,25).
 imposta prova_test prova
 imposta prova_fornace_centra 1
 
@@ -89,4 +90,4 @@ aspetta 3.5
 foto 05_riepilogo_col_jackpot
 pad b                               # CHIUDI
 aspetta 3
-foto 06_muro_pieno_in_vetrina
+foto 06_muro_2_in_vetrina
