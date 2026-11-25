@@ -647,16 +647,37 @@ local function shelf(a, g, key)
 	kit.text(c, T.of_total:format(coins.format(total)), x + w - PAD, y + 102, 17, KC.MUTE, "end")
 	kit.heading(c, T.fragments, ix, y + 146, KC.MUTE)
 	for i, set in ipairs(equip.SETS) do
-		local ry = y + 158 + (i - 1) * 38
+		local ry = y + 158 + (i - 1) * 35
 		local n = fr[set.id] or 0
 		local icon = kit.piece(c, "frammento_" .. set.id, ix + 15, ry + 17, 30)
 		if n == 0 then gui.set_color(icon, DIM) end
 		kit.text(c, set.name, ix + 38, ry + 24, 17, n > 0 and color_of(set.id) or KC.MUTE, "start", 0.5)
 		kit.text(c, "x" .. n, x + w - PAD, ry + 25, 20, n > 0 and KC.SAND or KC.MUTE, "end")
 	end
-	kit.rect(c, ix, y + 368, iw, 2, KC.LINE)
-	kit.heading(c, T.new_wall, ix, y + 400, KC.MUTE)
-	a.fx.timer = kit.text(c, until_next(), ix, y + 444, 34, KC.SAND, "start")
+	-- the walls of today (Sergio, 25 Nov, proposal A): three moulds, the full ones with
+	-- their lid, the one of now glowing with its multiplier, the next ones dark
+	kit.rect(c, ix, y + 340, iw, 2, KC.LINE)
+	kit.heading(c, T.today, ix, y + 368, KC.MUTE)
+	local now = forge.level(key)
+	local done_now = forge.full(p, key)
+	for i = 0, forge.WALLS - 1 do
+		local cx, bottom, w = ix + 30 + i * 74, y + 432, 44
+		local state = (i < now or (i == now and done_now)) and "done" or i == now and "now" or "next"
+		local gx, gy = cx - c.ox, c.oy - bottom
+		local n = piece(c.node, "stampo_grandi_vuoti_ferro", gx, gy, w * IMG_W, gui.PIVOT_S)
+		if state == "now" then
+			-- hot, as a mould glows when it is hit (glow: its own drawing added in ember)
+			local h = piece(c.node, "stampo_grandi_vuoti_ferro", gx, gy, w * IMG_W, gui.PIVOT_S)
+			gui.set_blend_mode(h, gui.BLEND_ADD)
+			gui.set_color(h, vmath.vector4(EMBER.x, EMBER.y, EMBER.z, 0.6))
+		end
+		if state == "next" then gui.set_color(n, vmath.vector4(0.38, 0.36, 0.38, 1)) end
+		if state == "done" then piece(c.node, "coperchio_grandi", gx, gy + (RIM + LID_Y) * w, w * LID_W, gui.PIVOT_S) end
+		local label = state == "done" and T.wall_full_short or ("x" .. (tostring(forge.LEVELS[i + 1]):gsub("%.", ",")))
+		kit.text(c, label, cx, y + 450, 15, state == "now" and KC.HOT or KC.MUTE, "middle", 0.5)
+	end
+	kit.text(c, T.new_wall, ix, y + 476, 15, KC.MUTE, "start", 0.5)
+	a.fx.timer = kit.text(c, until_next(), x + w - PAD, y + 478, 24, KC.SAND, "end")
 	a.fx.timer_text = until_next()
 	return left
 end
@@ -738,8 +759,9 @@ function M.board(a)
 		if m.lucky and not (key == f.muro and f.pieni[m.slot]) then lucky = true end
 	end
 	local paper = panel(a.mid, PAPER.x, PAPER.y, PAPER.w, PAPER.h, "carta")
-	kit.text(paper, T.rule, PAPER.x + 24, PAPER.y + 46, 24, KC.INK, "start")
-	fit(kit.text(paper, lucky and T.rule_lucky or T.rule_sub:format(forge.THROWS, forge.THROWS), PAPER.x + 24, PAPER.y + 76, 18,
+	-- (Sergio, 25 Nov, proposal B: the Smith's paper says the walls of the day)
+	fit(kit.text(paper, T.rule_walls:format(forge.WALLS), PAPER.x + 24, PAPER.y + 46, 22, KC.INK, "start"), PAPER.w - 48)
+	fit(kit.text(paper, lucky and T.rule_lucky or T.rule_walls_sub, PAPER.x + 24, PAPER.y + 76, 17,
 		lucky and vmath.vector4(0.66, 0.28, 0.05, 1) or PAPER_MUTE, "start"), PAPER.w - 48)
 	local left = shelf(a, a.rt, key)
 	-- the band: FONDI I FRAMMENTI, and COLA (TIRA while throws are left)

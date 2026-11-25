@@ -199,6 +199,11 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   alle 5 di mattina si riparte dal primo muro nuovo (anche se eri a metà). I premi crescono:
   **x1, x1,25, x1,5** (Scaglie arrotondate a 5, frammenti 8, 10, 12), e il **jackpot 500, 750,
   1000** (`forge.LEVELS`, `forge.JACKPOTS`, `forge.current`). I tre muri sono uguali per tutti.
+  **Nel gioco si vede così** (Sergio, 25 nov, «A e B insieme»): nella vetrina, sotto i frammenti,
+  «I MURI DI OGGI» con tre stampi (quello pieno col coperchio e PIENO, quello di adesso
+  incandescente col suo premio, quelli dopo spenti) e «NUOVI FRA» col conto alla rovescia; sul
+  foglio del Fabbro «3 muri al giorno: riempi questo e si apre il prossimo.» e sotto i premi e
+  l'ora del nuovo giro (alle 5 di mattina).
   **Ogni muro nuovo mette gli stampi in posti nuovi** (Sergio, 24 nov): sempre staccati e
   tutti centrabili **con un tiro diretto, senza rimbalzi** (Sergio, 25 nov; il gioco lo
   controlla quando li appende, con la grandezza vera di ogni stampo, e sposta quello che non si

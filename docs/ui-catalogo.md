@@ -153,6 +153,7 @@ sotto una cornice a stampo (in vetrina la cornice del muro, mentre si tira tutto
 |---|---|---|
 | i disegni di Codex WB-092 e WB-093 nell'atlante `fornace` (`client/menu/fornace.atlas`, con le mipmap: si vede a tanti zoom) e i dipinti `client/paintings/fornace/` (`tools/grafica/fornace.py`; da vicino, nella colata, i dipinti si avvicinano solo fino ai loro pixel: mai ingranditi) | FORNACE | ✅ |
 | il cartellino del premio sopra lo stampo: l'icona (scaglia o frammento della famiglia) e il numero, sempre grandi uguali sullo schermo; lo stampo fortunato col numero oro e DOPPIO | FORNACE | ✅ |
+| I MURI DI OGGI nella vetrina: tre stampi piccoli in fila (pieno col coperchio e PIENO, quello di adesso incandescente come lo stampo colpito, quelli dopo spenti) col premio sotto, e NUOVI FRA col conto alla rovescia; sul foglio del Fabbro la regola dei tre muri | FORNACE | ✅ |
 | i TIRI in alto a sinistra: una goccia per tiro, quelle usate spente | FORNACE | ✅ |
 | la mira: la stessa della battaglia, disegno e conti (`battle/aim.lua`: lancetta, numeri, dal dito ad angolo e forza; col controller la levetta di mira e SPARA di `battle/sticks.lua`) più i puntini del primo tratto del volo | FORNACE | ✅ |
 | la levetta di mira del telefono: lo stesso pezzo della battaglia (`battle/stick_pad.lua`, disco velato col bordo azzurro, rosso quando lasciando si tira), in basso a destra | FORNACE, BATTAGLIA | ✅ |
