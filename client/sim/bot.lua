@@ -957,6 +957,7 @@ end
 
 -- The thinking: picks the move of the moment. Puts the best found so far in
 -- b.scelta, so if time runs short that one is used.
+local with_reply
 local function think(b, g)
 	local me = g.robots[b.id]
 	b.peril = hazards.risk(g)
@@ -1013,6 +1014,17 @@ local function think(b, g)
 	end
 	table.sort(moves, ranks_before)
 	b.scelta = moves[1]
+	-- arena only (pesi.risposta = K; Sergio, 25 Nov: how much is seeing the
+	-- future worth?): the best K moves are judged after the next enemy's
+	-- reply, played on the copy by a bot with the same weights
+	if b.pesi.risposta then
+		for i = 1, math.min(b.pesi.risposta, #moves) do
+			local m = moves[i]
+			if m.arma ~= "hook" then m.punti = with_reply(b, g, m) - (m.posto.n or 0) * b.pesi.strada end
+		end
+		table.sort(moves, ranks_before)
+		b.scelta = moves[1]
+	end
 
 	-- if there is nothing good on foot, the teleport to a better spot
 	-- (not with plan poi = "teletrasporto": the orb is for fleeing)
@@ -1101,6 +1113,45 @@ local function think(b, g)
 	if overrides.manca and m and not game.TOOLS[m.arma] and b.attacks % 2 == 0 then
 		m.ang = missing_angle(b, g, m)
 	end
+end
+
+-- The move m on a copy, then the next enemy's turn as a bot with the same
+-- weights would play it (thinking without limits): what it is all worth
+local function fire_on(w, id, m)
+	at_spot(w, id, m.posto)
+	local fire = { weapon = m.arma, angle = m.ang, power = m.potenza }
+	if game.TOOLS[m.arma] then w:use_tool(m.arma, fire) else w:attack(m.arma, fire) end
+end
+
+with_reply = function(b, g, m)
+	local w = M.world(g)
+	w.score = b.pesi.punteggio or g.score
+	fire_on(w, b.id, m)
+	until_quiet(b, w, 5 * 60)
+	local team, e = g.robots[b.id].team, nil
+	for k = 1, #w.order do
+		local id = w.order[(w.order_pos + k - 1) % #w.order + 1]
+		local r = w.robots[id]
+		if r and not r.dead and r.team ~= team then
+			e = id
+			break
+		end
+	end
+	if not e then return (value(b, g, w)) end
+	w.current, w.phase, w.timer, w.window = e, "aim", game.TURN_TICKS, 0
+	w.used = { primary = false, secondary = false, tool = false }
+	local ob = M.new(e, b.livello, 1, b.pesi)
+	ob.pesi.risposta = nil
+	ob.liv = copy(ob.liv)
+	ob.liv.lavoro = math.huge
+	ob.inizio = w.tick
+	think(ob, w)
+	local s = ob.scelta
+	if not s or s.arma == "teleport" then return (value(b, g, w)) end
+	local w2 = M.world(w)
+	fire_on(w2, e, s)
+	until_quiet(b, w2, 5 * 60)
+	return (value(b, g, w2))
 end
 
 -- Cover: once the attacks are over, the time left is used to get safe from
@@ -1218,6 +1269,11 @@ function M.new(id, livello, seed, weights, personality)
 		if k ~= "piano" then p[k] = v end
 	end
 	for k, v in pairs(weights or {}) do p[k] = v end
+	-- arena only: pesi.liv changes the level's numbers (mira = 0: perfect aim)
+	if p.liv then
+		overrides = copy(overrides)
+		for k, v in pairs(p.liv) do overrides[k] = v end
+	end
 	-- own_plan: the personality's plan, for the turns that have no other
 	return { id = id, livello = livello, liv = overrides, pesi = p, rng = generator((seed or 1) * 7919 + id), lavoro = 0,
 		attacks = 0, own_plan = feat.piano }
