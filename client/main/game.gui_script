@@ -23,6 +23,7 @@ local replay = require "sim.replay"
 local netkeys = require "sim.netkeys"
 -- the screens outside the battle, in a single table: the gui_script is close
 -- to Lua's limit of 200 local variables
+local forge_ui = require "menu.forge_ui"
 local menu = { podium = require "menu.podium", armory = require "menu.armory", pick = require "menu.pick",
 	training = require "menu.training", level_end = require "menu.level_end", campaign = require "menu.campaign",
 	settings = require "menu.settings", board = require "menu.board", queue = require "menu.queue",
@@ -5202,7 +5203,9 @@ function update(self, dt)
 		while socket.gettime() < stop do end
 	end
 	phone.vibration(profile.setting(self.profilo, "vibrazione") == "accesa")
-	phone.update(dt, self.mode == "local" or self.mode == "online" or self.mode == "replay" or self.mode == "ended")
+	-- (the Fornace's pour runs like a match: menu.forge_ui.busy)
+	phone.update(dt, self.mode == "local" or self.mode == "online" or self.mode == "replay" or self.mode == "ended"
+		or forge_ui.busy)
 	if screen.update() then arrange(self) end
 	self.vign:update(dt)
 	if self.ingresso then CP.entry_update(self, dt) end

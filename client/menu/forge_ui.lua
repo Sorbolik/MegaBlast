@@ -1158,9 +1158,17 @@ function recap(a)
 	for _, m in ipairs(forge.wall(p, wall_key(p))) do if not f.pieni[m.slot] or f.muro ~= wall_key(p) then left = left + 1 end end
 	local can = left > 0 and (p.ossidiana or 0) >= forge.COST and profile.can_spend()
 	local by, bw, bh = y0 + h - 84, (RECAP_W - 72) / 2, 60
-	kit.secondary(g, T.recap_again, x0 + 28, by, bw, bh, { main = true, off = not can, icon = "gemma" })
-	kit.secondary(g, T.recap_close, x0 + 44 + bw, by, bw, bh)
-	fx.recap_btns = { { x = x0 + 28, y = by, w = bw, h = bh, cmd = can and "again" or nil }, { x = x0 + 44 + bw, y = by, w = bw, h = bh, cmd = "close" } }
+	if got.jackpot then
+		-- after the jackpot only CHIUDI (Sergio, 25 Nov): the next wall of the day is
+		-- shown in the vetrina, a new pour starts from there
+		local cw = RECAP_W - 56
+		kit.secondary(g, T.recap_close, x0 + 28, by, cw, bh)
+		fx.recap_btns = { { x = x0 + 28, y = by, w = cw, h = bh, cmd = "close" } }
+	else
+		kit.secondary(g, T.recap_again, x0 + 28, by, bw, bh, { main = true, off = not can, icon = "gemma" })
+		kit.secondary(g, T.recap_close, x0 + 44 + bw, by, bw, bh)
+		fx.recap_btns = { { x = x0 + 28, y = by, w = bw, h = bh, cmd = can and "again" or nil }, { x = x0 + 44 + bw, y = by, w = bw, h = bh, cmd = "close" } }
+	end
 	gui.set_scale(root, vmath.vector3(0.9, 0.9, 1))
 	gui.animate(root, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3)
 	gui.move_above(fx.hud, nil)
@@ -1287,7 +1295,10 @@ local function draw_aim(a)
 	local p = a.prof
 	local f = p.fornace
 	local wall = forge.wall(p, f.muro)
-	local _, path = forge.fly(fx.angle, fx.power, wall, f.pieni, true)
+	-- (only the ticks the dots can use: to the top, from the throw's speed, and past it)
+	local _, _, _, vy0 = forge.launch(fx.angle, fx.power)
+	local top_t = math.max(0, vy0) / (game.GRAVITY * game.MISSILE_GRAVITY * game.DT)
+	local _, path = forge.fly(fx.angle, fx.power, wall, f.pieni, true, math.floor(top_t * DOTS_PAST) + 3)
 	fx.pts = fx.pts or {}
 	-- up to the top and a little past it, fading there (Sergio, 24 Nov); never past
 	-- the first bounce
@@ -1336,6 +1347,7 @@ end
 
 -- Every frame: true when the armory must be made again
 function M.update(a, dt)
+	M.busy = M.playing(a)
 	local fx = a.fx
 	if not fx then return false end
 	local p = a.prof
@@ -1679,9 +1691,14 @@ function M.playing(a)
 	return a.fx ~= nil and a.fx.phase ~= "vetrina"
 end
 
+-- Is a pour on screen, from the zoom in to the zoom out (Sergio, 25 Nov: the
+-- minigame at the screen's best, 90/120 Hz, like a match: main/phone.lua)
+M.busy = false
+
 -- leaving the FORNACE tab: the world goes; the paintings stay while in the BOTTEGA
 -- (keep), so the tab opens without decoding them again
 function M.release(a, keep)
+	M.busy = false
 	drop_world(a)
 	a.melt = nil
 	if keep then return end
