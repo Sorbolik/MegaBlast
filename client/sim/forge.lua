@@ -436,8 +436,10 @@ end
 -- rimbalzi (the knocks on the moulds' iron: the «rintocchi»), sponde (on the back
 -- wall) } and, when points is true, the drop's positions tick by tick (for drawing)
 -- and the ticks of the bounces (path.hits, and path.walls for the back wall).
+-- upto (drawing only): stop after so many ticks (the aim's dots need only the
+-- start: the whole flight every frame of the aim was ~900 tables a frame)
 local NONE = {}
-function M.fly(angle, power, wall, full, points)
+function M.fly(angle, power, wall, full, points, upto)
 	full = full or {}
 	local x, y, vx, vy = M.launch(angle, power)
 	local g = game.GRAVITY * game.MISSILE_GRAVITY
@@ -456,7 +458,7 @@ function M.fly(angle, power, wall, full, points)
 		wall.box = box
 	end
 	local dt, abs = game.DT, math.abs
-	for t = 1, M.MAX_TICKS do
+	for t = 1, upto or M.MAX_TICKS do
 		vy = vy - g * dt
 		local nx, ny = x + vx * dt, y + vy * dt
 		local hit = false

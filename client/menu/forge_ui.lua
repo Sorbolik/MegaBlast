@@ -647,16 +647,37 @@ local function shelf(a, g, key)
 	kit.text(c, T.of_total:format(coins.format(total)), x + w - PAD, y + 102, 17, KC.MUTE, "end")
 	kit.heading(c, T.fragments, ix, y + 146, KC.MUTE)
 	for i, set in ipairs(equip.SETS) do
-		local ry = y + 158 + (i - 1) * 38
+		local ry = y + 158 + (i - 1) * 35
 		local n = fr[set.id] or 0
 		local icon = kit.piece(c, "frammento_" .. set.id, ix + 15, ry + 17, 30)
 		if n == 0 then gui.set_color(icon, DIM) end
 		kit.text(c, set.name, ix + 38, ry + 24, 17, n > 0 and color_of(set.id) or KC.MUTE, "start", 0.5)
 		kit.text(c, "x" .. n, x + w - PAD, ry + 25, 20, n > 0 and KC.SAND or KC.MUTE, "end")
 	end
-	kit.rect(c, ix, y + 368, iw, 2, KC.LINE)
-	kit.heading(c, T.new_wall, ix, y + 400, KC.MUTE)
-	a.fx.timer = kit.text(c, until_next(), ix, y + 444, 34, KC.SAND, "start")
+	-- the walls of today (Sergio, 25 Nov, proposal A): three moulds, the full ones with
+	-- their lid, the one of now glowing with its multiplier, the next ones dark
+	kit.rect(c, ix, y + 340, iw, 2, KC.LINE)
+	kit.heading(c, T.today, ix, y + 368, KC.MUTE)
+	local now = forge.level(key)
+	local done_now = forge.full(p, key)
+	for i = 0, forge.WALLS - 1 do
+		local cx, bottom, w = ix + 30 + i * 74, y + 432, 44
+		local state = (i < now or (i == now and done_now)) and "done" or i == now and "now" or "next"
+		local gx, gy = cx - c.ox, c.oy - bottom
+		local n = piece(c.node, "stampo_grandi_vuoti_ferro", gx, gy, w * IMG_W, gui.PIVOT_S)
+		if state == "now" then
+			-- hot, as a mould glows when it is hit (glow: its own drawing added in ember)
+			local h = piece(c.node, "stampo_grandi_vuoti_ferro", gx, gy, w * IMG_W, gui.PIVOT_S)
+			gui.set_blend_mode(h, gui.BLEND_ADD)
+			gui.set_color(h, vmath.vector4(EMBER.x, EMBER.y, EMBER.z, 0.6))
+		end
+		if state == "next" then gui.set_color(n, vmath.vector4(0.38, 0.36, 0.38, 1)) end
+		if state == "done" then piece(c.node, "coperchio_grandi", gx, gy + (RIM + LID_Y) * w, w * LID_W, gui.PIVOT_S) end
+		local label = state == "done" and T.wall_full_short or ("x" .. (tostring(forge.LEVELS[i + 1]):gsub("%.", ",")))
+		kit.text(c, label, cx, y + 450, 15, state == "now" and KC.HOT or KC.MUTE, "middle", 0.5)
+	end
+	kit.text(c, T.new_wall, ix, y + 476, 15, KC.MUTE, "start", 0.5)
+	a.fx.timer = kit.text(c, until_next(), x + w - PAD, y + 478, 24, KC.SAND, "end")
 	a.fx.timer_text = until_next()
 	return left
 end
@@ -738,8 +759,9 @@ function M.board(a)
 		if m.lucky and not (key == f.muro and f.pieni[m.slot]) then lucky = true end
 	end
 	local paper = panel(a.mid, PAPER.x, PAPER.y, PAPER.w, PAPER.h, "carta")
-	kit.text(paper, T.rule, PAPER.x + 24, PAPER.y + 46, 24, KC.INK, "start")
-	fit(kit.text(paper, lucky and T.rule_lucky or T.rule_sub:format(forge.THROWS, forge.THROWS), PAPER.x + 24, PAPER.y + 76, 18,
+	-- (Sergio, 25 Nov, proposal B: the Smith's paper says the walls of the day)
+	fit(kit.text(paper, T.rule_walls:format(forge.WALLS), PAPER.x + 24, PAPER.y + 46, 22, KC.INK, "start"), PAPER.w - 48)
+	fit(kit.text(paper, lucky and T.rule_lucky or T.rule_walls_sub, PAPER.x + 24, PAPER.y + 76, 17,
 		lucky and vmath.vector4(0.66, 0.28, 0.05, 1) or PAPER_MUTE, "start"), PAPER.w - 48)
 	local left = shelf(a, a.rt, key)
 	-- the band: FONDI I FRAMMENTI, and COLA (TIRA while throws are left)
@@ -1158,9 +1180,17 @@ function recap(a)
 	for _, m in ipairs(forge.wall(p, wall_key(p))) do if not f.pieni[m.slot] or f.muro ~= wall_key(p) then left = left + 1 end end
 	local can = left > 0 and (p.ossidiana or 0) >= forge.COST and profile.can_spend()
 	local by, bw, bh = y0 + h - 84, (RECAP_W - 72) / 2, 60
-	kit.secondary(g, T.recap_again, x0 + 28, by, bw, bh, { main = true, off = not can, icon = "gemma" })
-	kit.secondary(g, T.recap_close, x0 + 44 + bw, by, bw, bh)
-	fx.recap_btns = { { x = x0 + 28, y = by, w = bw, h = bh, cmd = can and "again" or nil }, { x = x0 + 44 + bw, y = by, w = bw, h = bh, cmd = "close" } }
+	if got.jackpot then
+		-- after the jackpot only CHIUDI (Sergio, 25 Nov): the next wall of the day is
+		-- shown in the vetrina, a new pour starts from there
+		local cw = RECAP_W - 56
+		kit.secondary(g, T.recap_close, x0 + 28, by, cw, bh)
+		fx.recap_btns = { { x = x0 + 28, y = by, w = cw, h = bh, cmd = "close" } }
+	else
+		kit.secondary(g, T.recap_again, x0 + 28, by, bw, bh, { main = true, off = not can, icon = "gemma" })
+		kit.secondary(g, T.recap_close, x0 + 44 + bw, by, bw, bh)
+		fx.recap_btns = { { x = x0 + 28, y = by, w = bw, h = bh, cmd = can and "again" or nil }, { x = x0 + 44 + bw, y = by, w = bw, h = bh, cmd = "close" } }
+	end
 	gui.set_scale(root, vmath.vector3(0.9, 0.9, 1))
 	gui.animate(root, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3)
 	gui.move_above(fx.hud, nil)
@@ -1287,7 +1317,10 @@ local function draw_aim(a)
 	local p = a.prof
 	local f = p.fornace
 	local wall = forge.wall(p, f.muro)
-	local _, path = forge.fly(fx.angle, fx.power, wall, f.pieni, true)
+	-- (only the ticks the dots can use: to the top, from the throw's speed, and past it)
+	local _, _, _, vy0 = forge.launch(fx.angle, fx.power)
+	local top_t = math.max(0, vy0) / (game.GRAVITY * game.MISSILE_GRAVITY * game.DT)
+	local _, path = forge.fly(fx.angle, fx.power, wall, f.pieni, true, math.floor(top_t * DOTS_PAST) + 3)
 	fx.pts = fx.pts or {}
 	-- up to the top and a little past it, fading there (Sergio, 24 Nov); never past
 	-- the first bounce
@@ -1336,6 +1369,7 @@ end
 
 -- Every frame: true when the armory must be made again
 function M.update(a, dt)
+	M.busy = M.playing(a)
 	local fx = a.fx
 	if not fx then return false end
 	local p = a.prof
@@ -1679,9 +1713,14 @@ function M.playing(a)
 	return a.fx ~= nil and a.fx.phase ~= "vetrina"
 end
 
+-- Is a pour on screen, from the zoom in to the zoom out (Sergio, 25 Nov: the
+-- minigame at the screen's best, 90/120 Hz, like a match: main/phone.lua)
+M.busy = false
+
 -- leaving the FORNACE tab: the world goes; the paintings stay while in the BOTTEGA
 -- (keep), so the tab opens without decoding them again
 function M.release(a, keep)
+	M.busy = false
 	drop_world(a)
 	a.melt = nil
 	if keep then return end

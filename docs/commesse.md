@@ -199,6 +199,11 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   alle 5 di mattina si riparte dal primo muro nuovo (anche se eri a metà). I premi crescono:
   **x1, x1,25, x1,5** (Scaglie arrotondate a 5, frammenti 8, 10, 12), e il **jackpot 500, 750,
   1000** (`forge.LEVELS`, `forge.JACKPOTS`, `forge.current`). I tre muri sono uguali per tutti.
+  **Nel gioco si vede così** (Sergio, 25 nov, «A e B insieme»): nella vetrina, sotto i frammenti,
+  «I MURI DI OGGI» con tre stampi (quello pieno col coperchio e PIENO, quello di adesso
+  incandescente col suo premio, quelli dopo spenti) e «NUOVI FRA» col conto alla rovescia; sul
+  foglio del Fabbro «3 muri al giorno: riempi questo e si apre il prossimo.» e sotto i premi e
+  l'ora del nuovo giro (alle 5 di mattina).
   **Ogni muro nuovo mette gli stampi in posti nuovi** (Sergio, 24 nov): sempre staccati e
   tutti centrabili **con un tiro diretto, senza rimbalzi** (Sergio, 25 nov; il gioco lo
   controlla quando li appende, con la grandezza vera di ogni stampo, e sposta quello che non si
@@ -269,7 +274,13 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   ondeggia, «MURO PIENO», pioggia di Scaglie e frammenti, poi la medaglia.
 - **Il riepilogo della colata** (Sergio, 24 nov): finiti i tiri, prima di uscire, una card «LA
   COLATA» con le Scaglie, i frammenti per famiglia, il tiro in più, il jackpot e la medaglia;
-  COLA ANCORA (se c'è Ossidiana e il muro non è pieno) o CHIUDI.
+  COLA ANCORA (se c'è Ossidiana e il muro non è pieno) o CHIUDI. **Dopo il jackpot solo CHIUDI**
+  (Sergio, 25 nov: con COLA ANCORA il muro nuovo si vedeva coi calderoni del muro vecchio): il
+  muro dopo si vede nella vetrina e si cola da lì.
+- **La colata va come una partita** (Sergio, 25 nov: «sensibile al calo degli FPS»): dallo zoom
+  d'entrata a quello d'uscita il telefono va al massimo dello schermo (90/120 Hz), non ai 60 dei
+  menù né ai 30 dopo 12 secondi senza tocchi (`forge_ui.busy`, `main/phone.lua`). La mira calcola
+  solo il tratto del volo che serve ai puntini (prima tutto il volo, ~900 tabelle a ogni frame).
 - **La goccia entra solo dall'alto**: deve passare dentro l'orlo scendendo. **Sul ferro rimbalza**
   (Sergio, 24 nov: «finché non tocca terra è valido»): la goccia è una palla, la pancia e i due
   bordi di ogni stampo la fanno rimbalzare (rende metà della velocità contro il ferro) e può finire
