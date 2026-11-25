@@ -35,7 +35,7 @@ M.JACKPOT = 500
 -- the medals of the knocks (Sergio, 24 Nov: «una medaglia per aver fatto 6 rintocchi
 -- sulle coppe e una per 10»): the drop knocking on the moulds' iron so many times in
 -- one throw
-M.KNOCKS = { 6, 10 }
+M.KNOCKS = { 6, 8, 10 }
 -- what a pour is worth on average, in Scaglie of value (a fragment = 60): the
 -- design's aim, ~0.8x to 1.2x from worst to best (tools/economia/conti.lua)
 M.AVERAGE = 130
@@ -375,20 +375,33 @@ end
 -- rimbalzi (the knocks on the moulds' iron: the «rintocchi»), sponde (on the back
 -- wall) } and, when points is true, the drop's positions tick by tick (for drawing)
 -- and the ticks of the bounces (path.hits, and path.walls for the back wall).
+local NONE = {}
 function M.fly(angle, power, wall, full, points)
 	full = full or {}
 	local x, y, vx, vy = M.launch(angle, power)
 	local g = game.GRAVITY * game.MISSILE_GRAVITY
 	local path = points and { { x, y }, hits = {}, walls = {} } or nil
 	local hits, still, walls = 0, 0, 0
-	for t = 1, M.MAX_TICKS do
-		vy = vy - g * game.DT
-		local nx, ny = x + vx * game.DT, y + vy * game.DT
-		local hit = false
-		-- (a mould's iron and opening are all within 2 widths of its mouth: the far
-		-- ones are skipped, same result, faster)
-		local reach = math.abs(vx * game.DT) + math.abs(vy * game.DT) + M.DROP_R
+	-- (a mould's iron and opening are all within 2 widths of its mouth: the far ones
+	-- are skipped, and the whole wall when the drop is far from all of them; same
+	-- result, faster)
+	local box = wall.box
+	if not box then
+		box = { math.huge, -math.huge, math.huge, -math.huge }
 		for _, m in ipairs(wall) do
+			box[1], box[2] = math.min(box[1], m.x - 2 * m.w), math.max(box[2], m.x + 2 * m.w)
+			box[3], box[4] = math.min(box[3], m.y - 2 * m.w), math.max(box[4], m.y + 2 * m.w)
+		end
+		wall.box = box
+	end
+	local dt, abs = game.DT, math.abs
+	for t = 1, M.MAX_TICKS do
+		vy = vy - g * dt
+		local nx, ny = x + vx * dt, y + vy * dt
+		local hit = false
+		local reach = abs(vx * dt) + abs(vy * dt) + M.DROP_R
+		local any = nx > box[1] - reach and nx < box[2] + reach and ny > box[3] - reach and ny < box[4] + reach
+		for _, m in ipairs(any and wall or NONE) do
 			local near = math.abs(nx - m.x) < 2 * m.w + reach and math.abs(ny - m.y) < 2 * m.w + reach
 			-- through the opening, going down: in (a full one has its lid on)
 			local closed = full[m.slot]

@@ -1,6 +1,6 @@
 # WB-095 · La Fornace: la sponda in fondo e le medaglie dei rintocchi
 
-- **Stato:** APPROVATA (Claude, 24 nov: pezzi nuovi chiesti da Sergio, «in fondo a destra un muro ... fa rimbalzare la palla con un toc, come plastica che rimbalza» e «una medaglia per 6 rintocchi sulle coppe e una per 10»; non sostituiscono disegni già scelti)
+- **Stato:** IMPLEMENTATA (prima: APPROVATA da Claude il 24 nov sulle richieste di Sergio)
 - **Data:** 2026-11-24
 - **Ramo della scheda:** `claude/project-thread-ft5von` (Codex la esegue da qui: `git fetch origin claude/project-thread-ft5von`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-095`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-095` senza chiedere conferma (il repository è privato).
@@ -68,3 +68,20 @@ Nothing else: no ribbon, no letters, no numbers, no shadow on the ground, no glo
 ## Decisione
 
 Approvata da Claude il 24 nov sulle richieste di Sergio nella stessa giornata. Finché le immagini non ci sono il gioco usa il segnaposto per la sponda e le medaglie dei rintocchi non compaiono nel profilo (la regola le conta già).
+
+## Consegna di Codex
+
+- `art/WB-095/sponda_1.png` e `sponda_2.png`, con i rispettivi `.txt` — 1024×1536, un tentativo per variante.
+- `art/WB-095/medaglie_rintocchi_1.png` e `medaglie_rintocchi_2.png`, con i rispettivi `.txt` — 1536×1024, un tentativo per la prima variante e due per la seconda, selezionato il secondo.
+
+Prompt originali eseguiti con ImageGen e riferimenti nell'ordine indicato. I quattro PNG sono stati ridimensionati in proporzione e centrati su tela verde.
+
+Le sponde sono intere, senza terreno o scritte, con ferro rivettato e gomma rossa sul lato sinistro. Sono alte circa 1479 e 1493 px. Le sagome sono larghe circa un terzo dell'altezza rispetto al quinto previsto. In entrambi i fogli delle medaglie, il bronzo è a sinistra e l'argento a destra. Ho verificato visivamente i 6 e 10 stampi lungo le traiettorie e larghezze di 717–731 px. Il fondo verde si discosta da #00FF00. La resa sul muro e la leggibilità delle medaglie a 128 px nel profilo restano da verificare.
+
+## Resoconto di Claude
+
+25 nov, Claude. I quattro fogli sono puliti. Ho scelto:
+- `sponda_2`: cinque cuscini con le cinghie, si legge meglio come gomma che rimbalza;
+- `medaglie_rintocchi_1`: in diagonale, si legge meglio piccola; l'argento ha l'intarsio di Ossidiana chiesto (nella 2 non c'è).
+
+Le ha ritagliate `tools/grafica/fornace.py` nell'atlante `fornace`, al doppio della misura sullo schermo e mai ingrandite. La sponda è in tre pezzi: il piede e due tratti (cuscino e cinghia) che si impilano fino in cima alla vista, con la gomma sulla riga dove la goccia rimbalza. Le medaglie sono anche nell'atlante `fucina` (128 px, `tools/grafica/fucina.py`), come badge del profilo. Sergio ha chiesto anche quella degli 8 rintocchi: scheda WB-096.

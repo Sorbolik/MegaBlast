@@ -204,7 +204,8 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   vedono sempre da sinistra: si gira solo il disegno (e la mira, che resta giusta per il dito).
 - **La sponda in fondo** (Sergio, 24 nov sera): a destra, dopo l'ultimo stampo, un muro che si
   raggiunge col tiro e rimanda indietro la goccia con un «toc», come una sponda di gomma
-  (`forge.BACK_X`, rende l'85% della velocità). Disegno di Codex da WB-095, per ora un segnaposto.
+  (`forge.BACK_X`, rende l'85% della velocità). Disegno di Codex WB-095 (sponda 2): ferro
+  rivettato con cinque cuscini di gomma rossa.
 - **Lo stampo fortunato** (Sergio, 24 nov): ogni tanto un muro ha uno stampo che dà il
   doppio, un muro ogni 8 di fila (uguale per tutti: sempre entro 15 muri, `forge.lucky_slot`). Uno
   stampo pieno non paga due volte: una goccia che lo prende è come il ferro, va nel secchio.
@@ -224,12 +225,14 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   i 12 stampi di un muro prende **500 Scaglie** ogni volta e, la prima volta, la medaglia
   **Jackpot della Fornace** (`forge.JACKPOT`, il conto in `fornace.jackpot`). La medaglia è un badge del profilo, d'oro, nella casella dei clienti di fiducia: si mette accanto al nome come gli altri (`orders.badges`). Scartati: un
   frammento per famiglia e una colata gratis.
-- **Le medaglie dei rintocchi** (Sergio, 24 nov sera): un rintocco è un colpo della goccia sul
-  ferro degli stampi nello stesso tiro; la prima volta che un tiro ne fa **6** e la prima volta
-  che ne fa **10** si vince una medaglia (`forge.KNOCKS`, il record in `fornace.rintocchi`, la
-  scritta «6 RINTOCCHI!» nel gioco). Le medaglie le disegna Codex (WB-095); nel profilo arrivano
-  coi disegni. Misurato su 611.780 tiri a caso su 20 muri: 6 o più circa 1 tiro su 2.900, 10
-  mai (il massimo è 8): da decidere con Sergio.
+- **Le medaglie dei rintocchi** (Sergio, 24 e 25 nov): un rintocco è un colpo della goccia sul
+  ferro degli stampi nello stesso tiro (solo sugli stampi: la sponda non conta); la prima volta
+  che un tiro ne fa **6**, **8** e **10** si vince una medaglia: bronzo, acciaio, argento con
+  l'Ossidiana (`forge.KNOCKS`, il record in `fornace.rintocchi`). Nel gioco la scritta «6
+  RINTOCCHI!», la medaglia che salta fuori e la sua riga nel riepilogo; nel profilo sono badge come
+  quella del jackpot (`orders.FORGE_BADGES`). Disegni di Codex: 6 e 10 da WB-095, 8 da WB-096 (la
+  regola la conta già; la medaglia compare quando c'è il disegno). Misurato su 611.780 tiri a caso
+  su 20 muri: 6 o più circa 1 tiro su 2.900, 10 mai (il massimo è 8): Sergio la vuole lo stesso.
 - **Quando la goccia entra e quando lo stampo è preso** (Sergio, 24 nov, sulla pagina
   https://claude.ai/artifact/LcTuEFuH5XKmmmeDPgtGN2): entrando, **la fiammata**, una colonna di
   fuoco di Ossidiana dalla bocca; lo stampo preso lo chiude **un coperchio di ferro** che scende

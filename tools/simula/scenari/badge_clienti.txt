@@ -11,6 +11,6 @@ foto 01_profilo_badge_clienti
 tocca_bordo 613 514 alto sinistra   # il primo badge dei clienti
 aspetta 0.6
 foto 02_badge_scelto
-tocca_bordo 717 514 alto sinistra   # la medaglia del jackpot della Fornace (WB-094)
+tocca_bordo 772 506 alto sinistra   # la medaglia del jackpot della Fornace (WB-094)
 aspetta 0.6
 foto 03_medaglia_jackpot_scelta

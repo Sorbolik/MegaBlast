@@ -385,3 +385,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 24 nov | **Fornace: la sponda in fondo a destra che rimanda la goccia col «toc»** e **l'hitbox del coperchio sul suo disegno** (Sergio). | commesse.md, forge.lua, questa PR |
 | 24 nov | **Fornace: fiammata e jackpot come nella pagina delle animazioni** (Sergio: «inguardabili ... falla in quel modo»). Scartate le animazioni della PR 427. | commesse.md, forge_ui.lua, questa PR |
 | 24 nov | **Fornace: medaglie dei 6 e dei 10 rintocchi in un tiro** (Sergio). Disegni WB-095; nel profilo coi disegni. 10 rintocchi oggi non capitano mai (massimo 8): da decidere. | commesse.md, forge.lua, questa PR |
+| 25 nov | **Fornace: medaglie a 6, 8 e 10 rintocchi, contando solo i colpi sugli stampi** (Sergio: «anche se non è mai successo tu mettilo quello di 10»). Disegni WB-095 (6, 10) e WB-096 (8). | commesse.md, forge.lua, orders.lua, questa PR |

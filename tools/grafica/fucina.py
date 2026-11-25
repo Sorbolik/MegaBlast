@@ -348,6 +348,13 @@ def fai_medaglia_jackpot():
     im = im.resize((128, round(im.size[1] * 128 / im.size[0])), Image.LANCZOS)
     salva(im, "medaglia_jackpot")
     MISURE["medaglia_jackpot"] = im.size
+    # le medaglie dei rintocchi (WB-095, Sergio 24 nov: 6 e 10 colpi sugli stampi in un tiro)
+    md = ritaglia(os.path.join(ART, "WB-095", "medaglie_rintocchi_1.png"))
+    for nome, box in (("medaglia_rintocchi_6", (0, 0, 760, 1024)), ("medaglia_rintocchi_10", (760, 0, 1536, 1024))):
+        im = stretto(md.crop(box))
+        im = im.resize((128, round(im.size[1] * 128 / im.size[0])), Image.LANCZOS)
+        salva(im, nome)
+        MISURE[nome] = im.size
 
 
 def fai_perle():

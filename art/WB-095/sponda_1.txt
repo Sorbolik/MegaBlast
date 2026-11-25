@@ -1,0 +1,12 @@
+Image 1 is a screenshot of the forge of our cartoon game: on the right edge there is a tall placeholder column of stacked iron pieces; it must be replaced. Image 2 shows the riveted iron of the forge (thick slightly irregular black ink outline, flat colors, one flat highlight, one flat shadow). Image 3 shows the casting moulds of the same forge.
+
+Draw ONE tall BUMPER WALL for the right end of the forge, in the style of images 2 and 3, on plain green (#00FF00), centered, as TALL as the image (at least 1400 px) and about one fifth as wide as tall, seen straight from the front:
+- a tall frame of riveted dark iron (#3A3238, highlight #5D5560) standing on the floor, with a heavy foot at the bottom and a cap at the top;
+- on its LEFT face, facing the moulds, a thick soft BUMPER of dark red rubber (#8E2B2B, highlight #C2493F) running from bottom to top, bulging a little, made of four or five stacked rounded cushions held by iron straps, so it clearly bounces a ball back;
+- a few dents and scratches on the rubber, one small soot stain.
+Nothing else: no moulds, no chains, no floor, no letters, no numbers, no shadow on the ground, no glow.
+
+Riferimenti in ordine: art/WB-095/riferimenti/R3_fondo_del_muro.png, art/WB-095/riferimenti/R4_sporgenza.png, art/WB-095/riferimenti/R2_stampi.png
+ImageGen. Ridimensionato in proporzione e centrato su tela verde da 1024×1536.
+Un tentativo. Quattro cuscini a sinistra, piede e cappello interi. Sagoma circa 477×1479 px, più larga del quinto richiesto. Verde campionato #05FB05.
+Il fondo si discosta da #00FF00 esatto.

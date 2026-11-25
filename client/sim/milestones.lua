@@ -112,13 +112,17 @@ end
 M.CLIENTS = {}
 
 -- A badge arriving from outside (online, from the others): valid or nil
+-- the Forge's medals and their only grade (sim/orders.lua FORGE_BADGES)
+local FORGE = { fornace_jackpot = 3, fornace_rintocchi_6 = 1, fornace_rintocchi_8 = 2, fornace_rintocchi_10 = 4 }
 function M.valid(b)
 	if type(b) ~= "table" then return nil end
 	local s = M.BY_ID[b.id]
 	local g = tonumber(b.grado)
 	-- a client's badge (sim/orders.lua badges): a known client, grades 1 to 4
 	-- the Forge's jackpot medal: gold, one only
-	if b.id == "fornace_jackpot" then return g == 3 and { id = b.id, grado = 3 } or nil end
+	-- the Forge's medals (sim/orders.lua FORGE_BADGES): one grade each
+	local fb = FORGE[b.id]
+	if fb then return g == fb and { id = b.id, grado = g } or nil end
 	local cl = type(b.id) == "string" and b.id:match("^cl_(%a+)$")
 	if cl then
 		if not (M.CLIENTS[cl] and g and g >= 1 and g <= 4 and g % 1 == 0) then return nil end

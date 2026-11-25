@@ -184,6 +184,17 @@ end
 -- the metal of the trust's thread (1 bronze ... 4 ember, the pieces' grades).
 M.BADGE = "cl_"
 M.JACKPOT_BADGE = "fornace_jackpot"
+-- the Forge's medals as badges (its own drawing each, ui/tag_card.lua forge_badge): the
+-- jackpot's, gold; the knocks' in one throw (Sergio 24-25 Nov: 6, 8, 10), bronze, silver,
+-- obsidian. A medal whose drawing is not there yet (art = false) is not given yet.
+M.FORGE_BADGES = {
+	{ id = "fornace_jackpot", grado = 3, art = true },
+	{ id = "fornace_rintocchi_6", grado = 1, knocks = 6, art = true },
+	{ id = "fornace_rintocchi_8", grado = 2, knocks = 8, art = false },
+	{ id = "fornace_rintocchi_10", grado = 4, knocks = 10, art = true },
+}
+M.FORGE_BADGE = {}
+for _, b in ipairs(M.FORGE_BADGES) do M.FORGE_BADGE[b.id] = b end
 function M.badge_grade(trust)
 	return math.min(4, math.floor((trust - 1) / M.TRUST_LAP) + 1)
 end
@@ -197,8 +208,14 @@ function M.badges(p)
 		local t = c.clienti[cl.id] and c.clienti[cl.id].fiducia or 0
 		if t >= M.TRUST_LAP then out[#out + 1] = { id = M.BADGE .. cl.id, grado = M.badge_grade(t) } end
 	end
-	-- the Forge's jackpot medal (Sergio, 24 Nov: the first full wall), gold
-	if p.fornace and (p.fornace.jackpot or 0) > 0 then out[#out + 1] = { id = M.JACKPOT_BADGE, grado = 3 } end
+	-- the Forge's medals: the first full wall, the knocks' records
+	local f = p.fornace
+	if f then
+		for _, b in ipairs(M.FORGE_BADGES) do
+			local won = b.knocks and (f.rintocchi or 0) >= b.knocks or not b.knocks and (f.jackpot or 0) > 0
+			if won and b.art then out[#out + 1] = { id = b.id, grado = b.grado } end
+		end
+	end
 	return out
 end
 

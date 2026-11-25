@@ -76,6 +76,7 @@ local MID = { x = -172, y = -158, w = 1936, k = 0.3 }
 local FLOOR_TOP, FLOOR_W = -132, 560
 local LEDGE = { x = -90, y = 2, w = 150 }
 local BACK_W = 150
+local BACK_FACE = 29 / 488 -- where the rubber starts in the drawing, of its width
 local BUCKET = { x = forge.BUCKET_X, y = -150, w = 120 }
 -- the moulds' plates by family (WB-093), the Scaglie ones in iron
 local PLATE = { fabbro = "oro", corvo = "azzurro", fornace = "arancio", leviatano = "verde", vuoto = "viola" }
@@ -539,12 +540,19 @@ local function make_world(a)
 	for x = -900, 2600, FLOOR_W - 4 do piece(fx.world, "pavimento", x, FLOOR_TOP, FLOOR_W, gui.PIVOT_NW) end
 	piece(fx.world, "secchio", BUCKET.x, BUCKET.y, BUCKET.w, gui.PIVOT_S)
 	piece(fx.world, "sporgenza", LEDGE.x, LEDGE.y, LEDGE.w, gui.PIVOT_NW)
-	-- the back wall (forge.BACK_X): the ledge's stone blocks one on the other, up
-	-- out of the view (placeholder until its own drawing)
-	local bh = BACK_W * PIECES.sporgenza.h / PIECES.sporgenza.w
-	for y = FLOOR_TOP + bh - 6, 1400, bh - 6 do
-		local b = piece(fx.world, "sporgenza", forge.BACK_X + BACK_W, y, BACK_W, gui.PIVOT_NW)
-		gui.set_scale(b, vmath.vector3(-1, 1, 1))
+	-- the back wall (forge.BACK_X, WB-095): iron with the red rubber cushions on the side
+	-- of the moulds, the rubber's face on BACK_X; the foot on the floor, then a cushion
+	-- and a strap after the other up out of the view
+	local bx = forge.BACK_X - BACK_W * BACK_FACE
+	local y = FLOOR_TOP - 4
+	y = y + BACK_W * PIECES.sponda_piede.h / PIECES.sponda_piede.w
+	piece(fx.world, "sponda_piede", bx, y, BACK_W, gui.PIVOT_NW)
+	local k = 0
+	while y < 1400 do
+		k = k + 1
+		local name = "sponda_tratto_" .. (k % 2 + 1)
+		y = y + BACK_W * PIECES[name].h / PIECES[name].w - 1
+		piece(fx.world, name, bx, y, BACK_W, gui.PIVOT_NW)
 	end
 	-- the wall: chains behind the moulds, the tags on top of everything
 	fx.chains = empty(fx.world)
@@ -1010,7 +1018,20 @@ local function land(a)
 	fx.phase, fx.t = "after", 0
 	fx.focus = nil
 	-- a record of knocks on the moulds' iron in one throw (6, 10: the medals)
-	if r.knocks then shout(a, T.knocks:format(r.knocks), 540, KC.SAND, 1.6, 44) end
+	if r.knocks then
+		shout(a, T.knocks:format(r.knocks), 540, KC.SAND, 1.8, 44)
+		-- its medal (WB-095) jumps out under the words the first time
+		local name = "medaglia_rintocchi_" .. r.knocks
+		if PIECES[name] then
+			local md = piece(fx.hud, name, (screen.x0 + screen.x1) / 2, 420, 130)
+			gui.set_scale(md, vmath.vector3(0.1, 0.1, 1))
+			gui.animate(md, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.45, 0.15)
+			gui.set_rotation(md, vmath.vector3(0, 0, -25))
+			gui.animate(md, "euler.z", 0, gui.EASING_OUTBACK, 0.6, 0.15)
+			gui.animate(md, "color.w", 0, gui.EASING_INQUAD, 0.3, 1.6, function() gui.delete_node(md) end)
+		end
+		if fx.got then fx.got.knocks = math.max(fx.got.knocks or 0, r.knocks) end
+	end
 	if r.esito == "stampo" then
 		local m = fx.wall[r.slot]
 		fx.freeze, fx.shake = FREEZE, SHAKE
@@ -1095,6 +1116,9 @@ function recap(a)
 	if got.bonus then rows[#rows + 1] = { icon = "goccia_hud", label = T.recap_bonus, value = "", color = KC.HOT } end
 	if got.jackpot then rows[#rows + 1] = { icon = "scaglia", label = T.recap_jackpot, value = "+" .. coins.format(got.jackpot), color = KC.HOT } end
 	if got.medal then rows[#rows + 1] = { icon = "medaglia_jackpot", label = T.medal, value = "", color = KC.HOT } end
+	if got.knocks and PIECES["medaglia_rintocchi_" .. got.knocks] then
+		rows[#rows + 1] = { icon = "medaglia_rintocchi_" .. got.knocks, label = T.knocks_medal:format(got.knocks), value = "", color = KC.HOT }
+	end
 	local h = 96 + #rows * RECAP_ROW + 104
 	local cx, cy = (screen.x0 + screen.x1) / 2, 360
 	local x0, y0 = cx - RECAP_W / 2, cy - h / 2
@@ -1112,7 +1136,7 @@ function recap(a)
 		local row = empty(root, 0, 0)
 		local rg = { node = row, ox = 0, oy = 720 }
 		if r.icon == "goccia_hud" then piece(row, "goccia", x0 + 52, 720 - y, 30)
-		elseif r.icon == "medaglia_jackpot" then piece(row, "medaglia_jackpot", x0 + 52, 720 - y, 40)
+		elseif r.icon:match("^medaglia_") then piece(row, r.icon, x0 + 52, 720 - y, 40)
 		elseif r.icon then kit.piece(rg, r.icon, x0 + 52, y, 34) end
 		fit(kit.text(rg, r.label, x0 + (r.icon and 84 or 34), y + 7, 19, KC.SAND, "start", 0.4), RECAP_W - 210)
 		if r.value ~= "" then kit.text(rg, r.value, x0 + RECAP_W - 34, y + 9, 26, r.color, "end") end
@@ -1649,11 +1673,26 @@ function M.playing(a)
 	return a.fx ~= nil and a.fx.phase ~= "vetrina"
 end
 
-function M.release(a)
+-- leaving the FORNACE tab: the world goes; the paintings stay while in the BOTTEGA
+-- (keep), so the tab opens without decoding them again
+function M.release(a, keep)
 	drop_world(a)
 	a.melt = nil
+	if keep then return end
 	for id in pairs(a.forge_tex or {}) do gui.delete_texture(id) end
 	a.forge_tex = nil
+end
+
+-- In the other BOTTEGA tabs: the paintings decoded one per frame before the FORNACE
+-- tab opens (all three in one frame held Lua over 130 ms)
+local PAINTINGS = { { "cielo", "cielo.jpg" }, { "lontano", "lontano.png" }, { "medio", "medio.png" } }
+function M.warm(a)
+	for _, q in ipairs(PAINTINGS) do
+		if not (a.forge_tex and a.forge_tex["fornace_" .. q[1]]) then
+			texture(a, q[1], q[2])
+			return
+		end
+	end
 end
 
 return M

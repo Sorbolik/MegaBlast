@@ -218,6 +218,12 @@ for _, b in ipairs(orders.badges(p)) do if b.id == orders.JACKPOT_BADGE then med
 local milestones = require "sim.milestones"
 check(medal and milestones.valid(medal) and not milestones.valid({ id = orders.JACKPOT_BADGE, grado = 4 }),
 	"la medaglia del jackpot è un badge del profilo (oro)")
+p.fornace.rintocchi = 8
+local ids = {}
+for _, b in ipairs(orders.badges(p)) do ids[b.id] = milestones.valid(b) and b.grado end
+check(ids.fornace_rintocchi_6 == 1 and not ids.fornace_rintocchi_10
+	and milestones.valid({ id = "fornace_rintocchi_10", grado = 4 }) and not milestones.valid({ id = "fornace_rintocchi_6", grado = 2 }),
+	"le medaglie dei rintocchi sono badge del profilo, una misura sola ciascuna")
 
 -- melting
 p = new()

@@ -51,6 +51,15 @@ local GOLD = kit.hex("ffc83d")
 -- the modes of the stats, as the Figma's chips (all of them first)
 local MODES = { "tutte", "2v2", "1v1", "torneo", "campagna" }
 
+-- the name of a Forge's medal (nil for the others): short under the badge, long when it
+-- is the only one in the list
+local function forge_name(id, long)
+	local b = orders.FORGE_BADGE[id]
+	if not b then return nil end
+	if b.knocks then return (long and T.knocks_badge_long or T.knocks_badge):format(b.knocks) end
+	return long and T.jackpot_badge_long or T.jackpot_badge
+end
+
 local function thousands(n)
 	local s = tostring(math.floor(n or 0))
 	local out = s:reverse():gsub("(%d%d%d)", "%1."):reverse()
@@ -115,7 +124,7 @@ local function sheet_stats(s)
 			else
 				tag.badge({ id = b.id, grado = b.grade }, x + 38 - g.ox, g.oy - 298, 40, g.node)
 				local cl = b.id:sub(#orders.BADGE + 1)
-				local name = b.id == orders.JACKPOT_BADGE and T.jackpot_badge or kit.upper(TO.clients[cl])
+				local name = forge_name(b.id) or kit.upper(TO.clients[cl])
 				fit(kit.text(g, name, x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
 			end
 			kit.zone(g, s.buttons, x, 264, 76, 80, "badge:" .. b.id)
@@ -191,14 +200,17 @@ local function sheet_stats(s)
 			-- up to four: a row and under it the name, like the records'; from five, two rows
 			local two = #list > 4
 			local d = two and 26 or 34
-			local label = #list == 1 and list[1].id == orders.JACKPOT_BADGE and T.jackpot_badge_long or T.clients_badges
+			local label = #list == 1 and forge_name(list[1].id, true) or T.clients_badges
 			if not two then fit(kit.text(g, label, x + 14, y + 57, 16, KC.SAND, "start", 0.3), cw - 28) end
+			-- (two rows: as many columns as half of them, up to 8 clients and 4 Forge's
+			-- medals, inside the card)
+			local cols = two and math.ceil(#list / 2) or 4
 			for k, b in ipairs(list) do
-				local col, row = (k - 1) % 4, two and math.floor((k - 1) / 4) or 0
-				local bx = x + 14 + d / 2 + col * ((cw - 28 - d) / 3)
-				local by = y + (two and 22 + row * 32 or 26)
+				local col, row = (k - 1) % cols, two and math.floor((k - 1) / cols) or 0
+				local bx = x + 14 + d / 2 + col * ((cw - 28 - d) / (cols - 1))
+				local by = y + (two and 18 + row * 33 or 26)
 				-- (the jackpot's is already a gold medal: no gold disc behind it, Sergio 24 Nov)
-				if picked[b.id] and b.id ~= orders.JACKPOT_BADGE then kit.dot(g, bx, by, d + 10, GOLD) end
+				if picked[b.id] and not orders.FORGE_BADGE[b.id] then kit.dot(g, bx, by, d + 10, GOLD) end
 				tag.badge(b, bx - g.ox, g.oy - by, d, g.node)
 				kit.zone(g, s.buttons, bx - (d + 8) / 2, by - (d + 8) / 2, d + 8, d + 8, "badge:" .. b.id)
 			end

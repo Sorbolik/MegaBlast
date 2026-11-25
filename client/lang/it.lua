@@ -626,6 +626,7 @@ return {
 		jackpot = "JACKPOT!",
 		wall_full = "MURO PIENO",
 		knocks = "%d RINTOCCHI!",
+		knocks_medal = "MEDAGLIA: %d RINTOCCHI",
 		medal = "MEDAGLIA: JACKPOT DELLA FORNACE",
 		recap_title = "LA COLATA",
 		recap_scaglie = "Scaglie",
@@ -693,6 +694,8 @@ return {
 		clients_badges = "CLIENTI DI FIDUCIA",
 		jackpot_badge = "JACKPOT",
 		jackpot_badge_long = "JACKPOT DELLA FORNACE",
+		knocks_badge = "%d RINTOCCHI",
+		knocks_badge_long = "%d RINTOCCHI ALLA FORNACE",
 		clients_none = "A 10 PERLE IL CLIENTE TI DÀ IL SUO BADGE",
 		won_share = "%s%% delle partite vinte",
 		-- the modes, short, as chips

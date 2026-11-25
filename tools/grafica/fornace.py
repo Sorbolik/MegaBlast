@@ -28,6 +28,7 @@ RADICE = os.path.join(QUI, "..", "..")
 A92 = os.path.join(RADICE, "art", "WB-092")
 A93 = os.path.join(RADICE, "art", "WB-093")
 A94 = os.path.join(RADICE, "art", "WB-094")
+A95 = os.path.join(RADICE, "art", "WB-095")
 OUT = os.path.join(RADICE, "client", "assets", "fornace")
 ATLAS = os.path.join(RADICE, "client", "menu", "fornace.atlas")
 LUA = os.path.join(RADICE, "client", "menu", "forge_pieces.lua")
@@ -152,6 +153,33 @@ def fai_wb094():
     salva("medaglia_jackpot", md, 400 / PX)
 
 
+# la sponda di WB-095 (sponda_2, cinque cuscini): il piede coi due cuscini di sotto e due
+# tratti (cuscino e cinghia, da metà cinghia a metà cinghia) che si impilano fino in cima
+# alla vista; larga 150 nel mondo (forge_ui.lua BACK_W)
+SPONDA_TAGLI = {"sponda_piede": (883, None), "sponda_tratto_1": (355, 619), "sponda_tratto_2": (619, 883)}
+
+
+def fai_wb095():
+    sp = stretto(ritaglia(os.path.join(A95, "sponda_2.png")))
+    for nome, (y0, y1) in SPONDA_TAGLI.items():
+        salva_intero(nome, sp.crop((0, y0, sp.width, y1 or sp.height)), sp.width, 150)
+    # le medaglie dei rintocchi (medaglie_rintocchi_1: bronzo 6 a sinistra, argento 10 a
+    # destra), grandi come quella del jackpot
+    md = ritaglia(os.path.join(A95, "medaglie_rintocchi_1.png"))
+    salva("medaglia_rintocchi_6", md.crop((0, 0, 760, md.height)), 400 / PX)
+    salva("medaglia_rintocchi_10", md.crop((760, 0, md.width, md.height)), 400 / PX)
+
+
+def salva_intero(nome, im, largo_foglio, larghezza_mondo):
+    # come salva, ma senza stringere: i pezzi della sponda si impilano e tengono tutti la
+    # larghezza del foglio intero
+    w = min(largo_foglio, round(larghezza_mondo * PX))
+    if w < largo_foglio:
+        im = im.resize((w, max(1, round(im.height * w / largo_foglio))), Image.LANCZOS)
+    im.save(os.path.join(OUT, nome + ".png"), optimize=True)
+    MISURE[nome] = (im.width, im.height)
+
+
 def fai_fucina():
     gs = ritaglia(os.path.join(A92, "goccia_e_secchio_1.png"))
     salva("goccia", gs.crop((136, 162, 356, 380)), 22)
@@ -191,6 +219,7 @@ def main():
             os.remove(os.path.join(OUT, f))
     fai_stampi()
     fai_wb094()
+    fai_wb095()
     fai_fucina()
     fai_sfondi()
     fai_mestolo()

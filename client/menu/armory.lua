@@ -197,7 +197,7 @@ local function build(a)
 	a.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	a.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
-	if a.tab ~= "fornace" then forge_ui.release(a) end
+	if a.tab ~= "fornace" then forge_ui.release(a, true) end
 	if a.tab == "commesse" then
 		outline.off()
 		orders_ui.board(a)
@@ -266,6 +266,7 @@ function M.update(a, dt)
 	-- the delivery's scene: at the receipt the screen is made again, with its buttons
 	if a.tab == "commesse" and orders_ui.update(a, dt) then build(a) end
 	if a.tab == "fornace" and forge_ui.update(a, dt) then build(a) end
+	if a.tab ~= "fornace" then forge_ui.warm(a) end
 	if a.outline then outline.update(a.outline) end
 end
 
