@@ -224,7 +224,9 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
 - **Il jackpot del muro pieno** (Sergio, 24 nov, «Medaglia + 500 Scaglie»): chi riempie tutti
   i 12 stampi di un muro prende **500 Scaglie** ogni volta e, la prima volta, la medaglia
   **Jackpot della Fornace** (`forge.JACKPOT`, il conto in `fornace.jackpot`). La medaglia è un badge del profilo, d'oro, nella casella dei clienti di fiducia: si mette accanto al nome come gli altri (`orders.badges`). Scartati: un
-  frammento per famiglia e una colata gratis.
+  frammento per famiglia e una colata gratis. Il jackpot **chiude la colata** anche se restano tiri
+  (persi, niente tiro in più) e un muro pieno **non si cola più** fino al muro dopo (Sergio, 25 nov:
+  «non ti deve permettere di rifarla su quel muro»; `forge.full`, la colata risponde `"pieno"`).
 - **Le medaglie dei rintocchi** (Sergio, 24 e 25 nov): un rintocco è un colpo della goccia sul
   ferro degli stampi nello stesso tiro (solo sugli stampi: la sponda non conta); la prima volta
   che un tiro ne fa **6**, **8** e **10** si vince una medaglia: bronzo, acciaio, argento con

@@ -213,6 +213,12 @@ local before = p.scaglie or 0
 r = forge.throw(p, ja[1], ja[2])
 check(r.jackpot == forge.JACKPOT and r.medal and p.fornace.jackpot == 1
 	and p.scaglie == before + jw[1].scaglie + forge.JACKPOT, "muro pieno: jackpot e medaglia la prima volta")
+check(p.fornace.tiri == 0 and not r.bonus, "il jackpot chiude la colata anche coi tiri rimasti")
+p.ossidiana = forge.COST
+local ok, why = forge.pour(p, TODAY .. "#0", TODAY)
+check(not ok and why == "pieno" and p.ossidiana == forge.COST and forge.full(p, TODAY .. "#0"),
+	"un muro pieno non si cola più")
+check(forge.pour(p, TODAY .. "#1", TODAY) and not forge.full(p, TODAY .. "#1"), "il muro dopo sì")
 local medal
 for _, b in ipairs(orders.badges(p)) do if b.id == orders.JACKPOT_BADGE then medal = b end end
 local milestones = require "sim.milestones"

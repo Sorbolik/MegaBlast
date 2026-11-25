@@ -462,6 +462,18 @@ function M.init(p)
 	return p
 end
 
+-- Every mould of the wall key filled: the wall is done and can't be poured on
+-- again (Sergio, 25 Nov)
+function M.full(p, key)
+	M.init(p)
+	local f = p.fornace
+	if key ~= f.muro then return false end
+	for _, m in ipairs(M.wall(p, key)) do
+		if not f.pieni[m.slot] then return false end
+	end
+	return true
+end
+
 -- A pour on the wall key (the phone says which wall it sees: it must be of
 -- today and never older than the last one, so a wall can't be filled again by
 -- going back to it). The throws of a pour stay on its wall even if the wall
@@ -471,6 +483,7 @@ function M.pour(p, key, today)
 	local f = p.fornace
 	if f.tiri > 0 then return nil, "colata" end
 	if not key_ok(key) or key:sub(1, 10) ~= tostring(today) or key < f.muro then return nil, "muro" end
+	if M.full(p, key) then return nil, "pieno" end
 	if (p.ossidiana or 0) < M.COST then return nil, "ossidiana" end
 	if key ~= f.muro then
 		f.fortunato = M.lucky_slot(key)
@@ -520,6 +533,9 @@ function M.throw(p, angle, power)
 			f.jackpot = f.jackpot + 1
 			p.scaglie = (p.scaglie or 0) + M.JACKPOT
 			r.jackpot, r.medal = M.JACKPOT, f.jackpot == 1 or nil
+			-- the jackpot closes the pour, even with throws left (Sergio, 25 Nov)
+			f.tiri = 0
+			return r
 		end
 	end
 	if f.lanci == M.THROWS and f.centri == M.THROWS then
