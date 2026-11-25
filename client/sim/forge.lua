@@ -380,10 +380,13 @@ M.LID_R, M.LID_Y = 0.54, -0.08
 -- The back wall (Sergio, 24 Nov: «in fondo a destra un muro, ad un po' di distanza
 -- dall'ultimo vaso, raggiungibile col tiro, fa rimbalzare la palla con un toc, come
 -- se sbattesse su della plastica»): a wall from the floor up, at BACK_X (the farthest
--- moulds end by 1510; at full power the drop gets there at about -50); it sends the
--- drop back with BACK_BOUNCE of its speed
+-- moulds end by 1510; at full power the drop gets there at about -50)
 M.BACK_X = 1640
-M.BACK_BOUNCE = 0.85
+-- the push up (Sergio, 25 Nov: «quasi un booster verso l'alto ... con l'angolo
+-- invertito e sempre verso l'alto»; numbers chosen on the test page): the drop goes
+-- back with BACK_PUSH of its speed, at the angle it came (rising or falling), but
+-- always upward, between BACK_MIN and BACK_MAX degrees
+M.BACK_PUSH, M.BACK_MIN, M.BACK_MAX = 0.75, 30, 85
 
 -- where the drop is taken by mould m: the line's height and half width
 function M.catch(m)
@@ -489,7 +492,9 @@ function M.fly(angle, power, wall, full, points)
 		end
 		-- the back wall: back with a toc
 		if nx + M.DROP_R > M.BACK_X and vx > 0 then
-			nx, vx, vy = M.BACK_X - M.DROP_R, -vx * M.BACK_BOUNCE, vy * M.SLIDE
+			local sp = math.sqrt(vx * vx + vy * vy) * M.BACK_PUSH
+			local up = math.max(math.rad(M.BACK_MIN), math.min(math.rad(M.BACK_MAX), math.atan2(math.abs(vy), math.abs(vx))))
+			nx, vx, vy = M.BACK_X - M.DROP_R, -math.cos(up) * sp, math.sin(up) * sp
 			walls = walls + 1
 			if path then path.walls[#path.walls + 1] = t end
 		end

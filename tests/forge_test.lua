@@ -173,7 +173,8 @@ do
 	local w = forge.wall(q, q.fornace.muro)
 	local doubled = true
 	for _, m in ipairs(w) do
-		if m.lucky then doubled = (m.scaglie or 0) == 2 * (forge.PRIZES[m.slot].scaglie or 0) and (m.n or 0) == 2 * (forge.PRIZES[m.slot].frammenti or 0) end
+		local plain = forge.layout(q.fornace.muro, forge.SEED)[m.slot]
+		if m.lucky then doubled = (m.scaglie or 0) == 2 * (plain.scaglie or 0) and (m.n or 0) == 2 * (plain.n or 0) end
 	end
 	check(doubled, "lo stampo fortunato dà il doppio")
 end
@@ -278,7 +279,6 @@ do
 			local rr = forge.fly(math.rad(deg), pw / 100, w, {})
 			if rr.esito == "stampo" and w[rr.slot].scaglie then
 				if not knock and rr.rimbalzi == 1 and rr.sponde == 0 then knock = { math.rad(deg), pw / 100, rr.slot } end
-				if not wall and rr.sponde > 0 and rr.rimbalzi == 0 then wall = { math.rad(deg), pw / 100, rr.slot } end
 			end
 		end
 	end
@@ -286,14 +286,25 @@ do
 	forge.pour(q, key, TODAY)
 	local r1 = forge.throw(q, knock[1], knock[2])
 	check(r1.sponda == 1.5 and r1.scaglie == math.floor(w[knock[3]].scaglie * 1.5), "un rintocco prima di entrare: premio x1,5")
-	if wall then
-		local q2 = new(100)
-		forge.pour(q2, key, TODAY)
-		local r2 = forge.throw(q2, wall[1], wall[2])
-		check(r2.sponda == 2 and r2.scaglie == w[wall[3]].scaglie * 2, "la sponda del muro: premio x2")
-	else
-		print("     (nessun tiro di sola sponda del muro su questo muro)")
+	-- (a throw that goes in only off the back wall: looked for over a few days)
+	local day
+	for d = 1, 28 do
+		local dk = string.format("2026-12-%02d", d)
+		local wd = forge.wall(new(), dk .. "#0")
+		for deg = 5, 85 do
+			for pw = 50, 100 do
+				local rr = forge.fly(math.rad(deg), pw / 100, wd, {})
+				if not wall and rr.esito == "stampo" and wd[rr.slot].scaglie and rr.sponde > 0 and rr.rimbalzi == 0 then
+					wall, day, w = { math.rad(deg), pw / 100, rr.slot }, dk, wd
+				end
+			end
+		end
+		if wall then break end
 	end
+	local q2 = new(100)
+	forge.pour(q2, day .. "#0", day)
+	local r2 = forge.throw(q2, wall[1], wall[2])
+	check(r2.sponda == 2 and r2.scaglie == w[wall[3]].scaglie * 2, "la sponda del muro: premio x2")
 end
 local medal
 for _, b in ipairs(orders.badges(p)) do if b.id == orders.JACKPOT_BADGE then medal = b end end

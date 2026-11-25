@@ -204,6 +204,11 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   controlla quando li appende, con la grandezza vera di ogni stampo, e sposta quello che non si
   prende). Le famiglie cambiano e gli
   stampi riempiti tornano vuoti.
+- **La sponda in fondo spinge in alto** (Sergio, 25 nov: «quasi un booster verso l'alto», numeri
+  scelti sulla pagina di prova https://claude.ai/artifact/9RZpeMBV7fuPz6nM6fquiJ): la goccia torna
+  indietro con lo stesso angolo con cui è arrivata, salendo o scendendo, ma sempre verso l'alto,
+  fra 30 e 85 gradi, con il 75% della sua velocità (`forge.BACK_PUSH`, `BACK_MIN`, `BACK_MAX`;
+  prima era un rimbalzo normale all'85%).
 - **I colpi di sponda pagano di più** (Sergio, 25 nov): ogni rintocco sul ferro degli stampi
   prima di entrare vale +50% del premio dello stampo, passare dalla sponda in fondo lo
   raddoppia, al massimo x3 (`forge.KNOCK_BONUS`, `WALL_BONUS`, `BANK_MAX`); nel gioco
