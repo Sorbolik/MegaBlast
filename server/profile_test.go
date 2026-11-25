@@ -100,11 +100,11 @@ func TestForgeRules(t *testing.T) {
 		local p = profile.new()
 		p.ossidiana = 25
 		local today = "2026-11-24"
-		local ok = progress.act(p, { k = "colata", muro = today .. "#1" }, today)
+		local ok = progress.act(p, { k = "colata", muro = today .. "#0" }, today)
 		local r = progress.act(p, { k = "tiro", angolo = math.rad(45), forza = 0.1 }, today)
 		local old = progress.act(p, { k = "colata", muro = "2026-11-23#2" }, today)
 		return { ok and 1 or 0, p.ossidiana, r and r.scaglie or -1, p.fornace.tiri, old and 1 or 0 }`, &got)
-	want := []float64{1, 5, 20, 2, 0}
+	want := []float64{1, 10, 30, 2, 0}
 	if len(got) != len(want) {
 		t.Fatalf("fornace sul server: %v, attesa %v", got, want)
 	}

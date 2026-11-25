@@ -8,9 +8,9 @@
 -- phone only says the angle and the power, the result is computed here.
 --
 -- The world is the forge's, in the battle's units, with the apprentice's feet
--- at (0, 0) and y up. The wall has 12 moulds; a new wall comes three times a game
--- day (at 5, 13 and 21 Italian time: the key is "date#shift"), with the moulds in
--- new places. A filled mould stays full until the next wall.
+-- at (0, 0) and y up. The wall has 12 moulds; a game day has three walls, one after
+-- the other (the key is "date#n", n = 0, 1, 2), with the moulds in new places and
+-- richer prizes. A filled mould stays full until the next wall.
 --
 -- The profile's field (added by M.init): fornace = { muro, pieni[slot], tiri,
 -- lanci, centri, colate, fortunato, jackpot, rintocchi }: the wall of the last pour,
@@ -24,24 +24,39 @@ local orders = require "sim.orders"
 
 local M = {}
 
-M.COST = 20              -- Ossidiana per pour
+M.COST = 15              -- Ossidiana per pour (20 until 25 Nov: it gave no more than the Commesse)
 M.THROWS = 3             -- throws per pour
 M.BONUS = 1              -- extra throws for a perfect pour (all hits)
-M.MISS = 20              -- Scaglie for a drop that misses (it falls in the bucket)
+M.MISS = 30              -- Scaglie for every drop, in the bucket or in a mould (r.base) (Sergio, 25 Nov: «mettiamolo a 30 e lasciamolo sempre a 30», on every wall)
 -- the jackpot (Sergio, 24 Nov: «se qualcuno riempie tutti quelli di un muro ha un premio
 -- speciale»): every mould of a wall filled gives JACKPOT Scaglie, and the first time the
 -- «Jackpot della Fornace» medal (p.fornace.jackpot counts them)
 M.JACKPOT = 500
+-- the jackpot of each wall of the day (Sergio, 25 Nov: «più bello che il Jackpot del
+-- terzo muro ti dia 1000 che è un numero pieno»)
+M.JACKPOTS = { 500, 750, 1000 }
 -- the medals of the knocks (Sergio, 24 Nov: «una medaglia per aver fatto 6 rintocchi
 -- sulle coppe e una per 10»): the drop knocking on the moulds' iron so many times in
 -- one throw
 M.KNOCKS = { 6, 8, 10 }
--- what a pour is worth on average, in Scaglie of value (a fragment = 60): the
--- design's aim, ~0.8x to 1.2x from worst to best (tools/economia/conti.lua)
-M.AVERAGE = 130
+-- what a pour is worth on average, in Scaglie of value (a fragment = 60): measured
+-- with a model player who aims with some error (25 Nov, 15 Ossidiana, MISS 30 on every
+-- drop, first wall: 172 weak, 206 average and good, plus 5-9% of bank shots; the
+-- third wall ~+25%; tools/economia/conti.lua reads it). The currencies thread asked
+-- for at most 10 Scaglie per Ossidiana on average: Sergio chose ~14 («va bene così»)
+M.AVERAGE = 220
+-- the walls of a game day (Sergio, 25 Nov): three, the same for everyone, one after
+-- the other: the second opens when the first is full, the third after the second;
+-- a game day to go on (at 5 in the morning it starts again from the first). The
+-- prizes grow with the wall, the jackpot too
+M.WALLS = 3
+M.LEVELS = { 1, 1.25, 1.5 }
+-- the bank shots (Sergio, 25 Nov: «che sia sponda sul muro o che sia sui calderoni,
+-- si deve incrementare il premio»): each knock on the moulds' iron before going in
+-- adds KNOCK_BONUS of the mould's prize, the back wall doubles it, BANK_MAX at most
+M.KNOCK_BONUS, M.WALL_BONUS, M.BANK_MAX = 0.5, 2, 3
 M.MELT_IN, M.MELT_OUT = 4, 1   -- fragments of a family for one of another
 M.MELT_SCAGLIE = 20      -- Scaglie for one fragment
-M.SHIFT_HOURS = 8        -- a new wall every 8 hours of the game day (5, 13, 21)
 M.FLOOR = -144           -- the forge's floor
 M.DROP_R = 4             -- the drop's radius
 M.MAX_TICKS = 900
@@ -56,11 +71,15 @@ local function hash(...)
 	return h
 end
 
--- The wall's key for a game day (wallet.today) and the hour of the game day
--- (0..23, 0 is 5 in the morning)
-function M.key(today, hour)
-	local shift = math.max(0, math.min(2, math.floor((tonumber(hour) or 0) / M.SHIFT_HOURS)))
-	return tostring(today) .. "#" .. shift
+-- The key of wall n (0, 1, 2) of a game day (wallet.today)
+function M.key(today, n)
+	return tostring(today) .. "#" .. math.max(0, math.min(M.WALLS - 1, tonumber(n) or 0))
+end
+
+-- the wall's number in its day (0, 1, 2) and its prizes' multiplier
+function M.level(key)
+	local n = tonumber(tostring(key):sub(12, 12)) or 0
+	return n, M.LEVELS[n + 1] or 1
 end
 
 local function key_ok(key)
@@ -139,12 +158,13 @@ function M.mirrored(key)
 	return key_ok(key) and hash(key, "specchio") % 2 == 1
 end
 
--- Can mould i of wall be hit? Tries the arcs from flat to high, each with the
--- power that lands on the opening's centre (y up: v^2 = g dx^2 / (2 cos^2 a (dx tan a - dy)))
+-- Can mould i of wall be hit with a direct throw (Sergio, 25 Nov: «devono essere
+-- tutti raggiungibili senza rimbalzi»)? Tries the arcs from flat to high, each with
+-- the power that lands on the opening's centre (y up: v^2 = g dx^2 / (2 cos^2 a (dx tan a - dy)))
 function M.reachable(wall, i)
 	local m = wall[i]
 	local g = game.GRAVITY * game.MISSILE_GRAVITY
-	for deg = 16, 82, 3 do
+	for deg = 16, 82, 2 do
 		local a = math.rad(deg)
 		local x0, y0 = M.launch(a, 1)
 		local dx, dy = m.x - x0, m.y - y0
@@ -154,7 +174,7 @@ function M.reachable(wall, i)
 			local power = v / game.MISSILE_SPEED
 			if power >= 0.1 and power <= 1 then
 				local r = M.fly(a, power, wall, {})
-				if r.esito == "stampo" and r.slot == i then return true end
+				if r.esito == "stampo" and r.slot == i and r.rimbalzi == 0 and r.sponde == 0 then return true end
 			end
 		end
 	end
@@ -203,6 +223,7 @@ end
 -- The wall of key for seed (lucky: the slot of the double mould, or nil):
 -- { { slot, x, y, w, inner, depth, chain, small, scaglie | set + n, lucky } }
 local LAYOUTS, LAYOUTS_N = {}, 0
+local NONE_LIST = {}
 function M.layout(key, seed, lucky)
 	local id = tostring(key) .. "|" .. tostring(seed) .. "|" .. tostring(lucky)
 	if LAYOUTS[id] then return LAYOUTS[id] end
@@ -222,41 +243,78 @@ function M.layout(key, seed, lucky)
 	end
 	table.sort(spots, function(a, b) if a.k ~= b.k then return a.k < b.k end return a.x < b.x end)
 	-- picked one by one; a spot is taken only if it and all the ones before can
-	-- still be hit (a mould can cover another from the drop's way)
-	local picked = {}
-	for _, sp in ipairs(spots) do
-		local ok = true
-		for _, q in ipairs(picked) do
-			-- apart, and never one over the other
-			if (sp.x - q.x) ^ 2 + (sp.y - q.y) ^ 2 < M.SPOT_GAP ^ 2 or math.abs(sp.x - q.x) < M.COLUMN then ok = false; break end
-		end
-		if ok then
-			picked[#picked + 1] = sp
-			local probe = {}
-			for i, q in ipairs(picked) do probe[i] = { slot = i, x = q.x, y = q.y, w = B, inner = B * 0.36, depth = B * 0.78 } end
-			for i = 1, #picked do
-				if not M.reachable(probe, i) then ok = false; break end
+	-- still be hit (a mould can cover another from the drop's way); then, with the
+	-- moulds' true sizes, each one must still be hit directly: a spot that isn't is
+	-- left out and the wall picked again
+	local banned, out = {}, nil
+	for _ = 1, 12 do
+		local picked = {}
+		for _, sp in ipairs(spots) do
+			local ok = not banned[sp]
+			for _, q in ipairs(ok and picked or NONE_LIST) do
+				-- apart, and never one over the other
+				if (sp.x - q.x) ^ 2 + (sp.y - q.y) ^ 2 < M.SPOT_GAP ^ 2 or math.abs(sp.x - q.x) < M.COLUMN then ok = false; break end
 			end
-			if not ok then picked[#picked] = nil end
+			if ok then
+				picked[#picked + 1] = sp
+				local probe = {}
+				for i, q in ipairs(picked) do probe[i] = { slot = i, x = q.x, y = q.y, w = B, inner = B * 0.36, depth = B * 0.78 } end
+				for i = 1, #picked do
+					if not M.reachable(probe, i) then ok = false; break end
+				end
+				if not ok then picked[#picked] = nil end
+			end
+			if #picked == #M.PRIZES then break end
 		end
-		if #picked == #M.PRIZES then break end
-	end
-	-- the farther (and higher), the richer
-	table.sort(picked, function(a, b)
-		local da, db = a.x + 0.6 * a.y, b.x + 0.6 * b.y
-		if da ~= db then return da < db end
-		return a.x < b.x
-	end)
-	local out = {}
-	for i, sp in ipairs(picked) do
-		local pz = M.PRIZES[i]
-		local m = { slot = i, x = sp.x, y = sp.y, w = pz.w, inner = pz.w * 0.36, depth = pz.w * 0.78,
-			small = pz.w < B, scaglie = pz.scaglie, lucky = lucky == i or nil }
-		if sp.y > 100 then m.chain = M.CEILING - sp.y end
-		if pz.frammenti then m.set, m.n = equip.SETS[hash(seed, key, i, "famiglia") % #equip.SETS + 1].id, pz.frammenti end
-		out[i] = m
+		-- the farther (and higher), the richer
+		table.sort(picked, function(a, b)
+			local da, db = a.x + 0.6 * a.y, b.x + 0.6 * b.y
+			if da ~= db then return da < db end
+			return a.x < b.x
+		end)
+		out = {}
+		for i, sp in ipairs(picked) do
+			local pz = M.PRIZES[i]
+			local m = { slot = i, x = sp.x, y = sp.y, w = pz.w, inner = pz.w * 0.36, depth = pz.w * 0.78,
+				small = pz.w < B, scaglie = pz.scaglie, lucky = lucky == i or nil, spot = sp }
+			if sp.y > 100 then m.chain = M.CEILING - sp.y end
+			if pz.frammenti then m.set, m.n = equip.SETS[hash(seed, key, i, "famiglia") % #equip.SETS + 1].id, pz.frammenti end
+			out[i] = m
+		end
+		local bad
+		for i = 1, #out do
+			if not M.reachable(out, i) then bad = out[i].spot; break end
+		end
+		out.box = nil
+		for _, m in ipairs(out) do m.spot, m.irons, m.lidded = nil, nil, nil end
+		if not bad then break end
+		banned[bad] = true
 	end
 	M.by_ease(out)
+	-- the second and third wall of the day: every prize times the wall's multiplier
+	-- (Scaglie to the nearest 5; the fragments' total rounded, the extra ones to the
+	-- hardest fragment moulds)
+	local _, mult = M.level(key)
+	if mult ~= 1 then
+		local frs, total = {}, 0
+		for _, m in ipairs(out) do
+			if m.scaglie then
+				m.scaglie = math.floor(m.scaglie * mult / 5 + 0.5) * 5
+			else
+				frs[#frs + 1] = m
+				total = total + m.n
+			end
+		end
+		local extra = math.floor(total * mult + 0.5) - total
+		table.sort(frs, function(a, b)
+			if a.ease ~= b.ease then return a.ease < b.ease end
+			return a.slot < b.slot
+		end)
+		for i = 1, extra do
+			local m = frs[(i - 1) % #frs + 1]
+			m.n = m.n + 1
+		end
+	end
 	for _, m in ipairs(out) do
 		if m.lucky then
 			if m.scaglie then m.scaglie = m.scaglie * 2 else m.n = m.n * 2 end
@@ -322,10 +380,13 @@ M.LID_R, M.LID_Y = 0.54, -0.08
 -- The back wall (Sergio, 24 Nov: «in fondo a destra un muro, ad un po' di distanza
 -- dall'ultimo vaso, raggiungibile col tiro, fa rimbalzare la palla con un toc, come
 -- se sbattesse su della plastica»): a wall from the floor up, at BACK_X (the farthest
--- moulds end by 1510; at full power the drop gets there at about -50); it sends the
--- drop back with BACK_BOUNCE of its speed
+-- moulds end by 1510; at full power the drop gets there at about -50)
 M.BACK_X = 1640
-M.BACK_BOUNCE = 0.85
+-- the push up (Sergio, 25 Nov: «quasi un booster verso l'alto ... con l'angolo
+-- invertito e sempre verso l'alto»; numbers chosen on the test page): the drop goes
+-- back with BACK_PUSH of its speed, at the angle it came (rising or falling), but
+-- always upward, between BACK_MIN and BACK_MAX degrees
+M.BACK_PUSH, M.BACK_MIN, M.BACK_MAX = 0.75, 30, 85
 
 -- where the drop is taken by mould m: the line's height and half width
 function M.catch(m)
@@ -431,7 +492,9 @@ function M.fly(angle, power, wall, full, points)
 		end
 		-- the back wall: back with a toc
 		if nx + M.DROP_R > M.BACK_X and vx > 0 then
-			nx, vx, vy = M.BACK_X - M.DROP_R, -vx * M.BACK_BOUNCE, vy * M.SLIDE
+			local sp = math.sqrt(vx * vx + vy * vy) * M.BACK_PUSH
+			local up = math.max(math.rad(M.BACK_MIN), math.min(math.rad(M.BACK_MAX), math.atan2(math.abs(vy), math.abs(vx))))
+			nx, vx, vy = M.BACK_X - M.DROP_R, -math.cos(up) * sp, math.sin(up) * sp
 			walls = walls + 1
 			if path then path.walls[#path.walls + 1] = t end
 		end
@@ -462,15 +525,38 @@ function M.init(p)
 	return p
 end
 
--- A pour on the wall key (the phone says which wall it sees: it must be of
--- today and never older than the last one, so a wall can't be filled again by
--- going back to it). The throws of a pour stay on its wall even if the wall
--- changes meanwhile.
+-- Every mould of the wall key filled: the wall is done and can't be poured on
+-- again (Sergio, 25 Nov)
+function M.full(p, key)
+	M.init(p)
+	local f = p.fornace
+	if key ~= f.muro then return false end
+	for _, m in ipairs(M.wall(p, key)) do
+		if not f.pieni[m.slot] then return false end
+	end
+	return true
+end
+
+-- The wall p is on today: the one of its last pour, or the next one of the day
+-- when that is full (the third stays, full, until 5 in the morning), or the first
+function M.current(p, today)
+	M.init(p)
+	local f = p.fornace
+	if f.muro:sub(1, 10) ~= tostring(today) or not key_ok(f.muro) then return M.key(today, 0) end
+	local n = M.level(f.muro)
+	if f.tiri <= 0 and n < M.WALLS - 1 and M.full(p, f.muro) then return M.key(today, n + 1) end
+	return f.muro
+end
+
+-- A pour on the wall key (the phone says which wall it sees: it must be the one
+-- p is on today, so a wall can't be filled again by going back to it, nor one
+-- skipped). The throws of a pour stay on its wall even if the day changes meanwhile.
 function M.pour(p, key, today)
 	M.init(p)
 	local f = p.fornace
 	if f.tiri > 0 then return nil, "colata" end
-	if not key_ok(key) or key:sub(1, 10) ~= tostring(today) or key < f.muro then return nil, "muro" end
+	if not key_ok(key) or key ~= M.current(p, today) then return nil, "muro" end
+	if M.full(p, key) then return nil, "pieno" end
 	if (p.ossidiana or 0) < M.COST then return nil, "ossidiana" end
 	if key ~= f.muro then
 		f.fortunato = M.lucky_slot(key)
@@ -497,13 +583,21 @@ function M.throw(p, angle, power)
 		f.pieni[r.slot] = true
 		f.centri = f.centri + 1
 		r.lucky = m.lucky
+		-- the bank shot: the knocks and the back wall raise the prize
+		local bank = (1 + M.KNOCK_BONUS * r.rimbalzi) * (r.sponde > 0 and M.WALL_BONUS or 1)
+		bank = math.min(M.BANK_MAX, bank)
+		if bank > 1 then r.sponda = bank end
 		if m.scaglie then
-			r.scaglie = m.scaglie
+			r.scaglie = math.floor(m.scaglie * bank)
 		else
-			r.set, r.n = m.set, m.n
+			r.set, r.n = m.set, math.floor(m.n * bank)
 			orders.init(p)
 			p.commesse.frammenti[m.set] = (p.commesse.frammenti[m.set] or 0) + m.n
 		end
+		-- the consolation is paid on every throw, a hit too (Sergio, 25 Nov: «non voglio
+		-- penalizzare chi fa centro non dandogli qualcosa che avrebbe comunque»)
+		r.base = M.MISS
+		p.scaglie = (p.scaglie or 0) + M.MISS
 	else
 		r.scaglie = M.MISS
 	end
@@ -518,8 +612,11 @@ function M.throw(p, angle, power)
 		for _, m in ipairs(wall) do if not f.pieni[m.slot] then all = false; break end end
 		if all then
 			f.jackpot = f.jackpot + 1
-			p.scaglie = (p.scaglie or 0) + M.JACKPOT
-			r.jackpot, r.medal = M.JACKPOT, f.jackpot == 1 or nil
+			r.jackpot, r.medal = M.JACKPOTS[M.level(f.muro) + 1] or M.JACKPOT, f.jackpot == 1 or nil
+			p.scaglie = (p.scaglie or 0) + r.jackpot
+			-- the jackpot closes the pour, even with throws left (Sergio, 25 Nov)
+			f.tiri = 0
+			return r
 		end
 	end
 	if f.lanci == M.THROWS and f.centri == M.THROWS then

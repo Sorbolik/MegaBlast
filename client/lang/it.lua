@@ -598,11 +598,11 @@ return {
 	-- menu/armory.lua and ui/step_scene.lua: the pieces' levels in Scaglie
 	-- menu/forge_ui.lua: the FORNACE tab of the BOTTEGA (docs/commesse.md "La Fornace")
 	forge = {
-		on_wall = "SUL MURO",
+		on_wall = "MURO %d DI %d",
 		filled = "%d su %d pieni",
 		of_total = "su %s",
 		fragments = "FRAMMENTI",
-		new_wall = "MURO NUOVO FRA",
+		new_wall = "MURI NUOVI FRA",
 		rule = "Una colata = 3 tiri.",
 		rule_sub = "Fai %d su %d e il Fabbro te ne regala un altro.",
 		rule_lucky = "Su questo muro c'è uno stampo che dà il DOPPIO.",
@@ -621,6 +621,8 @@ return {
 		bonus = "3 SU 3! UN TIRO IN PIÙ",
 		lucky = "DOPPIO",
 		lucky_hit = "DOPPIO!",
+		-- the bank shot's prize multiplier: knocks on the moulds, the back wall
+		bank = "DI SPONDA x%s",
 		miss = "NEL SECCHIO",
 		hit = "CENTRO!",
 		jackpot = "JACKPOT!",

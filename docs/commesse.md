@@ -145,7 +145,9 @@ Scelto da Sergio il 24 nov fra tre proposte (https://claude.ai/artifact/JSm7FyZ8
 scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a tempo).
 
 - **L'unico posto dove l'Ossidiana diventa valuta.** Una scheda **FORNACE** nella BOTTEGA,
-  fra COMMESSE e BANCO. Una **colata costa 20 Ossidiana** e la paghi tu col pulsante, ogni
+  fra COMMESSE e BANCO. Una **colata costa 15 Ossidiana** (20 fino al 25 nov: Sergio, «forse costa troppo?»; con 20
+  rendeva 7,5 Scaglie di valore per Ossidiana a un giocatore medio, come le Commesse, e nessuno
+  convertiva; con 15 circa 10, il tetto della media chiesto dal thread delle valute) e la paghi tu col pulsante, ogni
   volta: niente colate automatiche, niente inviti a comprare.
 - **La scheda FORNACE è il muro in vetrina** (Sergio, 24 nov, proposte A e A su
   https://claude.ai/artifact/NtdiVrugGEEvKiBsyifAv2): il Fabbro al banco, il muro di oggi in
@@ -191,10 +193,29 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   x2), **255 Scaglie e 8 frammenti per muro**. Più lontano e più in alto, più rende; quelli
   lontani sono piccoli e chiedono quasi tutta la forza. Mirando scegli la famiglia che ti
   serve. Le catene (degli stampi alti) per ora stanno ferme.
-- **Il muro cambia tre volte al giorno, alle 5, alle 13 e alle 21** (idea di Sergio) e
-  **ogni muro nuovo mette gli stampi in posti nuovi** (Sergio, 24 nov): sempre staccati e
-  tutti centrabili (il gioco lo controlla quando li appende). Le famiglie cambiano e gli
+- **Tre muri al giorno, uno dopo l'altro** (Sergio, 25 nov; prima erano tre a orario, alle 5,
+  13 e 21, ma riempirne uno costava più Ossidiana di quella che si fa in 8 ore): il secondo si
+  apre quando hai riempito il primo, il terzo dopo il secondo; hai tutto il giorno di gioco, e
+  alle 5 di mattina si riparte dal primo muro nuovo (anche se eri a metà). I premi crescono:
+  **x1, x1,25, x1,5** (Scaglie arrotondate a 5, frammenti 8, 10, 12), e il **jackpot 500, 750,
+  1000** (`forge.LEVELS`, `forge.JACKPOTS`, `forge.current`). I tre muri sono uguali per tutti.
+  **Ogni muro nuovo mette gli stampi in posti nuovi** (Sergio, 24 nov): sempre staccati e
+  tutti centrabili **con un tiro diretto, senza rimbalzi** (Sergio, 25 nov; il gioco lo
+  controlla quando li appende, con la grandezza vera di ogni stampo, e sposta quello che non si
+  prende). Le famiglie cambiano e gli
   stampi riempiti tornano vuoti.
+- **La sponda in fondo spinge in alto** (Sergio, 25 nov: «quasi un booster verso l'alto», numeri
+  scelti sulla pagina di prova https://claude.ai/artifact/9RZpeMBV7fuPz6nM6fquiJ): la goccia torna
+  indietro con lo stesso angolo con cui è arrivata, salendo o scendendo, ma sempre verso l'alto,
+  fra 30 e 85 gradi, con il 75% della sua velocità (`forge.BACK_PUSH`, `BACK_MIN`, `BACK_MAX`;
+  prima era un rimbalzo normale all'85%).
+- **I colpi di sponda pagano di più** (Sergio, 25 nov): ogni rintocco sul ferro degli stampi
+  prima di entrare vale +50% del premio dello stampo, passare dalla sponda in fondo lo
+  raddoppia, al massimo x3 (`forge.KNOCK_BONUS`, `WALL_BONUS`, `BANK_MAX`); nel gioco
+  «DI SPONDA x1,5». Il premio di consolazione è **30 Scaglie per ogni goccia**, nel secchio
+  e anche a segno (il centro aggiunge il premio dello stampo), su tutti i muri (`forge.MISS`,
+  `r.base`; Sergio, 25 nov: «mettiamolo a 30 e lasciamolo sempre a 30», «non voglio penalizzare
+  chi fa centro»; era 20 e solo nel secchio).
 - **Il muro è uguale per tutti** (Sergio, 24 nov sera: «sempre randomico, ma uguale per tutti
   quanti, crea più unione tra la gente»): posti, premi e stampo fortunato vengono solo dal
   muro di quel momento (`forge.wall`, seme `forge.SEED` uguale per tutti), non più da un seme
@@ -224,7 +245,9 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
 - **Il jackpot del muro pieno** (Sergio, 24 nov, «Medaglia + 500 Scaglie»): chi riempie tutti
   i 12 stampi di un muro prende **500 Scaglie** ogni volta e, la prima volta, la medaglia
   **Jackpot della Fornace** (`forge.JACKPOT`, il conto in `fornace.jackpot`). La medaglia è un badge del profilo, d'oro, nella casella dei clienti di fiducia: si mette accanto al nome come gli altri (`orders.badges`). Scartati: un
-  frammento per famiglia e una colata gratis.
+  frammento per famiglia e una colata gratis. Il jackpot **chiude la colata** anche se restano tiri
+  (persi, niente tiro in più) e un muro pieno **non si cola più** fino al muro dopo (Sergio, 25 nov:
+  «non ti deve permettere di rifarla su quel muro»; `forge.full`, la colata risponde `"pieno"`).
 - **Le medaglie dei rintocchi** (Sergio, 24 e 25 nov): un rintocco è un colpo della goccia sul
   ferro degli stampi nello stesso tiro (solo sugli stampi: la sponda non conta); la prima volta
   che un tiro ne fa **6**, **8** e **10** si vince una medaglia: bronzo, acciaio, argento con
@@ -253,7 +276,7 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   in un altro stampo più in basso; conta solo quando tocca terra. Uno stampo pieno è chiuso dal
   coperchio, che la fa rimbalzare via (un cerchio sul disegno del coperchio, `forge.LID_R`;
   Sergio, 24 nov sera: «l'hitbox del coperchio più coerente col coperchio»; `fly`).
-- **Mai zero**: una goccia fuori dagli stampi cade nel secchio (20 Scaglie). Tre centri
+- **Mai zero**: una goccia fuori dagli stampi cade nel secchio, e ogni goccia dà 30 Scaglie, anche a segno. Tre centri
   su tre danno un tiro in più (uno solo per colata).
 - **Il cambio**: una colata rende in media circa **130 Scaglie di valore** (frammento = 60),
   dal peggio al meglio circa da 0,8 a 1,2 volte la media. Da ritarare coi conti delle ore

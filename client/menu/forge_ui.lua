@@ -122,19 +122,19 @@ local function day_clock()
 	return t.hour, t.hour * 3600 + t.min * 60 + t.sec
 end
 
--- the wall the player sees now: the one of his throws if some are left, else today's
+-- the wall the player sees now: the one of his throws if some are left, else the
+-- one he is on today (the next of the day when his is full)
 local function wall_key(p)
 	forge.init(p)
 	local f = p.fornace
 	if f.tiri > 0 and f.muro ~= "" then return f.muro end
-	return forge.key(profile.today(p), (day_clock()))
+	return forge.current(p, profile.today(p))
 end
 
--- "3:12:05" to the next wall
+-- "3:12:05" to the new walls (the game day's turn, at 5 in the morning)
 local function until_next()
 	local _, now = day_clock()
-	local next_at = (math.floor(now / (forge.SHIFT_HOURS * 3600)) + 1) * forge.SHIFT_HOURS * 3600
-	local left = math.max(0, next_at - now)
+	local left = math.max(0, 24 * 3600 - now)
 	return string.format("%d:%02d:%02d", math.floor(left / 3600), math.floor(left / 60) % 60, left % 60)
 end
 
@@ -639,8 +639,8 @@ local function shelf(a, g, key)
 	local ix, iw = x + PAD, w - 2 * PAD
 	local sc, fr, left = forge.left(p, key)
 	local total = 0
-	for _, pz in ipairs(forge.PRIZES) do total = total + (pz.scaglie or 0) end
-	kit.text(c, T.on_wall, ix, y + PAD + 18, 22, KC.HOT, "start", 1)
+	for _, m in ipairs(forge.wall(p, key)) do total = total + (m.scaglie or 0) end
+	kit.text(c, T.on_wall:format(forge.level(key) + 1, forge.WALLS), ix, y + PAD + 18, 22, KC.HOT, "start", 1)
 	fit(kit.text(c, kit.upper(T.filled:format(#forge.PRIZES - left, #forge.PRIZES)), ix, y + PAD + 42, 16, KC.MUTE, "start", 0.5), iw)
 	kit.piece(c, "scaglia", ix + 17, y + 92, 34)
 	kit.text(c, coins.format(sc), ix + 42, y + 102, 28, sc > 0 and KC.SAND or KC.MUTE, "start")
@@ -903,7 +903,7 @@ local function launch(a)
 	fx.result, fx.path, fx.wall, fx.hit_i, fx.wall_i = r, path, wall, 1, 1
 	local got = fx.got
 	if got then
-		got.scaglie = got.scaglie + (r.scaglie or 0)
+		got.scaglie = got.scaglie + (r.scaglie or 0) + (r.base or 0)
 		if r.set then got.fr[r.set] = (got.fr[r.set] or 0) + r.n end
 		if r.esito == "stampo" then got.hits = got.hits + 1 end
 		if r.bonus then got.bonus = true end
@@ -1047,10 +1047,13 @@ local function land(a)
 		fx.hold = 0.5
 		if r.jackpot then jackpot(a, r) end
 		local sx, sy = to_screen(fx, m.x, m.y + m.w * 0.6)
-		if r.scaglie then
-			coins.fly(fx.purse, "scaglia", in_purse(fx, sx, sy), math.min(10, math.max(3, math.floor(r.scaglie / 8))), r.scaglie,
+		-- (with the Scaglie every drop gets, forge.MISS)
+		local sc = (r.scaglie or 0) + (r.base or 0)
+		if sc > 0 then
+			coins.fly(fx.purse, "scaglia", in_purse(fx, sx, sy), math.min(10, math.max(3, math.floor(sc / 8))), sc,
 				function(i) if i == 1 then sound.play("#scaglia") end end)
-		else
+		end
+		if not r.scaglie then
 			-- the family's fragment rises from the mould, with how many
 			local n = empty(fx.hud, sx, sy)
 			local g = { node = n, ox = 0, oy = 0 }
@@ -1064,6 +1067,9 @@ local function land(a)
 			sound.play("#scaglia")
 		end
 		if r.lucky then shout(a, T.lucky_hit, 470, KC.HOT, 1.1) end
+		if r.sponda then
+			shout(a, T.bank:format((string.format("%.1f", r.sponda):gsub("%.0$", ""):gsub("%.", ","))), r.lucky and 410 or 470, KC.HOT, 1.1)
+		end
 	else
 		missed(a, last[1], last[2])
 		return
