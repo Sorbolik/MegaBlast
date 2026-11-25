@@ -99,9 +99,11 @@ M.GRADES = {
 -- esplora: chance of picking on purpose one of the moves after the best;
 -- cassa: what taking a crate is worth (in match points), plus cassa_fame
 -- for each shot that robot is short of HUNGER (crate primaries and chosen
--- secondary: whoever runs dry wants it more).
+-- secondary: whoever runs dry wants it more); tiro_minimo: a weapon shot
+-- worth this much or less is not fired (it would hit only walls), the bot
+-- takes cover instead.
 M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 100, globo_riparo = 3,
-	cassa = 12, cassa_fame = 8 }
+	cassa = 12, cassa_fame = 8, tiro_minimo = 1 }
 
 -- Personalities: how a bot plays, besides its level (how good it is). They
 -- are only weights different from M.PESI, so the bot doesn't cheat: it always
@@ -931,6 +933,16 @@ local function missing_angle(b, g, m)
 	return m.ang + 0.8
 end
 
+-- Is move m worth firing? Tools, the orb and the plan's forced attacks always,
+-- and every attack of the bots that must attack anyway (the tutorial's
+-- teacher, who misses on purpose, and the plan attacca_entro, which earns the
+-- orbs by attacking); a weapon only if it earns more than pesi.tiro_minimo
+local function worth_firing(b, m)
+	if not m or not m.arma or m.forced or game.TOOLS[m.arma] or m.arma == "teleport" then return true end
+	if b.liv.manca or (b.piano and b.piano.attacca_entro) then return true end
+	return (m.punti or 0) > b.pesi.tiro_minimo
+end
+
 -- The thinking: picks the move of the moment. Puts the best found so far in
 -- b.scelta, so if time runs short that one is used.
 local function think(b, g)
@@ -1025,6 +1037,11 @@ local function think(b, g)
 		if m.punti >= math.min(0, moves[1].punti) then b.scelta = m end
 	end
 
+	-- a shot worth nothing (it hits nobody, or only its own side) is not fired:
+	-- the bots were shooting into walls (Sergio, 25 Nov 2026); they take
+	-- cover instead. pesi.tiro_minimo: the least a shot must be worth
+	if not worth_firing(b, b.scelta) then b.scelta = nil end
+
 	-- plan due_attacchi: if the weapon left reaches the enemy from no spot,
 	-- get as close as possible and use it anyway
 	if not b.scelta and plan and plan.due_attacchi and #list > 0 then
@@ -1035,7 +1052,7 @@ local function think(b, g)
 				if math.abs(p.x - o.x) < math.abs(near.x - o.x) then near = p end
 			end
 			local a = math.atan2(o.y + game.HURT_Y - (near.y + game.DISEGNO_H / 2), o.x - near.x)
-			b.scelta = { posto = near, arma = list[#list], ang = a, potenza = 1, punti = 0 }
+			b.scelta = { posto = near, arma = list[#list], ang = a, potenza = 1, punti = 0, forced = true }
 		end
 	end
 
@@ -1274,6 +1291,11 @@ function M.input(b, g)
 		-- arrived: the shot, with the level's error
 		if not g:can_use(s.arma) then
 			rethink(b, 10)
+			return IDLE
+		end
+		-- the best move found when time ran short may be worth nothing
+		if not worth_firing(b, s) then
+			enough(b)
 			return IDLE
 		end
 		local a = s.ang + noise(b) * b.liv.mira
