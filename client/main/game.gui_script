@@ -54,6 +54,7 @@ local hud = require "battle.hud"
 local screen = require "ui.screen"
 local frames = require "ui.frames"
 local phone = require "main.phone"
+local side_core = require "main.side_core"
 -- in the browser without the extension (web build) the browser's WebSocket is enough
 local ws = websocket or (html5 and require "main.ws_browser")
 
@@ -756,6 +757,8 @@ local function new_match(self, seed, map, opts)
 	-- the bots' keys too: the replay of a moment (profile, PARTITE) gets there at once
 	self.ricetta.bot_keys = true
 	self.g, self.bots = replay.match(self.ricetta)
+	-- against the MAESTRO the bots think on another core (main/side_core.lua)
+	side_core.start(self.ricetta, self.bots)
 	-- the world shows only now that there is a match (show_menu)
 	msg.post("/terreno#script", "home", {})
 	gui.set_enabled(self.mondo, true)
@@ -5309,6 +5312,8 @@ function update(self, dt)
 			-- moment instead of stuttering. Ticks and keys are the same: the match
 			-- doesn't change (docs/prestazioni.md, Fase 1)
 			if ticks >= CATCHUP_BOT and bot.totale ~= thought then break end
+			-- the bot's keys from the other core aren't here yet: the match waits this frame
+			if not side_core.ready(self.g) then break end
 			ticks = ticks + 1
 			local input = {
 				left = move_left(self),
@@ -5324,12 +5329,14 @@ function update(self, dt)
 			capture(self.pose_a, self.g)
 			-- a bot's turn: the keys are its own
 			input = replay.input(self.ricetta, self.g, self.bots, input)
+			side_core.person(self.g, input)
 			-- the shots of whoever plays here, for the stats
 			if self.conta and input.fire and self.g.current == self.conta.me then
 				CP.conta.shot(self.conta, self.g, input.fire.weapon)
 			end
 			self.g:step(input)
 			replay.after(self.ricetta, self.g)
+			side_core.played(self.g)
 			for _, e in ipairs(self.g:pop_events()) do
 				handle_event(self, e)
 				if self.missione then missions.event(self.missione, self.g, e, self.bots) end

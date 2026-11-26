@@ -48,6 +48,15 @@ M.LEVELS = {
 	difficile = { reaction = 20, mira = 0.008, potenza = 0.008, sbaglia = 0, walk_ticks = 420, powers = 5,
 		teletrasporto = true, rampino = true, oggetti = true, lavoro = 400, pericolo = 1 },
 }
+-- maestro (the training's MAESTRO, Sergio, 26 Nov 2026: "mettila solo in
+-- allenamento oltre il livello difficile"): the hard bot that, among its two best
+-- attacks (and covers), plays each on a copy of the match up to the enemy's
+-- reply and keeps the better one (sim/master.lua; 77% against grade 10 in the
+-- arena). It thinks more per tick (lavoro) and for longer.
+M.LEVELS.maestro = { maestro = { candidate = 2, semi = 1, turni = 2, leggero = true, tempo = 3 }, lavoro = 3000 }
+for k, v in pairs(M.LEVELS.difficile) do
+	if M.LEVELS.maestro[k] == nil then M.LEVELS.maestro[k] = v end
+end
 M.ORDER = { "facile", "normale", "difficile" }
 
 -- The campaign grades (Sergio, 30 October 2026: "vorrei sentire una bella
@@ -330,6 +339,8 @@ local function work(b, n)
 	end
 end
 
+M.work = work
+
 -- Runs the copy, for at most max ticks, until everything is still
 local function until_quiet(b, w, max)
 	local nr = #w.robots
@@ -445,7 +456,16 @@ local function caratteristiche(b, g, w, x)
 end
 M.caratteristiche = caratteristiche
 
-local FEAT_BUF = {}
+local FEAT_BUF, CORR_BUF = {}, {}
+
+-- A learned correction (tools/arena/maestro.py): weights times the features
+-- of the position after the move, in match points. Not in the game: nil
+-- unless the arena gives the bot pesi.correzione or pesi.riparo.
+local function correction(wts, x)
+	local s = 0
+	for i = 1, #wts do s = s + wts[i] * (x[i] or 0) end
+	return s
+end
 
 -- How many counted shots rb has: the crate primaries and the chosen secondary
 local function shots_left(rb)
@@ -520,6 +540,7 @@ local function value(b, g, w)
 			end
 		end
 	end
+	if b.pesi.correzione then s = s + correction(b.pesi.correzione, caratteristiche(b, g, w, CORR_BUF)) end
 	-- the second value: the hits alone (points and life), without crates and hazard
 	return s + casse(b, g, w) + peril(b, g, w, PERIL_ATTACK), s
 end
@@ -939,6 +960,16 @@ local function missing_angle(b, g, m)
 	return m.ang + 0.8
 end
 
+-- The moves handed to b.scegli: the one the bot would pick first, then the
+-- others in order
+local function candidates(first, moves)
+	local out = { first }
+	for _, m in ipairs(moves) do
+		if m ~= first then out[#out + 1] = m end
+	end
+	return out
+end
+
 -- the arcs (degrees above the horizon) of the harmless shot that ends a turn
 -- with nothing worth attacking
 local SAFE_ARCS = { 30, 50, 70 }
@@ -1051,9 +1082,12 @@ local function think(b, g)
 			-- throw the orb; once there, think again from there
 			local orb = best_move.posto.globo
 			b.scelta = { posto = spots[1], arma = "teleport", ang = orb[1], potenza = orb[2], punti = best_move.punti }
+			if b.scegli then b.scelta = b.scegli(b, g, candidates(b.scelta, moves), "attacco") end
 			return
 		end
 	end
+	-- scegli (only tools/arena/maestro.lua): someone else picks among the best
+	if b.scegli and b.scelta then b.scelta = b.scegli(b, g, candidates(b.scelta, moves), "attacco") end
 
 	-- sometimes (low levels) a worse move, but not one that hurts itself or
 	-- its teammate (points below zero when the best isn't). esplora: the same
@@ -1174,6 +1208,7 @@ local function shelter(b, g, w)
 	local x = caratteristiche(b, g, w, FEAT_BUF)
 	if x[7] == 1 then return -1000 end
 	local s = x[11] * 10 - x[16] * 4 - x[14] * 8 - x[15] * 3 - x[4] * 50 + casse(b, g, w) + peril(b, g, w, 1)
+	if b.pesi.riparo then s = s + correction(b.pesi.riparo, x) end
 	-- the coward's den: covered and seen by nobody
 	local den = b.pesi.den
 	if den then
@@ -1188,6 +1223,7 @@ local THROWS, DEN_THROWS = { 0.45, 0.7, 0.95 }, { 0.3, 0.45, 0.6, 0.75, 0.9, 1 }
 
 local function take_cover(b, g)
 	local me = g.robots[b.id]
+	b.ripari = nil
 	b.peril = hazards.risk(g)
 	local remaining = g.window > 0 and g.window or g.timer
 	-- plan poi = "teletrasporto": to cover with the orb instead of on foot;
@@ -1225,7 +1261,14 @@ local function take_cover(b, g)
 		at_spot(w, b.id, spot)
 		work(b, 20)
 		local s = shelter(b, g, w) - (spot.n or 0) * b.pesi.strada
-		if not best_move or s > best_move.punti then best_move = { posto = spot, punti = s } end
+		local mv = { posto = spot, punti = s }
+		if not best_move or s > best_move.punti then best_move = mv end
+		if b.scegli then
+			local all = b.ripari or {}
+			b.ripari = all
+			mv.k = #all + 1
+			all[#all + 1] = mv
+		end
 	end
 	if b.liv.rampino and g:can_use("hook") and remaining > 3 * 60 then
 		for grades = 15, 165, 25 do
@@ -1245,6 +1288,16 @@ local function take_cover(b, g)
 	end
 	if orb and orb.punti > best_move.punti + b.pesi.globo_riparo then best_move = orb end
 	b.scelta = best_move
+	if b.scegli then
+		local all = b.ripari or {}
+		b.ripari = nil
+		if orb then
+			orb.k = #all + 1
+			all[#all + 1] = orb
+		end
+		table.sort(all, ranks_before)
+		b.scelta = b.scegli(b, g, candidates(best_move, all), "riparo")
+	end
 end
 
 -- The turn ----------------------------------------------------------------------------
@@ -1278,8 +1331,10 @@ function M.new(id, livello, seed, weights, personality)
 		for k, v in pairs(p.liv) do overrides[k] = v end
 	end
 	-- own_plan: the personality's plan, for the turns that have no other
-	return { id = id, livello = livello, liv = overrides, pesi = p, rng = generator((seed or 1) * 7919 + id), lavoro = 0,
+	local b = { id = id, livello = livello, liv = overrides, pesi = p, rng = generator((seed or 1) * 7919 + id), lavoro = 0,
 		attacks = 0, own_plan = feat.piano }
+	if overrides.maestro then b.scegli = require("sim.master").chooser(overrides.maestro) end
+	return b
 end
 
 -- Noise between -1 and 1, more often near 0

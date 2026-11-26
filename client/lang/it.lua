@@ -133,7 +133,7 @@ return {
 	-- menu/training.lua: ALLENAMENTO, the mode (tabs), the difficulty, then the map
 	training = {
 		difficulty = "DIFFICOLTÀ",
-		levels = { facile = "FACILE", normale = "NORMALE", difficile = "DIFFICILE" },
+		levels = { facile = "FACILE", normale = "NORMALE", difficile = "DIFFICILE", maestro = "MAESTRO" },
 		offline = "SENZA RETE",
 		map = "MAPPA",
 		mode_and_bot = "%s · BOT %s",

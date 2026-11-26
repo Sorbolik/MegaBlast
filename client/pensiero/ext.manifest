@@ -1,0 +1,6 @@
+# Il secondo core dei bot (src/pensiero.cpp): un secondo motore Lua su un thread a parte, dove gira il gemello
+# della partita (sim/second_core.lua) che pensa per il MAESTRO senza rubare tempo ai frame. Nel browser non c'è
+# (niente thread): il gioco va avanti senza (client/main/side_core.lua controlla "if pensiero").
+# Si compila sul build server di Defold (APK su Telegram, editor sul PC di Sergio);
+# la simulazione e la build web nel cloud lo lasciano fuori (tools/simula/senza_estensioni.py).
+name: "Pensiero"

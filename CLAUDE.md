@@ -73,7 +73,7 @@ centro; su 20:9 o 4:3 lo schermo vero va da `schermo.x0` a `x1` e da `y0` a `y1`
 l'HUD o i menu prova anche `--schermo 1600x720` e `--schermo 960x720` (scenario `schermo.txt`).
 
 Le estensioni native del client (cartelle con `ext.manifest`, per ora `client/vibra`:
-la micro-vibrazione) si compilano solo sul build server di Defold: simulazione e build
+la micro-vibrazione, e `client/pensiero`: il secondo motore Lua dove pensano i bot del MAESTRO) si compilano solo sul build server di Defold: simulazione e build
 web nel cloud compilano una copia del client senza (`tools/simula/senza_estensioni.py`),
 e la build di prova dell'APK (`.github/workflows/build-pr.yml`, da lanciare a mano sul
 ramo da Actions quando si tocca un'estensione o il manifest del motore) dice se compilano.
