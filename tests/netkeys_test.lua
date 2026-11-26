@@ -76,6 +76,7 @@ do
 	rb.melee_hit, rb.cannon = { [1] = true }, { wait = 3, hit = { [3] = true } }
 	g.pools[1] = { id = 1, x = 10, y = 10, r = 60, turns = 3, owner = 1, team = 1, lit = { [2] = 1 } }
 	g.projectile = { x = 1, y = 2, hit = { [4] = true } }
+	g.flying[1] = { x = 3, y = 4, hit = { [2] = true } }
 	local function dump(t, seen)
 		seen = seen or {}
 		if type(t) ~= "table" then return tostring(t) end
@@ -90,7 +91,7 @@ do
 		end
 		return "{" .. table.concat(out, ",") .. "}"
 	end
-	local before = dump({ g.robots, g.pools, g.projectile, g.orbs, g.placed })
+	local before = dump({ g.robots, g.pools, g.projectile, g.flying, g.orbs, g.placed })
 	local w = bot.world(g)
 	-- every table of the copy written over
 	local function scribble(t, depth)
@@ -102,8 +103,8 @@ do
 			end
 		end
 	end
-	scribble({ w.robots, w.pools, w.projectile, w.orbs, w.placed }, 0)
-	check(dump({ g.robots, g.pools, g.projectile, g.orbs, g.placed }) == before, "la copia del bot non scrive nella partita vera")
+	scribble({ w.robots, w.pools, w.projectile, w.flying, w.orbs, w.placed }, 0)
+	check(dump({ g.robots, g.pools, g.projectile, g.flying, g.orbs, g.placed }) == before, "la copia del bot non scrive nella partita vera")
 end
 
 if failures > 0 then

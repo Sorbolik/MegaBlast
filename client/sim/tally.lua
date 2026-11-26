@@ -72,7 +72,8 @@ function M.event(c, g, e)
 			c.colpo.preso = true
 			c.a_segno = c.a_segno + 1
 			local o = g.robots[e.robot]
-			local d = math.floor(math.sqrt((o.x - c.colpo.x) ^ 2 + (o.y - c.colpo.y) ^ 2) + 0.5)
+			local dx, dy = o.x - c.colpo.x, o.y - c.colpo.y
+			local d = math.floor(math.sqrt(dx * dx + dy * dy) + 0.5)
 			if d > c.colpo_lungo then c.colpo_lungo = d end
 			if d >= M.LONG then
 				moment(c, g, function(T) return T.long_shot:format(d, c.nomi[e.robot] or "?") end)

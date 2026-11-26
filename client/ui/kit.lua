@@ -745,10 +745,22 @@ function M.secondary(g, label, x, y, w, h, opt)
 	p.set_label(label)
 	p.label = lt
 	if opt.sub then
-		local st = M.text(f, opt.sub, tx, base + sub_gap + M.CAP * 16, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or (opt.main and C.HOT or C.MUTE), align, 0.5)
+		local first = type(opt.sub) == "table" and opt.sub[1] or opt.sub
+		local st = M.text(f, first, tx, base + sub_gap + M.CAP * 16, 16, opt.off and with_alpha(C.MUTE, 0.7) or opt.sub_color or (opt.main and C.HOT or C.MUTE), align, 0.5)
 		local sub_full = gui.get_scale(st)
-		-- another short line (the home's doors: what is new there)
+		-- another short line (the home's doors: what is new there). t can be a list, longest
+		-- first: the first that fits at full size, so it never shrinks under MIN_TEXT when a
+		-- shorter version says enough (the campaign's «<MISSIONE> · NUOVA», 26 Nov)
 		p.set_sub = function(t)
+			if type(t) == "table" then
+				local pick = t[#t]
+				for _, v in ipairs(t) do
+					gui.set_text(st, v)
+					gui.set_scale(st, sub_full)
+					if M.width(st) <= room_w then pick = v break end
+				end
+				t = pick
+			end
 			gui.set_text(st, t)
 			gui.set_scale(st, sub_full)
 			if M.width(st) > room_w then gui.set_scale(st, sub_full * (room_w / M.width(st))); M.check_small(st) end

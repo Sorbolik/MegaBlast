@@ -181,6 +181,11 @@ M.PUNCH_HOP = 15 * M.U      -- the attacker rises a little with the uppercut
 M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true, bellows = true,
 	vortex = true, cannon = true, petard = true }
 M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows", "vortex", "cannon", "petard" }
+-- weapons (and the Giano) that fly as self.projectile: firing one while another
+-- shot still flies moves the old one to self.flying, where it goes on until it
+-- bursts (it used to be replaced, and vanished without exploding: Sergio, 26 Nov)
+M.SHOOTS = { missile = true, grenade = true, tar = true, petard = true, sniper = true, vortex = true,
+	boomerang = true, drill = true, janus = true }
 -- weapons that don't use up shots
 M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill" }
@@ -231,6 +236,17 @@ M.MAX_SETTLE_TICKS = 5 * 60
 -- grows with exponent AIM_EXPONENT (2: quadratic, more precise on short shots).
 M.AIM_DEADZONE = 0.2
 M.AIM_EXPONENT = 2
+
+-- x to the whole power n (n >= 0), by multiplying. The simulation never uses ^:
+-- LuaJIT computes x ^ n with pow() in the interpreter and by multiplying in the
+-- compiled code (older versions), and the last digit can differ, so the same
+-- match came out different by how much of it got compiled (Sergio's PC, 26 Nov:
+-- registra.lua with CRLF line ends). tools/confronta/identica.py checks it.
+function M.ipow(x, n)
+	local out = 1
+	for _ = 1, n do out = out * x end
+	return out
+end
 -- how much of the gap between aim and finger is recovered each frame (at 60 Hz); 1 = at once
 M.AIM_SMOOTH = 0.2
 -- Short jump (like Hollow Knight): releasing jump while rising multiplies the
@@ -247,7 +263,7 @@ M.JUMP_BUFFER_TICKS = 6
 function M.aim_power(f)
 	f = math.max(0, math.min(1, f))
 	if M.AIM_DEADZONE > 0 then f = math.max(0, (f - M.AIM_DEADZONE) / (1 - M.AIM_DEADZONE)) end
-	return math.max(0.1, f ^ M.AIM_EXPONENT)
+	return math.max(0.1, M.ipow(f, M.AIM_EXPONENT))
 end
 
 local NO_INPUT = {}
@@ -339,7 +355,7 @@ function M.new(seed, map_id, opts)
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.GRID_W, M.WORLD_H / M.CELL, M.CELL, M.MARGIN_CELLS)
 	map.build(g.terrain, seed)
-	g.spawn_spots = M.find_spawn_spots(g.terrain)
+	g.spawn_spots = map.respawns or M.find_spawn_spots(g.terrain)
 	local players = opts.players or C.MODES["1v1"]
 	assert(#players >= 2 and #players <= M.MAX_PLAYERS, "da 2 a " .. M.MAX_PLAYERS .. " giocatori")
 	g.robots = {}
@@ -408,6 +424,7 @@ function M.new(seed, map_id, opts)
 	g.events = {}
 	g.tick = 0
 	g.orbs = {}              -- teleport orbs in flight, oldest first
+	g.flying = {}            -- older shots still in flight (self.projectile is the last fired), oldest first
 	g.orb_seq = 0
 	g.match_left = M.MATCH_TICKS
 	g.current = 1
@@ -810,38 +827,60 @@ function M.find_spawn_spots(t)
 	return #out > 0 and out or nil
 end
 
--- rb's respawn point: random among the free ones, far from living enemies
--- (SPAWN_FAR) and from traps; if there are none, the one furthest from enemies.
--- Without steel points, a random free point.
+-- rb's respawn point (Sergio, 26 November 2026: "può capitare che spawni 10 volte nello stesso
+-- posto"). The map's own points (maps.lua respawns: 12 on the iron of the good maps), else the
+-- steel ones found in the terrain. Every free point gets a weight, like Halo's spawns: none
+-- within SPAWN_FAR of a living enemy (unless no point is that far), more the farther the
+-- nearest enemy (up to SPAWN_CALM), more near a living teammate (SPAWN_MATE), much less near
+-- where rb has just died (SPAWN_GRAVE), never the point it came back on last time; then a draw
+-- weighted by the match generator (client and server agree). Without points, a random free one.
+M.SPAWN_CALM, M.SPAWN_MATE, M.SPAWN_GRAVE = 700, 350, 250
 function M:spawn_spot(rb)
 	local spots = self.spawn_spots
 	if not spots then
 		return self:surface_spot(function(x, gy) return not self:robot_collides(x, gy, rb) end)
 	end
-	local ok, best, best_d = {}, nil, -1
-	for _, s in ipairs(spots) do
-		if not self:robot_collides(s.x, s.y, rb) then
-			local d = math.huge
-			for _, o in ipairs(self.robots) do
-				if o ~= rb and not o.dead and o.team ~= rb.team then
-					local dx, dy = o.x - s.x, o.y - s.y
-					d = math.min(d, math.sqrt(dx * dx + dy * dy))
-				end
-			end
-			local trap_name = false
-			for _, o in ipairs(self.placed) do
-				if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAP and math.abs(o.y - s.y) < M.SPAWN_TRAP then
-					trap_name = true
-				end
-			end
-			if not trap_name then
-				if d >= M.SPAWN_FAR then ok[#ok + 1] = s end
-				if d > best_d then best, best_d = s, d end
+	local cand, far_enough = {}, false
+	for i, s in ipairs(spots) do
+		local trapped = false
+		for _, o in ipairs(self.placed) do
+			if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAP and math.abs(o.y - s.y) < M.SPAWN_TRAP then
+				trapped = true
 			end
 		end
+		if not trapped and i ~= rb.last_spawn and not self:robot_collides(s.x, s.y, rb) then
+			local enemy, mate = math.huge, math.huge
+			for _, o in ipairs(self.robots) do
+				if o ~= rb and not o.dead then
+					local dx, dy = o.x - s.x, o.y - s.y
+					local d = math.sqrt(dx * dx + dy * dy)
+					if o.team ~= rb.team then enemy = math.min(enemy, d) else mate = math.min(mate, d) end
+				end
+			end
+			local w = math.min(enemy, M.SPAWN_CALM) / M.SPAWN_CALM
+			if mate < M.SPAWN_MATE then w = w * 1.5 end
+			local gx, gy = rb.x - s.x, rb.y - s.y
+			if gx * gx + gy * gy < M.SPAWN_GRAVE * M.SPAWN_GRAVE then w = w * 0.2 end
+			cand[#cand + 1] = { i = i, w = w, far = enemy >= M.SPAWN_FAR }
+			if enemy >= M.SPAWN_FAR then far_enough = true end
+		end
 	end
-	local s = #ok > 0 and ok[1 + math.floor(self.rng:next() * #ok)] or best
-	if s then return s.x, s.y end
+	local total = 0
+	for _, c in ipairs(cand) do
+		if far_enough and not c.far then c.w = 0 end
+		total = total + c.w
+	end
+	if #cand == 0 then return nil end
+	local pick = cand[#cand]
+	if total > 0 then
+		local r = self.rng:next() * total
+		for _, c in ipairs(cand) do
+			r = r - c.w
+			if c.w > 0 and r < 0 then pick = c break end
+		end
+	end
+	rb.last_spawn = pick.i
+	return spots[pick.i].x, spots[pick.i].y
 end
 
 -- Start-of-match points of the real matches (training, same phone, online, private
@@ -909,7 +948,8 @@ local function start_unevenness(placed)
 		local best = math.huge
 		for _, o in ipairs(placed) do
 			if o.team ~= p.team then
-				best = math.min(best, math.sqrt((p.x - o.x) ^ 2 + (p.y - o.y) ^ 2))
+				local dx, dy = p.x - o.x, p.y - o.y
+				best = math.min(best, math.sqrt(dx * dx + dy * dy))
 			end
 		end
 		sum[p.team], n[p.team] = (sum[p.team] or 0) + best, (n[p.team] or 0) + 1
@@ -972,6 +1012,9 @@ function M:remove(id)
 		-- the next one is already in their place in the order: end_turn passes to them
 		self.order_pos = pos - 1
 		if self.projectile and self.projectile.owner == id then self.projectile = nil end
+		for i = #self.flying, 1, -1 do
+			if self.flying[i].owner == id then table.remove(self.flying, i) end
+		end
 		self:end_turn()
 	end
 end
@@ -1726,10 +1769,14 @@ end
 -- One tick of flight: it starts fast and slows down (drag), gravity grows
 -- little by little up to drop times the robots' gravity in drop_ramp seconds,
 -- so at first it goes almost straight and then drops more and more
+-- the speed kept each tick (drag per second to the power DT), computed once per drag;
+-- DT is not whole, so ^ is pow() in the interpreter and in the compiled code alike
+local sniper_drag, sniper_k
 local function sniper_step(gravity, vx, vy, age)
 	local s = C.SNIPER
 	local g = gravity * s.drop * math.min(1, age / (s.drop_ramp * 60))
-	local k = s.drag ^ M.DT
+	if sniper_drag ~= s.drag then sniper_drag, sniper_k = s.drag, s.drag ^ M.DT end -- pow ok
+	local k = sniper_k
 	return vx * k, (vy - g * M.DT) * k
 end
 
@@ -1752,7 +1799,7 @@ function M:update_sniper(p)
 			p.bounces = p.bounces + 1
 			p.vx, p.vy = bounce(t, nx, ny, p.vx, p.vy)
 			-- too many bounces or almost still: it dies out there
-			if p.bounces > C.SNIPER.bounces or p.vx * p.vx + p.vy * p.vy < C.SNIPER.min_speed ^ 2 then
+			if p.bounces > C.SNIPER.bounces or p.vx * p.vx + p.vy * p.vy < C.SNIPER.min_speed * C.SNIPER.min_speed then
 				self:emit({ type = "sniper_end", x = p.x, y = p.y })
 				self.projectile = nil
 				return
@@ -2599,7 +2646,7 @@ end
 function M:update_lunge(rb)
 	local mx, my = rb.lunge_vx * M.DT, rb.lunge_vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
-	local len = math.sqrt(rb.lunge_vx ^ 2 + rb.lunge_vy ^ 2)
+	local len = math.sqrt(rb.lunge_vx * rb.lunge_vx + rb.lunge_vy * rb.lunge_vy)
 	local ux, uy = rb.lunge_vx / len, rb.lunge_vy / len
 	local stopped = false
 	for _ = 1, steps do
@@ -2963,6 +3010,7 @@ function M:use_tool(kind, fire)
 		self:fire_hook(fire.angle)
 		return
 	elseif kind == "janus" then
+		self:park_shot()
 		self.used.tool = true
 		self:throw_janus(fire.angle, fire.power)
 		return
@@ -3031,7 +3079,7 @@ end
 local function spring_vy(b, o)
 	local tr = C.TRAMPOLINE
 	local chain = b.bounced_on == o.id and (b.bounces or 0) or 0
-	local vy = tr.launch_vy * (o.power or 1) * tr.decay ^ chain
+	local vy = tr.launch_vy * (o.power or 1) * M.ipow(tr.decay, chain)
 	if vy < tr.min_vy then return nil end
 	b.bounced_on, b.bounces = o.id, chain + 1
 	return vy
@@ -3249,6 +3297,37 @@ function M:blast_on(rb, x, y, blast, owner)
 	return dmg, dx * imp * f, dy * imp * f
 end
 
+-- A new shot is about to take self.projectile: the one still flying goes on
+-- among the older ones
+function M:park_shot()
+	if self.projectile then
+		self.flying[#self.flying + 1] = self.projectile
+		self.projectile = nil
+	end
+end
+
+-- The older shots move like the last one: each in turn takes self.projectile
+-- for its tick (the update functions only know that one)
+function M:update_flying()
+	local last, n = self.projectile, 0
+	local list = self.flying
+	for i = 1, #list do
+		self.projectile = list[i]
+		self:update_projectile()
+		if self.projectile then
+			n = n + 1
+			list[n] = self.projectile
+		end
+	end
+	for i = #list, n + 1, -1 do list[i] = nil end
+	self.projectile = last
+end
+
+-- Any shot in flight, the last or an older one
+function M:shots_flying()
+	return self.projectile ~= nil or #self.flying > 0
+end
+
 function M:update_projectile()
 	local p = self.projectile
 	if p.kind == "grenade" or p.kind == "tar" or p.kind == "petard" then return self:update_grenade(p) end
@@ -3397,6 +3476,7 @@ end
 -- The robot on turn attacks with weapon (already checked with can_use)
 function M:attack(weapon, fire)
 	local rb = self.robots[self.current]
+	if M.SHOOTS[weapon] then self:park_shot() end
 	local first = not (self.used.primary or self.used.secondary)
 	if M.SECONDARY[weapon] then self.used.secondary = true else self.used.primary = true end
 	if not M.FREE_WEAPONS[weapon] then rb.ammo[weapon] = rb.ammo[weapon] - 1 end
@@ -3506,6 +3586,7 @@ function M:fingerprint()
 	end
 	local p = self.projectile
 	if p then h = shuffle(shuffle(h, p.x * 16), p.y * 16) end
+	for _, q in ipairs(self.flying) do h = shuffle(shuffle(h, q.x * 16), q.y * 16) end
 	h = shuffle(h, #self.orbs)
 	h = shuffle(h, #self.placed)
 	return h
@@ -3601,6 +3682,7 @@ function M:advance(input, can_move)
 		if rb.dead then rb.cannon = nil end
 		if rb.hook_shot then self:update_hook_shot(rb) end
 	end
+	if #self.flying > 0 then self:update_flying() end
 	if self.projectile then self:update_projectile() end
 	if self.burst then self:update_burst() end
 	self:update_shards()
@@ -3668,7 +3750,7 @@ function M:step(input)
 	elseif self.phase == "settle" then
 		-- wait for shots, orbs and robots to settle
 		self.settle_total = self.settle_total + 1
-		local still = #self.orbs == 0 and not self.projectile and not self:shards_flying() and not hazards.busy(self)
+		local still = #self.orbs == 0 and not self:shots_flying() and not self:shards_flying() and not hazards.busy(self)
 		for _, o in ipairs(self.placed) do
 			if o.flying then still = false end
 		end

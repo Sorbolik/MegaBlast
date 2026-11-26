@@ -196,6 +196,7 @@ def main():
     ap.add_argument("--punteggio")
     ap.add_argument("--processi", type=int, default=None)
     ap.add_argument("--seme", type=int, default=1)
+    ap.add_argument("--eq", help="ricetta (o eq in Lua): ogni robot vestito come un rivale di quell'equipaggiamento")
     ap.add_argument("--grado", type=int, help="numero del grado di bot.GRADES da battere al posto del bot di oggi")
     ap.add_argument("--umane", help="esempi delle partite delle persone (turni_umani.lua --esempi)")
     ap.add_argument("--peso-umane", type=int, default=3, help="quante volte contano gli esempi delle persone")
@@ -244,7 +245,8 @@ def main():
         ns = argparse.Namespace(partite=args.partite, da=1 + giro * 1000000 + args.seme * 10 ** 9,
                                 processi=args.processi or arena.os.cpu_count() or 1, modo=args.modo,
                                 livello=args.livello, mappa=args.mappa, punteggio=args.punteggio,
-                                pesi=str(file_pesi), ritocchi=None, set=None, assegna=None, impara="1", luajit=None)
+                                pesi=str(file_pesi), ritocchi=None, set=None, assegna=None, impara="1", luajit=None,
+                                eq=args.eq)
         partite = arena.leggi(arena.gioca(ns))
         x, y, catene, ms = esempi(partite)
         catene += giro * 10 ** 9  # catene diverse fra i giri

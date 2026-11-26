@@ -220,7 +220,8 @@ def gioca(cartella, file_pesi, partite, da, args, assegna=None):
     arena.USCITA = cartella
     ns = argparse.Namespace(partite=partite, da=da, processi=args.processi or arena.os.cpu_count() or 1,
                             modo=args.modo, livello=args.livello, mappa=args.mappa, punteggio=args.punteggio,
-                            pesi=str(file_pesi), ritocchi=None, set=None, assegna=assegna, luajit=getattr(args, "luajit", None))
+                            pesi=str(file_pesi), ritocchi=None, set=None, assegna=assegna, luajit=getattr(args, "luajit", None),
+                            eq=getattr(args, "eq", None))
     return arena.leggi(arena.gioca(ns))
 
 
@@ -327,6 +328,7 @@ def main():
     ap.add_argument("--processi", type=int, default=None)
     ap.add_argument("--luajit")
     ap.add_argument("--seme", type=int, default=1)
+    ap.add_argument("--eq", help="ricetta (o eq in Lua): ogni robot vestito come un rivale di quell'equipaggiamento")
     ap.add_argument("--grado", type=int, help="numero del grado di bot.GRADES da battere al posto del bot di oggi")
     ap.add_argument("--nuova", action="store_true", help="ricomincia da zero (cancella la cartella)")
     ap.add_argument("--cartella", default=str(arena.REPO / "simulazione" / "arena" / "evolvi"))

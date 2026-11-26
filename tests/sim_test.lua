@@ -900,9 +900,9 @@ do
 		run(d, 60)
 		local from_pt = d.robots[1]
 		d.robots[2].x = -1000
-		-- a hole of radius 150 px in the terrain, to have room on all sides
-		d.terrain:carve(640, 400, 150)
-		place(from_pt, 640, 400 - game.ROBOT_H / 2)
+		-- a hole of radius 150 px in the terrain, to have room on all sides (away from the iron)
+		d.terrain:carve(640, 600, 150)
+		place(from_pt, 640, 600 - game.ROBOT_H / 2)
 		local x0, y0 = from_pt.x, from_pt.y
 		d:step({ fire = { angle = math.rad(deg), power = 1, weapon = "eagle" } })
 		run(d, config.EAGLE.recoil_ticks)
@@ -2570,6 +2570,54 @@ do
 	check(t[3].eq.liv == 7 and t[4].eq.liv == 30, "dress_bots: a person and a bot each, the bot copies the other team's person")
 	t = loadout.dress_bots({ P(1, nil, nil), P(2, 4) }, 5)
 	check(t[2].eq == nil, "dress_bots: whoever wears nothing gets a bare bot")
+end
+
+-- A second attack that flies (Petardo, Voragine) while the first shot is still in
+-- flight: both go on and both burst (the second used to replace the first, which
+-- vanished without exploding: Sergio's video, 26 Nov)
+do
+	local m = game.new(42, "pavimento")
+	run(m, 120)
+	local rb = m.robots[m.current]
+	rb.secondary, rb.ammo.petard = "petard", 2
+	m:pop_events()
+	m:step({ fire = { weapon = "missile", angle = math.rad(85), power = 1 } })
+	run(m, 20)
+	check(m.projectile and m.projectile.kind == "missile" and m:can_use("petard"), "the Petardo can go while the missile flies")
+	m:step({ fire = { weapon = "petard", angle = math.rad(20), power = 0.5 } })
+	check(m.projectile and m.projectile.kind == "petard" and #m.flying == 1 and m.flying[1].kind == "missile",
+		"two shots in flight: the Petardo and the missile")
+	local booms = 0
+	for _ = 1, 900 do
+		m:step()
+		for _, e in ipairs(m:pop_events()) do
+			if e.type == "explosion" or e.type == "petard" or e.type == "petard_blast" then booms = booms + 1 end
+		end
+		if not m:shots_flying() then break end
+	end
+	check(not m:shots_flying() and #m.flying == 0, "both shots end")
+	check(booms >= 2, "both shots burst (" .. booms .. ")")
+end
+
+-- The video: an Uovo rolling on the ground, then the Voragine; the Uovo still blows up
+do
+	local m = game.new(42, "pavimento")
+	run(m, 120)
+	local rb = m.robots[m.current]
+	rb.ammo.grenade, rb.secondary, rb.ammo.vortex = 1, "vortex", 2
+	m:pop_events()
+	m:step({ fire = { weapon = "grenade", angle = math.rad(10), power = 0.3 } })
+	run(m, 120)
+	m:step({ fire = { weapon = "vortex", angle = math.rad(85), power = 1 } })
+	local kinds = {}
+	for _ = 1, 900 do
+		m:step()
+		for _, e in ipairs(m:pop_events()) do
+			if e.type == "explosion" then kinds[#kinds + 1] = e.r end
+		end
+		if not m:shots_flying() then break end
+	end
+	check(#kinds == 2, "the Uovo on the ground and the Voragine both blow up (" .. #kinds .. ")")
 end
 
 if failures > 0 then

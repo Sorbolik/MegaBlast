@@ -7,6 +7,8 @@
 --          [--punteggio variante.lua]   -- una tabella come config.SCORE (opts.score), per provare varianti
 --          [--ritocchi armi.lua]       -- function(config, game) che cambia i numeri delle armi (solo arena:
 --                                         la ricetta non li contiene, si rigioca con lo stesso file)
+--          [--eq FILE]                 -- ogni robot vestito come un rivale di questo equipaggiamento (come i bot
+--                                         dell'allenamento): una ricetta (il primo giocatore con eq) o un eq in Lua
 --          [--set misto]               -- ogni robot una famiglia intera al 30 a caso (o nessuna)
 --          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI, anche con la rete): ogni robot ne prende uno a caso
 --          [--impara 1]                -- scrive anche gli esempi per impara.py: a ogni fine turno le
@@ -101,6 +103,22 @@ local USO = {
 local MODI = { "1v1", "2v2", "ffa" }
 local PUNTEGGIO = opt.punteggio and dofile(opt.punteggio) or nil
 local POPOLAZIONE = opt.pesi and dofile(opt.pesi) or nil
+-- --eq FILE: una ricetta (il primo giocatore con eq) o un file Lua che restituisce un eq
+local EQ
+if opt.eq then
+	local f = assert(io.open(opt.eq, "rb"))
+	local text = f:read("*a")
+	f:close()
+	local r = replay.decode(text)
+	if r then
+		for _, p in ipairs(r.opzioni.players or {}) do
+			if p.eq then EQ = p.eq break end
+		end
+	else
+		EQ = dofile(opt.eq)
+	end
+	EQ = assert(EQ and assetto.net_clean(EQ), "equipaggiamento non valido: " .. opt.eq)
+end
 if opt.ritocchi then dofile(opt.ritocchi)(config, game) end
 
 -- primaria, secondaria o oggetto (il teletrasporto è un oggetto)
@@ -162,6 +180,11 @@ local function partita(k)
 				p.stats = assetto.stats(game.base_stats(), { tree = {}, gear = gear, variant = "a" }, livelli)
 			end
 		end
+	end
+	-- --eq: ogni robot vestito come un rivale di quell'equipaggiamento (come i bot
+	-- dell'allenamento, sim/loadout.lua rival: stessa potenza, pezzi e Sigilli a caso)
+	if EQ then
+		for i, p in ipairs(players) do p.eq = assetto.rival(EQ, seme, i) end
 	end
 	local r = replay.new(seme, mappa, { players = players, score = PUNTEGGIO })
 	local g, bots = replay.match(r)

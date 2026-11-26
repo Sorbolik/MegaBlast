@@ -189,6 +189,9 @@ function N.snapshot(g, aim)
 	end
 	-- k: "missile", "grenade", "sniper", "boomerang", "drill", "tar", "petard" or "vortex", fu: ticks before the Uovo blows up
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }
+	-- pf: the older shots still in flight (game.flying), the same fields
+	local pf = {}
+	for i, q in ipairs(g.flying) do pf[i] = { x = q.x, y = q.y, k = q.kind, fu = q.fuse or 0 } end
 	-- o: the teleport orbs in flight (i = orb number, to follow it from one state to the next)
 	local orbs = {}
 	for i, ob in ipairs(g.orbs) do orbs[i] = { i = ob.id, x = ob.x, y = ob.y } end
@@ -231,7 +234,7 @@ function N.snapshot(g, aim)
 	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0) + (g.used.tool and 4 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
 		u = used, mt = g.match_left, ai = g.intro > 0 and g.intro or nil, fr = g.final_round, gr = g.round,
-		av = g.ahead, ab = g.ahead_base, r = robots, p = p, o = orbs, s = shards,
+		av = g.ahead, ab = g.ahead_base, r = robots, p = p, pf = pf, o = orbs, s = shards,
 		c = crates, pl = placed, hl = heals, pp = pools, hz = g.hz, aim = aim,
 		si = b and b.stand_in or nil, n = g.tick, fp = g:fingerprint() }
 end
