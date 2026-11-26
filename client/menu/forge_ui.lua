@@ -1554,10 +1554,14 @@ local function pay(a, after)
 	for _, j in ipairs(jobs) do
 		later(fx, t, function()
 			local q = screen.node_pos(j.node)
+			-- the heap bursts: embers, a warm flash, a shake
+			sparks(fx, fx.hud, q.x, q.y + 10, 26, 1.4, 420, 10, 760, { GOLD, EMBER, GOLD })
+			fx.shake = SHAKE * 0.8
+			sound.play("#martello")
 			if j.coins then
 				coins.fly(fx.purse, "scaglia", in_purse(fx, q.x, q.y + (j.beads and 30 or 10)),
-					math.min(18, math.max(4, math.floor(j.coins / 12))), j.coins,
-					function(i) if i % 3 == 1 then sound.play("#scaglia") end end)
+					math.min(28, math.max(6, math.floor(j.coins / 8))), j.coins,
+					function(i) if i % 2 == 1 then sound.play("#scaglia") end end)
 			else
 				fragment_home(fx, j.set, j.n, q.x, q.y + 10)
 			end
@@ -1572,8 +1576,17 @@ local function pay(a, after)
 		t = t + PAY_GAP
 	end
 	if #jobs > 0 then say(fx, T.say_pay, "usuraio_paga") end
+	-- once it has all landed: the total big and wobbling, a golden flash
+	local total = sc + (got.vetri or 0) * forge.MISS
+	if total > 0 then
+		later(fx, t + coins.FLIGHT * 0.6, function()
+			veil(fx, WARM, 0.45, 0.25)
+			banner(a, T.paid:format(coins.format(total)), 470, 64, GOLD, 1.3)
+			sound.play("#scaglia")
+		end)
+	end
 	-- the bench straightens up as it empties
-	later(fx, t + coins.FLIGHT + 0.7, function()
+	later(fx, t + coins.FLIGHT + 1.4, function()
 		if fx.purse then coins.finish(fx.purse) end
 		fx.got = nil
 		after()

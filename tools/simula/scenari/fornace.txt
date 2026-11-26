@@ -51,7 +51,7 @@ aspetta 0.5
 foto 10b_incassa
 aspetta 0.5
 foto 10c_incassa
-aspetta 3
+aspetta 4.5
 foto 11_di_nuovo_in_vetrina
 tocca_bordo 291 49 basso sinistra   # FONDI I FRAMMENTI
 aspetta 1

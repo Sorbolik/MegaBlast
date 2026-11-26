@@ -641,6 +641,7 @@ return {
 		recap_jackpot = "Jackpot del muro pieno",
 		recap_again = "COLA ANCORA",
 		recap_close = "INCASSA",
+		paid = "+%s INCASSATE",
 		melt_title = "FONDI I FRAMMENTI",
 		melt_pick = "Scegli la famiglia da fondere",
 		melt_scaglie = "IN SCAGLIE",

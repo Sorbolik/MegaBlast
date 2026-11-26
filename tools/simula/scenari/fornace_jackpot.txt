@@ -96,5 +96,5 @@ foto 05_riepilogo_col_jackpot
 pad b                               # INCASSA: i mucchi caduti volano nel portafoglio
 aspetta 0.5
 foto 05b_incassa
-aspetta 3
+aspetta 5
 foto 06_muro_2_in_vetrina
