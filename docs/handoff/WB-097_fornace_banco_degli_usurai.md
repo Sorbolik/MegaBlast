@@ -174,3 +174,31 @@ Tutti i 18 PNG sono da 1536×1024. Per argine, bancone e bottino ho ridimensiona
 In entrambi i fogli del bottino la goccia è presente solo allungata, con coda a destra, e la perla è già dentro lo schizzo di sabbia. La misura e l'ordine dei mucchi sono leggibili. Il verde generato differisce da #00FF00. Non sono state verificate le giunzioni senza cuciture, lo scontorno finale o la resa in gioco.
 
 ## Resoconto di Claude
+
+26 nov. Nel gioco sul ramo `claude/project-thread-oh0dd6` (PR #437), tagli e misure in `tools/grafica/fornace.py`.
+
+- **Scelti**: `sabbione_cielo_2` (più fuoco in basso), `sabbione_lontano_1`, `sabbione_medio_1`, `usurai_vuoti_2` (le facce più cattive e le borse più leggibili), `argine_e_pinnacolo_2` (l'argine con la sabbia sopra, la parete senza fiume: il Flegetonte c'è già nel medio), `bancone_1`, `mucchi_e_vetro_2`.
+- **Scartati**: `sabbione_vicino_1` e `_2` (il primo piano copriva la fascia bassa del bancone, e la pioggia di fuoco la fa il gioco con le falde di `mucchi_e_vetro`), e **tutti e due gli `usurai_pieni`**: sono un diavolo simile a Malacoda in piedi, non gli usurai del foglio vuoto. Per ora l'usuraio pagato è quello vuoto con la borsa piena della goccia di WB-092 (col premio sopra): funziona, ma la faccia arrabbiata e contenta manca.
+- **Ritocchi miei**: il verde dei dipinti lontano e medio aveva una foschia verde sulla rupe: tolto con un'alfa morbida. Il foglio ha tre usurai grandi e tre piccoli ma ogni colore serve in tutte e due le misure: i grandi azzurro, verde e ferro sono i grandi viola, oro e arancio con lo stemma ridipinto (solo lo stemma, a tinta piatta). L'argine e la parete sono tagliati dentro il contorno per ripetersi senza righe; la parete si ripete capovolta un pezzo sì e uno no. La perla di vetro è tagliata fuori dallo schizzo giallo. Le assi spezzate sono più spesse delle intere: si usano solo le punte, alla misura dell'asse.
+- **Misure nel gioco**: l'usuraio grande è largo circa 160 unità del mondo (circa 107 px a muro intero su 1280×720, 315 px nei fogli: mai ingranditi fino allo zoom 1,6 dei piccoli, che sono i grandi rimpiccioliti).
+- **Fase 2 da fare** (sotto): rifare gli usurai pieni partendo dal foglio vuoto scelto.
+
+## Fase 2 (26 nov): gli usurai pieni, da rifare
+
+- **Stato:** APPROVATA (Claude, 26 nov: rifà un foglio scartato, nessuna scelta nuova di Sergio)
+- **Ramo delle immagini:** `design/WB-097` (stessa cartella `art/WB-097/`, nomi nuovi: non sovrascrive niente)
+
+| Nome file | Cosa c'è | Riferimenti | Misura | Varianti |
+|---|---|---|---|---|
+| `usurai_pieni_bis` | gli stessi sei usurai di `usurai_vuoti_2` con la borsa piena e la bocca aperta | `art/WB-097/usurai_vuoti_2.png`, R5 | 1536×1024 | 2 |
+
+### `usurai_pieni_bis`
+
+```
+Image 1 is a sheet of six usurers from our cartoon game: greedy damned souls in ragged hooded cloaks, sitting on a little mound of sand, holding up an open leather purse with a coat of arms on it. Image 2 shows the STYLE of our characters: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic.
+
+Redraw EXACTLY THE SAME SIX USURERS OF IMAGE 1, each one in the same place of the sheet, at the same size, with the same pose, the same cloak color, the same skin, the same face, the same purse and the same shield color: copy them, do not invent new characters. Change only two things. First: the purse is now FULL, its open mouth filled to the brim with glowing molten metal, deep violet-black obsidian with bright orange-red cracks (like a ball of molten lava), with one flat white highlight; the purse is a little swollen. Second: each usurer has his MOUTH WIDE OPEN as if shouting, eyebrows up, half outraged because the purse burns and half delighted because it is full; his eyes still on the purse, his hands still on the purse. Plain green background (#00FF00), the six usurers well apart and whole, not touching.
+Nothing else in the image: no icons on the shields, no letters, no numbers, no speech bubbles, no smoke clouds, no shadow on the ground, no glow halo.
+```
+
+Criteri: sono i sei usurai di image 1 (stessi mantelli e stemmi, stesso posto e misura), bocca spalancata, borsa piena di Ossidiana fusa viola e arancio (come la goccia del gioco), niente scritte, verde pieno.

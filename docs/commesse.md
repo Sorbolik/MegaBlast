@@ -144,6 +144,34 @@ Principi di Sergio che reggono tutto:
 Scelto da Sergio il 24 nov fra tre proposte (https://claude.ai/artifact/JSm7FyZ8HkhchARfBT8LTU:
 scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a tempo).
 
+**Dal 26 nov la Fornace sta nel Banco degli Usurai** (Sergio: «la mappa è poco ispirata»; scelta A
+su https://claude.ai/artifact/7sCdLDNgtHNcUtSEG6aXyK, bancone 2 su
+https://claude.ai/artifact/GVsg8dBpjKahkBfL7eQJbJ; disegni di Codex WB-097). Le regole non cambiano,
+cambia dove sei e cosa sono le cose:
+
+- **Dove**: il Sabbione del girone VII sotto la pioggia di fuoco (Inf. XIV e XVII). Il Fabbro manda
+  l'apprendista a **cambiare l'Ossidiana**: la Fornace è il cambiavalute, e la storia lo dice da sola.
+- **Gli stampi sono gli usurai** seduti con la borsa aperta verso il cielo; lo **stemma sulla borsa**
+  è il colore della famiglia (ferro per le Scaglie). Quelli in alto stanno in cima a un pinnacolo di
+  roccia (solo disegno, come le catene di prima: la goccia ci passa). La bocca della borsa è dove la
+  regola prende la goccia (`m.x`, `m.y`; l'orlo è largo 0,76 dello stampo, la presa 0,82). L'usuraio
+  pagato ha la borsa piena di Ossidiana fusa (dove la regola mette il coperchio) col premio sopra.
+- **Il secchio non c'è più**: la goccia che manca le borse cade nella sabbia e diventa **vetro**; la
+  perla salta nel **vaso del Fabbro** in fondo al bancone e il Fabbro la paga 30 (`forge.MISS`,
+  come prima). Il vaso conta le perle del muro (`fornace.vetri`, si svuota col muro nuovo).
+- **La sponda** è la parete di roccia a destra, dietro cui cade il Flegetonte.
+- **La fascia bassa** (si vede solo con tutto il muro sullo schermo): l'argine del fiume, e davanti
+  il **bancone dei cambiavalute** su due cavalletti, col bottino del muro in mucchi (le Scaglie
+  prese, i frammenti famiglia per famiglia, più grandi man mano) e il vaso delle perle. Il bancone
+  **si piega** sotto il bottino; al jackpot **si spezza** in mezzo («bancarotta»: la parola viene
+  dal banco rotto dei cambiavalute), le due metà cadono sui cavalletti e i mucchi scivolano via.
+  Non cambia niente nel punteggio.
+- **Gli usurai parlano** (Sergio, 26 nov): una frase sopra la testa, come le battute dei bot in
+  battaglia; mentre miri ogni tanto uno a caso, quello preso quando paga, quello mancato per un pelo
+  (o un altro) quando la goccia finisce nel vetro, tre alla bancarotta (`forge.say_*` in
+  `client/lang/it.lua`).
+- **La pioggia di fuoco**: falde che scendono piano su tutto il muro, dietro gli usurai.
+
 - **L'unico posto dove l'Ossidiana diventa valuta.** Una scheda **FORNACE** nella BOTTEGA,
   fra COMMESSE e BANCO. Una **colata costa 15 Ossidiana** (20 fino al 25 nov: Sergio, «forse costa troppo?»; con 20
   rendeva 7,5 Scaglie di valore per Ossidiana a un giocatore medio, come le Commesse, e nessuno
@@ -200,7 +228,7 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   **x1, x1,25, x1,5** (Scaglie arrotondate a 5, frammenti 8, 10, 12), e il **jackpot 500, 750,
   1000** (`forge.LEVELS`, `forge.JACKPOTS`, `forge.current`). I tre muri sono uguali per tutti.
   **Nel gioco si vede così** (Sergio, 25 nov, «A e B insieme»): nella vetrina, sotto i frammenti,
-  «I MURI DI OGGI» con tre stampi (quello pieno col coperchio e PIENO, quello di adesso
+  «I MURI DI OGGI» con tre usurai (quello pagato con la borsa piena e PIENO, quello di adesso
   incandescente col suo premio, quelli dopo spenti) e «NUOVI FRA» col conto alla rovescia; sul
   foglio del Fabbro «3 muri al giorno: riempi questo e si apre il prossimo.» e sotto i premi e
   l'ora del nuovo giro (alle 5 di mattina).
@@ -290,7 +318,7 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   in un altro stampo più in basso; conta solo quando tocca terra. Uno stampo pieno è chiuso dal
   coperchio, che la fa rimbalzare via (un cerchio sul disegno del coperchio, `forge.LID_R`;
   Sergio, 24 nov sera: «l'hitbox del coperchio più coerente col coperchio»; `fly`).
-- **Mai zero**: una goccia fuori dagli stampi cade nel secchio, e ogni goccia dà 30 Scaglie, anche a segno. Tre centri
+- **Mai zero**: una goccia fuori dagli stampi diventa vetro (prima cadeva nel secchio), e ogni goccia dà 30 Scaglie, anche a segno. Tre centri
   su tre danno un tiro in più (uno solo per colata).
 - **Il cambio**: una colata rende in media circa **130 Scaglie di valore** (frammento = 60),
   dal peggio al meglio circa da 0,8 a 1,2 volte la media. Da ritarare coi conti delle ore
@@ -298,8 +326,10 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
 - **Il server decide**: il telefono manda il muro che vede, poi angolo e forza di ogni tiro
   (azioni `colata`, `tiro`, `fondi` del profilo); il server rifà il volo con le stesse regole
   (`client/sim/forge.lua`) e paga. Il risultato non lo dice il telefono, e niente è a caso.
-- **Arte**: stampi, goccia, catene e secchio da Codex (scheda in `docs/handoff/`); lo sfondo
-  è quello della fucina che c'è già.
+- **Arte**: dal 26 nov il Banco degli Usurai di Codex WB-097 (usurai, Sabbione, argine,
+  pinnacoli, parete, bancone, mucchi, vaso e perle, falde); di prima restano goccia e schizzo
+  (WB-092), mestolo (WB-093), fiammata e medaglia del jackpot (WB-094), medaglie dei rintocchi
+  (WB-095/096). Tagli e misure in `tools/grafica/fornace.py`.
 - **Da decidere prima di vendere l'Ossidiana**: l'Ossidiana comprata con soldi veri non
   entra nella Fornace (se no la Fornace diventa «compro Scaglie»), oppure l'Ossidiana non si
   vende.

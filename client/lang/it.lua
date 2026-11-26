@@ -599,7 +599,7 @@ return {
 	-- menu/forge_ui.lua: the FORNACE tab of the BOTTEGA (docs/commesse.md "La Fornace")
 	forge = {
 		on_wall = "MURO %d DI %d",
-		filled = "%d su %d pieni",
+		filled = "%d su %d pagati",
 		of_total = "su %s",
 		fragments = "FRAMMENTI",
 		new_wall = "NUOVI FRA",
@@ -607,7 +607,7 @@ return {
 		wall_full_short = "PIENO",
 		rule_walls = "%d muri al giorno: riempi questo e si apre il prossimo.",
 		rule_walls_sub = "Premi x1 · x1,25 · x1,5. Alle 5 di mattina si riparte dal primo.",
-		rule_lucky = "Su questo muro c'è uno stampo che dà il DOPPIO.",
+		rule_lucky = "Su questo muro c'è un usuraio che paga il DOPPIO.",
 		melt = "FONDI I FRAMMENTI",
 		pour = "COLA",
 		pour_sub = "%d tiri · costa %d",
@@ -625,7 +625,8 @@ return {
 		lucky_hit = "DOPPIO!",
 		-- the bank shot's prize multiplier: knocks on the moulds, the back wall
 		bank = "DI SPONDA x%s",
-		miss = "NEL SECCHIO",
+		-- a drop that misses: glass in the sand, the Smith pays it
+		miss = "PERLA DI VETRO",
 		hit = "CENTRO!",
 		jackpot = "JACKPOT!",
 		wall_full = "MURO PIENO",
@@ -647,6 +648,13 @@ return {
 		melt_family = "IN UN'ALTRA FAMIGLIA",
 		melt_four = "FONDINE %d",
 		melt_four_sub = "ne fai %d",
+		-- the usurers' lines (Sergio, 26 Nov): one at random, over the head
+		say_idle = { "Non ci prendi!", "La mia borsa è vuota...", "Piove fuoco anche oggi", "Qui si cambia a buon prezzo!",
+			"Avanti, apprendista!", "Tiro corto, ci scommetto", "Quanto pesa quel mestolo?", "Che borsa, eh? È la più bella" },
+		say_hit = { "Ahi, la mia borsa!", "Scotta, scotta!", "Va bene, pago!", "Il mio stemma!", "Ecco il resto, ladro!", "Rovinato!" },
+		say_near = { "Quasi!", "Per un pelo!", "Uff, che spavento", "Mancato, ah ah!" },
+		say_miss = { "Ah ah, vetro!", "Un'altra perla per il Fabbro", "Tutto nella sabbia!", "Mira meglio!" },
+		say_jackpot = { "BANCAROTTA!", "Il banco si è rotto!", "Siamo rovinati!" },
 	},
 
 	pieces = {
