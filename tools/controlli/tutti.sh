@@ -29,6 +29,7 @@ passo "controlli dell'editor di Defold" python3 tools/simula/controlla.py client
 for f in tests/*_test.lua; do
 	passo "$f" test_lua "$f"
 done
+passo "simulazione sempre identica" python3 tools/confronta/identica.py --partite 2 --missioni 0
 passo "copione dei livelli" luajit tools/copione/controlla.lua
 passo "massimi delle statistiche" luajit tools/statistiche/massimi.lua --controlla
 passo "tempi dell'economia" luajit tools/economia/conti.lua --controlla

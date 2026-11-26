@@ -170,7 +170,8 @@ function M.reachable(wall, i)
 		local dx, dy = m.x - x0, m.y - y0
 		local d = dx * math.tan(a) - dy
 		if dx > 0 and d > 0 then
-			local v = math.sqrt(g * dx * dx / (2 * math.cos(a) ^ 2 * d))
+			local c = math.cos(a)
+			local v = math.sqrt(g * dx * dx / (2 * c * c * d))
 			local power = v / game.MISSILE_SPEED
 			if power >= 0.1 and power <= 1 then
 				local r = M.fly(a, power, wall, {})
@@ -253,7 +254,8 @@ function M.layout(key, seed, lucky)
 			local ok = not banned[sp]
 			for _, q in ipairs(ok and picked or NONE_LIST) do
 				-- apart, and never one over the other
-				if (sp.x - q.x) ^ 2 + (sp.y - q.y) ^ 2 < M.SPOT_GAP ^ 2 or math.abs(sp.x - q.x) < M.COLUMN then ok = false; break end
+				local dx, dy = sp.x - q.x, sp.y - q.y
+				if dx * dx + dy * dy < M.SPOT_GAP * M.SPOT_GAP or math.abs(sp.x - q.x) < M.COLUMN then ok = false; break end
 			end
 			if ok then
 				picked[#picked + 1] = sp
