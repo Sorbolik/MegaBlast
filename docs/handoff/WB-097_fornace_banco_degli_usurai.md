@@ -185,7 +185,7 @@ In entrambi i fogli del bottino la goccia è presente solo allungata, con coda a
 
 ## Fase 2 (26 nov): gli usurai pieni, da rifare
 
-- **Stato:** APPROVATA (Claude, 26 nov: rifà un foglio scartato, nessuna scelta nuova di Sergio)
+- **Stato:** SCARTATA (26 nov, Sergio: gli usurai sul muro fanno troppa confusione; le borse restano da sole, appese alle corde: vedi WB-098). Codex non la esegue.
 - **Ramo delle immagini:** `design/WB-097` (stessa cartella `art/WB-097/`, nomi nuovi: non sovrascrive niente)
 
 | Nome file | Cosa c'è | Riferimenti | Misura | Varianti |
