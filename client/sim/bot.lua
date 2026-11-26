@@ -692,7 +692,8 @@ local function enemies(g, me, x, y)
 		if not o.dead and o.team ~= me.team then out[#out + 1] = o end
 	end
 	table.sort(out, function(a, c)
-		local from, dc = (a.x - x) ^ 2 + (a.y - y) ^ 2, (c.x - x) ^ 2 + (c.y - y) ^ 2
+		local ax, ay, cx, cy = a.x - x, a.y - y, c.x - x, c.y - y
+		local from, dc = ax * ax + ay * ay, cx * cx + cy * cy
 		if from ~= dc then return from < dc end
 		return a.id < c.id
 	end)

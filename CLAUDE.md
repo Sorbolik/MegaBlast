@@ -34,7 +34,7 @@ bash tools/controlli/tutti.sh
 ```
 
 Deve finire con `OK` (sintassi e globali del Lua, controlli dell'editor, tutti i
-test Lua, le miniature delle missioni in pari con mappe e dipinti, `go vet`, `gofmt`, `go test ./server/`). Lo stesso controllo gira su
+test Lua, le miniature delle missioni e le cartoline delle mappe in pari con mappe e dipinti, `go vet`, `gofmt`, `go test ./server/`). Lo stesso controllo gira su
 GitHub dopo ogni merge su `main` (`.github/workflows/controlli.yml`); prima di una
 versione online si lancia a mano sul ramo (Actions > Controlli > Run workflow).
 Se diventa rosso su main, il thread che ha mergiato lo sistema subito.
@@ -263,7 +263,9 @@ nel gioco non cambia niente").
 Il bot (`client/sim/bot.lua`) preme gli stessi tasti di un giocatore e pensa
 provando le mosse su copie della partita (`bot.world`, `game:advance`): se
 cambi la fisica il bot la segue da solo. Deve restare deterministico: niente tempo vero,
-niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio.
+niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio, niente `^` nella
+simulazione (`x * x` o `game.ipow`: l'interprete e il JIT di LuaJIT non danno la stessa ultima
+cifra); lo controlla `tools/confronta/identica.py` in `tutti.sh`.
 Ogni partita ha la sua ricetta (`client/sim/replay.lua`) con le impronte dello
 stato: rigiocandola devono tornare tutte. L'arena (`tools/arena/`, vedi il
 README) fa giocare i bot tra loro su tutti i core e scrive il rapporto per il

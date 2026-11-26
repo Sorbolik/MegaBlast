@@ -18,3 +18,16 @@ python3 tools/confronta/confronta.py --base HEAD~1
   prima partita diversa e il secondo in cui diverge.
 
 Una modifica di un miliardesimo alla gravità basta a farlo fallire.
+
+## Sempre identica
+
+`identica.py` (gira in `tutti.sh` con 2 partite) controlla che la simulazione dia
+sempre la stessa partita: niente `^` in `client/sim` (interprete e JIT di LuaJIT
+possono dare un'ultima cifra diversa: si usa `x * x` o `game.ipow`), e le stesse
+partite giocate normali, senza JIT (`-joff`) e con `caos.lua` (ordine di `pairs`
+a caso e memoria spostata) devono avere le stesse impronte.
+
+```bash
+python3 tools/confronta/identica.py               # 4 partite e le missioni
+python3 tools/confronta/identica.py --partite 40
+```
