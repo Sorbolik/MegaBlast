@@ -1388,7 +1388,9 @@ do
 	check(r1.ammo[s2] == config.SECONDARY_SHOTS.draft and eg:can_use(s2) and eg:can_use("sword"),
 		"the picked secondary has its shots, the Lama is unlimited")
 	eg:step({ fire = { angle = 0, power = 1, weapon = s2 } })
-	check(eg.used.secondary and not eg.used.primary and not eg:can_use("sword") and eg:can_use("missile"),
+	-- (a secondary that flies, Petardo or Vortice, holds the missile until it lands)
+	check(eg.used.secondary and not eg.used.primary and not eg:can_use("sword")
+		and (eg:can_use("missile") or eg.projectile ~= nil),
 		"once the picked secondary is used, the Lama can't be used in the turn")
 	check(r1.ammo[s2] == config.SECONDARY_SHOTS.draft - 1, "the secondary uses up a shot")
 	-- the Lama on an enemy gives back a secondary shot, up to the maximum; on a teammate no
@@ -2570,6 +2572,25 @@ do
 	check(t[3].eq.liv == 7 and t[4].eq.liv == 30, "dress_bots: a person and a bot each, the bot copies the other team's person")
 	t = loadout.dress_bots({ P(1, nil, nil), P(2, 4) }, 5)
 	check(t[2].eq == nil, "dress_bots: whoever wears nothing gets a bare bot")
+end
+
+-- A second attack that flies (Petardo, Vortice) waits for the first shot to land:
+-- it used to replace it, and the first shot vanished mid-air without exploding
+do
+	local m = game.new(42, "pavimento")
+	run(m, 120)
+	local rb = m.robots[m.current]
+	rb.secondary, rb.ammo.petard = "petard", 2
+	m:step({ fire = { weapon = "missile", angle = math.rad(85), power = 1 } })
+	run(m, 20)
+	check(m.projectile and m.projectile.kind == "missile" and not m:can_use("petard"), "no Petardo while the missile flies")
+	m:step({ fire = { weapon = "petard", angle = math.rad(20), power = 0.5 } })
+	check(m.projectile and m.projectile.kind == "missile" and rb.ammo.petard == 2, "the missile keeps flying, the Petardo stays")
+	for _ = 1, 600 do
+		m:step()
+		if not m.projectile then break end
+	end
+	check(not m.projectile and m:can_use("petard"), "the missile lands, then the Petardo can go")
 end
 
 if failures > 0 then

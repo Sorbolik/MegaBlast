@@ -1081,7 +1081,10 @@ local function think(b, g)
 				tries[#tries + 1] = { side == 0 and up or math.pi - up, 1 }
 				tries[#tries + 1] = { side == 0 and up or math.pi - up, 0.6 }
 			end
+			-- only free weapons: a crate weapon is not used up on nothing (the
+			-- Uovo thrown up just to end the turn burst in the air, Sergio, 26 Nov 2026)
 			for k = 1, math.min(2, #list) do
+				if not game.FREE_WEAPONS[list[k]] then break end
 				for _, t in ipairs(tries) do
 					local pts, _, hit = try_move(b, g, spots[1], list[k], t[1], t[2], "tutto")
 					if (hit or pts) > b.pesi.tiro_primo then

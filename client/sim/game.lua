@@ -181,6 +181,11 @@ M.PUNCH_HOP = 15 * M.U      -- the attacker rises a little with the uppercut
 M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true, bellows = true,
 	vortex = true, cannon = true, petard = true }
 M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows", "vortex", "cannon", "petard" }
+-- weapons (and the Giano) that fly as self.projectile: only one at a time, so
+-- none of them can be used while another is still flying (a second attack
+-- used to replace the first shot, which vanished mid-air without exploding)
+M.SHOOTS = { missile = true, grenade = true, tar = true, petard = true, sniper = true, vortex = true,
+	boomerang = true, drill = true, janus = true }
 -- weapons that don't use up shots
 M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill" }
@@ -3372,6 +3377,7 @@ function M:can_use(weapon)
 	if rb.dead then return false end
 	-- inside the cannon, waiting for the fuse: nothing else
 	if rb.cannon and rb.cannon.wait > 0 then return false end
+	if self.projectile and M.SHOOTS[weapon] then return false end
 	if weapon == "parachute" then
 		-- only in the air
 		if rb.grounded then return false end
