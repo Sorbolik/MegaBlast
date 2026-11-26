@@ -32,6 +32,12 @@ local terrain = require "sim.terrain"
 function terrain.new(w, h, cell, ox)
 	return setmetatable({ w = w, h = h, cell = cell, ox = ox or 0, data = ffi.new("uint8_t[?]", w * h + 1) }, terrain)
 end
+function terrain:blank()
+	return terrain.new(self.w, self.h, self.cell, self.ox)
+end
+function terrain:copy_cells(dst, i0, i1)
+	ffi.copy(dst.data + i0, self.data + i0, i1 - i0 + 1)
+end
 
 -- Fixed maps are drawn only once per process: later matches copy the ready
 -- cells instead of drawing them again.

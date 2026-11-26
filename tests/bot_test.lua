@@ -325,6 +325,34 @@ do
 	check(#res == 0, "melee aim online with an orb in flight (only id and position): no error " .. table.concat(res, "; "))
 end
 
+-- The training's MAESTRO (sim/master.lua): its first choices of a 1v1 come from
+-- playing the candidates on, a little per tick, and the match it plays on copies
+-- of stays its own: recipe replayed identical, the bot thinking again too
+do
+	local players = { { team = 1, bot = "maestro" }, { team = 2, bot = "difficile" } }
+	local r = replay.new(21, "pavimento", { players = players })
+	local g8, bots = replay.match(r)
+	local choices, longest = 0, 0
+	local chooser = bots[1].scegli
+	bots[1].scegli = function(b, gg, all, kind)
+		local m = chooser(b, gg, all, kind)
+		choices = choices + 1
+		return m
+	end
+	while g8.phase ~= "over" and g8.tick < 60 * 60 do
+		g8:step(replay.input(r, g8, bots))
+		replay.after(r, g8)
+		g8:pop_events()
+		-- the work of this tick (bot.work: the copies' bots count too)
+		longest = math.max(longest, bots[1].lavoro)
+	end
+	check(choices > 0, "maestro: it plays its candidates on (" .. choices .. " choices in a minute)")
+	check(longest <= bot.LEVELS.maestro.lavoro + 600, "maestro: it thinks a little per tick (at most " .. longest .. " units)")
+	replay.close(r, g8)
+	local ok, tick = replay.verify(r, nil, true)
+	check(ok, "maestro: the recipe replays identical with the bots thinking again" .. (ok and "" or " (tick " .. tostring(tick) .. ")"))
+end
+
 if failures > 0 then
 	print(failures .. " tests failed")
 	os.exit(1)

@@ -30,17 +30,18 @@
 -- --modello: il grado che il Maestro crede abbiano gli avversari nei rollout
 -- (di base quello vero: provarne un altro dice se vince solo perché li conosce).
 -- --solo attacco|riparo: sceglie solo quelle; --leggero 1: nei rollout bot che
--- cercano meno (più veloci); --finto 1: rollout fatti ma gioca la prima candidata.
+-- cercano meno (più veloci); --finto 1: rollout fatti ma gioca la prima candidata;
+-- --limiti 1: pensa a pezzi come nel gioco (di base tutto in un tick).
+-- Il livello del gioco si prova con --grado maestro --maestro 0 (bot.LEVELS.maestro).
 
 package.path = "client/?.lua;" .. package.path
 
-local game = require "sim.game"
 local config = require "sim.config"
 local draft = require "sim.draft"
 local maps = require "sim.maps"
-local rng = require "sim.rng"
 local bot = require "sim.bot"
 local replay = require "sim.replay"
+local master = require "sim.master"
 
 local opt = { partite = 2, da = 0, modo = "2v2", grado = 10, maestro = 1, candidate = 5, semi = 4, giri = 1, turni = 0,
 	vita = 0.5, max_tick = 6000 }
@@ -102,189 +103,21 @@ local function to_json(v)
 	return table.concat(out)
 end
 
--- La partita intera copiata -----------------------------------------------------------
-
--- tabelle che nessuno scrive durante la partita: restano in comune
-local SHARE = { map = true, score = true, stats = true }
-
-local function deep(v, memo)
-	if type(v) ~= "table" then return v end
-	local c = memo[v]
-	if c then return c end
-	c = {}
-	memo[v] = c
-	for k, x in pairs(v) do
-		if type(x) == "table" and not SHARE[k] then c[k] = deep(x, memo) else c[k] = x end
-	end
-	local mt = getmetatable(v)
-	if mt then setmetatable(c, mt) end
-	return c
-end
-
--- La copia di g da giocare avanti col seme s: il terreno a parte (è grande:
--- un ciclo sui numeri), il generatore della partita cambiato (le casse future
--- non si sanno) e le casse a terra senza contenuto, come le copie del bot
-local function copia(g, s)
-	local data = g.terrain.data
-	g.terrain.data = nil
-	local c = deep(g, {})
-	g.terrain.data = data
-	local d = {}
-	for k = 1, #data do d[k] = data[k] end
-	c.terrain.data = d
-	c.rng = rng.new(s)
-	for _ = 1, 4 do c.rng:next() end
-	for _, k in ipairs(c.crates) do k.weapon = "hook" end
-	return c
-end
-
--- Valore e caratteristiche --------------------------------------------------------------
-
-local function margine(g, team)
-	local mio, altri = 0, {}
-	for _, rb in ipairs(g.robots) do
-		if rb.team == team then mio = mio + rb.points else altri[rb.team] = (altri[rb.team] or 0) + rb.points end
-	end
-	local primo = -math.huge
-	for _, v in pairs(altri) do primo = math.max(primo, v) end
-	return mio - (primo == -math.huge and 0 or primo)
-end
-
--- vita della squadra meno la media delle altre (i morti contano 0)
-local function vite(g, team)
-	local mio, altri, n = 0, 0, {}
-	for _, rb in ipairs(g.robots) do
-		local hp = rb.dead and 0 or rb.hp
-		if rb.team == team then mio = mio + hp else
-			altri = altri + hp
-			n[rb.team] = true
-		end
-	end
-	local squadre = 0
-	for _ in pairs(n) do squadre = squadre + 1 end
-	return mio - altri / math.max(1, squadre)
-end
-
-local function valore(g, team)
-	return margine(g, team) + opt.vita * vite(g, team)
-end
-
-local function arrotonda(x)
-	local out = {}
-	for k = 1, #x do out[k] = math.floor(x[k] * 10000 + 0.5) / 10000 end
-	return out
-end
-
--- Il Maestro --------------------------------------------------------------------------
-
-local DEAD = coroutine.create(function() end)
-coroutine.resume(DEAD)
-
--- i pesi di chi gioca: l'allievo per la squadra del Maestro, il grado per gli altri
-local function pesi_di(team, team_m)
-	return team == team_m and ALLIEVO or nil
-end
-
--- Gioca avanti la copia G: il robot me parte con la mossa m già scelta (lo
--- stato del bot b di adesso), poi tutti col bot. Restituisce il valore alla
--- fine e le caratteristiche della posizione appena la mossa si è fermata.
-local function rollout(g, b, m, tipo, s, team_m)
-	local G = copia(g, s)
-	local me = b.id
-	local team = g.robots[me].team
-	local bots = {}
-	for k, rb in ipairs(G.robots) do
-		bots[k] = bot.new(k, rb.team == team_m and opt.grado or opt.modello, s * 31 + k, pesi_di(rb.team, team_m))
-		-- --leggero 1: nei rollout bot che cercano meno (meno passi e potenze), stessa mira
-		if opt.leggero == 1 then
-			local l = {}
-			for kk, v in pairs(bots[k].liv) do l[kk] = v end
-			l.walk_ticks, l.powers = math.min(l.walk_ticks, 120), 2
-			bots[k].liv = l
-		end
-	end
-	local rb = bots[me]
-	rb.turno, rb.sheltered, rb.inizio, rb.attacks, rb.piano = G.turn_no, b.sheltered, b.inizio, b.attacks, b.piano
-	rb.stato, rb.attesa, rb.co, rb.scelta, rb.passo, rb.think_from = "pensa", b.attesa or 0, DEAD, m, 0, G.tick
-	local ref = bot.world(g)
-	local x, mossa, giri, turni = nil, false, 0, 0
-	local fine = G.tick + opt.max_tick * opt.giri
-	while G.phase ~= "over" and G.tick < fine do
-		local who = bots[G.current]
-		G:step(who and bot.input(who, G) or {})
-		for _, e in ipairs(G:pop_events()) do
-			if e.type == "turn" then
-				turni = turni + 1
-				if e.robot == me then giri = giri + 1 end
-			end
-		end
-		-- la mossa si è fermata: la posizione che ne è uscita
-		if rb.stato ~= "pensa" then mossa = true end
-		if not x and (G.current ~= me or (mossa and (rb.stato == "fine" or rb.stato == "pensa") and bot.quiet(G))) then
-			x = arrotonda(bot.caratteristiche({ id = me }, ref, G, {}))
-		end
-		if (opt.turni > 0 and turni >= opt.turni) or (opt.turni == 0 and giri >= opt.giri) then break end
-	end
-	return valore(G, team), x
-end
+-- Il Maestro (sim/master.lua) ------------------------------------------------------------
 
 local scelte -- le scelte della partita, per --dati
 
--- Le prime n candidate diverse: stessa arma, stesso angolo e quasi lo stesso posto sono la stessa mossa
-local function uguali(a, c)
-	return a.arma == c.arma and math.abs((a.ang or 0) - (c.ang or 0)) < 0.03 and math.abs((a.potenza or 0) - (c.potenza or 0)) < 0.03
-		and math.abs(a.posto.x - c.posto.x) < 9 and math.abs(a.posto.y - c.posto.y) < 9
-end
-
-local function uniche(all, n)
-	local out = {}
-	for _, m in ipairs(all) do
-		local nuova = true
-		for _, c in ipairs(out) do
-			if uguali(m, c) then
-				nuova = false
-				break
-			end
-		end
-		if nuova then out[#out + 1] = m end
-		if #out >= n then break end
-	end
-	return out
-end
-
 local function maestro(team_m)
-	return function(b, g, all, tipo)
-		-- --solo attacco|riparo: il Maestro sceglie solo quelle
-		if opt.solo and opt.solo ~= tipo then return all[1] end
-		local cands = uniche(all, opt.candidate)
-		local n = #cands
-		if n <= 1 then return cands[1] end
-		local team = g.robots[b.id].team
-		local v0 = valore(g, team)
-		local q, xs = {}, {}
-		for k = 1, n do
-			local sum = 0
-			for s = 1, opt.semi do
-				-- gli stessi semi per ogni candidata
-				local seed = (g.tick * 977 + b.id * 131 + s * 7919) % 2147483647 + 1
-				local v, x = rollout(g, b, cands[k], tipo, seed, team_m)
-				sum = sum + v - v0
-				if s == 1 then xs[k] = x end
-			end
-			q[k] = sum / opt.semi
-		end
-		local best = 1
-		for k = 2, n do
-			if q[k] > q[best] then best = k end
-		end
-		-- --finto 1: i rollout si fanno ma si gioca la prima (la prova che non toccano la partita vera)
-		if opt.finto == 1 then best = 1 end
-		local punti = {}
-		for k = 1, n do punti[k] = cands[k].punti end
-		scelte[#scelte + 1] = { tipo = tipo, chi = b.id, t = g.tick, q = q, punti = punti, x = xs, scelta = best,
-			arma = cands[best].arma or "riparo" }
-		return cands[best]
-	end
+	return master.chooser({ candidate = opt.candidate, semi = opt.semi, turni = opt.turni, giri = opt.giri,
+		vita = opt.vita, max_tick = opt.max_tick, leggero = opt.leggero == 1, solo = opt.solo, finto = opt.finto == 1,
+		libero = opt.limiti ~= 1,
+		primo = opt.primo, tempo = opt.tempo,
+		-- nei rollout la squadra del Maestro gioca con l'allievo, gli altri col grado che crede (--modello)
+		grado = function(team)
+			if team == team_m then return opt.grado, ALLIEVO end
+			return opt.modello, nil
+		end,
+		log = function(s) scelte[#scelte + 1] = s end })
 end
 
 -- Una partita -----------------------------------------------------------------------
@@ -324,7 +157,7 @@ local function partita(k)
 	local punti = {}
 	for _, rb in ipairs(g.robots) do punti[rb.team] = (punti[rb.team] or 0) + rb.points end
 	return { numero = k, modo = modo, mappa = mappa, squadra_maestro = team_m, vincitore = res.winner or 0,
-		punti = punti, margine = margine(g, team_m), secondi = os.clock() - t0, scelte = #scelte }, scelte
+		punti = punti, margine = master.margin(g, team_m), secondi = os.clock() - t0, scelte = #scelte }, scelte
 end
 
 local out = opt.uscita and assert(io.open(opt.uscita, "w")) or io.stdout

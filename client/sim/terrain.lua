@@ -19,6 +19,18 @@ function M.new(w, h, cell, ox)
 	return t
 end
 
+-- A terrain like this one with no cells yet, then copy_cells fills it from
+-- index i0 to i1: sim/master.lua copies the whole match a piece at a time, so the
+-- phone doesn't stop a frame (the server has its own, with the byte array)
+function M:blank()
+	return setmetatable({ w = self.w, h = self.h, cell = self.cell, ox = self.ox, data = {} }, getmetatable(self))
+end
+
+function M:copy_cells(dst, i0, i1)
+	local s, d = self.data, dst.data
+	for i = i0, i1 do d[i] = s[i] end
+end
+
 -- Value of cell (cx, cy). Outside the grid it is always empty.
 function M:get(cx, cy)
 	cx = cx + self.ox

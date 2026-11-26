@@ -30,7 +30,10 @@ local common = require("lang.text").common
 local M = {}
 
 local MODES_LIST = { { "1v1", common.modes["1v1"] }, { "2v2", common.modes["2v2"] }, { "ffa", common.modes.ffa } }
-local LEVELS = { { "facile", T.levels.facile }, { "normale", T.levels.normale }, { "difficile", T.levels.difficile } }
+-- MAESTRO (Sergio, 26 Nov 2026): beyond DIFFICILE, the bot that plays its best moves on to the
+-- enemy's reply before choosing (sim/master.lua), only here
+local LEVELS = { { "facile", T.levels.facile }, { "normale", T.levels.normale }, { "difficile", T.levels.difficile },
+	{ "maestro", T.levels.maestro } }
 local NAMES = {}
 for _, t in ipairs(MODES_LIST) do NAMES[t[1]] = t[2] end
 for _, t in ipairs(LEVELS) do NAMES[t[1]] = t[2] end

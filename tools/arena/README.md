@@ -100,6 +100,9 @@ contro il bot di oggi a coppie, e se fa meglio del migliore il ciclo dopo il Mae
 gioca avanti con lui (expert iteration). Esce `simulazione/arena/maestro/`: `maestro.md`,
 `stato.json`, `migliore.lua`, `ciclo_N/`. Una partita del Maestro dura qualche minuto (circa
 20 rollout a scelta): sui 16 core del PC fa circa un ciclo ogni mezz'ora.
+Il codice dei rollout è `client/sim/master.lua`, lo stesso del livello MAESTRO dell'Allenamento
+(`bot.LEVELS.maestro`, che pensa a pezzi come il bot); il livello si prova con
+`luajit tools/arena/maestro.lua --grado maestro --maestro 0 --avversario difficile`.
 
 ## Turni delle persone
 

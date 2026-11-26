@@ -48,6 +48,15 @@ M.LEVELS = {
 	difficile = { reaction = 20, mira = 0.008, potenza = 0.008, sbaglia = 0, walk_ticks = 420, powers = 5,
 		teletrasporto = true, rampino = true, oggetti = true, lavoro = 400, pericolo = 1 },
 }
+-- maestro (the training's MAESTRO, Sergio, 26 Nov 2026: "mettila solo in
+-- allenamento oltre il livello difficile"): the hard bot that, among its two best
+-- attacks (and covers), plays each on a copy of the match up to the enemy's
+-- reply and keeps the better one (sim/master.lua; 77% against grade 10 in the
+-- arena). It thinks more per tick (lavoro) and for longer.
+M.LEVELS.maestro = { maestro = { candidate = 2, semi = 1, turni = 2, leggero = true, tempo = 3 }, lavoro = 3000 }
+for k, v in pairs(M.LEVELS.difficile) do
+	if M.LEVELS.maestro[k] == nil then M.LEVELS.maestro[k] = v end
+end
 M.ORDER = { "facile", "normale", "difficile" }
 
 -- The campaign grades (Sergio, 30 October 2026: "vorrei sentire una bella
@@ -328,6 +337,8 @@ local function work(b, n)
 		coroutine.yield()
 	end
 end
+
+M.work = work
 
 -- Runs the copy, for at most max ticks, until everything is still
 local function until_quiet(b, w, max)
@@ -1317,8 +1328,10 @@ function M.new(id, livello, seed, weights, personality)
 		for k, v in pairs(p.liv) do overrides[k] = v end
 	end
 	-- own_plan: the personality's plan, for the turns that have no other
-	return { id = id, livello = livello, liv = overrides, pesi = p, rng = generator((seed or 1) * 7919 + id), lavoro = 0,
+	local b = { id = id, livello = livello, liv = overrides, pesi = p, rng = generator((seed or 1) * 7919 + id), lavoro = 0,
 		attacks = 0, own_plan = feat.piano }
+	if overrides.maestro then b.scegli = require("sim.master").chooser(overrides.maestro) end
+	return b
 end
 
 -- Noise between -1 and 1, more often near 0
