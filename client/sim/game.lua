@@ -181,6 +181,11 @@ M.PUNCH_HOP = 15 * M.U      -- the attacker rises a little with the uppercut
 M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true, bellows = true,
 	vortex = true, cannon = true, petard = true }
 M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows", "vortex", "cannon", "petard" }
+-- weapons (and the Giano) that fly as self.projectile: firing one while another
+-- shot still flies moves the old one to self.flying, where it goes on until it
+-- bursts (it used to be replaced, and vanished without exploding: Sergio, 26 Nov)
+M.SHOOTS = { missile = true, grenade = true, tar = true, petard = true, sniper = true, vortex = true,
+	boomerang = true, drill = true, janus = true }
 -- weapons that don't use up shots
 M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill" }
@@ -419,6 +424,7 @@ function M.new(seed, map_id, opts)
 	g.events = {}
 	g.tick = 0
 	g.orbs = {}              -- teleport orbs in flight, oldest first
+	g.flying = {}            -- older shots still in flight (self.projectile is the last fired), oldest first
 	g.orb_seq = 0
 	g.match_left = M.MATCH_TICKS
 	g.current = 1
@@ -1006,6 +1012,9 @@ function M:remove(id)
 		-- the next one is already in their place in the order: end_turn passes to them
 		self.order_pos = pos - 1
 		if self.projectile and self.projectile.owner == id then self.projectile = nil end
+		for i = #self.flying, 1, -1 do
+			if self.flying[i].owner == id then table.remove(self.flying, i) end
+		end
 		self:end_turn()
 	end
 end
@@ -3001,6 +3010,7 @@ function M:use_tool(kind, fire)
 		self:fire_hook(fire.angle)
 		return
 	elseif kind == "janus" then
+		self:park_shot()
 		self.used.tool = true
 		self:throw_janus(fire.angle, fire.power)
 		return
@@ -3287,6 +3297,37 @@ function M:blast_on(rb, x, y, blast, owner)
 	return dmg, dx * imp * f, dy * imp * f
 end
 
+-- A new shot is about to take self.projectile: the one still flying goes on
+-- among the older ones
+function M:park_shot()
+	if self.projectile then
+		self.flying[#self.flying + 1] = self.projectile
+		self.projectile = nil
+	end
+end
+
+-- The older shots move like the last one: each in turn takes self.projectile
+-- for its tick (the update functions only know that one)
+function M:update_flying()
+	local last, n = self.projectile, 0
+	local list = self.flying
+	for i = 1, #list do
+		self.projectile = list[i]
+		self:update_projectile()
+		if self.projectile then
+			n = n + 1
+			list[n] = self.projectile
+		end
+	end
+	for i = #list, n + 1, -1 do list[i] = nil end
+	self.projectile = last
+end
+
+-- Any shot in flight, the last or an older one
+function M:shots_flying()
+	return self.projectile ~= nil or #self.flying > 0
+end
+
 function M:update_projectile()
 	local p = self.projectile
 	if p.kind == "grenade" or p.kind == "tar" or p.kind == "petard" then return self:update_grenade(p) end
@@ -3435,6 +3476,7 @@ end
 -- The robot on turn attacks with weapon (already checked with can_use)
 function M:attack(weapon, fire)
 	local rb = self.robots[self.current]
+	if M.SHOOTS[weapon] then self:park_shot() end
 	local first = not (self.used.primary or self.used.secondary)
 	if M.SECONDARY[weapon] then self.used.secondary = true else self.used.primary = true end
 	if not M.FREE_WEAPONS[weapon] then rb.ammo[weapon] = rb.ammo[weapon] - 1 end
@@ -3544,6 +3586,7 @@ function M:fingerprint()
 	end
 	local p = self.projectile
 	if p then h = shuffle(shuffle(h, p.x * 16), p.y * 16) end
+	for _, q in ipairs(self.flying) do h = shuffle(shuffle(h, q.x * 16), q.y * 16) end
 	h = shuffle(h, #self.orbs)
 	h = shuffle(h, #self.placed)
 	return h
@@ -3639,6 +3682,7 @@ function M:advance(input, can_move)
 		if rb.dead then rb.cannon = nil end
 		if rb.hook_shot then self:update_hook_shot(rb) end
 	end
+	if #self.flying > 0 then self:update_flying() end
 	if self.projectile then self:update_projectile() end
 	if self.burst then self:update_burst() end
 	self:update_shards()
@@ -3706,7 +3750,7 @@ function M:step(input)
 	elseif self.phase == "settle" then
 		-- wait for shots, orbs and robots to settle
 		self.settle_total = self.settle_total + 1
-		local still = #self.orbs == 0 and not self.projectile and not self:shards_flying() and not hazards.busy(self)
+		local still = #self.orbs == 0 and not self:shots_flying() and not self:shards_flying() and not hazards.busy(self)
 		for _, o in ipairs(self.placed) do
 			if o.flying then still = false end
 		end
