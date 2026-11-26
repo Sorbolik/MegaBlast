@@ -1265,7 +1265,7 @@ local function launch(a)
 	fx.phase, fx.t = "fly", 0
 end
 
-local missed, after_throw, recap
+local missed, after_throw, recap, pay
 
 -- The whole wall filled (the page's «jackpot del muro pieno»): once the last flame has
 -- burned the moulds light up one after another like a row of lamps, a flash, the
@@ -1362,7 +1362,6 @@ local function land(a)
 	local last = fx.path[#fx.path]
 	gui.set_enabled(fx.drop, false)
 	fx.phase, fx.t = "after", 0
-	fx.focus = nil
 	-- a record of knocks on the moulds' iron in one throw (6, 10: the medals)
 	if r.knocks then
 		shout(a, T.knocks:format(r.knocks), 540, KC.SAND, 1.8, 44)
@@ -1381,7 +1380,6 @@ local function land(a)
 	if r.esito == "stampo" then
 		local m = fx.wall[r.slot]
 		fx.freeze, fx.shake = FREEZE, SHAKE
-		fx.focus = { m.x, m.y }
 		fill_mould(fx, m)
 		fx.shake = SHAKE * 1.6
 		sound.play("#martello")
@@ -1485,6 +1483,13 @@ local RECAP_W, RECAP_ROW = 480, 52
 function recap(a)
 	local fx, p = a.fx, a.prof
 	local got = fx.got
+	-- the wall full: the bench is paid by itself first (Sergio, 26 Nov: «o quando finiamo
+	-- il muro in automatico»), then the card with what came, and only CHIUDI
+	if got.jackpot and not got.paid then
+		got.paid = true
+		pay(a, function() fx.got = got; recap(a); fx.got = nil end)
+		return
+	end
 	fx.phase, fx.t = "recap", 0
 	if fx.stick then gui.set_enabled(fx.stick.base, false) end
 	local rows = {}
@@ -1539,7 +1544,7 @@ function recap(a)
 		-- after the jackpot only CHIUDI (Sergio, 25 Nov): the next wall of the day is
 		-- shown in the vetrina, a new pour starts from there
 		local cw = RECAP_W - 56
-		kit.secondary(g, T.recap_close, x0 + 28, by, cw, bh)
+		kit.secondary(g, T.recap_done, x0 + 28, by, cw, bh)
 		fx.recap_btns = { { x = x0 + 28, y = by, w = cw, h = bh, cmd = "close" } }
 	else
 		kit.secondary(g, T.recap_again, x0 + 28, by, bw, bh, { main = true, off = not can, icon = "gemma" })
@@ -1574,7 +1579,7 @@ end
 -- Scaglie in arcs into the wallet that counts them up, the beads of the jar too, the
 -- fragments up under it with their number; the usurer grumbles; then after()
 local PAY_GAP = 0.45
-local function pay(a, after)
+function pay(a, after)
 	local fx = a.fx
 	local got = fx.got or {}
 	fx.phase, fx.t = "pay", 0
@@ -1635,19 +1640,23 @@ local function recap_do(a, what)
 	if not what then return end
 	fx.recap_btns = nil
 	if fx.recap then gui.delete_node(fx.recap); fx.recap = nil end
-	pay(a, function()
-		-- COLA ANCORA stays on the wall (Sergio, 25 Nov: «non c'è bisogno di uscire e
-		-- rientrare»): it pays, and the gems fly into the ladle as at every pour
-		-- (the same wall only: at 5 in the morning a new one comes, and the recap closes on it)
-		if what == "again" and wall_key(a.prof) == fx.key and profile.act(a.prof, { k = "colata", muro = wall_key(a.prof) }) then
-			fx.poured = true
-			fx.got = { sacchi = 0, vetri = 0, fr = {}, hits = 0 }
-			bench(fx, nil)
-			gems(fx)
-			return
-		end
-		close(a)
-	end)
+	-- COLA ANCORA stays on the wall (Sergio, 25 Nov: «non c'è bisogno di uscire e
+	-- rientrare») and pays nothing (Sergio, 26 Nov: «quando facciamo cola ancora ... non
+	-- dobbiamo ancora riscattare i ricavi»): the loot stays on the bench and grows, the
+	-- gems fly into the ladle as at every pour (the same wall only: at 5 in the morning a
+	-- new one comes, and the recap closes on it)
+	if what == "again" and wall_key(a.prof) == fx.key and profile.act(a.prof, { k = "colata", muro = wall_key(a.prof) }) then
+		fx.poured = true
+		local got = fx.got or { sacchi = 0, vetri = 0, fr = {}, hits = 0 }
+		got.bonus, got.medal, got.knocks = nil, nil, nil
+		fx.got = got
+		bench(fx, got)
+		gems(fx)
+		return
+	end
+	-- INCASSA pays the bench; after the jackpot it is paid already (recap)
+	if not fx.got then close(a); return end
+	pay(a, function() close(a) end)
 end
 
 -- an angle and power that fill the nearest empty mould (the simulator's sure aim)
@@ -1789,8 +1798,8 @@ end
 -- loads, follows the drop and stops on the mould): a little closer than the whole
 -- wall, eased toward where things happen, and back to the whole wall to aim
 local CAM_EASE = 5
-local FOCUS_T = 1.2 -- on the hit mould while its flame burns
 local FLY_EASE, FLY_ZOOM = 9, 1.5
+local AFTER_EASE = 9 -- quick back to the whole wall once the drop has landed
 local function follow(a, dt)
 	local fx = a.fx
 	if fx.tr or not (fx.phase == "aim" or fx.phase == "swing" or fx.phase == "fly" or fx.phase == "after") then return end
@@ -1804,9 +1813,11 @@ local function follow(a, dt)
 		local d = gui.get_position(fx.drop)
 		tx, ty, ts = d.x, math.max(forge.FLOOR + 60, d.y), math.max(base.s * FLY_ZOOM, math.min(THROW_CAM.s, fx.cam.s))
 		ease = FLY_EASE
-	elseif fx.phase == "after" and fx.focus and fx.t < FOCUS_T then
-		tx, ty, ts = lerp(base.x, fx.focus[1], 0.3), lerp(base.y, fx.focus[2], 0.3), base.s * 1.2
+	elseif fx.phase == "after" then
+		ease = AFTER_EASE
 	end
+	-- (after the drop lands, the whole wall at once: Sergio, 26 Nov, «anche quei momenti
+	-- devono avere sempre il dezoom massimo, così si vedono le frasi dello strozzino»)
 	local k = 1 - math.exp(-dt * ease)
 	local c = fx.cam
 	fx.cam = { x = c.x + (tx - c.x) * k, y = c.y + (ty - c.y) * k, s = math.exp(math.log(c.s) + (math.log(ts) - math.log(c.s)) * k) }
@@ -1887,7 +1898,10 @@ function M.update(a, dt)
 				gui.set_rotation(gm.node, vmath.vector3(0, 0, (u * 6 + i) * 57))
 			end
 		end
-		coins.set(fx.purse, p.scaglie or 0, (p.ossidiana or 0) + forge.COST - landed)
+		-- (the wallet without the bench still to cash: COLA ANCORA keeps it there)
+		local g = fx.got or {}
+		local unpaid = (g.sacchi or 0) + (g.jackpot or 0) + (g.vetri or 0) * forge.MISS
+		coins.set(fx.purse, (p.scaglie or 0) - unpaid, (p.ossidiana or 0) + forge.COST - landed)
 		local done = GEM_START + (forge.COST - 1) * GEM_GAP + GEM_FLY
 		if fx.t >= done then
 			-- it melts: the splash in the ladle, the molten drop stays in it

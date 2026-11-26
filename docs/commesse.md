@@ -176,12 +176,15 @@ sei e cosa sono le cose:
   cade sopra e **si spezza** in mezzo («bancarotta»: la parola viene dal banco rotto dei
   cambiavalute), le due metà cadono sui cavalletti e i mucchi scivolano ai suoi piedi.
 - **Si incassa solo alla fine** (Sergio, 26 nov: «i soldi che prendi ... non vadano più a sommarsi ai
-  tuoi, solo alla fine della sessione, in un tripudio di animazioni»; il bancone tiene solo la colata
-  di adesso, scelto sulla scheda): durante la colata il portafoglio in alto non si muove e tutto resta
-  sul bancone, anche le perle. Nel riepilogo il pulsante è **INCASSA** (e COLA ANCORA incassa prima di
-  colare): il bancone si svuota un mucchio dopo l'altro, le Scaglie volano in arco nel portafoglio che
-  le conta, i frammenti salgono sotto il portafoglio col loro numero. È solo il disegno: il profilo è
-  pagato tiro per tiro come prima (il server decide), e chiudere il gioco a metà non perde niente.
+  tuoi, solo alla fine della sessione, in un tripudio di animazioni»; poi: «quando facciamo cola
+  ancora in partita non dobbiamo ancora riscattare i ricavi, quello solo quando facciamo riscatta o
+  quando finiamo il muro in automatico»): durante le colate il portafoglio in alto non si muove e
+  tutto resta sul bancone, anche le perle; **COLA ANCORA non incassa**, il bancone si somma colata
+  dopo colata. Si incassa con **INCASSA** nel riepilogo, oppure **da solo al muro pieno** (dopo la
+  bancarotta, poi il riepilogo con CHIUDI): il bancone si svuota un mucchio dopo l'altro, le Scaglie
+  volano in arco nel portafoglio che le conta, i frammenti salgono sotto il portafoglio col loro
+  numero. È solo il disegno: il profilo è pagato tiro per tiro come prima (il server decide), e
+  chiudere il gioco a metà non perde niente.
 - **Lo strozzino**, seduto in fondo al bancone col suo libro dei conti, **parla** ogni tanto
   (Sergio, 26 nov: «uno di questi predoni accanto al tavolo che ogni tanto ti parla»). Il bottino è
   suo e **glielo stiamo rubando** (Sergio, 26 nov): le sue frasi sono di un derubato, una frase
