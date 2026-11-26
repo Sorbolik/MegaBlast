@@ -1,0 +1,13 @@
+Image 1 is a rough draft of a minigame of our cartoon game: in the stone face of an embankment there is the long wooden counter of a medieval money changer, where the loot of the player piles up and makes the plank bend. Image 2 shows the end of the game: the plank cracks, then snaps in two in the middle and everything falls down ("bankruptcy", the broken bench). Image 3 shows the STYLE of our game: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic.
+
+Draw these separate pieces on plain green (#00FF00), well apart, each whole:
+1. THE PLANK, in three pieces so the game can build it as long as it wants and bend it: a LEFT END, a MIDDLE piece whose left and right ends are cut straight to repeat seamlessly, and a RIGHT END. A thick old plank of worn brown wood (#7A4B2A, highlight #A5785A, shadow #5A3218), seen from the front and a little from above so the TOP surface is visible, with iron nails and a few coin scratches. The plank is about twenty times longer than thick in total.
+2. A TRESTLE: one wooden trestle leg in an A shape seen from the front, to hold the plank.
+3. THE BROKEN PLANK: the same plank snapped in two, each half drawn separately, with jagged splintered wood at the broken end.
+4. A CRACK: one dark jagged crack with a few small splinters, to put on top of the plank in the middle.
+No coins, no characters, no letters, no shadow on the ground, no glow halo.
+
+Riferimenti in ordine: art/WB-097/riferimenti/R2_bozza_bancone.png, art/WB-097/riferimenti/R3_bozza_bancarotta.png, art/WB-087/malacoda_2.png
+ImageGen. Un tentativo. Ridimensionato in proporzione e centrato su tela verde da 1536×1024.
+Tre pezzi di asse, cavalletto, due metà spezzate e crepa, separati. Le giunzioni del pezzo centrale non sono verificate.
+Verde campionato: #04F805, diverso da #00FF00 esatto.

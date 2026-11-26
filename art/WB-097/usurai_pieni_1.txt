@@ -1,0 +1,9 @@
+Image 1 is a rough draft of a minigame of our cartoon game: a little devil throws drops of molten obsidian into the open purses of greedy damned souls (usurers) sitting on a burning desert of sand. Image 2 shows the STYLE of our characters: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic, funny and expressive. Image 3 shows small objects in that style and the five family colors.
+
+Draw the SAME SIX usurers as the previous sheet, in the same order, same size, same cloaks and same shield colors (gold, ice blue, fire orange, sea green, violet, iron grey), each one whole and well apart on plain green (#00FF00), in two rows of three. Now the purse is FULL: its mouth is filled to the brim with glowing molten metal, bright orange-yellow (#FFB703 and #FF7A1A) with one flat white-yellow highlight and a thin wisp of steam; the purse is a little swollen. Each usurer has his MOUTH WIDE OPEN as if shouting, eyebrows up, half outraged because the purse burns and half delighted because it is full; his hands still hold the purse.
+Nothing else in the image: no icons on the shields, no letters, no numbers, no speech bubbles, no shadow on the ground, no glow halo.
+
+Riferimenti in ordine: art/WB-097/riferimenti/R1_bozza_usurai.png, art/WB-087/malacoda_2.png, art/WB-084/frammenti_1.png
+ImageGen. Tre tentativi, selezionato il primo. PNG nativo da 1536×1024.
+Sei figure con borse piene e stemmi in ordine. Il modello ha ripreso Malacoda in piedi. Le figure differiscono dagli usurai seduti, hanno misure simili e le bocche non sono tutte chiaramente spalancate.
+Verde campionato: #03FA03, diverso da #00FF00 esatto.

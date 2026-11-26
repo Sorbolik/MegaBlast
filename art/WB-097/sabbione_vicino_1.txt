@@ -1,0 +1,8 @@
+Image 2 is one background layer of our game: copy its HAND exactly: no black outline at all, big simple flat shapes, very few details.
+
+Paint the NEAREST layer of an infernal desert of burning sand, wide (3:2), on plain green (#00FF00) so it can be cut out: only near, dark, slightly blurred shapes along the BOTTOM edge and in the two bottom corners: the crest of a dune of dark orange sand (#7A3A1C), a half-buried broken coin chest on the left, a few scorched stones on the right, a thin rim of orange light on their edges, and four or five big blurred flakes of fire falling in front. They take at most the bottom fifth of the image, apart from the flakes. Everything else is green. No outlines, no characters, no letters.
+
+Riferimenti in ordine: art/WB-097/riferimenti/R1_bozza_usurai.png, client/paintings/backgrounds/forgia_medio_2.png
+ImageGen. Un tentativo. PNG nativo da 1536×1024.
+Duna vicina con cassa, pietre e quattro falde sfocate. Gli oggetti restano in basso.
+Verde campionato: #02F805, diverso da #00FF00 esatto.

@@ -161,4 +161,16 @@ Approvata da Claude il 26 nov: Sergio ha scelto l'ambientazione «Il Banco degli
 
 ## Consegna di Codex
 
+In `art/WB-097/` sono consegnati i seguenti fogli e un `.txt` omonimo per ciascuno, con prompt originale, riferimenti nell'ordine e note.
+
+- `sabbione_cielo_1.png`, `sabbione_cielo_2.png`, `sabbione_lontano_1.png`, `sabbione_lontano_2.png`, `sabbione_medio_1.png`, `sabbione_medio_2.png`, `sabbione_vicino_1.png`, `sabbione_vicino_2.png` — un tentativo ciascuno.
+- `usurai_vuoti_1.png`, `usurai_vuoti_2.png` — un tentativo ciascuno.
+- `usurai_pieni_1.png`, `usurai_pieni_2.png` — tre tentativi ciascuno, selezionato il primo.
+- `argine_e_pinnacolo_1.png`, `argine_e_pinnacolo_2.png`, `bancone_1.png`, `bancone_2.png` — un tentativo ciascuno.
+- `mucchi_e_vetro_1.png`, `mucchi_e_vetro_2.png` — tre tentativi ciascuno, selezionato il secondo.
+
+Tutti i 18 PNG sono da 1536×1024. Per argine, bancone e bottino ho ridimensionato in proporzione e centrato i fogli su verde. Ho controllato visivamente i quattro piani di ciascuna variante, l'area centrale libera, la distribuzione degli oggetti, l'assenza di scritte e il colore degli stemmi. Nei due fogli vuoti gli usurai grandi superano i 300 px. I fogli pieni mantengono i sei colori e il metallo fuso, ma mostrano un personaggio simile a Malacoda, in piedi e di taglia uniforme. Il criterio dello stesso personaggio nelle due pose non è soddisfatto.
+
+In entrambi i fogli del bottino la goccia è presente solo allungata, con coda a destra, e la perla è già dentro lo schizzo di sabbia. La misura e l'ordine dei mucchi sono leggibili. Il verde generato differisce da #00FF00. Non sono state verificate le giunzioni senza cuciture, lo scontorno finale o la resa in gioco.
+
 ## Resoconto di Claude
