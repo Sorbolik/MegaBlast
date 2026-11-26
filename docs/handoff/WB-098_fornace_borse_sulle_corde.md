@@ -1,6 +1,6 @@
 # WB-098 · La Fornace: le borse appese alle corde, chiuse col sigillo, la trave dei conti, l'usuraio del banco
 
-- **Stato:** IMPLEMENTATA (Claude, 26 nov: nel gioco sul ramo `claude/project-thread-oh0dd6`, PR #437; approvata su anteprima di Sergio https://claude.ai/artifact/FtpmtRZabnAmpyvbGpq1n8 , «Mi piace l’anteprima»)
+- **Stato:** IN PARTE SCARTATA (Sergio, 26 nov: «i calderoni di prima mi piacevano di più»: le borse aperte e chiuse e la corda escono dal gioco, tornano gli stampi di WB-093; restano la trave coi cordini e l'usuraio del banco). Prima IMPLEMENTATA (Claude, 26 nov: nel gioco sul ramo `claude/project-thread-oh0dd6`, PR #437; approvata su anteprima di Sergio https://claude.ai/artifact/FtpmtRZabnAmpyvbGpq1n8 , «Mi piace l’anteprima»)
 - **Data:** 2026-11-26
 - **Ramo della scheda:** `claude/project-thread-oh0dd6` (Codex la esegue da qui: `git fetch origin claude/project-thread-oh0dd6`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-098`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-098` senza chiedere conferma (il repository è privato).

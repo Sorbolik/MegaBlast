@@ -1,4 +1,4 @@
-# La Fornace nel Banco degli Usurai (WB-097): tiri corti che mancano le borse. La goccia
+# La Fornace nel Banco degli Usurai (WB-097): tiri corti che mancano i calderoni. La goccia
 # cade nella sabbia, diventa una perla di vetro che salta nel vaso in fondo al bancone, il
 # Fabbro paga 30 e l'usuraio più vicino ride. Le battute degli usurai mentre miri.
 # Gira anche con --schermo 1600x720 e 960x720. (tocca_centro: Y dal basso)

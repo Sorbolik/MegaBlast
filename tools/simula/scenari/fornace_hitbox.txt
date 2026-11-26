@@ -1,7 +1,7 @@
-# Le hitbox della Fornace sopra le borse (Sergio, 26 Nov): rosso il ferro dove la goccia
-# rimbalza (pancia, labbri della bocca, la borsa chiusa), verde la riga che la prende.
+# Le hitbox della Fornace sopra i calderoni (Sergio, 26 Nov): rosso il ferro dove la goccia
+# rimbalza (pancia, labbri della bocca, il coperchio), verde la riga che la prende.
 # Solo nel simulatore (prova_fornace_hitbox). Con prova_fornace_centra ogni tiro va nella
-# borsa vuota più vicina, così si vedono anche le chiuse.
+# stampo vuoto più vicino, così si vedono anche i coperchi.
 imposta prova_test prova
 imposta prova_fornace_centra 1
 imposta prova_fornace_hitbox si

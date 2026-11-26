@@ -170,7 +170,8 @@ function M.reachable(wall, i)
 		local dx, dy = m.x - x0, m.y - y0
 		local d = dx * math.tan(a) - dy
 		if dx > 0 and d > 0 then
-			local v = math.sqrt(g * dx * dx / (2 * math.cos(a) ^ 2 * d))
+			local c = math.cos(a)
+			local v = math.sqrt(g * dx * dx / (2 * c * c * d))
 			local power = v / game.MISSILE_SPEED
 			if power >= 0.1 and power <= 1 then
 				local r = M.fly(a, power, wall, {})
@@ -253,7 +254,8 @@ function M.layout(key, seed, lucky)
 			local ok = not banned[sp]
 			for _, q in ipairs(ok and picked or NONE_LIST) do
 				-- apart, and never one over the other
-				if (sp.x - q.x) ^ 2 + (sp.y - q.y) ^ 2 < M.SPOT_GAP ^ 2 or math.abs(sp.x - q.x) < M.COLUMN then ok = false; break end
+				local dx, dy = sp.x - q.x, sp.y - q.y
+				if dx * dx + dy * dy < M.SPOT_GAP * M.SPOT_GAP or math.abs(sp.x - q.x) < M.COLUMN then ok = false; break end
 			end
 			if ok then
 				picked[#picked + 1] = sp
@@ -373,9 +375,8 @@ M.STILL = 90             -- ticks almost still (resting on a lip): it drips down
 M.CATCH = 0.3
 
 -- The lid of a full mould (Sergio, 24 Nov: «l'hitbox del coperchio un pochino più
--- coerente col coperchio»): first the drawn lid's dome (WB-094), since 26 Nov the
--- taken purse, tied and sealed around its mouth (client/menu/forge_ui.lua seal, WB-098),
--- as a circle
+-- coerente col coperchio»): the drawn lid's dome (WB-094, client/menu/forge_ui.lua
+-- seal: 1.02 of the mould wide, from 0.11 under the rim to 0.48 over it) as a circle
 M.LID_R, M.LID_Y = 0.54, -0.08
 
 -- The back wall (Sergio, 24 Nov: «in fondo a destra un muro, ad un po' di distanza

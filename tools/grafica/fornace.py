@@ -1,20 +1,20 @@
 # La Fornace del Fabbro (docs/commesse.md "La Fornace"): i pezzi del Banco degli Usurai
 # (Sergio, 26 nov: la Fornace sta nel Sabbione del girone VII) dai disegni di Codex
 # (art/WB-097: cielo 2, lontano 1, medio 1, argine e pinnacolo 2, bancone 1, mucchi e vetro 2;
-# art/WB-098: borse aperte 1, borse chiuse 1, trave e corde 2, usuraio del banco 1) e quelli rimasti delle schede di prima (art/WB-092: goccia e schizzo;
-# art/WB-093: mestolo 1; art/WB-094: fiammata 1, medaglia del jackpot 1; art/WB-095: le
+# art/WB-098: trave e corde 2, usuraio del banco 1) e quelli rimasti delle schede di prima
+# (art/WB-092: goccia, schizzo e catena; art/WB-093: gli stampi vuoti e il mestolo 1;
+# art/WB-094: i coperchi; art/WB-094: fiammata 1, medaglia del jackpot 1; art/WB-095: le
 # medaglie dei rintocchi).
 #   python3 tools/grafica/fornace.py
 # Scrive:
-#   client/assets/fornace/*.png       le borse (6 colori, aperte e chiuse), la trave, la
-#                                     corda e i cordini, l'usuraio del banco (3 facce), argine,
+#   client/assets/fornace/*.png       gli stampi (6 colori, grandi e piccoli), i coperchi, la
+#                                     catena, la trave e i cordini, l'usuraio del banco (3 facce), argine,
 #                                     parete, sporgenza, il bancone e i mucchi,
 #                                     il vaso e le perle di vetro, le falde di fuoco, i 4
 #                                     fotogrammi della fiammata, le medaglie, goccia, schizzo
 #   client/menu/fornace.atlas         l'atlante (fuori da /ui/: ha le mipmap, perché la
 #                                     fucina si vede a tanti zoom)
-#   client/menu/forge_pieces.lua      le misure in pixel di ogni pezzo (generato) e, per le
-#                                     borse, la bocca (mx, my, mw), la corda (rx), il sigillo (sx, sy, sw)
+#   client/menu/forge_pieces.lua      le misure in pixel di ogni pezzo (generato)
 #   client/paintings/fornace/*.png|jpg   cielo, lontano e medio: grandi, caricati solo
 #                                     quando la Fornace è aperta
 #   art/armi/mestolo.png, mestolo_icona.png   il Mestolo per tools/grafica/armi.py
@@ -145,115 +145,46 @@ def fai_fucina():
     gs = ritaglia(os.path.join(A92, "goccia_e_secchio_1.png"))
     salva("goccia", gs.crop((136, 162, 356, 380)), 22)
     salva("schizzo", gs.crop((335, 500, 712, 747)), 70)
+    salva("catena", gs.crop((1331, 113, 1423, 911)), 14)
 
 
 # Il Banco degli Usurai (art/WB-097 e WB-098, Sergio 26 nov) ---------------------------
 
-# Le borse sulle corde (WB-098, Sergio 26 nov: gli usurai sul muro facevano confusione):
-# una borsa aperta e una chiusa per colore, una sola misura (le piccole sono le grandi
-# rimpicciolite, mai ingrandito un disegno). L'orlo è largo RIM_W dello stampo delle
-# regole (forge.lua: le labbra a ±0,43 della larghezza, la presa a ±0,41)
+# Gli stampi dello strozzino (WB-093, Sergio 26 nov: «i calderoni di prima mi piacevano di
+# più», tornano al posto delle borse di WB-098): le scatole sui fogli ritagliati, per colore
+# (riga sopra: oro, azzurro, arancio; sotto: verde mare, viola, ferro)
 COLORI = ["oro", "azzurro", "arancio", "verde", "viola", "ferro"]
-BORSE_APERTE = [(164, 19, 480, 495), (610, 19, 926, 495), (1056, 19, 1372, 495),
-                (164, 512, 480, 991), (610, 512, 926, 991), (1056, 512, 1372, 991)]
-BORSE_CHIUSE = [(125, 16, 470, 476), (594, 16, 941, 477), (1065, 16, 1411, 477),
-                (125, 519, 471, 980), (594, 519, 941, 980), (1065, 519, 1411, 980)]
-RIM_W = 0.76
-STAMPO = 78 * 1.06
-BOCCHE = {}
+SCATOLE = {
+    "stampi_grandi_vuoti_1": [(69, 32, 456, 433), (574, 32, 962, 433), (1079, 32, 1466, 433),
+                              (69, 546, 456, 946), (574, 546, 962, 946), (1079, 546, 1466, 946)],
+    "stampi_piccoli_vuoti_1": [(112, 96, 465, 450), (591, 96, 945, 450), (1072, 96, 1424, 450),
+                               (112, 578, 465, 932), (591, 578, 945, 932), (1072, 578, 1424, 931)],
+}
+# larghezza nel mondo (forge.lua: grandi 78, piccoli 52, per forge.GROW 1,06; il disegno è
+# largo 1,05 lo stampo, il coperchio 1,02: forge_ui.lua IMG_W, LID_W)
+LARGO = {"grandi": 78 * 1.06, "piccoli": 52 * 1.06}
 
 
-def bocca_borsa(im):
-    # la bocca: il buio dentro l'orlo (aperto per staccarlo dal contorno nero), poi
-    # l'orlo a destra e a sinistra lungo la sua riga fino al contorno
-    a = np.asarray(im).astype(float)
-    al, lum = a[..., 3], a[..., :3].mean(2)
-    h, w = al.shape
-    buio = ndi.binary_opening((al > 250) & (lum < 45), iterations=6)
-    lab, k = ndi.label(buio)
-    best = None
-    for i in range(1, k + 1):
-        ys, xs = np.where(lab == i)
-        if ys.mean() < h * 0.6 and (best is None or len(xs) > best[0]):
-            best = (len(xs), xs.min(), xs.max(), ys.min(), ys.max())
-    _, x0, x1, y0, y1 = best
-    cy = (y0 + y1) // 2
-
-    def esci(x, d):
-        while 0 < x < w - 1 and lum[cy, x] < 60:
-            x += d
-        while 0 < x < w - 1 and lum[cy, x] >= 60 and al[cy, x] > 200:
-            x += d
-        return x
-    sx, dx = esci(x0, -1), esci(x1, 1)
-    return (sx + dx) / 2, cy, dx - sx
-
-
-def pancia(im):
-    # il fondo della borsa e la larghezza della pancia (la riga più larga della metà bassa)
-    al = np.asarray(im)[..., 3] > 128
-    ys = np.where(al.any(1))[0]
-    basso = ys.max()
-    righe = [(r, np.where(al[r])[0]) for r in range(al.shape[0] // 2, basso)]
-    r, xs = max(righe, key=lambda q: q[1].max() - q[1].min() if len(q[1]) else 0)
-    return basso, (xs.min() + xs.max()) / 2, xs.max() - xs.min()
-
-
-def cima(im):
-    # dove la corda esce in alto: il mezzo delle prime righe piene
-    al = np.asarray(im)[..., 3] > 128
-    ys = np.where(al.any(1))[0]
-    xs = np.where(al[ys.min():ys.min() + 6].any(0))[0]
-    return (xs.min() + xs.max()) / 2
-
-
-def sigillo(im):
-    # il mezzo della ceralacca: la macchia rossa più grande
-    a = np.asarray(im).astype(int)
-    rosso = (a[..., 0] > 100) & (a[..., 1] < a[..., 0] * 0.33) & (a[..., 2] < a[..., 0] * 0.33) & (a[..., 3] > 200)
-    lab, k = ndi.label(rosso)
-    s = ndi.sum(rosso, lab, range(1, k + 1))
-    ys, xs = np.where(lab == int(np.argmax(s)) + 1)
-    return xs.mean(), ys.mean(), xs.max() - xs.min()
-
-
-def borsa(nome, im, k, extra):
-    if k < 1:
-        im = im.resize((round(im.width * k), max(1, round(im.height * k))), Image.LANCZOS)
-    im.save(os.path.join(OUT, nome + ".png"), optimize=True)
-    MISURE[nome] = (im.width, im.height)
-    BOCCHE[nome] = {q: round(v * k, 1) for q, v in extra.items()}
-
-
-def fai_borse():
-    aperte = ritaglia(os.path.join(A98, "borse_aperte_1.png"))
-    chiuse = ritaglia(os.path.join(A98, "borse_chiuse_1.png"))
-    for c, ba, bc in zip(COLORI, BORSE_APERTE, BORSE_CHIUSE):
-        a = stretto(aperte.crop(ba))
-        mx, my, mw = bocca_borsa(a)
-        k = min(1, STAMPO * RIM_W * a.width / mw * PX / a.width)
-        fa, _, pa = pancia(a)
-        borsa(f"borsa_{c}", a, k, {"mx": mx, "my": my, "mw": mw, "rx": cima(a)})
-        # la chiusa: la stessa pancia, la bocca dove sarebbe quella dell'aperta
-        b = stretto(chiuse.crop(bc))
-        fb, xb, pb = pancia(b)
-        q = pb / pa
-        sx, sy, sw = sigillo(b)
-        kb = k / q
-        borsa(f"borsa_chiusa_{c}", b, min(1, kb), {"mx": xb, "my": fb - (fa - my) * q, "mw": mw * q, "rx": cima(b),
-                                                    "sx": sx, "sy": sy, "sw": sw})
+def fai_stampi():
+    for foglio, scatole in SCATOLE.items():
+        im = ritaglia(os.path.join(A93, foglio + ".png"))
+        _, misura_, stato, _ = foglio.split("_")
+        for col, box in zip(COLORI, scatole):
+            salva(f"stampo_{misura_}_{stato}_{col}", im.crop(box), LARGO[misura_] * 1.05)
+    # i coperchi dello stampo preso (WB-094)
+    cp = ritaglia(os.path.join(A94, "coperchi_1.png"))
+    salva("coperchio_grandi", cp.crop((87, 326, 732, 703)), LARGO["grandi"] * 1.02)
+    salva("coperchio_piccoli", cp.crop((948, 368, 1438, 677)), LARGO["piccoli"] * 1.02)
 
 
 def fai_corde():
-    # la trave dei conti, il piolo, la corda che si impila, i cordini annodati (trave_e_corde_2)
+    # la trave dei conti, il piolo, i cordini annodati (trave_e_corde_2)
     tc = ritaglia(os.path.join(A98, "trave_e_corde_2.png"))
     salva("trave_sx", tc.crop((11, 277, 424, 420)), 200)
     salva("trave_dx", tc.crop((1112, 277, 1526, 420)), 200)
     # (il pezzo di mezzo si ripete: tagliato dentro il contorno a destra e a sinistra)
     tr = stretto(tc.crop((452, 317, 1085, 386)))
     salva("trave", tr.crop((8, 0, tr.width - 8, tr.height)), 280)
-    co = stretto(tc.crop((505, 445, 537, 743)))
-    salva("corda", co.crop((0, 6, co.width, co.height - 6)), 8)
     salva("piolo", tc.crop((327, 528, 382, 602)), 14)
     for nome, b in (("cordino_corto_rosso", (655, 453, 704, 620)), ("cordino_corto", (807, 453, 856, 620)),
                     ("cordino_lungo_rosso", (961, 445, 1011, 727)), ("cordino_lungo", (1104, 445, 1153, 727))):
@@ -338,7 +269,6 @@ def fai_wb097():
 
 
 def fai_wb098():
-    fai_borse()
     fai_corde()
     fai_usuraio_banco()
 
@@ -361,6 +291,7 @@ def main():
     for f in os.listdir(OUT):
         if f.endswith(".png"):
             os.remove(os.path.join(OUT, f))
+    fai_stampi()
     fai_wb094()
     fai_wb095()
     fai_fucina()
@@ -378,7 +309,7 @@ def main():
                 "-- Forge's atlas (client/menu/fornace.atlas).\nreturn {\n")
         for n in nomi:
             w, h = MISURE[n]
-            extra = "".join(f", {k} = {v}" for k, v in BOCCHE.get(n, {}).items())
+            extra = ""
             f.write(f"\t{n} = {{ w = {w}, h = {h}{extra} }},\n")
         f.write("}\n")
     print(len(nomi), "pezzi")

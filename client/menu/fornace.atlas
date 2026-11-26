@@ -17,46 +17,16 @@ images {
   image: "/assets/fornace/asse_sx.png"
 }
 images {
-  image: "/assets/fornace/borsa_arancio.png"
-}
-images {
-  image: "/assets/fornace/borsa_azzurro.png"
-}
-images {
-  image: "/assets/fornace/borsa_chiusa_arancio.png"
-}
-images {
-  image: "/assets/fornace/borsa_chiusa_azzurro.png"
-}
-images {
-  image: "/assets/fornace/borsa_chiusa_ferro.png"
-}
-images {
-  image: "/assets/fornace/borsa_chiusa_oro.png"
-}
-images {
-  image: "/assets/fornace/borsa_chiusa_verde.png"
-}
-images {
-  image: "/assets/fornace/borsa_chiusa_viola.png"
-}
-images {
-  image: "/assets/fornace/borsa_ferro.png"
-}
-images {
-  image: "/assets/fornace/borsa_oro.png"
-}
-images {
-  image: "/assets/fornace/borsa_verde.png"
-}
-images {
-  image: "/assets/fornace/borsa_viola.png"
+  image: "/assets/fornace/catena.png"
 }
 images {
   image: "/assets/fornace/cavalletto.png"
 }
 images {
-  image: "/assets/fornace/corda.png"
+  image: "/assets/fornace/coperchio_grandi.png"
+}
+images {
+  image: "/assets/fornace/coperchio_piccoli.png"
 }
 images {
   image: "/assets/fornace/cordino_corto.png"
@@ -141,6 +111,42 @@ images {
 }
 images {
   image: "/assets/fornace/sporgenza.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_arancio.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_azzurro.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_ferro.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_oro.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_verde.png"
+}
+images {
+  image: "/assets/fornace/stampo_grandi_vuoti_viola.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_arancio.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_azzurro.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_ferro.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_oro.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_verde.png"
+}
+images {
+  image: "/assets/fornace/stampo_piccoli_vuoti_viola.png"
 }
 images {
   image: "/assets/fornace/trave.png"

@@ -11,11 +11,12 @@
 -- goes back into the frame. FONDI I FRAMMENTI opens the melting window.
 --
 -- The place is the Banco degli Usurai (Sergio, 26 Nov; art WB-097): the Sabbione of
--- circle VII under the rain of fire, the usurers sitting with their purse open to the
--- sky are the moulds (the family's crest on the purse), a drop that misses falls in
--- the sand and is a glass bead for the Smith's jar; under the sand, in the band seen
--- only from far, the money-changers' bench with the loot of the wall, sagging as it
--- grows, broken by the jackpot (the «bancarotta»). The usurers talk now and then.
+-- circle VII under the rain of fire. The moulds are the usurer's (WB-093, with the crest
+-- of the family he took the gold from; Sergio, 26 Nov): every one we fill steals his
+-- ingot. A drop that misses falls in the sand and is a glass bead for the Smith's jar;
+-- under the sand, in the band seen only from far, the bench with the loot of the pour,
+-- sagging as it grows, broken by the jackpot (the «bancarotta»), paid into the wallet
+-- only at INCASSA. The usurer, robbed, sits at its end and talks now and then.
 --
 -- The forge is a world of its own (the rules' units, the apprentice's feet at
 -- (0, 0), y up) under a stencil frame: in the vetrina the frame is the window on
@@ -83,16 +84,19 @@ local MID = { x = -172, y = -158, w = 1936, k = 0.3 }
 -- dark of the band under it), the apprentice on a stone ledge, the rock wall on the
 -- right is the back wall (forge.BACK_X), drawn from the floor up out of the view
 local FLOOR_TOP = -132
-local ARGINE_W, ARGINE_TOP = 720, -124
+-- (its sand from the floor down: the moulds standing on it stay on the sand)
+local ARGINE_W, ARGINE_TOP = 720, FLOOR_TOP
 local LEDGE = { x = -90, y = 2, w = 150 }
 local ROCK_W = 160
--- the usurers' purses (the rules' moulds, WB-098; Sergio, 26 Nov: «questi stessi fagotti
--- senza i predoni ... con delle corde»): the purse's mouth on the mould's (m.x, m.y), its
--- rim RIM_W of the mould wide (the rules' lips are at 0.43 of it, the catch at 0.41); the
--- crest by family, iron for the Scaglie; each hangs on a rope from the beam at the top
+-- the usurer's moulds (WB-093; Sergio, 26 Nov: «i calderoni di prima mi piacevano di più»,
+-- back instead of the purses of WB-098): he casts his gold in them, each with the crest of
+-- the family he took it from (iron for the Scaglie); filling one steals his ingot. The
+-- plate by family; the image is a little wider than the mould (the rings), its rim at
+-- RIM x width above its bottom (the rules' depth, 0.78); the high ones hang on a chain
+-- from the beam at the top
 local PLATE = { fabbro = "oro", corvo = "azzurro", fornace = "arancio", leviatano = "verde", vuoto = "viola" }
-local RIM_W = 0.76
-local ROPE_W = 7
+local IMG_W, RIM = 1.05, 0.79
+local CHAIN_W = 10
 -- the beam of the accounts over the wall (Sergio, 26 Nov: «riferimenti per i tiri
 -- successivi, non proprio una griglia ... solo in alto»): its middle at y, a peg every
 -- PEG_STEP with a knotted cord, long and short in turn (the usurers count debts in knots)
@@ -212,16 +216,14 @@ local function painting(a, parent, name, file, x, y, w)
 	return n
 end
 
--- the usurer of mould m: his drawing, its world units per pixel, where his head's top
--- and his sand's bottom are
--- (Sergio, 26 Nov: the purses hang in front of the embankment, but none comes lower
--- than its sand: a low one is drawn smaller, never stretched)
-local SAND_LOW = ARGINE_TOP - 23 * ARGINE_W / PIECES.argine.w
-local function figure(m, full)
-	local name = (full and "borsa_chiusa_" or "borsa_") .. (m.set and PLATE[m.set] or "ferro")
-	local pc = PIECES[name]
-	local k = math.min(m.w * RIM_W / pc.mw, (m.y - SAND_LOW) / (pc.h - pc.my))
-	return name, pc, k, m.y + pc.my * k, m.y - (pc.h - pc.my) * k
+local function mould_name(m)
+	return "stampo_" .. (m.small and "piccoli" or "grandi") .. "_vuoti_" .. (m.set and PLATE[m.set] or "ferro")
+end
+
+-- the top of mould m's drawing
+local function mould_top(m)
+	local pc = PIECES[mould_name(m)]
+	return m.y - RIM * m.w + IMG_W * m.w * pc.h / pc.w
 end
 
 -- Views and cameras -------------------------------------------------------------------
@@ -326,10 +328,9 @@ local function color_of(set)
 	return vmath.vector4(tonumber(c:sub(1, 2), 16) / 255, tonumber(c:sub(3, 4), 16) / 255, tonumber(c:sub(5, 6), 16) / 255, 1)
 end
 
--- a prize tag: the coin or the family's fragment and the number, over the usurer
+-- a prize tag: the coin or the family's fragment and the number, over the mould
 local function tag(fx, m)
-	local _, _, _, top = figure(m)
-	local t = empty(fx.tags_root, m.x, top + 2)
+	local t = empty(fx.tags_root, m.x, mould_top(m) + 2)
 	local g = { node = t, ox = 0, oy = 0 }
 	local icon = m.scaglie and "scaglia" or "frammento_" .. m.set
 	local txt = m.scaglie and tostring(m.scaglie) or "x" .. m.n
@@ -349,40 +350,35 @@ local function tag(fx, m)
 	fx.tags[m.slot] = t
 end
 
--- the rope of a purse: from the drawing's top (where its own rope ends) up to the beam,
--- behind it (drawn only: the drop goes through it)
-local function rope(fx, m, full)
-	if fx.ropes[m.slot] then gui.delete_node(fx.ropes[m.slot]) end
-	local _, pc, k, top = figure(m, full)
-	local r = empty(fx.ropes_root)
-	local x = m.x + (pc.rx - pc.mx) * k
+-- the chain of a mould that doesn't stand on the sand: from the drawing's top up behind
+-- the beam (drawn only)
+local function chain(fx, m)
+	if m.y - RIM * m.w < FLOOR_TOP + 3 then return end
 	-- whole pieces down from the beam, the last one up from the drawing's top (over the
-	-- one before it: never a stretched piece)
-	local h = ROPE_W * PIECES.corda.h / PIECES.corda.w
+	-- one before it: never a stretched piece, never over the beam)
+	local h = CHAIN_W * PIECES.catena.h / PIECES.catena.w
+	local top = mould_top(m) - 6 * m.w / 78
 	local y = BEAM.y
 	while y - h > top do
-		piece(r, "corda", x, y, ROPE_W, gui.PIVOT_N)
+		piece(fx.chains_root, "catena", m.x, y, CHAIN_W, gui.PIVOT_N)
 		y = y - h + 1
 	end
-	piece(r, "corda", x, top - 2, ROPE_W, gui.PIVOT_S)
-	fx.ropes[m.slot] = r
+	piece(fx.chains_root, "catena", m.x, top, CHAIN_W, gui.PIVOT_S)
 end
 
--- a taken purse (Sergio, 26 Nov: «un coperchio coerente quando sono stati presi»):
--- closed, tied and sealed in wax, the prize on the seal (where the rules' lid is:
--- forge.LID_R, LID_Y, around the mouth)
-local SEAL_ICON = 0.62
+-- the lid of a taken mould (Sergio, 24 Nov, «coperchio sigillato», art WB-094): the
+-- iron lid sits on the mouth (the rules' lid: forge.LID_R, LID_Y), the prize taken on
+-- its boss: the usurer's ingot is ours
+local LID_W, LID_Y, BOSS_Y, BOSS_W = 1.02, -0.11, 0.66, 0.3
 local function seal(fx, m)
 	if fx.seals[m.slot] then gui.delete_node(fx.seals[m.slot]) end
-	local name, pc, k = figure(m, true)
-	local n = fx.figs[m.slot]
-	gui.play_flipbook(n, name)
-	gui.set_size(n, vec(pc.w * k, pc.h * k))
-	gui.set_position(n, vec((pc.w / 2 - pc.mx) * k, (pc.my - pc.h / 2) * k))
-	rope(fx, m, true)
-	local s = empty(fx.moulds[m.slot], (pc.sx - pc.mx) * k, (pc.my - pc.sy) * k)
+	local name = "coperchio_" .. (m.small and "piccoli" or "grandi")
+	local w = m.w * LID_W
+	local h = w * PIECES[name].h / PIECES[name].w
+	local s = empty(fx.moulds[m.slot], 0, m.w * LID_Y)
+	piece(s, name, 0, 0, w, gui.PIVOT_S)
 	local g = { node = s, ox = 0, oy = 0 }
-	kit.piece(g, m.scaglie and "scaglia" or "frammento_" .. m.set, 0, 0, pc.sw * k * SEAL_ICON)
+	kit.piece(g, m.scaglie and "scaglia" or "frammento_" .. m.set, 0, -h * BOSS_Y, w * BOSS_W)
 	fx.seals[m.slot] = s
 	if fx.hitbox_of then fx.hitbox_of(fx, m, true) end
 	return s
@@ -442,13 +438,14 @@ local function shock(fx, x, y, w)
 	gui.animate(r, "color.w", 0, gui.EASING_LINEAR, 0.5, 0, function() gui.delete_node(r) end)
 end
 
--- the usurer glowing hot (his own drawing, added in ember on top) for d seconds
+-- the mould glowing hot (its own drawing, added in ember on top) for d seconds
 local function glow(fx, m, d, a)
 	local n = fx.figs[m.slot]
 	if not n then return end
 	local h = gui.new_box_node(vec(0, 0), gui.get_size(n))
 	gui.set_texture(h, "fornace")
 	gui.play_flipbook(h, gui.get_flipbook(n))
+	gui.set_pivot(h, gui.PIVOT_S)
 	gui.set_blend_mode(h, gui.BLEND_ADD)
 	gui.set_parent(h, n)
 	local c = vmath.vector4(EMBER.x, EMBER.y, EMBER.z, a or 0.9)
@@ -457,7 +454,7 @@ local function glow(fx, m, d, a)
 	return h
 end
 
--- the usurer trembling around his purse's mouth, less and less
+-- the mould trembling around its mouth, less and less
 local function tremble(fx, m, d)
 	fx.trembles = fx.trembles or {}
 	fx.trembles[m.slot] = { t = 0, d = d }
@@ -538,7 +535,7 @@ local function flame(fx, m)
 	tremble(fx, m, 0.75)
 end
 
--- The hitboxes over the purses, only in the simulator (imposta prova_fornace_hitbox si),
+-- The hitboxes over the moulds, only in the simulator (imposta prova_fornace_hitbox si),
 -- as on https://claude.ai/artifact/Gjq7oJAtJP1yXvLshSxXAa: red the iron the drop
 -- bounces off (forge.lua irons), green the line that takes it (forge.catch)
 local HB_RED, HB_GREEN = vmath.vector4(1, 0.35, 0.29, 0.9), vmath.vector4(0.49, 0.94, 0.54, 1)
@@ -568,57 +565,35 @@ local function show_hitbox(fx, m, closed)
 		local l = box(root, m.x, y, 2 * half, 4)
 		gui.set_color(l, HB_GREEN)
 	end
-	-- (prova_fornace_hitbox proposta: in yellow the shapes proposed to Sergio, 26 Nov:
-	-- the closed purse = belly + a circle on its tied tuft, no lips; a purse drawn
-	-- smaller over the sand has its iron shrunk with the drawing)
-	if fx.hitbox_proposal then
-		local _, pc, k = figure(m, closed)
-		local f = k / (m.w * RIM_W / pc.mw)
-		local w = m.w * f
-		local plip = w * forge.LIP
-		local inner = m.inner * f
-		local yc = closed and { { m.x, m.y - w * forge.BELLY, w * forge.BELLY }, { m.x, m.y + 0.12 * w, 0.3 * w } }
-			or { { m.x, m.y - w * forge.BELLY, w * forge.BELLY }, { m.x - inner - plip, m.y, plip }, { m.x + inner + plip, m.y, plip } }
-		for _, c in ipairs(yc) do
-			local n = gui.new_pie_node(vec(c[1], c[2]), vec(2 * c[3], 2 * c[3]))
-			gui.set_outer_bounds(n, gui.PIEBOUNDS_ELLIPSE)
-			gui.set_perimeter_vertices(n, 48)
-			gui.set_inner_radius(n, math.max(0, c[3] - 2.5))
-			gui.set_color(n, vmath.vector4(1, 0.85, 0.2, 1))
-			gui.set_parent(n, root)
-		end
-	end
 end
 
--- a purse: the drawing with its mouth on the mould's (m.x, m.y), under a node on the
--- mouth (it trembles and pops around it), its rope up to the beam
+-- a mould: the drawing under a node on its mouth (it trembles and pops around it), its
+-- chain up to the beam
 local function draw_mould(fx, m, full)
-	local name, pc, k = figure(m)
 	local root = empty(fx.wall_root, m.x, m.y)
-	local n = piece(root, name, (pc.w / 2 - pc.mx) * k, (pc.my - pc.h / 2) * k, pc.w * k)
+	local n = piece(root, mould_name(m), 0, -RIM * m.w, m.w * IMG_W, gui.PIVOT_S)
 	fx.moulds[m.slot], fx.figs[m.slot] = root, n
-	if full then seal(fx, m) else rope(fx, m); tag(fx, m) end
+	chain(fx, m)
+	if full then seal(fx, m) else tag(fx, m) end
 	show_hitbox(fx, m, full)
 end
 
--- fills a mould on the wall (a hit): the purse jumps, the flame, then once the column
--- has burned it closes with a squash, tied and sealed, the prize on the seal; the tag goes
-local LID_AT = 0.85
+-- fills a mould on the wall (a hit): a pop, the flame, then the lid comes down on the
+-- mouth with a bounce; the tag goes
+local LID_AT = 0.85 -- the lid comes down once the column has burned
 local function fill_mould(fx, m)
 	local n = fx.moulds[m.slot]
 	if not n then return end
-	gui.set_scale(n, vmath.vector3(1.12, 0.88, 1))
+	gui.set_scale(n, vmath.vector3(1.3, 0.75, 1))
 	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.35)
 	flame(fx, m)
-	later(fx, LID_AT, function()
-		if not fx.moulds[m.slot] then return end
-		local s = seal(fx, m)
-		gui.set_scale(n, vmath.vector3(0.8, 1.25, 1))
-		gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTELASTIC, 0.6)
-		gui.set_scale(s, vmath.vector3(0.2, 0.2, 1))
-		gui.animate(s, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.35, 0.1)
-		sound.play("#martello")
-	end)
+	local s = seal(fx, m)
+	local p = gui.get_position(s)
+	gui.set_position(s, p + vec(0, m.w * 1.6))
+	-- hidden (scale 0, which its children take too) until the flame has burst
+	gui.set_scale(s, vmath.vector3(0.001, 0.001, 1))
+	gui.animate(s, "scale", vmath.vector3(1, 1, 1), gui.EASING_LINEAR, 0.01, LID_AT)
+	gui.animate(s, "position.y", p.y, gui.EASING_OUTBOUNCE, 0.4, LID_AT)
 	if fx.tags[m.slot] then
 		gui.delete_node(fx.tags[m.slot])
 		fx.tags[m.slot] = nil
@@ -640,8 +615,11 @@ local function say(fx, lines, face)
 	local line = lines[math.random(#lines)]
 	local t = empty(fx.tags_root, BANKER.x, BANKER.y + BANKER.h + 8)
 	local g = { node = t, ox = 0, oy = 0 }
-	kit.text(g, line, 1.5, -12 + 1.5, 17, KC.INK, "middle", 0.5)
-	kit.text(g, line, 0, -12, 17, KC.SAND, "middle", 0.5)
+	-- toward the middle of the screen from over his head (centred it went off the edge)
+	local mirrored = (fx.mir or 1) < 0
+	local ax, al = mirrored and -60 or 60, mirrored and "start" or "end"
+	kit.text(g, line, ax + 1.5, -12 + 1.5, 17, KC.INK, al, 0.5)
+	kit.text(g, line, ax, -12, 17, KC.SAND, al, 0.5)
 	fx.saying, fx.tags.say = t, t
 	gui.set_scale(t, vmath.vector3((fx.mir or 1) / fx.cam.s, 1 / fx.cam.s, 1))
 	local pc = PIECES[face or "usuraio_parla"]
@@ -699,7 +677,7 @@ local function bench(fx, got, pop)
 	fx.bench = empty(fx.band)
 	got = got or {}
 	local sc, fr = (got.sacchi or 0) + (got.jackpot or 0), got.fr or {}
-	-- (it sags with every purse taken in the pour, all the way at four)
+	-- (it sags with every mould filled in the pour, all the way at four)
 	fx.sag = BENCH.sag * math.min(1, (got.hits or 0) / (forge.THROWS + forge.BONUS))
 	local L = BENCH.seg * BENCH.n
 	local xl, xr = BENCH.x + TRESTLE_IN, BENCH.x + L - TRESTLE_IN
@@ -826,7 +804,7 @@ local function make_world(a)
 	local fx = a.fx or {}
 	a.fx = fx
 	fx.phase = fx.phase or "vetrina"
-	fx.tags, fx.moulds, fx.seals, fx.figs, fx.ropes, fx.saying = {}, {}, {}, {}, {}, nil
+	fx.tags, fx.moulds, fx.seals, fx.figs, fx.saying = {}, {}, {}, {}, nil
 	fx.parts, fx.trembles, fx.timers, fx.bench, fx.bench_tags = nil, nil, nil, nil, nil
 	fx.top = empty(nil, 0, 0)
 	-- one of the screen's top nodes: the home's door drags it with the page (ui/door_pass.lua;
@@ -861,11 +839,10 @@ local function make_world(a)
 	-- the embankment, the apprentice's ledge on its sand
 	for x = -900, 2600, ARGINE_W - 2 do piece(fx.world, "argine", x, ARGINE_TOP, ARGINE_W, gui.PIVOT_NW) end
 	piece(fx.world, "sporgenza", LEDGE.x, LEDGE.y, LEDGE.w, gui.PIVOT_NW)
-	-- the purses in front of it (Sergio, 26 Nov): their ropes behind them all, the beam over the ropes
-	fx.ropes_root = empty(fx.world)
+	-- the moulds in front of it (Sergio, 26 Nov): their chains behind them all, the beam over the chains
+	fx.chains_root = empty(fx.world)
 	fx.wall_root = empty(fx.world)
 	if sys.get_config_int("megablast.simula", 0) == 1 and sys.get_config_string("megablast.prova_fornace_hitbox", "") ~= "" then
-		fx.hitbox_proposal = sys.get_config_string("megablast.prova_fornace_hitbox", "") == "proposta"
 		fx.hitbox, fx.hb, fx.hitbox_of = empty(fx.world), {}, show_hitbox
 		gui.set_visible(fx.hitbox, true)
 	end
@@ -987,27 +964,25 @@ local function shelf(a, g, key)
 		kit.text(c, set.name, ix + 38, ry + 24, 17, n > 0 and color_of(set.id) or KC.MUTE, "start", 0.5)
 		kit.text(c, "x" .. n, x + w - PAD, ry + 25, 20, n > 0 and KC.SAND or KC.MUTE, "end")
 	end
-	-- the walls of today (Sergio, 25 Nov, proposal A): three purses, the paid ones closed
-	-- and sealed, the one of now glowing with its multiplier, the next ones dark
+	-- the walls of today (Sergio, 25 Nov, proposal A): three moulds, the full ones with
+	-- their lid, the one of now glowing with its multiplier, the next ones dark
 	kit.rect(c, ix, y + 340, iw, 2, KC.LINE)
 	kit.heading(c, T.today, ix, y + 368, KC.MUTE)
 	local now = forge.level(key)
 	local done_now = forge.full(p, key)
 	for i = 0, forge.WALLS - 1 do
-		local cx, bottom, h = ix + 30 + i * 74, y + 434, 56
+		local cx, bottom, w = ix + 30 + i * 74, y + 432, 44
 		local state = (i < now or (i == now and done_now)) and "done" or i == now and "now" or "next"
-		local name = state == "done" and "borsa_chiusa_ferro" or "borsa_ferro"
-		local pc = PIECES[name]
-		local w = h * pc.w / pc.h
 		local gx, gy = cx - c.ox, c.oy - bottom
-		local n = piece(c.node, name, gx, gy, w, gui.PIVOT_S)
+		local n = piece(c.node, "stampo_grandi_vuoti_ferro", gx, gy, w * IMG_W, gui.PIVOT_S)
 		if state == "now" then
-			-- hot, as a purse glows when it is hit (glow: its own drawing added in ember)
-			local hot = piece(c.node, name, gx, gy, w, gui.PIVOT_S)
-			gui.set_blend_mode(hot, gui.BLEND_ADD)
-			gui.set_color(hot, vmath.vector4(EMBER.x, EMBER.y, EMBER.z, 0.6))
+			-- hot, as a mould glows when it is hit (glow: its own drawing added in ember)
+			local h = piece(c.node, "stampo_grandi_vuoti_ferro", gx, gy, w * IMG_W, gui.PIVOT_S)
+			gui.set_blend_mode(h, gui.BLEND_ADD)
+			gui.set_color(h, vmath.vector4(EMBER.x, EMBER.y, EMBER.z, 0.6))
 		end
 		if state == "next" then gui.set_color(n, vmath.vector4(0.38, 0.36, 0.38, 1)) end
+		if state == "done" then piece(c.node, "coperchio_grandi", gx, gy + (RIM + LID_Y) * w, w * LID_W, gui.PIVOT_S) end
 		local label = state == "done" and T.wall_full_short or ("x" .. (tostring(forge.LEVELS[i + 1]):gsub("%.", ",")))
 		kit.text(c, label, cx, y + 450, 15, state == "now" and KC.HOT or KC.MUTE, "middle", 0.5)
 	end
@@ -1326,7 +1301,7 @@ local function jackpot(a, r)
 				gui.animate(h, "color.w", 0.45, gui.EASING_INOUTSINE, 0.4, 0.15, nil, gui.PLAYBACK_LOOP_PINGPONG)
 				lamps[#lamps + 1] = h
 			end
-			-- the golden light on the full purse's top
+			-- the golden light on the full mould's lid
 			local e = ui.disc(m.x, m.y + m.w * 0.42, m.w * 0.9, GOLD, fx.splash)
 			gui.set_size(e, vec(m.w * 0.9, m.w * 0.2))
 			gui.set_blend_mode(e, gui.BLEND_ADD)
@@ -1448,8 +1423,8 @@ local function land(a)
 end
 
 -- a drop that missed: its splash, it is glass in the sand and the bead hops into the
--- jar at the end of the bench (MISS, paid at INCASSA); the usurer it nearly went in
--- (or another one) laughs
+-- jar at the end of the bench (MISS, paid at INCASSA); the usurer laughs (relieved
+-- when it nearly went in)
 local HOP_T = 0.75
 missed = function(a, x, y)
 	local fx = a.fx
@@ -1465,7 +1440,7 @@ missed = function(a, x, y)
 	fx.parts = fx.parts or {}
 	fx.parts[#fx.parts + 1] = { node = b, x = x, y = y, vx = (tx - x) / HOP_T, vy = (ty - y) / HOP_T + 0.5 * g * HOP_T,
 		g = g, t = 0, life = HOP_T, keep = true }
-	-- the usurer it passed nearest
+	-- the mould it passed nearest
 	local near, best = nil, math.huge
 	for _, m in ipairs(fx.wall) do
 		if not a.prof.fornace.pieni[m.slot] then
