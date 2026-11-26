@@ -53,12 +53,12 @@ local function shot(w, dist, angle, power)
 	a.grounded, b.grounded = true, true
 	local x0, y0, hp = b.x, b.y, b.hp
 	q:step({ fire = { angle = angle, power = power, weapon = w } })
-	local fired = q.projectile ~= nil or a.recoil or a.swinging or q.melee ~= nil
+	local fired = q:shots_flying() or a.recoil or a.swinging or q.melee ~= nil
 	-- until the projectile is gone (the Uovo has a fuse) and 60 ticks after, at most 900
 	local after = 0
 	for _ = 1, 900 do
 		q:step()
-		if not q.projectile then after = after + 1 end
+		if not q:shots_flying() then after = after + 1 end
 		if after >= 60 then break end
 	end
 	return hp - b.hp, math.sqrt((b.x - x0) ^ 2 + (b.y - y0) ^ 2), b.dead, fired

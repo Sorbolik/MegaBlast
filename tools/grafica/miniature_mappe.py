@@ -8,8 +8,12 @@
 #
 #   python3 tools/grafica/miniature_mappe.py      (dalla cartella del repository, dopo
 #                                                      mappe_dipinte.py)
-import json, os, subprocess
-from PIL import Image
+#   python3 tools/grafica/miniature_mappe.py --controlla    (solo il controllo, in tutti.sh:
+#                     dice se una mappa è stata ridipinta e la sua cartolina no; Sergio, 26 nov)
+import hashlib, json, os, subprocess, sys
+# il controllo (--controlla) gira anche dove non c'è Pillow (GitHub)
+if "--controlla" not in sys.argv:
+    from PIL import Image
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.abspath(os.path.join(QUI, "..", ".."))
@@ -74,19 +78,54 @@ def cartolina(mappa, sfondo):
     return im.resize((W, H), Image.LANCZOS)
 
 
+# Le impronte di quello che fa ogni cartolina (i dipinti che usa e questo strumento): se una
+# mappa viene ridipinta e la cartolina no, il controllo veloce lo dice
+IMPRONTE = os.path.join(QUI, "miniature_mappe.impronte.json")
+
+
+def impronta(mappa, sfondo):
+    h = hashlib.sha1()
+    h.update(open(os.path.abspath(__file__), "rb").read())
+    h.update(json.dumps(sfondo, sort_keys=True).encode())
+    file = [os.path.join(DIPINTI, "maps", "%s_1.png" % mappa["id"]),
+            os.path.join(DIPINTI, "backgrounds", "%s_cielo_1.png" % mappa["sfondo"])]
+    file += [os.path.join(DIPINTI, "backgrounds", "%s_%s_1.png" % (mappa["sfondo"], g["name"])) for g in sfondo["groups"]]
+    for f in file:
+        h.update(open(f, "rb").read())
+    return h.hexdigest()
+
+
+def controlla():
+    """Il controllo veloce: le cartoline sono quelle delle mappe di oggi?"""
+    dati = leggi()
+    vecchie = json.load(open(IMPRONTE)) if os.path.exists(IMPRONTE) else {}
+    da_rifare = [m["id"] for m in dati["mappe"] if vecchie.get(m["id"]) != impronta(m, dati["sfondi"][m["sfondo"]])]
+    if da_rifare:
+        print("cartoline delle mappe da rifare (%s): python3 tools/grafica/miniature_mappe.py" % ", ".join(da_rifare))
+        return False
+    print("cartoline delle mappe in pari con i dipinti")
+    return True
+
+
 def main():
     dati = leggi()
     os.makedirs(OUT, exist_ok=True)
-    righe = []
+    righe, impronte = [], {}
     for m in dati["mappe"]:
         f = os.path.join(OUT, m["id"] + ".png")
         cartolina(m, dati["sfondi"][m["sfondo"]]).convert("RGB").save(f, optimize=True)
         righe.append('images {\n  image: "/assets/maps/miniature/%s.png"\n}\n' % m["id"])
+        impronte[m["id"]] = impronta(m, dati["sfondi"][m["sfondo"]])
         print("scritta", os.path.relpath(f, RADICE))
     with open(ATLAS, "w") as a:
         a.write("".join(righe) + "margin: 2\nextrude_borders: 2\ninner_padding: 0\n")
     print("scritto", os.path.relpath(ATLAS, RADICE))
+    with open(IMPRONTE, "w") as f:
+        json.dump(impronte, f, indent=1, sort_keys=True)
+        f.write("\n")
 
 
 if __name__ == "__main__":
+    if "--controlla" in sys.argv:
+        sys.exit(0 if controlla() else 1)
     main()

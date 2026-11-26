@@ -635,8 +635,11 @@ local function new_pose()
 	-- c: crates by id (while falling they move, so they are interpolated too)
 	local r = {}
 	for i = 1, game.MAX_PLAYERS do r[i] = { x = 0, y = 0 } end
+	-- f: the older shots still in flight (src: the shot itself, to follow it)
+	local f = {}
+	for i = 1, 3 do f[i] = { x = 0, y = 0 } end
 	return { r = r, p = { x = 0, y = 0 }, has_p = false,
-		o = o, no = 0, s = sh, c = {} }
+		o = o, no = 0, s = sh, c = {}, f = f, nf = 0 }
 end
 
 -- The orb with that number in the pose, or nil
@@ -656,6 +659,14 @@ local function capture(pose, g)
 	end
 	pose.has_p = g.projectile ~= nil
 	if pose.has_p then pose.p.x, pose.p.y = g.projectile.x, g.projectile.y end
+	pose.p_src = g.projectile
+	local nf = math.min(#g.flying, #pose.f)
+	for i = 1, nf do
+		local src, dst = g.flying[i], pose.f[i]
+		dst.src, dst.x, dst.y = src, src.x, src.y
+	end
+	for i = nf + 1, #pose.f do pose.f[i].src = nil end
+	pose.nf = nf
 	local n = math.min(#g.orbs, game.MAX_ORBS)
 	for i = 1, n do
 		local src, dst = g.orbs[i], pose.o[i]
@@ -761,6 +772,7 @@ local function new_match(self, seed, map, opts)
 	self.names, self.colors = names_colors(self.g.robots)
 	-- the colors are new: render() paints shards, missile and egg again
 	self.shard_color, self.missile_color, self.egg_color = nil, nil, nil
+	for _, v in ipairs(self.old_shots) do v.missile_color, v.egg_color = nil, nil end
 	for i in pairs(self.bots) do self.names[i] = self.names[i] .. TM.bot_suffix end
 	for i = #self.g.robots + 1, game.MAX_PLAYERS do
 		scoria.set_enabled(self.robots[i].rig, false)
@@ -786,6 +798,7 @@ local function new_match(self, seed, map, opts)
 	for i = 1, game.MAX_PLAYERS do plates[i] = self.robots[i].plate end
 	score.match(self.punti, self.g, TEAM_NAMES, plates)
 	self.trail_n = 0
+	for _, v in ipairs(self.old_shots) do v.trail_n = 0 end
 	if self.fx then impact.reset(self.fx) end
 	if self.lights then self.lights:reset() end
 	self.pose_dt = game.DT
@@ -919,7 +932,7 @@ end
 
 -- Grapple and Bellows as drawn, in a single table: the file is close to the
 -- 200 locals Lua allows
-local RM = { fune = require "battle.rope", cannon = require "battle.cannon", hazards = require "battle.hazards", focus = require "battle.turn_focus", layout = require "battle.hud_layout", GUSTS = 5,
+local RM = { MAX_FLY = 3, fune = require "battle.rope", cannon = require "battle.cannon", hazards = require "battle.hazards", focus = require "battle.turn_focus", layout = require "battle.hud_layout", GUSTS = 5,
 	-- the images of the new shots in flight (battle/weapons.lua, shots), by projectile kind
 	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano", vortex = "voragine_volo" } }
 -- The weapons' signatures (WB-066): one drawing on the impact, tinted
@@ -4149,6 +4162,171 @@ function CR.countdown(self, dt)
 	end
 end
 
+-- One shot in flight as drawn (v: its nodes, RM.build_shot): the Uovo rolls
+-- with the seconds left above it, the others glow in the shooter's color with
+-- a trail. prev, cur: where it was and is in the two poses (cur nil: nothing in
+-- flight, hidden). Returns where it is drawn, or nil
+function RM.draw_shot(self, v, prev, cur, kind, fuse, owner, k, dt)
+	local fx, fy
+	-- Flame Egg: rolls while flying, with the seconds left to the blast above
+	local egg = cur ~= nil and kind == "grenade"
+	show(v.egg, egg)
+	if egg then
+		local p0 = prev or cur
+		local x = p0.x + (cur.x - p0.x) * k
+		set_pos(v.egg, x, p0.y + (cur.y - p0.y) * k)
+		fx, fy = x, p0.y + (cur.y - p0.y) * k
+		EULER.z = -x * 4
+		gui.set_euler(v.egg_spin, EULER)
+		if v.egg_color ~= owner then
+			gui.set_color(v.egg_light, self.colors[owner])
+			v.egg_color = owner
+		end
+		impact.trail(self.fx, dt, x, p0.y + (cur.y - p0.y) * k, 30)
+		local secs = math.max(1, math.ceil((fuse or 0) / 60))
+		if v.egg_secs ~= secs then
+			gui.set_text(v.egg_label, tostring(secs))
+			v.egg_secs = secs
+		end
+	end
+
+	-- missile: glow in the shooter's color and a trail fading out
+	local missile = cur ~= nil and not egg
+	show(v.projectile, missile)
+	if missile then
+		local p0 = prev or cur
+		local x, y = p0.x + (cur.x - p0.x) * k, p0.y + (cur.y - p0.y) * k
+		set_pos(v.projectile, x, y)
+		fx, fy = x, y
+		if v.missile_color ~= owner then
+			gui.set_color(v.projectile_glow, self.colors[owner])
+			gui.set_color(v.razzo_tinta, self.colors[owner])
+			gui.set_color(v.palla_tinta, self.colors[owner])
+			for _, tint in pairs(v.shots_new_tint) do gui.set_color(tint, self.colors[owner]) end
+			v.missile_color = owner
+		end
+		-- rocket and ball point the way they go
+		local dx, dy = cur.x - p0.x, cur.y - p0.y
+		if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
+		gui.set_euler(v.projectile, SNIPER_EULER)
+		local sniper = kind == "sniper"
+		local newer = RM.NEW_SHOTS[kind] ~= nil
+		for k, n in pairs(v.shots_new) do show(n, k == kind) end
+		show(v.razzo, not sniper and not newer)
+		show(v.palla, sniper)
+		-- the Falcetto spins instead of pointing the way it goes
+		if kind == "boomerang" then
+			SNIPER_EULER.z = self.clock * 900
+			gui.set_euler(v.projectile, SNIPER_EULER)
+		end
+		-- Giano: the coin doesn't point anywhere, it flips on itself; two faces (the
+		-- shooter's color and gold) and a trail that alternates them
+		if kind == "janus" then
+			SNIPER_EULER.z = 0
+			gui.set_euler(v.projectile, SNIPER_EULER)
+			local c = math.cos(self.clock * 16)
+			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (0.18 + 0.82 * math.abs(c)), VK.y
+			gui.set_scale(v.projectile, SNIPER_SCALE)
+			v.sniper_shape = true
+			gui.set_color(v.shots_new_tint.janus, c >= 0 and self.colors[owner] or hud.YELLOW)
+			for j, node in ipairs(v.trail) do
+				local col = j % 2 == 0 and self.colors[owner] or hud.YELLOW
+				gui.set_color(node, vmath.vector4(col.x, col.y, col.z, 0.6 - j * 0.06))
+			end
+			v.janus_trail = true
+		elseif v.janus_trail then
+			for j, node in ipairs(v.trail) do gui.set_color(node, vmath.vector4(1, 0.6, 0.3, 0.55 - j * 0.06)) end
+			v.janus_trail = false
+		end
+		if sniper then
+			-- sniper: stretched the way it goes; at every bounce it squashes and wobbles
+			-- like jelly, then goes back to how it was
+			local t = self.clock - (self.boing or -10)
+			local w = BOING_AMP * math.exp(-t * BOING_DAMP) * math.cos(t * BOING_FREQ)
+			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (1.25 - w), VK.y * (0.85 + w)
+			gui.set_scale(v.projectile, SNIPER_SCALE)
+			v.sniper_shape = true
+		elseif v.sniper_shape then
+			gui.set_scale(v.projectile, VK)
+			v.sniper_shape = false
+		end
+		impact.trail(self.fx, dt, x, y, 40)
+		local n = #v.trail
+		v.trail_i = v.trail_i % n + 1
+		local tp = v.trail_pos[v.trail_i]
+		tp.x, tp.y = x, y
+		v.trail_n = math.min(n, v.trail_n + 1)
+		for j = 1, n do
+			local node = v.trail[j]
+			if j <= v.trail_n then
+				local q = v.trail_pos[(v.trail_i - j) % n + 1]
+				show(node, true)
+				set_pos(node, q.x, q.y)
+			else
+				show(node, false)
+			end
+		end
+	else
+		v.trail_n = 0
+		for _, node in ipairs(v.trail) do show(node, false) end
+	end
+
+	return fx, fy
+end
+
+-- The nodes of one shot in flight (trail, missile and the other shots, Uovo)
+-- into v: self for the last shot fired, a table for each older one
+function RM.build_shot(v)
+	-- missile: trail, halo in the team color and white core
+	v.trail, v.trail_pos, v.trail_i, v.trail_n = {}, {}, 0, 0
+	for i = 1, 8 do
+		v.trail[i] = glow(0, 0, (16 - i * 1.4) * K, vmath.vector4(1, 0.6, 0.3, 0.55 - i * 0.06))
+		v.trail_pos[i] = { x = 0, y = 0 }
+	end
+	v.projectile = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(v.projectile, false)
+	gui.set_adjust_mode(v.projectile, gui.ADJUST_FIT)
+	v.projectile_glow = glow(0, 0, 34, WHITE)
+	gui.set_parent(v.projectile_glow, v.projectile)
+	v.razzo, v.razzo_tinta = hit_def("razzo", 1 / K)
+	gui.set_parent(v.razzo, v.projectile)
+	v.palla, v.palla_tinta = hit_def("palla", 1 / K)
+	gui.set_parent(v.palla, v.projectile)
+	-- the new shots: only the one of the kind in flight is visible
+	v.shots_new, v.shots_new_tint = {}, {}
+	for kind, img in pairs(RM.NEW_SHOTS) do
+		local n, tint = hit_def(img, 1 / K)
+		gui.set_parent(n, v.projectile)
+		gui.set_enabled(n, false)
+		v.shots_new[kind], v.shots_new_tint[kind] = n, tint
+	end
+	gui.set_scale(v.projectile, VK)
+
+	-- Flame Egg in flight
+	v.egg = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+	gui.set_visible(v.egg, false)
+	gui.set_parent(glow(0, 0, 36, BRACE), v.egg)
+	v.egg_spin = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(v.egg_spin, false)
+	gui.set_parent(v.egg_spin, v.egg)
+	local egg_img
+	egg_img, v.egg_light = hit_def("uovo", 1 / K)
+	gui.set_parent(egg_img, v.egg_spin)
+	v.egg_label = label(0, 26, "3", 0.7 / K)
+	gui.set_parent(v.egg_label, v.egg)
+	gui.set_enabled(v.egg, false)
+	gui.set_scale(v.egg, VK)
+	return v
+end
+
+-- Where an older shot (src) was in the previous pose, or nil
+function RM.prev_shot(pa, src)
+	for i = 1, pa.nf do
+		if pa.f[i].src == src then return pa.f[i] end
+	end
+	if pa.has_p and pa.p_src == src then return pa.p end
+end
+
 local function render(self, dt)
 	self.clock = self.clock + dt
 	local g = self.g
@@ -4354,111 +4532,27 @@ local function render(self, dt)
 		self.rope_who = nil
 	end
 
-	-- Flame Egg: rolls while flying, with the seconds left to the blast above
-	local egg = pb.has_p and g.projectile and g.projectile.kind == "grenade"
-	show(self.egg, egg)
-	if egg then
-		local p0 = pa.has_p and pa.p or pb.p
-		local x = p0.x + (pb.p.x - p0.x) * k
-		set_pos(self.egg, x, p0.y + (pb.p.y - p0.y) * k)
-		self.focus_x, self.focus_y = x, p0.y + (pb.p.y - p0.y) * k
-		EULER.z = -x * 4
-		gui.set_euler(self.egg_spin, EULER)
-		if self.egg_color ~= g.current then
-			gui.set_color(self.egg_light, self.colors[g.current])
-			self.egg_color = g.current
-		end
-		impact.trail(self.fx, dt, x, p0.y + (pb.p.y - p0.y) * k, 30)
-		local secs = math.max(1, math.ceil((g.projectile.fuse or 0) / 60))
-		if self.egg_secs ~= secs then
-			gui.set_text(self.egg_label, tostring(secs))
-			self.egg_secs = secs
+	-- the last shot fired, then the older ones still in flight (sim/game.lua flying)
+	local main = pb.has_p and g.projectile
+	local same = pa.has_p and pa.p_src == pb.p_src
+	-- (the camera follows the last one, or the oldest still flying)
+	local sx, sy = RM.draw_shot(self, self, same and pa.p or nil, pb.has_p and pb.p or nil,
+		main and main.kind, main and main.fuse, main and main.owner or g.current, k, dt)
+	local shot_on = sx ~= nil
+	if shot_on then
+		self.focus_x, self.focus_y = sx, sy
+		CP.notch(self, sx, sy)
+	end
+	for i, v in ipairs(self.old_shots) do
+		local f = i <= pb.nf and pb.f[i] or nil
+		local src = f and f.src
+		local ox, oy = RM.draw_shot(self, v, f and RM.prev_shot(pa, src), f, src and src.kind, src and src.fuse,
+			src and src.owner or g.current, k, dt)
+		if ox then
+			CP.notch(self, ox, oy)
+			if not shot_on then self.focus_x, self.focus_y, shot_on = ox, oy, true end
 		end
 	end
-
-	-- missile: glow in the shooter's color and a trail fading out
-	local missile = pb.has_p and not egg
-	show(self.projectile, missile)
-	if missile then
-		local p0 = pa.has_p and pa.p or pb.p
-		local x, y = p0.x + (pb.p.x - p0.x) * k, p0.y + (pb.p.y - p0.y) * k
-		set_pos(self.projectile, x, y)
-		self.focus_x, self.focus_y = x, y
-		if self.missile_color ~= g.current then
-			gui.set_color(self.projectile_glow, self.colors[g.current])
-			gui.set_color(self.razzo_tinta, self.colors[g.current])
-			gui.set_color(self.palla_tinta, self.colors[g.current])
-			for _, tint in pairs(self.shots_new_tint) do gui.set_color(tint, self.colors[g.current]) end
-			self.missile_color = g.current
-		end
-		-- rocket and ball point the way they go
-		local dx, dy = pb.p.x - p0.x, pb.p.y - p0.y
-		if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
-		gui.set_euler(self.projectile, SNIPER_EULER)
-		local kind = g.projectile and g.projectile.kind
-		local sniper = kind == "sniper"
-		local newer = RM.NEW_SHOTS[kind] ~= nil
-		for k, n in pairs(self.shots_new) do show(n, k == kind) end
-		show(self.razzo, not sniper and not newer)
-		show(self.palla, sniper)
-		-- the Falcetto spins instead of pointing the way it goes
-		if kind == "boomerang" then
-			SNIPER_EULER.z = self.clock * 900
-			gui.set_euler(self.projectile, SNIPER_EULER)
-		end
-		-- Giano: the coin doesn't point anywhere, it flips on itself; two faces (the
-		-- shooter's color and gold) and a trail that alternates them
-		if kind == "janus" then
-			SNIPER_EULER.z = 0
-			gui.set_euler(self.projectile, SNIPER_EULER)
-			local c = math.cos(self.clock * 16)
-			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (0.18 + 0.82 * math.abs(c)), VK.y
-			gui.set_scale(self.projectile, SNIPER_SCALE)
-			self.sniper_shape = true
-			gui.set_color(self.shots_new_tint.janus, c >= 0 and self.colors[g.current] or hud.YELLOW)
-			for j, node in ipairs(self.trail) do
-				local col = j % 2 == 0 and self.colors[g.current] or hud.YELLOW
-				gui.set_color(node, vmath.vector4(col.x, col.y, col.z, 0.6 - j * 0.06))
-			end
-			self.janus_trail = true
-		elseif self.janus_trail then
-			for j, node in ipairs(self.trail) do gui.set_color(node, vmath.vector4(1, 0.6, 0.3, 0.55 - j * 0.06)) end
-			self.janus_trail = false
-		end
-		if sniper then
-			-- sniper: stretched the way it goes; at every bounce it squashes and wobbles
-			-- like jelly, then goes back to how it was
-			local t = self.clock - (self.boing or -10)
-			local w = BOING_AMP * math.exp(-t * BOING_DAMP) * math.cos(t * BOING_FREQ)
-			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (1.25 - w), VK.y * (0.85 + w)
-			gui.set_scale(self.projectile, SNIPER_SCALE)
-			self.sniper_shape = true
-		elseif self.sniper_shape then
-			gui.set_scale(self.projectile, VK)
-			self.sniper_shape = false
-		end
-		impact.trail(self.fx, dt, x, y, 40)
-		local n = #self.trail
-		self.trail_i = self.trail_i % n + 1
-		local tp = self.trail_pos[self.trail_i]
-		tp.x, tp.y = x, y
-		self.trail_n = math.min(n, self.trail_n + 1)
-		for j = 1, n do
-			local node = self.trail[j]
-			if j <= self.trail_n then
-				local q = self.trail_pos[(self.trail_i - j) % n + 1]
-				show(node, true)
-				set_pos(node, q.x, q.y)
-			else
-				show(node, false)
-			end
-		end
-	else
-		self.trail_n = 0
-		for _, node in ipairs(self.trail) do show(node, false) end
-	end
-
-	if missile or egg then CP.notch(self, self.focus_x, self.focus_y) end
 
 	-- Shard Swarm: small glows in the shooter's color
 	local n_shards, shard_x, shard_y = 0, 0, 0
@@ -4755,7 +4849,7 @@ local function render(self, dt)
 		end
 		local fx, fy, fast = nil, nil, false
 		self.cam_pause = math.max(0, self.cam_pause - dt)
-		if missile or egg then
+		if shot_on then
 			fx, fy, fast = self.focus_x, self.focus_y, true
 			self.cam_pause = 0
 		elseif n_shards > 0 then
@@ -4868,30 +4962,10 @@ function init(self)
 	-- whom the close-range weapon in hand would hit: robot ids and where to draw the ring
 	self.bersagli = { id = {}, pos = {}, n = 0 }
 
-	-- missile: trail, halo in the team color and white core
-	self.trail, self.trail_pos, self.trail_i, self.trail_n = {}, {}, 0, 0
-	for i = 1, 8 do
-		self.trail[i] = glow(0, 0, (16 - i * 1.4) * K, vmath.vector4(1, 0.6, 0.3, 0.55 - i * 0.06))
-		self.trail_pos[i] = { x = 0, y = 0 }
-	end
-	self.projectile = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
-	gui.set_visible(self.projectile, false)
-	gui.set_adjust_mode(self.projectile, gui.ADJUST_FIT)
-	self.projectile_glow = glow(0, 0, 34, WHITE)
-	gui.set_parent(self.projectile_glow, self.projectile)
-	self.razzo, self.razzo_tinta = hit_def("razzo", 1 / K)
-	gui.set_parent(self.razzo, self.projectile)
-	self.palla, self.palla_tinta = hit_def("palla", 1 / K)
-	gui.set_parent(self.palla, self.projectile)
-	-- the new shots: only the one of the kind in flight is visible
-	self.shots_new, self.shots_new_tint = {}, {}
-	for kind, img in pairs(RM.NEW_SHOTS) do
-		local n, tint = hit_def(img, 1 / K)
-		gui.set_parent(n, self.projectile)
-		gui.set_enabled(n, false)
-		self.shots_new[kind], self.shots_new_tint[kind] = n, tint
-	end
-	gui.set_scale(self.projectile, VK)
+	-- the shots in flight: the last fired on self, the older ones (RM.MAX_FLY) apart
+	RM.build_shot(self)
+	self.old_shots = {}
+	for i = 1, RM.MAX_FLY do self.old_shots[i] = RM.build_shot({}) end
 
 	-- teleport orb: small and round
 	self.orbs = {}
@@ -4907,20 +4981,6 @@ function init(self)
 		self.orbs[i] = { root = root, glow = orb_glow, light = light }
 	end
 
-	-- Flame Egg in flight
-	self.egg = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
-	gui.set_visible(self.egg, false)
-	gui.set_parent(glow(0, 0, 36, BRACE), self.egg)
-	self.egg_spin = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
-	gui.set_visible(self.egg_spin, false)
-	gui.set_parent(self.egg_spin, self.egg)
-	local egg_img
-	egg_img, self.egg_light = hit_def("uovo", 1 / K)
-	gui.set_parent(egg_img, self.egg_spin)
-	self.egg_label = label(0, 26, "3", 0.7 / K)
-	gui.set_parent(self.egg_label, self.egg)
-	gui.set_enabled(self.egg, false)
-	gui.set_scale(self.egg, VK)
 
 	-- the Swarm's shards
 	self.shard_nodes, self.shard_tints = {}, {}
@@ -5004,6 +5064,11 @@ function init(self)
 	world[#world + 1] = self.projectile
 	for _, o in ipairs(self.orbs) do world[#world + 1] = o.root end
 	world[#world + 1] = self.egg
+	for _, v in ipairs(self.old_shots) do
+		for _, n in ipairs(v.trail) do world[#world + 1] = n end
+		world[#world + 1] = v.projectile
+		world[#world + 1] = v.egg
+	end
 	for _, n in ipairs(self.shard_nodes) do world[#world + 1] = n end
 	for _, c in ipairs(self.crate_nodes) do world[#world + 1] = c.node end
 	for _, n in ipairs(items.nodes(self.oggetti)) do world[#world + 1] = n end

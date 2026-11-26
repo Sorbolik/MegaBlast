@@ -234,7 +234,7 @@ local function no_crater(self, x, y, owner, blast, weapon)
 end
 
 local function world_parts()
-	return { robots = {}, orbs = {}, placed = {}, pools = {}, shards = {}, crates = {}, events = {}, used = {}, rng = rng.new(1) }
+	return { robots = {}, orbs = {}, placed = {}, pools = {}, shards = {}, crates = {}, events = {}, used = {}, flying = {}, rng = rng.new(1) }
 end
 
 -- a list of copies of src's items, in the reused list dst
@@ -291,6 +291,7 @@ function M.world(g, into)
 	end
 	w.shards = shards
 	w.projectile = g.projectile and copy2(g.projectile)
+	w.flying = copies(o.flying, g.flying)
 	w.burst = g.burst and copy2(g.burst)
 	w.explode = no_crater
 	-- the Trapano's tunnel doesn't dig either
@@ -313,7 +314,7 @@ end
 
 -- All still: nothing in flight, robots on the ground and no shots under way
 local function quiet(w)
-	if w.projectile or w.burst or #w.orbs > 0 then return false end
+	if w:shots_flying() or w.burst or #w.orbs > 0 then return false end
 	for i = 1, game.SHARD_COUNT do
 		if w.shards[i] then return false end
 	end
@@ -358,10 +359,11 @@ end
 local function in_flight(b, w, max)
 	for t = 1, max do
 		w.tick = w.tick + 1
+		if #w.flying > 0 then w:update_flying() end
 		if w.projectile then w:update_projectile() end
 		if w.burst then w:update_burst() end
 		w:update_shards()
-		if not w.projectile and not w:shards_flying() then return t end
+		if not w:shots_flying() and not w:shards_flying() then return t end
 		if t % 10 == 0 then work(b, 10) end
 	end
 	return max
@@ -632,7 +634,7 @@ local function try_move(b, g, spot, wpn, ang, pow, fino)
 	local fire = { weapon = wpn, angle = ang, power = pow }
 	if game.TOOLS[wpn] then w:use_tool(wpn, fire) else w:attack(wpn, fire) end
 	local px, py = c.x, c.y
-	if fino == "volo" and (w.projectile or w.burst) then
+	if fino == "volo" and (w:shots_flying() or w.burst) then
 		in_flight(b, w, 6 * 60)
 	else
 		until_quiet(b, w, fino == "volo" and 90 or 5 * 60)
@@ -711,7 +713,8 @@ local function enemies(g, me, x, y)
 		if not o.dead and o.team ~= me.team then out[#out + 1] = o end
 	end
 	table.sort(out, function(a, c)
-		local from, dc = (a.x - x) ^ 2 + (a.y - y) ^ 2, (c.x - x) ^ 2 + (c.y - y) ^ 2
+		local ax, ay, cx, cy = a.x - x, a.y - y, c.x - x, c.y - y
+		local from, dc = ax * ax + ay * ay, cx * cx + cy * cy
 		if from ~= dc then return from < dc end
 		return a.id < c.id
 	end)

@@ -1,0 +1,30 @@
+# Due colpi in aria insieme (video di Sergio, 26 nov: l'Uovo arrivava ai piedi del nemico
+# e spariva senza esplodere quando partiva la Voragine). Ora il secondo colpo non toglie il
+# primo: l'Uovo resta a terra col suo conto alla rovescia mentre vola la Voragine, e
+# scoppiano tutti e due. Con prova_armi 1 e prova_secondaria vortex: 2 Uovo, la Voragine si tocca nella barra.
+imposta prova_armi 1
+imposta prova_secondaria vortex
+imposta prova_vicino 200
+imposta zoom 2
+
+aspetta 2
+tocca 222 148                      # PARTITA DI PROVA (zona nascosta della home)
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+premi 2
+mira 60 10 0.3                      # Uovo, piano verso il nemico
+aspetta 1.2
+foto 01_uovo_a_terra
+tocca 868 62                        # Voragine (nella barra)
+mira 20 160 0.3                     # Voragine, quasi dritta in alto
+aspetta 0.4
+foto 02_due_colpi
+aspetta 0.8
+foto 03_uovo_e_voragine
+aspetta_evento explosion 5
+aspetta 0.1
+foto 04_primo_scoppio
+aspetta_evento explosion 6
+aspetta 0.1
+foto 05_secondo_scoppio
+aspetta_stato turno=2 fase=aim 30
