@@ -501,7 +501,7 @@ local function build(c)
 		local id = c.next_id or list[#list].id
 		local name = ""
 		for _, l in ipairs(list) do if l.id == id then name = kit.upper(l.titolo) end end
-		act = { id = id, sub = c.next_id and T.play_new:format(name) or T.replay_final }
+		act = { id = id, sub = c.next_id and { T.play_new:format(name), name } or T.replay_final }
 	else
 		local prev
 		for _, cp in ipairs(payload.CAPITOLI) do
