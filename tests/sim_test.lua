@@ -1388,9 +1388,7 @@ do
 	check(r1.ammo[s2] == config.SECONDARY_SHOTS.draft and eg:can_use(s2) and eg:can_use("sword"),
 		"the picked secondary has its shots, the Lama is unlimited")
 	eg:step({ fire = { angle = 0, power = 1, weapon = s2 } })
-	-- (a secondary that flies, Petardo or Vortice, holds the missile until it lands)
-	check(eg.used.secondary and not eg.used.primary and not eg:can_use("sword")
-		and (eg:can_use("missile") or eg.projectile ~= nil),
+	check(eg.used.secondary and not eg.used.primary and not eg:can_use("sword") and eg:can_use("missile"),
 		"once the picked secondary is used, the Lama can't be used in the turn")
 	check(r1.ammo[s2] == config.SECONDARY_SHOTS.draft - 1, "the secondary uses up a shot")
 	-- the Lama on an enemy gives back a secondary shot, up to the maximum; on a teammate no
@@ -2574,23 +2572,52 @@ do
 	check(t[2].eq == nil, "dress_bots: whoever wears nothing gets a bare bot")
 end
 
--- A second attack that flies (Petardo, Vortice) waits for the first shot to land:
--- it used to replace it, and the first shot vanished mid-air without exploding
+-- A second attack that flies (Petardo, Voragine) while the first shot is still in
+-- flight: both go on and both burst (the second used to replace the first, which
+-- vanished without exploding: Sergio's video, 26 Nov)
 do
 	local m = game.new(42, "pavimento")
 	run(m, 120)
 	local rb = m.robots[m.current]
 	rb.secondary, rb.ammo.petard = "petard", 2
+	m:pop_events()
 	m:step({ fire = { weapon = "missile", angle = math.rad(85), power = 1 } })
 	run(m, 20)
-	check(m.projectile and m.projectile.kind == "missile" and not m:can_use("petard"), "no Petardo while the missile flies")
+	check(m.projectile and m.projectile.kind == "missile" and m:can_use("petard"), "the Petardo can go while the missile flies")
 	m:step({ fire = { weapon = "petard", angle = math.rad(20), power = 0.5 } })
-	check(m.projectile and m.projectile.kind == "missile" and rb.ammo.petard == 2, "the missile keeps flying, the Petardo stays")
-	for _ = 1, 600 do
+	check(m.projectile and m.projectile.kind == "petard" and #m.flying == 1 and m.flying[1].kind == "missile",
+		"two shots in flight: the Petardo and the missile")
+	local booms = 0
+	for _ = 1, 900 do
 		m:step()
-		if not m.projectile then break end
+		for _, e in ipairs(m:pop_events()) do
+			if e.type == "explosion" or e.type == "petard" or e.type == "petard_blast" then booms = booms + 1 end
+		end
+		if not m:shots_flying() then break end
 	end
-	check(not m.projectile and m:can_use("petard"), "the missile lands, then the Petardo can go")
+	check(not m:shots_flying() and #m.flying == 0, "both shots end")
+	check(booms >= 2, "both shots burst (" .. booms .. ")")
+end
+
+-- The video: an Uovo rolling on the ground, then the Voragine; the Uovo still blows up
+do
+	local m = game.new(42, "pavimento")
+	run(m, 120)
+	local rb = m.robots[m.current]
+	rb.ammo.grenade, rb.secondary, rb.ammo.vortex = 1, "vortex", 2
+	m:pop_events()
+	m:step({ fire = { weapon = "grenade", angle = math.rad(10), power = 0.3 } })
+	run(m, 120)
+	m:step({ fire = { weapon = "vortex", angle = math.rad(85), power = 1 } })
+	local kinds = {}
+	for _ = 1, 900 do
+		m:step()
+		for _, e in ipairs(m:pop_events()) do
+			if e.type == "explosion" then kinds[#kinds + 1] = e.r end
+		end
+		if not m:shots_flying() then break end
+	end
+	check(#kinds == 2, "the Uovo on the ground and the Voragine both blow up (" .. #kinds .. ")")
 end
 
 if failures > 0 then

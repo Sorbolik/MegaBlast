@@ -888,7 +888,7 @@ local function attempt_over(r, g)
 	local t = r.shot
 	if not t or r.esito then return end
 	local rb = g.robots[PLAYER]
-	local frozen = not (g.projectile or g:shards_flying() or #g.orbs > 0) and (rb.dead or rb.grounded
+	local frozen = not (g:shots_flying() or g:shards_flying() or #g.orbs > 0) and (rb.dead or rb.grounded
 		and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch or rb.lunge or rb.mallet or rb.recoil or rb.cannon))
 	t.t = frozen and t.t + 1 or 0
 	if t.t < MISS_TICK then return end
@@ -920,7 +920,7 @@ end
 -- Ritenta and go back as you were
 local function hold_still(r, g, p)
 	local rb = g.robots[PLAYER]
-	local flying = g.projectile or g:shards_flying() or #g.orbs > 0
+	local flying = g:shots_flying() or g:shards_flying() or #g.orbs > 0
 	if rb.dead or not rb.grounded or flying then
 		r.stuck_ticks = 0
 		return
@@ -1006,7 +1006,7 @@ local NO_AIM = { parachute = true, shield = true, swap = true }
 
 -- nothing flying and rb still on the ground
 local function settled(g, rb)
-	if g.projectile or g.burst or g:shards_flying() or #g.orbs > 0 then return false end
+	if g:shots_flying() or g.burst or g:shards_flying() or #g.orbs > 0 then return false end
 	return rb.dead or rb.grounded and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch
 		or rb.lunge or rb.mallet or rb.recoil or rb.cannon or rb.parachute)
 end
@@ -1196,7 +1196,7 @@ function M.tick(r, g)
 	end
 	-- the cards of weapons that arrive without a crate: when the hit that did the
 	-- step has landed, and a moment later
-	local flying = g.projectile or g.burst or g:shards_flying() or #g.orbs > 0
+	local flying = g:shots_flying() or g.burst or g:shards_flying() or #g.orbs > 0
 	for i, c in ipairs(l.cards or {}) do
 		if not r.opened[i] and (c.dopo == 0 or st.steps_done[c.dopo]) then
 			-- (if nothing is flying, at once)
