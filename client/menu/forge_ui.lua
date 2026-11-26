@@ -214,10 +214,13 @@ end
 
 -- the usurer of mould m: his drawing, its world units per pixel, where his head's top
 -- and his sand's bottom are
+-- (Sergio, 26 Nov: the purses hang in front of the embankment, but none comes lower
+-- than its sand: a low one is drawn smaller, never stretched)
+local SAND_LOW = ARGINE_TOP - 23 * ARGINE_W / PIECES.argine.w
 local function figure(m, full)
 	local name = (full and "borsa_chiusa_" or "borsa_") .. (m.set and PLATE[m.set] or "ferro")
 	local pc = PIECES[name]
-	local k = m.w * RIM_W / pc.mw
+	local k = math.min(m.w * RIM_W / pc.mw, (m.y - SAND_LOW) / (pc.h - pc.my))
 	return name, pc, k, m.y + pc.my * k, m.y - (pc.h - pc.my) * k
 end
 
@@ -381,6 +384,7 @@ local function seal(fx, m)
 	local g = { node = s, ox = 0, oy = 0 }
 	kit.piece(g, m.scaglie and "scaglia" or "frammento_" .. m.set, 0, 0, pc.sw * k * SEAL_ICON)
 	fx.seals[m.slot] = s
+	if fx.hitbox_of then fx.hitbox_of(fx, m, true) end
 	return s
 end
 
@@ -534,6 +538,58 @@ local function flame(fx, m)
 	tremble(fx, m, 0.75)
 end
 
+-- The hitboxes over the purses, only in the simulator (imposta prova_fornace_hitbox si),
+-- as on https://claude.ai/artifact/Gjq7oJAtJP1yXvLshSxXAa: red the iron the drop
+-- bounces off (forge.lua irons), green the line that takes it (forge.catch)
+local HB_RED, HB_GREEN = vmath.vector4(1, 0.35, 0.29, 0.9), vmath.vector4(0.49, 0.94, 0.54, 1)
+local function show_hitbox(fx, m, closed)
+	if not fx.hitbox then return end
+	if fx.hb[m.slot] then gui.delete_node(fx.hb[m.slot]) end
+	local root = empty(fx.hitbox)
+	gui.set_visible(root, true)
+	fx.hb[m.slot] = root
+	local lip = m.w * forge.LIP
+	local circles = {
+		{ m.x, m.y - m.w * forge.BELLY, m.w * forge.BELLY },
+		{ m.x - m.inner - lip, m.y, lip },
+		{ m.x + m.inner + lip, m.y, lip },
+	}
+	if closed then circles[4] = { m.x, m.y + m.w * forge.LID_Y, m.w * forge.LID_R } end
+	for _, c in ipairs(circles) do
+		local n = gui.new_pie_node(vec(c[1], c[2]), vec(2 * c[3], 2 * c[3]))
+		gui.set_outer_bounds(n, gui.PIEBOUNDS_ELLIPSE)
+		gui.set_perimeter_vertices(n, 48)
+		gui.set_inner_radius(n, math.max(0, c[3] - 2.5))
+		gui.set_color(n, HB_RED)
+		gui.set_parent(n, root)
+	end
+	if not closed then
+		local y, half = forge.catch(m)
+		local l = box(root, m.x, y, 2 * half, 4)
+		gui.set_color(l, HB_GREEN)
+	end
+	-- (prova_fornace_hitbox proposta: in yellow the shapes proposed to Sergio, 26 Nov:
+	-- the closed purse = belly + a circle on its tied tuft, no lips; a purse drawn
+	-- smaller over the sand has its iron shrunk with the drawing)
+	if fx.hitbox_proposal then
+		local _, pc, k = figure(m, closed)
+		local f = k / (m.w * RIM_W / pc.mw)
+		local w = m.w * f
+		local plip = w * forge.LIP
+		local inner = m.inner * f
+		local yc = closed and { { m.x, m.y - w * forge.BELLY, w * forge.BELLY }, { m.x, m.y + 0.12 * w, 0.3 * w } }
+			or { { m.x, m.y - w * forge.BELLY, w * forge.BELLY }, { m.x - inner - plip, m.y, plip }, { m.x + inner + plip, m.y, plip } }
+		for _, c in ipairs(yc) do
+			local n = gui.new_pie_node(vec(c[1], c[2]), vec(2 * c[3], 2 * c[3]))
+			gui.set_outer_bounds(n, gui.PIEBOUNDS_ELLIPSE)
+			gui.set_perimeter_vertices(n, 48)
+			gui.set_inner_radius(n, math.max(0, c[3] - 2.5))
+			gui.set_color(n, vmath.vector4(1, 0.85, 0.2, 1))
+			gui.set_parent(n, root)
+		end
+	end
+end
+
 -- a purse: the drawing with its mouth on the mould's (m.x, m.y), under a node on the
 -- mouth (it trembles and pops around it), its rope up to the beam
 local function draw_mould(fx, m, full)
@@ -542,6 +598,7 @@ local function draw_mould(fx, m, full)
 	local n = piece(root, name, (pc.w / 2 - pc.mx) * k, (pc.my - pc.h / 2) * k, pc.w * k)
 	fx.moulds[m.slot], fx.figs[m.slot] = root, n
 	if full then seal(fx, m) else rope(fx, m); tag(fx, m) end
+	show_hitbox(fx, m, full)
 end
 
 -- fills a mould on the wall (a hit): the purse jumps, the flame, then once the column
@@ -801,9 +858,17 @@ local function make_world(a)
 		if k % 2 == 1 then gui.set_scale(n, vmath.vector3(1, -1, 1)) end
 		y, k = y + rh - 1, k + 1
 	end
-	-- the purses: their ropes behind them all, the beam over the ropes
+	-- the embankment, the apprentice's ledge on its sand
+	for x = -900, 2600, ARGINE_W - 2 do piece(fx.world, "argine", x, ARGINE_TOP, ARGINE_W, gui.PIVOT_NW) end
+	piece(fx.world, "sporgenza", LEDGE.x, LEDGE.y, LEDGE.w, gui.PIVOT_NW)
+	-- the purses in front of it (Sergio, 26 Nov): their ropes behind them all, the beam over the ropes
 	fx.ropes_root = empty(fx.world)
 	fx.wall_root = empty(fx.world)
+	if sys.get_config_int("megablast.simula", 0) == 1 and sys.get_config_string("megablast.prova_fornace_hitbox", "") ~= "" then
+		fx.hitbox_proposal = sys.get_config_string("megablast.prova_fornace_hitbox", "") == "proposta"
+		fx.hitbox, fx.hb, fx.hitbox_of = empty(fx.world), {}, show_hitbox
+		gui.set_visible(fx.hitbox, true)
+	end
 	fx.tags_root = empty(nil)
 	local key = wall_key(p)
 	local f = p.fornace
@@ -836,9 +901,6 @@ local function make_world(a)
 	end
 	piece(fx.world, "trave_sx", BEAM.x0, BEAM.y, lw, gui.PIVOT_W)
 	piece(fx.world, "trave_dx", xr, BEAM.y, rw, gui.PIVOT_E)
-	-- the embankment in front, the apprentice's ledge on its sand
-	for x = -900, 2600, ARGINE_W - 2 do piece(fx.world, "argine", x, ARGINE_TOP, ARGINE_W, gui.PIVOT_NW) end
-	piece(fx.world, "sporgenza", LEDGE.x, LEDGE.y, LEDGE.w, gui.PIVOT_NW)
 	fx.band = empty(fx.world)
 	local bp = PIECES.usuraio_zitto
 	fx.banker = piece(fx.band, "usuraio_zitto", BANKER.x, BANKER.y, BANKER.h * bp.w / bp.h, gui.PIVOT_S)

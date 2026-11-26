@@ -155,7 +155,8 @@ sei e cosa sono le cose:
   l'apprendista a **cambiare l'Ossidiana**: la Fornace è il cambiavalute, e la storia lo dice da sola.
 - **Gli stampi sono le borse degli usurai**, aperte verso il cielo e **appese a una corda** che sale
   alla trave in alto (Sergio, 26 nov: gli usurai seduti sul muro «creano troppa confusione visiva»;
-  niente pinnacoli né piedistalli). Lo **stemma sulla borsa** è il colore della famiglia (ferro per le
+  niente pinnacoli né piedistalli). Le borse stanno davanti all'argine e nessuna scende sotto la
+  sua sabbia: una bassa si disegna più piccola (Sergio, 26 nov). Lo **stemma sulla borsa** è il colore della famiglia (ferro per le
   Scaglie). La corda è solo disegno: la goccia ci passa. La bocca della borsa è dove la regola prende
   la goccia (`m.x`, `m.y`; l'orlo è largo 0,76 dello stampo, la presa 0,82). La borsa presa si
   **chiude**: legata stretta e sigillata con la ceralacca, l'icona del premio sul sigillo (dove la
@@ -180,7 +181,8 @@ sei e cosa sono le cose:
   colare): il bancone si svuota un mucchio dopo l'altro, le Scaglie volano in arco nel portafoglio che
   le conta, i frammenti salgono sotto il portafoglio col loro numero. È solo il disegno: il profilo è
   pagato tiro per tiro come prima (il server decide), e chiudere il gioco a metà non perde niente.
-- **Un solo usuraio**, seduto in fondo al bancone col suo libro dei conti, **parla** ogni tanto
+- **Un solo usuraio**, seduto in fondo al bancone col suo libro dei conti, **parla** ogni tanto.
+  Il bottino è suo e **glielo stiamo rubando** (Sergio, 26 nov): le sue frasi sono di un derubato
   (Sergio, 26 nov: «uno di questi predoni accanto al tavolo che ogni tanto ti parla»): una frase
   sopra la testa come le battute dei bot, a bocca aperta; mentre miri, quando prendi una borsa,
   quando la goccia finisce nel vetro, e brontolando (la faccia di chi paga) all'INCASSA e alla

@@ -650,14 +650,14 @@ return {
 		melt_family = "IN UN'ALTRA FAMIGLIA",
 		melt_four = "FONDINE %d",
 		melt_four_sub = "ne fai %d",
-		-- the usurers' lines (Sergio, 26 Nov): one at random, over the head
-		say_idle = { "Non ci prendi!", "La mia borsa è vuota...", "Piove fuoco anche oggi", "Qui si cambia a buon prezzo!",
-			"Avanti, apprendista!", "Tiro corto, ci scommetto", "Quanto pesa quel mestolo?", "Che borsa, eh? È la più bella" },
-		say_hit = { "Ahi, la mia borsa!", "Scotta, scotta!", "Va bene, pago!", "Il mio stemma!", "Ecco il resto, ladro!", "Rovinato!" },
-		say_near = { "Quasi!", "Per un pelo!", "Uff, che spavento", "Mancato, ah ah!" },
-		say_miss = { "Ah ah, vetro!", "Un'altra perla per il Fabbro", "Tutto nella sabbia!", "Mira meglio!" },
-		say_pay = { "Fino all'ultima perla...", "Mi rovini!", "Conta bene, conta bene...", "Torna presto, ladro" },
-		say_jackpot = { "BANCAROTTA!", "Il banco si è rotto!", "Siamo rovinati!" },
+		-- the banker's lines (Sergio, 26 Nov: we are stealing his loot): one at random, over the head
+		say_idle = { "Giù le mani dal mio oro!", "Ti tengo d'occhio, ladruncolo", "Quelle borse sono mie!", "Guardie! Al ladro!",
+			"Non ci provare nemmeno", "Quella è la dote di mia figlia!", "Il Fabbro ti manda a rubare, eh?", "Conto le borse ogni sera, sai?" },
+		say_hit = { "Ahi, la mia borsa!", "Al ladro! Al ladro!", "Ridammela subito!", "Il mio stemma!", "Me la paghi, apprendista!", "Rovinato!" },
+		say_near = { "Ah, mancata!", "Per un pelo, ladro!", "Uff, che spavento", "Le mie borse sono al sicuro" },
+		say_miss = { "Ah ah, solo vetro!", "Tienti le tue perline", "Tutto nella sabbia!", "Non sai nemmeno rubare!" },
+		say_pay = { "Il mio bottino...", "Mi stai spolpando!", "Lascia almeno gli spiccioli!", "Tornerò a riprendermelo" },
+		say_jackpot = { "BANCAROTTA!", "Mi hai ripulito tutto!", "Sono rovinato!" },
 	},
 
 	pieces = {
