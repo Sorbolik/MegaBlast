@@ -1,0 +1,12 @@
+Image 1 is a draft of a minigame of our cartoon game: at the bottom right, next to the long wooden counter where the player's loot piles up, sits one usurer who keeps the accounts and talks to the player now and then. Image 2 shows the end of the session: the coins fly from the counter to the player's wallet and the usurer grumbles. Image 3 shows our usurers: copy EXACTLY that character and STYLE: a skinny, hunched, greedy damned soul with grey-green skin (#8D8F86), sunken cheeks, big greedy yellow eyes, a long nose, wrapped in a ragged hooded cloak (dark grey-brown #4A3A30), thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, cartoon comic.
+
+Draw the SAME usurer THREE times on plain green (#00FF00), side by side, well apart, each whole, same size (about 480 px tall) and same pose: he SITS on a small wooden stool, seen three quarters, turned towards the LEFT (where the counter is), one bony hand on a small open account book on his knees and a quill in the other. No purse in his hands. Three faces:
+1. QUIET: mouth closed, a sly greedy grin, eyes on the counter.
+2. TALKING: mouth wide open as if saying a line, one finger raised.
+3. PAYING: grumpy and sorry, eyebrows down, lower lip out, the hand with the quill thrown up in despair.
+Nothing else: no counter, no coins, no letters, no speech bubbles, no shadow on the ground, no glow halo.
+
+Riferimenti in ordine: art/WB-098/riferimenti/R1_anteprima_muro.png, art/WB-098/riferimenti/R3_anteprima_incassa.png, art/WB-097/usurai_vuoti_2.png
+ImageGen. PNG ridimensionato in proporzione, ritagliato solo nel verde ai lati e centrato su tela da 1536×1024.
+Un tentativo. Tre pose sedute rivolte a sinistra, alte circa 457, 465 e 469 px. La mano e la posizione dell'avambraccio cambiano. Verde campionato #02F903.
+Il fondo si discosta da #00FF00 esatto.

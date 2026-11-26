@@ -95,3 +95,14 @@ Nothing else: no counter, no coins, no letters, no speech bubbles, no shadow on 
 - [ ] nessuna scritta, nessun alone, verde pieno attorno
 
 Approvata da Claude il 26 nov: Sergio ha approvato l'anteprima. Quando questi disegni saranno nel gioco, Claude toglie dal gioco e dall'atlante gli usurai e i pinnacoli di WB-097 che non servono più.
+
+## Consegna di Codex
+
+- `art/WB-098/borse_aperte_1.png` e `borse_aperte_2.png`, con i rispettivi `.txt` — un tentativo per variante.
+- `art/WB-098/borse_chiuse_1.png` e `borse_chiuse_2.png`, con i rispettivi `.txt` — un tentativo per variante.
+- `art/WB-098/trave_e_corde_1.png` e `trave_e_corde_2.png`, con i rispettivi `.txt` — tre tentativi per la prima variante, selezionato il terzo, un tentativo per la seconda.
+- `art/WB-098/usuraio_del_banco_1.png` e `usuraio_del_banco_2.png`, con i rispettivi `.txt` — un tentativo per variante.
+
+Otto PNG da 1536×1024, con i prompt originali eseguiti in ImageGen e i riferimenti nell'ordine indicato. I fogli delle borse hanno la misura nativa richiesta. Travi e usurai sono stati ridimensionati in proporzione e centrati su verde. Per gli usurai ho ritagliato soltanto il verde ai lati per mantenere tutte le pose sopra i 450 px.
+
+Controllati numero, separazione e ordine degli stemmi. Le borse aperte hanno cavità visibile e tiranti a V. Quelle chiuse hanno ciuffo e sigillo rosso vuoto. Le sagome delle borse sono larghe circa 307–337 px, oltre circa 230 px indicati nel prompt, con lievi differenze tra gli stati. In entrambi i fogli si riconoscono le tre espressioni dell'usuraio seduto rivolto a sinistra. I quattro cordini di ogni variante hanno tre o cinque nodi. Il fondo si discosta da #00FF00 esatto. I bordi neri di alcuni pezzi possono lasciare una riga alla giunzione. La ripetizione effettiva della trave e della corda e la resa in gioco restano da verificare.

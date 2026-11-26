@@ -1,0 +1,13 @@
+Image 1 is a draft of a minigame of our cartoon game: at the top of the screen a long wooden beam crosses the whole scene; from iron pegs at a regular step hang short knotted cords, long and short in turn, and some longer ropes go down to hold leather purses. Image 2 shows the STYLE of our game: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic.
+
+Draw these separate pieces on plain green (#00FF00), well apart, each whole:
+1. THE BEAM, in three pieces: a LEFT END wedged into a lump of dark red rock (#5A2A1C), a MIDDLE piece whose left and right ends are cut straight so the game can repeat it seamlessly, and a RIGHT END wedged into rock too. An old squared wooden beam of dark brown wood (#6A3F22, highlight #94603A, shadow #43250F), seen from the front, about ten times longer than tall, with iron nails and a few notches carved like tally marks.
+2. THE PEG: one small black iron peg with a ring, seen from the front, to put under the beam.
+3. THE ROPE: one straight vertical piece of thick twisted rope (#D6A062, shadow #A06C3A), about twelve times longer than thick, its top and bottom cut straight so the game can stack it seamlessly.
+4. FOUR TALLY CORDS: short thin cords hanging straight down, each with knots at a regular step and a small tassel at the end: two short (three knots) and two long (five knots); one short and one long have a red tassel (#B0221C), the others a natural rope tassel. Their top is cut straight (they hang from the peg).
+No characters, no purses, no letters, no shadow on the ground, no glow halo.
+
+Riferimenti in ordine: art/WB-098/riferimenti/R1_anteprima_muro.png, art/WB-097/usurai_vuoti_2.png
+ImageGen. PNG ridimensionato in proporzione e centrato su tela verde da 1536×1024.
+Tre tentativi, scelto il terzo. Tre segmenti, piolo, corda e quattro cordini con tre o cinque nodi. Le estremità del pezzo centrale e della corda hanno tratti di contorno che possono lasciare una riga in ripetizione. Verde campionato #03F803.
+Il fondo si discosta da #00FF00 esatto.
