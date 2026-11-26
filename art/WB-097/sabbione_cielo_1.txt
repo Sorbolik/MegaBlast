@@ -1,0 +1,7 @@
+Image 1 is a rough draft of a minigame of our game: a little devil stands on a stone ledge at the bottom left and throws drops of molten metal into the open purses of greedy damned souls sitting on a burning desert of sand under a rain of fire; it only says WHERE things are. Image 2 is one background layer of our game: copy its HAND and its TONES exactly: no black outline at all, big simple flat shapes with soft gradients, very few details, dark and desaturated colors, bright colors only in the lights.
+
+Paint the FARTHEST layer of that place, wide (3:2), filling the whole image edge to edge: the sky above an infernal desert, a deep dark red-brown at the top (#2B0F12) warming down to dusty orange near the bottom (#8C3D1C), lit from the BOTTOM LEFT by a warm orange glow and touched in the TOP RIGHT corner by a thin cold blue-white light. Very far away, small soft flakes of fire fall slowly and straight down like snow without wind, sparse, a little brighter (#E07A3A). The CENTER and the RIGHT half stay calm, because the game draws the targets and the flying drop there. No outlines, no characters, no ground, no letters, no frame.
+
+Riferimenti in ordine: art/WB-097/riferimenti/R1_bozza_usurai.png, client/paintings/backgrounds/forgia_medio_2.png
+ImageGen. Un tentativo. PNG nativo da 1536×1024.
+Cielo a tutta tela, fuoco tenue e zona centrale calma. Il gelo in alto a destra è discreto.

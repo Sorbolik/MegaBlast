@@ -1,4 +1,4 @@
-# La Fornace: la fiammata e il coperchio da vicino (foto fitte dopo un centro).
+# La Fornace: la fiammata e lo stampo pieno da vicino (foto fitte dopo un centro).
 imposta prova_test prova
 imposta prova_fornace_centra 1
 

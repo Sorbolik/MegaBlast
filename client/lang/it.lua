@@ -599,7 +599,7 @@ return {
 	-- menu/forge_ui.lua: the FORNACE tab of the BOTTEGA (docs/commesse.md "La Fornace")
 	forge = {
 		on_wall = "MURO %d DI %d",
-		filled = "%d su %d pieni",
+		filled = "%d su %d pagati",
 		of_total = "su %s",
 		fragments = "FRAMMENTI",
 		new_wall = "NUOVI FRA",
@@ -607,7 +607,7 @@ return {
 		wall_full_short = "PIENO",
 		rule_walls = "%d muri al giorno: riempi questo e si apre il prossimo.",
 		rule_walls_sub = "Premi x1 · x1,25 · x1,5. Alle 5 di mattina si riparte dal primo.",
-		rule_lucky = "Su questo muro c'è uno stampo che dà il DOPPIO.",
+		rule_lucky = "Su questo muro c'è un calderone che vale il DOPPIO.",
 		melt = "FONDI I FRAMMENTI",
 		pour = "COLA",
 		pour_sub = "%d tiri · costa %d",
@@ -625,7 +625,8 @@ return {
 		lucky_hit = "DOPPIO!",
 		-- the bank shot's prize multiplier: knocks on the moulds, the back wall
 		bank = "DI SPONDA x%s",
-		miss = "NEL SECCHIO",
+		-- a drop that misses: glass in the sand, the Smith pays it
+		miss = "PERLA DI VETRO",
 		hit = "CENTRO!",
 		jackpot = "JACKPOT!",
 		wall_full = "MURO PIENO",
@@ -633,12 +634,14 @@ return {
 		knocks_medal = "MEDAGLIA: %d RINTOCCHI",
 		medal = "MEDAGLIA: JACKPOT DELLA FORNACE",
 		recap_title = "LA COLATA",
-		recap_scaglie = "Scaglie",
+		recap_scaglie = "Scaglie dei calderoni",
+		recap_beads = "Perle di vetro (%d)",
 		recap_fragments = "Frammenti %s",
 		recap_bonus = "3 su 3: un tiro in più",
 		recap_jackpot = "Jackpot del muro pieno",
 		recap_again = "COLA ANCORA",
-		recap_close = "CHIUDI",
+		recap_close = "INCASSA",
+		paid = "+%s INCASSATE",
 		melt_title = "FONDI I FRAMMENTI",
 		melt_pick = "Scegli la famiglia da fondere",
 		melt_scaglie = "IN SCAGLIE",
@@ -647,6 +650,14 @@ return {
 		melt_family = "IN UN'ALTRA FAMIGLIA",
 		melt_four = "FONDINE %d",
 		melt_four_sub = "ne fai %d",
+		-- the banker's lines (Sergio, 26 Nov: we are stealing his loot): one at random, over the head
+		say_idle = { "Giù le mani dal mio oro!", "Ti tengo d'occhio, ladruncolo", "Quei calderoni sono miei!", "Guardie! Al ladro!",
+			"Non ci provare nemmeno", "Quell'oro è la dote di mia figlia!", "Il Fabbro ti manda a rubare, eh?", "Conto i lingotti ogni sera, sai?" },
+		say_hit = { "Il mio lingotto!", "Al ladro! Al ladro!", "Ridammelo subito!", "Il mio stemma!", "Me la paghi, apprendista!", "Rovinato!" },
+		say_near = { "Ah, mancata!", "Per un pelo, ladro!", "Uff, che spavento", "Il mio oro è al sicuro" },
+		say_miss = { "Ah ah, solo vetro!", "Tienti le tue perline", "Tutto nella sabbia!", "Non sai nemmeno rubare!" },
+		say_pay = { "Il mio bottino...", "Mi stai spolpando!", "Lascia almeno gli spiccioli!", "Tornerò a riprendermelo" },
+		say_jackpot = { "BANCAROTTA!", "Mi hai ripulito tutto!", "Sono rovinato!" },
 	},
 
 	pieces = {

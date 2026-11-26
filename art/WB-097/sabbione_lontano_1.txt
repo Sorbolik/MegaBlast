@@ -1,0 +1,8 @@
+Image 1 is a rough draft of a minigame of our game set on a burning desert of sand in hell under a rain of fire. Image 2 is one background layer of our game: copy its HAND and its TONES exactly: no black outline at all, big simple flat shapes with soft gradients, very few details, dark and desaturated colors.
+
+Paint the FAR layer of that desert, wide (3:2), on plain green (#00FF00) above the shapes so it can be cut out: along the BOTTOM third, long low soft dunes of dark sand seen far away (#6E2E18 to #8C3D1C), a few tiny dark seated silhouettes of damned souls scattered on them, and on the far RIGHT a thin tall waterfall of a boiling red river (#B8321E with a brighter core #E8642A) falling from high cliffs that fade into the haze. The dunes are a little higher on the LEFT. Nothing in the top half except the green, apart from the waterfall on the right. No outlines, no letters, no frame.
+
+Riferimenti in ordine: art/WB-097/riferimenti/R1_bozza_usurai.png, client/paintings/backgrounds/forgia_medio_2.png
+ImageGen. Un tentativo. PNG nativo da 1536×1024.
+Dune basse con alcune silhouette sedute e Flegetonte sul lato destro.
+Verde campionato: #03F908, diverso da #00FF00 esatto.

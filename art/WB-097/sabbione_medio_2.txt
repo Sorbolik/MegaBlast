@@ -1,0 +1,8 @@
+Image 1 is a rough draft of a minigame of our game set on a burning desert of sand in hell under a rain of fire. Image 2 is one background layer of our game: copy its HAND and its TONES exactly: no black outline at all, big simple flat shapes with soft gradients, few details, dark and desaturated colors.
+
+Paint the MIDDLE layer of that desert, wide (3:2), on plain green (#00FF00) so it can be cut out: on the far LEFT a tall broken rock spire of dark red stone (#5A2A1C to #7C3A22) with the warm orange glow of the fire on its edge; on the far RIGHT the edge of a tall dark cliff with a red stream of boiling water running down it. A few dead branches of burnt shrubs at the bottom corners. The whole middle of the image, from left to right and from top to bottom, stays EMPTY green: the targets and the flight of the drop go there. No outlines, no characters, no letters.
+
+Riferimenti in ordine: art/WB-097/riferimenti/R1_bozza_usurai.png, client/paintings/backgrounds/forgia_medio_2.png
+ImageGen. Un tentativo. PNG nativo da 1536×1024.
+Margini rocciosi con un centro libero e una massa rocciosa più larga alla base.
+Verde campionato: #03FB05, diverso da #00FF00 esatto.

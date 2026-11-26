@@ -1,6 +1,7 @@
 # La Fornace: tre colate da 3 su 3 (4 tiri ciascuna, con prova_fornace_centra ogni tiro va
 # nello stampo vuoto più vicino) riempiono i 12 stampi del muro: il JACKPOT, la medaglia la
-# prima volta, il riepilogo della colata; COLA ANCORA dal riepilogo (SPARA, rt) e CHIUDI (b).
+# prima volta, il riepilogo della colata; COLA ANCORA dal riepilogo (SPARA, rt) e INCASSA (b):
+# il bancone si svuota nel portafoglio solo lì.
 # Dopo il jackpot in vetrina c'è il secondo muro del giorno (MURO 2 DI 3, premi x1,25).
 imposta prova_test prova
 imposta prova_fornace_centra 1
@@ -22,10 +23,12 @@ foto 01_sigillati
 trascina 300 300 330 380 0.4
 aspetta 9
 foto 02_riepilogo
-pad rt                              # COLA ANCORA: resta sul muro, le gemme nel mestolo
+pad rt                              # COLA ANCORA: prima incassa il bancone, poi resta sul muro e le gemme nel mestolo
 aspetta 0.8
+foto 02a_incassa_prima_di_colare
+aspetta 2.5
 foto 02b_cola_ancora_le_gemme
-aspetta 9.2
+aspetta 11
 trascina 300 300 330 380 0.4
 aspetta 9
 trascina 300 300 330 380 0.4
@@ -33,9 +36,9 @@ aspetta 9
 trascina 300 300 330 380 0.4
 aspetta 9
 trascina 300 300 330 380 0.4
-aspetta 9
+aspetta 14
 pad rt                              # COLA ANCORA
-aspetta 10
+aspetta 15
 trascina 300 300 330 380 0.4
 aspetta 9
 trascina 300 300 330 380 0.4
@@ -90,6 +93,8 @@ foto 04_jackpot_22
 aspetta 0.25
 aspetta 3.5
 foto 05_riepilogo_col_jackpot
-pad b                               # CHIUDI
-aspetta 3
+pad b                               # INCASSA: i mucchi caduti volano nel portafoglio
+aspetta 0.5
+foto 05b_incassa
+aspetta 5
 foto 06_muro_2_in_vetrina

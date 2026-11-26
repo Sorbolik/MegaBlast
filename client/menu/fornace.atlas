@@ -1,11 +1,59 @@
 images {
+  image: "/assets/fornace/argine.png"
+}
+images {
+  image: "/assets/fornace/asse.png"
+}
+images {
+  image: "/assets/fornace/asse_dx.png"
+}
+images {
+  image: "/assets/fornace/asse_rotta_dx.png"
+}
+images {
+  image: "/assets/fornace/asse_rotta_sx.png"
+}
+images {
+  image: "/assets/fornace/asse_sx.png"
+}
+images {
   image: "/assets/fornace/catena.png"
+}
+images {
+  image: "/assets/fornace/cavalletto.png"
 }
 images {
   image: "/assets/fornace/coperchio_grandi.png"
 }
 images {
   image: "/assets/fornace/coperchio_piccoli.png"
+}
+images {
+  image: "/assets/fornace/cordino_corto.png"
+}
+images {
+  image: "/assets/fornace/cordino_corto_rosso.png"
+}
+images {
+  image: "/assets/fornace/cordino_lungo.png"
+}
+images {
+  image: "/assets/fornace/cordino_lungo_rosso.png"
+}
+images {
+  image: "/assets/fornace/crepa.png"
+}
+images {
+  image: "/assets/fornace/cristalli_1.png"
+}
+images {
+  image: "/assets/fornace/cristalli_2.png"
+}
+images {
+  image: "/assets/fornace/cristalli_3.png"
+}
+images {
+  image: "/assets/fornace/falda.png"
 }
 images {
   image: "/assets/fornace/fiammata_1.png"
@@ -20,6 +68,15 @@ images {
   image: "/assets/fornace/fiammata_4.png"
 }
 images {
+  image: "/assets/fornace/fiocco_1.png"
+}
+images {
+  image: "/assets/fornace/fiocco_2.png"
+}
+images {
+  image: "/assets/fornace/fiocco_3.png"
+}
+images {
   image: "/assets/fornace/goccia.png"
 }
 images {
@@ -32,22 +89,25 @@ images {
   image: "/assets/fornace/medaglia_rintocchi_6.png"
 }
 images {
-  image: "/assets/fornace/pavimento.png"
+  image: "/assets/fornace/monete_1.png"
+}
+images {
+  image: "/assets/fornace/monete_2.png"
+}
+images {
+  image: "/assets/fornace/monete_3.png"
+}
+images {
+  image: "/assets/fornace/parete.png"
+}
+images {
+  image: "/assets/fornace/perla.png"
+}
+images {
+  image: "/assets/fornace/piolo.png"
 }
 images {
   image: "/assets/fornace/schizzo.png"
-}
-images {
-  image: "/assets/fornace/secchio.png"
-}
-images {
-  image: "/assets/fornace/sponda_piede.png"
-}
-images {
-  image: "/assets/fornace/sponda_tratto_1.png"
-}
-images {
-  image: "/assets/fornace/sponda_tratto_2.png"
 }
 images {
   image: "/assets/fornace/sporgenza.png"
@@ -87,6 +147,27 @@ images {
 }
 images {
   image: "/assets/fornace/stampo_piccoli_vuoti_viola.png"
+}
+images {
+  image: "/assets/fornace/trave.png"
+}
+images {
+  image: "/assets/fornace/trave_dx.png"
+}
+images {
+  image: "/assets/fornace/trave_sx.png"
+}
+images {
+  image: "/assets/fornace/usuraio_paga.png"
+}
+images {
+  image: "/assets/fornace/usuraio_parla.png"
+}
+images {
+  image: "/assets/fornace/usuraio_zitto.png"
+}
+images {
+  image: "/assets/fornace/vaso.png"
 }
 margin: 0
 extrude_borders: 2
