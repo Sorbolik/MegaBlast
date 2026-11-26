@@ -27,6 +27,7 @@ local coins = require "ui.coins"
 local screen = require "ui.screen"
 local scoria = require "battle.scoria"
 local aim = require "battle.aim"
+local hud = require "battle.hud"
 local sticks = require "battle.sticks"
 local controller = require "ui.controller"
 local SP = require "battle.stick_pad"
@@ -98,6 +99,10 @@ local OPEN, GEM_START, GEM_GAP, GEM_FLY, MELT, SHOTS, PAN = 0.75, 0.1, 0.04, 0.4
 -- from the animation editor) and the drop leaves where the ladle is fastest; the
 -- camera follows it as in battle
 local WINDUP = 0.35   -- the camera to the apprentice, when the finger lifts
+-- seconds to aim a throw (Sergio, 25 Nov: «nessuno può avere tutto il tempo del
+-- mondo»): the battle's stopwatch at the bottom; at zero the apprentice throws
+-- where the aim points (never a lost drop: at worst a crooked one)
+local AIM_SECONDS = 10
 local JOIN = 0.12     -- the drop from the bowl onto the rules' path
 local THROW_CAM = { x = 30, y = 40, s = 1.9 }
 -- the molten drop's place in the ladle's bowl (the weapon's units, tools/grafica/armi.py)
@@ -881,6 +886,11 @@ local function start(a, poured)
 	fx.stick = SP.new(SP.AIM_PAD, SP.AIM_IDLE)
 	gui.set_parent(fx.stick.base, fx.hud)
 	gui.set_enabled(fx.stick.base, false)
+	-- the aim's time: the battle's stopwatch, at the bottom in the middle
+	fx.watch = hud.stopwatch(640, (screen.y0 or 0) + 72)
+	gui.set_parent(fx.watch.radice, fx.hud)
+	gui.set_parent(fx.watch.clock, fx.hud)
+	hud.stopwatch_on(fx.watch, false)
 	gui.set_enabled(fx.hud, false)
 	gui.move_above(fx.top, nil)
 	a.melt = nil
@@ -903,6 +913,8 @@ local function to_aim(a)
 	local fx = a.fx
 	fx.phase, fx.t = "aim", 0
 	fx.aiming = false
+	fx.aim_left = AIM_SECONDS
+	if fx.watch then hud.stopwatch_on(fx.watch, true) end
 	pad_off(fx)
 	fx.st.lancio = nil
 	if fx.stick then gui.set_enabled(fx.stick.base, SP.on()) end
@@ -917,6 +929,7 @@ local function close(a)
 	fx.stick = nil
 	if fx.purse then coins.finish(fx.purse); coins.delete(fx.purse); fx.purse = nil end
 	if fx.hud then gui.delete_node(fx.hud); fx.hud = nil end
+	fx.watch = nil
 	-- the effects still going belong to the hud and the wall, which go
 	fx.parts, fx.trembles, fx.timers = nil, nil, nil
 	fx.row, fx.hint = nil, nil
@@ -1277,6 +1290,7 @@ local function throw(a)
 	end
 	-- the finger lifts: the camera comes close to the apprentice, then the swing
 	if fx.stick then gui.set_enabled(fx.stick.base, false) end
+	if fx.watch then hud.stopwatch_on(fx.watch, false) end
 	fx.phase, fx.t = "windup", 0
 	travel(fx, fx.view, THROW_CAM, WINDUP)
 end
@@ -1318,6 +1332,17 @@ local function pad_aim(a)
 		pad_off(fx)
 		aim_off(fx)
 	end
+end
+
+-- the aim's time is up: the apprentice throws where the aim points now (the
+-- last throw's, if this one was never aimed)
+local function time_up(a)
+	local fx = a.fx
+	pad_off(fx)
+	aim_off(fx)
+	fx.aiming, fx.finger = false, false
+	if not fx.angle or not fx.power then fx.angle, fx.power = math.rad(40), 0.4 end
+	throw(a)
 end
 
 local function draw_aim(a)
@@ -1484,7 +1509,8 @@ function M.update(a, dt)
 		if moved then
 			-- the hint, the first time
 			if f.colate <= 2 and f.lanci == 0 and not fx.hint then
-				fx.hint = empty(fx.hud, 640, (screen.y0 or 0) + 40)
+				-- (at the top: the bottom is the stopwatch's)
+				fx.hint = empty(fx.hud, 640, (screen.y1 or 720) - 104)
 				local g = { node = fx.hint, ox = 0, oy = 0 }
 				-- with a controller, its stick and its SPARA button
 				local c = controller.current_value
@@ -1498,6 +1524,9 @@ function M.update(a, dt)
 	elseif fx.phase == "aim" then
 		pad_aim(a)
 		if fx.aiming or fx.pad or (fx.stick and fx.stick.id and fx.thumb_st.active) then draw_aim(a) end
+		fx.aim_left = fx.aim_left - dt
+		if fx.watch then hud.stopwatch_update(fx.watch, dt, "turno", math.max(0, fx.aim_left), AIM_SECONDS, nil, "") end
+		if fx.aim_left <= 0 then time_up(a) end
 	elseif fx.phase == "windup" then
 		-- close on the apprentice: the throw clip starts (it ends with the drop away)
 		if moved then

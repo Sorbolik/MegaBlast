@@ -280,6 +280,12 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
   **COLA ANCORA resta sul muro** (Sergio, 25 nov: «non c'è bisogno di uscire e rientrare»): paga
   e le gemme volano nel mestolo come a ogni colata, senza tornare alla vetrina (se intanto alle 5
   è arrivato il muro nuovo, il riepilogo si chiude sulla vetrina).
+- **Dieci secondi per mirare** (Sergio, 25 nov: «nessuno può avere tutto il tempo del mondo per
+  prendere la mira», scelta A): a ogni tiro il cronometro della battaglia in basso al centro (lo
+  stesso pezzo, `battle/hud.lua`); a zero l'apprendista tira da solo dove punta la mira (quella del
+  tiro prima se non hai mirato): il tiro non si perde mai, al massimo va storto. Scartati il conto
+  3-2-1 senza cronometro e la goccia persa allo scadere. È solo del telefono: le regole e il server
+  non cambiano. La scritta che spiega la mira, le prime volte, sale in alto.
 - **La colata va come una partita** (Sergio, 25 nov: «sensibile al calo degli FPS»): dallo zoom
   d'entrata a quello d'uscita il telefono va al massimo dello schermo (90/120 Hz), non ai 60 dei
   menù né ai 30 dopo 12 secondi senza tocchi (`forge_ui.busy`, `main/phone.lua`). La mira calcola
