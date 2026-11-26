@@ -1,0 +1,28 @@
+# Le anteprime delle mappe dove appaiono (Sergio, 26 nov: dopo il ferro nuovo non
+# rispecchiavano la mappa): le cartoline dell'ALLENAMENTO, le carte delle missioni della
+# CAMPAGNA e le miniature della CRONOLOGIA del profilo.
+imposta prova_profilo 1
+imposta prova_vignette no
+aspetta 4
+tocca_bordo 220 172 mezzo sinistra    # ALLENAMENTO
+aspetta 1
+foto 01_allenamento
+trascina 1100 328 500 328 0.6         # la fila scorre: la Forgia e la Fossa
+aspetta 0.5
+foto 02_allenamento_forgia_fossa
+tocca 36 60                           # indietro
+aspetta_stato modo=menu 3
+aspetta 1
+tocca_bordo 220 294 mezzo sinistra    # CAMPAGNA
+aspetta 1
+foto 03_campagna
+tocca 740 596                         # LA FORGIA
+aspetta 0.6
+foto 04_campagna_forgia
+tocca 36 60                           # indietro
+aspetta 1.5
+tocca_bordo 120 56 alto sinistra      # il tondo del profilo
+aspetta 1.5
+tocca_bordo 684 53 alto sinistra      # CRONOLOGIA PARTITE
+aspetta 0.8
+foto 05_cronologia

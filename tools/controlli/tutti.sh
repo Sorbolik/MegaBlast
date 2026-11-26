@@ -35,6 +35,7 @@ passo "massimi delle statistiche" luajit tools/statistiche/massimi.lua --control
 passo "tempi dell'economia" luajit tools/economia/conti.lua --controlla
 passo "menu dal kit (docs/ui-catalogo.md)" python3 tools/controlli/controlla_kit.py
 passo "miniature delle missioni" python3 tools/grafica/miniature_missioni.py --controlla
+passo "cartoline delle mappe" python3 tools/grafica/miniature_mappe.py --controlla
 passo "go vet" go vet ./...
 passo "gofmt" bash -c 'f=$(gofmt -l server simfs.go); [ -z "$f" ] || { echo "da formattare con gofmt -w: $f"; false; }'
 passo "go test ./server/" go test ./server/
