@@ -29,7 +29,7 @@ coroutine debug io math os package string table bit jit ffi arg""".split())
 DEFOLD = set("""go gui msg vmath sys hash hash_to_hex pprint timer sound window render resource
 buffer json http socket crash profiler image zlib html5 label sprite physics factory
 collectionfactory particlefx tilemap model camera collectionproxy b2d liveupdate graphics
-font iac iap push webview websocket vibra""".split())
+font iac iap push webview websocket vibra pensiero""".split())
 
 # Le funzioni che Defold chiama in un .script / .gui_script / .render_script
 CICLO = set("init final update fixed_update late_update on_message on_input on_reload".split())

@@ -42,7 +42,7 @@ local ch = {
 	end,
 }
 local loaded = {}
-pensiero = {
+rawset(_G, "pensiero", {
 	avvia = function(src, main)
 		for k in pairs(src) do loaded[#loaded + 1] = k end
 		worker = coroutine.create(function() require(main).run(ch) end)
@@ -57,7 +57,7 @@ pensiero = {
 		pump(100000)
 		return table.remove(outbox, 1)
 	end,
-}
+})
 sys = { load_resource = function(path)
 	local f = io.open("client" .. path, "rb")
 	if not f then return nil end
