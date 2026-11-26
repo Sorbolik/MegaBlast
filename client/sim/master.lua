@@ -26,7 +26,9 @@
 -- It thinks a little at a time like the bot (bot.work: the copies' ticks and
 -- the thinking of their bots count), so the phone doesn't stop a frame.
 
-local bot = require "sim.bot"
+-- sim/bot.lua requires this module when it makes a MAESTRO: this one takes it
+-- when first used (bob refuses a circular require, as the Defold editor does)
+local bot
 local rng = require "sim.rng"
 
 local M = {}
@@ -61,6 +63,7 @@ local CELLS_PER_WORK = 400
 -- the match's generator changed with seed s (the coming crates aren't known)
 -- and the crates on the ground with nothing inside, like the bot's copies
 function M.copy(g, s, b)
+	bot = bot or package.loaded["sim.bot"]
 	local c = deep(g, {})
 	local t = g.terrain:blank()
 	local n = g.terrain.w * g.terrain.h
@@ -207,6 +210,7 @@ end
 local DEFAULTS = { candidate = 2, semi = 1, turni = 2, giri = 1, vita = 0.5, max_tick = 6000 }
 
 function M.chooser(opts)
+	bot = bot or package.loaded["sim.bot"]
 	local o = {}
 	for k, v in pairs(DEFAULTS) do o[k] = v end
 	for k, v in pairs(opts or {}) do o[k] = v end
