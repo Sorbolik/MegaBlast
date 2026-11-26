@@ -99,9 +99,12 @@ M.GRADES = {
 -- esplora: chance of picking on purpose one of the moves after the best;
 -- cassa: what taking a crate is worth (in match points), plus cassa_fame
 -- for each shot that robot is short of HUNGER (crate primaries and chosen
--- secondary: whoever runs dry wants it more).
+-- secondary: whoever runs dry wants it more); tiro_minimo: a weapon shot
+-- worth this much or less is not fired (it would hit only walls), the bot
+-- takes cover instead; tiro_primo: the same for the turn's first attack,
+-- lower (a harmless shot ends the turn sooner).
 M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 100, globo_riparo = 3,
-	cassa = 12, cassa_fame = 8 }
+	cassa = 12, cassa_fame = 8, tiro_minimo = 1, tiro_primo = -1 }
 
 -- Personalities: how a bot plays, besides its level (how good it is). They
 -- are only weights different from M.PESI, so the bot doesn't cheat: it always
@@ -515,7 +518,8 @@ local function value(b, g, w)
 			end
 		end
 	end
-	return s + casse(b, g, w) + peril(b, g, w, PERIL_ATTACK)
+	-- the second value: the hits alone (points and life), without crates and hazard
+	return s + casse(b, g, w) + peril(b, g, w, PERIL_ATTACK), s
 end
 
 -- Distance from the enemy nearest to (x, y): for the same damage, a shot
@@ -596,8 +600,9 @@ function M.hits(g, wpn, ang, out)
 end
 
 -- Tries an attack from the spot. fino: "volo" (only the shots) or "tutto"
--- (until everything is still). Returns the score, and whether it changed
--- anything that counts (points, crates, robots moved: value ~= 0).
+-- (until everything is still). Returns the score, whether it changed
+-- anything that counts (points, crates, robots moved: value ~= 0) and what
+-- the hits alone are worth (nil with the net).
 local function try_move(b, g, spot, wpn, ang, pow, fino)
 	local w = scratch(b, "move", g)
 	w.score = b.pesi.punteggio or g.score
@@ -611,7 +616,7 @@ local function try_move(b, g, spot, wpn, ang, pow, fino)
 	else
 		until_quiet(b, w, fino == "volo" and 90 or 5 * 60)
 	end
-	local s = value(b, g, w)
+	local s, hit = value(b, g, w)
 	local counts = s ~= 0
 	if s == 0 and not b.pesi.rete then
 		-- nothing hit: what counts is where it burst
@@ -620,7 +625,7 @@ local function try_move(b, g, spot, wpn, ang, pow, fino)
 		end
 		s = nearness(g, g.robots[b.id], px, py)
 	end
-	return s, counts
+	return s, counts, hit
 end
 
 -- The Grapple on enemy number who, then the best shot with the weapons in
@@ -721,12 +726,12 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 	local cy = y + game.DISEGNO_H / 2
 	local targets = enemies(g, me, x, y)
 	local function add(wpn, a, p, fino)
-		local s, counts = try_move(b, g, spot, wpn, a, p, fino)
+		local s, counts, hit = try_move(b, g, spot, wpn, a, p, fino)
 		-- the Molla only if it does something (it isn't an attack: no aiming at nothing)
 		if wpn == "trampoline" and not (counts and s > 0) then return end
 		s = taste(b, wpn, s)
 		moves[#moves + 1] = { posto = spot, arma = wpn, ang = a, potenza = p, punti = s - (spot.n or 0) * b.pesi.strada,
-			k = #moves + 1 }
+			colpo = hit, k = #moves + 1 }
 	end
 	for k, o in ipairs(targets) do
 		if k > 2 then break end
@@ -931,8 +936,28 @@ local function missing_angle(b, g, m)
 	return m.ang + 0.8
 end
 
+-- the arcs (degrees above the horizon) of the harmless shot that ends a turn
+-- with nothing worth attacking
+local SAFE_ARCS = { 30, 50, 70 }
+
+-- Is move m worth firing? Tools, the orb and the plan's forced attacks always,
+-- and every attack of the bots that must attack anyway (the tutorial's
+-- teacher, who misses on purpose, and the plan attacca_entro, which earns the
+-- orbs by attacking); a weapon only if it earns more than pesi.tiro_minimo.
+-- The turn's first attack, though, is fired if it only harms nobody of its
+-- own side (more than pesi.tiro_primo): it ends the turn sooner instead of
+-- making the others wait for the timer (Sergio, 25 Nov 2026)
+local function worth_firing(b, g, m)
+	if not m or not m.arma or m.forced or game.TOOLS[m.arma] or m.arma == "teleport" then return true end
+	if b.liv.manca or (b.piano and b.piano.attacca_entro) then return true end
+	-- the hits alone (m.colpo): crates and the map's hazard are worth the same without the shot
+	local first = not (g.used.primary or g.used.secondary)
+	return (m.colpo or m.punti or 0) > (first and b.pesi.tiro_primo or b.pesi.tiro_minimo)
+end
+
 -- The thinking: picks the move of the moment. Puts the best found so far in
 -- b.scelta, so if time runs short that one is used.
+local with_reply
 local function think(b, g)
 	local me = g.robots[b.id]
 	b.peril = hazards.risk(g)
@@ -983,11 +1008,23 @@ local function think(b, g)
 	for i = 1, math.min(FINALISTS, #moves) do
 		local m = moves[i]
 		if m.arma ~= "hook" then
-			m.punti = taste(b, m.arma, try_move(b, g, m.posto, m.arma, m.ang, m.potenza, "tutto")) - (m.posto.n or 0) * b.pesi.strada
+			local s, _, hit = try_move(b, g, m.posto, m.arma, m.ang, m.potenza, "tutto")
+			m.punti, m.colpo = taste(b, m.arma, s) - (m.posto.n or 0) * b.pesi.strada, hit
 		end
 	end
 	table.sort(moves, ranks_before)
 	b.scelta = moves[1]
+	-- arena only (pesi.risposta = K; Sergio, 25 Nov: how much is seeing the
+	-- future worth?): the best K moves are judged after the next enemy's
+	-- reply, played on the copy by a bot with the same weights
+	if b.pesi.risposta then
+		for i = 1, math.min(b.pesi.risposta, #moves) do
+			local m = moves[i]
+			if m.arma ~= "hook" then m.punti = with_reply(b, g, m) - (m.posto.n or 0) * b.pesi.strada end
+		end
+		table.sort(moves, ranks_before)
+		b.scelta = moves[1]
+	end
 
 	-- if there is nothing good on foot, the teleport to a better spot
 	-- (not with plan poi = "teletrasporto": the orb is for fleeing)
@@ -1025,6 +1062,38 @@ local function think(b, g)
 		if m.punti >= math.min(0, moves[1].punti) then b.scelta = m end
 	end
 
+	-- a shot worth nothing (it hits nobody, or only its own side) is not fired:
+	-- the bots were shooting into walls (Sergio, 25 Nov 2026); they take
+	-- cover instead (worth_firing: the first attack only if it is harmless)
+	if not worth_firing(b, g, b.scelta) then b.scelta = nil end
+	-- nothing worth it and no attack yet this turn: a harmless shot towards the
+	-- nearest enemy from where it stands, so the turn ends sooner instead of
+	-- making the others wait for the timer (tried on the copy)
+	if not b.scelta and not plan and not (g.used.primary or g.used.secondary) and #list > 0 then
+		local o = enemies(g, me, me.x, me.y)[1]
+		if o then
+			-- straight at it, then higher and higher arcs on its side
+			local a0 = math.atan2(o.y + game.HURT_Y - (me.y + game.DISEGNO_H / 2), o.x - me.x)
+			local side = o.x < me.x and math.pi or 0
+			local tries = { { a0, 1 } }
+			for _, deg in ipairs(SAFE_ARCS) do
+				local up = math.rad(deg)
+				tries[#tries + 1] = { side == 0 and up or math.pi - up, 1 }
+				tries[#tries + 1] = { side == 0 and up or math.pi - up, 0.6 }
+			end
+			for k = 1, math.min(2, #list) do
+				for _, t in ipairs(tries) do
+					local pts, _, hit = try_move(b, g, spots[1], list[k], t[1], t[2], "tutto")
+					if (hit or pts) > b.pesi.tiro_primo then
+						b.scelta = { posto = spots[1], arma = list[k], ang = t[1], potenza = t[2], punti = pts, forced = true }
+						break
+					end
+				end
+				if b.scelta then break end
+			end
+		end
+	end
+
 	-- plan due_attacchi: if the weapon left reaches the enemy from no spot,
 	-- get as close as possible and use it anyway
 	if not b.scelta and plan and plan.due_attacchi and #list > 0 then
@@ -1035,7 +1104,7 @@ local function think(b, g)
 				if math.abs(p.x - o.x) < math.abs(near.x - o.x) then near = p end
 			end
 			local a = math.atan2(o.y + game.HURT_Y - (near.y + game.DISEGNO_H / 2), o.x - near.x)
-			b.scelta = { posto = near, arma = list[#list], ang = a, potenza = 1, punti = 0 }
+			b.scelta = { posto = near, arma = list[#list], ang = a, potenza = 1, punti = 0, forced = true }
 		end
 	end
 
@@ -1044,6 +1113,45 @@ local function think(b, g)
 	if overrides.manca and m and not game.TOOLS[m.arma] and b.attacks % 2 == 0 then
 		m.ang = missing_angle(b, g, m)
 	end
+end
+
+-- The move m on a copy, then the next enemy's turn as a bot with the same
+-- weights would play it (thinking without limits): what it is all worth
+local function fire_on(w, id, m)
+	at_spot(w, id, m.posto)
+	local fire = { weapon = m.arma, angle = m.ang, power = m.potenza }
+	if game.TOOLS[m.arma] then w:use_tool(m.arma, fire) else w:attack(m.arma, fire) end
+end
+
+with_reply = function(b, g, m)
+	local w = M.world(g)
+	w.score = b.pesi.punteggio or g.score
+	fire_on(w, b.id, m)
+	until_quiet(b, w, 5 * 60)
+	local team, e = g.robots[b.id].team, nil
+	for k = 1, #w.order do
+		local id = w.order[(w.order_pos + k - 1) % #w.order + 1]
+		local r = w.robots[id]
+		if r and not r.dead and r.team ~= team then
+			e = id
+			break
+		end
+	end
+	if not e then return (value(b, g, w)) end
+	w.current, w.phase, w.timer, w.window = e, "aim", game.TURN_TICKS, 0
+	w.used = { primary = false, secondary = false, tool = false }
+	local ob = M.new(e, b.livello, 1, b.pesi)
+	ob.pesi.risposta = nil
+	ob.liv = copy(ob.liv)
+	ob.liv.lavoro = math.huge
+	ob.inizio = w.tick
+	think(ob, w)
+	local s = ob.scelta
+	if not s or s.arma == "teleport" then return (value(b, g, w)) end
+	local w2 = M.world(w)
+	fire_on(w2, e, s)
+	until_quiet(b, w2, 5 * 60)
+	return (value(b, g, w2))
 end
 
 -- Cover: once the attacks are over, the time left is used to get safe from
@@ -1161,6 +1269,11 @@ function M.new(id, livello, seed, weights, personality)
 		if k ~= "piano" then p[k] = v end
 	end
 	for k, v in pairs(weights or {}) do p[k] = v end
+	-- arena only: pesi.liv changes the level's numbers (mira = 0: perfect aim)
+	if p.liv then
+		overrides = copy(overrides)
+		for k, v in pairs(p.liv) do overrides[k] = v end
+	end
 	-- own_plan: the personality's plan, for the turns that have no other
 	return { id = id, livello = livello, liv = overrides, pesi = p, rng = generator((seed or 1) * 7919 + id), lavoro = 0,
 		attacks = 0, own_plan = feat.piano }
@@ -1274,6 +1387,11 @@ function M.input(b, g)
 		-- arrived: the shot, with the level's error
 		if not g:can_use(s.arma) then
 			rethink(b, 10)
+			return IDLE
+		end
+		-- the best move found when time ran short may be worth nothing
+		if not worth_firing(b, g, s) then
+			enough(b)
 			return IDLE
 		end
 		local a = s.ang + noise(b) * b.liv.mira
