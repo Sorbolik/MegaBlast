@@ -18,6 +18,7 @@ python3 tools/arena/arena.py --partite 300 --pesi due.lua --assegna turno   # du
 python3 tools/arena/evolvi.py                                  # specialisti del bot del gioco, senza fine
 python3 tools/arena/impara.py                                  # bot con rete neurale che imparano a gradiente, senza fine
 python3 tools/arena/trovate.py simulazione/arena/evolvi        # video e pagina delle trovate dei bot
+python3 tools/arena/maestro.py                                 # maestro e allievo: rollout e correzione imparata, senza fine
 ```
 
 `variante.lua` restituisce una tabella come `config.SCORE` (`return { damage = 1, kill = 60, ... }`):
@@ -74,6 +75,31 @@ strumenti finiscono nel gioco: il gioco usa il bot euristico.
 
 Serve luajit (sul PC di Windows: `luajit.exe` nel PATH, o `--luajit C:\percorso\luajit.exe`).
 Il video usa il simulatore (`tools/simula`), quindi solo su Linux.
+
+## Maestro e allievo
+
+```bash
+python tools/arena/maestro.py                 # la notte: cicli senza fine, riparte da dov'era
+python tools/arena/maestro.py --cicli 1 --partite 30 --esame 120   # prova breve
+python tools/arena/maestro.py --solo-esame simulazione/arena/maestro/migliore.lua
+```
+
+Un altro modo di allenare, invece di numeri a caso giudicati su partite intere (lì il caso
+copre differenze di qualche punto). Il Maestro (`maestro.lua`) è il bot del gioco che, a ogni
+scelta (attacco e riparo), prende le sue migliori candidate (`b.scegli` in `client/sim/bot.lua`),
+copia la partita intera e gioca avanti il resto del giro con tutti i bot, più volte con semi
+diversi (gli stessi per ogni candidata), e tiene quella che lascia la squadra più avanti in
+punti più metà della vita di differenza (`--vita`). È il rollout del backgammon.
+
+Le sue vittorie contro il bot di oggi dicono quanto rende pensare meglio, anche mappa per mappa
+(il tetto di bravura: dove resta vicino al 50% decide il caso). Le sue scelte, con le
+caratteristiche della posizione dopo ogni candidata, insegnano all'allievo una correzione
+(`pesi.correzione` per l'attacco, `pesi.riparo` per il riparo: venti numeri ciascuna, ridge
+dentro ogni scelta). L'allievo è il bot del gioco con quei numeri, senza rollout: si esamina
+contro il bot di oggi a coppie, e se fa meglio del migliore il ciclo dopo il Maestro sceglie e
+gioca avanti con lui (expert iteration). Esce `simulazione/arena/maestro/`: `maestro.md`,
+`stato.json`, `migliore.lua`, `ciclo_N/`. Una partita del Maestro dura qualche minuto (circa
+20 rollout a scelta): sui 16 core del PC fa circa un ciclo ogni mezz'ora.
 
 ## Turni delle persone
 
