@@ -88,7 +88,7 @@ function M.from_finger(dx, dy, s)
 end
 -- the aim stick's power (battle/sticks.lua: f from 0 to 1)
 function M.stick_power(f)
-	return max(0.1, f ^ game.AIM_EXPONENT)
+	return max(0.1, game.ipow(f, game.AIM_EXPONENT))
 end
 
 -- Whole degrees as the player reads them

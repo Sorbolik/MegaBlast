@@ -263,7 +263,9 @@ nel gioco non cambia niente").
 Il bot (`client/sim/bot.lua`) preme gli stessi tasti di un giocatore e pensa
 provando le mosse su copie della partita (`bot.world`, `game:advance`): se
 cambi la fisica il bot la segue da solo. Deve restare deterministico: niente tempo vero,
-niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio.
+niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio, niente `^` nella
+simulazione (`x * x` o `game.ipow`: l'interprete e il JIT di LuaJIT non danno la stessa ultima
+cifra); lo controlla `tools/confronta/identica.py` in `tutti.sh`.
 Ogni partita ha la sua ricetta (`client/sim/replay.lua`) con le impronte dello
 stato: rigiocandola devono tornare tutte. L'arena (`tools/arena/`, vedi il
 README) fa giocare i bot tra loro su tutti i core e scrive il rapporto per il
