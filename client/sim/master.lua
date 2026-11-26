@@ -20,7 +20,9 @@
 -- the copies don't touch the match), log(choice) for the arena's data, libero
 -- (the arena's teacher: thinks without the work cap, all in one tick), primo
 -- (seconds: only the turn's first attack, if at least that much turn is left),
--- tempo (seconds: no rollout with less time than this left to play).
+-- tempo (seconds: no rollout with less time than this left to play), corto
+-- (on the copy the turn ends as soon as the move has come to rest), stima
+-- (the units a rollout costs, about: none if the time left isn't enough).
 -- It thinks a little at a time like the bot (bot.work: the copies' ticks and
 -- the thinking of their bots count), so the phone doesn't stop a frame.
 
@@ -133,6 +135,10 @@ local function rollout(G, b, m, s, o, ref)
 			local l = {}
 			for kk, v in pairs(x.liv) do l[kk] = v end
 			l.walk_ticks, l.powers = math.min(l.walk_ticks, 120), 2
+			-- leggero 2: much less (a short walk, one power, no orb nor Grapple)
+			if o.leggero == 2 then l.walk_ticks, l.powers, l.teletrasporto, l.rampino = 60, 1, false, false end
+			-- leggero 3: the same search on foot, but no orb nor Grapple
+			if o.leggero == 3 then l.teletrasporto, l.rampino = false, false end
 			x.liv = l
 		end
 		bots[k] = x
@@ -157,8 +163,18 @@ local function rollout(G, b, m, s, o, ref)
 		-- counts it once more: it is only for measuring)
 		if not o.libero then bot.work(b, STEP_WORK + (bot.totale or 0) - before) end
 		if rb.stato ~= "pensa" then moved = true end
-		if o.log and not x and (G.current ~= me or (moved and (rb.stato == "fine" or rb.stato == "pensa") and bot.quiet(G))) then
+		local rest = G.current ~= me or (moved and (rb.stato == "fine" or rb.stato == "pensa") and bot.quiet(G))
+		if o.log and not x and rest then
 			x = rounded(bot.caratteristiche({ id = me }, ref, G, {}))
+		end
+		-- corto: once the move has come to rest the turn ends there (the rest of
+		-- it isn't played: half the work, the enemy's reply is what counts)
+		if o.corto and rest and G.current == me and G.phase == "aim" then G.timer = 0 end
+		-- and the enemy's reply ends with its first attack, once all is still
+		if o.corto and G.current ~= me and turns > 0 then
+			local eb = bots[G.current]
+			if eb.stato == "aspetta" then eb.fired = true end
+			if eb.fired and eb.stato ~= "aspetta" and bot.quiet(G) then break end
 		end
 		if (o.turni > 0 and turns >= o.turni) or (o.turni == 0 and rounds >= o.giri) then break end
 	end
@@ -208,6 +224,12 @@ function M.chooser(opts)
 		local cands = different(all, o.candidate)
 		local n = #cands
 		if n <= 1 then return cands[1] end
+		-- stima (units a rollout costs): not if the time left to play isn't enough
+		-- to think them all at the bot's pace (it would stand still, then play worse)
+		if o.stima and not o.libero then
+			local need = n * o.semi * o.stima / b.liv.lavoro + 60
+			if (g.window > 0 and g.window or g.timer) < need then return cands[1] end
+		end
 		local team = g.robots[b.id].team
 		-- one copy now: g goes on ticking while the Maestro thinks
 		b.libero = o.libero

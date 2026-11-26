@@ -109,9 +109,9 @@ local scelte -- le scelte della partita, per --dati
 
 local function maestro(team_m)
 	return master.chooser({ candidate = opt.candidate, semi = opt.semi, turni = opt.turni, giri = opt.giri,
-		vita = opt.vita, max_tick = opt.max_tick, leggero = opt.leggero == 1, solo = opt.solo, finto = opt.finto == 1,
+		vita = opt.vita, max_tick = opt.max_tick, leggero = (opt.leggero or 0) > 0 and opt.leggero or nil, solo = opt.solo, finto = opt.finto == 1,
 		libero = opt.limiti ~= 1,
-		primo = opt.primo, tempo = opt.tempo,
+		primo = opt.primo, tempo = opt.tempo, corto = opt.corto == 1,
 		-- nei rollout la squadra del Maestro gioca con l'allievo, gli altri col grado che crede (--modello)
 		grado = function(team)
 			if team == team_m then return opt.grado, ALLIEVO end
