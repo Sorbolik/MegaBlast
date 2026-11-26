@@ -231,6 +231,17 @@ M.MAX_SETTLE_TICKS = 5 * 60
 -- grows with exponent AIM_EXPONENT (2: quadratic, more precise on short shots).
 M.AIM_DEADZONE = 0.2
 M.AIM_EXPONENT = 2
+
+-- x to the whole power n (n >= 0), by multiplying. The simulation never uses ^:
+-- LuaJIT computes x ^ n with pow() in the interpreter and by multiplying in the
+-- compiled code (older versions), and the last digit can differ, so the same
+-- match came out different by how much of it got compiled (Sergio's PC, 26 Nov:
+-- registra.lua with CRLF line ends). tools/confronta/identica.py checks it.
+function M.ipow(x, n)
+	local out = 1
+	for _ = 1, n do out = out * x end
+	return out
+end
 -- how much of the gap between aim and finger is recovered each frame (at 60 Hz); 1 = at once
 M.AIM_SMOOTH = 0.2
 -- Short jump (like Hollow Knight): releasing jump while rising multiplies the
@@ -247,7 +258,7 @@ M.JUMP_BUFFER_TICKS = 6
 function M.aim_power(f)
 	f = math.max(0, math.min(1, f))
 	if M.AIM_DEADZONE > 0 then f = math.max(0, (f - M.AIM_DEADZONE) / (1 - M.AIM_DEADZONE)) end
-	return math.max(0.1, f ^ M.AIM_EXPONENT)
+	return math.max(0.1, M.ipow(f, M.AIM_EXPONENT))
 end
 
 local NO_INPUT = {}
@@ -909,7 +920,8 @@ local function start_unevenness(placed)
 		local best = math.huge
 		for _, o in ipairs(placed) do
 			if o.team ~= p.team then
-				best = math.min(best, math.sqrt((p.x - o.x) ^ 2 + (p.y - o.y) ^ 2))
+				local dx, dy = p.x - o.x, p.y - o.y
+				best = math.min(best, math.sqrt(dx * dx + dy * dy))
 			end
 		end
 		sum[p.team], n[p.team] = (sum[p.team] or 0) + best, (n[p.team] or 0) + 1
@@ -1726,10 +1738,14 @@ end
 -- One tick of flight: it starts fast and slows down (drag), gravity grows
 -- little by little up to drop times the robots' gravity in drop_ramp seconds,
 -- so at first it goes almost straight and then drops more and more
+-- the speed kept each tick (drag per second to the power DT), computed once per drag;
+-- DT is not whole, so ^ is pow() in the interpreter and in the compiled code alike
+local sniper_drag, sniper_k
 local function sniper_step(gravity, vx, vy, age)
 	local s = C.SNIPER
 	local g = gravity * s.drop * math.min(1, age / (s.drop_ramp * 60))
-	local k = s.drag ^ M.DT
+	if sniper_drag ~= s.drag then sniper_drag, sniper_k = s.drag, s.drag ^ M.DT end -- pow ok
+	local k = sniper_k
 	return vx * k, (vy - g * M.DT) * k
 end
 
@@ -1752,7 +1768,7 @@ function M:update_sniper(p)
 			p.bounces = p.bounces + 1
 			p.vx, p.vy = bounce(t, nx, ny, p.vx, p.vy)
 			-- too many bounces or almost still: it dies out there
-			if p.bounces > C.SNIPER.bounces or p.vx * p.vx + p.vy * p.vy < C.SNIPER.min_speed ^ 2 then
+			if p.bounces > C.SNIPER.bounces or p.vx * p.vx + p.vy * p.vy < C.SNIPER.min_speed * C.SNIPER.min_speed then
 				self:emit({ type = "sniper_end", x = p.x, y = p.y })
 				self.projectile = nil
 				return
@@ -2599,7 +2615,7 @@ end
 function M:update_lunge(rb)
 	local mx, my = rb.lunge_vx * M.DT, rb.lunge_vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
-	local len = math.sqrt(rb.lunge_vx ^ 2 + rb.lunge_vy ^ 2)
+	local len = math.sqrt(rb.lunge_vx * rb.lunge_vx + rb.lunge_vy * rb.lunge_vy)
 	local ux, uy = rb.lunge_vx / len, rb.lunge_vy / len
 	local stopped = false
 	for _ = 1, steps do
@@ -3031,7 +3047,7 @@ end
 local function spring_vy(b, o)
 	local tr = C.TRAMPOLINE
 	local chain = b.bounced_on == o.id and (b.bounces or 0) or 0
-	local vy = tr.launch_vy * (o.power or 1) * tr.decay ^ chain
+	local vy = tr.launch_vy * (o.power or 1) * M.ipow(tr.decay, chain)
 	if vy < tr.min_vy then return nil end
 	b.bounced_on, b.bounces = o.id, chain + 1
 	return vy
