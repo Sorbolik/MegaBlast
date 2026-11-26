@@ -12,13 +12,15 @@ local function caso(n)
 	return 1 + s % n
 end
 
--- un po' di tabelle e di testi prima di tutto: gli indirizzi si spostano
-SPOSTA = {}
-for i = 1, 1000 + caso(5000) do SPOSTA[i] = { i, tostring(i) .. "x" } end
+-- un po' di tabelle e di testi prima di tutto, tenuti vivi: gli indirizzi si spostano
+-- (rawset: le globali le cambia apposta, globali.py non deve segnalarle)
+local sposta = {}
+for i = 1, 1000 + caso(5000) do sposta[i] = { i, tostring(i) .. "x" } end
+rawset(_G, "caos_sposta", sposta)
 
 local pairs_vero = pairs
 -- pairs con le chiavi in un ordine a caso (ogni chiamata il suo)
-function pairs(t)
+local function pairs_a_caso(t)
 	local mt = getmetatable(t)
 	if mt and mt.__pairs then return pairs_vero(t) end
 	local chiavi = {}
@@ -35,8 +37,9 @@ function pairs(t)
 		return k, t[k]
 	end, t, nil
 end
+rawset(_G, "pairs", pairs_a_caso)
 
 local argomenti = { [0] = "tools/confronta/registra.lua" }
 for i = 2, #arg do argomenti[i - 1] = arg[i] end
-arg = argomenti
-dofile(arg[0])
+rawset(_G, "arg", argomenti)
+dofile(argomenti[0])
