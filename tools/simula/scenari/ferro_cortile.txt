@@ -1,0 +1,10 @@
+# Il ferro del cortile (Sergio, 26 nov: travi in più e piegate, asimmetriche, sui pezzi che
+# c'erano già): tutta la mappa da lontano.
+imposta prova_vignette no
+imposta prova_missione guidata
+imposta zoom 3
+aspetta 2.5
+tocca_bordo 175 52 basso destra                         # AVANTI sulla cartolina
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2
+foto 01_tutta_la_mappa

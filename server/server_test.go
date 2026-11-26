@@ -71,8 +71,9 @@ while g.tick < 3000 do
 	if g.turn_no ~= turn then turn, from, flagged = g.turn_no, g.tick, false; turns = turns + 1 end
 	local acted = g.used.primary or g.used.secondary or g.used.tool
 	-- a bot that stands against the enemy can't always aim at it (random start
-	-- points, 9 Nov): a few such turns are fine, most must end in an attack
-	if not flagged and not acted and g.phase == "aim" and g.tick - from >= 600 then flagged, lazy = true, lazy + 1 end
+	-- points, 9 Nov): a few such turns are fine, most must end in an attack; with the
+	-- iron of 26 Nov they walk longer to find a free line, so 15 s before flagging
+	if not flagged and not acted and g.phase == "aim" and g.tick - from >= 900 then flagged, lazy = true, lazy + 1 end
 end
 end
 assert(lazy * 4 <= turns, "the bots didn't attack in " .. lazy .. " turns of " .. turns)

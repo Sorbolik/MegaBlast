@@ -7,7 +7,7 @@
 import math, random
 from PIL import ImageDraw
 from mondo import T, creste, torri, camini, nubi, poligoni, blocco, mat, LATO
-from scena import W, H, MARGINE, mix, poly, nebbia, Id, trave
+from scena import W, H, MARGINE, mix, poly, nebbia, Id, trave, trave_piegata, fascia
 from dipinto import colora, sfuma_sagome, grade, GRUPPI
 from volume import solido
 from tavole import FORGIA, tinta
@@ -370,6 +370,11 @@ CORTILE = dict(
             (580, 404), (520, 392)]],
     legni=[(50, 330, 130, 24), (1100, 330, 130, 24)] + _assi,
     travi=[(580, 140, 120, 16)],
+    # il ferro sopra i pezzi che ci sono già, asimmetrico (Sergio, 26 nov, proposta A): la mensola
+    # di sinistra dentro il muro, la sporgenza fuori a destra, l'asse bassa di sinistra, quella alta
+    # di destra e il terrazzo di sinistra giù per la rampa fino a metà cortile
+    piegate=[[(50, 330), (180, 330)], [(1280, 380), (1398, 380)], [(250, 410), (360, 410)], [(800, 230), (900, 230)],
+             [(50, 500), (230, 500), (290, 560), (480, 560)]],
     catene=[(500, 0, 362), (730, 0, 362), (640, 0, 140)] + _catene,
 )
 
@@ -383,6 +388,7 @@ def mappa(L=CORTILE):
         out += "".join(selciato(a[0], a[1], b[0] - a[0], rng) for a, b in zip(p, p[1:] + p[:1]) if b[0] - a[0] > 20 and a[1] == b[1])
     out += solido(L["ferro"], FERRO, g, rng)
     out += "".join(legno(*r) for r in L["legni"]) + "".join(trave(*t, M) for t in L["travi"])
+    out += "".join(trave_piegata(p, 16, M) for p in L.get("piegate", []))
     return out + "".join(catena(*q) for q in L["catene"])
 
 
@@ -398,3 +404,5 @@ def maschera(im, L=CORTILE):
         d.polygon([(x * .5 + o, y * .5) for x, y in p], fill="red")
     for x, y, w, h in L["travi"]:
         d.rectangle([x * .5 + o, y * .5, (x + w) * .5 + o - 1, (y + h) * .5 - 1], fill="red")
+    for p in L.get("piegate", []):
+        d.polygon([(x * .5 + o, y * .5) for x, y in fascia(p, 16)[1]], fill="red")
