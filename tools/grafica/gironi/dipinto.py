@@ -6,7 +6,7 @@
 #
 #   piani(g, P) -> cielo, gruppi di piani dello sfondo e piano di gioco, già colorati
 import colorsys, re
-from scena import W, H, mix, hx, Id, trave, nebbia
+from scena import W, H, mix, hx, Id, trave, trave_piegata, nebbia
 from mondo import strati, T
 
 
@@ -84,6 +84,7 @@ def piani(g, P):
                 for k, v in g["mat"].items()}
     g.pop("diavoli", None)
     travi = g.pop("travi", [])
+    piegate = g.pop("piegate", [])
     cielo, gioco, gruppi = "", "", {n: ([], []) for n, _, _ in GRUPPI}
     for nome, s, vel in strati(g, anima=False):
         if nome == "cielo":
@@ -93,7 +94,7 @@ def piani(g, P):
             gs = colora(s, "gioco", P)
             # l'ombra sullo sfondo la fa lo shader del gioco
             gs = re.sub(r'<g filter="url\(#om\d+\)" opacity="[0-9.]+">.*?</g>', "", gs, count=1)
-            gioco = gs + "".join(trave(*t, g["mat"]) for t in travi)
+            gioco = gs + "".join(trave(*t, g["mat"]) for t in travi) + "".join(trave_piegata(p, 16, g["mat"]) for p in piegate)
         elif nome == "particelle":
             pass                                    # le braci le fa lo shader
         elif nome.startswith("nebbia"):

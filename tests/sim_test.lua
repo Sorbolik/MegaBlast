@@ -900,9 +900,9 @@ do
 		run(d, 60)
 		local from_pt = d.robots[1]
 		d.robots[2].x = -1000
-		-- a hole of radius 150 px in the terrain, to have room on all sides
-		d.terrain:carve(640, 400, 150)
-		place(from_pt, 640, 400 - game.ROBOT_H / 2)
+		-- a hole of radius 150 px in the terrain, to have room on all sides (away from the iron)
+		d.terrain:carve(640, 600, 150)
+		place(from_pt, 640, 600 - game.ROBOT_H / 2)
 		local x0, y0 = from_pt.x, from_pt.y
 		d:step({ fire = { angle = math.rad(deg), power = 1, weapon = "eagle" } })
 		run(d, config.EAGLE.recoil_ticks)

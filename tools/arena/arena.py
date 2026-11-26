@@ -44,10 +44,10 @@ def gioca(args):
         blocchi.append((da, q))
         da += q
     extra = []
-    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set", "assegna", "impara"):
+    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set", "assegna", "impara", "eq"):
         v = getattr(args, chiave, None)
         if v:
-            extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi", "ritocchi") else v]
+            extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi", "ritocchi", "eq") else v]
     t0 = time.time()
     processi = []
     for k, (da, q) in enumerate(blocchi):
@@ -260,6 +260,7 @@ def main():
     ap.add_argument("--assegna", help="turno: con --pesi gli individui a turno invece che a caso")
     ap.add_argument("--ritocchi", help="file Lua: function(config, game) che cambia i numeri delle armi (prova)")
     ap.add_argument("--set", help="misto: ogni robot un set completo a caso (o nessuno)")
+    ap.add_argument("--eq", help="ricetta (o eq in Lua): ogni robot vestito come un rivale di quell'equipaggiamento")
     ap.add_argument("--luajit")
     ap.add_argument("--rapporto", help="solo il rapporto da un partite.jsonl già fatto")
     ap.add_argument("--video", type=int, help="il video dell'highlight N")

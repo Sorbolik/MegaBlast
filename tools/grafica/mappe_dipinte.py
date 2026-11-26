@@ -33,7 +33,7 @@ from tavole import FORGIA, LIMBO, LUSSURIA, GOLA, AVARIZIA, IRA, ERESIA, VIOLENZ
 from mondo import blocco, scheggia, fungo, arco                # noqa: E402
 from scena import acqua                                        # noqa: E402
 from volume import forma, solido                               # noqa: E402
-from scena import mix, W, H, MARGINE                                    # noqa: E402
+from scena import mix, W, H, MARGINE, fascia                                    # noqa: E402
 from dipinto import piani, raggi, grade, DEFS, GRUPPI          # noqa: E402
 from temi import TEMI                                          # noqa: E402
 import cortile                                                 # noqa: E402
@@ -68,7 +68,16 @@ SUOLO = [(0, 560), (250, 560), (310, 500), (560, 500), (620, 560), (860, 560), (
          (1280, 760), (0, 760)]
 SOPRA = [scheggia(110, 300, 130, 50), blocco(300, 180, 90, 28), fungo(380, 330, 180, 26, 170, 22),
          scheggia(590, 250, 110, 44), scheggia(690, 410, 100, 40), blocco(960, 230, 140, 38), arco(960, 370, 230, 130, 30, 40)]
-TRAVI = [(400, 140, 140, 16), (740, 330, 130, 16)]
+# la trave in cima spostata a destra di 50 (Sergio, 26 nov: fra lei e l'isola alta di sinistra il
+# diavoletto non passava)
+TRAVI = [(450, 140, 140, 16), (740, 330, 130, 16)]
+# Il ferro sopra i pezzi che ci sono già (Sergio, 26 nov: più piattaforme di ferro, asimmetriche, anche
+# piegate; la linea di sopra di ogni trave, il ferro è alto 16 e sta dentro il pezzo): la Forgia
+# con la proposta A, la fossa con la B. Sopra il ferro si rinasce (client/sim/maps.lua: respawns)
+PIEGATE_FORGIA = [[(300, 180), (390, 180)], [(690, 410), (790, 410)], [(960, 370), (1190, 370)],
+                  [(310, 500), (560, 500), (620, 560), (733, 560)]]
+PIEGATE_FOSSA = [[(110, 300), (240, 300)], [(690, 410), (790, 410)], [(960, 230), (1100, 230)],
+                 [(250, 560), (310, 500), (560, 500), (620, 560), (680, 560)]]
 SX = [(0, 560), (250, 560), (310, 500), (560, 500), (620, 560), (680, 560), (680, 760), (0, 760)]
 DX = [(790, 560), (860, 560), (920, 500), (1280, 500), (1280, 760), (790, 760)]
 
@@ -265,8 +274,8 @@ def lava(r):
 
 
 MAPPE = {
-    "pavimento": dict(FORGIA, isole=[SUOLO] + SOPRA, travi=TRAVI),
-    "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA, travi=TRAVI, sotto=lava),
+    "pavimento": dict(FORGIA, isole=[SUOLO] + SOPRA, travi=TRAVI, piegate=PIEGATE_FORGIA),
+    "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA, travi=TRAVI, sotto=lava, piegate=PIEGATE_FOSSA),
     "limbo": dict(LIMBO, isole=[LIMBO_SUOLO] + LIMBO_SOPRA, travi=[(250, 190, 110, 14), (920, 190, 110, 14)]),
     "lussuria": dict(LUSSURIA, isole=[LUSS_SX, LUSS_DX] + LUSS_SOPRA, travi=[], sopra=None, acciaio=LUSS_SPUNTONI),
     "gola": dict(GOLA, isole=[GOLA_SUOLO] + GOLA_SOPRA, travi=GOLA_TRAVI, sopra=pozze),
@@ -391,6 +400,8 @@ def maschera(g, nome, disegna=None):
             d.rectangle([x * .5 + o, y * .5, (x + w) * .5 + o - 1, (y + h) * .5 - 1], fill="red")
         for p in g.get("acciaio", []):
             d.polygon([(x * .5 + o, y * .5) for x, y in p], fill="red")
+        for p in g.get("piegate", []):
+            d.polygon([(x * .5 + o, y * .5) for x, y in fascia(p, 16)[1]], fill="red")
     os.makedirs(MASCHERE, exist_ok=True)
     im.save(os.path.join(MASCHERE, nome + ".png"))
 
@@ -438,7 +449,7 @@ def fasce_scritte():
 
 def main(solo_hd=False):
     P = TEMI["forgia"]
-    densita = dict(DENSITA_HD) if solo_hd else dict(DENSITA, **DENSITA_HD)
+    densita = dict(DENSITA_HD) if solo_hd else {**DENSITA, **DENSITA_HD}
     for d0 in set(cartella(d) for d in densita):
         for sotto in ("maps", "backgrounds"):
             os.makedirs(os.path.join(d0, sotto), exist_ok=True)

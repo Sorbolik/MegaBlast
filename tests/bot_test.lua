@@ -182,8 +182,8 @@ do
 		while g.turn_no == turn_now and g.tick - start < 40 * 60 do g:step(bot.input(b, g)) end
 		return rb.crates
 	end
-	check(takes(12, -110) >= 1 and takes(12, 110) >= 1, "crates: the bot takes the crate nearby")
-	check(takes(0, -110) == 0, "crates: with pesi.cassa 0 it leaves it")
+	check(takes(12, -80) >= 1 and takes(12, 110) >= 1, "crates: the bot takes the crate nearby")
+	check(takes(0, -80) == 0, "crates: with pesi.cassa 0 it leaves it")
 end
 
 -- The net: sums by hand on a small net (ReLU in the middle, linear output)

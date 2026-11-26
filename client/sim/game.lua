@@ -339,7 +339,7 @@ function M.new(seed, map_id, opts)
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.GRID_W, M.WORLD_H / M.CELL, M.CELL, M.MARGIN_CELLS)
 	map.build(g.terrain, seed)
-	g.spawn_spots = M.find_spawn_spots(g.terrain)
+	g.spawn_spots = map.respawns or M.find_spawn_spots(g.terrain)
 	local players = opts.players or C.MODES["1v1"]
 	assert(#players >= 2 and #players <= M.MAX_PLAYERS, "da 2 a " .. M.MAX_PLAYERS .. " giocatori")
 	g.robots = {}
@@ -810,38 +810,60 @@ function M.find_spawn_spots(t)
 	return #out > 0 and out or nil
 end
 
--- rb's respawn point: random among the free ones, far from living enemies
--- (SPAWN_FAR) and from traps; if there are none, the one furthest from enemies.
--- Without steel points, a random free point.
+-- rb's respawn point (Sergio, 26 November 2026: "può capitare che spawni 10 volte nello stesso
+-- posto"). The map's own points (maps.lua respawns: 12 on the iron of the good maps), else the
+-- steel ones found in the terrain. Every free point gets a weight, like Halo's spawns: none
+-- within SPAWN_FAR of a living enemy (unless no point is that far), more the farther the
+-- nearest enemy (up to SPAWN_CALM), more near a living teammate (SPAWN_MATE), much less near
+-- where rb has just died (SPAWN_GRAVE), never the point it came back on last time; then a draw
+-- weighted by the match generator (client and server agree). Without points, a random free one.
+M.SPAWN_CALM, M.SPAWN_MATE, M.SPAWN_GRAVE = 700, 350, 250
 function M:spawn_spot(rb)
 	local spots = self.spawn_spots
 	if not spots then
 		return self:surface_spot(function(x, gy) return not self:robot_collides(x, gy, rb) end)
 	end
-	local ok, best, best_d = {}, nil, -1
-	for _, s in ipairs(spots) do
-		if not self:robot_collides(s.x, s.y, rb) then
-			local d = math.huge
-			for _, o in ipairs(self.robots) do
-				if o ~= rb and not o.dead and o.team ~= rb.team then
-					local dx, dy = o.x - s.x, o.y - s.y
-					d = math.min(d, math.sqrt(dx * dx + dy * dy))
-				end
-			end
-			local trap_name = false
-			for _, o in ipairs(self.placed) do
-				if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAP and math.abs(o.y - s.y) < M.SPAWN_TRAP then
-					trap_name = true
-				end
-			end
-			if not trap_name then
-				if d >= M.SPAWN_FAR then ok[#ok + 1] = s end
-				if d > best_d then best, best_d = s, d end
+	local cand, far_enough = {}, false
+	for i, s in ipairs(spots) do
+		local trapped = false
+		for _, o in ipairs(self.placed) do
+			if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAP and math.abs(o.y - s.y) < M.SPAWN_TRAP then
+				trapped = true
 			end
 		end
+		if not trapped and i ~= rb.last_spawn and not self:robot_collides(s.x, s.y, rb) then
+			local enemy, mate = math.huge, math.huge
+			for _, o in ipairs(self.robots) do
+				if o ~= rb and not o.dead then
+					local dx, dy = o.x - s.x, o.y - s.y
+					local d = math.sqrt(dx * dx + dy * dy)
+					if o.team ~= rb.team then enemy = math.min(enemy, d) else mate = math.min(mate, d) end
+				end
+			end
+			local w = math.min(enemy, M.SPAWN_CALM) / M.SPAWN_CALM
+			if mate < M.SPAWN_MATE then w = w * 1.5 end
+			local gx, gy = rb.x - s.x, rb.y - s.y
+			if gx * gx + gy * gy < M.SPAWN_GRAVE * M.SPAWN_GRAVE then w = w * 0.2 end
+			cand[#cand + 1] = { i = i, w = w, far = enemy >= M.SPAWN_FAR }
+			if enemy >= M.SPAWN_FAR then far_enough = true end
+		end
 	end
-	local s = #ok > 0 and ok[1 + math.floor(self.rng:next() * #ok)] or best
-	if s then return s.x, s.y end
+	local total = 0
+	for _, c in ipairs(cand) do
+		if far_enough and not c.far then c.w = 0 end
+		total = total + c.w
+	end
+	if #cand == 0 then return nil end
+	local pick = cand[#cand]
+	if total > 0 then
+		local r = self.rng:next() * total
+		for _, c in ipairs(cand) do
+			r = r - c.w
+			if c.w > 0 and r < 0 then pick = c break end
+		end
+	end
+	rb.last_spawn = pick.i
+	return spots[pick.i].x, spots[pick.i].y
 end
 
 -- Start-of-match points of the real matches (training, same phone, online, private
