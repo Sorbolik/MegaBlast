@@ -17,7 +17,58 @@ images {
   image: "/assets/fornace/asse_sx.png"
 }
 images {
+  image: "/assets/fornace/borsa_arancio.png"
+}
+images {
+  image: "/assets/fornace/borsa_azzurro.png"
+}
+images {
+  image: "/assets/fornace/borsa_chiusa_arancio.png"
+}
+images {
+  image: "/assets/fornace/borsa_chiusa_azzurro.png"
+}
+images {
+  image: "/assets/fornace/borsa_chiusa_ferro.png"
+}
+images {
+  image: "/assets/fornace/borsa_chiusa_oro.png"
+}
+images {
+  image: "/assets/fornace/borsa_chiusa_verde.png"
+}
+images {
+  image: "/assets/fornace/borsa_chiusa_viola.png"
+}
+images {
+  image: "/assets/fornace/borsa_ferro.png"
+}
+images {
+  image: "/assets/fornace/borsa_oro.png"
+}
+images {
+  image: "/assets/fornace/borsa_verde.png"
+}
+images {
+  image: "/assets/fornace/borsa_viola.png"
+}
+images {
   image: "/assets/fornace/cavalletto.png"
+}
+images {
+  image: "/assets/fornace/corda.png"
+}
+images {
+  image: "/assets/fornace/cordino_corto.png"
+}
+images {
+  image: "/assets/fornace/cordino_corto_rosso.png"
+}
+images {
+  image: "/assets/fornace/cordino_lungo.png"
+}
+images {
+  image: "/assets/fornace/cordino_lungo_rosso.png"
 }
 images {
   image: "/assets/fornace/crepa.png"
@@ -59,9 +110,6 @@ images {
   image: "/assets/fornace/goccia.png"
 }
 images {
-  image: "/assets/fornace/goccia_grande.png"
-}
-images {
   image: "/assets/fornace/medaglia_jackpot.png"
 }
 images {
@@ -86,7 +134,7 @@ images {
   image: "/assets/fornace/perla.png"
 }
 images {
-  image: "/assets/fornace/pinnacolo.png"
+  image: "/assets/fornace/piolo.png"
 }
 images {
   image: "/assets/fornace/schizzo.png"
@@ -95,40 +143,22 @@ images {
   image: "/assets/fornace/sporgenza.png"
 }
 images {
-  image: "/assets/fornace/usuraio_grande_arancio.png"
+  image: "/assets/fornace/trave.png"
 }
 images {
-  image: "/assets/fornace/usuraio_grande_azzurro.png"
+  image: "/assets/fornace/trave_dx.png"
 }
 images {
-  image: "/assets/fornace/usuraio_grande_ferro.png"
+  image: "/assets/fornace/trave_sx.png"
 }
 images {
-  image: "/assets/fornace/usuraio_grande_oro.png"
+  image: "/assets/fornace/usuraio_paga.png"
 }
 images {
-  image: "/assets/fornace/usuraio_grande_verde.png"
+  image: "/assets/fornace/usuraio_parla.png"
 }
 images {
-  image: "/assets/fornace/usuraio_grande_viola.png"
-}
-images {
-  image: "/assets/fornace/usuraio_piccolo_arancio.png"
-}
-images {
-  image: "/assets/fornace/usuraio_piccolo_azzurro.png"
-}
-images {
-  image: "/assets/fornace/usuraio_piccolo_ferro.png"
-}
-images {
-  image: "/assets/fornace/usuraio_piccolo_oro.png"
-}
-images {
-  image: "/assets/fornace/usuraio_piccolo_verde.png"
-}
-images {
-  image: "/assets/fornace/usuraio_piccolo_viola.png"
+  image: "/assets/fornace/usuraio_zitto.png"
 }
 images {
   image: "/assets/fornace/vaso.png"

@@ -53,3 +53,12 @@ aspetta 6
 trascina 300 300 320 340 0.4
 aspetta 6
 foto 05_tre_perle
+aspetta 4
+foto 06_riepilogo_con_le_perle
+pad b                               # INCASSA
+aspetta 0.6
+foto 07_incassa
+aspetta 0.6
+foto 07b_incassa
+aspetta 3
+foto 08_bancone_vuoto

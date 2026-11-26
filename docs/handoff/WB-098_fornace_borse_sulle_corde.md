@@ -1,6 +1,6 @@
 # WB-098 · La Fornace: le borse appese alle corde, chiuse col sigillo, la trave dei conti, l'usuraio del banco
 
-- **Stato:** APPROVATA (Claude, 26 nov: Sergio ha approvato l'anteprima https://claude.ai/artifact/FtpmtRZabnAmpyvbGpq1n8 , «Mi piace l'anteprima»)
+- **Stato:** IMPLEMENTATA (Claude, 26 nov: nel gioco sul ramo `claude/project-thread-oh0dd6`, PR #437; approvata su anteprima di Sergio https://claude.ai/artifact/FtpmtRZabnAmpyvbGpq1n8 , «Mi piace l’anteprima»)
 - **Data:** 2026-11-26
 - **Ramo della scheda:** `claude/project-thread-oh0dd6` (Codex la esegue da qui: `git fetch origin claude/project-thread-oh0dd6`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-098`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-098` senza chiedere conferma (il repository è privato).
@@ -106,3 +106,12 @@ Approvata da Claude il 26 nov: Sergio ha approvato l'anteprima. Quando questi di
 Otto PNG da 1536×1024, con i prompt originali eseguiti in ImageGen e i riferimenti nell'ordine indicato. I fogli delle borse hanno la misura nativa richiesta. Travi e usurai sono stati ridimensionati in proporzione e centrati su verde. Per gli usurai ho ritagliato soltanto il verde ai lati per mantenere tutte le pose sopra i 450 px.
 
 Controllati numero, separazione e ordine degli stemmi. Le borse aperte hanno cavità visibile e tiranti a V. Quelle chiuse hanno ciuffo e sigillo rosso vuoto. Le sagome delle borse sono larghe circa 307–337 px, oltre circa 230 px indicati nel prompt, con lievi differenze tra gli stati. In entrambi i fogli si riconoscono le tre espressioni dell'usuraio seduto rivolto a sinistra. I quattro cordini di ogni variante hanno tre o cinque nodi. Il fondo si discosta da #00FF00 esatto. I bordi neri di alcuni pezzi possono lasciare una riga alla giunzione. La ripetizione effettiva della trave e della corda e la resa in gioco restano da verificare.
+
+## Resoconto di Claude
+
+26 nov. Nel gioco sul ramo `claude/project-thread-oh0dd6` (PR #437), tagli e misure in `tools/grafica/fornace.py` (`fai_wb098`).
+
+- **Scelti**: `borse_aperte_1` (la V di corda e la bocca più leggibili), `borse_chiuse_1` (stessa forma delle aperte, sigillo grande), `trave_e_corde_2` (nodi più puliti, piolo ad anello), `usuraio_del_banco_1` (la faccia di chi paga è disperata; nella 2 fa la linguaccia).
+- **Tagli**: la bocca della borsa si trova da sola (il buio dentro l'orlo, poi l'orlo fino al contorno), così come il punto da cui esce la corda e il mezzo della ceralacca; la borsa chiusa si mette con la pancia allineata a quella aperta. Il pezzo di mezzo della trave e la corda sono tagliati dentro il contorno ai capi: si ripetono senza righe (controllato nelle foto del simulatore).
+- **Misure nel gioco**: una sola misura per colore (le borse piccole sono le grandi rimpicciolite, mai ingrandito un disegno); la trave alta 30 unità del mondo a y = 530, un cordino ogni 95; l'usuraio del banco alto 225 in fondo al bancone.
+- **Tolti**: gli usurai e i pinnacoli di WB-097 e la goccia grande di WB-092 (gioco, atlante, tagli).

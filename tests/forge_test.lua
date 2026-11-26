@@ -195,7 +195,6 @@ check(r.esito == "stampo" and r.slot == 1 and r.scaglie == first.scaglie and r.b
 	and p.scaglie == s0 + first.scaglie + forge.MISS, "centro: le Scaglie dello stampo, più le 30 di ogni goccia")
 r = forge.throw(p, AIMS[1][1], AIMS[1][2])
 check(r.esito ~= "stampo" and not r.base and p.scaglie == s0 + first.scaglie + 2 * forge.MISS, "uno stampo pieno non paga più: secchio")
-check(p.fornace.vetri == 1, "la goccia mancata è una perla di vetro nel vaso del muro")
 local slot2 = AIMS[2]
 r = forge.throw(p, slot2[1], slot2[2])
 local m2 = forge.wall(p, TODAY .. "#0")[2]
@@ -212,7 +211,7 @@ forge.throw(p, 0.5, 0.1); forge.throw(p, 0.5, 0.1); forge.throw(p, 0.5, 0.1)
 for i = 1, 12 do p.fornace.pieni[i] = true end
 check(forge.current(p, TODAY) == TODAY .. "#1" and not forge.pour(p, TODAY .. "#0", TODAY)
 	and not forge.pour(p, TODAY .. "#2", TODAY), "muro pieno: si passa al secondo, non si torna e non si salta")
-check(forge.pour(p, TODAY .. "#1", TODAY) and next(p.fornace.pieni) == nil and p.fornace.vetri == 0, "muro nuovo: stampi vuoti, vaso vuoto")
+check(forge.pour(p, TODAY .. "#1", TODAY) and next(p.fornace.pieni) == nil, "muro nuovo: stampi vuoti")
 forge.throw(p, 0.5, 0.1); forge.throw(p, 0.5, 0.1); forge.throw(p, 0.5, 0.1)
 for i = 1, 12 do p.fornace.pieni[i] = true end
 check(forge.current(p, TODAY) == TODAY .. "#2" and forge.pour(p, TODAY .. "#2", TODAY), "poi il terzo")

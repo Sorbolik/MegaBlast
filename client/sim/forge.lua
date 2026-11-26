@@ -374,8 +374,8 @@ M.CATCH = 0.3
 
 -- The lid of a full mould (Sergio, 24 Nov: «l'hitbox del coperchio un pochino più
 -- coerente col coperchio»): first the drawn lid's dome (WB-094), since 26 Nov the
--- paid usurer's purse full of molten Ossidiana (client/menu/forge_ui.lua seal: a
--- ball 0.9 of the mould wide on the mouth), as a circle
+-- taken purse, tied and sealed around its mouth (client/menu/forge_ui.lua seal, WB-098),
+-- as a circle
 M.LID_R, M.LID_Y = 0.54, -0.08
 
 -- The back wall (Sergio, 24 Nov: «in fondo a destra un muro, ad un po' di distanza
@@ -525,9 +525,6 @@ function M.init(p)
 	f.colate = f.colate or 0
 	f.jackpot = f.jackpot or 0
 	f.rintocchi = f.rintocchi or 0
-	-- the drops that missed on this wall: glass beads in the Smith's jar (Sergio, 26 Nov,
-	-- the Banco degli Usurai: drawn only, the Scaglie are paid at every throw)
-	f.vetri = f.vetri or 0
 	return p
 end
 
@@ -566,7 +563,7 @@ function M.pour(p, key, today)
 	if (p.ossidiana or 0) < M.COST then return nil, "ossidiana" end
 	if key ~= f.muro then
 		f.fortunato = M.lucky_slot(key)
-		f.muro, f.pieni, f.vetri = key, {}, 0
+		f.muro, f.pieni = key, {}
 	end
 	p.ossidiana = p.ossidiana - M.COST
 	f.tiri, f.lanci, f.centri = M.THROWS, 0, 0
@@ -606,7 +603,6 @@ function M.throw(p, angle, power)
 		p.scaglie = (p.scaglie or 0) + M.MISS
 	else
 		r.scaglie = M.MISS
-		f.vetri = f.vetri + 1
 	end
 	if r.scaglie then p.scaglie = (p.scaglie or 0) + r.scaglie end
 	-- the knocks' medals, the first time

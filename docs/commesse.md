@@ -146,31 +146,46 @@ scartati il poker «Le Cinque Fiamme», che somiglia a una slot, e il Maglio a t
 
 **Dal 26 nov la Fornace sta nel Banco degli Usurai** (Sergio: «la mappa è poco ispirata»; scelta A
 su https://claude.ai/artifact/7sCdLDNgtHNcUtSEG6aXyK, bancone 2 su
-https://claude.ai/artifact/GVsg8dBpjKahkBfL7eQJbJ; disegni di Codex WB-097). Le regole non cambiano,
-cambia dove sei e cosa sono le cose:
+https://claude.ai/artifact/GVsg8dBpjKahkBfL7eQJbJ; disegni di Codex WB-097; poi, lo stesso giorno, gli
+usurai lasciano il muro e restano le loro borse appese alle corde, anteprima
+https://claude.ai/artifact/FtpmtRZabnAmpyvbGpq1n8, disegni WB-098). Le regole non cambiano, cambia dove
+sei e cosa sono le cose:
 
 - **Dove**: il Sabbione del girone VII sotto la pioggia di fuoco (Inf. XIV e XVII). Il Fabbro manda
   l'apprendista a **cambiare l'Ossidiana**: la Fornace è il cambiavalute, e la storia lo dice da sola.
-- **Gli stampi sono gli usurai** seduti con la borsa aperta verso il cielo; lo **stemma sulla borsa**
-  è il colore della famiglia (ferro per le Scaglie). Quelli in alto stanno in cima a un pinnacolo di
-  roccia (solo disegno, come le catene di prima: la goccia ci passa). La bocca della borsa è dove la
-  regola prende la goccia (`m.x`, `m.y`; l'orlo è largo 0,76 dello stampo, la presa 0,82). L'usuraio
-  pagato ha la borsa piena di Ossidiana fusa (dove la regola mette il coperchio) col premio sopra.
+- **Gli stampi sono le borse degli usurai**, aperte verso il cielo e **appese a una corda** che sale
+  alla trave in alto (Sergio, 26 nov: gli usurai seduti sul muro «creano troppa confusione visiva»;
+  niente pinnacoli né piedistalli). Lo **stemma sulla borsa** è il colore della famiglia (ferro per le
+  Scaglie). La corda è solo disegno: la goccia ci passa. La bocca della borsa è dove la regola prende
+  la goccia (`m.x`, `m.y`; l'orlo è largo 0,76 dello stampo, la presa 0,82). La borsa presa si
+  **chiude**: legata stretta e sigillata con la ceralacca, l'icona del premio sul sigillo (dove la
+  regola mette il coperchio).
+- **La trave dei conti** in alto (Sergio: «un background che con una scusa abbia un pochino di
+  riferimenti per i tiri successivi, non proprio una griglia ... solo in alto, non dietro i pot»):
+  una trave lungo tutto il muro, un piolo ogni 95 e sotto ognuno un cordino annodato, lungo e corto a
+  turno (gli usurai contano i debiti coi nodi). Dà dei punti fissi per ricordare dove hai mirato.
 - **Il secchio non c'è più**: la goccia che manca le borse cade nella sabbia e diventa **vetro**; la
-  perla salta nel **vaso del Fabbro** in fondo al bancone e il Fabbro la paga 30 (`forge.MISS`,
-  come prima). Il vaso conta le perle del muro (`fornace.vetri`, si svuota col muro nuovo).
+  perla salta nel **vaso** in fondo al bancone e vale 30 (`forge.MISS`, come prima).
 - **La sponda** è la parete di roccia a destra, dietro cui cade il Flegetonte.
 - **La fascia bassa** (si vede solo con tutto il muro sullo schermo): l'argine del fiume, e davanti
-  il **bancone dei cambiavalute** su due cavalletti, col bottino del muro in mucchi (le Scaglie
-  prese, i frammenti famiglia per famiglia, più grandi man mano) e il vaso delle perle. Il bancone
-  **si piega** sotto il bottino; al jackpot **si spezza** in mezzo («bancarotta»: la parola viene
-  dal banco rotto dei cambiavalute), le due metà cadono sui cavalletti e i mucchi scivolano via.
-  Non cambia niente nel punteggio.
-- **Gli usurai parlano** (Sergio, 26 nov): una frase sopra la testa, come le battute dei bot in
-  battaglia; mentre miri ogni tanto uno a caso, quello preso quando paga, quello mancato per un pelo
-  (o un altro) quando la goccia finisce nel vetro, tre alla bancarotta (`forge.say_*` in
-  `client/lang/it.lua`).
-- **La pioggia di fuoco**: falde che scendono piano su tutto il muro, dietro gli usurai.
+  il **bancone dei cambiavalute** su due cavalletti, col bottino **della colata** in mucchi (le
+  Scaglie delle borse, i frammenti famiglia per famiglia, più grandi man mano) e il vaso con le perle
+  dei tiri mancati. Il bancone **si piega** a ogni borsa presa; al jackpot il mucchio del jackpot ci
+  cade sopra e **si spezza** in mezzo («bancarotta»: la parola viene dal banco rotto dei
+  cambiavalute), le due metà cadono sui cavalletti e i mucchi scivolano ai suoi piedi.
+- **Si incassa solo alla fine** (Sergio, 26 nov: «i soldi che prendi ... non vadano più a sommarsi ai
+  tuoi, solo alla fine della sessione, in un tripudio di animazioni»; il bancone tiene solo la colata
+  di adesso, scelto sulla scheda): durante la colata il portafoglio in alto non si muove e tutto resta
+  sul bancone, anche le perle. Nel riepilogo il pulsante è **INCASSA** (e COLA ANCORA incassa prima di
+  colare): il bancone si svuota un mucchio dopo l'altro, le Scaglie volano in arco nel portafoglio che
+  le conta, i frammenti salgono sotto il portafoglio col loro numero. È solo il disegno: il profilo è
+  pagato tiro per tiro come prima (il server decide), e chiudere il gioco a metà non perde niente.
+- **Un solo usuraio**, seduto in fondo al bancone col suo libro dei conti, **parla** ogni tanto
+  (Sergio, 26 nov: «uno di questi predoni accanto al tavolo che ogni tanto ti parla»): una frase
+  sopra la testa come le battute dei bot, a bocca aperta; mentre miri, quando prendi una borsa,
+  quando la goccia finisce nel vetro, e brontolando (la faccia di chi paga) all'INCASSA e alla
+  bancarotta (`forge.say_*` in `client/lang/it.lua`).
+- **La pioggia di fuoco**: falde che scendono piano su tutto il muro, dietro le borse.
 
 - **L'unico posto dove l'Ossidiana diventa valuta.** Una scheda **FORNACE** nella BOTTEGA,
   fra COMMESSE e BANCO. Una **colata costa 15 Ossidiana** (20 fino al 25 nov: Sergio, «forse costa troppo?»; con 20
@@ -228,7 +243,7 @@ cambia dove sei e cosa sono le cose:
   **x1, x1,25, x1,5** (Scaglie arrotondate a 5, frammenti 8, 10, 12), e il **jackpot 500, 750,
   1000** (`forge.LEVELS`, `forge.JACKPOTS`, `forge.current`). I tre muri sono uguali per tutti.
   **Nel gioco si vede così** (Sergio, 25 nov, «A e B insieme»): nella vetrina, sotto i frammenti,
-  «I MURI DI OGGI» con tre usurai (quello pagato con la borsa piena e PIENO, quello di adesso
+  «I MURI DI OGGI» con tre borse (quella del muro pagato chiusa e PIENO, quella di adesso
   incandescente col suo premio, quelli dopo spenti) e «NUOVI FRA» col conto alla rovescia; sul
   foglio del Fabbro «3 muri al giorno: riempi questo e si apre il prossimo.» e sotto i premi e
   l'ora del nuovo giro (alle 5 di mattina).
@@ -326,8 +341,9 @@ cambia dove sei e cosa sono le cose:
 - **Il server decide**: il telefono manda il muro che vede, poi angolo e forza di ogni tiro
   (azioni `colata`, `tiro`, `fondi` del profilo); il server rifà il volo con le stesse regole
   (`client/sim/forge.lua`) e paga. Il risultato non lo dice il telefono, e niente è a caso.
-- **Arte**: dal 26 nov il Banco degli Usurai di Codex WB-097 (usurai, Sabbione, argine,
-  pinnacoli, parete, bancone, mucchi, vaso e perle, falde); di prima restano goccia e schizzo
+- **Arte**: dal 26 nov il Banco degli Usurai di Codex WB-097 (Sabbione, argine, parete, bancone,
+  mucchi, vaso e perle, falde) e WB-098 (le borse aperte e chiuse, la trave, la corda, i cordini,
+  l'usuraio del banco in tre facce); di prima restano goccia e schizzo
   (WB-092), mestolo (WB-093), fiammata e medaglia del jackpot (WB-094), medaglie dei rintocchi
   (WB-095/096). Tagli e misure in `tools/grafica/fornace.py`.
 - **Da decidere prima di vendere l'Ossidiana**: l'Ossidiana comprata con soldi veri non

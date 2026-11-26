@@ -86,12 +86,21 @@ local FLOOR_TOP = -132
 local ARGINE_W, ARGINE_TOP = 720, -124
 local LEDGE = { x = -90, y = 2, w = 150 }
 local ROCK_W = 160
--- the usurers (the rules' moulds): the purse's mouth on the mould's (m.x, m.y), its
--- rim RIM_W of the mould wide (the rules' lips are at 0.43 of it, the catch at 0.41);
--- the crest by family, iron for the Scaglie; a high one sits on a rock pinnacle
+-- the usurers' purses (the rules' moulds, WB-098; Sergio, 26 Nov: «questi stessi fagotti
+-- senza i predoni ... con delle corde»): the purse's mouth on the mould's (m.x, m.y), its
+-- rim RIM_W of the mould wide (the rules' lips are at 0.43 of it, the catch at 0.41); the
+-- crest by family, iron for the Scaglie; each hangs on a rope from the beam at the top
 local PLATE = { fabbro = "oro", corvo = "azzurro", fornace = "arancio", leviatano = "verde", vuoto = "viola" }
 local RIM_W = 0.76
-local PILLAR = 0.32 -- the pinnacle's width, of the usurer's
+local ROPE_W = 7
+-- the beam of the accounts over the wall (Sergio, 26 Nov: «riferimenti per i tiri
+-- successivi, non proprio una griglia ... solo in alto»): its middle at y, a peg every
+-- PEG_STEP with a knotted cord, long and short in turn (the usurers count debts in knots)
+local BEAM = { y = 530, h = 30, x0 = -260 }
+local PEG_STEP, CORD_W = 95, 15
+local CORDS = { "cordino_lungo_rosso", "cordino_corto", "cordino_lungo", "cordino_corto_rosso" }
+-- the usurer who keeps the bench's account, sitting at its right end
+local BANKER = { x = 1545, y = -330, h = 225 }
 -- the money-changers' bench in the band (Sergio, 26 Nov: «il bancone che si piega»):
 -- planks on two trestles, the loot of this wall in heaps on it (the Scaglie, the
 -- fragments by family), the jar of glass beads at its end; it sags as the loot grows
@@ -205,8 +214,8 @@ end
 
 -- the usurer of mould m: his drawing, its world units per pixel, where his head's top
 -- and his sand's bottom are
-local function figure(m)
-	local name = "usuraio_" .. (m.small and "piccolo" or "grande") .. "_" .. (m.set and PLATE[m.set] or "ferro")
+local function figure(m, full)
+	local name = (full and "borsa_chiusa_" or "borsa_") .. (m.set and PLATE[m.set] or "ferro")
 	local pc = PIECES[name]
 	local k = m.w * RIM_W / pc.mw
 	return name, pc, k, m.y + pc.my * k, m.y - (pc.h - pc.my) * k
@@ -337,15 +346,40 @@ local function tag(fx, m)
 	fx.tags[m.slot] = t
 end
 
--- a paid usurer (Sergio, 26 Nov): his purse full of molten Ossidiana (the drop's ball
--- in the mouth, where the rules' lid is: forge.LID_R, LID_Y), the prize taken on it
-local BALL_W, BALL_Y, BOSS_W = 0.9, 0.02, 0.4
+-- the rope of a purse: from the drawing's top (where its own rope ends) up to the beam,
+-- behind it (drawn only: the drop goes through it)
+local function rope(fx, m, full)
+	if fx.ropes[m.slot] then gui.delete_node(fx.ropes[m.slot]) end
+	local _, pc, k, top = figure(m, full)
+	local r = empty(fx.ropes_root)
+	local x = m.x + (pc.rx - pc.mx) * k
+	-- whole pieces down from the beam, the last one up from the drawing's top (over the
+	-- one before it: never a stretched piece)
+	local h = ROPE_W * PIECES.corda.h / PIECES.corda.w
+	local y = BEAM.y
+	while y - h > top do
+		piece(r, "corda", x, y, ROPE_W, gui.PIVOT_N)
+		y = y - h + 1
+	end
+	piece(r, "corda", x, top - 2, ROPE_W, gui.PIVOT_S)
+	fx.ropes[m.slot] = r
+end
+
+-- a taken purse (Sergio, 26 Nov: «un coperchio coerente quando sono stati presi»):
+-- closed, tied and sealed in wax, the prize on the seal (where the rules' lid is:
+-- forge.LID_R, LID_Y, around the mouth)
+local SEAL_ICON = 0.62
 local function seal(fx, m)
 	if fx.seals[m.slot] then gui.delete_node(fx.seals[m.slot]) end
-	local s = empty(fx.moulds[m.slot] or fx.wall_root, 0, m.w * BALL_Y)
-	piece(s, "goccia_grande", 0, 0, m.w * BALL_W)
+	local name, pc, k = figure(m, true)
+	local n = fx.figs[m.slot]
+	gui.play_flipbook(n, name)
+	gui.set_size(n, vec(pc.w * k, pc.h * k))
+	gui.set_position(n, vec((pc.w / 2 - pc.mx) * k, (pc.my - pc.h / 2) * k))
+	rope(fx, m, true)
+	local s = empty(fx.moulds[m.slot], (pc.sx - pc.mx) * k, (pc.my - pc.sy) * k)
 	local g = { node = s, ox = 0, oy = 0 }
-	kit.piece(g, m.scaglie and "scaglia" or "frammento_" .. m.set, 0, 0, m.w * BOSS_W)
+	kit.piece(g, m.scaglie and "scaglia" or "frammento_" .. m.set, 0, 0, pc.sw * k * SEAL_ICON)
 	fx.seals[m.slot] = s
 	return s
 end
@@ -410,7 +444,7 @@ local function glow(fx, m, d, a)
 	if not n then return end
 	local h = gui.new_box_node(vec(0, 0), gui.get_size(n))
 	gui.set_texture(h, "fornace")
-	gui.play_flipbook(h, (figure(m)))
+	gui.play_flipbook(h, gui.get_flipbook(n))
 	gui.set_blend_mode(h, gui.BLEND_ADD)
 	gui.set_parent(h, n)
 	local c = vmath.vector4(EMBER.x, EMBER.y, EMBER.z, a or 0.9)
@@ -500,47 +534,34 @@ local function flame(fx, m)
 	tremble(fx, m, 0.75)
 end
 
--- a usurer: the drawing with his purse's mouth on the mould's (m.x, m.y), under a node
--- on the mouth (he trembles and pops around it)
+-- a purse: the drawing with its mouth on the mould's (m.x, m.y), under a node on the
+-- mouth (it trembles and pops around it), its rope up to the beam
 local function draw_mould(fx, m, full)
 	local name, pc, k = figure(m)
 	local root = empty(fx.wall_root, m.x, m.y)
 	local n = piece(root, name, (pc.w / 2 - pc.mx) * k, (pc.my - pc.h / 2) * k, pc.w * k)
 	fx.moulds[m.slot], fx.figs[m.slot] = root, n
-	if full then seal(fx, m) else tag(fx, m) end
+	if full then seal(fx, m) else rope(fx, m); tag(fx, m) end
 end
 
--- the rock pinnacle a high usurer sits on, from under his sand down behind the
--- embankment (drawn only, like the chains were: the drop goes through it)
-local function draw_pillar(fx, m)
-	local _, pc, k, _, bottom = figure(m)
-	if bottom < ARGINE_TOP + 4 then return end
-	local w = pc.w * k * PILLAR
-	local h = w * PIECES.pinnacolo.h / PIECES.pinnacolo.w
-	local x = m.x + (pc.w / 2 - pc.mx) * k
-	local y = bottom + w * 0.15
-	while y > ARGINE_TOP - 40 do
-		piece(fx.pillars, "pinnacolo", x, y, w, gui.PIVOT_N)
-		y = y - h + 2
-	end
-end
-
--- fills a mould on the wall (a hit): the usurer jumps, the flame, then the molten ball
--- comes down into his purse with a bounce; the tag goes
-local LID_AT = 0.85 -- the ball comes down once the column has burned
+-- fills a mould on the wall (a hit): the purse jumps, the flame, then once the column
+-- has burned it closes with a squash, tied and sealed, the prize on the seal; the tag goes
+local LID_AT = 0.85
 local function fill_mould(fx, m)
 	local n = fx.moulds[m.slot]
 	if not n then return end
 	gui.set_scale(n, vmath.vector3(1.12, 0.88, 1))
 	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.35)
 	flame(fx, m)
-	local s = seal(fx, m)
-	local p = gui.get_position(s)
-	gui.set_position(s, p + vec(0, m.w * 1.6))
-	-- hidden (scale 0, which its children take too) until the flame has burst
-	gui.set_scale(s, vmath.vector3(0.001, 0.001, 1))
-	gui.animate(s, "scale", vmath.vector3(1, 1, 1), gui.EASING_LINEAR, 0.01, LID_AT)
-	gui.animate(s, "position.y", p.y, gui.EASING_OUTBOUNCE, 0.4, LID_AT)
+	later(fx, LID_AT, function()
+		if not fx.moulds[m.slot] then return end
+		local s = seal(fx, m)
+		gui.set_scale(n, vmath.vector3(0.8, 1.25, 1))
+		gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTELASTIC, 0.6)
+		gui.set_scale(s, vmath.vector3(0.2, 0.2, 1))
+		gui.animate(s, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.35, 0.1)
+		sound.play("#martello")
+	end)
 	if fx.tags[m.slot] then
 		gui.delete_node(fx.tags[m.slot])
 		fx.tags[m.slot] = nil
@@ -553,53 +574,34 @@ local function fade(n, d, delay)
 	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, d, delay or 0, function() gui.delete_node(n) end)
 end
 
--- A usurer says something (Sergio, 26 Nov: «gli usurai possono dire qualcosa ogni
--- tanto?»): plain text over his head, as the bots' lines in battle, for a moment
+-- The usurer of the bench says something (Sergio, 26 Nov: «uno di questi predoni accanto
+-- al tavolo che ogni tanto ti parla»): plain text over his head, as the bots' lines in
+-- battle, for a moment, with his face for it (usuraio_parla, or usuraio_paga at INCASSA)
 local SAY_T = 2.2
-local function say(fx, m, lines)
-	if not m or not lines or fx.says[m.slot] then return end
+local function say(fx, lines, face)
+	if not lines or not fx.banker or fx.saying then return end
 	local line = lines[math.random(#lines)]
-	local _, _, _, top = figure(m)
-	local t = empty(fx.tags_root, m.x, top + 2)
+	local t = empty(fx.tags_root, BANKER.x, BANKER.y + BANKER.h + 8)
 	local g = { node = t, ox = 0, oy = 0 }
-	kit.text(g, line, 1.5, -52 + 1.5, 17, KC.INK, "middle", 0.5)
-	kit.text(g, line, 0, -52, 17, KC.SAND, "middle", 0.5)
-	local key = "say" .. m.slot
-	fx.says[m.slot], fx.tags[key] = t, t
+	kit.text(g, line, 1.5, -12 + 1.5, 17, KC.INK, "middle", 0.5)
+	kit.text(g, line, 0, -12, 17, KC.SAND, "middle", 0.5)
+	fx.saying, fx.tags.say = t, t
 	gui.set_scale(t, vmath.vector3((fx.mir or 1) / fx.cam.s, 1 / fx.cam.s, 1))
+	local pc = PIECES[face or "usuraio_parla"]
+	gui.play_flipbook(fx.banker, face or "usuraio_parla")
+	gui.set_size(fx.banker, vec(BANKER.h * pc.w / pc.h, BANKER.h))
 	later(fx, SAY_T, function()
-		fx.says[m.slot], fx.tags[key] = nil, nil
+		fx.saying, fx.tags.say = nil, nil
 		fade(t, 0.3)
+		if fx.banker then
+			local q = PIECES.usuraio_zitto
+			gui.play_flipbook(fx.banker, "usuraio_zitto")
+			gui.set_size(fx.banker, vec(BANKER.h * q.w / q.h, BANKER.h))
+		end
 	end)
 end
 
--- one of the usurers still with an empty purse, at random (nil when none)
-local function someone(fx, p)
-	local f = p.fornace
-	local list = {}
-	for _, m in ipairs(fx.wall or forge.wall(p, fx.key)) do
-		if not (fx.key == f.muro and f.pieni[m.slot]) and not fx.says[m.slot] then list[#list + 1] = m end
-	end
-	return list[1] and list[math.random(#list)] or nil
-end
-
 -- The bench ---------------------------------------------------------------------------
-
--- the loot of the wall key so far: the Scaglie taken and of the whole wall, the
--- fragments by family, how many moulds are taken
-local function loot(p, key)
-	local f = p.fornace
-	local full = key == f.muro and f.pieni or {}
-	local sc, all, fr, n = 0, 0, {}, 0
-	for _, m in ipairs(forge.wall(p, key)) do
-		if m.scaglie then all = all + m.scaglie end
-		if full[m.slot] then
-			n = n + 1
-			if m.scaglie then sc = sc + m.scaglie else fr[m.set] = (fr[m.set] or 0) + m.n end
-		end
-	end
-	return sc, all, fr, n
-end
 
 -- a chip: the coin or the family's fragment and a number (always this big on the
 -- screen, under fx.tags_root), its middle at (x, y)
@@ -627,20 +629,21 @@ local function bench_sag(fx, x)
 	return -fx.sag * math.sin(math.pi * clamp((x - BENCH.x) / L))
 end
 
--- The money-changers' bench of the wall key: the loot in heaps, the jar with the
--- glass beads. pop: the heap that has just grown ("scaglie" or a family), it jumps;
--- whole: drawn whole even if the wall is full (the jackpot breaks it after)
-local function bench(fx, p, key, pop, whole)
+-- The money-changers' bench (Sergio, 26 Nov: «si accumulasse tutto sul tavolo ... ti
+-- arrivino nel portafoglio solo alla fine»): the loot of this pour in heaps, the jar
+-- with its glass beads; the wallet gets it all at INCASSA (pay). got: the pour's loot
+-- (nil: an empty bench); pop: the heap that has just grown ("scaglie" or a family), it jumps
+local function bench(fx, got, pop)
 	if fx.bench then gui.delete_node(fx.bench) end
 	for _, k in ipairs(fx.bench_tags or {}) do
 		if fx.tags[k] then gui.delete_node(fx.tags[k]); fx.tags[k] = nil end
 	end
 	fx.bench_tags = {}
 	fx.bench = empty(fx.band)
-	local f = p.fornace
-	local sc, all, fr, n = loot(p, key)
-	local broke = not whole and forge.full(p, key)
-	fx.sag = broke and 0 or BENCH.sag * n / #forge.PRIZES
+	got = got or {}
+	local sc, fr = (got.sacchi or 0) + (got.jackpot or 0), got.fr or {}
+	-- (it sags with every purse taken in the pour, all the way at four)
+	fx.sag = BENCH.sag * math.min(1, (got.hits or 0) / (forge.THROWS + forge.BONUS))
 	local L = BENCH.seg * BENCH.n
 	local xl, xr = BENCH.x + TRESTLE_IN, BENCH.x + L - TRESTLE_IN
 	local t = BENCH.seg * PIECES.asse.h / PIECES.asse.w
@@ -655,7 +658,6 @@ local function bench(fx, p, key, pop, whole)
 	fx.planks = {}
 	for i = 0, BENCH.n - 1 do
 		local name = i == 0 and "asse_sx" or i == BENCH.n - 1 and "asse_dx" or "asse"
-		if broke and i == BENCH.n / 2 - 1 then name = "asse_rotta_sx" elseif broke and i == BENCH.n / 2 then name = "asse_rotta_dx" end
 		local xc = BENCH.x + BENCH.seg * (i + 0.5)
 		local h, x, y = on(xc)
 		local q = piece(h, name, x, y, BENCH.seg + 4)
@@ -663,14 +665,15 @@ local function bench(fx, p, key, pop, whole)
 		gui.set_rotation(q, vmath.vector3(0, 0, math.deg(math.atan(slope))))
 		fx.planks[i + 1] = q
 	end
-	-- the jar at the end, the beads of the drops that missed on this wall in it
+	-- the jar at the end, the beads of the drops that missed in this pour in it
 	local jh, jx, jy = on(JAR.x)
 	jy = jy + t * 0.5 - 3
-	local jar = piece(jh, "vaso", jx, jy, JAR.w, gui.PIVOT_S)
-	local beads = key == f.muro and f.vetri or 0
+	fx.jar = piece(jh, "vaso", jx, jy, JAR.w, gui.PIVOT_S)
+	local beads = got.vetri or 0
+	fx.beads = {}
 	for i = 1, math.min(beads, 16) do
 		local row, col = math.floor((i - 1) / 4), (i - 1) % 4
-		piece(jh, "perla", jx - 15 + col * 10 + (row % 2) * 4, jy + 10 + row * 8, 10)
+		fx.beads[i] = piece(jh, "perla", jx - 15 + col * 10 + (row % 2) * 4, jy + 10 + row * 8, 10)
 	end
 	fx.jar_at = { JAR.x, BENCH.y + t * 0.5 + JAR.w * PIECES.vaso.h / PIECES.vaso.w }
 	if beads > 0 then
@@ -678,19 +681,15 @@ local function bench(fx, p, key, pop, whole)
 		chip(fx, k, JAR.x, fx.jar_at[2] + 14, "scaglia", coins.format(beads * forge.MISS))
 		fx.bench_tags[#fx.bench_tags + 1] = k
 	end
-	if broke then
-		gui.set_rotation(halves[1], vmath.vector3(0, 0, -BREAK_DEG))
-		gui.set_rotation(halves[2], vmath.vector3(0, 0, BREAK_DEG))
-		return
-	end
 	-- the heaps: the Scaglie, then the fragments family by family, bigger as they grow
-	fx.heaps = {}
+	fx.heaps, fx.heap_of = {}, {}
 	local function heap(what, x, size, color, icon, txt, id)
 		local name = what .. "_" .. size
 		local h, hx, y = on(x)
 		local nd = piece(h, name, hx, y + t * 0.5 - 3, HEAPS[what][size], gui.PIVOT_S)
 		if color then gui.set_color(nd, color) end
 		fx.heaps[#fx.heaps + 1] = nd
+		fx.heap_of[id] = nd
 		if pop == id then
 			gui.set_scale(nd, vmath.vector3(0.2, 0.2, 1))
 			gui.animate(nd, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.45)
@@ -700,8 +699,7 @@ local function bench(fx, p, key, pop, whole)
 		fx.bench_tags[#fx.bench_tags + 1] = k
 	end
 	if sc > 0 then
-		local k = sc / math.max(1, all)
-		heap("monete", HEAPS_X, k <= 0.34 and 1 or k <= 0.67 and 2 or 3, nil, "scaglia", coins.format(sc), "scaglie")
+		heap("monete", HEAPS_X, sc <= 60 and 1 or sc <= 200 and 2 or 3, nil, "scaglia", coins.format(sc), "scaglie")
 	end
 	for i, set in ipairs(equip.SETS) do
 		local c = fr[set.id]
@@ -716,7 +714,7 @@ local function bench(fx, p, key, pop, whole)
 end
 
 -- The bancarotta (the jackpot): the bench cracks in the middle, the two halves fall
--- on their trestles, the heaps slide off and go
+-- on their trestles, the heaps slide off and lie at its feet until INCASSA
 local function bankrupt(fx)
 	if not fx.planks then return end
 	local L = BENCH.seg * BENCH.n
@@ -736,8 +734,8 @@ local function bankrupt(fx)
 	gui.animate(fx.halves[2], "euler.z", BREAK_DEG, gui.EASING_OUTBOUNCE, 0.6)
 	for k, h in ipairs(fx.heaps or {}) do
 		local p = gui.get_position(h)
-		gui.animate(h, "position.y", p.y - 180, gui.EASING_INQUAD, 0.7, 0.15 + k * 0.04)
-		gui.animate(h, "color.w", 0, gui.EASING_INQUAD, 0.5, 0.35 + k * 0.04)
+		gui.animate(h, "position.y", p.y - 50, gui.EASING_OUTBOUNCE, 0.7, 0.15 + k * 0.04)
+		gui.animate(h, "euler.z", (k % 2 == 0 and 1 or -1) * 8, gui.EASING_OUTQUAD, 0.5, 0.15 + k * 0.04)
 	end
 	for _, k in ipairs(fx.bench_tags or {}) do
 		local t = fx.tags[k]
@@ -771,7 +769,7 @@ local function make_world(a)
 	local fx = a.fx or {}
 	a.fx = fx
 	fx.phase = fx.phase or "vetrina"
-	fx.tags, fx.moulds, fx.seals, fx.figs, fx.says = {}, {}, {}, {}, {}
+	fx.tags, fx.moulds, fx.seals, fx.figs, fx.ropes, fx.saying = {}, {}, {}, {}, {}, nil
 	fx.parts, fx.trembles, fx.timers, fx.bench, fx.bench_tags = nil, nil, nil, nil, nil
 	fx.top = empty(nil, 0, 0)
 	-- one of the screen's top nodes: the home's door drags it with the page (ui/door_pass.lua;
@@ -803,8 +801,8 @@ local function make_world(a)
 		if k % 2 == 1 then gui.set_scale(n, vmath.vector3(1, -1, 1)) end
 		y, k = y + rh - 1, k + 1
 	end
-	-- the usurers: the pinnacles behind them all, the high ones first (the lower in front)
-	fx.pillars = empty(fx.world)
+	-- the purses: their ropes behind them all, the beam over the ropes
+	fx.ropes_root = empty(fx.world)
 	fx.wall_root = empty(fx.world)
 	fx.tags_root = empty(nil)
 	local key = wall_key(p)
@@ -819,12 +817,31 @@ local function make_world(a)
 	local order = {}
 	for i, m in ipairs(forge.wall(p, key)) do order[i] = m end
 	table.sort(order, function(m, q) if m.y ~= q.y then return m.y > q.y end return m.slot < q.slot end)
-	for _, m in ipairs(order) do draw_pillar(fx, m) end
 	for _, m in ipairs(order) do draw_mould(fx, m, full[m.slot]) end
+	-- the beam of the accounts: its rock ends on the left and in the rock wall, the
+	-- middle repeated; a peg every PEG_STEP and its knotted cord under it
+	local bk = BEAM.h / PIECES.trave.h
+	local lw, rw, mw = PIECES.trave_sx.w * bk, PIECES.trave_dx.w * bk, PIECES.trave.w * bk
+	local xr = forge.BACK_X + ROCK_W * 0.4
+	local bx = BEAM.x0 + lw - 4
+	for x = math.floor((xr - rw - bx) / PEG_STEP) * PEG_STEP + bx, BEAM.x0 + 60, -PEG_STEP do
+		local i = math.floor((x - BEAM.x0) / PEG_STEP + 0.5)
+		local cord = CORDS[i % #CORDS + 1]
+		piece(fx.world, cord, x, BEAM.y - BEAM.h * 0.35, CORD_W, gui.PIVOT_N)
+		piece(fx.world, "piolo", x, BEAM.y - BEAM.h * 0.3, CORD_W * 0.8)
+	end
+	while bx < xr - rw + 4 do
+		piece(fx.world, "trave", bx, BEAM.y, mw + 2, gui.PIVOT_W)
+		bx = bx + mw - 2
+	end
+	piece(fx.world, "trave_sx", BEAM.x0, BEAM.y, lw, gui.PIVOT_W)
+	piece(fx.world, "trave_dx", xr, BEAM.y, rw, gui.PIVOT_E)
 	-- the embankment in front, the apprentice's ledge on its sand
 	for x = -900, 2600, ARGINE_W - 2 do piece(fx.world, "argine", x, ARGINE_TOP, ARGINE_W, gui.PIVOT_NW) end
 	piece(fx.world, "sporgenza", LEDGE.x, LEDGE.y, LEDGE.w, gui.PIVOT_NW)
 	fx.band = empty(fx.world)
+	local bp = PIECES.usuraio_zitto
+	fx.banker = piece(fx.band, "usuraio_zitto", BANKER.x, BANKER.y, BANKER.h * bp.w / bp.h, gui.PIVOT_S)
 	-- the apprentice on the ledge, the ladle in his hand
 	local dev = scoria.new(a.colore or ui.C.SQUADRA[1], scoria.player)
 	gui.set_parent(dev.root, fx.world)
@@ -853,7 +870,7 @@ local function make_world(a)
 	gui.set_parent(fx.tags_root, fx.world)
 	fx.view = frame_view()
 	fx.cam = frame_cam(fx.view)
-	bench(fx, p, key)
+	bench(fx, nil)
 	apply(fx)
 	return fx
 end
@@ -908,31 +925,27 @@ local function shelf(a, g, key)
 		kit.text(c, set.name, ix + 38, ry + 24, 17, n > 0 and color_of(set.id) or KC.MUTE, "start", 0.5)
 		kit.text(c, "x" .. n, x + w - PAD, ry + 25, 20, n > 0 and KC.SAND or KC.MUTE, "end")
 	end
-	-- the walls of today (Sergio, 25 Nov, proposal A): three usurers, the paid ones with
-	-- the purse full, the one of now glowing with its multiplier, the next ones dark
+	-- the walls of today (Sergio, 25 Nov, proposal A): three purses, the paid ones closed
+	-- and sealed, the one of now glowing with its multiplier, the next ones dark
 	kit.rect(c, ix, y + 340, iw, 2, KC.LINE)
 	kit.heading(c, T.today, ix, y + 368, KC.MUTE)
 	local now = forge.level(key)
 	local done_now = forge.full(p, key)
 	for i = 0, forge.WALLS - 1 do
-		local cx, bottom, w = ix + 30 + i * 74, y + 434, 50
+		local cx, bottom, h = ix + 30 + i * 74, y + 434, 56
 		local state = (i < now or (i == now and done_now)) and "done" or i == now and "now" or "next"
-		local name = "usuraio_grande_ferro"
+		local name = state == "done" and "borsa_chiusa_ferro" or "borsa_ferro"
 		local pc = PIECES[name]
+		local w = h * pc.w / pc.h
 		local gx, gy = cx - c.ox, c.oy - bottom
 		local n = piece(c.node, name, gx, gy, w, gui.PIVOT_S)
 		if state == "now" then
-			-- hot, as a usurer glows when he is hit (glow: his own drawing added in ember)
-			local h = piece(c.node, name, gx, gy, w, gui.PIVOT_S)
-			gui.set_blend_mode(h, gui.BLEND_ADD)
-			gui.set_color(h, vmath.vector4(EMBER.x, EMBER.y, EMBER.z, 0.6))
+			-- hot, as a purse glows when it is hit (glow: its own drawing added in ember)
+			local hot = piece(c.node, name, gx, gy, w, gui.PIVOT_S)
+			gui.set_blend_mode(hot, gui.BLEND_ADD)
+			gui.set_color(hot, vmath.vector4(EMBER.x, EMBER.y, EMBER.z, 0.6))
 		end
 		if state == "next" then gui.set_color(n, vmath.vector4(0.38, 0.36, 0.38, 1)) end
-		if state == "done" then
-			-- the purse full of molten Ossidiana, as on the wall
-			local k = w / pc.w
-			piece(c.node, "goccia_grande", gx + (pc.mx - pc.w / 2) * k, gy + (pc.h - pc.my) * k, pc.mw * k / RIM_W * BALL_W)
-		end
 		local label = state == "done" and T.wall_full_short or ("x" .. (tostring(forge.LEVELS[i + 1]):gsub("%.", ",")))
 		kit.text(c, label, cx, y + 450, 15, state == "now" and KC.HOT or KC.MUTE, "middle", 0.5)
 	end
@@ -1127,7 +1140,7 @@ local function start(a, poured)
 	local p = a.prof
 	fx.phase, fx.t = "open", 0
 	fx.poured = poured
-	fx.got = { scaglie = 0, fr = {}, hits = 0 }
+	fx.got = { sacchi = 0, vetri = 0, fr = {}, hits = 0 }
 	travel(fx, full_view(), CLOSE, OPEN)
 	-- the throws' things over the whole screen: the wallet and the throws
 	fx.hud = empty(nil, 0, 0)
@@ -1177,6 +1190,7 @@ local function close(a)
 	-- the effects still going belong to the hud and the wall, which go
 	fx.parts, fx.trembles, fx.timers = nil, nil, nil
 	fx.row, fx.hint = nil, nil
+	fx.got = nil
 	fx.phase, fx.t = "close", 0
 	travel(fx, frame_view(), frame_cam(frame_view()), OPEN)
 	fx.rebuild = true
@@ -1195,9 +1209,13 @@ local function launch(a)
 	fx.result, fx.path, fx.wall, fx.hit_i, fx.wall_i = r, path, wall, 1, 1
 	local got = fx.got
 	if got then
-		got.scaglie = got.scaglie + (r.scaglie or 0) + (r.base or 0)
+		if r.esito == "stampo" then
+			got.hits = got.hits + 1
+			got.sacchi = got.sacchi + (r.scaglie or 0) + (r.base or 0)
+		else
+			got.vetri = got.vetri + 1
+		end
 		if r.set then got.fr[r.set] = (got.fr[r.set] or 0) + r.n end
-		if r.esito == "stampo" then got.hits = got.hits + 1 end
 		if r.bonus then got.bonus = true end
 		if r.jackpot then got.jackpot, got.medal = r.jackpot, r.medal end
 	end
@@ -1215,7 +1233,7 @@ local missed, after_throw, recap
 -- The whole wall filled (the page's «jackpot del muro pieno»): once the last flame has
 -- burned the moulds light up one after another like a row of lamps, a flash, the
 -- camera shakes, JACKPOT! huge and wobbling, a rain of Scaglie and fragments over the
--- screen; the Scaglie into the wallet and, the first time, the medal
+-- screen; the Scaglie on the bench (it breaks) and, the first time, the medal
 local LAMPS_AT, LAMP_GAP, BANG_AT = 1.2, 0.1, 2.4
 local RAIN = { "scaglia", "scaglia", "scaglia", "frammento_fabbro", "scaglia", "scaglia", "scaglia", "frammento_corvo",
 	"scaglia", "scaglia", "scaglia", "frammento_fornace", "scaglia", "scaglia", "scaglia", "frammento_leviatano",
@@ -1247,7 +1265,7 @@ local function jackpot(a, r)
 				lamps[#lamps + 1] = h
 			end
 			-- the golden light on the full purse's top
-			local e = ui.disc(m.x, m.y + m.w * (BALL_Y + 0.42), m.w * 0.9, GOLD, fx.splash)
+			local e = ui.disc(m.x, m.y + m.w * 0.42, m.w * 0.9, GOLD, fx.splash)
 			gui.set_size(e, vec(m.w * 0.9, m.w * 0.2))
 			gui.set_blend_mode(e, gui.BLEND_ADD)
 			gui.set_scale(e, vmath.vector3(0.2, 0.2, 1))
@@ -1259,7 +1277,7 @@ local function jackpot(a, r)
 	later(fx, BANG_AT, function()
 		-- the bancarotta: the bench breaks under the loot, the usurers cry
 		bankrupt(fx)
-		for _ = 1, 3 do say(fx, fx.wall[math.random(#fx.wall)], T.say_jackpot) end
+		say(fx, T.say_jackpot, "usuraio_paga")
 		veil(fx, WARM, 0.7, 0.12)
 		fx.shake = SHAKE * 3
 		sound.play("#martello")
@@ -1278,10 +1296,6 @@ local function jackpot(a, r)
 					vy = -(260 + 200 * math.random()), g = 600, t = 0, life = 2.2, spin = (math.random() - 0.5) * 360, keep = true }
 			end)
 		end
-		later(fx, 0.4, function()
-			coins.fly(fx.purse, "scaglia", in_purse(fx, cx, 360), 14, r.jackpot,
-				function(i) if i % 4 == 1 then sound.play("#scaglia") end end)
-		end)
 		if r.medal then
 			later(fx, 0.7, function()
 				shout(a, T.medal, 150, KC.SAND, JACKPOT_T - BANG_AT - 0.7, 30)
@@ -1342,12 +1356,6 @@ local function land(a)
 		fx.hold = 0.5
 		if r.jackpot then jackpot(a, r) end
 		local sx, sy = to_screen(fx, m.x, m.y + m.w * 0.6)
-		-- (with the Scaglie every drop gets, forge.MISS)
-		local sc = (r.scaglie or 0) + (r.base or 0)
-		if sc > 0 then
-			coins.fly(fx.purse, "scaglia", in_purse(fx, sx, sy), math.min(10, math.max(3, math.floor(sc / 8))), sc,
-				function(i) if i == 1 then sound.play("#scaglia") end end)
-		end
 		if not r.scaglie then
 			-- the family's fragment rises from the mould, with how many
 			local n = empty(fx.hud, sx, sy)
@@ -1363,8 +1371,8 @@ local function land(a)
 		end
 		-- the usurer cries, the loot goes on the bench (it sags a little more)
 		later(fx, LID_AT + 0.3, function()
-			say(fx, m, T.say_hit)
-			bench(fx, a.prof, fx.key, r.set or "scaglie", r.jackpot ~= nil)
+			say(fx, T.say_hit)
+			bench(fx, fx.got, r.set or "scaglie")
 		end)
 		if r.lucky then shout(a, T.lucky_hit, 470, KC.HOT, 1.1) end
 		if r.sponda then
@@ -1378,7 +1386,7 @@ local function land(a)
 end
 
 -- a drop that missed: its splash, it is glass in the sand and the bead hops into the
--- Smith's jar at the end of the bench, which pays MISS; the usurer it nearly went in
+-- jar at the end of the bench (MISS, paid at INCASSA); the usurer it nearly went in
 -- (or another one) laughs
 local HOP_T = 0.75
 missed = function(a, x, y)
@@ -1406,12 +1414,11 @@ missed = function(a, x, y)
 			end
 		end
 	end
-	if near and best < 1 then say(fx, near, T.say_near) else say(fx, someone(fx, a.prof), T.say_miss) end
+	say(fx, near and best < 1 and T.say_near or T.say_miss)
 	later(fx, HOP_T, function()
 		sound.play("#punto")
-		bench(fx, a.prof, fx.key)
+		bench(fx, fx.got)
 		local bx, by = to_screen(fx, fx.jar_at[1], fx.jar_at[2])
-		coins.fly(fx.purse, "scaglia", in_purse(fx, bx, by), 3, r.scaglie or forge.MISS)
 		local n = empty(fx.hud, bx, by + 30)
 		local tg = { node = n, ox = 0, oy = 0 }
 		kit.text(tg, T.miss, 2, 2, 20, KC.INK, "middle", 1)
@@ -1435,7 +1442,8 @@ after_throw = function(a)
 end
 
 -- The pour's recap (Sergio, 24 Nov: «un riepilogo delle ricompense ... prima di chiudere
--- la partita»): what the throws brought, row by row, then COLA ANCORA and CHIUDI
+-- la partita»): what the throws brought, row by row, then COLA ANCORA and INCASSA (both
+-- pay what is on the bench first)
 local RECAP_W, RECAP_ROW = 480, 52
 function recap(a)
 	local fx, p = a.fx, a.prof
@@ -1443,7 +1451,10 @@ function recap(a)
 	fx.phase, fx.t = "recap", 0
 	if fx.stick then gui.set_enabled(fx.stick.base, false) end
 	local rows = {}
-	rows[#rows + 1] = { icon = "scaglia", label = T.recap_scaglie, value = "+" .. coins.format(got.scaglie), color = KC.SAND }
+	rows[#rows + 1] = { icon = "scaglia", label = T.recap_scaglie, value = "+" .. coins.format(got.sacchi), color = KC.SAND }
+	if got.vetri > 0 then
+		rows[#rows + 1] = { icon = "scaglia", label = T.recap_beads:format(got.vetri), value = "+" .. coins.format(got.vetri * forge.MISS), color = KC.SAND }
+	end
 	for _, set in ipairs(equip.SETS) do
 		local n = got.fr[set.id]
 		if n then rows[#rows + 1] = { icon = "frammento_" .. set.id, label = T.recap_fragments:format(set.name), value = "+" .. n, color = color_of(set.id) } end
@@ -1503,21 +1514,90 @@ function recap(a)
 	gui.move_above(fx.hud, nil)
 end
 
+-- a fragment of the bench up to the wallet: it lands under it with its number
+local function fragment_home(fx, set, n, x, y)
+	local tx, ty = screen.x1 - 200, 720 - 104
+	local nd = empty(fx.hud, x, y)
+	kit.piece({ node = nd, ox = 0, oy = 0 }, "frammento_" .. set.id, 0, 0, 44)
+	gui.set_scale(nd, vmath.vector3(0.3, 0.3, 1))
+	gui.animate(nd, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.15)
+	gui.animate(nd, "position.x", tx, gui.EASING_OUTQUAD, coins.FLIGHT * 1.4, 0.1)
+	gui.animate(nd, "position.y", ty, gui.EASING_INQUAD, coins.FLIGHT * 1.4, 0.1, function()
+		sound.play("#scaglia")
+		local g = { node = nd, ox = 0, oy = 0 }
+		kit.text(g, "+" .. n .. " " .. set.name, 26 + 2, 8 + 2, 20, KC.INK, "start")
+		kit.text(g, "+" .. n .. " " .. set.name, 26, 8, 20, color_of(set.id), "start")
+		gui.animate(nd, "position.y", ty - 16, gui.EASING_OUTQUAD, 1.2)
+		fade(nd, 0.4, 1.1)
+	end)
+end
+
+-- INCASSA (Sergio, 26 Nov: «ti arrivino nel portafoglio solo alla fine, quando chiudi
+-- con la modale ... in un tripudio di animazioni»): the bench empties heap by heap, the
+-- Scaglie in arcs into the wallet that counts them up, the beads of the jar too, the
+-- fragments up under it with their number; the usurer grumbles; then after()
+local PAY_GAP = 0.45
+local function pay(a, after)
+	local fx = a.fx
+	local got = fx.got or {}
+	fx.phase, fx.t = "pay", 0
+	local jobs = {}
+	local heaps = fx.heap_of or {}
+	local sc = (got.sacchi or 0) + (got.jackpot or 0)
+	if sc > 0 and heaps.scaglie then jobs[#jobs + 1] = { node = heaps.scaglie, coins = sc, tag = "heap_scaglie" } end
+	if (got.vetri or 0) > 0 and fx.jar then jobs[#jobs + 1] = { node = fx.jar, coins = got.vetri * forge.MISS, tag = "jar", beads = true } end
+	for _, set in ipairs(equip.SETS) do
+		local n = got.fr and got.fr[set.id]
+		if n and heaps[set.id] then jobs[#jobs + 1] = { node = heaps[set.id], set = set, n = n, tag = "heap_" .. set.id } end
+	end
+	local t = 0
+	for _, j in ipairs(jobs) do
+		later(fx, t, function()
+			local q = screen.node_pos(j.node)
+			if j.coins then
+				coins.fly(fx.purse, "scaglia", in_purse(fx, q.x, q.y + (j.beads and 30 or 10)),
+					math.min(18, math.max(4, math.floor(j.coins / 12))), j.coins,
+					function(i) if i % 3 == 1 then sound.play("#scaglia") end end)
+			else
+				fragment_home(fx, j.set, j.n, q.x, q.y + 10)
+			end
+			if j.beads then
+				for _, b in ipairs(fx.beads or {}) do fade(b, 0.25) end
+			else
+				gui.animate(j.node, "scale", vmath.vector3(0.01, 0.01, 1), gui.EASING_INBACK, 0.4, 0.15)
+			end
+			local tg = fx.tags[j.tag]
+			if tg then fx.tags[j.tag] = nil; fade(tg, 0.25) end
+		end)
+		t = t + PAY_GAP
+	end
+	if #jobs > 0 then say(fx, T.say_pay, "usuraio_paga") end
+	-- the bench straightens up as it empties
+	later(fx, t + coins.FLIGHT + 0.7, function()
+		if fx.purse then coins.finish(fx.purse) end
+		fx.got = nil
+		after()
+	end)
+end
+
 local function recap_do(a, what)
 	local fx = a.fx
 	if not what then return end
 	fx.recap_btns = nil
 	if fx.recap then gui.delete_node(fx.recap); fx.recap = nil end
-	-- COLA ANCORA stays on the wall (Sergio, 25 Nov: «non c'è bisogno di uscire e
-	-- rientrare»): it pays, and the gems fly into the ladle as at every pour
-	-- (the same wall only: at 5 in the morning a new one comes, and the recap closes on it)
-	if what == "again" and wall_key(a.prof) == fx.key and profile.act(a.prof, { k = "colata", muro = wall_key(a.prof) }) then
-		fx.poured = true
-		fx.got = { scaglie = 0, fr = {}, hits = 0 }
-		gems(fx)
-		return
-	end
-	close(a)
+	pay(a, function()
+		-- COLA ANCORA stays on the wall (Sergio, 25 Nov: «non c'è bisogno di uscire e
+		-- rientrare»): it pays, and the gems fly into the ladle as at every pour
+		-- (the same wall only: at 5 in the morning a new one comes, and the recap closes on it)
+		if what == "again" and wall_key(a.prof) == fx.key and profile.act(a.prof, { k = "colata", muro = wall_key(a.prof) }) then
+			fx.poured = true
+			fx.got = { sacchi = 0, vetri = 0, fr = {}, hits = 0 }
+			bench(fx, nil)
+			gems(fx)
+			return
+		end
+		close(a)
+	end)
 end
 
 -- an angle and power that fill the nearest empty mould (the simulator's sure aim)
@@ -1790,11 +1870,11 @@ function M.update(a, dt)
 			to_aim(a)
 		end
 	elseif fx.phase == "aim" then
-		-- now and then a usurer says something
+		-- now and then the usurer of the bench says something
 		fx.chat = (fx.chat or 3) - dt
 		if fx.chat <= 0 then
 			fx.chat = 6 + math.random() * 5
-			say(fx, someone(fx, p), T.say_idle)
+			say(fx, T.say_idle)
 		end
 		pad_aim(a)
 		if fx.aiming or fx.pad or (fx.stick and fx.stick.id and fx.thumb_st.active) then draw_aim(a) end
@@ -1906,6 +1986,8 @@ end
 function M.input(a, action_id, action)
 	local fx = a.fx
 	if not fx or fx.phase == "vetrina" then return false end
+	-- (INCASSA: the bench empties into the wallet, nothing to touch)
+	if fx.phase == "pay" then return true end
 	if fx.phase == "recap" then
 		if action_id == ui.PAD and action.pressed then
 			local c = controller.current_value
