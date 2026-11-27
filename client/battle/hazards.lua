@@ -14,8 +14,8 @@
 -- The fire rain (Violenza) is the hail with orange stones; the false bridges (Frode) shine in
 -- warning over the rectangle of the one that is about to fall (the crumbling is announced).
 -- The lever (Limbo) sits on its steel stud: a plate with the hinge and the handle, which snaps to
--- the other side at every flip; during the second of stopped time a ring with an arrow marks
--- where each robot will land. Until Codex's drawing (docs/handoff/WB-099) it is drawn here.
+-- the other side at every flip (Codex's drawings, WB-099); during the second of stopped time a
+-- ring with an arrow marks where each robot will land.
 --   hazards.painting(g)                        -- the map's painting: the Limbo upside down has its own
 
 local config = require "sim.config"
@@ -44,14 +44,11 @@ local LID = vmath.vector4(0.2, 0.09, 0.07, 1)
 local FLAME = vmath.vector4(1, 0.55, 0.15, 0.9)
 local FLAME_CORE = vmath.vector4(1, 0.82, 0.3, 0.95)
 local ROCKS, TOMBS, FLAMES = 4, 4, 3
--- the lever's colours (docs/handoff/WB-099: the steel of the studs, the gold knob)
-local STEEL = vmath.vector4(0.349, 0.4, 0.427, 1)
-local STEEL_LIGHT = vmath.vector4(0.663, 0.741, 0.784, 1)
-local INK = vmath.vector4(0.106, 0.129, 0.141, 1)
-local GOLD = vmath.vector4(1, 0.718, 0.012, 1)
-local GOLD_LIGHT = vmath.vector4(1, 0.878, 0.541, 1)
+-- the lever's drawings in the world (Codex, WB-099; numbers printed by tools/grafica/leva.py): the
+-- plate as wide as the stud, the handle with the middle of its eye eye_x, eye_y from its top left
+local LEVER_ART = { plate_w = 30, plate_h = 30.2, handle_w = 45, handle_h = 11.3, eye_x = 4.0, eye_y = 5.6 }
 local LANDING = vmath.vector4(1, 0.88, 0.5, 0.95)
-local LEVER_TILT = math.rad(35)
+local LEVER_TILT = config.LEVER.tilt
 local MAX_ROBOTS = 4
 local WATER_W, WATER_DEPTH = 2400, 400
 
@@ -64,6 +61,14 @@ local function node(w, h, color, parent)
 end
 
 local P, S = vmath.vector3(), vmath.vector3()
+
+-- an image of the battle atlas, as big as in the world
+local function image(name, w, h, parent)
+	local n = node(w, h, vmath.vector4(1, 1, 1, 1), parent)
+	gui.set_texture(n, "battaglia")
+	gui.play_flipbook(n, name)
+	return n
+end
 local function pos(n, x, y)
 	P.x, P.y = x, y
 	gui.set_position(n, P)
@@ -139,24 +144,14 @@ function M.new()
 		end
 		o.tombs[i] = { root = root, lid = lid, flames = flames }
 	end
-	-- the lever: the plate on the stud, the handle turning around the hinge, the gold knob at its end
-	local L = config.LEVER
+	-- the lever (WB-099, tools/grafica/leva.py): the handle turns around its eye on the hinge, the
+	-- plate sits over it on the stud
 	o.lever = node(0, 0, vmath.vector4(1, 1, 1, 1))
 	gui.set_enabled(o.lever, false)
 	o.handle = node(0, 0, vmath.vector4(1, 1, 1, 1), o.lever)
-	local rod = node(L.out + 4, 9, INK, o.handle)
-	pos(rod, (L.out + 4) / 2, 0)
-	local rod_light = node(L.out, 4, STEEL_LIGHT, o.handle)
-	pos(rod_light, L.out / 2, 0)
-	o.knob = ui.disc(L.out, 0, 22, INK, o.handle)
-	ui.disc(0, 0, 16, GOLD, o.knob)
-	ui.disc(-2.5, 2.5, 6, GOLD_LIGHT, o.knob)
-	node(30, 30, INK, o.lever)
-	node(24, 24, STEEL, o.lever)
-	local shine = node(18, 3, STEEL_LIGHT, o.lever)
-	pos(shine, 0, 8)
-	ui.disc(0, 0, 11, INK, o.lever)
-	ui.disc(0, 0, 5, STEEL_LIGHT, o.lever)
+	local handle = image("leva_manico", LEVER_ART.handle_w, LEVER_ART.handle_h, o.handle)
+	pos(handle, LEVER_ART.handle_w / 2 - LEVER_ART.eye_x, LEVER_ART.eye_y - LEVER_ART.handle_h / 2)
+	image("leva_piastra", LEVER_ART.plate_w, LEVER_ART.plate_h, o.lever)
 	o.tilt = LEVER_TILT
 	-- where each one lands while time is stopped: a ring on the ground and an arrow above it
 	o.landing = {}
@@ -240,10 +235,6 @@ function M.update(o, g, clock)
 		o.tilt = o.tilt + (want - o.tilt) * 0.35
 		S.x, S.y, S.z = 0, 0, math.deg(math.atan2(dy, dx) + o.tilt)
 		gui.set_euler(o.handle, S)
-		-- the knob breathes a little: it is there to be hit
-		local k = 1 + 0.06 * math.sin(clock * 4)
-		S.x, S.y, S.z = k, k, 1
-		gui.set_scale(o.knob, S)
 		for i, l in ipairs(o.landing) do
 			local ly = hz.freeze > 0 and hz.ly[i] or -1
 			local rb = g.robots[i]

@@ -69,12 +69,18 @@ do
 			and not g.terrain:solid(s.x, s.y + 1)
 	end
 	check(both, "limbo: the respawns stand on steel beams free on both faces")
-	local steel = true
-	for _, s in ipairs(map.levers) do
+	local steel, blocked = true, {}
+	for i, s in ipairs(map.levers) do
 		steel = steel and g.terrain:get(math.floor(s.x / 3), math.floor(s.y / 3)) == 2
-			and not g.terrain:solid(s.x + s.dx * C.LEVER.out, s.y + s.dy * C.LEVER.out)
+		-- the knob leans to one side, then to the other
+		for _, t in ipairs({ C.LEVER.tilt, -C.LEVER.tilt }) do
+			local c, sn = math.cos(t), math.sin(t)
+			local kx, ky = s.x + (s.dx * c - s.dy * sn) * C.LEVER.out, s.y + (s.dx * sn + s.dy * c) * C.LEVER.out
+			if g.terrain:solid(kx, ky) then blocked[#blocked + 1] = i end
+		end
 	end
-	check(steel, "limbo: every stud of the lever is steel, with room for the knob")
+	check(steel, "limbo: every stud of the lever is steel")
+	check(#blocked == 0, "limbo: the knob is out of the terrain on both sides (" .. table.concat(blocked, ",") .. ")")
 	check(hz.flip == 0 and hz.at >= 1 and hz.at <= #map.levers, "limbo: the lever starts on a stud, the map the right way up")
 	-- the map mirrors: a cell and its mirror swap, robots too
 	local before = {}

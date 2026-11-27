@@ -504,7 +504,9 @@ end
 -- the middle of the knob, where shots and bodies pull it
 local function lever_knob(g, hz)
 	local x, y, dx, dy = lever_spot(g, hz, hz.at)
-	return x + dx * C.LEVER.out, y + dy * C.LEVER.out
+	local t = hz.n % 2 == 0 and C.LEVER.tilt or -C.LEVER.tilt
+	local c, sn = math.cos(t), math.sin(t)
+	return x + (dx * c - dy * sn) * C.LEVER.out, y + (dx * sn + dy * c) * C.LEVER.out
 end
 M.lever_spot, M.lever_knob = lever_spot, lever_knob
 

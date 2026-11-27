@@ -84,8 +84,8 @@ distanza da dove atterra chi l'ha tirata, per 0,2 entro 250, per 0,5 vicino (350
 mai la borchia di prima. Per `LEVER.cool` = 90 tick dopo il fermo non si può ritirare (se no chi
 atterra lì vicino la tira subito di nuovo). Il client cambia dipinto (`limbo_sotto`, lo stesso
 disegno specchiato con la luce dall'alto: `tools/grafica/mappe_dipinte.py`, `limbo(True)`),
-ridisegna la maschera specchiata coi crateri e disegna la leva segnaposto finché non arriva quella
-di Codex (`docs/handoff/WB-099`). I bot non la vedono ancora (niente `risk`): non la tirano apposta.
+ridisegna la maschera specchiata coi crateri e disegna la leva di Codex (`docs/handoff/WB-099`, ritagliata
+da `tools/grafica/leva.py`). I bot non la vedono ancora (niente `risk`): non la tirano apposta.
 
 ## Violenza, Frode, Tradimento e Lucifero (terzo blocco)
 

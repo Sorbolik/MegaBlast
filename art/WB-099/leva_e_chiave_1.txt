@@ -1,0 +1,11 @@
+Image 1 is a supply crate from our cartoon game: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, no gradients. Image 2 is a map of the same game (the Limbo, a ruined grey-green castle): look at the riveted steel beams and the small square steel studs. Image 3 only shows WHERE a lever sits on one of those studs and how it snaps; ignore its drawing style.
+
+Draw THREE SEPARATE OBJECTS in the style of image 1, on plain green (#00FF00), well apart from each other, seen straight from the front, nothing touching:
+1. LEFT: the LEVER BASE, a square riveted steel plate like the studs of image 2 (steel #59666D, highlight #A9BDC8, dark edge #1B2124), with four rivets in the corners and a round iron hinge in the exact middle (a ring with a dark hole). At least 450 px wide.
+2. MIDDLE: the LEVER HANDLE alone, lying horizontal: a straight steel rod (same steel colors) with, at its LEFT end, a round eye that fits on the hinge, and at its RIGHT end a big round knob of molten gold (#FFB703, highlight #FFE08A, shadow #C47A00), like a ball you want to hit. At least 600 px long, the rod about one eighth as thick as long.
+3. RIGHT: an old castle KEY of tarnished gold (#E3B341, highlight #FFE7A0, shadow #9C6E12) with a ring bow shaped like a small crenellated tower and a two-tooth bit, lying horizontal, at least 450 px long.
+Nothing else: no floor, no wall, no letters, no numbers, no shadow on the ground, no glow, no sparkles.
+
+Riferimenti in ordine: art/WB-099/riferimenti/R3_cassa.png, art/WB-099/riferimenti/R1_mappa_limbo.jpg, art/WB-099/riferimenti/R2_leva_segnaposto.png.
+ImageGen, tre tentativi, selezionato il primo. Ridimensionato in proporzione e centrato su tela verde da 1536×1024.
+Larghezze di piastra, manico e chiave: circa 245, 568 e 421 px. Minimi del prompt non raggiunti. Verde campionato #02F807, diverso da #00FF00.
