@@ -610,6 +610,9 @@ end
 local function flip(g, hz)
 	local by = hz.pull
 	mirror(g)
+	-- whoever pulled the lever hit all their enemies (Sergio, 27 Nov): a fall from the flip is their kill
+	local puller = g.robots[by]
+	if puller then for _, rb in ipairs(g.robots) do if not rb.dead then g:credit(rb, puller) end end end
 	hz.flip = 1 - hz.flip
 	hz.n = hz.n + 1
 	-- where each one will land: the ground under them in the world turned over

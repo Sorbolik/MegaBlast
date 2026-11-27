@@ -77,7 +77,9 @@ cadono sul terreno sotto o spariscono). Non si gioca mai a testa in giù. Poi il
 freccia mostra dove atterrerà ognuno (`hz.lx`, `hz.ly`, -1 se cade fuori). Poi tutti cadono, col
 danno da caduta normale. Le rinascite stanno sulle 8 travi d'acciaio libere sopra e sotto: a ogni
 capovolgimento passano all'altra faccia (`y2`). La leva non scatta da sola (Sergio: «resta ferma
-finché qualcuno la tira»).
+finché qualcuno la tira»). Chi la tira conta come l'ultimo che ha colpito tutti i suoi nemici
+(Sergio, 27 nov): chi muore cadendo nei `KILL_CREDIT_SECONDS` dopo è una sua uccisione, anche se prima
+l'aveva colpito un altro. I compagni non contano.
 
 Dopo lo scatto salta su un'altra borchia, a caso con i pesi (`LEVER`): `min(d, 700) / 700` con `d` la
 distanza da dove atterra chi l'ha tirata, per 0,2 entro 250, per 0,5 vicino (350) a un suo compagno;

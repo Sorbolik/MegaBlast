@@ -545,6 +545,8 @@ function M:push(rb, dx)
 	local p = dx * M.PUSH
 	if step_x(self, other, p) then
 		step_x(self, rb, p)
+		-- a body push counts as a hit (Sergio, 27 Nov): whoever falls off soon after is your kill
+		self:credit(other, rb)
 		return true
 	end
 	return false

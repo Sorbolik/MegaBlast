@@ -92,6 +92,11 @@ do
 	hazards.blast(g, kx, ky, 10, 1)
 	g:step()
 	check(hz.flip == 1 and hz.n == 1, "limbo: a blast on the knob flips the map")
+	local credit = true
+	for _, o in ipairs(g.robots) do
+		if (o.team ~= rb.team) ~= (o.last_hit == rb.id) then credit = false end
+	end
+	check(credit, "limbo: whoever pulls the lever hit all their enemies (the falls are their kills)")
 	local w, h, same = g.terrain.w, g.terrain.h, true
 	for _, cy in ipairs({ 0, 40, 100, 200, 359 }) do
 		for cx = 0, w - 1, 7 do
