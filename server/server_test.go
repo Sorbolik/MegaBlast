@@ -36,9 +36,9 @@ func TestSimPicksMapFromSeed(t *testing.T) {
 }
 
 // The map's hazard goes in the state as it is (hz, sim/hazards.lua): the boulders of
-// Avarizia, the level of Ira's water, the phase of Eresia's tombs.
+// Avarizia, the level of Ira's water, the phase of Eresia's tombs, the Limbo's lever (upside down or not).
 func TestHazardInSnapshot(t *testing.T) {
-	for id, field := range map[string]string{"avarizia": `"rocks"`, "ira": `"level"`, "eresia": `"phase"`} {
+	for id, field := range map[string]string{"avarizia": `"rocks"`, "ira": `"level"`, "eresia": `"phase"`, "limbo": `"flip"`} {
 		sim := newTestSim(t, 7, id)
 		sim.Step(Input{})
 		if s := string(sim.Snapshot(false, 0)); !strings.Contains(s, `"hz":`) || !strings.Contains(s, field) {

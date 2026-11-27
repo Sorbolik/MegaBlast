@@ -1029,6 +1029,11 @@ return {
 			abbatte = { "Un altro per la fornace!", "Forgiato!" },
 			muore = { "La Forgia non si spegne...", "Tornerò più duro!" },
 		},
+		-- the Fabbro at your side in the Limbo: only a line when someone flies off with the flip
+		fabbro_limbo = {
+			vola = { "Volato via!", "Ciao ciao, anima!", "Che gravità di situazione!", "Sottosopra e fuori!",
+				"Buon viaggio!", "Il Limbo non perdona!" },
+		},
 		},
 	},
 
@@ -1205,6 +1210,8 @@ return {
 		boulders = "Rotolano i massi!",
 		water = "L'acqua sale!",
 		tombs = "Le tombe cambiano!",
+		flip = "Sottosopra!",
+		flip_by = "LEVA!",
 		fire_rain = "Piove fuoco!",
 		bridge_shaking = "Un ponte trema: corri!",
 		collapse = "Il ponte crolla!",

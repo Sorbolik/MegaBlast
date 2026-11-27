@@ -658,4 +658,32 @@ M.girone_1 = {
 	},
 }
 
+-- Circle I: the Limbo (docs/campagna_gironi.md; Sergio, 27 Nov 2026: the gravity no longer low but
+-- upside down, with the lever on the map, sim/hazards.lua). The first level only lets you get to
+-- know the lever: the Fabbro at your side says it once, at the start, then it is a normal match on
+-- points; when someone flies off he comments (battle/quips.lua, vola).
+M.girone_2 = {
+	{
+		id = "lasciate_ogne_speranza",
+		titolo = "Lasciate ogne speranza",
+		tipo = "squadra",
+		goal_text = "Nel Limbo c'è una leva: colpiscila o toccala e la mappa si capovolge. Tu e il Fabbro contro due anime",
+		mappa = "limbo",
+		giocatori = {
+			{ team = 1 },
+			{ team = 2, bot = 3, nome = "Un'anima" },
+			{ team = 1, bot = 3, nome = "Il Fabbro", battute = "fabbro_limbo" },
+			{ team = 2, bot = 2, nome = "Un'anima" },
+		},
+		globi_tempo = true,
+		-- to retune with the collaudo (luajit tools/arena/collaudo.lua) once the level is played
+		stelle = { punti = { 600, 760 } },
+		obiettivo = { { win = true, testo = "Vinci la partita col Fabbro" } },
+		righe = {
+			{ testo = "Qui nel Limbo la gravità è fuori di testa! Colpisci la leva, o toccala, e tutto si capovolge.",
+				quando = { turno = 1, di_turno = "tu" } },
+		},
+	},
+}
+
 return M

@@ -12,7 +12,7 @@
 --
 -- Quips cycle in order (n: how many times it already happened), no randomness.
 -- Moments: turno (their turn starts), colpisce (hurts someone on their turn),
--- colpito (they get hurt), scappa (teleports), abbatte, muore.
+-- colpito (they get hurt), scappa (teleports), abbatte, muore, vola (anyone falls off the map).
 
 local T = require("lang.text").quips
 
@@ -41,13 +41,21 @@ local function moment(who, e, current_one)
 		if who[e.robot] then return e.robot, "colpito" end
 		if e.robot ~= current_one then return current_one, "colpisce" end
 	elseif e.type == "death" then
+		-- whoever has a line for it comments on anyone flying off the map (the Fabbro in the
+		-- Limbo: Sergio, 27 Nov), before their own muore or abbatte
+		if e.reason == "fell" then
+			for i = 1, 4 do
+				local b = who[i] and QUIPS[who[i]]
+				if b and b.vola then return i, "vola" end
+			end
+		end
 		if who[e.robot] then return e.robot, "muore" end
 		return e.by, "abbatte"
 	end
 	return nil
 end
 
-local STRONG = { muore = true, abbatte = true, scappa = true }
+local STRONG = { muore = true, abbatte = true, scappa = true, vola = true }
 
 function M.event(p, e, current_one)
 	local i, m = moment(p.chi, e, current_one)

@@ -101,6 +101,7 @@ return {
 		pavimento = "forgia",
 		fossa = "forgia",
 		limbo = "limbo",
+		limbo_sotto = "limbo",
 		lussuria = "lussuria",
 		gola = "gola",
 		avarizia = "avarizia",

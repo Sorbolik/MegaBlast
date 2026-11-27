@@ -121,12 +121,12 @@ personaggi; attenzione al rosso della squadra sui gironi rossi).
 - Verso: «sanza speme vivemo in disio» (Inf. IV, 42)
 - Storia: Anime sospese, né buone né cattive. Per passare nel vero inferno bisogna attraversare l'Acheronte, e Caronte i diavoletti non li traghetta.
 - Mappa: Mura a gradoni di un castello in rovina, colonne spezzate, un ruscello in basso, nebbia grigio-verde e luce pallida dall'alto. Quasi simmetrica: va bene anche online.
-- Pericolo: Gravità ridotta: si salta più lontano e i colpi volano di più. Sono sospese le anime, e lo sei anche tu.
-- Conviene: Paracadute, controllo in aria, tiri lunghi.. Gradi del bot: 3 → 5.
+- Pericolo: La leva (Sergio, 27 nov 2026, al posto della gravità ridotta): sta su una borchia d'acciaio qualsiasi; chi la colpisce o la tocca capovolge la mappa, il tempo si ferma un secondo per vedere dove si atterra, poi tutti cadono. Dopo salta su un'altra borchia, lontano da chi l'ha tirata. Regole in [pericoli_mappe.md](pericoli_mappe.md).
+- Conviene: Paracadute, pensare a dove si cade, tiri sulla leva al momento giusto. Gradi del bot: 3 → 5.
 - Colori: #1d2522 #55665e #d9cfa8 #a9bdb3
 - Livelli:
-  1. **Lasciate ogne speranza** (intro): Oltre la porta: arriva alla bandierina saltando fra le mura. Senti quanto voli.
-  2. **Senza peso** (duello): Un'ombra testa calda che tira da lontanissimo.
+  1. **Lasciate ogne speranza** (squadra, nel gioco dal 27 nov): tu e il Fabbro (grado 3) contro due anime normali (gradi 3 e 2), partita ai punti. Il Fabbro dice la leva una volta sola, al primo turno; poi solo una battuta quando qualcuno vola fuori (Sergio).
+  2. **Sottosopra** (duello; era «Senza peso»): Un'ombra testa calda che tira da lontanissimo.
   3. **I sette muri** (rompicapo): Sette bersagli nelle mura, otto colpi. Con poca gravità l'Uovo rimbalza diverso.
   4. **Il ruscello** (squadra): Il primo 2 contro 2 col Fabbro, contro due ombre.
   5. **Gli spiriti magni** (orda): Tu contro tre anime antiche, deboli ma insieme.

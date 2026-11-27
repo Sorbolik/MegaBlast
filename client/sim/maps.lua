@@ -54,9 +54,24 @@ add("cortile", "Il cortile", { spawns = { { x = 210, from = 450 }, { x = 1710, f
 -- The first circles of the campaign (docs/campagna_gironi.md): one map for each, shared by its
 -- levels, with the circle's hazard (sim/hazards.lua, docs/pericoli_mappe.md). In the rotation
 -- too, so they also bring variety online (Sergio, 11 Nov).
--- Limbo: less gravity: you jump higher and farther and the shots fly longer.
-add("limbo", "Il Limbo", { gravity = 0.6,
-	spawns = { { x = 180, from = 600 }, { x = 1740, from = 520 }, { x = 630, from = 400 }, { x = 1230, from = 300 } },
+-- Limbo: the lever (Sergio, 27 Nov 2026): hit it with a shot or touch it and the whole map turns
+-- upside down (sim/hazards.lua, lever); then it jumps to another of the 20 steel studs (levers: the
+-- middle of the stud and the face it sticks out of, tools/grafica/mappe_dipinte.py LIMBO_BORCHIE).
+-- As big as the Fabbro's pit, 12 respawns on the 8 steel beams, free on both faces: y2 is the top of
+-- the beam when the map is upside down.
+add("limbo", "Il Limbo", { hazard = "lever",
+	spawns = { { x = 540, from = 400 }, { x = 1665, from = 400 }, { x = 150, from = 400 }, { x = 1800, from = 400 } },
+	respawns = { { x = 90, y = 780, y2 = 324 }, { x = 180, y = 780, y2 = 324 }, { x = 375, y = 420, y2 = 684 },
+		{ x = 480, y = 420, y2 = 684 }, { x = 772.5, y = 630, y2 = 474 }, { x = 915, y = 705, y2 = 399 },
+		{ x = 1020, y = 705, y2 = 399 }, { x = 1207.5, y = 555, y2 = 549 }, { x = 1350, y = 405, y2 = 699 },
+		{ x = 1470, y = 405, y2 = 699 }, { x = 1800, y = 750, y2 = 354 }, { x = 1830, y = 450, y2 = 654 } },
+	levers = { { x = 225, y = 960, dx = 0, dy = -1 }, { x = 420, y = 897, dx = 0, dy = -1 }, { x = 1050, y = 786, dx = 0, dy = -1 },
+		{ x = 900, y = 900, dx = -1, dy = 0 }, { x = 1650, y = 885, dx = 0, dy = -1 }, { x = 1350, y = 975, dx = 0, dy = -1 },
+		{ x = 300, y = 585, dx = 0, dy = 1 }, { x = 180, y = 570, dx = -1, dy = 0 }, { x = 960, y = 462, dx = 0, dy = -1 },
+		{ x = 960, y = 510, dx = 0, dy = 1 }, { x = 1545, y = 561, dx = 0, dy = -1 }, { x = 1725, y = 615, dx = 1, dy = 0 },
+		{ x = 285, y = 274.5, dx = -1, dy = 0 }, { x = 570, y = 237, dx = 0, dy = 1 }, { x = 1027.5, y = 177, dx = 0, dy = -1 },
+		{ x = 1275, y = 120, dx = 1, dy = 0 }, { x = 1635, y = 237, dx = 0, dy = 1 }, { x = 1710, y = 267, dx = -1, dy = 0 },
+		{ x = 1830, y = 942, dx = 0, dy = -1 }, { x = 90, y = 210, dx = 0, dy = 1 } },
 	build = function(t) t:load(mapdata.limbo) end })
 -- Lussuria: the storm moves everyone a step at the end of each round; the steel spikes are
 -- for the Rampino, the gorge in the middle kills.

@@ -102,15 +102,43 @@ def stringi_rett(x, y, w, h):
 
 
 # ---------------------------------------------------------------- i gironi (scena 1280 x 720)
-# I · Limbo, il castello dei sette muri: terrazza alta a sinistra, gradoni che scendono verso il centro
-# con tre monconi di colonne spezzate, la riva bassa a destra che si rialza in fondo; rovine e colonne
-# sospese (gravità ridotta: si salta il doppio). Nessun muro di lato.
-LIMBO_SUOLO = [(0, 400), (140, 400), (200, 460), (290, 460), (350, 520), (440, 520), (440, 480), (480, 480), (480, 520),
-               (560, 520), (620, 570), (700, 570), (700, 530), (760, 530), (760, 570), (860, 570), (900, 540),
-               (980, 540), (1030, 500), (1090, 500), (1130, 440), (1160, 440), (1200, 480), (1280, 480),
-               (1280, 760), (0, 760)]
-LIMBO_SOPRA = [fungo(230, 330, 150, 24, 90, 22), fungo(800, 330, 150, 24, 90, 22), scheggia(520, 210, 170, 56),
-               blocco(60, 250, 110, 26), blocco(1010, 300, 100, 26), scheggia(390, 400, 110, 40), scheggia(960, 170, 120, 40)]
+# I · Limbo capovolto (Sergio, 27 nov 2026: la gravità si inverte con la leva; layout v3 «adesso ci
+# siamo»): la volta in alto con i merli e la T appesi, in mezzo tre lastre (una è la porta del castello,
+# con la nicchia fra le gambe), sotto i gradoni, il ponte ad arco sopra il vuoto e il gradino alto a
+# destra; da bordo a bordo come la fossa del Fabbro. Le otto travi d'acciaio sono libere sopra e sotto:
+# ci si rinasce da tutte e due le parti (le 12 rinascite in client/sim/maps.lua). Le 20 borchie
+# d'acciaio (20 x 20, metà dentro il terreno) sono i posti della leva. Dopo la leva la mappa si specchia
+# davvero (client/sim/hazards.lua, lever): «limbo_sotto» è lo stesso disegno capovolto, dipinto con la
+# luce dall'alto (solo il dipinto: la maschera è quella dritta, specchiata dal gioco).
+LIMBO_ISOLE = [
+    [(0, 0), (360, 0), (360, 80), (300, 80), (300, 122), (260, 122), (260, 80), (130, 80), (112, 106), (72, 106), (54, 80), (0, 80)],
+    [(440, 0), (760, 0), (760, 58), (642, 58), (642, 168), (722, 168), (722, 196), (520, 196), (520, 168), (600, 168), (600, 58), (440, 58)],
+    [(830, 0), (1280, 0), (1280, 92), (1180, 92), (1150, 130), (1060, 130), (1030, 100), (930, 100), (900, 70), (830, 70)],
+    [(120, 330), (330, 330), (330, 350), (300, 372), (150, 372), (120, 350)],
+    [(560, 380), (720, 380), (720, 446), (692, 446), (692, 412), (588, 412), (588, 446), (560, 446)],
+    [(930, 300), (1150, 300), (1150, 322), (1082, 322), (1060, 346), (1000, 346), (978, 322), (930, 322)],
+    [(400, 250), (480, 250), (480, 268), (400, 268)],
+    [(800, 486), (884, 486), (884, 504), (800, 504)],
+    [(0, 580), (150, 580), (150, 552), (190, 552), (190, 522), (300, 522), (340, 562), (430, 562), (430, 720), (0, 720)],
+    arco(520, 562, 330, 158, 40, 60),
+    [(920, 602), (1010, 602), (1050, 562), (1140, 562), (1140, 522), (1280, 522), (1280, 720), (920, 720)],
+]
+LIMBO_TRAVI = [(40, 200, 110, 16), (230, 440, 120, 16), (470, 300, 90, 16), (590, 250, 110, 16),
+               (760, 350, 90, 16), (880, 450, 130, 16), (1150, 220, 100, 16), (1180, 420, 80, 16)]
+# le borchie della leva: il centro, sul bordo della faccia (il gioco: maps.lua, levers)
+LIMBO_BORCHIE = [(150, 80), (280, 122), (700, 196), (600, 120), (1100, 130), (900, 70), (200, 330), (120, 340),
+                 (640, 412), (640, 380), (1030, 346), (1150, 310), (190, 537), (380, 562), (685, 602), (850, 640),
+                 (1090, 562), (1140, 542), (1220, 92), (60, 580)]
+
+
+def limbo(capovolto):
+    """Il Limbo dritto o specchiato in verticale (scena 720 di altezza)."""
+    isole = [[(x, 720 - y) for x, y in p] if capovolto else p for p in LIMBO_ISOLE]
+    travi = LIMBO_TRAVI + [(x - 10, y - 10, 20, 20) for x, y in LIMBO_BORCHIE]
+    if capovolto:
+        travi = [(x, 720 - y - h, w, h) for x, y, w, h in travi]
+    return dict(LIMBO, isole=isole, travi=travi, stile="")
+
 
 # II · Lussuria, la bufera: due scogliere a zig-zag diverse (larga a sinistra, stretta e alta a destra)
 # con la gola in mezzo (cadere è morire), schegge nel vuoto e spuntoni d'acciaio dove aggrapparsi col Rampino
@@ -276,7 +304,8 @@ def lava(r):
 MAPPE = {
     "pavimento": dict(FORGIA, isole=[SUOLO] + SOPRA, travi=TRAVI, piegate=PIEGATE_FORGIA),
     "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA, travi=TRAVI, sotto=lava, piegate=PIEGATE_FOSSA),
-    "limbo": dict(LIMBO, isole=[LIMBO_SUOLO] + LIMBO_SOPRA, travi=[(250, 190, 110, 14), (920, 190, 110, 14)]),
+    "limbo": limbo(False),
+    "limbo_sotto": limbo(True),
     "lussuria": dict(LUSSURIA, isole=[LUSS_SX, LUSS_DX] + LUSS_SOPRA, travi=[], sopra=None, acciaio=LUSS_SPUNTONI),
     "gola": dict(GOLA, isole=[GOLA_SUOLO] + GOLA_SOPRA, travi=GOLA_TRAVI, sopra=pozze),
     "avarizia": dict(AVARIZIA, isole=[AVAR_SUOLO] + AVAR_SOPRA, travi=AVAR_TRAVI, sopra=monete),
@@ -290,7 +319,7 @@ MAPPE = {
     "lucifero": dict(TRADIMENTO, isole=[LUC_SX, LUC_DX] + LUC_SOPRA, travi=[], sopra=None),
 }
 # il tema (temi.py) di ogni mappa dei gironi: colori dello sfondo e del terreno; le altre hanno quello della Forgia
-TEMA = {"limbo": "limbo", "lussuria": "lussuria", "gola": "gola", "avarizia": "avarizia", "ira": "ira", "eresia": "eresia",
+TEMA = {"limbo": "limbo", "limbo_sotto": "limbo", "lussuria": "lussuria", "gola": "gola", "avarizia": "avarizia", "ira": "ira", "eresia": "eresia",
         "flegetonte": "violenza", "sabbione": "violenza", "malebolge": "frode", "cocito": "tradimento", "lucifero": "tradimento"}
 # le mappe disegnate a parte, col loro sfondo: terreno svg e maschera
 ALTRE = {"cortile": (cortile.mappa, cortile.maschera, "cortile")}
@@ -472,7 +501,8 @@ def main(solo_hd=False):
     sfondo_di = {}
     # il terreno delle mappe dipinte
     for nome, g in MAPPE.items():
-        if not solo_hd:
+        # il dipinto capovolto non ha maschera: il gioco specchia quella dritta
+        if not solo_hd and not nome.endswith("_sotto"):
             maschera(g, nome)
         sfondo_di[nome] = TEMA.get(nome, "forgia")
         Pm = TEMI[sfondo_di[nome]]

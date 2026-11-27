@@ -10,6 +10,8 @@ local M = {}
 M.CAPITOLI = {
 	{ id = "addestramento", titolo = "Addestramento", serve = 0, missioni = levels.addestramento, aspetta = true },
 	{ id = "girone_1", titolo = "La Forgia", serve = 9, missioni = levels.girone_1 },
+	-- the Limbo, the first circle of Hell: one level for now (Sergio, 27 Nov 2026)
+	{ id = "girone_2", titolo = "Il Limbo", serve = 9, missioni = levels.girone_2 },
 }
 
 -- the levels the campaign will have from the Forgia to Lucifero
