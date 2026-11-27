@@ -65,4 +65,11 @@ nel codice.
 
 ## Consegna di Codex
 
+- `art/WB-099/leva_e_chiave_1.png` e `leva_e_chiave_1.txt` — tre tentativi, selezionato il primo.
+- `art/WB-099/leva_e_chiave_2.png` e `leva_e_chiave_2.txt` — tre tentativi, selezionato il primo.
+
+Prompt originale e riferimenti R3, R1, R2 in ordine. I fogli ImageGen sono stati ridimensionati in proporzione e centrati su tela verde da 1536×1024. Controllati i tre oggetti separati, i quattro rivetti, il perno centrale, il manico orizzontale con occhiello a sinistra e pomo a destra, la chiave a torretta con due denti e l'assenza di scritte.
+
+La piastra misura 243–245 px, il manico 558–568 px e la chiave 418–421 px. Rimangono sotto i rispettivi minimi del prompt (450, 600 e 450 px). La piastra resta anche sotto i 400 px dell'obiettivo generale. Il verde si discosta da #00FF00. Accoppiamento del perno e resa in gioco da verificare.
+
 ## Resoconto di Claude
