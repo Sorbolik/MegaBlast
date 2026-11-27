@@ -50,7 +50,9 @@ local WX, WY, WW, WH = 150, 46, 980, 600
 local LX, LW = WX + 36, 360
 -- the signature's words: under the beads, up to the rows' middle
 local SW = 560
-local RX, RR = WX + 400, WX + WW - 36
+local RX, RR = WX + 470, WX + WW - 36
+-- the name, grade and level beside the piece: up to well before the rows
+local NAME_W = RX - 56 - (LX + 168)
 
 -- a text never wider than max (a long one shrinks)
 local function fit(n, max)
@@ -99,7 +101,7 @@ local function signature(s, g, now, level, lit, set, slot)
 	local can = sn and not sn.level and p.ossidiana >= sn.cost and net
 	local note = not sn and T.sign_top or sn.level and T.sign_needs:format(sn.level)
 		or not net and TP.need_network or T.sign_cost:format(sn.cost)
-	local sb = kit.secondary(g, T.light_sign, LX, WY + WH - 36 - 62, LW - 10, 62,
+	local sb = kit.secondary(g, T.light_sign, LX, WY + WH - 36 - 62, 280, 62,
 		{ icon = "gemma", sub = kit.upper(note), sub_color = KC.OBSIDIAN, off = not can })
 	kit.button(s.buttons, sb, "firma", { spento = not can })
 end
@@ -129,12 +131,12 @@ function M.window(s, g, sel)
 	-- the piece, its name, grade and level, the beads
 	local mini = gear_ui.mini(wg, LX, WY + 82, 150, { set = set, slot = slot, level = level, sel = true })
 	b.icon = mini.node
-	fit(kit.text(wg, gear_ui.name(set, slot), LX + 168, WY + 136, 26, KC.SAND), LW - 168)
-	fit(kit.text(wg, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), LX + 168, WY + 164, 17, ui.C.GRADI[tier], "start", 1), LW - 168)
-	b.title = fit(kit.text(wg, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), LX + 168, WY + 200, 21, KC.SAND), LW - 168)
+	fit(kit.text(wg, gear_ui.name(set, slot), LX + 168, WY + 136, 26, KC.SAND), NAME_W)
+	fit(kit.text(wg, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), LX + 168, WY + 164, 17, ui.C.GRADI[tier], "start", 1), NAME_W)
+	b.title = fit(kit.text(wg, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), LX + 168, WY + 200, 21, KC.SAND), NAME_W)
 	if nxt and nxt.proof > 0 then
 		fit(kit.text(wg, kit.upper(TP.proof:format(nxt.proof_done, nxt.proof)), LX + 168, WY + 224, 16,
-			nxt.proof_done >= nxt.proof and KC.MINT or KC.STEEL, "start", 0.5), LW - 168)
+			nxt.proof_done >= nxt.proof and KC.MINT or KC.STEEL, "start", 0.5), NAME_W)
 	end
 	b.bar = M.ingots(wg, LX, WY + 336, RR - LX, 34, level, lit)
 	b.gems, b.level = b.bar.gems, level
@@ -169,13 +171,13 @@ function M.window(s, g, sel)
 		s.action = kit.secondary(wg, TP.upgrade, RR - 290, by, 290, 62, { main = true, size = 30, icon = "az_potenzia",
 			sub = kit.upper(why or TP.price_only:format(coins.format(nxt.cost))), off = not ok })
 		kit.button(s.buttons, s.action, "potenzia", { main = true, spento = not ok })
-		local fcost = p.commesse and p.commesse.aperta and orders.level_cost(p, set, slot)
-		if fcost then
-			local fok = orders.fragments(p, set) >= fcost and nxt.proof_done >= nxt.proof and net
-			local fb = kit.secondary(wg, T.with_fragments, RX, by, 240, 62,
-				{ icon = "frammento_" .. set, sub = kit.upper(T.fragments_cost:format(fcost, orders.fragments(p, set))), off = not fok })
-			kit.button(s.buttons, fb, "frammenti", { spento = not fok })
-		end
+		-- always there (Sergio, 27 Nov): off without fragments enough (or before the Smith calls)
+		local fcost = orders.level_cost(p, set, slot)
+		local have = p.commesse and orders.fragments(p, set) or 0
+		local fok = p.commesse and p.commesse.aperta and have >= fcost and nxt.proof_done >= nxt.proof and net
+		local fb = kit.secondary(wg, T.with_fragments, LX + 300, by, 298, 62,
+			{ icon = "frammento_" .. set, sub = kit.upper(T.fragments_cost:format(fcost, have)), off = not fok })
+		kit.button(s.buttons, fb, "frammenti", { spento = not fok })
 	else
 		s.action = kit.secondary(wg, TP.upgrade, RR - 290, by, 290, 62, { main = true, size = 30, icon = "az_potenzia", off = true, sub = kit.upper(TP.at_max) })
 	end
