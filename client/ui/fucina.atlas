@@ -371,6 +371,12 @@ images {
   image: "/assets/fucina/corona.png"
 }
 images {
+  image: "/assets/fucina/croce.png"
+}
+images {
+  image: "/assets/fucina/croce_premuta.png"
+}
+images {
   image: "/assets/fucina/fabbro_al_banco.png"
 }
 images {
@@ -594,6 +600,12 @@ images {
 }
 images {
   image: "/assets/fucina/ingranaggio.png"
+}
+images {
+  image: "/assets/fucina/interruttore_dx.png"
+}
+images {
+  image: "/assets/fucina/interruttore_sx.png"
 }
 images {
   image: "/assets/fucina/lucchetto.png"

@@ -440,6 +440,8 @@ def fai_secondario():
     # incontri cosi' male in punta, e che sia ben definito il <»): un pezzo solo, la punta
     # unita ad angolo vivo, i capi tondi, niente contorno
     fai_freccina()
+    fai_croce()
+    fai_interruttore()
 
 
 def lastra(nome, h, ferro, luce):
@@ -662,6 +664,85 @@ def fai_freccina():
         d.ellipse(((cx - h) * S, (cy - h) * S, (cx + h) * S, (cy + h) * S), fill=(0xF4, 0xEC, 0xE1, 255))
     intero("freccina", np.asarray(im), 96)
     # (le monete del foglio monete_* non sono piaciute a Sergio: si rifanno con WB-072)
+
+
+def fai_croce():
+    # la X che chiude le finestre (Sergio, 27 nov: «una bella x fatta bene», senza lastra
+    # ma col rilievo dei pulsanti): contorno d'inchiostro spesso, faccia di ferro chiara con
+    # la luce in alto, l'ombra nera sotto come la lastra. croce_premuta: scesa sull'ombra
+    S, W, H = 8, 40, 46             # misure del disegno (la X sta in 40 x 40, 6 sotto per l'ombra)
+
+    def tratti(dy, spess, colore, im):
+        d = ImageDraw.Draw(im)
+        r = spess / 2
+        for (x0, y0), (x1, y1) in (((10, 10), (30, 30)), ((30, 10), (10, 30))):
+            d.line(((x0 * S, (y0 + dy) * S), (x1 * S, (y1 + dy) * S)), fill=colore, width=round(spess * S))
+            for cx, cy in ((x0, y0 + dy), (x1, y1 + dy)):
+                d.ellipse(((cx - r) * S, (cy - r) * S, (cx + r) * S, (cy + r) * S), fill=colore)
+
+    def croce(giu):
+        im = Image.new("RGBA", (W * S, H * S), (0, 0, 0, 0))
+        if not giu:
+            tratti(4, 15, (0, 0, 0, 255), im)
+        dy = 3 if giu else 0
+        tratti(dy, 15, (0x0B, 0x08, 0x0D, 255), im)
+        # la faccia: dal bianco caldo in alto al ferro in basso
+        faccia = Image.new("L", im.size, 0)
+        tratti(dy, 8, 255, faccia)
+        y = np.linspace(0, 1, H * S)[:, None]
+        top, mid, bot = np.array([255, 246, 230.]), np.array([227, 216, 198.]), np.array([169, 157, 140.])
+        k = np.clip(((y * H) - (10 + dy - 4)) / 28, 0, 1)[..., None]
+        col = np.where(k < 0.55, top + (mid - top) * (k / 0.55), mid + (bot - mid) * ((k - 0.55) / 0.45))
+        col = np.broadcast_to(col, (H * S, W * S, 3))
+        if giu:
+            col = col * 0.9
+        f = np.dstack([col, np.asarray(faccia)]).astype(np.uint8)
+        im.alpha_composite(Image.fromarray(f, "RGBA"))
+        # il filo di luce sulle due metà in alto
+        luce = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(luce)
+        for a, b in (((11.5, 10.5 + dy), (19, 18 + dy)), ((28.5, 10.5 + dy), (22, 17 + dy))):
+            d.line(((a[0] * S, a[1] * S), (b[0] * S, b[1] * S)), fill=(255, 255, 255, 215), width=round(2.2 * S))
+        im.alpha_composite(luce)
+        return np.asarray(im)
+
+    intero("croce", croce(False), 112)
+    intero("croce_premuta", croce(True), 112)
+
+
+def fai_interruttore():
+    # l'interruttore fra due modi della stessa azione (Sergio, 27 nov: «mi piaceva lo switch
+    # che avevi fatto in anteprima»): una pista scura con contorno d'inchiostro e l'ombra
+    # nera dei pulsanti, divisa a meta'; la meta' scelta nel ferro rovente del principale.
+    # Due pezzi interi, 300 x 46 sullo schermo (+3 d'ombra), al doppio: interruttore_sx
+    # (scelta la sinistra) e interruttore_dx
+    S, W, H, R, B, O = 2, 300, 46, 12, 3, 3
+    INK, FONDO, ACCESO = (0x0B, 0x08, 0x0D, 255), (0x24, 0x1C, 0x2B, 255), (0x6C, 0x2B, 0x19, 255)
+    for lato in ("sx", "dx"):
+        im = Image.new("RGBA", (W * S, (H + O) * S), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        d.rounded_rectangle((0, O * S, W * S - 1, (H + O) * S - 1), R * S, fill=(0, 0, 0, 255))
+        d.rounded_rectangle((0, 0, W * S - 1, H * S - 1), R * S, fill=INK)
+        dentro = (B * S, B * S, (W - B) * S - 1, (H - B) * S - 1)
+        d.rounded_rectangle(dentro, (R - B) * S, fill=FONDO)
+        # la meta' scelta: la stessa forma tagliata a meta'
+        mezza = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        ImageDraw.Draw(mezza).rounded_rectangle(dentro, (R - B) * S, fill=ACCESO)
+        m = np.asarray(mezza).copy()
+        if lato == "sx":
+            m[:, W * S // 2:] = 0
+        else:
+            m[:, :W * S // 2] = 0
+        im.alpha_composite(Image.fromarray(m, "RGBA"))
+        # il filo di luce in alto sulla meta' accesa, come sulla lastra
+        x0, x1 = (B + 4, W // 2 - 4) if lato == "sx" else (W // 2 + 4, W - B - 4)
+        d = ImageDraw.Draw(im)
+        d.line((x0 * S, (B + 2) * S, x1 * S, (B + 2) * S), fill=(0xA0, 0x4A, 0x2E, 255), width=2 * S)
+        # il taglio in mezzo
+        d.rectangle(((W // 2 - 1.5) * S, 0, (W // 2 + 1.5) * S, H * S - 1), fill=INK)
+        nome = "interruttore_" + lato
+        im.save(os.path.join(OUT, nome + ".png"), optimize=True)
+        MISURE[nome] = im.size
 
 
 def griglia(percorso, per_riga, minimo=1500):
