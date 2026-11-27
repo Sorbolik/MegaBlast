@@ -79,7 +79,7 @@ local function shop(a)
 	kit.text(g, T.offers, x + 60, 120, 26, KC.HOT, "start", 1)
 	kit.text(g, kit.upper(T.change_in:format(until_change())), x + 62, 143, 18, KC.MUTE, "start", 0.5)
 
-	a.list = card_list.new(g, VIEW, a.list and a.list.scroll or a.scroll)
+	a.list = card_list.new(g, VIEW, a.scroll)
 	a.cards = {}
 	local y = TOP
 	local function place(items)
@@ -157,6 +157,8 @@ local function build(a)
 		if a[k] then gui.delete_node(a[k].node) end
 		a[k] = nil
 	end
+	-- (the list stays where it was scrolled)
+	if a.list then a.scroll = a.list.scroll end
 	a.buttons, a.figure, a.action, a.list, a.sheen = {}, nil, nil, nil, nil
 	a.outline = nil
 	orders_ui.release(a)

@@ -122,7 +122,7 @@ local function inventory(s)
 		for _, it in ipairs(owned(s)) do
 			if a.gear[it[2]] == it[1] then worn[#worn + 1] = it else others[#others + 1] = it end
 		end
-		s.list = card_list.new(g, VIEW, s.list and s.list.scroll or s.scroll)
+		s.list = card_list.new(g, VIEW, s.scroll)
 		s.cards = {}
 		local y = TOP
 		local function place(items)
@@ -383,6 +383,8 @@ local function build(s)
 		if s[k] then gui.delete_node(s[k].node) end
 		s[k] = nil
 	end
+	-- (the list stays where it was scrolled)
+	if s.list then s.scroll = s.list.scroll end
 	s.buttons, s.figure, s.action, s.list, s.cards, s.tokens, s.sheen = {}, nil, nil, nil, nil, nil, nil
 	s.outline, s.pose = nil, nil
 	local p = s.prof
@@ -476,6 +478,7 @@ local function run_cmd(s, ui_action)
 	elseif kind == "filtro" then
 		s.slot = x ~= "" and x or nil
 		if s.list then s.list.scroll = 0 end
+		s.scroll = 0
 	elseif kind == "pezzo" then
 		-- a tap tries it on, a second tap takes it off (Sergio, 26 Nov)
 		s.sel = not same_piece(s.sel, { a, b }) and { a, b } or nil
