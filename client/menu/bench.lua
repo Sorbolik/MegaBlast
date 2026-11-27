@@ -3,15 +3,16 @@
 -- the piece as a small card with its +N, its name and grade, its level as thirty beads
 -- on a thread (ui/ingots.lua, the signature's slots at 10 20 30), its signature with
 -- what it really gives and ACCENDI LA FIRMA; on the right what it does now and at the
--- next level, the Proof, and how to pay: +1 LIVELLO in Scaglie, or COI FRAMMENTI of its
--- family once the Smith has called. Buying a level fills its bead with a blow; a step
--- opens the step's scene; lighting the signature makes it flare. CHIUDI, the veil or
--- the arrow close it.
+-- next level, the Proof, and how to pay: one +1 LIVELLO, in Scaglie or in the fragments
+-- of its family (the switch over it). Beside the X, what you have of both.
+-- Buying a level fills its bead with a blow; a step opens the step's scene; lighting the
+-- signature makes it flare. The X, the veil or the arrow close it.
 --
 --   local bench = require "menu.bench"
 --   bench.ingots(g, x, y, w, h, level, lit)       -- the beads of the level (ui/ingots.lua)
 --   bench.window(s, g, sel)                       -- the window of the piece sel = { set, slot }
 --   bench.run(s, kind, sel) -> true               -- "potenzia" / "firma" / "frammenti" (false: not the bench's)
+--                                                 -- s.pay: "frammenti" pays in fragments (the switch)
 --   bench.after(s)                                -- after the screen is built: the opening, the blow, the scene
 --   bench.update(s, dt) / bench.input(s, action_id, action) -> true while the scene runs
 --   bench.delete(s)
@@ -32,7 +33,6 @@ local sign_light = require "ui.sign_light"
 local orders = require "sim.orders"
 local T = require("lang.text").armory
 local TP = require("lang.text").pieces
-local TV = require("lang.text").vignette
 
 local M = {}
 
@@ -50,7 +50,9 @@ local WX, WY, WW, WH = 150, 46, 980, 600
 local LX, LW = WX + 36, 360
 -- the signature's words: under the beads, up to the rows' middle
 local SW = 560
-local RX, RR = WX + 400, WX + WW - 36
+local RX, RR = WX + 470, WX + WW - 36
+-- the name, grade and level beside the piece: up to well before the rows
+local NAME_W = RX - 56 - (LX + 168)
 
 -- a text never wider than max (a long one shrinks)
 local function fit(n, max)
@@ -99,9 +101,25 @@ local function signature(s, g, now, level, lit, set, slot)
 	local can = sn and not sn.level and p.ossidiana >= sn.cost and net
 	local note = not sn and T.sign_top or sn.level and T.sign_needs:format(sn.level)
 		or not net and TP.need_network or T.sign_cost:format(sn.cost)
-	local sb = kit.secondary(g, T.light_sign, LX, WY + WH - 36 - 62, LW - 10, 62,
+	local sb = kit.secondary(g, T.light_sign, LX, WY + WH - 36 - 62, 280, 62,
 		{ icon = "gemma", sub = kit.upper(note), sub_color = KC.OBSIDIAN, off = not can })
 	kit.button(s.buttons, sb, "firma", { spento = not can })
+end
+
+-- a balance on the wallet's small iron plate (ui/coins.lua): its coin sticking out of
+-- the left end, the number in its room
+local function balance(g, icon, x, y, w, n)
+	local pl = kit.plate(g, x, y, w, 44, KC.ROSE, { sk = 0 })
+	kit.piece(g, icon, x + 14, y + 22, 38)
+	fit(kit.text({ node = pl.g.node, ox = pl.g.ox, oy = pl.g.oy, box = pl.box }, coins.format(n), x + 38, y + 31, 22, KC.SAND), w - 50)
+end
+
+-- the X that closes (Sergio, 27 Nov): no slab, the buttons' relief (tools/grafica/fucina.py,
+-- croce); the finger on it brings it down onto its shadow
+local function close_x(s, g, cx, cy)
+	local z = kit.zone(g, s.buttons, cx - 34, cy - 34, 68, 68, "chiudi")
+	local n = kit.piece(g, "croce", cx, cy + 3, 53)
+	z.on_press = function(down) gui.play_flipbook(n, down and "croce_premuta" or "croce") end
 end
 
 function M.window(s, g, sel)
@@ -123,18 +141,24 @@ function M.window(s, g, sel)
 	kit.card(wg, WX, WY, WW, WH)
 	kit.zone(wg, s.buttons, WX, WY, WW, WH, "finestra")
 	kit.text(wg, TP.upgrade_here, LX, WY + 58, 34, KC.HOT, "start", 1)
-	local cb = kit.secondary(wg, TV.close, RR - 170, WY + 22, 170, 52, {})
-	kit.button(s.buttons, cb, "chiudi")
+	-- what you have to pay with, always in sight beside the X (Sergio, 27 Nov): the
+	-- Scaglie and the fragments of the piece's family, on the wallet's plates
+	local have = p.commesse and orders.fragments(p, set) or 0
+	local xr = RR - 4
+	local fx = xr - 46 - 18 - 104
+	balance(wg, "frammento_" .. set, fx, WY + 26, 104, have)
+	balance(wg, "scaglia", fx - 12 - 156, WY + 26, 156, p.scaglie)
+	close_x(s, wg, xr - 23, WY + 50)
 
 	-- the piece, its name, grade and level, the beads
 	local mini = gear_ui.mini(wg, LX, WY + 82, 150, { set = set, slot = slot, level = level, sel = true })
 	b.icon = mini.node
-	fit(kit.text(wg, gear_ui.name(set, slot), LX + 168, WY + 136, 26, KC.SAND), LW - 168)
-	fit(kit.text(wg, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), LX + 168, WY + 164, 17, ui.C.GRADI[tier], "start", 1), LW - 168)
-	b.title = fit(kit.text(wg, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), LX + 168, WY + 200, 21, KC.SAND), LW - 168)
+	fit(kit.text(wg, gear_ui.name(set, slot), LX + 168, WY + 136, 26, KC.SAND), NAME_W)
+	fit(kit.text(wg, kit.upper(T.grade:format(gear_ui.ROMAN[tier], TP.grades[tier])), LX + 168, WY + 164, 17, ui.C.GRADI[tier], "start", 1), NAME_W)
+	b.title = fit(kit.text(wg, nxt and T.level_to:format(level, nxt.level) or T.level_top:format(level), LX + 168, WY + 200, 21, KC.SAND), NAME_W)
 	if nxt and nxt.proof > 0 then
 		fit(kit.text(wg, kit.upper(TP.proof:format(nxt.proof_done, nxt.proof)), LX + 168, WY + 224, 16,
-			nxt.proof_done >= nxt.proof and KC.MINT or KC.STEEL, "start", 0.5), LW - 168)
+			nxt.proof_done >= nxt.proof and KC.MINT or KC.STEEL, "start", 0.5), NAME_W)
 	end
 	b.bar = M.ingots(wg, LX, WY + 336, RR - LX, 34, level, lit)
 	b.gems, b.level = b.bar.gems, level
@@ -159,23 +183,31 @@ function M.window(s, g, sel)
 		end
 	end
 
-	-- how to pay: Scaglie (the main action), or the family's fragments (the Smith's
-	-- orders, docs/commesse.md) once the Smith has called
+	-- how to pay (Sergio, 27 Nov, choice C): one +1 LIVELLO, and over it the switch of the
+	-- coin it is paid with, Scaglie or the family's fragments (the Smith's orders, docs/commesse.md):
+	-- two ways of doing the same thing, the signature's button apart on the left
 	local by = WY + WH - 36 - 62
 	if nxt then
-		local ok = nxt.proof_done >= nxt.proof and p.scaglie >= nxt.cost and net
-		local why = nxt.proof_done < nxt.proof and TP.proof_first or p.scaglie < nxt.cost
-			and TP.missing:format(coins.format(nxt.cost - p.scaglie)) or not net and TP.need_network or nil
-		s.action = kit.secondary(wg, TP.upgrade, RR - 290, by, 290, 62, { main = true, size = 30, icon = "az_potenzia",
-			sub = kit.upper(why or TP.price_only:format(coins.format(nxt.cost))), off = not ok })
-		kit.button(s.buttons, s.action, "potenzia", { main = true, spento = not ok })
-		local fcost = p.commesse and p.commesse.aperta and orders.level_cost(p, set, slot)
-		if fcost then
-			local fok = orders.fragments(p, set) >= fcost and nxt.proof_done >= nxt.proof and net
-			local fb = kit.secondary(wg, T.with_fragments, RX, by, 240, 62,
-				{ icon = "frammento_" .. set, sub = kit.upper(T.fragments_cost:format(fcost, orders.fragments(p, set))), off = not fok })
-			kit.button(s.buttons, fb, "frammenti", { spento = not fok })
+		local frag = s.pay == "frammenti"
+		kit.switch(wg, s.buttons, RR - kit.SWITCH_W, by - 68, { { T.pay_scaglie, "paga:scaglie", "scaglia" },
+			{ T.pay_fragments, "paga:frammenti", "frammento_" .. set } }, frag and 2 or 1)
+		local proof = nxt.proof_done >= nxt.proof
+		local ok, why
+		if frag then
+			local fcost = orders.level_cost(p, set, slot)
+			ok = p.commesse and p.commesse.aperta and have >= fcost and proof and net
+			why = not proof and TP.proof_first or not (p.commesse and p.commesse.aperta) and T.fragments_closed
+				or have < fcost and T.fragments_missing:format(fcost - have) or not net and TP.need_network or nil
+			why = why or T.fragments_price:format(fcost)
+		else
+			ok = proof and p.scaglie >= nxt.cost and net
+			why = not proof and TP.proof_first or p.scaglie < nxt.cost
+				and TP.missing:format(coins.format(nxt.cost - p.scaglie)) or not net and TP.need_network
+				or TP.price_only:format(coins.format(nxt.cost))
 		end
+		s.action = kit.secondary(wg, TP.upgrade, RR - 290, by, 290, 62, { main = true, size = 30, icon = "az_potenzia",
+			sub = kit.upper(why), off = not ok })
+		kit.button(s.buttons, s.action, frag and "frammenti" or "potenzia", { main = true, spento = not ok })
 	else
 		s.action = kit.secondary(wg, TP.upgrade, RR - 290, by, 290, 62, { main = true, size = 30, icon = "az_potenzia", off = true, sub = kit.upper(TP.at_max) })
 	end
