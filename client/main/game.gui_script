@@ -405,7 +405,8 @@ local function paint_terrain(self)
 	else
 		self.mask_tex = resource.create_texture(MASK_PATH, mask_params(TW, TH), buf)
 	end
-	msg.post("/terreno#script", "maschera", { path = self.mask_tex, mappa = self.g.map })
+	-- the Limbo upside down has its own painting (battle/hazards.lua)
+	msg.post("/terreno#script", "maschera", { path = self.mask_tex, mappa = require("battle.hazards").painting(self.g) })
 end
 
 -- Updates the mask in the given rectangle (cell coordinates); fresh: the
@@ -939,6 +940,26 @@ RM.SIGN = {
 	shell = { 0.3, 0.25, 0.3 }, clay = { 0.78, 0.41, 0.23 }, pitch = { 0.36, 0.28, 0.4 },
 	paper = { 0.95, 0.79, 0.3 }, void = { 0.55, 0.4, 0.9 },
 }
+-- The lever turned the map upside down (sim/hazards.lua, lever): the craters go to their mirror, the
+-- mask is redrawn from the flipped cells with the painting upside down (battle/hazards.lua painting),
+-- and robots, shots and crates jump to their new place without sliding there
+function RM.flip(self, e)
+	local H = game.WORLD_H
+	for _, k in ipairs(CR.list(self)) do k.y = H - k.y end
+	draw_terrain(self)
+	-- the next match on this map starts the right way up: the whole mask again
+	self.drawn_map = nil
+	capture(self.pose_a, self.g)
+	capture(self.pose_b, self.g)
+	for i, rg in ipairs(self.g.robots) do
+		local v = self.view[i]
+		v.x, v.y, v.px = rg.x, rg.y, nil
+	end
+	camera.shake(self.cam, 0, 1, 14)
+	sound.play("#boom", { gain = 0.6, speed = 0.7 })
+	show_message(self, TM.flip)
+	if e.robot and self.robots[e.robot] then plate.announcement(self.robots[e.robot].plate, TM.flip_by) end
+end
 function RM.blast_signature(self, e)
 	-- only a shot fired a moment ago (a missile lost in the water leaves no blast)
 	local w = self.last_shot_t and self.clock - self.last_shot_t < 8 and self.last_shot
@@ -1495,6 +1516,8 @@ local function handle_event(self, e)
 		show_message(self, TM.water)
 	elseif e.type == "tombs" then
 		show_message(self, TM.tombs)
+	elseif e.type == "flip" then
+		RM.flip(self, e)
 	elseif e.type == "final_round" then
 		score.last_lap(self.punti)
 	elseif e.type == "parachute" then
@@ -2937,6 +2960,16 @@ start_local_match = function(self, picked)
 		local a, b = self.g.robots[1], self.g.robots[2]
 		local y = self.g.terrain:ground_below(a.x + near, a.y + 3 * game.ROBOT_H)
 		if y then b.x, b.y, b.grounded = a.x + near, y, true end
+	end
+	-- prova_leva N: the Limbo's lever on stud N and the first robot on the ground 45 px to its left
+	-- (scenario leva.txt: it walks into it)
+	local lever = SIMULATE and config_int("megablast.prova_leva", 0) or 0
+	local hz = self.g.hz
+	if lever > 0 and hz and self.g.levers and self.g.levers[lever] then
+		hz.at = lever
+		local s, a = self.g.levers[lever], self.g.robots[1]
+		local y = self.g.terrain:ground_below(s.x - 45, s.y + 3 * game.ROBOT_H)
+		if y then a.x, a.y, a.grounded = s.x - 45, y, true end
 	end
 	CP.begin(self, 1, nil, nil, true)
 	self.mode = "local"

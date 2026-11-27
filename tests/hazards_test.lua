@@ -53,31 +53,104 @@ for _, id in ipairs(maps.CIRCLES) do
 	check(free, id .. ": the fixed spawns stand on the ground")
 end
 
--- Limbo: less gravity, same jump speed: higher and longer
+-- Limbo: the lever turns the map upside down
 do
-	local low, normal = started(1, "limbo"), started(1, "pavimento")
-	check(math.abs(low.gravity - game.GRAVITY * maps.get("limbo").gravity) < 1e-9, "limbo: gravity from the map")
-	check(normal.gravity == game.GRAVITY, "the other maps keep the usual gravity")
-	local function apex(g)
-		local rb = g.robots[1]
-		local y0 = rb.y
-		local top = y0
-		local input = { jump = true, hold = true }
-		for _ = 1, 120 do
-			g:step(input)
-			if rb.y > top then top = rb.y end
+	local map = maps.get("limbo")
+	local g = started(1, "limbo", { players = C.MODES["2v2"] })
+	local hz = g.hz
+	check(g.gravity == game.GRAVITY, "limbo: the usual gravity")
+	check(#map.respawns == 12 and #map.levers >= 20, "limbo: 12 respawns and at least 20 studs for the lever")
+	-- every respawn is on steel on both faces, every stud is steel
+	local both = true
+	for _, s in ipairs(map.respawns) do
+		local c = g.terrain.cell
+		both = both and g.terrain:get(math.floor(s.x / c), math.floor(s.y / c) - 1) == 2
+			and g.terrain:get(math.floor(s.x / c), math.floor((g.WORLD_H - s.y2) / c)) == 2
+			and not g.terrain:solid(s.x, s.y + 1)
+	end
+	check(both, "limbo: the respawns stand on steel beams free on both faces")
+	local steel, blocked = true, {}
+	for i, s in ipairs(map.levers) do
+		steel = steel and g.terrain:get(math.floor(s.x / 3), math.floor(s.y / 3)) == 2
+		-- the knob leans to one side, then to the other
+		for _, t in ipairs({ C.LEVER.tilt, -C.LEVER.tilt }) do
+			local c, sn = math.cos(t), math.sin(t)
+			local kx, ky = s.x + (s.dx * c - s.dy * sn) * C.LEVER.out, s.y + (s.dx * sn + s.dy * c) * C.LEVER.out
+			if g.terrain:solid(kx, ky) then blocked[#blocked + 1] = i end
 		end
-		return top - y0
 	end
-	local a, b = apex(low), apex(normal)
-	check(a > b * 1.4, string.format("limbo: the jump is higher (%.0f against %.0f)", a, b))
-	-- a shot flies farther: the range of a missile at 45 degrees on flat ground
-	local function range(g)
-		local vx, vy = math.cos(0.78) * game.MISSILE_SPEED, math.sin(0.78) * game.MISSILE_SPEED
-		local gr = g.gravity * game.MISSILE_GRAVITY
-		return vx * (2 * vy / gr)
+	check(steel, "limbo: every stud of the lever is steel")
+	check(#blocked == 0, "limbo: the knob is out of the terrain on both sides (" .. table.concat(blocked, ",") .. ")")
+	check(hz.flip == 0 and hz.at >= 1 and hz.at <= #map.levers, "limbo: the lever starts on a stud, the map the right way up")
+	-- the map mirrors: a cell and its mirror swap, robots too
+	local before = {}
+	for i = 1, #g.terrain.data do before[i] = g.terrain.data[i] end
+	local rb = g.robots[1]
+	local y0 = rb.y
+	local kx, ky = hazards.lever_knob(g, hz)
+	local at = hz.at
+	hazards.blast(g, kx, ky, 10, 1)
+	g:step()
+	check(hz.flip == 1 and hz.n == 1, "limbo: a blast on the knob flips the map")
+	local w, h, same = g.terrain.w, g.terrain.h, true
+	for _, cy in ipairs({ 0, 40, 100, 200, 359 }) do
+		for cx = 0, w - 1, 7 do
+			if g.terrain.data[cy * w + cx + 1] ~= before[(h - 1 - cy) * w + cx + 1] then same = false end
+		end
 	end
-	check(range(low) > range(normal) * 1.5, "limbo: the shots fly farther")
+	check(same, "limbo: the terrain is the mirror of the one before")
+	check(math.abs(rb.y - (g.WORLD_H - y0 - g.ROBOT_H)) < 1e-6 and not rb.grounded, "limbo: the robots are mirrored and fall")
+	check(hz.at ~= at, "limbo: the lever jumps to another stud")
+	check(hz.freeze == C.LEVER.freeze - 1 or hz.freeze == C.LEVER.freeze, "limbo: time stops for a second")
+	-- in the freeze nothing moves, not even the turn clock
+	local timer, ry = g.timer, rb.y
+	run(g, 20)
+	check(g.timer == timer and rb.y == ry, "limbo: in the freeze nothing moves")
+	check(hz.ly[1] ~= nil, "limbo: where each one lands is known")
+	run(g, C.LEVER.freeze)
+	check(rb.y < ry, "limbo: after the freeze everyone falls")
+	-- the respawns swapped face
+	check(g.spawn_spots[1].y == map.respawns[1].y2, "limbo: the respawns are on the other face of the beams")
+	-- in the cool down nothing pulls it, then a body does
+	kx, ky = hazards.lever_knob(g, hz)
+	hazards.blast(g, kx, ky, 10, 1)
+	g:step()
+	check(hz.n == 1, "limbo: right after a flip the lever rests")
+	run(g, C.LEVER.cool + 10)
+	kx, ky = hazards.lever_knob(g, hz)
+	local o = g.robots[2]
+	o.x, o.y = kx, ky - g.HURT_Y
+	g:step()
+	check(hz.n == 2 and hz.flip == 0 and hz.by == 2, "limbo: touching the knob with the body flips it back")
+	-- the same seed gives the same flips: client and server agree
+	local function play(seed)
+		local a = started(seed, "limbo", { players = C.MODES["2v2"] })
+		for _ = 1, 3 do
+			local x, y = hazards.lever_knob(a, a.hz)
+			hazards.blast(a, x, y, 10, a.current)
+			run(a, C.LEVER.freeze + C.LEVER.cool + 5)
+		end
+		return a.hz.at, a.hz.n, a:fingerprint()
+	end
+	local a1, n1, f1 = play(7)
+	local a2, n2, f2 = play(7)
+	check(a1 == a2 and n1 == n2 and f1 == f2 and n1 == 3, "limbo: the flips are the same with the same seed")
+	-- the next stud is far from whoever pulled it
+	local far, total = 0, 0
+	for seed = 1, 40 do
+		local b = started(seed, "limbo")
+		local x, y = hazards.lever_knob(b, b.hz)
+		hazards.blast(b, x, y, 10, 1)
+		b:step()
+		local lx, ly = b.hz.lx[1], b.hz.ly[1]
+		local sx, sy = hazards.lever_spot(b, b.hz, b.hz.at)
+		if ly >= 0 then
+			total = total + 1
+			local dx, dy = sx - lx, sy - ly
+			if dx * dx + dy * dy > C.LEVER.near * C.LEVER.near then far = far + 1 end
+		end
+	end
+	check(total > 0 and far >= total * 0.8, string.format("limbo: the lever reappears far from the puller (%d of %d)", far, total))
 end
 
 -- Lussuria: the storm

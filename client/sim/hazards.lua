@@ -3,7 +3,7 @@
 --   gravity = 0.55                   the gravity of the whole match, times the usual one
 --   mud = { { x0, x1, y0, y1 } }     world rectangles: a robot standing on the ground inside one is slowed
 --   blood = { { x0, x1, y0, y1 } }   the same, but it sets the robot alight (status burn)
---   hazard = "wind" | "hail" | "fire_rain" | "bridges" | "ice" | "boulders" | "water" | "tombs"
+--   hazard = "wind" | "hail" | "fire_rain" | "bridges" | "ice" | "boulders" | "water" | "tombs" | "lever"
 --                                    a hazard of the rounds (KINDS below)
 --   bridges = { { x0, x1, y0, y1 } } (hazard "bridges") the false bridges: the world rectangle of each
 --   ice = true | { rects }           (hazard "ice") where it slides: everywhere, or in these rectangles
@@ -11,6 +11,8 @@
 --   rocks = { { x, dir } }           boulders: where one starts at the end of each round, and the way it rolls
 --   water = { y }                    the starting level of the rising water (world y)
 --   tombs = { { x0, x1, y0, y1 } }   the tombs, world rectangles; the ones that are open burn whoever is in
+--   levers = { { x, y, dx, dy } }    (hazard "lever") the steel studs the lever can stand on, and the face
+--                                    it sticks out of; respawns need y2 too, the top of the beam upside down
 -- The state of a hazard of the rounds lives only in g.hz, a table of numbers and
 -- lists: the server sends it as it is (state field "hz", server/net.lua) and the
 -- client copies it back, so whoever draws it (battle/hazards.lua) reads g.hz and
@@ -23,6 +25,8 @@
 --                     the next turn has not started yet
 --   tick(g, hz)       every tick (also in the bot's tries, where hz is nil: it does not see it)
 --   busy(g, hz)       true while something is still in the air: the turn does not end under it
+--   hold(g, hz)       (optional) true: time stands still this tick (game:step does nothing else)
+--   blast, line       (optional) an explosion or a straight shot happened (M.blast, M.line)
 --   risk(g, hz)       (optional) returns f(rb): the hit points that robot would lose if it were left
 --                     where it is until the next round end (M.DEATH or more: it dies there). It is
 --                     how the bots (sim/bot.lua) see the hazard: they read nothing else of it
@@ -483,11 +487,225 @@ KINDS.tombs = {
 	end,
 }
 
+-- The lever (Limbo): g.levers are the steel studs where it can stand, { x, y, dx, dy } in the
+-- world with the map the right way up (dx, dy: the face it sticks out of). hz.at is the stud it is
+-- on now, hz.flip 1 when the map is upside down (then the stud is at y = WORLD_H - y and dy flips).
+-- A shot or a body that reaches its knob sets hz.pull (who pulled it); at the end of the tick the
+-- whole map mirrors vertically, terrain and everything on it, hz.freeze stops time for a second
+-- (game:step) showing in hz.lx, hz.ly where each robot will land (ly -1: nowhere, it falls off),
+-- then everyone falls. hz.cool: ticks before it can be pulled again; hz.touch[i] 1 while robot i
+-- is touching the knob (the body pulls it on entering, not standing there).
+local function lever_spot(g, hz, i)
+	local s = g.levers[i]
+	if hz.flip == 1 then return s.x, g.terrain.h * g.terrain.cell - s.y, s.dx, -s.dy end
+	return s.x, s.y, s.dx, s.dy
+end
+
+-- the middle of the knob, where shots and bodies pull it
+local function lever_knob(g, hz)
+	local x, y, dx, dy = lever_spot(g, hz, hz.at)
+	local t = hz.n % 2 == 0 and C.LEVER.tilt or -C.LEVER.tilt
+	local c, sn = math.cos(t), math.sin(t)
+	return x + (dx * c - dy * sn) * C.LEVER.out, y + (dx * sn + dy * c) * C.LEVER.out
+end
+M.lever_spot, M.lever_knob = lever_spot, lever_knob
+
+local function lever_ready(hz)
+	return hz.pull == 0 and hz.freeze == 0 and hz.cool == 0
+end
+
+-- The world upside down: every row of cells swaps with its mirror and so does everything that is
+-- in the world. Robots keep their feet at the bottom (a robot standing on the floor ends up just
+-- under the same floor, now a ceiling, and falls); what lies on the ground drops to the ground
+-- below it, what can't is gone.
+local function mirror(g)
+	local t = g.terrain
+	local w, h, data = t.w, t.h, t.data
+	local H = h * t.cell
+	for cy = 0, math.floor(h / 2) - 1 do
+		local a, b = cy * w, (h - 1 - cy) * w
+		for i = 1, w do
+			data[a + i], data[b + i] = data[b + i], data[a + i]
+		end
+	end
+	local function point(o)
+		o.y = H - o.y
+		if o.vy then o.vy = -o.vy end
+	end
+	for _, rb in ipairs(g.robots) do
+		if not rb.dead then
+			rb.y = H - rb.y - g.ROBOT_H
+			rb.vy = -(rb.vy or 0)
+			if rb.recoil_vy then rb.recoil_vy = -rb.recoil_vy end
+			rb.grounded, rb.fall_top = false, nil
+			rb.hooked, rb.hook_shot = nil, nil
+		end
+	end
+	if g.projectile then point(g.projectile) end
+	for _, p in ipairs(g.flying) do point(p) end
+	for _, o in ipairs(g.orbs) do point(o) end
+	for i = 1, g.SHARD_COUNT do
+		if g.shards[i] then point(g.shards[i]) end
+	end
+	if g.burst then g.burst.angle = -g.burst.angle end
+	for _, c in ipairs(g.crates) do
+		c.y, c.vy, c.landed = H - c.y - g.CRATE_H, 0, false
+	end
+	for _, o in ipairs(g.placed) do
+		o.y = H - o.y - 2 * (o.r or g.GRENADE_R)
+		if o.flying then o.vy = -(o.vy or 0) else o.vy = 0 end
+	end
+	-- the healing circles and the pools of pitch lie on the ground: they drop to the one below
+	for _, list in ipairs({ { g.heals, "heal_gone" }, { g.pools, "pool_gone" } }) do
+		local items = list[1]
+		for i = #items, 1, -1 do
+			local o = items[i]
+			local gy = t:ground_below(o.x, H - o.y - 1)
+			if gy then
+				o.y = gy
+			else
+				table.remove(items, i)
+				g:emit({ type = list[2], id = o.id })
+			end
+		end
+	end
+	-- the respawns are on beams free on both faces: the other face is the top now
+	for i, s in ipairs(g.spawn_spots) do
+		g.spawn_spots[i] = { x = s.x, y = s.y2, y2 = s.y }
+	end
+end
+
+-- The next stud: never the one it was on, far from where the puller lands and from their teammates
+local function next_lever(g, hz, by)
+	local L, cand, total = C.LEVER, {}, 0
+	local px, py = hz.lx[by], hz.ly[by]
+	for i = 1, #g.levers do
+		if i ~= hz.at then
+			local x, y = lever_spot(g, hz, i)
+			local wt = 1
+			if px and py >= 0 then
+				local dx, dy = x - px, y - py
+				local d = math.sqrt(dx * dx + dy * dy)
+				wt = math.min(d, L.far) / L.far
+				if d < L.near then wt = wt * L.near_mul end
+			end
+			for _, o in ipairs(g.robots) do
+				if o.id ~= by and not o.dead and by > 0 and o.team == g.robots[by].team then
+					local dx, dy = x - o.x, y - o.y
+					if dx * dx + dy * dy < L.mate * L.mate then wt = wt * L.mate_mul end
+				end
+			end
+			cand[#cand + 1] = { i = i, w = wt }
+			total = total + wt
+		end
+	end
+	local r = g.rng:next() * total
+	for _, c in ipairs(cand) do
+		r = r - c.w
+		if r < 0 then return c.i end
+	end
+	return cand[#cand].i
+end
+
+local function flip(g, hz)
+	local by = hz.pull
+	mirror(g)
+	hz.flip = 1 - hz.flip
+	hz.n = hz.n + 1
+	-- where each one will land: the ground under them in the world turned over
+	for i, rb in ipairs(g.robots) do
+		local gy = not rb.dead and g.terrain:ground_below(rb.x, rb.y) or nil
+		hz.lx[i], hz.ly[i] = rb.x, gy or -1
+	end
+	local from = hz.at
+	hz.at = next_lever(g, hz, by)
+	hz.pull, hz.by, hz.freeze, hz.cool = 0, by, C.LEVER.freeze, C.LEVER.cool
+	g:emit({ type = "flip", robot = by, flip = hz.flip, from = from, at = hz.at })
+end
+
+-- a shot or a blast at (x, y) with reach r, by robot by: is the knob in it?
+local function lever_hit(g, hz, x, y, r, by)
+	if not lever_ready(hz) then return end
+	local kx, ky = lever_knob(g, hz)
+	local dx, dy, rr = x - kx, y - ky, r + C.LEVER.r
+	if dx * dx + dy * dy <= rr * rr then hz.pull = by or g.current end
+end
+
+local MELEE = { "swing", "punch", "mallet", "lunge" }
+
+KINDS.lever = {
+	setup = function(g, hz)
+		hz.flip, hz.n, hz.pull, hz.by, hz.freeze, hz.cool = 0, 0, 0, 0, 0, 0
+		hz.lx, hz.ly, hz.touch = {}, {}, {}
+		for i = 1, #g.robots do hz.lx[i], hz.ly[i], hz.touch[i] = 0, -1, 0 end
+		hz.at = math.floor(g.rng:next() * #g.levers) + 1
+		-- the respawns become copies: they swap face at every flip
+		local spots = {}
+		for i, s in ipairs(g.spawn_spots) do spots[i] = { x = s.x, y = s.y, y2 = s.y2 or s.y } end
+		g.spawn_spots = spots
+	end,
+	tick = function(g, hz)
+		if hz.cool > 0 and hz.freeze == 0 then hz.cool = hz.cool - 1 end
+		local kx, ky = lever_knob(g, hz)
+		local L = C.LEVER
+		-- bodies: whoever reaches the knob (its hit circle), on entering
+		for i, rb in ipairs(g.robots) do
+			local on = not rb.dead and not rb.gone and g.hurt_at(rb, kx, ky, L.r * 0.5)
+			if on and hz.touch[i] == 0 and lever_ready(hz) then hz.pull = i end
+			hz.touch[i] = on and 1 or 0
+			-- a melee hit going on near it
+			if not rb.dead and lever_ready(hz) then
+				for _, f in ipairs(MELEE) do
+					if rb[f] then
+						local dx, dy = rb.x - kx, rb.y + g.HURT_Y - ky
+						if dx * dx + dy * dy <= L.melee * L.melee then hz.pull = i end
+					end
+				end
+			end
+		end
+		-- shots in flight
+		local p = g.projectile
+		if p and p.kind ~= "janus" then lever_hit(g, hz, p.x, p.y, 0, p.owner) end
+		for _, q in ipairs(g.flying) do
+			if q.kind ~= "janus" then lever_hit(g, hz, q.x, q.y, 0, q.owner) end
+		end
+		for i = 1, g.SHARD_COUNT do
+			local sh = g.shards[i]
+			if sh then lever_hit(g, hz, sh.x, sh.y, 0, sh.owner) end
+		end
+		if hz.pull ~= 0 then flip(g, hz) end
+	end,
+	-- the freeze: time stops, nothing moves, the turn clock too
+	hold = function(g, hz)
+		if hz.freeze <= 0 then return false end
+		hz.freeze = hz.freeze - 1
+		if hz.freeze == 0 then
+			for i = 1, #g.robots do hz.ly[i] = -1 end
+		end
+		return true
+	end,
+	blast = function(g, hz, x, y, r, by)
+		lever_hit(g, hz, x, y, r, by)
+	end,
+	line = function(g, hz, x0, y0, x1, y1, by)
+		if not lever_ready(hz) then return end
+		local kx, ky = lever_knob(g, hz)
+		local vx, vy = x1 - x0, y1 - y0
+		local len2 = vx * vx + vy * vy
+		local u = len2 > 0 and math.max(0, math.min(1, ((kx - x0) * vx + (ky - y0) * vy) / len2)) or 0
+		lever_hit(g, hz, x0 + vx * u, y0 + vy * u, 0, by)
+	end,
+	busy = function(g, hz)
+		return hz.freeze > 0 or hz.pull ~= 0
+	end,
+}
+
 function M.setup(g, map)
 	g.gravity = g.gravity * (map.gravity or 1)
 	g.mud, g.blood = map.mud, map.blood
 	g.bridges, g.ice, g.wings = map.bridges, map.ice, map.wings
 	g.rocks, g.water, g.tombs = map.rocks, map.water, map.tombs
+	g.levers = map.levers
 	g.hazard = map.hazard
 	if map.hazard then
 		g.hz = {}
@@ -540,6 +758,27 @@ function M.risk(g)
 	local hz = g.hz
 	local k = hz and KINDS[g.hazard]
 	return k and k.risk and k.risk(g, hz) or nil
+end
+
+-- The hazard stops time (the lever's freeze): game:step does nothing else this tick
+function M.hold(g)
+	local hz = g.hz
+	local k = hz and KINDS[g.hazard]
+	return k and k.hold and k.hold(g, hz) or false
+end
+
+-- An explosion at (x, y) of crater radius r by robot by (game:blast), a straight shot from
+-- (x0, y0) to (x1, y1) (game:fire_eagle): what the hazard does with it
+function M.blast(g, x, y, r, by)
+	local hz = g.hz
+	local k = hz and KINDS[g.hazard]
+	if k and k.blast then k.blast(g, hz, x, y, r, by) end
+end
+
+function M.line(g, x0, y0, x1, y1, by)
+	local hz = g.hz
+	local k = hz and KINDS[g.hazard]
+	if k and k.line then k.line(g, hz, x0, y0, x1, y1, by) end
 end
 
 function M.busy(g)

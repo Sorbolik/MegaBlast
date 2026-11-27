@@ -13,17 +13,20 @@ Si scrivono come dati nella mappa (`client/sim/maps.lua`) e le fa `client/sim/ha
 
 | Campo | Cosa fa | Esempio |
 |---|---|---|
-| `gravity = 0.6` | la gravità di tutta la partita, per il valore: salti e tiri vanno più lontano | Limbo |
+| `gravity = 0.6` | la gravità di tutta la partita, per il valore: salti e tiri vanno più lontano | nessuna per ora (era il Limbo fino al 27 nov) |
 | `mud = { { x0, x1, y0, y1 } }` | rettangoli del mondo: chi sta a terra dentro prende lo stato «lento» (fino a fine del suo prossimo turno) | le pozze della Gola |
 | `blood = { { x0, x1, y0, y1 } }` | come il fango ma dà lo stato «bruciatura» | le pozze del Flegetonte |
-| `hazard = "wind"`, `"hail"`, `"fire_rain"`, `"bridges"`, `"ice"`, `"boulders"`, `"water"` o `"tombs"` | un pericolo dei giri: la tabella `KINDS` di `hazards.lua` | Lussuria, Gola, Avarizia, Ira, Eresia, Sabbione, Malebolge, Cocito e Lucifero |
+| `hazard = "wind"`, `"hail"`, `"fire_rain"`, `"bridges"`, `"ice"`, `"boulders"`, `"water"`, `"tombs"` o `"lever"` | un pericolo dei giri: la tabella `KINDS` di `hazards.lua` | Limbo, Lussuria, Gola, Avarizia, Ira, Eresia, Sabbione, Malebolge, Cocito e Lucifero |
 | `bridges = { { x0, x1, y0, y1 } }` | con `bridges`: il rettangolo del mondo di ogni ponte che crolla | Malebolge |
 | `ice = true` (o rettangoli), `wings = true` | con `ice`: dove si scivola; con `wings` a fine giro le ali spingono tutti lontano dal centro | Cocito, Lucifero |
+| `levers = { { x, y, dx, dy } }` | con `lever`: le borchie d'acciaio dove può stare la leva e la faccia da cui spunta; le rinascite hanno anche `y2`, la cima della trave a mappa capovolta | Limbo |
 
 Un pericolo dei giri ha quattro punti d'ingresso, tutti facoltativi tranne `setup`:
 `setup(g, hz)` all'inizio, `round_end(g, hz)` quando l'ultimo turno del giro è finito
 (i robot sono fermi, il turno dopo non è partito), `tick(g, hz)` a ogni tick e `busy(g, hz)`
-(vero finché qualcosa è in aria: il turno non finisce sotto). Il suo stato sta **solo** in
+(vero finché qualcosa è in aria: il turno non finisce sotto); la leva ne usa altri tre: `hold(g, hz)`
+(vero: il tempo è fermo, `game:step` non fa altro), `blast` e `line` (un'esplosione o un colpo dritto
+appena successi, da `game:blast` e `game:fire_eagle`). Il suo stato sta **solo** in
 `g.hz`, una tabella di numeri e liste; tutto il casuale usa il generatore della partita
 (`g.rng`), così server e client sorteggiano uguale. Nei tentativi del bot (`bot.world`)
 `g.hz` non c'è: la copia del bot non simula il pericolo (la gravità e il fango sì); il bot lo vede dal rischio, vedi sotto.
@@ -51,7 +54,7 @@ che ogni pozza abbia il terreno dentro il rettangolo).
 
 | Mappa | Pericolo | Numeri (`config.lua` e `maps.lua`) |
 |---|---|---|
-| Limbo | gravità ridotta | `gravity = 0.6`: il salto passa da 40 a 67 e una Lanciarune a 45° fa 1,7 volte la strada |
+| Limbo | la leva (dal 27 nov, al posto della gravità ridotta): chi la colpisce con un colpo qualsiasi (esplosione, colpo in volo, schegge, Tonante, un colpo da vicino) o la tocca col corpo capovolge la mappa, vedi sotto | `C.LEVER`, `levers` e le rinascite con `y2` in `maps.lua` |
 | Lussuria | la bufera: a fine giro una raffica sposta ogni robot (non i colpi) di `WIND.step` = 66 (un passo e mezzo), fermandosi ai muri; la freccia dice da che parte per tutto il giro | spuntoni d'acciaio per il Rampino, la gola in mezzo uccide |
 | Gola | la grandine: `HAIL.count` = 3 chicchi per giro cadono dove le ombre li hanno annunciati il giro prima, scoppiano sul primo terreno o robot (`HAIL.blast`: 35 al centro, 15 al bordo, scava) | due pozze di fango (`mud`) |
 
@@ -61,6 +64,28 @@ cambia le fasi della partita, quindi né il server né il client); i chicchi cad
 primo turno del giro dopo, come le casse, e il turno non finisce finché cadono; il fango è lo
 stato «lento» che c'era già. Non fatto: l'Uovo che
 nel fango non rimbalza (Gola, scheda della campagna).
+
+## La leva del Limbo (Sergio, 27 nov 2026)
+
+La leva sta su una delle 20 borchie d'acciaio della mappa (indistruttibili), su qualsiasi faccia,
+anche quelle sotto: chi gioca deve pesare se vale un colpo. La colpisci (con un colpo, che conta
+come attacco) o la tocchi col corpo entrandoci, e alla fine del tick **la mappa si capovolge
+davvero**: le righe di celle si scambiano con la loro specchiata e così tutto quello che c'è sopra
+(robot coi piedi in basso, colpi, globi, schegge, casse, trappole; cerchi di cura e pozze di pece
+cadono sul terreno sotto o spariscono). Non si gioca mai a testa in giù. Poi il tempo si ferma per
+`LEVER.freeze` = 60 tick (1 s): niente si muove, nemmeno il cronometro del turno, e un anello con la
+freccia mostra dove atterrerà ognuno (`hz.lx`, `hz.ly`, -1 se cade fuori). Poi tutti cadono, col
+danno da caduta normale. Le rinascite stanno sulle 8 travi d'acciaio libere sopra e sotto: a ogni
+capovolgimento passano all'altra faccia (`y2`). La leva non scatta da sola (Sergio: «resta ferma
+finché qualcuno la tira»).
+
+Dopo lo scatto salta su un'altra borchia, a caso con i pesi (`LEVER`): `min(d, 700) / 700` con `d` la
+distanza da dove atterra chi l'ha tirata, per 0,2 entro 250, per 0,5 vicino (350) a un suo compagno;
+mai la borchia di prima. Per `LEVER.cool` = 90 tick dopo il fermo non si può ritirare (se no chi
+atterra lì vicino la tira subito di nuovo). Il client cambia dipinto (`limbo_sotto`, lo stesso
+disegno specchiato con la luce dall'alto: `tools/grafica/mappe_dipinte.py`, `limbo(True)`),
+ridisegna la maschera specchiata coi crateri e disegna la leva di Codex (`docs/handoff/WB-099`, ritagliata
+da `tools/grafica/leva.py`). I bot non la vedono ancora (niente `risk`): non la tirano apposta.
 
 ## Violenza, Frode, Tradimento e Lucifero (terzo blocco)
 

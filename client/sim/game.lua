@@ -1905,6 +1905,7 @@ function M:fire_eagle(angle)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
 	local ex, ey, hit = self:ray(x, y, angle, C.EAGLE.range, rb)
+	hazards.line(self, x, y, ex, ey, rb.id)
 	rb.facing = math.cos(angle) < 0 and -1 or 1
 	local s = C.EAGLE
 	rb.recoil = s.recoil_ticks
@@ -3243,6 +3244,7 @@ end
 -- The explosion, without the crater: it sets off nearby traps and
 -- trampolines, hits and pushes robots
 function M:blast(x, y, owner, blast, weapon)
+	hazards.blast(self, x, y, blast.r, owner)
 	-- traps and trampolines in the crater blow up
 	for i = #self.placed, 1, -1 do
 		local o = self.placed[i]
@@ -3701,6 +3703,8 @@ function M:step(input)
 		self.intro = self.intro - 1
 		return
 	end
+	-- the map's hazard can stop time (the lever's second: sim/hazards.lua)
+	if hazards.hold(self) then return end
 	-- match time only goes down during turns: while waiting for shots and robots
 	-- to settle it's stopped (Sergio, 30 Oct)
 	if self.match_left > 0 and self.phase ~= "settle" then

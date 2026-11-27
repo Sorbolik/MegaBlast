@@ -3,7 +3,7 @@
 -- blows, all round long) is a pill of the HUD; the hail's shadows (where the stones will fall
 -- at the end of the round) and the stones in flight are in the world, like the boulders rolling
 -- (Avarizia), the water with the line it will rise to (Ira) and the tombs' flames and lids
--- (Eresia). The mud is painted in the map; the low gravity needs no drawing.
+-- (Eresia). The mud is painted in the map. The Limbo's lever: below.
 --
 --   local o = hazards.new()                    -- all the nodes, hidden until a match has the hazard
 --   hazards.nodes(o)                           -- the world nodes, to put in the "mondo" node
@@ -13,6 +13,10 @@
 --   hazards.gust(o)                            -- the "gust" event: the arrow flashes
 -- The fire rain (Violenza) is the hail with orange stones; the false bridges (Frode) shine in
 -- warning over the rectangle of the one that is about to fall (the crumbling is announced).
+-- The lever (Limbo) sits on its steel stud: a plate with the hinge and the handle, which snaps to
+-- the other side at every flip (Codex's drawings, WB-099); during the second of stopped time a
+-- ring with an arrow marks where each robot will land.
+--   hazards.painting(g)                        -- the map's painting: the Limbo upside down has its own
 
 local config = require "sim.config"
 local sim_hazards = require "sim.hazards"
@@ -40,6 +44,12 @@ local LID = vmath.vector4(0.2, 0.09, 0.07, 1)
 local FLAME = vmath.vector4(1, 0.55, 0.15, 0.9)
 local FLAME_CORE = vmath.vector4(1, 0.82, 0.3, 0.95)
 local ROCKS, TOMBS, FLAMES = 4, 4, 3
+-- the lever's drawings in the world (Codex, WB-099; numbers printed by tools/grafica/leva.py): the
+-- plate as wide as the stud, the handle with the middle of its eye eye_x, eye_y from its top left
+local LEVER_ART = { plate_w = 30, plate_h = 30.2, handle_w = 45, handle_h = 11.3, eye_x = 4.0, eye_y = 5.6 }
+local LANDING = vmath.vector4(1, 0.88, 0.5, 0.95)
+local LEVER_TILT = config.LEVER.tilt
+local MAX_ROBOTS = 4
 local WATER_W, WATER_DEPTH = 2400, 400
 
 local function node(w, h, color, parent)
@@ -51,6 +61,14 @@ local function node(w, h, color, parent)
 end
 
 local P, S = vmath.vector3(), vmath.vector3()
+
+-- an image of the battle atlas, as big as in the world
+local function image(name, w, h, parent)
+	local n = node(w, h, vmath.vector4(1, 1, 1, 1), parent)
+	gui.set_texture(n, "battaglia")
+	gui.play_flipbook(n, name)
+	return n
+end
 local function pos(n, x, y)
 	P.x, P.y = x, y
 	gui.set_position(n, P)
@@ -126,6 +144,29 @@ function M.new()
 		end
 		o.tombs[i] = { root = root, lid = lid, flames = flames }
 	end
+	-- the lever (WB-099, tools/grafica/leva.py): the handle turns around its eye on the hinge, the
+	-- plate sits over it on the stud
+	o.lever = node(0, 0, vmath.vector4(1, 1, 1, 1))
+	gui.set_enabled(o.lever, false)
+	o.handle = node(0, 0, vmath.vector4(1, 1, 1, 1), o.lever)
+	local handle = image("leva_manico", LEVER_ART.handle_w, LEVER_ART.handle_h, o.handle)
+	pos(handle, LEVER_ART.handle_w / 2 - LEVER_ART.eye_x, LEVER_ART.eye_y - LEVER_ART.handle_h / 2)
+	image("leva_piastra", LEVER_ART.plate_w, LEVER_ART.plate_h, o.lever)
+	o.tilt = LEVER_TILT
+	-- where each one lands while time is stopped: a ring on the ground and an arrow above it
+	o.landing = {}
+	for i = 1, MAX_ROBOTS do
+		local root = node(0, 0, vmath.vector4(1, 1, 1, 1))
+		gui.set_enabled(root, false)
+		local ring = ui.ring_node(0, 0, 44, 4, LANDING, root)
+		gui.set_size(ring, vmath.vector3(44, 14, 0))
+		local arrow = node(14, 14, LANDING, root)
+		gui.set_euler(arrow, vmath.vector3(0, 0, 45))
+		pos(arrow, 0, 22)
+		local shaft = node(5, 22, LANDING, root)
+		pos(shaft, 0, 36)
+		o.landing[i] = { root = root, arrow = arrow, shaft = shaft }
+	end
 	o.pill = node(0, 0, vmath.vector4(1, 1, 1, 1))
 	gui.set_enabled(o.pill, false)
 	node(176, 44, PILL, o.pill)
@@ -143,6 +184,8 @@ function M.nodes(o)
 	for _, r in ipairs(o.rocks) do list[#list + 1] = r.root end
 	list[#list + 1] = o.water
 	for _, t in ipairs(o.tombs) do list[#list + 1] = t.root end
+	list[#list + 1] = o.lever
+	for _, l in ipairs(o.landing) do list[#list + 1] = l.root end
 	return list
 end
 
@@ -152,6 +195,12 @@ end
 
 function M.place(o, x, y)
 	if o.pill then pos(o.pill, x, y) end
+end
+
+-- The terrain painting to show (client/paintings/maps): the map's, or its upside down one
+function M.painting(g)
+	if g.hazard == "lever" and g.hz and g.hz.flip == 1 then return g.map .. "_sotto" end
+	return g.map
 end
 
 function M.gust(o)
@@ -175,6 +224,28 @@ function M.update(o, g, clock)
 		for _, r in ipairs(o.rocks) do gui.set_enabled(r.root, false) end
 		for _, t in ipairs(o.tombs) do gui.set_enabled(t.root, false) end
 		gui.set_enabled(o.water, kind == "water")
+		gui.set_enabled(o.lever, kind == "lever")
+		for _, l in ipairs(o.landing) do gui.set_enabled(l.root, false) end
+	end
+	if kind == "lever" and hz then
+		-- the handle leans to one side of its face, and snaps to the other at every flip
+		local x, y, dx, dy = sim_hazards.lever_spot(g, hz, hz.at)
+		pos(o.lever, x, y)
+		local want = hz.n % 2 == 0 and LEVER_TILT or -LEVER_TILT
+		o.tilt = o.tilt + (want - o.tilt) * 0.35
+		S.x, S.y, S.z = 0, 0, math.deg(math.atan2(dy, dx) + o.tilt)
+		gui.set_euler(o.handle, S)
+		for i, l in ipairs(o.landing) do
+			local ly = hz.freeze > 0 and hz.ly[i] or -1
+			local rb = g.robots[i]
+			local on = ly >= 0 and rb ~= nil and not rb.dead
+			gui.set_enabled(l.root, on)
+			if on then
+				pos(l.root, hz.lx[i], ly)
+				pos(l.arrow, 0, 22 + 5 * math.sin(clock * 9))
+				pos(l.shaft, 0, 36 + 5 * math.sin(clock * 9))
+			end
+		end
 	end
 	if kind == "bridges" and hz then
 		-- the bridge that crumbles pulses over its rectangle until it falls

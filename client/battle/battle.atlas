@@ -76,6 +76,12 @@ images {
 images {
   image: "/assets/fx/fx_vento.png"
 }
+images {
+  image: "/assets/fx/leva_manico.png"
+}
+images {
+  image: "/assets/fx/leva_piastra.png"
+}
 margin: 0
 extrude_borders: 2
 inner_padding: 0
