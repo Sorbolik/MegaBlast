@@ -994,6 +994,29 @@ function M.choice(g, list_of, x, y, label, opts, active, w, off)
 	end
 end
 
+-- SWITCH: two ways of doing the same thing (Sergio, 27 Nov: POTENZIA's Scaglie or
+-- fragments), a dark track cut in half with the chosen half in the main button's red-hot
+-- iron (tools/grafica/fucina.py, interruttore_sx/_dx: 300 x 46, fixed). (x, y) its top left;
+-- opts: { { label, ui_action, icon }, { ... } }, active 1 or 2
+M.SWITCH_W, M.SWITCH_H = 300, 46
+function M.switch(g, list_of, x, y, opts, active)
+	local W, H = M.SWITCH_W, M.SWITCH_H
+	M.piece(g, active == 1 and "interruttore_sx" or "interruttore_dx", x + W / 2, y + (H + 3) / 2, H + 3)
+	for i, o in ipairs(opts) do
+		local on = i == active
+		local hx = x + (i - 1) * W / 2
+		local t = M.text(g, o[1], 0, y + H / 2 + 16 * M.CAP / 2 + 1, 16, on and C.SAND or C.MUTE, "start", 0.5)
+		local iw, gap = o[3] and 24 or 0, o[3] and 5 or 0
+		-- icon and word in the middle of their half, never closer than 14 to its edges
+		local room = W / 2 - 28 - iw - gap
+		if M.width(t) > room then gui.set_scale(t, gui.get_scale(t) * (room / M.width(t))); M.check_small(t) end
+		local left = hx + (W / 2 - (iw + gap + M.width(t))) / 2
+		if o[3] then M.piece(g, o[3], left + iw / 2, y + H / 2, iw) end
+		gui.set_position(t, vec(left + iw + gap - g.ox, gui.get_position(t).y))
+		if not on then M.zone(g, list_of, hx, y, W / 2, H, o[2]) end
+	end
+end
+
 -- CARDS: an iron panel with a short line in the card's color at the top left.
 -- opt: sel (chosen: a warm frame), off (dim). Returns { node, g }
 function M.card(g, x, y, w, h, color, opt)

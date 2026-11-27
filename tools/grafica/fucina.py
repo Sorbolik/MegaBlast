@@ -441,6 +441,7 @@ def fai_secondario():
     # unita ad angolo vivo, i capi tondi, niente contorno
     fai_freccina()
     fai_croce()
+    fai_interruttore()
 
 
 def lastra(nome, h, ferro, luce):
@@ -707,6 +708,41 @@ def fai_croce():
 
     intero("croce", croce(False), 112)
     intero("croce_premuta", croce(True), 112)
+
+
+def fai_interruttore():
+    # l'interruttore fra due modi della stessa azione (Sergio, 27 nov: «mi piaceva lo switch
+    # che avevi fatto in anteprima»): una pista scura con contorno d'inchiostro e l'ombra
+    # nera dei pulsanti, divisa a meta'; la meta' scelta nel ferro rovente del principale.
+    # Due pezzi interi, 300 x 46 sullo schermo (+3 d'ombra), al doppio: interruttore_sx
+    # (scelta la sinistra) e interruttore_dx
+    S, W, H, R, B, O = 2, 300, 46, 12, 3, 3
+    INK, FONDO, ACCESO = (0x0B, 0x08, 0x0D, 255), (0x24, 0x1C, 0x2B, 255), (0x6C, 0x2B, 0x19, 255)
+    for lato in ("sx", "dx"):
+        im = Image.new("RGBA", (W * S, (H + O) * S), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        d.rounded_rectangle((0, O * S, W * S - 1, (H + O) * S - 1), R * S, fill=(0, 0, 0, 255))
+        d.rounded_rectangle((0, 0, W * S - 1, H * S - 1), R * S, fill=INK)
+        dentro = (B * S, B * S, (W - B) * S - 1, (H - B) * S - 1)
+        d.rounded_rectangle(dentro, (R - B) * S, fill=FONDO)
+        # la meta' scelta: la stessa forma tagliata a meta'
+        mezza = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        ImageDraw.Draw(mezza).rounded_rectangle(dentro, (R - B) * S, fill=ACCESO)
+        m = np.asarray(mezza).copy()
+        if lato == "sx":
+            m[:, W * S // 2:] = 0
+        else:
+            m[:, :W * S // 2] = 0
+        im.alpha_composite(Image.fromarray(m, "RGBA"))
+        # il filo di luce in alto sulla meta' accesa, come sulla lastra
+        x0, x1 = (B + 4, W // 2 - 4) if lato == "sx" else (W // 2 + 4, W - B - 4)
+        d = ImageDraw.Draw(im)
+        d.line((x0 * S, (B + 2) * S, x1 * S, (B + 2) * S), fill=(0xA0, 0x4A, 0x2E, 255), width=2 * S)
+        # il taglio in mezzo
+        d.rectangle(((W // 2 - 1.5) * S, 0, (W // 2 + 1.5) * S, H * S - 1), fill=INK)
+        nome = "interruttore_" + lato
+        im.save(os.path.join(OUT, nome + ".png"), optimize=True)
+        MISURE[nome] = im.size
 
 
 def griglia(percorso, per_riga, minimo=1500):

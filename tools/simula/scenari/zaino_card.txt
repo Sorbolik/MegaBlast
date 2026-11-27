@@ -1,7 +1,7 @@
 # Lo ZAINO con le card dei pezzi (Sergio, 27 nov): nessun pezzo scelto all'ingresso,
 # un tocco prova il pezzo addosso (stats a confronto, il suo gettone nella colonna di
 # quello che indossi), un altro tocco lo toglie; tenuto premuto apre POTENZIA, la
-# finestra che esce dalla card (PAGA CON sceglie la moneta, la X chiude); INDOSSA lo mette (l'apprendista si schiaccia e scintilla).
+# finestra che esce dalla card (l'interruttore sceglie la moneta, la X chiude); INDOSSA lo mette (l'apprendista si schiaccia e scintilla).
 # (tocca_centro e trascina: y dal basso)
 # Gira anche con --schermo 1600x720 e 960x720.
 imposta prova_profilo 1
@@ -25,10 +25,10 @@ aspetta 0.15
 foto 06_finestra_atterra
 aspetta 0.8
 foto 07_finestra
-tocca_centro 1010 213               # PAGA CON: FRAMMENTI
+tocca_centro 1019 217               # l'interruttore: FRAMMENTI
 aspetta 0.5
 foto 07b_paga_frammenti
-tocca_centro 850 213                # PAGA CON: SCAGLIE
+tocca_centro 869 217                # l'interruttore: SCAGLIE
 aspetta 0.5
 tocca_centro 948 140                # +1 LIVELLO
 aspetta 0.1

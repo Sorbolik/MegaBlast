@@ -4,7 +4,7 @@
 -- on a thread (ui/ingots.lua, the signature's slots at 10 20 30), its signature with
 -- what it really gives and ACCENDI LA FIRMA; on the right what it does now and at the
 -- next level, the Proof, and how to pay: one +1 LIVELLO, in Scaglie or in the fragments
--- of its family (PAGA CON, the choice over it). Beside the X, what you have of both.
+-- of its family (the switch over it). Beside the X, what you have of both.
 -- Buying a level fills its bead with a blow; a step opens the step's scene; lighting the
 -- signature makes it flare. The X, the veil or the arrow close it.
 --
@@ -12,7 +12,7 @@
 --   bench.ingots(g, x, y, w, h, level, lit)       -- the beads of the level (ui/ingots.lua)
 --   bench.window(s, g, sel)                       -- the window of the piece sel = { set, slot }
 --   bench.run(s, kind, sel) -> true               -- "potenzia" / "firma" / "frammenti" (false: not the bench's)
---                                                 -- s.pay: "frammenti" pays in fragments (PAGA CON)
+--                                                 -- s.pay: "frammenti" pays in fragments (the switch)
 --   bench.after(s)                                -- after the screen is built: the opening, the blow, the scene
 --   bench.update(s, dt) / bench.input(s, action_id, action) -> true while the scene runs
 --   bench.delete(s)
@@ -183,14 +183,14 @@ function M.window(s, g, sel)
 		end
 	end
 
-	-- how to pay (Sergio, 27 Nov, choice C): one +1 LIVELLO, and over it the coin it is
-	-- paid with, Scaglie or the family's fragments (the Smith's orders, docs/commesse.md):
+	-- how to pay (Sergio, 27 Nov, choice C): one +1 LIVELLO, and over it the switch of the
+	-- coin it is paid with, Scaglie or the family's fragments (the Smith's orders, docs/commesse.md):
 	-- two ways of doing the same thing, the signature's button apart on the left
 	local by = WY + WH - 36 - 62
 	if nxt then
 		local frag = s.pay == "frammenti"
-		kit.choice(wg, s.buttons, RR - 316, by - 70, T.pay_with,
-			{ { T.pay_scaglie, "paga:scaglie" }, { T.pay_fragments, "paga:frammenti" } }, frag and 2 or 1, 158)
+		kit.switch(wg, s.buttons, RR - kit.SWITCH_W, by - 68, { { T.pay_scaglie, "paga:scaglie", "scaglia" },
+			{ T.pay_fragments, "paga:frammenti", "frammento_" .. set } }, frag and 2 or 1)
 		local proof = nxt.proof_done >= nxt.proof
 		local ok, why
 		if frag then

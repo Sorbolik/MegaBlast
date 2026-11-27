@@ -433,8 +433,8 @@ return {
 		light_sign = "ACCENDI LA FIRMA",
 		-- the next level paid with the family's fragments (the Smith's orders): what it costs, how many you hold
 		with_fragments = "COI FRAMMENTI", fragments_cost = "Costa %d · ne hai %d", pick_family = "Scegli un pezzo",
-		-- POTENZIA: PAGA CON (one +1 LIVELLO, the coin chosen over it) and its line in fragments
-		pay_with = "PAGA CON", pay_scaglie = "SCAGLIE", pay_fragments = "FRAMMENTI",
+		-- POTENZIA: one +1 LIVELLO, the switch of the coin over it, and its line in fragments
+		pay_scaglie = "SCAGLIE", pay_fragments = "FRAMMENTI",
 		fragments_price = "%d frammenti", fragments_missing = "mancano %d frammenti",
 		fragments_closed = "sblocca le commesse",
 		sign_cost = "%d ossidiana",

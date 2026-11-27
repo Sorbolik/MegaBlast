@@ -602,6 +602,12 @@ images {
   image: "/assets/fucina/ingranaggio.png"
 }
 images {
+  image: "/assets/fucina/interruttore_dx.png"
+}
+images {
+  image: "/assets/fucina/interruttore_sx.png"
+}
+images {
   image: "/assets/fucina/lucchetto.png"
 }
 images {

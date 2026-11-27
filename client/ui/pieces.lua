@@ -126,6 +126,8 @@ return {
 	ic_vuoto_stivali_forgiato = { w = 240, h = 240 },
 	indietro = { w = 179, h = 120 },
 	ingranaggio = { w = 128, h = 128 },
+	interruttore_dx = { w = 600, h = 98 },
+	interruttore_sx = { w = 600, h = 98 },
 	lucchetto = { w = 102, h = 120 },
 	materiale_ghiaccio = { w = 192, h = 192 },
 	materiale_grandine = { w = 192, h = 192 },
