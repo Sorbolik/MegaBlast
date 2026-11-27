@@ -35,6 +35,7 @@
 --   mira.posa(pts, n, step, max, out)              -- where the dots go (no nodes)
 
 local ui = require "ui.ui"
+local game = require "sim.game"
 
 local M = {}
 
@@ -73,6 +74,22 @@ local TRACE_C = vmath.vector4(LIGHT.x, LIGHT.y, LIGHT.z, 0.35)
 local LINE_C, LINE_SHADOW_C = vmath.vector4(LIGHT.x, LIGHT.y, LIGHT.z, 0.7), vmath.vector4(0, 0, 0, 0.35)
 local V, S = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1)
 local E = vmath.vector3(0, 0, 0)
+
+-- From the finger to the aim, the same in battle and in the Forge (menu/forge_ui.lua):
+-- (dx, dy) from the middle of whoever aims, in the world; s the camera's scale.
+-- The direction is taken in the world, the distance (so the power) in screen
+-- pixels, the same at every zoom: RANGE for full power; let go closer than
+-- CANCEL_R and the shot is cancelled.
+M.RANGE = 220
+M.CANCEL_R = 28
+function M.from_finger(dx, dy, s)
+	local d = sqrt(dx * dx + dy * dy) * s
+	return math.atan2(dy, dx), d, game.aim_power(d / M.RANGE)
+end
+-- the aim stick's power (battle/sticks.lua: f from 0 to 1)
+function M.stick_power(f)
+	return max(0.1, game.ipow(f, game.AIM_EXPONENT))
+end
 
 -- Whole degrees as the player reads them
 function M.degrees(a)
@@ -240,7 +257,15 @@ local function move(n, x, y, scale)
 	gui.set_scale(n, S)
 end
 
-function M.trajectory(m, pts, n, s)
+-- fade (0..1, optional): from that part of the dots on they fade out to the end
+-- (the Forge, docs/commesse.md: the dots go a little past the top and fade)
+local FADED = vmath.vector4()
+local function fade_dot(n, c, a)
+	FADED.x, FADED.y, FADED.z, FADED.w = c.x, c.y, c.z, c.w * a
+	gui.set_color(n, FADED)
+end
+
+function M.trajectory(m, pts, n, s, fade)
 	local k = M.lay_dots(pts, n, M.STEP / s, M.POINTS, m.out)
 	local scale = 1 / s
 	for i = 1, M.POINTS do
@@ -251,8 +276,15 @@ function M.trajectory(m, pts, n, s)
 			local o = m.out[i]
 			move(m.shadows[i], o.x, o.y, scale)
 			move(m.lights[i], o.x, o.y, scale)
+			if fade or m.faded then
+				local a = 1
+				if fade and i / k > fade then a = math.max(0, 1 - (i / k - fade) / (1 - fade)) end
+				fade_dot(m.shadows[i], SHADOW, a)
+				fade_dot(m.lights[i], LIGHT, a)
+			end
 		end
 	end
+	m.faded = fade and true or nil
 end
 
 function M.crosshair(m, x, y, angle_deg, s, strength, color)

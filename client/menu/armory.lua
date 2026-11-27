@@ -19,6 +19,9 @@ local profile = require "menu.profile"
 local wallet = require "sim.wallet"
 local gear_ui = require "menu.gear_ui"
 local outline = require "menu.outline"
+local orders_ui = require "menu.orders_ui"
+local forge_ui = require "menu.forge_ui"
+local orders = require "sim.orders"
 local T = require("lang.text").armory
 local TG = require("lang.text").gear_ui
 local TP = require("lang.text").pieces
@@ -27,6 +30,8 @@ local common = require("lang.text").common
 local M = {}
 
 local KC = kit.C
+-- where the tabs start, as in the ZAINO
+local TABS_X = 300
 
 local function copy(t)
 	if type(t) ~= "table" then return t end
@@ -83,9 +88,9 @@ local function ware(a, x, y, w, h, set, slot, price, o)
 	if not o.owned then kit.zone(g, a.buttons, x, y, w, h, "merce:" .. set .. ":" .. slot) end
 end
 
--- time until the shop changes (midnight)
-local function until_midnight()
-	local t = os.date("*t")
+-- time until the shop changes: the day turns at wallet.DAY_HOUR in the morning
+local function until_change()
+	local t = os.date("*t", os.time() - wallet.DAY_HOUR * 3600)
 	local left = (23 - t.hour) * 60 + (59 - t.min)
 	return string.format("%dH %dM", math.floor(left / 60), left % 60)
 end
@@ -106,7 +111,7 @@ local function shop(a)
 	gui.play_flipbook(img, "fabbro_calma")
 	gui.set_parent(img, face)
 	kit.text(g, T.offers, x + 60, 120, 26, KC.HOT, "start", 1)
-	kit.text(g, kit.upper(T.change_in:format(until_midnight())), x + 62, 143, 18, KC.MUTE, "start", 0.5)
+	kit.text(g, kit.upper(T.change_in:format(until_change())), x + 62, 143, 18, KC.MUTE, "start", 0.5)
 	local offers = wallet.shop(p, today)
 	local full = wallet.PRICE_CATALOG
 	local i = 0
@@ -136,18 +141,27 @@ local function shop(a)
 	local vb = kit.secondary(a.low2, T.use_voucher, 430, 640, 270, 62,
 		{ icon = "buono", sub = kit.upper(T.you_have:format(p.buoni)), sub_color = KC.HOT_BOTTOM, off = not usable })
 	kit.button(a.buttons, vb, "buono", { spento = not usable })
+	-- or with its family's fragments, at the full price (docs/commesse.md): only once the Smith has called
+	if p.commesse and p.commesse.aperta then
+		local fcost = w and orders.in_fragments(wallet.price(p, w[1], w[2], false))
+		local have = w and orders.fragments(p, w[1]) or 0
+		local fok = w and not wallet.owns(p, w[1], w[2]) and have >= fcost and net
+		local fb = kit.secondary(a.low, T.with_fragments, 150, 640, 262, 62, { icon = "frammento_" .. (w and w[1] or "fabbro"),
+			sub = w and kit.upper(T.fragments_cost:format(fcost, have)) or kit.upper(T.pick_family), off = not fok })
+		kit.button(a.buttons, fb, "frammenti", { spento = not fok })
+	end
 	local price = w and wallet.price(p, w[1], w[2], w[3])
 	local ok = w and not wallet.owns(p, w[1], w[2]) and p.scaglie >= price and net
 	local sub = not w and TP.pick_ware or (wallet.owns(p, w[1], w[2]) and TP.in_wardrobe) or (not net and TP.need_network)
 		or (p.scaglie < price and TP.missing:format(coins.format(price - p.scaglie))) or TP.price_only:format(coins.format(price))
-	a.action = kit.action(a.right, TP.buy, 948, 628, 308, 80, { size = 46, off = not ok, sub = kit.upper(sub) })
+	a.action = kit.action(a.right, TP.buy, 948, 628, 308, 80, { icon = "scaglia", size = 46, off = not ok, sub = kit.upper(sub) })
 	kit.button(a.buttons, a.action, "compra", { main = true, spento = not ok })
 	return w
 end
 
 -- Screen ----------------------------------------------------------------------------
 
-local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over" }
+local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over", "mlow", "mright", "stop" }
 
 local function build(a)
 	if a.head then kit.header_delete(a.head) end
@@ -157,8 +171,24 @@ local function build(a)
 	end
 	a.buttons, a.figure, a.action = {}, nil, nil
 	a.outline = nil
+	orders_ui.release(a)
 	local p = a.prof
 	a.head = kit.header(a.buttons, common.shop, KC.PURPLE, "indietro", a.from or common.home)
+	-- the three tabs, once the Smith has called: COMMESSE (his orders), FORNACE (the
+	-- Forge, where Ossidiana is spent) and BANCO (the shop)
+	-- (a test profile sees them at once: the test bench is in COMMESSE)
+	local open = (p.commesse and p.commesse.aperta) or profile.test
+	if not open then a.tab = "banco" end
+	a.tab = a.tab or "commesse"
+	if open then
+		local at = { commesse = 1, fornace = 2, banco = 3 }
+		kit.tabs(a.head.top_left, a.buttons, TABS_X, 28,
+			{ { T.tab_orders, "scheda:commesse" }, { T.tab_forge, "scheda:fornace" }, { T.tab_bench, "scheda:banco" } },
+			at[a.tab] or 1, KC.PURPLE, true)
+		-- by COMMESSE, how many are ready (the word is smaller when another tab is open)
+		local ready = orders_ui.news(p)
+		if ready and ready > 0 then orders_ui.badge(a.head.top_left, TABS_X + (#T.tab_orders * 14 + 64) + 13 - (a.tab ~= "commesse" and 21 or 0), 28 + 26, ready) end
+	end
 	a.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(a.wallet, p.buoni or 0)
 	a.left = kit.anchor(0, 0, gui.ANCHOR_LEFT)
@@ -167,6 +197,17 @@ local function build(a)
 	a.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	a.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
+	if a.tab ~= "fornace" then forge_ui.release(a, true) end
+	if a.tab == "commesse" then
+		outline.off()
+		orders_ui.board(a)
+		return
+	elseif a.tab == "fornace" then
+		-- the Forge (docs/commesse.md "La Fornace"): the wall in vetrina, the throws
+		outline.off()
+		forge_ui.board(a)
+		return
+	end
 	local act = profile.active_loadout(p)
 	gear_ui.devil(a, a.left, 215, 600, 395)
 	local try, focus
@@ -200,7 +241,11 @@ local function run_cmd(a, ui_action)
 	local kind, x = ui_action:match("^(%a+):?(.*)$")
 	local p = a.prof
 	local s1, s2 = x:match("^([^:]*):?(.*)$")
-	if kind == "foglio" then
+	if orders_ui.cmd(a, kind, x) or forge_ui.cmd(a, kind, x) then
+		-- (a tap of the COMMESSE or of the FORNACE tab)
+	elseif kind == "scheda" then
+		a.tab, a.sheet, a.modal, a.scene, a.melt = x, nil, nil, nil, nil
+	elseif kind == "foglio" then
 		a.sheet = not a.sheet
 	elseif kind == "merce" then
 		-- an offer is bought at the shop's price; the day's pieces at the full one
@@ -208,6 +253,8 @@ local function run_cmd(a, ui_action)
 		a.ware = { s1, s2, offer and wallet.today() or nil }
 	elseif kind == "compra" and a.ware then
 		if profile.act(p, { k = "compra", set = a.ware[1], slot = a.ware[2], offer = a.ware[3] ~= nil }) then sound.play("#scaglia") end
+	elseif kind == "frammenti" and a.ware then
+		if profile.act(p, { k = "compra", set = a.ware[1], slot = a.ware[2], frammenti = true }) then sound.play("#scaglia") end
 	elseif kind == "buono" and a.ware then
 		profile.act(p, { k = "buono", set = a.ware[1], slot = a.ware[2] })
 	end
@@ -216,18 +263,35 @@ end
 
 function M.update(a, dt)
 	if a.figure then scoria.update(a.figure, dt, a.st) end
+	-- the delivery's scene: at the receipt the screen is made again, with its buttons
+	if a.tab == "commesse" and orders_ui.update(a, dt) then build(a) end
+	if a.tab == "fornace" and forge_ui.update(a, dt) then build(a) end
+	if a.tab ~= "fornace" then forge_ui.warm(a) end
 	if a.outline then outline.update(a.outline) end
 end
 
 function M.on_input(a, action_id, action)
+	-- while the Forge plays, the finger is its own
+	if forge_ui.input(a, action_id, action) then return nil end
 	local ui_action = ui.touch(a.buttons, action_id, action)
-	if ui_action == "indietro" then return "indietro" end
+	if ui_action == "indietro" then
+		-- (a window of the COMMESSE closes first)
+		if not (a.modal or a.scene or a.melt) then return "indietro" end
+		a.modal, a.scene, a.melt = nil, nil, nil
+		build(a)
+		return nil
+	end
 	if ui_action then run_cmd(a, ui_action) end
-	return nil
+	-- POTENZIA on the delivery's receipt: the ZAINO (main/game.gui_script)
+	local leave = a.leave
+	a.leave = nil
+	return leave
 end
 
 function M.destroy(a)
 	outline.off()
+	orders_ui.release(a)
+	forge_ui.release(a)
 	kit.header_delete(a.head)
 	for _, k in ipairs(GROUPS) do
 		if a[k] then gui.delete_node(a[k].node) end

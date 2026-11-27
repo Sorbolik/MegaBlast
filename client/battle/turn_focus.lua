@@ -22,7 +22,8 @@
 local M = {}
 
 M.FADE_LOW = 0.2
-M.LOOK, M.OUT, M.LIFT = 1.6, 150, 60
+-- LIFT 90 (Sergio, 23 Nov: a bit more map below on your turn; it was 60)
+M.LOOK, M.OUT, M.LIFT = 1.6, 150, 90
 M.TENSION_S, M.ZOOM = 8, 0.09
 M.SHADE = vmath.vector4(0.7, 0.5, 0.4, 1)
 

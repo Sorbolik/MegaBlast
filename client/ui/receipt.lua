@@ -36,6 +36,7 @@ local profile = require "menu.profile"
 local equip = require "sim.gear"
 local T = require("lang.text").receipt
 local TM = require("lang.text").milestones
+local TO = require("lang.text").orders
 
 local M = {}
 
@@ -46,9 +47,16 @@ M.BOTTOM = 566    -- the rows stay above this (the thread, the screens' buttons)
 -- its columns, the same for every row: where the names start and how wide they
 -- can be, where the experience ends, the coin's middle, where the amount ends
 local PANEL_X, PANEL_W = 796, 448
-local NAME_X, NAME_W, XP_X, COIN_X, AMOUNT_X = 816, 190, 1120, 1150, 1224
+-- (Sergio, 23 Nov: every icon on the right, stuck to its number: the amount ends at
+-- NUMBER_X and its coin sits right after it, against the panel's edge)
+local NAME_X, NAME_W, XP_X, COIN_X, AMOUNT_X = 816, 190, 1100, 1209, 1224
+-- (a bit bigger, Sergio the same day: the coins 26, the materials 30)
+local COIN_D, MATERIAL_D = 26, 30
+local NUMBER_X = COIN_X - MATERIAL_D / 2 - 5
 -- how tall the total, the level with its bar and what a new level gives are
 local TOTAL_H, LEVEL_H, AFTER_H = 60, 60, 54
+-- the Smith's orders: how tall their heading is, how many rows at most
+local ORDERS_HEAD, ORDERS_MAX = 30, 4
 -- when the first line comes, the rhythm of the others, how long the total counts
 M.FIRST, M.RHYTHM, M.COUNT = 0.9, 0.22, 0.6
 -- the sparks of experience: one every GAP seconds, each FLIGHT long
@@ -131,12 +139,23 @@ function M.new(gain, prof, top, buttons, parent)
 	-- the total, the Ossidiana's, the level, what the level gives
 	local after = level_up or braci > 0
 	local fixed = TOTAL_H + (ob > 0 and 46 or 0) + LEVEL_H + (after and AFTER_H or 0)
-	local step = math.max(M.LINE_MIN, math.min(M.LINE_H, (M.BOTTOM - first - fixed) / math.max(1, #lines)))
+	-- the Smith's orders this match moved (gain.commesse, sim/orders.lua match): the
+	-- material that dropped and one row per order, at most ORDERS_MAX (the ready first)
+	local moved = {}
+	for _, o in ipairs(gain.commesse or {}) do
+		if o.ready or o.key ~= "order" then moved[#moved + 1] = o end
+	end
+	for _, o in ipairs(gain.commesse or {}) do
+		if o.key == "order" and not o.ready then moved[#moved + 1] = o end
+	end
+	while #moved > ORDERS_MAX do moved[#moved] = nil end
+	if #moved > 0 then fixed = fixed + ORDERS_HEAD end
+	local step = math.max(M.LINE_MIN, math.min(M.LINE_H, (M.BOTTOM - first - fixed) / math.max(1, #lines + #moved)))
 	local tall = math.min(36, step - 4)
 	-- a coin's amount at the row's end, with the coin before it
 	local function coin_cell(kind, n, y, size)
-		local t = kit.text(g, T.plus:format(coins.format(n)), AMOUNT_X, y, size, kind == "scaglia" and KC.SAND or coins.COLOR[kind], "end")
-		local icon = coins.icon(kind, COIN_X, 720 - y + size * 0.36, 16, p)
+		local t = kit.text(g, T.plus:format(coins.format(n)), NUMBER_X, y, size, kind == "scaglia" and KC.SAND or coins.COLOR[kind], "end")
+		local icon = coins.icon(kind, COIN_X, 720 - y + size * 0.36, COIN_D, p)
 		return t, icon
 	end
 	kit.text(g, T.title, NAME_X, top, 16, KC.HOT_TOP, "start", 1.5)
@@ -178,6 +197,45 @@ function M.new(gain, prof, top, buttons, parent)
 		r.coin_total.ossidiana = coin_cell("ossidiana", 0, y + 25, 16)
 		r.from.ossidiana = vec(COIN_X, 720 - (y + 18))
 	end
+	-- the Smith's orders: their heading, then the rows (they come in after the others)
+	if #moved > 0 then
+		y = y + 50
+		kit.line(g, NAME_X, y + 2, AMOUNT_X, y + 2, 2, KC.LINE)
+		kit.text(g, TO.receipt_title, NAME_X, y + ORDERS_HEAD - 4, 16, KC.HOT_TOP, "start", 1.5)
+		y = y + ORDERS_HEAD - step + 6
+		for _, o in ipairs(moved) do
+			y = y + step
+			local base = y + tall / 2 + 5
+			local row = { plain = true }
+			local name, right, color = "", "", KC.SAND
+			local icon
+			if o.key == "material" then
+				-- the material: its number, then its icon on the right like the coins
+				icon = kit.piece(g, "materiale_" .. o.id, COIN_X, base - 6, MATERIAL_D)
+				name, right = TO.materials[o.id], T.plus:format(o.n)
+			elseif o.key == "open" then
+				name = TO.receipt_open
+			else
+				name = o.cliente and TO.clients[o.cliente] or TO.receipt_smith
+				right = TO.progress:format(coins.format(o.done), coins.format(o.asked))
+				if o.ready then right, color = right .. " · " .. TO.ready, KC.MINT end
+			end
+			local rn = kit.text(g, right, icon and NUMBER_X or AMOUNT_X, base, 16, color, "end")
+			local nn = kit.text(g, kit.upper(name), NAME_X, base, 16, KC.SAND)
+			local room = AMOUNT_X - NAME_X - kit.width(rn) - (icon and 48 or 12)
+			local wide = kit.width(nn)
+			if wide > room then
+				local sca = gui.get_scale(nn)
+				gui.set_scale(nn, vec(sca.x * room / wide, sca.y * room / wide))
+				kit.check_small(nn)
+			end
+			if icon then row[#row + 1] = icon end
+			row[#row + 1], row[#row + 2] = nn, rn
+			for _, n in ipairs(row) do alpha(n, 0) end
+			r.rows[#r.rows + 1] = row
+		end
+		y = y + step - 44
+	end
 	-- the level, how far it is, and its bar as wide as the rows
 	y = y + 50
 	local lv = level_up and T.level_up:format(gain.livello) or T.level:format(gain.livello)
@@ -185,13 +243,18 @@ function M.new(gain, prof, top, buttons, parent)
 	alpha(r.level, 0)
 	kit.text(g, math.floor(prof.xp) .. " / " .. profile.xp_level(prof.livello), AMOUNT_X, y + 25, 16, KC.MUTE, "end", 1)
 	local bar_x, bar_y = (NAME_X + AMOUNT_X) / 2, 720 - (y + 44)
-	r.bar = ui.bar(bar_x, bar_y, AMOUNT_X - NAME_X, 10, BAR, p)
-	gui.set_color(r.bar.nodo, KC.TRACK)
+	-- the bar of every bar (kit.bar: the home's groove and strip), in a node of its own
+	-- for the swell
+	local bn = gui.new_box_node(vec(bar_x, bar_y), vec(0, 0))
+	gui.set_visible(bn, false)
+	gui.set_parent(bn, p)
+	r.kbar = kit.bar({ node = bn, ox = bar_x, oy = y + 44 }, NAME_X, y + 39, AMOUNT_X - NAME_X, 10, 0, BAR)
+	r.bar = { nodo = bn, full = r.kbar.front.parts, w = AMOUNT_X - NAME_X }
 	r.level_up, r.bar_x, r.bar_y = level_up, bar_x, bar_y
 	local before = (prof.xp - gain.xp) / profile.xp_level(gain.level_before)
 	if level_up or braci > 0 then before = 0 end
 	r.bar_from, r.bar_to = math.max(0, before), prof.xp / profile.xp_level(prof.livello)
-	ui.bar_value(r.bar, r.bar_from)
+	kit.bar_fill(r.kbar, r.bar_from)
 	y = y + LEVEL_H
 	-- what the new level gives: a row in an empty node of its own (the pop animates that)
 	r.after = {}
@@ -237,9 +300,11 @@ local function pulse(r, strong)
 	gui.cancel_animations(b.nodo, "scale")
 	gui.set_scale(b.nodo, vec(1, strong and 2.6 or 1.9))
 	gui.animate(b.nodo, "scale", vec(1, 1), gui.EASING_OUTQUAD, strong and 0.4 or 0.18)
-	gui.cancel_animations(b.full, "color")
-	gui.set_color(b.full, vmath.vector4(1, 0.95, 0.8, 1))
-	gui.animate(b.full, "color", BAR, gui.EASING_INQUAD, strong and 0.5 or 0.25)
+	for _, n in ipairs(b.full) do
+		gui.cancel_animations(n, "color")
+		gui.set_color(n, vmath.vector4(1, 0.95, 0.8, 1))
+		gui.animate(n, "color", vmath.vector4(1, 1, 1, 1), gui.EASING_INQUAD, strong and 0.5 or 0.25)
+	end
 end
 
 -- the coins leave the totals for the pill: some Scaglie, then the Ossidiana
@@ -279,7 +344,7 @@ local function spark_land(r, f, i, xp, coin, quiet)
 	f.landed[i] = true
 	if f.nodes[i] then gui.delete_node(f.nodes[i]); f.nodes[i] = nil end
 	local frac = r.bar_from + (r.bar_to - r.bar_from) * i / f.n
-	ui.bar_value(r.bar, frac)
+	kit.bar_fill(r.kbar, frac)
 	local last = i == f.n
 	if quiet then
 		if last then sparks_done(r, coin) end
@@ -373,7 +438,8 @@ function M.verdict(r, v)
 	r.gain = zero
 	r.sc, r.ob = 0, 0
 	for _, row in ipairs(r.rows) do
-		for j = 2, #row do
+		-- (the orders' rows are not amounts: they stay)
+		for j = 2, row.plain and 0 or #row do
 			gui.set_text(row[j], row[j] == row.xp and xp_text(0) or T.plus:format(0))
 			gui.set_color(row[j], KC.MUTE)
 		end

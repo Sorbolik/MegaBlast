@@ -5,7 +5,6 @@
 # centro della testata; nella scelta delle armi, in partita e sul podio il
 # gettone accanto all'ingranaggio. Le stesse schermate senza coda sono nelle
 # foto di scheda.txt, impostazioni.txt e degli altri scenari.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_scelta 1
 imposta prova_durata 3
 imposta prova_profilo 1

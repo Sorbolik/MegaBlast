@@ -124,7 +124,7 @@ function M.open_view(weapon_name, commands)
 	-- how to use it: its two lines end well above the button
 	riga(use(d, weapon_name, commands), d.bars and -172 or -100, 0.8, C.TEXT, paper)
 	-- OK is the primary button of the menus, the gem
-	c.ok = kit.action({ node = paper, ox = 0, oy = 0 }, T.ok, -OK_W / 2, -OK_Y - OK_H / 2, OK_W, OK_H, { size = 30 })
+	c.ok = kit.action({ node = paper, ox = 0, oy = 0 }, T.ok, -OK_W / 2, -OK_Y - OK_H / 2, OK_W, OK_H, { icon = "az_pronto", size = 30 })
 	-- arrives with a small hop
 	gui.set_scale(paper, vmath.vector3(0.6, 0.6, 1))
 	gui.animate(paper, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.35)

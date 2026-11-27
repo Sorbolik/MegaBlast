@@ -1,0 +1,41 @@
+# Lo ZAINO col profilo di prova (tutti i pezzi al 30): entrando e scegliendo pezzi più
+# volte la GUI finiva i nodi (4096) e in basso mancavano scritte e INDOSSA (Sergio, 24 nov).
+imposta prova_test prova
+aspetta 4
+tocca_centro 640 300               # l'apprendista: lo zaino
+aspetta 1.5
+tocca_centro 526 515
+aspetta 0.4
+tocca_centro 676 515
+aspetta 0.4
+tocca_centro 826 515
+aspetta 0.4
+tocca_centro 976 515
+aspetta 0.4
+tocca_bordo 70 40 basso sinistra    # HOME
+aspetta 1.5
+tocca_centro 640 300               # l'apprendista: lo zaino
+aspetta 1.5
+tocca_centro 526 515
+aspetta 0.4
+tocca_centro 676 515
+aspetta 0.4
+tocca_centro 826 515
+aspetta 0.4
+tocca_centro 976 515
+aspetta 0.4
+tocca_bordo 70 40 basso sinistra    # HOME
+aspetta 1.5
+tocca_centro 640 300               # l'apprendista: lo zaino
+aspetta 1.5
+tocca_centro 526 515
+aspetta 0.4
+tocca_centro 676 515
+aspetta 0.4
+tocca_centro 826 515
+aspetta 0.4
+tocca_centro 976 515
+aspetta 0.4
+foto 01_scelto
+tocca_bordo 70 40 basso sinistra    # HOME
+aspetta 1.5

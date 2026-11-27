@@ -1,0 +1,76 @@
+# Le Commesse del Fabbro (docs/commesse.md): la BOTTEGA con le schede COMMESSE e BANCO,
+# col profilo di prova FINE GIOCO (tutti i clienti, commesse in ogni stato), e il banco
+# di prova che fa passare partite e giorni finti.
+# Gira anche con --schermo 1600x720 e 960x720. (tocca_centro: Y dal basso)
+imposta prova_test prova
+
+aspetta 4
+foto 00_porta_in_home            # sulla porta: quante sono pronte
+tocca_bordo 210 170 mezzo destra    # la porta BOTTEGA
+aspetta 10
+foto 01_commesse
+tocca_centro 522 484                # il primo cartellino: si apre
+aspetta 2
+foto 01a_cartellino_aperto
+tocca_bordo 497 49 basso sinistra   # SCAMBIA
+aspetta 2
+tocca_centro 636 430                # il terzo materiale
+aspetta 1
+foto 01b_scambia
+tocca_bordo 267 49 basso sinistra   # INDIETRO: torna il cartellino
+aspetta 1
+tocca_centro 150 320                # fuori: si chiude
+aspetta 1
+tocca_centro 873 233                # la commessa del Fabbro
+aspetta 2
+tocca_centro 640 390                # la famiglia Fornace
+aspetta 1
+foto 01c_famiglia_del_fabbro
+tocca_centro 150 320
+aspetta 1
+tocca_bordo 565 49 basso centro     # I TUOI CLIENTI: il libro dei clienti
+aspetta 2
+tocca_centro 631 494                # il secondo cliente
+aspetta 1
+tocca_bordo 178 52 basso destra     # CHIAMA
+aspetta 2
+foto 01d_clienti
+tocca_centro 150 320
+aspetta 1
+tocca_bordo 275 49 basso sinistra   # PROVA: il banco di prova al posto del Fabbro
+aspetta 2
+foto 02_banco_di_prova
+tocca_bordo 214 187 alto sinistra   # PARTITA FINTA VINTA
+aspetta 1
+tocca_bordo 214 187 alto sinistra
+aspetta 1
+tocca_bordo 214 187 alto sinistra
+aspetta 2
+foto 03_tre_partite_finte
+tocca_bordo 214 432 alto sinistra   # PROSSIMO COLPO BUONO
+aspetta 1
+tocca_bordo 178 52 basso destra     # CONSEGNA: la scena della consegna (proposta A)
+aspetta 0.3
+foto 04a_i_cartellini_volano
+aspetta 1.15
+foto 04b_martellate
+aspetta 0.75
+foto 04c_il_cliente_fiero
+aspetta 1.6
+foto 04d_scontrino
+tocca_bordo 178 52 basso destra     # OK
+aspetta 1
+foto 04_consegnate
+tocca_bordo 214 285 alto sinistra   # PASSA UN GIORNO
+aspetta 2
+foto 05_il_giorno_dopo
+tocca_bordo 214 481 alto sinistra   # RIDAI I PEZZI DEL BANCO: si vedono i prezzi
+aspetta 1
+tocca_bordo 275 49 basso sinistra   # PROVA: torna il Fabbro
+aspetta 1
+tocca_bordo 590 53 alto sinistra    # BANCO: lo shop di sempre
+aspetta 4
+foto 06_banco
+tocca_centro 484 293                # un pezzo del giorno: COI FRAMMENTI a sinistra
+aspetta 2
+foto 07_banco_coi_frammenti

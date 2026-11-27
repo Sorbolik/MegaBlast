@@ -1,0 +1,13 @@
+Image 1 shows the casting moulds of our cartoon game: dark cast iron, thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, two little ears with a ring on the top edge. Image 2 is a rough draft: on the bottom left an iron LID closes the mouth of a mould that has been filled (the draft lid is only a placeholder for the idea and the size).
+
+Draw TWO iron LIDS for the moulds of image 1, in the same style as image 1, on plain green (#00FF00), side by side and well apart: on the left a BIG lid as wide as the mouth of the big moulds of image 1 plus a little (at least 400 px wide), on the right a SMALL lid two thirds as wide (at least 280 px wide). Each lid is seen from the front and a little from above, exactly the angle of the moulds of image 1, so it can sit on their mouth:
+- a flat round cast-iron lid (#3A3238, highlight #5D5560), a thick rim all around, its top slightly domed;
+- in the middle of the top a flat round EMPTY boss, a little lighter (#4A4248), where the game will put an icon;
+- four small rivets around the boss;
+- along the lower edge, where the lid meets the mould, a thin glowing seam of molten metal, bright orange (#FF7A1A) with a yellow core (#FFB703), as if the lid was just sealed on the hot metal;
+- the two lids are identical except the size.
+Nothing else: no mould under them, no handle, no icons, no letters, no numbers, no shadow on the ground, no glow halo outside the seam.
+
+Riferimenti in ordine: art/WB-094/riferimenti/R1_stampi_vuoti.png, art/WB-094/riferimenti/R2_bozze_animate.png
+ImageGen. Un tentativo. Foglio ridimensionato in proporzione e centrato su verde. Coperchi larghi circa 599 e 409 px, con centro vuoto e cucitura in basso. Verde campionato #03F903.
+Il verde differisce da #00FF00 esatto.

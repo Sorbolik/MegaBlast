@@ -16,11 +16,12 @@ centro compare una riga:
 60 FPS  PEGGIORE 34 MS  99% SOTTO 17  SCATTI 2/MIN  ULTIMO: DIPINTO 34 MS
 ```
 
-Online c'è anche **RETE 45 MS**: l'attesa più lunga fra due stati del server
-negli ultimi 10 secondi (normale 33 ms, il server ne manda 30 al secondo). Il
-disegno nasconde le attese fino a 4 stati (133 ms, `client/main/playout.lua`):
-uno scatto che si vede con gli FPS a posto e RETE sopra i 130-150 ms è la rete,
-non il telefono.
+Online c'è anche **RETE 45 MS**: l'attesa più lunga fra due messaggi del
+server negli ultimi 10 secondi (normale 17 ms: i tasti di ogni tick). Nel tuo
+turno la rete non si vede (il telefono gioca subito, 22 nov); negli altri il
+disegno nasconde le attese fino a 3-10 tick (50-170 ms, `CP.net_frame`): uno
+scatto che si vede con gli FPS a posto e RETE sopra i 150 ms è la rete, non il
+telefono.
 
 - **FPS** e **99% SOTTO** sugli ultimi 10 secondi (a 60 Hz un frame è 16,7 ms;
   a 120 Hz 8,3 ms).
@@ -200,7 +201,10 @@ sono tutti puntuali. Lo scenario `rete_tele.txt` fa la stessa cosa con una rete
 finta (`imposta prova_rete 120`: a volte trattiene i messaggi fino a 120 ms):
 prima il globo in volo restava fermo 2-3 frame di fila e poi faceva 10-13 px in
 un frame; con la coda (`client/main/playout.lua`) fa 5-6 px a ogni frame per
-tutto il volo. `tests/playout_test.lua` lo controlla con arrivi a mucchi.
+tutto il volo. Dal 22 nov la coda è dei tasti, non degli stati (online in
+lockstep, `CP.net_frame`): la partita si gioca sul telefono un tick alla volta
+come in locale, quindi il globo non salta mai, e i tasti che arrivano a mucchi
+aspettano qualche tick in coda.
 
 ## Cosa si è trovato (19 nov, scatti nello SHOP e nello ZAINO)
 
@@ -452,3 +456,13 @@ già 120 FPS.
 - **Uno strumento esterno** (RenderDoc, PIX, Android GPU Inspector): utili per
   la GPU, ma pesanti da installare; prima il contatore dice se il problema è la
   GPU.
+
+## Nodi della GUI
+
+La GUI del gioco (`client/main/game.gui`) ha `max_nodes: 8192` (24 nov): con i pulsanti a lastra
+lo ZAINO del profilo di prova, ricostruito a ogni pezzo scelto, restava
+con circa 400 nodi liberi su 4096 e sul telefono li finiva (scritte e INDOSSA mancanti in basso).
+Ogni pulsante a lastra è una sola lastra di tre nodi: cambiando stato (acceso, chiaro, premuto)
+cambia i disegni, non accende altri nodi. Uscendo dallo ZAINO i suoi nodi tornano liberi (misurato).
+Se la GUI scrive `Could not create the node since the buffer is full`, la simulazione fallisce:
+scenario `zaino_fine_gioco.txt`.

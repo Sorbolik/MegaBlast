@@ -62,6 +62,8 @@ jobs:
           # senza i dipinti HD dei PC (client/paintings_hd): sul telefono non si usano
           printf '[project]\n%s\n\n' "$(grep '^custom_resources' client/game.project | sed 's#,/paintings_hd##')" > "$RUNNER_TEMP/apk.ini"
           printf '[megablast]\nversion = %s\ntest = %s\n' "$(git log -1 --format=%h)" "$([ "$RAMO" = main ] && echo 0 || echo 1)" >> "$RUNNER_TEMP/apk.ini"
+          # l'impronta della simulazione: il server rifiuta un telefono con un'altra (server/simtree.go)
+          printf 'sim = %s\n' "$(git rev-parse HEAD:client/sim)" >> "$RUNNER_TEMP/apk.ini"
           [ -n "$SERVER_URL" ] && printf 'server_url = %s\n' "$SERVER_URL" >> "$RUNNER_TEMP/apk.ini"
           java -jar "$RUNNER_TEMP/bob.jar" --root client --settings "$RUNNER_TEMP/apk.ini" \
             --platform arm64-android --architectures arm64-android --strip-executable \
@@ -113,10 +115,10 @@ jobs:
           if [ "$GRANDE" = "true" ]; then
             printf '\n⚠️ APK oltre i 50 MB di Telegram: scaricalo da %s (Artifacts)\n' "$RUN_URL" >> "$RUNNER_TEMP/didascalia.txt"
             curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \
-              -F "chat_id=$CHAT" -F "text=<$RUNNER_TEMP/didascalia.txt"
+              -F "chat_id=$CHAT" -F 'link_preview_options={"is_disabled":true}' -F "text=<$RUNNER_TEMP/didascalia.txt"
           else
             curl -fsS -o /dev/null "$API/bot$TOKEN/sendDocument" \
               -F "chat_id=$CHAT" -F "caption=<$RUNNER_TEMP/didascalia.txt" -F "document=@$RUNNER_TEMP/MegaBlast.apk"
           fi
           curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \
-            -F "chat_id=$CHAT" -F "text=<$RUNNER_TEMP/novita.txt"
+            -F "chat_id=$CHAT" -F 'link_preview_options={"is_disabled":true}' -F "text=<$RUNNER_TEMP/novita.txt"

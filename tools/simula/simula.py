@@ -109,7 +109,7 @@ def test_sim():
 
 def impostazioni(scenario):
     """Righe "imposta chiave valore" dello scenario: vanno nella sezione [megablast] della build."""
-    righe = []
+    righe, display = [], ""
     for riga in scenario.read_text().splitlines():
         p = shlex.split(riga, comments=True)
         if p and p[0] == "imposta":
@@ -120,7 +120,10 @@ def impostazioni(scenario):
             if p[1] == "prova_copione":
                 valore = str((REPO / valore).resolve())
             righe.append(f"{p[1]} = {valore}\n")
-    return "".join(righe)
+            # uno schermo veloce come quello del telefono (90-120 Hz): niente vsync
+            if p[1] == "prova_hz":
+                display = f"\n[display]\nvsync = 0\nupdate_frequency = {valore}\n"
+    return "".join(righe) + display
 
 
 def build(out, extra=""):
@@ -128,7 +131,11 @@ def build(out, extra=""):
     # niente estensione WebSocket né estensioni native del client (si compilano sul
     # build server di Defold, che da qui non si raggiunge: si compila una copia del
     # client senza, senza_estensioni.py) e log di simulazione acceso
+    # il gioco vero cerca il server sul VPS (game.project): il simulatore usa sempre
+    # il suo, quello che avvia il comando server sulla porta 8090
     settings = out / "simula.ini"
+    if not re.search(r"^server_url ", extra, re.M):
+        extra = "server_url = ws://127.0.0.1:8090/ws\n" + extra
     settings.write_text("[project]\ndependencies#0 =\n\n[native_extension]\napp_manifest =\n\n[megablast]\nsimula = 1\n" + extra)
     bundle = out / "bundle"
     shutil.rmtree(bundle, ignore_errors=True)
@@ -326,7 +333,7 @@ def avvia_server(g, modo, n, eventi=None, bot_dopo=None, pezzi=None):
     bot_dopo: dopo quanto i bot riempiono la coda (-bot-dopo del server, per
     esempio "6s"; senza, quello del server: 25 s).
     pezzi: le famiglie dei pezzi che indossano i finti, a turno ("fornace,leviatano").
-    Lo scenario deve dire al gioco dove sta: imposta server_url ws://127.0.0.1:8090/ws
+    Il gioco del simulatore lo cerca già lì (build: server_url sulla porta 8090).
     eventi: un calendario in scenari/ (calendario_prova); modo "evento:ID" è la
     coda di quell'evento (la sua prima volta, che lo scenario fa in corso)."""
     if g.server:

@@ -114,9 +114,9 @@ local function profile_panel(s, g)
 		kit.text(g, T.code_help, x, top + 248, 16, KC.MUTE, "start", 1)
 		fit(kit.text(g, T.code_help2, x, top + 270, 16, KC.MUTE, "start", 1), INNER_W)
 		local off = test or not acc
-		local again = kit.secondary(g, T.new_code, x, top + 300, KEY_W, KEY_H, { off = off })
+		local again = kit.secondary(g, T.new_code, x, top + 300, KEY_W, KEY_H, { icon = "az_ripristina", off = off })
 		if not off then kit.button(s.buttons, again, "profilo_mio:nuovo") end
-		local have = kit.secondary(g, T.have_profile, x + KEY_W + KEY_GAP, top + 300, KEY_W, KEY_H, { off = off })
+		local have = kit.secondary(g, T.have_profile, x + KEY_W + KEY_GAP, top + 300, KEY_W, KEY_H, { icon = "az_profilo", off = off })
 		if not off then kit.button(s.buttons, have, "profilo_mio:recupera") end
 		fit(kit.text(g, T.code_old, x, bottom_line, 16, KC.MUTE, "start", 1), INNER_W)
 		return
@@ -133,10 +133,10 @@ local function profile_panel(s, g)
 	kit.text(g, T.tap_code, x, top + 248, 16, KC.MUTE, "start", 1)
 	fit(kit.text(g, T.recover_help, x, top + 270, 16, KC.MUTE, "start", 1), INNER_W)
 	local by = top + 300
-	local cancel = kit.secondary(g, T.cancel_recover, x, by, KEY_W, KEY_H)
+	local cancel = kit.secondary(g, T.cancel_recover, x, by, KEY_W, KEY_H, { icon = "az_annulla" })
 	kit.button(s.buttons, cancel, "profilo_mio:annulla")
 	local ready = #s.typed == CODE_LEN and not s.asking
-	local go = kit.secondary(g, T.recover, x + KEY_W + KEY_GAP, by, KEY_W, KEY_H, { off = not ready })
+	local go = kit.secondary(g, T.recover, x + KEY_W + KEY_GAP, by, KEY_W, KEY_H, { icon = "az_profilo", off = not ready })
 	if ready then kit.button(s.buttons, go, "profilo_mio:vai") end
 	local line, color = T.code_old, KC.MUTE
 	if s.asking then
@@ -161,11 +161,11 @@ local function build(s)
 	-- the profile's panel the same place goes back to the controller's buttons
 	local top_w = 300
 	local swap = kit.secondary(g, s.view and T.controller_keys or T.my_profile,
-		KEYS_PANEL_X + KEYS_PANEL_W - top_w, 36, top_w, KEY_H)
+		KEYS_PANEL_X + KEYS_PANEL_W - top_w, 36, top_w, KEY_H, { icon = s.view and "az_tasti" or "az_profilo" })
 	kit.button(s.buttons, swap, "profilo_mio:scambia")
 	-- DISPOSIZIONE TASTI at its left: the HUD's buttons, moved and resized
 	-- (menu/hud_editor.lua, opened by game.gui_script)
-	local arrange = kit.secondary(g, T.layout, KEYS_PANEL_X + KEYS_PANEL_W - 2 * top_w - 16, 36, top_w, KEY_H)
+	local arrange = kit.secondary(g, T.layout, KEYS_PANEL_X + KEYS_PANEL_W - 2 * top_w - 16, 36, top_w, KEY_H, { icon = "az_tasti" })
 	kit.button(s.buttons, arrange, "disposizione")
 
 	-- the choices on an iron panel: their names are read on it, not on the painting
@@ -237,8 +237,7 @@ local function build(s)
 	end
 	-- (where the second column ends)
 	local rx, ry = KEYS_X + KEY_W + KEY_GAP, KEYS_Y + (per_column - 1) * KEY_ROW
-	local reset = kit.plate(g, rx, ry - 1, KEY_W, KEY_H + 2, KC.ROSE, { sk = 0, d = 6, piece = "piastrina" })
-	kit.text(reset.g, T.reset, rx + KEY_W / 2, ry + 35, 21, KC.SAND, "middle", 0.5)
+	local reset = kit.secondary(g, T.reset, rx, ry, KEY_W, KEY_H, { icon = "az_ripristina" })
 	kit.button(s.buttons, reset, "ripristina")
 	for _, b in ipairs(s.buttons) do
 		if b.ui_action == lit then ui.light(s.buttons, b) end

@@ -20,8 +20,10 @@ local awards = require "sim.awards"
 local draft = require "sim.draft"
 local bot = require "sim.bot"
 local replay = require "sim.replay"
+local netkeys = require "sim.netkeys"
 -- the screens outside the battle, in a single table: the gui_script is close
 -- to Lua's limit of 200 local variables
+local forge_ui = require "menu.forge_ui"
 local menu = { podium = require "menu.podium", armory = require "menu.armory", pick = require "menu.pick",
 	training = require "menu.training", level_end = require "menu.level_end", campaign = require "menu.campaign",
 	settings = require "menu.settings", board = require "menu.board", queue = require "menu.queue",
@@ -40,9 +42,10 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	-- the kind of a mission: its postcard says it the first time (ui/level_types.lua)
 	level_types = require "ui.level_types",
 	-- the queue that stays alive outside the waiting room (Sergio, 3 Nov)
-	pill = require "ui.pill", playout = require "main.playout" }
+	pill = require "ui.pill" }
 local missions = require "sim.missions"
 local sticks = require "battle.sticks"
+local SP = require "battle.stick_pad"
 local aim_name = require "battle.aim"
 local camera = require "battle.camera"
 local items = require "battle.items"
@@ -60,9 +63,17 @@ local W, H = screen.W, screen.H
 -- the mask covers the grid, the margins beside the map too (CR.OX: where world x 0 sits)
 local TW, TH = game.GRID_W, game.WORLD_H / game.CELL
 
-local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
+-- The real server, the VPS (also editor and PC builds, Sergio 18 Nov: no local
+-- server on the PC); game.project says the same, a build may change it there
+local DEFAULT_SERVER = "ws://49.13.44.34/ws"
 -- Protocol version, equal to protocolVersion in server/server.go
-local PROTOCOL = 10
+local PROTOCOL = 11
+-- The fingerprint of this build's simulation (git rev-parse HEAD:client/sim,
+-- written by apk.yml and tools/web/build.sh): the server turns away a phone whose
+-- simulation is not its own (server/simtree.go), its matches would split from the
+-- server's. Nil (the simulator, the editor): not checked
+local SIM = sys.get_config_string("megablast.sim", "")
+SIM = SIM ~= "" and SIM or nil
 -- If the connection drops in a match we retry for a while (the server keeps
 -- the seat for 20 seconds)
 -- for the whole match (ten minutes): the server keeps our seat to the end and
@@ -98,8 +109,8 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- crates) with an ember border, on the right the secondaries (the Blade
 -- always, plus the one picked at the start) with a steel border. The Grapple
 -- is round and purple next to the teleport: on the right, where the aiming
--- hand is, because the left one moves (on the phone on an arc around the aim
--- stick, CP.hand.arc). The consumable items (trap, shield,
+-- hand is, because the left one moves (on the phone around the teleport above the aim
+-- stick, CP.hand.SPOTS). The consumable items (trap, shield,
 -- springboard, parachute: tapping them uses them at once) are a thing of their
 -- own (Sergio, 29 Oct: above the secondaries they looked like a submenu of
 -- theirs): a mint column (on the phone on the right edge), titled OGGETTI with how many are
@@ -134,7 +145,6 @@ local SIZES = { slot_tel = 72, narrow_slot = 62, gap_tel = 8, oggetto = 56, from
 -- group's color), selected
 local SLOT_BORDER = { [0] = vmath.vector4(1, 0.886, 0.769, 0.06), ui.C.LINE, ui.C.LIGHT }
 -- icon of a weapon already used this turn (it goes off: you see what is left)
-local ICON_USED = vmath.vector4(1, 1, 1, 0.3)
 local SLOT_SCALE, CHOSEN = vmath.vector3(1, 1, 1), 1.12
 -- Sniper bounce: how much it squashes, how soon it calms down and how much it shakes
 local BOING_AMP, BOING_DAMP, BOING_FREQ = 0.7, 4, 26
@@ -143,9 +153,9 @@ local SNIPER_EULER, SNIPER_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1
 -- points of the whole trajectory (one every 4 ticks), shown only in the
 -- Training lessons
 local HELP_POINTS = 45
-local AIM_RANGE = 220 -- finger distance matching maximum power
 -- bringing the finger back onto the robot and leaving it there cancels the shot
-local CANCEL_R = 28
+-- (the finger's range for full power is in battle/aim.lua, shared with the Forge)
+local CANCEL_R = aim_name.CANCEL_R
 
 local function fit(node)
 	gui.set_adjust_mode(node, gui.ADJUST_FIT)
@@ -240,28 +250,17 @@ local DARK_EMBER = vmath.vector4(0.85, 0.3, 0.08, 1)
 -- troppo al tempo della partita»; it was 110)
 local ZOOM_BTN = vmath.vector3(W - 70, H - 90, 0)
 
--- Phone controls: two sticks, the logic is in battle/sticks.lua. The base
--- goes where the thumb rests, within its zone, and goes back to its place
--- when the thumb lifts. On the computer no sticks: keyboard and mouse.
-local PAD_R = 94 -- stick travel
-local PAD_D = 2 * PAD_R + 28 -- drawing of the base
-local KNOB_D = 112
-local MOVE_PAD = { x = 115, y = 117 }
-local AIM_PAD = { x = W - 115, y = 117 }
--- the sticks are grabbed in the left and right 40%, below 60% of the height
-local PAD_ZONE = { sx = W * 0.4, dx = W * 0.6, y = H * 0.6 }
--- teleport: on the phone on the arc above the aim stick (CP.hand.arc, set by
--- arrange); on the computer at the bottom right (or the T key)
-local TELE_BTN_TOUCH = vmath.vector3(W - 145, 286, 0)
+-- Phone controls: two sticks, the logic is in battle/sticks.lua, the drawing in
+-- battle/stick_pad.lua (sizes, places, colors; the Forge uses the same). The base
+-- goes where the thumb rests, within its zone, and goes back to its place when the
+-- thumb lifts. On the computer no sticks: keyboard and mouse.
+local MOVE_PAD, AIM_PAD, PAD_ZONE = SP.MOVE_PAD, SP.AIM_PAD, SP.ZONE
+-- teleport: on the phone above the aim stick (CP.hand.SPOTS, set by
+-- CP.layout_place); on the computer at the bottom right (or the T key)
+local TELE_BTN_TOUCH = vmath.vector3(W - 58, 286, 0)
 local TELE_BTN_DESK = vmath.vector3(W - 100, 62, 0)
 local TELE_BTN_D = 84
--- aim ring: light blue when off, red when releasing fires the shot
-local AIM_IDLE = vmath.vector4(0.35, 0.85, 1, 0.35)
-local AIM_LIVE = vmath.vector4(1, 0.22, 0.16, 0.95)
-local MOVE_IDLE = vmath.vector4(1, 1, 1, 0.16)
-local MOVE_LIVE = vmath.vector4(1, 0.85, 0.55, 0.6)
--- fill of the base and of the knob
-local PAD_BOTTOM = { vmath.vector4(1, 1, 1, 0.05), vmath.vector4(1, 1, 1, 0.08) }
+local AIM_IDLE, AIM_LIVE, MOVE_IDLE, MOVE_LIVE = SP.AIM_IDLE, SP.AIM_LIVE, SP.MOVE_IDLE, SP.MOVE_LIVE
 
 -- Phone or computer: [megablast] comandi = telefono / computer to pick it,
 -- otherwise from the system (and from the browser, if it is a phone). During
@@ -280,19 +279,7 @@ local function touch_device()
 end
 
 local function server_url()
-	local u
-	if sys.get_config_string then
-		u = sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
-	else
-		u = sys.get_config("megablast.server_url", DEFAULT_SERVER)
-	end
-	if html5 then
-		local h = html5.run("window.location.hostname")
-		if h and h ~= "" and h ~= "127.0.0.1" and h ~= "localhost" then
-			u = u:gsub("127%.0%.0%.1", h):gsub("localhost", h)
-		end
-	end
-	return u
+	return sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
 end
 
 -- Terrain -----------------------------------------------------------------------
@@ -519,8 +506,8 @@ local function open_wheel(self, is_open)
 	gui.set_enabled(self.btn_quit, is_open)
 	gui.set_enabled(self.btn_aim, is_open)
 	gui.set_enabled(self.btn_reread, is_open and self.mode == "local" and self.missione ~= nil and #self.vign_pages > 0)
-	gui.set_text(self.btn_aim_text, TM.aim_mode:format(string.upper(profile.setting(self.profilo, "mira"))))
-	gui.set_text(self.rotellina[2].testo, self.mode == "connecting" and TM.quit_search or TM.quit_match)
+	self.btn_aim_plate.set_label(TM.aim_mode:format(string.upper(profile.setting(self.profilo, "mira"))))
+	self.btn_quit_plate.set_label(self.mode == "connecting" and TM.quit_search or TM.quit_match)
 end
 
 local function set_controls_visible(self, visible)
@@ -579,7 +566,7 @@ local function close_screen(self)
 end
 
 -- without_veil: you get here with a transition (ui/transition.lua), which already covers
-local function show_menu(self, without_veil, quiet)
+local function show_menu(self, without_veil, quiet, keep_room)
 	close_screen(self)
 	-- a big vignette still open goes away with its match: it would stay in
 	-- front of the home (the back button opens the wheel even over it)
@@ -587,7 +574,9 @@ local function show_menu(self, without_veil, quiet)
 	if self.sala then menu.lobby.destroy(self.sala); self.sala = nil end
 	self.podium_t = nil
 	-- in the queue the connection stays: you can go around the menus (ui/pill.lua)
-	if not self.queue then disconnect(self) end
+	-- and back to a private room after its match (CP.leave_end)
+	if not keep_room then self.private_room = nil end
+	if not self.queue and not keep_room then disconnect(self) end
 	self.mode = "menu"
 	home.show(self.home, without_veil, quiet)
 	home.queued(self.home, self.queue ~= nil)
@@ -630,8 +619,8 @@ local function show_menu(self, without_veil, quiet)
 end
 
 -- Smoothness -------------------------------------------------------------------
--- The simulation advances in fixed steps (60 per second locally, one state
--- every SNAPSHOT_TICKS online), while the screen may run at 60, 90 or 120 Hz.
+-- The simulation advances in fixed steps (60 per second, online too), while
+-- the screen may run at 60, 90 or 120 Hz.
 -- We always draw a position interpolated between the previous pose (a) and
 -- the latest (b), so motion doesn't stutter.
 
@@ -645,8 +634,11 @@ local function new_pose()
 	-- c: crates by id (while falling they move, so they are interpolated too)
 	local r = {}
 	for i = 1, game.MAX_PLAYERS do r[i] = { x = 0, y = 0 } end
+	-- f: the older shots still in flight (src: the shot itself, to follow it)
+	local f = {}
+	for i = 1, 3 do f[i] = { x = 0, y = 0 } end
 	return { r = r, p = { x = 0, y = 0 }, has_p = false,
-		o = o, no = 0, s = sh, c = {} }
+		o = o, no = 0, s = sh, c = {}, f = f, nf = 0 }
 end
 
 -- The orb with that number in the pose, or nil
@@ -666,6 +658,14 @@ local function capture(pose, g)
 	end
 	pose.has_p = g.projectile ~= nil
 	if pose.has_p then pose.p.x, pose.p.y = g.projectile.x, g.projectile.y end
+	pose.p_src = g.projectile
+	local nf = math.min(#g.flying, #pose.f)
+	for i = 1, nf do
+		local src, dst = g.flying[i], pose.f[i]
+		dst.src, dst.x, dst.y = src, src.x, src.y
+	end
+	for i = nf + 1, #pose.f do pose.f[i].src = nil end
+	pose.nf = nf
 	local n = math.min(#g.orbs, game.MAX_ORBS)
 	for i = 1, n do
 		local src, dst = g.orbs[i], pose.o[i]
@@ -692,34 +692,6 @@ local function capture(pose, g)
 	end
 end
 
--- The same pose from a state of the server (apply_state reads the rest), so the
--- match (self.g) can stay at the state being drawn while the next ones wait
-function menu.capture_net(pose, s)
-	for i, sr in ipairs(s.r) do
-		local r = pose.r[i]
-		r.x, r.y, r.g = sr.x, sr.y, sr.g
-		r.gs = sr.gs and true or false
-		if r.gs then r.gx, r.gy = sr.gx, sr.gy end
-	end
-	pose.has_p = s.p ~= nil
-	if pose.has_p then pose.p.x, pose.p.y = s.p.x, s.p.y end
-	local n = math.min(s.o and #s.o or 0, game.MAX_ORBS)
-	for i = 1, n do
-		local src, dst = s.o[i], pose.o[i]
-		dst.id, dst.x, dst.y = src.i, src.x, src.y
-	end
-	pose.no = n
-	for i = 1, game.SHARD_COUNT do pose.s[i].on = false end
-	for _, sh in ipairs(s.s or {}) do
-		local ps = pose.s[sh.i]
-		ps.on, ps.x, ps.y = true, sh.x, sh.y
-	end
-	for id in pairs(pose.c) do pose.c[id] = nil end
-	for _, c in ipairs(s.c or {}) do
-		pose.c[c.i] = { x = c.x, y = c.y, landed = c.l, seen = true, item = c.w }
-	end
-end
-
 -- ticks per frame while a bot thinks (update, the local match loop)
 local CATCHUP_BOT = 4
 
@@ -737,18 +709,11 @@ local function snap_robot(self, i)
 end
 
 local function reset_pose(self)
-	-- our own two (online the drawing takes them from the queue)
 	self.own_a, self.own_b = self.own_a or new_pose(), self.own_b or new_pose()
 	self.pose_a, self.pose_b = self.own_a, self.own_b
 	capture(self.pose_a, self.g)
 	capture(self.pose_b, self.g)
 	self.pose_t = 0
-	-- online the states are drawn from a queue (main/playout.lua)
-	local pl = menu.playout
-	self.playout = self.playout or pl.new(new_pose, capture, game.SNAPSHOT_TICKS * game.DT, menu.capture_net)
-	pl.reset(self.playout, self.g)
-	-- the server's events since its last state: they wait for the next one
-	self.net_events, self.net_over = {}, nil
 end
 
 -- Match -----------------------------------------------------------------------
@@ -804,6 +769,7 @@ local function new_match(self, seed, map, opts)
 	self.names, self.colors = names_colors(self.g.robots)
 	-- the colors are new: render() paints shards, missile and egg again
 	self.shard_color, self.missile_color, self.egg_color = nil, nil, nil
+	for _, v in ipairs(self.old_shots) do v.missile_color, v.egg_color = nil, nil end
 	for i in pairs(self.bots) do self.names[i] = self.names[i] .. TM.bot_suffix end
 	for i = #self.g.robots + 1, game.MAX_PLAYERS do
 		scoria.set_enabled(self.robots[i].rig, false)
@@ -829,6 +795,7 @@ local function new_match(self, seed, map, opts)
 	for i = 1, game.MAX_PLAYERS do plates[i] = self.robots[i].plate end
 	score.match(self.punti, self.g, TEAM_NAMES, plates)
 	self.trail_n = 0
+	for _, v in ipairs(self.old_shots) do v.trail_n = 0 end
 	if self.fx then impact.reset(self.fx) end
 	if self.lights then self.lights:reset() end
 	self.pose_dt = game.DT
@@ -841,7 +808,6 @@ local function new_match(self, seed, map, opts)
 	self.crate_tabs = {}
 	for _, n in ipairs(self.crate_nodes) do n.id = nil; gui.set_enabled(n.node, false) end
 	self.acc = 0
-	self.sent = {}
 	PAD.release_controls(self, true)
 	-- the camera already starts on whoever's turn it is
 	local rb = self.g.robots[self.g.current]
@@ -963,7 +929,7 @@ end
 
 -- Grapple and Bellows as drawn, in a single table: the file is close to the
 -- 200 locals Lua allows
-local RM = { fune = require "battle.rope", hazards = require "battle.hazards", focus = require "battle.turn_focus", layout = require "battle.hud_layout", GUSTS = 5,
+local RM = { MAX_FLY = 3, fune = require "battle.rope", cannon = require "battle.cannon", hazards = require "battle.hazards", focus = require "battle.turn_focus", layout = require "battle.hud_layout", GUSTS = 5,
 	-- the images of the new shots in flight (battle/weapons.lua, shots), by projectile kind
 	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano", vortex = "voragine_volo" } }
 -- The weapons' signatures (WB-066): one drawing on the impact, tinted
@@ -1243,6 +1209,12 @@ function CP.open_room(self, m)
 	menu.lobby.bot_in(self.sala, m.bot_in)
 end
 
+-- With a test profile (FINE GIOCO, DA ZERO) online counts what it wears, sent
+-- with the greeting (server.go cards; Sergio, 22 Nov: the bots wear as much)
+function CP.test_eq(self)
+	return profile.test and profile.equip(self.profilo) or nil
+end
+
 function CP.close_room(self)
 	if self.sala then menu.lobby.destroy(self.sala) end
 	self.sala = nil
@@ -1324,10 +1296,6 @@ local function handle_event(self, e)
 	end
 	if e.type == "explosion" or e.type == "carve" then
 		local row_min, row_max = e.row_min, e.row_max
-		if self.mode == "online" then
-			-- online we dig the terrain ourselves, at the same point as the server
-			row_min, row_max = self.g.terrain:carve(e.x, e.y, e.r)
-		end
 		local k = CR.list(self)
 		k[#k + 1] = { x = e.x, y = e.y, r = e.r }
 		local cx0, cy0, cx1, cy1 = CR.dig(self, e.x, e.y, e.r)
@@ -1358,8 +1326,7 @@ local function handle_event(self, e)
 	elseif e.type == "janus_swap" then
 		-- the two trade places: the view jumps (like a teleport), each gets a flash and a word
 		for _, id in ipairs({ e.a, e.b }) do
-			-- (online the queue already knows: net_state)
-			if self.mode ~= "online" then snap_robot(self, id) end
+			snap_robot(self, id)
 			plate.announcement(self.robots[id].plate, TM.swapped)
 		end
 		-- a bloom of the color of whoever arrives opens at each spot, with gold sparks
@@ -1370,8 +1337,7 @@ local function handle_event(self, e)
 		self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.bx, e.by
 		sound.play("#globo", { speed = 1.5 })
 	elseif e.type == "teleport" then
-		-- (online the queue already knows: net_state)
-		if self.mode ~= "online" then snap_robot(self, e.robot) end
+		snap_robot(self, e.robot)
 	elseif e.type == "teleports" or e.type == "swap" then
 		-- swapping the second attack gives an orb, which flies like the time ones
 		e.amount = e.amount or 1
@@ -1456,13 +1422,26 @@ local function handle_event(self, e)
 	elseif e.type == "bellows_hit" then
 		self.shot_x, self.shot_y, self.shot_t = self.g.robots[e.robot].x, self.g.robots[e.robot].y + game.DISEGNO_H / 2, self.clock
 		plate.announcement(self.robots[e.target].plate, TM.blown)
-	elseif e.type == "lunge" or e.type == "cannon" then
+	elseif e.type == "lunge" then
 		scoria.lunge(self.robots[e.robot].rig)
+	elseif e.type == "cannon" then
+		-- the Cannonata: into the cannon, the fuse, BOOM (battle/cannon.lua)
+		local v = self.view[e.robot]
+		RM.cannon.start(self.cannone, e.robot, v.x, v.y, e.angle, self.robots[e.robot].rig.color)
+	elseif e.type == "cannon_fire" then
+		RM.cannon.fire(self.cannone)
+		sound.play("#boom", { gain = 0.8, speed = 1.15 })
+		camera.shake(self.cam, -math.cos(e.angle), -math.sin(e.angle), 10)
 	elseif e.type == "boomerang" or e.type == "vortex" then
 		self.last_shot, self.last_shot_t = e.type, self.clock
 		scoria.fire(self.robots[e.robot].rig, "throw")
 	elseif e.type == "petard_blast" or e.type == "cannon_land" or e.type == "tar_break" or e.type == "boomerang_turn" then
 		shock(self, e.x, e.y)
+		if e.type == "cannon_land" then
+			-- the ball splits and the devil pops out
+			RM.cannon.land(self.cannone, e.x, e.y)
+			scoria.lunge(self.robots[e.robot].rig)
+		end
 		if e.type == "petard_blast" then
 			impact.sign(self.fx, "fx_anello_fumo", e.x, e.y, (e.r or 30) * 1.8, RM.SIGN.white, "pop")
 			for _ = 1, 3 do impact.sign(self.fx, "fx_coriandolo", e.x, e.y, 9, RM.SIGN.paper, "fall") end
@@ -1596,7 +1575,7 @@ local function handle_event(self, e)
 	elseif e.type == "respawn" then
 		scoria.set_enabled(self.robots[e.robot].rig, true)
 		plate.set_enabled(self.robots[e.robot].plate, true)
-		if self.mode ~= "online" then snap_robot(self, e.robot) end
+		snap_robot(self, e.robot)
 	elseif e.type == "over" then
 		-- prova_vince 1: the first robot's team wins (scenari/podio_forgia.txt)
 		if SIMULATE and config_int("megablast.prova_vince", 0) > 0 then e.winner = self.g.robots[1].team end
@@ -1670,7 +1649,10 @@ local function open_podium(self)
 		-- online the server counts it and sends what it gave (CP "premio"); if
 		-- it hasn't arrived yet (or there is no profile on the server) the same
 		-- sums here, only on the phone: the server's profile comes back anyway
-		gain = self.online_gain or profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c) }, true)
+		-- (with the Smith's orders' numbers, as the server makes them: a test profile
+		-- lives only here, and so its orders move too)
+		gain = self.online_gain or profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c),
+			commesse = CP.orders_summary(self, res, my_own, per_robot, c, self.online_humans or 1) }, true)
 		CP.expect(self, nil)
 		if self.online_gain then
 			self.verdict = "ok"
@@ -1681,7 +1663,12 @@ local function open_podium(self)
 		self.online_gain = nil
 	else
 		local _, n
-		gain, _, n = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c), ricetta = CP.recipe_text(self) })
+		-- prova_commesse 1: the match counts for the Smith's orders as an online one
+		-- with a mate (scenari/podio_commesse.txt: their rows on the receipt)
+		local as_online = SIMULATE and config_int("megablast.prova_commesse", 0) == 1
+		if as_online then r.online = true end
+		gain, _, n = profile.act(self.profilo, { k = "partita", r = r, conta = CP.stats_of(c), ricetta = CP.recipe_text(self),
+			commesse = as_online and CP.orders_summary(self, res, my_own, per_robot, c, 2) or nil })
 		CP.expect(self, n)
 	end
 	local number = CP.record(self, c)
@@ -1715,177 +1702,234 @@ local function send(self, msg)
 	end
 end
 
-local function apply_state(self, s)
-	local g = self.g
-	g.phase, g.current, g.timer = s.phase, s.cur, s.timer
-	g.window, g.final_round, g.round = s.win or 0, s.fr or false, s.gr or 1
-	g.ahead, g.ahead_base = s.av or 0, s.ab or 0
-	local u = s.u or 0
-	g.used.primary, g.used.secondary, g.used.tool = u % 2 == 1, u % 4 >= 2, u >= 4
-	g.match_left = s.mt or g.match_left
-	g.intro = s.ai or 0
-	-- where whoever's turn it is aims (server/net.lua): we show it, power stays secret
-	self.remote_aim = s.aim
+-- Online in lockstep (Sergio, 22 Nov: "voglio vedere in tempo reale quello
+-- che faccio, senza input lag"): every phone steps the same match (sim/game.lua
+-- is deterministic) with the same keys, tick by tick. On our turn we lead:
+-- the match moves at once with our keys, as in a local match, and they go to
+-- the server (sim/netkeys.lua), which steps its own copy with them and sends
+-- them to everyone as they were applied ("k"). The other ticks (the others'
+-- turns, the bots) we step with the server's keys, a few ticks behind it, so
+-- that a late message doesn't stop the drawing. What doesn't match (our keys
+-- applied differently, the fingerprint of the state, a missing tick) brings
+-- us back with the token: the server sends all the keys and we replay them.
+
+-- ticks waited before stepping the server's keys again, after running out;
+-- more than LAG_MAX waiting: one extra tick per frame; more than FF_TICKS
+-- (coming back, an app left in the background): stepped without drawing
+CP.LAG_MIN, CP.LAG_MAX, CP.FF_TICKS = 3, 10, 120
+-- the time per frame of that silent stepping (seconds; docs/prestazioni.md)
+CP.FF_BUDGET = 0.04
+
+function CP.net_new(self, resume)
+	-- coming back (resume) all the keys arrive first: nothing is played before them
+	self.net = { q = {}, qn = 0, led = {}, fp = {}, want = {}, out = {}, out0 = 0, starved = true,
+		ff = resume or false, log = resume or false,
+		-- back after a split (CP.resync): splitting again before a check agrees, we stop
+		split = resume and self.net_split or nil }
+	self.net_split = nil
+	self.remote_aim, self.net_over = nil, nil
+end
+
+-- A "k" from the server: n, the tick of the first code; k, the codes;
+-- cur, si, m: who is on turn, whether a bot plays for them, where they aim
+function CP.net_keys(self, m)
+	local n, g = self.net, self.g
+	local now = socket.gettime()
+	if self.state_at then frames.net(now - self.state_at) end
+	self.state_at = now
+	n.log = false
+	n.qn = math.max(n.qn, g.tick)
+	for i, code in ipairs(m.k or {}) do
+		local t = m.n + i - 1
+		if t < g.tick then
+			-- a tick we already stepped: if we led it, the server applied the same
+			local mine = n.led[t]
+			if mine ~= nil then
+				n.led[t] = nil
+				if mine ~= code then return CP.resync(self, "tasti diversi al tick " .. t .. " (" .. mine .. " / " .. code .. ")", true) end
+			end
+		elseif t == n.qn then
+			n.q[t], n.qn = code, t + 1
+		elseif t > n.qn then
+			return CP.resync(self, "mancano i tick da " .. n.qn .. " a " .. t)
+		end
+	end
+	-- where whoever's turn it is aims: we show it, power stays secret
+	self.remote_aim = m.m
 	-- back after a drop in the middle of our turn: the bot that played for us
 	-- finishes it (server/room.go standIn), the controls are ours from the next
-	local ours = s.si and s.cur == self.me or false
+	local ours = m.si and m.cur == self.me or false
 	if ours and not g.stand_in then show_message(self, TM.stand_in) end
 	g.stand_in = ours
-	for i, r in ipairs(s.r) do
-		local rb = g.robots[i]
-		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
-		rb.teleports_left, rb.turns, rb.points = r.tl or 0, r.tu or 1, r.pt or 0
-		rb.round_done = r.gd or false
-		rb.max_hp = r.mh or rb.max_hp
-		if r.gn and not rb.gone then
-			-- whoever comes back after a drop didn't see anyone leave: the robot vanishes here
-			rb.gone = true
-			scoria.set_enabled(self.robots[i].rig, false)
-			plate.set_enabled(self.robots[i].plate, false)
+end
+
+-- A state from the server: the check (n, fp: its tick and fingerprint)
+function CP.net_check(self, s)
+	local n, g = self.net, self.g
+	if s.phase == "over" then self.net_over = true end
+	if not s.n or not s.fp then return end
+	if s.n <= g.tick then
+		local mine = n.fp[s.n]
+		n.fp[s.n] = nil
+		if mine and mine ~= s.fp then
+			CP.resync(self, "stato diverso al tick " .. s.n, true)
+		elseif mine then
+			CP.net_agreed(self)
 		end
-		rb.swing = (r.s or 0) > 0 and r.s or nil
-		rb.swing_dir = (r.sd or 0) ~= 0 and r.sd or rb.facing
-		rb.punch = (r.pu or 0) > 0 and r.pu or nil
-		rb.punch_dir = (r.pd or 0) ~= 0 and r.pd or rb.facing
-		rb.swing_base, rb.punch_base = r.sb or 0, r.pb or 0
-		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
-		rb.ammo.sniper = r.ac or 0
-		rb.ammo.boomerang, rb.ammo.tar, rb.ammo.drill = r.ab or 0, r.at or 0, r.ar or 0
-		rb.secondary = (r.sw or "") ~= "" and r.sw or nil
-		for _, w in ipairs(game.DRAFT_SECONDARIES) do rb.ammo[w] = w == rb.secondary and (r.ss or 0) or 0 end
-		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
-		-- the Lunge's spear points along the dash (la: its angle)
-		rb.lunge_vx = rb.lunge and math.cos(r.la or 0) or nil
-		rb.lunge_vy = rb.lunge and math.sin(r.la or 0) or nil
-		rb.knocked = r.kn or false
-		rb.trapped = r.tr or nil
-		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or (r.hk or 0) < 0 and { x = r.hx, y = r.hy } or nil
-		rb.hook_shot = r.gs and { x = r.gx, y = r.gy } or nil
-		rb.mallet = (r.ml or 0) > 0 and r.ml or nil
-		rb.mallet_stop = (r.ms or 0) > 0 and r.ms or nil
-		rb.mallet_dir = (r.md or 0) ~= 0 and r.md or nil
-		rb.mallet_base = r.mb or 0
-		rb.ammo.trap, rb.ammo.shield, rb.ammo.trampoline = r.ak or 0, r.ad or 0, r.am or 0
-		rb.shield = (r.sh or 0) > 0 and r.sh or nil
-		rb.parachute = r.pa or false
-		rb.parachutes_left = r.pl or 0
-		-- turns left: burn, slow x 10, cracked armor x 100
-		local st = r.st or 0
-		for k, kind in ipairs({ "burn", "slow", "cracked" }) do
-			local turns = math.floor(st / 10 ^ (k - 1)) % 10
-			rb.status[kind] = turns > 0 and { turns = turns } or nil
+	else
+		n.want[s.n] = s.fp
+	end
+end
+
+-- whether we play this tick ourselves: our turn, and the server has no keys
+-- for it (a bot standing in for us)
+function CP.net_leads(self)
+	local n, g = self.net, self.g
+	return g.current == self.me and not g.stand_in and self.conn ~= nil and not n.ff
+		and n.q[g.tick] == nil and g.phase ~= "over"
+end
+
+-- One tick with the keys code. quiet: stepping without drawing (the events
+-- only for the craters, the stats and the end)
+function CP.net_step(self, code, quiet)
+	local n, g = self.net, self.g
+	if not quiet then capture(self.pose_a, g) end
+	local input, gone = netkeys.decode(code)
+	-- the robots that left right before this tick (server/room.go leave)
+	for _, i in ipairs(gone or {}) do
+		if g.robots[i] then g:remove(i) end
+	end
+	if self.conta and input and input.fire and g.current == self.me then
+		CP.conta.shot(self.conta, g, input.fire.weapon)
+	end
+	g:step(input)
+	local want = n.want[g.tick]
+	if want then
+		n.want[g.tick] = nil
+		if want ~= g:fingerprint() then
+			CP.resync(self, "stato diverso al tick " .. g.tick, true)
+		else
+			CP.net_agreed(self)
 		end
+	elseif g.tick % CP.CHECK_EVERY == 0 then
+		n.fp[g.tick] = g:fingerprint()
 	end
-	g.projectile = s.p and { x = s.p.x, y = s.p.y, kind = s.p.k, fuse = s.p.fu } or nil
-	g.orbs = {}
-	for i, o in ipairs(s.o or {}) do g.orbs[i] = { id = o.i, x = o.x, y = o.y } end
-	for i = 1, game.SHARD_COUNT do g.shards[i] = nil end
-	for _, sh in ipairs(s.s or {}) do g.shards[sh.i] = sh end
-	-- placed traps and springboards
-	for i = #g.placed, 1, -1 do g.placed[i] = nil end
-	for i, o in ipairs(s.pl or {}) do
-		g.placed[i] = { id = o.i, kind = o.k, x = o.x, y = o.y, armed = o.a, team = o.tm, r = o.r, flying = o.v, dir = o.d }
+	local events = g:pop_events()
+	if quiet then
+		CR.remember(self, events)
+		for _, e in ipairs(events) do
+			if self.conta then CP.conta.event(self.conta, g, e) end
+			if e.type == "over" then n.over_e = e end
+		end
+	else
+		-- an event that goes wrong doesn't stop the ones after it
+		for _, e in ipairs(events) do
+			local ok, err = pcall(handle_event, self, e)
+			if not ok then CP.net_note(self, "evento " .. tostring(e.type) .. ": " .. tostring(err)) end
+			if self.mode ~= "online" then break end
+		end
+		capture(self.pose_b, g)
 	end
-	-- pools of burning pitch
-	for i = #g.pools, 1, -1 do g.pools[i] = nil end
-	for i, o in ipairs(s.pp or {}) do g.pools[i] = { id = o.i, x = o.x, y = o.y, r = o.r, turns = o.tn } end
-	-- the map's hazard (sim/hazards.lua): the server sends all its state as it is
-	g.hz = s.hz
-	-- healing circles
-	for i = #g.heals, 1, -1 do g.heals[i] = nil end
-	for i, h in ipairs(s.hl or {}) do g.heals[i] = { id = h.i, x = h.x, y = h.y } end
-	-- crates: tables reused by id
-	local list = g.crates
-	for i = #list, 1, -1 do list[i] = nil end
-	for i, c in ipairs(s.c or {}) do
-		local t = self.crate_tabs[c.i] or {}
-		self.crate_tabs[c.i] = t
-		t.id, t.x, t.y, t.landed, t.item, t.weapon = c.i, c.x, c.y, c.l, c.w ~= nil or nil, c.w
-		list[i] = t
+	if self.conta then CP.conta.tick(self.conta, g) end
+end
+-- every how many ticks the server sends its state (server/room.go stateEvery)
+CP.CHECK_EVERY = 30
+
+-- Many ticks to catch up: stepped without drawing, a slice per frame; then
+-- the match is drawn again from where it is
+function CP.net_fast(self)
+	local n, g = self.net, self.g
+	if n.log then return end
+	local until_t = os.clock() + CP.FF_BUDGET
+	while n.q[g.tick] ~= nil and n.qn - g.tick > CP.LAG_MAX and os.clock() < until_t and self.mode == "online" do
+		local t = g.tick
+		CP.net_step(self, n.q[t], true)
+		n.q[t] = nil
 	end
+	if n.qn - g.tick > CP.LAG_MAX or self.mode ~= "online" then return end
+	n.ff = false
+	draw_terrain(self)
+	reset_pose(self)
+	for i, rb in ipairs(g.robots) do
+		scoria.set_enabled(self.robots[i].rig, not rb.gone and not rb.dead)
+		plate.set_enabled(self.robots[i].plate, not rb.gone and not rb.dead)
+	end
+	score.turn(self.punti, g)
+	local rb = g.robots[g.current]
+	camera.jump(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
+	if n.over_e then handle_event(self, n.over_e) end
 end
 
 -- The watchman of the online match (Sergio, 17 Nov: "si è bloccato il mio
 -- personaggio in aria, come tutto il resto", and it never moved again while the
--- server went on): if no state arrives for STALL seconds, or the queue fails,
--- we close the connection ourselves. Its DISCONNECTED brings us back with the
--- token and the server sends the whole match again (start with resume).
-CP.STALL = 5
+-- server went on): if nothing arrives for STALL seconds (a phone that leads
+-- may stay silent up to 5 s before a bot plays for it, server/room.go), or
+-- something doesn't match, we close the connection ourselves. Its
+-- DISCONNECTED brings us back with the token and the server sends the whole
+-- match again (start with resume, then all the keys).
+CP.STALL = 8
 
-function CP.resync(self, why)
+function CP.resync(self, why, split)
+	if not self.conn then return end
+	-- the match split from the server's (split): coming back replays all the keys
+	-- from the start and fixes a key or a message lost on the way. If it splits
+	-- again before any check has agreed, the replay brings it to the same place:
+	-- coming back again would drop every few seconds to the end (Sergio, 23 Nov,
+	-- 17 times in two minutes). We stop: the server keeps the seat and a bot
+	-- plays it (server/room.go standIn), we say why and go back to the menu
+	if split and self.net.split then
+		CP.net_note(self, "la partita resta diversa dopo il rientro: " .. why)
+		for _, what in ipairs(self.net_notes or {}) do send(self, { t = "nota", w = what }) end
+		self.net_notes = nil
+		CP.give_up(self)
+		return
+	end
 	local now = socket.gettime()
-	if not self.conn or (self.resync_at and now - self.resync_at < CP.STALL) then return end
+	if self.resync_at and now - self.resync_at < CP.STALL then return end
 	self.resync_at, self.state_at = now, now
 	CP.net_note(self, "mi ricollego: " .. why)
+	self.net_split = split or nil
 	ws.disconnect(self.conn)
 end
 
--- What went wrong online, with where the match and the queue were: kept (the
--- last few) and told to the server when we are back, which writes it in its
--- log (server.go, "nota"): a release APK has no log of its own
+-- A check of the match agreed with the server's: a later split is a new one
+function CP.net_agreed(self)
+	self.net.split, self.net_split = nil, nil
+end
+
+-- The match can't follow the server's any more: off the match, to the menu, with
+-- the seat to a bot (no "leave": the others keep seeing our robot)
+function CP.give_up(self)
+	local conn = self.conn
+	self.conn, self.tok = nil, nil
+	if conn then ws.disconnect(conn) end
+	self.queue = nil
+	set_controls_visible(self, false)
+	self.mode = "ended"
+	show_message(self, TM.back_to_menu:format(TM.out_of_sync), true)
+end
+
+-- What went wrong online, with where the match was: kept (the last few) and
+-- told to the server when we are back, which writes it in its log
+-- (server.go, "nota"): a release APK has no log of its own
 function CP.net_note(self, what)
-	local g, p = self.g, self.playout
-	local where = g and p and string.format(" [turno %s fase %s, coda %d, indietro %.1f, margine %.1f, ultimo stato %.1f s fa]",
-		tostring(g.current), tostring(g.phase), #p.q, p.n - p.t, p.lag, socket.gettime() - (self.state_at or socket.gettime())) or ""
+	local g, n = self.g, self.net
+	local where = g and n and string.format(" [turno %s fase %s, tick %d, in coda %d, ultimo messaggio %.1f s fa]",
+		tostring(g.current), tostring(g.phase), g.tick, math.max(0, n.qn - g.tick), socket.gettime() - (self.state_at or socket.gettime())) or ""
 	what = (what .. where):sub(1, 280)
 	print("ONLINE " .. what)
 	self.net_notes = self.net_notes or {}
 	if #self.net_notes < 6 then self.net_notes[#self.net_notes + 1] = what end
 end
 
--- ticks for our shot to reach the server, taken off the time shown (net_reach)
-CP.TRIP_TICKS = 6
-
--- A state arrived: into the queue with the events before it, drawn at an even
--- pace a little later (main/playout.lua). The match changes only when the
--- drawing gets there (net_reach): events, life, turn and rope with the robots.
-function CP.net_state(self, s)
-	local now = socket.gettime()
-	self.state_at = now
-	if self.playout.last_at then frames.net(now - self.playout.last_at) end
-	-- the robots that reappear elsewhere in this state don't slide there
-	local snaps
-	for _, e in ipairs(self.net_events) do
-		if e.type == "teleport" or e.type == "respawn" then
-			snaps = snaps or {}
-			snaps[e.robot] = true
-		elseif e.type == "janus_swap" then
-			snaps = snaps or {}
-			snaps[e.a], snaps[e.b] = true, true
-		end
-	end
-	menu.playout.arrive(self.playout, s, now, snaps, { s = s, ev = self.net_events })
-	self.net_events = {}
-end
-
-function CP.net_reach(self, data)
-	-- an event that goes wrong doesn't stop the ones after it, nor the state
-	for _, e in ipairs(data.ev) do
-		if self.g then
-			local ok, err = pcall(handle_event, self, e)
-			if not ok then CP.net_note(self, "evento " .. tostring(e.type) .. ": " .. tostring(err)) end
-		end
-	end
-	if self.g then
-		apply_state(self, data.s)
-		-- on our turn the time shown is prudent: what we see is behind the server by
-		-- the queue, and the shot still has to get there (TRIP_TICKS: no ping to
-		-- measure it). A shot let go with time on the ring always leaves.
-		local g = self.g
-		if g.current == self.me and g.phase == "aim" then
-			local late = math.ceil(menu.playout.behind(self.playout) * game.SNAPSHOT_TICKS) + CP.TRIP_TICKS
-			g.timer = math.max(0, g.timer - late)
-			if g.window > 0 then g.window = math.max(1, g.window - late) end
-		end
-		if self.conta then CP.conta.tick(self.conta, self.g) end
-	end
-end
-
 local function on_server_message(self, m)
 	if m.t == "wait" then
 		CP.queue_wait(self, m)
 	elseif m.t == "privata" then
-		if CP.private_screen(self) then menu.private.status(self.schermata.obj, m) end
+		-- the room; after its match it arrives under the podium, and waits there
+		-- for the way back (CP.leave_end)
+		self.private_room = m
+		if CP.private_screen(self) then CP.private_status(self, m) end
 	elseif m.t == "error" and CP.private_screen(self) then
 		-- wrong code, room full: said on the keypad (the server closes)
 		self.privata = nil
@@ -1903,7 +1947,7 @@ local function on_server_message(self, m)
 		if first then
 			-- from the private room (menu/private.lua) it closes now, under the lineup
 			if CP.private_screen(self) then close_screen(self) end
-			self.queue, self.privata = nil, nil
+			self.queue, self.privata, self.private_room = nil, nil, nil
 			CP.close_room(self)
 			show_message(self, "", true)
 			-- the players are found: the search's gear goes away (the match has its own)
@@ -1919,8 +1963,12 @@ local function on_server_message(self, m)
 			-- the lineup: the server also gives the draft its time
 			-- (config.LINEUP_SECONDS); coming back halfway, only the strip
 			local stays = math.min(gconfig.LINEUP_SECONDS, (m.left or 0) * game.DT - gconfig.DRAFT_SECONDS)
+			local humans = 0
+			for _, pl in ipairs(m.players) do
+				if not pl.bot then humans = humans + 1 end
+			end
 			CP.open_lineup(self, CP.showcases(self, m.players, name_list, { me = m.you, rete = m.vetrine or {} }),
-				profile.GROUP_NAMES[m.mode] or "", stays)
+				profile.GROUP_NAMES[m.mode] or "", stays, { p = self.profilo, map = m.map, humans = humans })
 		end
 	elseif m.t == "start" and not self.online_iris then
 		-- the match starts under the iris (the painted map loads in a long
@@ -1939,7 +1987,7 @@ local function on_server_message(self, m)
 		CP.close_room(self)
 		menu.pick.hide(self.scelta)
 		-- also when we come back after a drop (resume): the match is rebuilt from the
-		-- seed, then the digs and the state arrive.
+		-- seed, then all the keys arrive (CP.net_keys).
 		-- players: the robots' teams and their draft picks,
 		-- [{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},...]
 		-- regole: those of the queue's event (sim/rules.lua), as on the server
@@ -1956,27 +2004,24 @@ local function on_server_message(self, m)
 		self.g:pop_events()
 		self.online_teams = {}
 		for i, rb in ipairs(self.g.robots) do self.online_teams[i] = rb.team end
+		-- the people in the match (the Smith's orders ask for two: sim/orders.lua)
+		self.online_humans = 0
+		for _, pl in ipairs(m.players) do
+			if not pl.bot then self.online_humans = self.online_humans + 1 end
+		end
 		self.me, self.tok, self.tries = m.you, m.tok, 0
 		CP.begin(self, m.you, m.vetrine or {}, nil, false)
 		self.mode = "online"
 		set_controls_visible(self, true)
 		show_message(self, m.resume and TM.back_in or TM.you_are:format(self.names[m.you]))
 		self.state_at = socket.gettime()
+		-- coming back, all the keys from the start arrive: replayed without drawing
+		CP.net_new(self, m.resume)
 		if SIMULATE and m.resume then print("SIMULA evento rientro") end
-	elseif m.t == "sync" and self.g then
-		local k = CR.list(self)
-		for _, c in ipairs(m.x) do
-			self.g.terrain:carve(c[1], c[2], c[3])
-			k[#k + 1] = { x = c[1], y = c[2], r = c[3] }
-		end
-		self.drawn_map = nil
-		draw_terrain(self)
-	elseif m.t == "state" and self.g then
-		CP.net_state(self, m)
-	elseif m.t == "ev" and self.g then
-		self.net_events[#self.net_events + 1] = m
-		-- the server closes right after the end: not a drop (see DISCONNECTED)
-		if m.type == "over" then self.net_over = true end
+	elseif m.t == "k" and self.net and self.g then
+		CP.net_keys(self, m)
+	elseif m.t == "state" and self.net and self.g then
+		CP.net_check(self, m)
 	elseif m.t == "premio" then
 		-- what the server gave our profile for the match (server/room.go prizes):
 		-- the podium shows it, and the profile comes back from the server
@@ -2061,19 +2106,19 @@ on_socket = function(self, conn, data)
 	if data.event == ws.EVENT_CONNECTED then
 		-- the first message states the version: in the queue, or back in the match
 		if self.tok then
-			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
+			send(self, { t = "hello", v = PROTOCOL, tok = self.tok, sim = SIM })
 			-- and why we had dropped (CP.net_note)
 			for _, what in ipairs(self.net_notes or {}) do send(self, { t = "nota", w = what }) end
 			self.net_notes = nil
 		elseif self.privata then
 			-- the private match (menu/private.lua): a new room or a code
-			send(self, { t = "hello", v = PROTOCOL, privata = self.privata, profilo = CP.account.key(profile.test ~= false) })
+			send(self, { t = "hello", v = PROTOCOL, sim = SIM, privata = self.privata, profilo = CP.account.key(profile.test ~= false), prova = CP.test_eq(self) })
 		else
 			CP.wait(self, TM.waiting)
 			-- the queue picked in GIOCA ONLINE (menu/queue.lua): 2v2, 1v1 or an event,
 			-- and the guest profile: the server takes the tag and the pieces from
 			-- its own, and gives it the prizes (main/account.lua)
-			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2", profilo = CP.account.key(profile.test ~= false) })
+			send(self, { t = "hello", v = PROTOCOL, sim = SIM, mode = self.coda or "2v2", profilo = CP.account.key(profile.test ~= false), prova = CP.test_eq(self) })
 		end
 	elseif data.event == ws.EVENT_MESSAGE and conn == self.mute then
 		-- prova_muta: nothing arrives any more
@@ -2085,8 +2130,8 @@ on_socket = function(self, conn, data)
 	elseif data.event == ws.EVENT_DISCONNECTED or data.event == ws.EVENT_ERROR then
 		self.conn = nil
 		self.mute = nil
-		-- the match is over and the server closed: the end is still in the playout
-		-- queue (it is drawn a moment late), no reconnecting meanwhile
+		-- the match is over and the server closed: the last ticks may still be in
+		-- the queue (they are drawn a moment late), no reconnecting meanwhile
 		if self.net_over and self.mode == "online" then return end
 		local in_play = self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online"
 		if in_play and self.tok and self.tries < RECONNECT_TRIES then
@@ -2166,6 +2211,30 @@ end
 
 function CP.private_screen(self)
 	return self.mode == "schermata" and self.schermata and self.schermata.mod == menu.private
+end
+
+-- The room on its screen; back from a match we are still on its podium for the
+-- server until we say we are here ("torna": VIA waits for everyone)
+function CP.private_status(self, m)
+	menu.private.status(self.schermata.obj, m)
+	local me = type(m.posti) == "table" and m.posti[m.you]
+	if type(me) == "table" and me.podio then send(self, { t = "torna" }) end
+end
+
+-- Out of a finished match (the podium, or a tap when there is none): back to
+-- the private room it came from, the same one on the same connection
+-- (server/private.go, Sergio 22 Nov: "finchè non esco dalla stanza deve tornare
+-- nel menu di scelta dei bot"), otherwise the home
+function CP.leave_end(self)
+	CP.iris(self, function()
+		local room = self.conn and self.private_room
+		show_menu(self, true, room and true or nil, room ~= nil)
+		if room then
+			self.exited, self.online_teams = {}, nil
+			open_screen(self, menu.private)
+			CP.private_status(self, room)
+		end
+	end)
 end
 
 -- The queue outside the waiting room (Sergio, 3 Nov: "puoi stare a guardare i
@@ -2338,8 +2407,19 @@ function CP.showcases(self, players, name_list, opt)
 	for i, p in ipairs(players) do
 		local under = i == opt.me and TM.roles.you or (p.dummy and not p.insegna) and TM.roles.dummy or p.team == my_team and TM.roles.mate or TM.roles.opponent
 		local v
-		if opt.rete then
+		if opt.rete and p.bot and p.eq then
+			-- online the bots wear as much as the people too (sim/loadout.lua dress_bots)
+			v = CP.vetrina.from_eq(p.eq, name_list[i], p.team, under)
+			v.bot = true
+		elseif opt.rete and i == opt.me and profile.test then
+			-- a test profile has no card on the server: its own, from the phone
+			v = CP.vetrina.from_profile(self.profilo, name_list[i], p.team, under)
+		elseif opt.rete then
 			v = CP.vetrina.from_net(opt.rete[i], name_list[i], p.team, under)
+			-- the stats of what they wear (checked by the server), as in the match
+			local L = require "sim.loadout"
+			local ok, eq = pcall(L.net_clean, p.eq)
+			if ok and eq then CP.vetrina.with_pieces(CP.vetrina.with_stats(v, L.net_stats(eq, game.base_stats())), eq) end
 		elseif i == opt.me then
 			v = CP.vetrina.from_profile(self.profilo, name_list[i], p.team, under)
 		elseif p.bot and p.eq then
@@ -2363,7 +2443,7 @@ function CP.close_choice(self)
 end
 
 -- The lineup over the weapon draft (seconds: how many are left, online)
-function CP.open_lineup(self, showcases, title, seconds_left)
+function CP.open_lineup(self, showcases, title, seconds_left, orders)
 	CP.close_choice(self)
 	-- they leave with the draft, however it closes
 	menu.pick.when_closing(self.scelta, function() CP.close_choice(self) end)
@@ -2372,7 +2452,7 @@ function CP.open_lineup(self, showcases, title, seconds_left)
 		self.strip = menu.lineup.strip(showcases)
 		return
 	end
-	self.schier = menu.lineup.new(showcases, title)
+	self.schier = menu.lineup.new(showcases, title, orders)
 	if seconds_left then self.schier.t = seconds_left end
 	-- the queue's pill above the lineup
 	if self.pill then menu.pill.raise(self.pill) end
@@ -2435,7 +2515,7 @@ function CP.begin(self, me, net, cluster, replay_ok)
 	if net and self.look == scoria.PERSONAGGIO then
 		for i in ipairs(self.g.robots) do
 			local gear, tiers = {}, {}
-			for _, pz in ipairs(v[i].bot and {} or v[i].pezzi or {}) do gear[pz.slot], tiers[pz.slot] = pz.set, pz.tier end
+			for _, pz in ipairs(v[i].pezzi or {}) do gear[pz.slot], tiers[pz.slot] = pz.set, pz.tier end
 			dress(self, i, i == me and scoria.player or scoria.look_of(gear, tiers))
 		end
 	elseif self.look == scoria.PERSONAGGIO then
@@ -2611,6 +2691,12 @@ function CP.tally_end(self, res)
 		quando = os.time(), giocatori = self.match_showcases })
 end
 
+-- The match's numbers for the Smith's orders (sim/orders.lua summary), as the
+-- server makes them in worker.lua. humans: the people in the match
+function CP.orders_summary(self, res, me, per_robot, c, humans)
+	return require("sim.orders").summary(res, me, self.g and self.g.map, humans, #(per_robot[me] or {}), c and c.valori)
+end
+
 -- what of the summary goes into the stats (sim/progress.lua)
 function CP.stats_of(r)
 	return r and { gruppo = r.gruppo, valori = r.valori, armi = r.armi, won = r.won } or nil
@@ -2757,17 +2843,15 @@ local function start_local(self, against)
 	local seed = os.time()
 	for i, p in ipairs(gconfig.MODES[modo]) do
 		-- against the bots the player is the first robot, the others are bots
-		opts.players[i] = { team = p.team, bot = (against and not against.stesso and i > 1) and against.livello or nil }
+		opts.players[i] = { team = p.team, bot = (against and i > 1) and against.livello or nil }
 	end
 	-- against the bots everyone wears as much as the player (Sergio, 18 Nov): the
 	-- player's eq and the bots' built from it with the match's seed, in the recipe
-	-- (sim/loadout.lua rival; the server builds them again, server/verify.lua)
-	local mine = against and not against.stesso and profile.equip(self.profilo)
+	-- (sim/loadout.lua dress_bots; the server builds them again, server/verify.lua)
+	local mine = against and profile.equip(self.profilo)
 	if mine then
 		opts.players[1].eq = mine
-		for i, p in ipairs(opts.players) do
-			if p.bot then p.eq = require("sim.loadout").rival(mine, seed, i) end
-		end
+		require("sim.loadout").dress_bots(opts.players, seed)
 	end
 	self.local_opts, self.local_seed = opts, seed
 	-- in the test scenarios the draft is there only with prova_scelta 1 (scenario scelta.txt)
@@ -2783,7 +2867,11 @@ local function start_local(self, against)
 		if p.bot then bot.choose(d, i, seed) end
 	end
 	menu.pick.show(self.scelta, d, name_list, palette)
-	CP.open_lineup(self, CP.showcases(self, opts.players, name_list, { me = 1 }), profile.GROUP_NAMES[modo] or "")
+	-- prova_commesse 1: the lineup shows the Smith's orders as an online one with a mate
+	-- (scenari/squadre_commesse.txt)
+	local orders = SIMULATE and config_int("megablast.prova_commesse", 0) == 1
+		and { p = self.profilo, map = opts.map or require("sim.maps").pick(seed), humans = 2 } or nil
+	CP.open_lineup(self, CP.showcases(self, opts.players, name_list, { me = 1 }), profile.GROUP_NAMES[modo] or "", nil, orders)
 end
 
 -- The match on the same phone, with the players coming out of the draft (nil: no draft)
@@ -3337,11 +3425,8 @@ local function aim_from(self, x, y, snap)
 	local rb = current_robot(self)
 	self.aim_left, self.aim_sy = x, y
 	local wx, wy = camera.to_world(self.cam, x, y)
-	local dx, dy = wx - rb.x, wy - (rb.y + game.DISEGNO_H / 2)
-	self.aim_target = math.atan2(dy, dx)
+	self.aim_target, self.aim_dist, self.aim_power = aim_name.from_finger(wx - rb.x, wy - (rb.y + game.DISEGNO_H / 2), self.cam.s)
 	if snap or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = self.aim_target end
-	self.aim_dist = math.sqrt(dx * dx + dy * dy) * self.cam.s
-	self.aim_power = game.aim_power(self.aim_dist / AIM_RANGE)
 end
 
 local function smooth_aim(self, dt)
@@ -3361,79 +3446,87 @@ local function jump_held(self)
 	return self.keys.jump or self.move_st.jumping or self.pad_jump
 end
 
+-- The frame of the online match: our ticks at once, the server's at an even pace
+function CP.net_frame(self, dt)
+	local n, g = self.net, self.g
+	local now = socket.gettime()
+	-- the engine's dt stops at 1/30 s (engine.max_time_step): under 30 FPS the
+	-- match went slower, and on our turn the server and every phone with it
+	-- (Sergio, 23 Nov: 14 FPS in Safari, "il tempo diventava più lento per tutta
+	-- la lobby"). The ticks follow the real clock (dt 0: the hit-stop holds the world)
+	local real = dt > 0 and n.frame_at and now - n.frame_at or dt
+	n.frame_at = now
+	if not self.net_over and now - (self.state_at or now) > CP.STALL then
+		CP.resync(self, "niente dal server da " .. CP.STALL .. " s")
+	end
+	if n.qn - g.tick >= CP.FF_TICKS and not CP.net_leads(self) then n.ff = true end
+	if n.ff then
+		self.jump_pressed, self.fire = false, nil
+		return CP.net_fast(self)
+	end
+	self.acc = math.min(self.acc + real, 0.25)
+	local extra = n.qn - g.tick > CP.LAG_MAX and 1 or 0
+	while (self.acc >= game.DT or extra > 0) and self.mode == "online" do
+		local t, code = g.tick, nil
+		if CP.net_leads(self) then
+			if self.acc < game.DT then break end
+			local input = {
+				left = move_left(self),
+				right = move_right(self),
+				-- holding it down you jump again as soon as you touch the ground
+				jump = self.jump_pressed or jump_held(self) or false,
+				-- releasing the jump while rising makes the jump short
+				hold = jump_held(self) or false,
+				fire = self.fire,
+			}
+			self.jump_pressed, self.fire = false, nil
+			code = netkeys.encode(input)
+			n.led[t] = code
+			if #n.out == 0 then n.out0 = t end
+			n.out[#n.out + 1] = code
+			n.starved = false
+		else
+			code = n.q[t]
+			local have = n.qn - t
+			if code == nil then n.starved = true end
+			if n.starved and have >= CP.LAG_MIN then n.starved = false end
+			if n.starved then break end
+			n.q[t] = nil
+		end
+		CP.net_step(self, code)
+		if self.acc >= game.DT then self.acc = self.acc - game.DT else extra = 0 end
+	end
+	-- waiting for the server: the time doesn't pile up (no burst afterwards)
+	if n.starved then self.acc = math.min(self.acc, game.DT) end
+	-- a shot or a jump that no tick took yet waits for the next frame while we
+	-- lead: at 90-120 Hz many frames have no tick (Sergio, 22 Nov: "carico la
+	-- levetta, lascio il dito e non fa niente"). Not ours to lead: dropped
+	if not CP.net_leads(self) then self.jump_pressed, self.fire = false, nil end
+	self.pose_t, self.pose_dt = self.acc, game.DT
+	-- in the simulator, every 3 s of our turn: whether the match keeps the real
+	-- clock (ritmo_giusto) or slows down (ritmo_lento), scenario lento_online.txt
+	if SIMULATE and CP.net_leads(self) then
+		n.pace_t, n.pace_k = n.pace_t or now, n.pace_k or g.tick
+		if now - n.pace_t >= 3 then
+			local r = (g.tick - n.pace_k) * game.DT / (now - n.pace_t)
+			print(string.format("SIMULA evento ritmo_%s %.2f", r > 0.9 and "giusto" or "lento", r))
+			n.pace_t, n.pace_k = now, g.tick
+		end
+	else
+		n.pace_t, n.pace_k = nil, nil
+	end
+	-- our keys, and where we aim (angle only: the others see us aim)
+	if #n.out > 0 then
+		local aim = self.aiming and self.aim_angle or nil
+		send(self, { t = "k", n = n.out0, k = n.out, m = aim and math.floor(aim * 100 + 0.5) / 100 or nil })
+		n.out = {}
+	end
+end
+
 -- Sticks -----------------------------------------------------------------------
 
-local PAD_POS = vmath.vector3(0, 0, 0)
-
--- Stick as in the proposals: a faintly veiled disc with a border and a
--- matching knob; both borders take the state's color (pad_color).
--- jump: on the border the ticks of the arc where the stick jumps (from
--- levette.JUMP_START_ANGLE above the horizontal, on both sides), longer at the
--- two ends; they light up while jumping
-local function new_pad(rest, ring_color, jump_name)
-	local pad = { rest = rest }
-	pad.base = fit(ui.disc(rest.x, rest.y, PAD_D, PAD_BOTTOM[1]))
-	pad.ring = fit(ui.ring_node(0, 0, PAD_D, 3, ring_color, pad.base))
-	if jump_name then
-		pad.ticks, pad.tick_off, pad.tick_on = {}, vmath.vector4(1, 1, 1, 0.4), vmath.vector4(1, 0.85, 0.55, 1)
-		local a0, n = math.deg(sticks.JUMP_START_ANGLE), 9
-		for i = 0, n - 1 do
-			local a = a0 + (180 - 2 * a0) * i / (n - 1)
-			local long = (i == 0 or i == n - 1) and 16 or 9
-			local r = PAD_D / 2 - 4 - long / 2
-			local t = fit(gui.new_box_node(vmath.vector3(r * math.cos(math.rad(a)), r * math.sin(math.rad(a)), 0),
-				vmath.vector3(long, (i == 0 or i == n - 1) and 3 or 2, 0)))
-			gui.set_euler(t, vmath.vector3(0, 0, a))
-			gui.set_color(t, pad.tick_off)
-			gui.set_parent(t, pad.base)
-			pad.ticks[#pad.ticks + 1] = t
-		end
-	end
-	pad.knob = fit(ui.disc(0, 0, KNOB_D, PAD_BOTTOM[2], pad.base))
-	pad.knob_ring = fit(ui.ring_node(0, 0, KNOB_D, 3, ring_color, pad.knob))
-	return pad
-end
-
--- jump: the jump ticks lit (only the movement stick has them)
-local function pad_color(pad, c, jump_name)
-	gui.set_color(pad.ring, c)
-	gui.set_color(pad.knob_ring, c)
-	if pad.ticks and pad.salto ~= (jump_name or false) then
-		pad.salto = jump_name or false
-		for _, t in ipairs(pad.ticks) do gui.set_color(t, jump_name and pad.tick_on or pad.tick_off) end
-	end
-end
-
--- The thumb touches down at (x, y): the base goes there, without leaving the screen
-local function pad_press(pad, id, x, y)
-	pad.id, pad.x0, pad.y0 = id, x, y
-	local h = PAD_D / 2
-	PAD_POS.x = math.max(screen.x0 + h, math.min(screen.x1 - h, x))
-	PAD_POS.y = math.max(screen.y0 + h, math.min(screen.y1 - h, y))
-	pad.bx, pad.by = PAD_POS.x, PAD_POS.y
-	gui.set_position(pad.base, PAD_POS)
-end
-
--- The thumb is at (x, y): returns the offset from where it touched down, in
--- fractions of the travel (length at most 1)
-local function pad_drag(pad, x, y)
-	local dx, dy = (x - pad.x0) / PAD_R, (y - pad.y0) / PAD_R
-	local mag = math.sqrt(dx * dx + dy * dy)
-	if mag > 1 then dx, dy = dx / mag, dy / mag end
-	PAD_POS.x = pad.x0 - pad.bx + dx * PAD_R
-	PAD_POS.y = pad.y0 - pad.by + dy * PAD_R
-	gui.set_position(pad.knob, PAD_POS)
-	return dx, dy
-end
-
-local function pad_release(pad, ring_color)
-	pad.id = nil
-	PAD_POS.x, PAD_POS.y = pad.rest.x, pad.rest.y
-	gui.set_position(pad.base, PAD_POS)
-	PAD_POS.x, PAD_POS.y = 0, 0
-	gui.set_position(pad.knob, PAD_POS)
-	pad_color(pad, ring_color)
-end
+-- the sticks' drawing and their thumb (battle/stick_pad.lua, shared with the Forge)
+local new_pad, pad_color, pad_press, pad_drag, pad_release = SP.new, SP.color, SP.press, SP.drag, SP.release
 
 -- Micro-vibration (main/phone.lua: off with the IMPOSTAZIONI switch)
 local vibrate_touch = phone.tap
@@ -3460,7 +3553,7 @@ local function aim_pad_drag(self, x, y)
 	self.aim_target = st.angle
 	-- as soon as it lights up the aim jumps onto the stick, then chases it
 	if (st.active and not was) or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
-	self.aim_power = math.max(0.1, st.f ^ game.AIM_EXPONENT)
+	self.aim_power = aim_name.stick_power(st.f)
 	self.aim_dist = math.huge
 	self.aiming = st.active
 	pad_color(self.aim_pad, st.active and AIM_LIVE or AIM_IDLE)
@@ -3536,6 +3629,7 @@ local function set_touch_ui(self, on)
 	if self.move_pad.id then move_pad_release(self) end
 	if self.aim_pad.id then aim_pad_drop(self) end
 	self.touch_ui = on
+	SP.touch = on
 	-- the player's layout is only for the phone (battle/hud_layout.lua)
 	CP.layout_place(self)
 	gui.set_enabled(self.tele_key, not on)
@@ -3604,9 +3698,9 @@ local function update_bar(self)
 		AN.y = AN.y or {}
 		AN.x[1], AN.y[1] = W / 2 - from_pt, bar_y
 		AN.x[2], AN.y[2] = W / 2 + from_pt, bar_y
-		AN.x[3], AN.y[3] = screen.x1 - CP.hand.ARC.ITEMS_X, CP.hand.ARC.ITEMS_Y + screen.y0
-		local ax, ay = CP.hand.arc(2)
-		local bx, by = CP.hand.arc(3)
+		AN.x[3], AN.y[3] = CP.hand.spot(4)
+		local ax, ay = CP.hand.spot(2)
+		local bx, by = CP.hand.spot(3)
 		AN.x[4], AN.y[4] = (ax + bx) / 2, (ay + by) / 2
 	end
 	for _, sl in ipairs(self.slots) do
@@ -3628,20 +3722,21 @@ local function update_bar(self)
 				x = W / 2 + from_pt + d / 2 + k * (d + gap)
 			elseif gr == 3 then
 				-- the items column: on the phone on the right edge, above the aim
-				-- stick (CP.hand.ARC); on the computer above the teleport. With all
+				-- stick (CP.hand.SPOTS); on the computer above the teleport. With all
 				-- four its title stays under the zoom button (report UI-001)
 				d = SIZES.oggetto
 				if tel then
-					x, y = screen.x1 - CP.hand.ARC.ITEMS_X, CP.hand.ARC.ITEMS_Y + screen.y0 + k * (d + 6)
+					x, y = CP.hand.spot(4)
+					y = y + k * (d + 6)
 				else
 					x, y = tele.x, tele.y + TELE_BTN_D / 2 + 16 + d / 2 + k * (d + 6)
 				end
 			else
-				-- Rampino and Giano: on the phone on the arc around the aim stick,
-				-- after the teleport; on the computer side by side left of it
+				-- Rampino and Giano: on the phone beside the teleport and the items
+				-- (CP.hand.SPOTS); on the computer side by side left of the teleport
 				d = TELE_BTN_D
 				if tel then
-					x, y = CP.hand.arc(k + 2)
+					x, y = CP.hand.spot(k + 2)
 				else
 					x, y = tele.x - (k + 1) * (TELE_BTN_D + 12), tele.y
 				end
@@ -3667,6 +3762,8 @@ local function update_bar(self)
 			if on == 2 then
 				y = y + SIZES.alza * us
 				chosen = sl
+			elseif on == 0 or on == 4 then
+				y = y - CP.hand.ASH.SINK * us
 			end
 			sl.d = d * us
 			if sl.x ~= x or sl.y ~= y then
@@ -3674,16 +3771,13 @@ local function update_bar(self)
 				sl.x, sl.y = x, y
 			end
 			local sc = (gr <= 2 and d / SLOT or 1) * ((on >= 2 and on <= 4) and CHOSEN or 1) * us
+				* ((on == 0 or on == 4) and CP.hand.ASH.SCALE or 1)
 			local used_key = on == 2 and turn and not g:can_use(sl.weapon)
 			if sl.on ~= on or sl.sc ~= sc or sl.team_c ~= self.hand_color or sl.used_key ~= used_key then
 				sl.used_key = used_key
-				gui.set_color(sl.bordo, on >= 2 and ui.C.LIGHT or (on == 1 and CP.hand.dim(BAR_COLORS[gr]) or SLOT_BORDER[0]))
-				-- in hand but already used this turn (the Blade after its blow): the icon goes off
-				local spent_hand = on == 2 and turn and not g:can_use(sl.weapon)
-				if sl.icon then
-					gui.set_color(sl.icon, (on == 0 or on == 4 or spent_hand) and ICON_USED
-						or (on == 1 and CP.hand.dim(WHITE) or WHITE))
-				end
+				gui.set_color(sl.bordo, on >= 2 and ui.C.LIGHT or (on == 1 and BAR_COLORS[gr] or SLOT_BORDER[0]))
+				-- in hand but already used this turn (the Blade after its blow): the icon goes ash too
+				CP.hand.ash(sl.node, sl.icon, on == 0 or on == 4 or used_key)
 				CP.hand.frame(sl, gr <= 2 and "slot_arma" or (gr == 3 and "oggetto" or "gettone"), on == 2,
 					gr <= 2 and SLOT or (gr == 3 and SIZES.oggetto or TELE_BTN_D), self.hand_color)
 				sl.team_c = self.hand_color
@@ -3703,19 +3797,27 @@ local function update_bar(self)
 	return chosen
 end
 
--- What you hold (Sergio, 21 Nov: «deve avere la stessa identità grafica sempre
--- quello che hai in mano»): weapons, Grapple, Janus and teleport alike are
--- raised, bigger, with the light border, an outer frame of their own shape in
--- your team's color and the name above; everything else you could pick is at
--- half light (CP.hand.DIM; 1 would leave it lit), what is used up for this turn
--- dimmer; what runs out leaves the bar, the picked secondary stays (also at 0)
-CP.hand = { DIM = 0.5, FRAME = 1.16, dimmed = {},
+-- Three states, always told apart (Sergio, 21 and 23 Nov, docs/decisioni/interfaccia.md):
+-- - in hand: weapons, Grapple, Janus and teleport alike are raised, bigger,
+--   with the light border, an outer frame of their own shape in your team's
+--   color and the name above («la stessa identità grafica sempre»);
+-- - clickable: full light, the border in its group's color;
+-- - not usable now ("Cenere e piccolo"): the icon in grey ash (the lampo
+--   material, battle/flash.fp: ASH.ICON is no color, 0.6 light), the
+--   panel darker, the button smaller (ASH.SCALE) and lower (ASH.SINK).
+-- What runs out leaves the bar, the picked secondary stays (also at 0)
+CP.hand = { FRAME = 1.16,
+	ASH = { SCALE = 0.82, SINK = 9, ICON = vmath.vector4(0.6, 1, 0, 0.85), PANEL = vmath.vector4(0.04, 0.036, 0.05, 1) },
 	-- the shared PER TURNO badge once used ("0"): grey
 	BADGE = vmath.vector4(0.45, 0.42, 0.4, 1) }
-function CP.hand.dim(c)
-	local t = CP.hand.dimmed[c]
-	if not t then t = vmath.vector4(c.x, c.y, c.z, c.w * CP.hand.DIM); CP.hand.dimmed[c] = t end
-	return t
+-- panel and icon of a button, in ash or lit
+function CP.hand.ash(panel, icon, off)
+	local A = CP.hand.ASH
+	gui.set_color(panel, off and A.PANEL or ui.C.PANEL)
+	if icon then
+		if off then gui.set_material(icon, "lampo") else gui.reset_material(icon) end
+		gui.set_color(icon, off and A.ICON or WHITE)
+	end
 end
 
 -- sl: a slot or the teleport ({ node, mano }); d: the size of its shape
@@ -3731,13 +3833,15 @@ function CP.hand.frame(sl, shape, on, d, color)
 	end
 end
 
--- The default layout on the phone (Sergio, 21 Nov): teleport, Grapple and
--- Janus on an arc around the aim stick (the thumb reaches them without leaving
--- it), the items in a column on the right edge
-CP.hand.ARC = { R = 172, ANGLES = { 100, 136, 172 }, ITEMS_Y = 272, ITEMS_X = 44 }
-function CP.hand.arc(i)
-	local a = math.rad(CP.hand.ARC.ANGLES[i])
-	return AIM_PAD.x + CP.hand.ARC.R * math.cos(a), AIM_PAD.y + CP.hand.ARC.R * math.sin(a)
+-- The default layout on the phone (Sergio, 23 Nov, from his own screen): above
+-- the aim stick the teleport on the right edge with Janus at its left, the
+-- Grapple above them, beside the items column (which grows upward). Each spot
+-- from the right and bottom edges: 1 teleport, 2 Grapple, 3 Janus, 4 the first item
+-- (low enough that with all four items OGGETTI stays under the zoom button)
+CP.hand.SPOTS = { { 58, 286 }, { 122, 375 }, { 166, 283 }, { 44, 352 } }
+function CP.hand.spot(i)
+	local p = CP.hand.SPOTS[i]
+	return screen.x1 - p[1], screen.y0 + p[2]
 end
 
 CP.hand.TOOL = { D = 30, OUT = 40, CAPTION_X = -22 }
@@ -3832,7 +3936,7 @@ end
 function CP.layout_place(self)
 	if not self.chrono then return end
 	local L, HL = self.touch_ui and self.layout or nil, RM.layout
-	local ax, ay = CP.hand.arc(1)
+	local ax, ay = CP.hand.spot(1)
 	TELE_BTN_TOUCH.x, TELE_BTN_TOUCH.y = HL.place(L, "teletrasporto", ax, ay, ax, ay)
 	gui.set_position(self.btn_tele.nodo, self.touch_ui and TELE_BTN_TOUCH or TELE_BTN_DESK)
 	self.tele_state = nil
@@ -4055,6 +4159,171 @@ function CR.countdown(self, dt)
 	end
 end
 
+-- One shot in flight as drawn (v: its nodes, RM.build_shot): the Uovo rolls
+-- with the seconds left above it, the others glow in the shooter's color with
+-- a trail. prev, cur: where it was and is in the two poses (cur nil: nothing in
+-- flight, hidden). Returns where it is drawn, or nil
+function RM.draw_shot(self, v, prev, cur, kind, fuse, owner, k, dt)
+	local fx, fy
+	-- Flame Egg: rolls while flying, with the seconds left to the blast above
+	local egg = cur ~= nil and kind == "grenade"
+	show(v.egg, egg)
+	if egg then
+		local p0 = prev or cur
+		local x = p0.x + (cur.x - p0.x) * k
+		set_pos(v.egg, x, p0.y + (cur.y - p0.y) * k)
+		fx, fy = x, p0.y + (cur.y - p0.y) * k
+		EULER.z = -x * 4
+		gui.set_euler(v.egg_spin, EULER)
+		if v.egg_color ~= owner then
+			gui.set_color(v.egg_light, self.colors[owner])
+			v.egg_color = owner
+		end
+		impact.trail(self.fx, dt, x, p0.y + (cur.y - p0.y) * k, 30)
+		local secs = math.max(1, math.ceil((fuse or 0) / 60))
+		if v.egg_secs ~= secs then
+			gui.set_text(v.egg_label, tostring(secs))
+			v.egg_secs = secs
+		end
+	end
+
+	-- missile: glow in the shooter's color and a trail fading out
+	local missile = cur ~= nil and not egg
+	show(v.projectile, missile)
+	if missile then
+		local p0 = prev or cur
+		local x, y = p0.x + (cur.x - p0.x) * k, p0.y + (cur.y - p0.y) * k
+		set_pos(v.projectile, x, y)
+		fx, fy = x, y
+		if v.missile_color ~= owner then
+			gui.set_color(v.projectile_glow, self.colors[owner])
+			gui.set_color(v.razzo_tinta, self.colors[owner])
+			gui.set_color(v.palla_tinta, self.colors[owner])
+			for _, tint in pairs(v.shots_new_tint) do gui.set_color(tint, self.colors[owner]) end
+			v.missile_color = owner
+		end
+		-- rocket and ball point the way they go
+		local dx, dy = cur.x - p0.x, cur.y - p0.y
+		if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
+		gui.set_euler(v.projectile, SNIPER_EULER)
+		local sniper = kind == "sniper"
+		local newer = RM.NEW_SHOTS[kind] ~= nil
+		for k, n in pairs(v.shots_new) do show(n, k == kind) end
+		show(v.razzo, not sniper and not newer)
+		show(v.palla, sniper)
+		-- the Falcetto spins instead of pointing the way it goes
+		if kind == "boomerang" then
+			SNIPER_EULER.z = self.clock * 900
+			gui.set_euler(v.projectile, SNIPER_EULER)
+		end
+		-- Giano: the coin doesn't point anywhere, it flips on itself; two faces (the
+		-- shooter's color and gold) and a trail that alternates them
+		if kind == "janus" then
+			SNIPER_EULER.z = 0
+			gui.set_euler(v.projectile, SNIPER_EULER)
+			local c = math.cos(self.clock * 16)
+			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (0.18 + 0.82 * math.abs(c)), VK.y
+			gui.set_scale(v.projectile, SNIPER_SCALE)
+			v.sniper_shape = true
+			gui.set_color(v.shots_new_tint.janus, c >= 0 and self.colors[owner] or hud.YELLOW)
+			for j, node in ipairs(v.trail) do
+				local col = j % 2 == 0 and self.colors[owner] or hud.YELLOW
+				gui.set_color(node, vmath.vector4(col.x, col.y, col.z, 0.6 - j * 0.06))
+			end
+			v.janus_trail = true
+		elseif v.janus_trail then
+			for j, node in ipairs(v.trail) do gui.set_color(node, vmath.vector4(1, 0.6, 0.3, 0.55 - j * 0.06)) end
+			v.janus_trail = false
+		end
+		if sniper then
+			-- sniper: stretched the way it goes; at every bounce it squashes and wobbles
+			-- like jelly, then goes back to how it was
+			local t = self.clock - (self.boing or -10)
+			local w = BOING_AMP * math.exp(-t * BOING_DAMP) * math.cos(t * BOING_FREQ)
+			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (1.25 - w), VK.y * (0.85 + w)
+			gui.set_scale(v.projectile, SNIPER_SCALE)
+			v.sniper_shape = true
+		elseif v.sniper_shape then
+			gui.set_scale(v.projectile, VK)
+			v.sniper_shape = false
+		end
+		impact.trail(self.fx, dt, x, y, 40)
+		local n = #v.trail
+		v.trail_i = v.trail_i % n + 1
+		local tp = v.trail_pos[v.trail_i]
+		tp.x, tp.y = x, y
+		v.trail_n = math.min(n, v.trail_n + 1)
+		for j = 1, n do
+			local node = v.trail[j]
+			if j <= v.trail_n then
+				local q = v.trail_pos[(v.trail_i - j) % n + 1]
+				show(node, true)
+				set_pos(node, q.x, q.y)
+			else
+				show(node, false)
+			end
+		end
+	else
+		v.trail_n = 0
+		for _, node in ipairs(v.trail) do show(node, false) end
+	end
+
+	return fx, fy
+end
+
+-- The nodes of one shot in flight (trail, missile and the other shots, Uovo)
+-- into v: self for the last shot fired, a table for each older one
+function RM.build_shot(v)
+	-- missile: trail, halo in the team color and white core
+	v.trail, v.trail_pos, v.trail_i, v.trail_n = {}, {}, 0, 0
+	for i = 1, 8 do
+		v.trail[i] = glow(0, 0, (16 - i * 1.4) * K, vmath.vector4(1, 0.6, 0.3, 0.55 - i * 0.06))
+		v.trail_pos[i] = { x = 0, y = 0 }
+	end
+	v.projectile = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(v.projectile, false)
+	gui.set_adjust_mode(v.projectile, gui.ADJUST_FIT)
+	v.projectile_glow = glow(0, 0, 34, WHITE)
+	gui.set_parent(v.projectile_glow, v.projectile)
+	v.razzo, v.razzo_tinta = hit_def("razzo", 1 / K)
+	gui.set_parent(v.razzo, v.projectile)
+	v.palla, v.palla_tinta = hit_def("palla", 1 / K)
+	gui.set_parent(v.palla, v.projectile)
+	-- the new shots: only the one of the kind in flight is visible
+	v.shots_new, v.shots_new_tint = {}, {}
+	for kind, img in pairs(RM.NEW_SHOTS) do
+		local n, tint = hit_def(img, 1 / K)
+		gui.set_parent(n, v.projectile)
+		gui.set_enabled(n, false)
+		v.shots_new[kind], v.shots_new_tint[kind] = n, tint
+	end
+	gui.set_scale(v.projectile, VK)
+
+	-- Flame Egg in flight
+	v.egg = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+	gui.set_visible(v.egg, false)
+	gui.set_parent(glow(0, 0, 36, BRACE), v.egg)
+	v.egg_spin = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(v.egg_spin, false)
+	gui.set_parent(v.egg_spin, v.egg)
+	local egg_img
+	egg_img, v.egg_light = hit_def("uovo", 1 / K)
+	gui.set_parent(egg_img, v.egg_spin)
+	v.egg_label = label(0, 26, "3", 0.7 / K)
+	gui.set_parent(v.egg_label, v.egg)
+	gui.set_enabled(v.egg, false)
+	gui.set_scale(v.egg, VK)
+	return v
+end
+
+-- Where an older shot (src) was in the previous pose, or nil
+function RM.prev_shot(pa, src)
+	for i = 1, pa.nf do
+		if pa.f[i].src == src then return pa.f[i] end
+	end
+	if pa.has_p and pa.p_src == src then return pa.p end
+end
+
 local function render(self, dt)
 	self.clock = self.clock + dt
 	local g = self.g
@@ -4143,7 +4412,7 @@ local function render(self, dt)
 			st.facing = math.cos(self.aim_angle) < 0 and -1 or 1
 		elseif i == g.current and g.phase == "aim" and not my_turn(self) then
 			-- the others aim too (Sergio, 9 Nov: without it they looked frozen): online
-			-- what the server says, here the bot thinking about its move
+			-- what the server says (CP.net_keys), here the bot thinking about its move
 			local b = self.mode == "local" and self.bots and self.bots[i]
 			local other = self.mode == "online" and self.remote_aim or b and bot.shown_aim(b)
 			if other then
@@ -4173,8 +4442,7 @@ local function render(self, dt)
 		-- Titan's Fist: the arm follows the uppercut, rotated on the aim
 		if rb.punch ~= nil and not rb.dead then
 			weapon = "punch"
-			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
-			local t = math.max(0, rb.punch - span + k * span)
+			local t = math.max(0, rb.punch - 1 + k)
 			local a = game.punch_angle(t, rb.punch_base)
 			local dir = rb.punch_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
@@ -4190,8 +4458,7 @@ local function render(self, dt)
 		end
 		if rb.mallet ~= nil and not rb.dead then
 			weapon = "mallet"
-			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
-			local a = game.mallet_angle(math.max(0, rb.mallet - span + k * span), rb.mallet_base, rb.mallet_stop)
+			local a = game.mallet_angle(math.max(0, rb.mallet - 1 + k), rb.mallet_base, rb.mallet_stop)
 			local dir = rb.mallet_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
@@ -4208,8 +4475,7 @@ local function render(self, dt)
 		if rb.swing ~= nil and not rb.dead then
 			weapon = "sword"
 			-- the slash tick is pose b's: we draw it between a and b
-			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
-			local a = game.sword_angle(math.max(0, rb.swing - span + k * span), rb.swing_base)
+			local a = game.sword_angle(math.max(0, rb.swing - 1 + k), rb.swing_base)
 			-- the direction is the starting one: turning doesn't change the slash
 			local dir = rb.swing_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
@@ -4225,6 +4491,9 @@ local function render(self, dt)
 			end
 		end
 		st.solid = self.solid_at
+		-- the Cannonata: curled up, into the cannon, the ball (battle/cannon.lua)
+		RM.cannon.rig(self.cannone, i, rb, st, dt)
+		if st.rannicchia or st.nascosto or st.palla then scoria.empty_hands(r.rig, true) end
 		scoria.update(r.rig, dt, st)
 	end
 
@@ -4260,111 +4529,27 @@ local function render(self, dt)
 		self.rope_who = nil
 	end
 
-	-- Flame Egg: rolls while flying, with the seconds left to the blast above
-	local egg = pb.has_p and g.projectile and g.projectile.kind == "grenade"
-	show(self.egg, egg)
-	if egg then
-		local p0 = pa.has_p and pa.p or pb.p
-		local x = p0.x + (pb.p.x - p0.x) * k
-		set_pos(self.egg, x, p0.y + (pb.p.y - p0.y) * k)
-		self.focus_x, self.focus_y = x, p0.y + (pb.p.y - p0.y) * k
-		EULER.z = -x * 4
-		gui.set_euler(self.egg_spin, EULER)
-		if self.egg_color ~= g.current then
-			gui.set_color(self.egg_light, self.colors[g.current])
-			self.egg_color = g.current
-		end
-		impact.trail(self.fx, dt, x, p0.y + (pb.p.y - p0.y) * k, 30)
-		local secs = math.max(1, math.ceil((g.projectile.fuse or 0) / 60))
-		if self.egg_secs ~= secs then
-			gui.set_text(self.egg_label, tostring(secs))
-			self.egg_secs = secs
+	-- the last shot fired, then the older ones still in flight (sim/game.lua flying)
+	local main = pb.has_p and g.projectile
+	local same = pa.has_p and pa.p_src == pb.p_src
+	-- (the camera follows the last one, or the oldest still flying)
+	local sx, sy = RM.draw_shot(self, self, same and pa.p or nil, pb.has_p and pb.p or nil,
+		main and main.kind, main and main.fuse, main and main.owner or g.current, k, dt)
+	local shot_on = sx ~= nil
+	if shot_on then
+		self.focus_x, self.focus_y = sx, sy
+		CP.notch(self, sx, sy)
+	end
+	for i, v in ipairs(self.old_shots) do
+		local f = i <= pb.nf and pb.f[i] or nil
+		local src = f and f.src
+		local ox, oy = RM.draw_shot(self, v, f and RM.prev_shot(pa, src), f, src and src.kind, src and src.fuse,
+			src and src.owner or g.current, k, dt)
+		if ox then
+			CP.notch(self, ox, oy)
+			if not shot_on then self.focus_x, self.focus_y, shot_on = ox, oy, true end
 		end
 	end
-
-	-- missile: glow in the shooter's color and a trail fading out
-	local missile = pb.has_p and not egg
-	show(self.projectile, missile)
-	if missile then
-		local p0 = pa.has_p and pa.p or pb.p
-		local x, y = p0.x + (pb.p.x - p0.x) * k, p0.y + (pb.p.y - p0.y) * k
-		set_pos(self.projectile, x, y)
-		self.focus_x, self.focus_y = x, y
-		if self.missile_color ~= g.current then
-			gui.set_color(self.projectile_glow, self.colors[g.current])
-			gui.set_color(self.razzo_tinta, self.colors[g.current])
-			gui.set_color(self.palla_tinta, self.colors[g.current])
-			for _, tint in pairs(self.shots_new_tint) do gui.set_color(tint, self.colors[g.current]) end
-			self.missile_color = g.current
-		end
-		-- rocket and ball point the way they go
-		local dx, dy = pb.p.x - p0.x, pb.p.y - p0.y
-		if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
-		gui.set_euler(self.projectile, SNIPER_EULER)
-		local kind = g.projectile and g.projectile.kind
-		local sniper = kind == "sniper"
-		local newer = RM.NEW_SHOTS[kind] ~= nil
-		for k, n in pairs(self.shots_new) do show(n, k == kind) end
-		show(self.razzo, not sniper and not newer)
-		show(self.palla, sniper)
-		-- the Falcetto spins instead of pointing the way it goes
-		if kind == "boomerang" then
-			SNIPER_EULER.z = self.clock * 900
-			gui.set_euler(self.projectile, SNIPER_EULER)
-		end
-		-- Giano: the coin doesn't point anywhere, it flips on itself; two faces (the
-		-- shooter's color and gold) and a trail that alternates them
-		if kind == "janus" then
-			SNIPER_EULER.z = 0
-			gui.set_euler(self.projectile, SNIPER_EULER)
-			local c = math.cos(self.clock * 16)
-			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (0.18 + 0.82 * math.abs(c)), VK.y
-			gui.set_scale(self.projectile, SNIPER_SCALE)
-			self.sniper_shape = true
-			gui.set_color(self.shots_new_tint.janus, c >= 0 and self.colors[g.current] or hud.YELLOW)
-			for j, node in ipairs(self.trail) do
-				local col = j % 2 == 0 and self.colors[g.current] or hud.YELLOW
-				gui.set_color(node, vmath.vector4(col.x, col.y, col.z, 0.6 - j * 0.06))
-			end
-			self.janus_trail = true
-		elseif self.janus_trail then
-			for j, node in ipairs(self.trail) do gui.set_color(node, vmath.vector4(1, 0.6, 0.3, 0.55 - j * 0.06)) end
-			self.janus_trail = false
-		end
-		if sniper then
-			-- sniper: stretched the way it goes; at every bounce it squashes and wobbles
-			-- like jelly, then goes back to how it was
-			local t = self.clock - (self.boing or -10)
-			local w = BOING_AMP * math.exp(-t * BOING_DAMP) * math.cos(t * BOING_FREQ)
-			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (1.25 - w), VK.y * (0.85 + w)
-			gui.set_scale(self.projectile, SNIPER_SCALE)
-			self.sniper_shape = true
-		elseif self.sniper_shape then
-			gui.set_scale(self.projectile, VK)
-			self.sniper_shape = false
-		end
-		impact.trail(self.fx, dt, x, y, 40)
-		local n = #self.trail
-		self.trail_i = self.trail_i % n + 1
-		local tp = self.trail_pos[self.trail_i]
-		tp.x, tp.y = x, y
-		self.trail_n = math.min(n, self.trail_n + 1)
-		for j = 1, n do
-			local node = self.trail[j]
-			if j <= self.trail_n then
-				local q = self.trail_pos[(self.trail_i - j) % n + 1]
-				show(node, true)
-				set_pos(node, q.x, q.y)
-			else
-				show(node, false)
-			end
-		end
-	else
-		self.trail_n = 0
-		for _, node in ipairs(self.trail) do show(node, false) end
-	end
-
-	if missile or egg then CP.notch(self, self.focus_x, self.focus_y) end
 
 	-- Shard Swarm: small glows in the shooter's color
 	local n_shards, shard_x, shard_y = 0, 0, 0
@@ -4461,7 +4646,8 @@ local function render(self, dt)
 	self.hand_color = self.colors[owner and owner.id or g.current]
 	local chosen = update_bar(self)
 	CP.fly_pending(self)
-	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
+	-- on the others' turn it can be picked like the bar (update_bar), unless the orbs are used up
+	local tele_state = self.tele_armed and 2 or ((tele_ok or (not my_turn(self) and owner and owner.teleports_left > 0)) and 1 or 0)
 	local bt = self.btn_tele
 	-- in the lessons that don't talk about orbs the button isn't there
 	local tele_sees = self.controls_visible and missions.sees(self.missione, "teleport")
@@ -4470,17 +4656,17 @@ local function render(self, dt)
 		self.tele_sees = tele_sees
 	end
 	if self.tele_state ~= tele_state or bt.team_c ~= self.hand_color then
-		gui.set_color(bt.bordo, tele_state == 2 and ui.C.LIGHT or (tele_state == 1 and CP.hand.dim(ui.C.PURPLE) or SLOT_BORDER[0]))
-		gui.set_color(bt.icon_img, tele_state == 0 and ICON_USED or (tele_state == 1 and CP.hand.dim(WHITE) or WHITE))
+		gui.set_color(bt.bordo, tele_state == 2 and ui.C.LIGHT or (tele_state == 1 and ui.C.PURPLE or SLOT_BORDER[0]))
+		CP.hand.ash(bt.nodo, bt.icon_img, tele_state == 0)
 		bt.node = bt.node or bt.nodo
 		CP.hand.frame(bt, "gettone", tele_state == 2, TELE_BTN_D, self.hand_color)
 		bt.team_c = self.hand_color
 		local ts = self.touch_ui and RM.layout.of(self.layout, "teletrasporto").s or 1
-		local sc = (tele_state == 2 and CHOSEN or 1) * ts
+		local sc = (tele_state == 2 and CHOSEN or (tele_state == 0 and CP.hand.ASH.SCALE or 1)) * ts
 		SLOT_SCALE.x, SLOT_SCALE.y = sc, sc
 		gui.set_scale(bt.nodo, SLOT_SCALE)
 		local p = self.touch_ui and TELE_BTN_TOUCH or TELE_BTN_DESK
-		set_pos(bt.nodo, p.x, p.y + (tele_state == 2 and SIZES.alza * ts or 0))
+		set_pos(bt.nodo, p.x, p.y + (tele_state == 2 and SIZES.alza or (tele_state == 0 and -CP.hand.ASH.SINK or 0)) * ts)
 		self.tele_state = tele_state
 	end
 	-- what you hold: the tag with the name above and the halo in your color
@@ -4660,7 +4846,7 @@ local function render(self, dt)
 		end
 		local fx, fy, fast = nil, nil, false
 		self.cam_pause = math.max(0, self.cam_pause - dt)
-		if missile or egg then
+		if shot_on then
 			fx, fy, fast = self.focus_x, self.focus_y, true
 			self.cam_pause = 0
 		elseif n_shards > 0 then
@@ -4687,9 +4873,7 @@ end
 local function arrange(self)
 	local x0, y0, x1, y1 = screen.x0, screen.y0, screen.x1, screen.y1
 	ZOOM_BTN.x, ZOOM_BTN.y = x1 - 70, y1 - 90
-	MOVE_PAD.x, MOVE_PAD.y = x0 + 115, y0 + 117
-	AIM_PAD.x, AIM_PAD.y = x1 - 115, y0 + 117
-	PAD_ZONE.sx, PAD_ZONE.dx, PAD_ZONE.y = x0 + (x1 - x0) * 0.4, x1 - (x1 - x0) * 0.4, y0 + (y1 - y0) * 0.6
+	SP.arrange(x0, y0, x1, y1)
 	TELE_BTN_DESK.x, TELE_BTN_DESK.y = x1 - 100, y0 + 62
 	for _, pad in ipairs({ self.move_pad, self.aim_pad }) do
 		if not pad.id then set_pos(pad.base, pad.rest.x, pad.rest.y) end
@@ -4718,6 +4902,9 @@ function RM.nodes(self)
 	end
 	self.rm_nodes = RM.fune.nodes(self.fune)
 	for _, n in ipairs(self.gusts) do self.rm_nodes[#self.rm_nodes + 1] = n end
+	-- the Cannonata: the big cannon and the ball's shells (battle/cannon.lua; its fx after impact.new)
+	self.cannone = RM.cannon.new(nil, RM.SIGN)
+	for _, n in ipairs(RM.cannon.nodes(self.cannone)) do self.rm_nodes[#self.rm_nodes + 1] = n end
 	-- the controller: buttons and sticks (ui/controller.lua), its aim and its
 	-- walking (here and not in init, which already has almost 60 upvalues)
 	self.ctrl, self.pad_st, self.pad_move = PAD.reader.new(sys.get_sys_info().system_name), sticks.new(), sticks.new()
@@ -4772,30 +4959,10 @@ function init(self)
 	-- whom the close-range weapon in hand would hit: robot ids and where to draw the ring
 	self.bersagli = { id = {}, pos = {}, n = 0 }
 
-	-- missile: trail, halo in the team color and white core
-	self.trail, self.trail_pos, self.trail_i, self.trail_n = {}, {}, 0, 0
-	for i = 1, 8 do
-		self.trail[i] = glow(0, 0, (16 - i * 1.4) * K, vmath.vector4(1, 0.6, 0.3, 0.55 - i * 0.06))
-		self.trail_pos[i] = { x = 0, y = 0 }
-	end
-	self.projectile = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
-	gui.set_visible(self.projectile, false)
-	gui.set_adjust_mode(self.projectile, gui.ADJUST_FIT)
-	self.projectile_glow = glow(0, 0, 34, WHITE)
-	gui.set_parent(self.projectile_glow, self.projectile)
-	self.razzo, self.razzo_tinta = hit_def("razzo", 1 / K)
-	gui.set_parent(self.razzo, self.projectile)
-	self.palla, self.palla_tinta = hit_def("palla", 1 / K)
-	gui.set_parent(self.palla, self.projectile)
-	-- the new shots: only the one of the kind in flight is visible
-	self.shots_new, self.shots_new_tint = {}, {}
-	for kind, img in pairs(RM.NEW_SHOTS) do
-		local n, tint = hit_def(img, 1 / K)
-		gui.set_parent(n, self.projectile)
-		gui.set_enabled(n, false)
-		self.shots_new[kind], self.shots_new_tint[kind] = n, tint
-	end
-	gui.set_scale(self.projectile, VK)
+	-- the shots in flight: the last fired on self, the older ones (RM.MAX_FLY) apart
+	RM.build_shot(self)
+	self.old_shots = {}
+	for i = 1, RM.MAX_FLY do self.old_shots[i] = RM.build_shot({}) end
 
 	-- teleport orb: small and round
 	self.orbs = {}
@@ -4811,20 +4978,6 @@ function init(self)
 		self.orbs[i] = { root = root, glow = orb_glow, light = light }
 	end
 
-	-- Flame Egg in flight
-	self.egg = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
-	gui.set_visible(self.egg, false)
-	gui.set_parent(glow(0, 0, 36, BRACE), self.egg)
-	self.egg_spin = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
-	gui.set_visible(self.egg_spin, false)
-	gui.set_parent(self.egg_spin, self.egg)
-	local egg_img
-	egg_img, self.egg_light = hit_def("uovo", 1 / K)
-	gui.set_parent(egg_img, self.egg_spin)
-	self.egg_label = label(0, 26, "3", 0.7 / K)
-	gui.set_parent(self.egg_label, self.egg)
-	gui.set_enabled(self.egg, false)
-	gui.set_scale(self.egg, VK)
 
 	-- the Swarm's shards
 	self.shard_nodes, self.shard_tints = {}, {}
@@ -4883,6 +5036,7 @@ function init(self)
 
 	-- explosions, sparks and numbers: the particles' pools
 	self.fx = impact.new()
+	self.cannone.fx = self.fx
 
 	-- explosion debris, reused in rotation
 	self.debris, self.debris_i = {}, 0
@@ -4907,6 +5061,11 @@ function init(self)
 	world[#world + 1] = self.projectile
 	for _, o in ipairs(self.orbs) do world[#world + 1] = o.root end
 	world[#world + 1] = self.egg
+	for _, v in ipairs(self.old_shots) do
+		for _, n in ipairs(v.trail) do world[#world + 1] = n end
+		world[#world + 1] = v.projectile
+		world[#world + 1] = v.egg
+	end
 	for _, n in ipairs(self.shard_nodes) do world[#world + 1] = n end
 	for _, c in ipairs(self.crate_nodes) do world[#world + 1] = c.node end
 	for _, n in ipairs(items.nodes(self.oggetti)) do world[#world + 1] = n end
@@ -4963,12 +5122,12 @@ function init(self)
 	self.btn_menu = ui.settings_button({}, "menu")
 	-- (in a list, for the controller light)
 	self.rotellina = {}
-	self.btn_retry = ui.button(self.rotellina, 32 + 12 + 80, 0, 160, 64, common.retry, "riprova", nil, self.btn_menu)
-	self.btn_quit = ui.button(self.rotellina, 32 + 12 + 160 + 12 + 130, 0, 260, 64, TM.quit_match, "esci", nil, self.btn_menu)
-	self.btn_aim = ui.button(self.rotellina, 32 + 12 + 130, -76, 260, 64, TM.aim, "mira", nil, self.btn_menu)
-	self.btn_aim_text = self.rotellina[3].testo
+	-- (the secondary buttons of the menus, each with its icon: Sergio, 23 Nov)
+	self.btn_retry = menu.kit.button_at(self.rotellina, 32 + 12 + 70 + 90, 0, 180, 62, common.retry, "riprova", "az_riprova", self.btn_menu)
+	self.btn_quit, self.btn_quit_plate = menu.kit.button_at(self.rotellina, 32 + 12 + 70 + 180 + 44 + 130, 0, 260, 62, TM.quit_match, "esci", "az_esci", self.btn_menu)
+	self.btn_aim, self.btn_aim_plate = menu.kit.button_at(self.rotellina, 32 + 12 + 70 + 130, -76, 260, 62, TM.aim, "mira", "az_mira", self.btn_menu)
 	-- RILEGGI: the big vignettes of this mission again (battle/vignette.lua)
-	self.btn_reread = ui.button(self.rotellina, 32 + 12 + 260 + 12 + 90, -76, 180, 64, TM.reread, "rileggi", nil, self.btn_menu)
+	self.btn_reread = menu.kit.button_at(self.rotellina, 32 + 12 + 70 + 260 + 44 + 100, -76, 200, 62, TM.reread, "rileggi", "az_rileggi", self.btn_menu)
 	gui.set_enabled(self.btn_reread, false)
 	-- the strip of the vignettes, above the match and its HUD
 	self.vign = CP.vignette.new()
@@ -5070,6 +5229,8 @@ function init(self)
 	-- where the player put the buttons (IMPOSTAZIONI > DISPOSIZIONE TASTI)
 	self.layout = RM.layout.load(profile.setting(self.profilo, "disposizione"))
 	CP.layout_place(self)
+	-- imposta prova_test prova (or risorse): the test profile of the settings (scenari/bot_prova_online.txt)
+	if SIMULATE and sys.get_config_string("megablast.prova_test", "") ~= "" then profile.choose_test(self.profilo, sys.get_config_string("megablast.prova_test", "")) end
 	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2, config_int("megablast.prova_profilo", 0) == 3, config_int("megablast.prova_profilo", 0) == 4) end
 	if SIMULATE then profile.sample_void(self.profilo, config_int("megablast.prova_vuoto", 0), sys.get_config_string("megablast.prova_famiglia", "vuoto")) end
 	CP.account_start(self)
@@ -5089,8 +5250,17 @@ end
 
 function update(self, dt)
 	frames.begin()
+	-- imposta prova_lento MS: every frame takes MS milliseconds more, like a slow
+	-- phone in the browser (scenario lento_online.txt)
+	if SIMULATE and self.slow_ms ~= 0 then
+		self.slow_ms = self.slow_ms or config_int("megablast.prova_lento", 0)
+		local stop = socket.gettime() + self.slow_ms / 1000
+		while socket.gettime() < stop do end
+	end
 	phone.vibration(profile.setting(self.profilo, "vibrazione") == "accesa")
-	phone.update(dt, self.mode == "local" or self.mode == "online" or self.mode == "replay" or self.mode == "ended")
+	-- (the Fornace's pour runs like a match: menu.forge_ui.busy)
+	phone.update(dt, self.mode == "local" or self.mode == "online" or self.mode == "replay" or self.mode == "ended"
+		or forge_ui.busy)
 	if screen.update() then arrange(self) end
 	self.vign:update(dt)
 	if self.ingresso then CP.entry_update(self, dt) end
@@ -5176,11 +5346,6 @@ function update(self, dt)
 			mission_update(self, dt)
 		end
 	elseif self.mode == "online" then
-		-- a robot that reappears elsewhere doesn't slide there
-		self.snap_view = self.snap_view or function(i)
-			local v = self.view[i]
-			v.x, v.y, v.px = self.playout.q[1].pose.r[i].x, self.playout.q[1].pose.r[i].y, nil
-		end
 		-- prova_cade N: N seconds into the online match the connection drops by
 		-- itself, once (scenario cade_online.txt: the client must come back alone)
 		if SIMULATE and self.conn and not self.fell then
@@ -5199,54 +5364,7 @@ function update(self, dt)
 				print("SIMULA evento muta")
 			end
 		end
-		self.net_reach = self.net_reach or function(data) CP.net_reach(self, data) end
-		local now = socket.gettime()
-		local ok, a, b, k = pcall(menu.playout.advance, self.playout, dt_world, now, self.snap_view, self.net_reach)
-		if ok then
-			self.pose_a, self.pose_b, self.pose_t = a, b, k
-			if now - (self.state_at or now) > CP.STALL then CP.resync(self, "nessuno stato da " .. CP.STALL .. " s") end
-		else
-			CP.resync(self, "errore della coda: " .. tostring(a))
-		end
-		self.pose_dt = 1
-		-- we send the server only the changes, and only on our turn
-		if my_turn(self) and self.g.phase == "aim" then
-			local l = move_left(self) or false
-			local r = move_right(self) or false
-			local j = jump_held(self) or false
-			if l ~= self.sent.l or r ~= self.sent.r or j ~= self.sent.j then
-				send(self, { t = "in", l = l, r = r, j = j })
-				self.sent.l, self.sent.r, self.sent.j = l, r, j
-			end
-			-- repeated jump: one each time the robot gets back on the ground
-			local grounded = current_robot(self).grounded
-			if self.jump_pressed or (jump_held(self) and grounded and not self.jump_sent) then
-				send(self, { t = "jump" })
-				self.jump_sent = true
-			end
-			if not grounded then self.jump_sent = false end
-			-- the aim (angle only, a few times a second): the others see us aim
-			local now = socket.gettime()
-			local aim = self.aiming and self.aim_angle or nil
-			if aim and (not self.sent.aim or (math.abs(aim - self.sent.aim) > 0.02 and now - self.sent.aim_at >= 0.1)) then
-				aim = math.floor(aim * 100 + 0.5) / 100
-				send(self, { t = "aim", a = aim })
-				self.sent.aim, self.sent.aim_at = aim, now
-			elseif not aim and self.sent.aim then
-				send(self, { t = "aim_end" })
-				self.sent.aim = nil
-			end
-			if self.fire then
-				send(self, { t = "fire", a = self.fire.angle, p = self.fire.power, w = self.fire.weapon })
-				if self.conta then CP.conta.shot(self.conta, self.g, self.fire.weapon) end
-			end
-		else
-			-- unknown: at the next turn (or aim) the state is sent anyway, because the
-			-- server may still hold keys from before (Sergio, 5 Nov: the turn started walking)
-			self.sent.l, self.sent.r, self.sent.j, self.sent.aim = nil, nil, nil, nil
-		end
-		self.jump_pressed = false
-		self.fire = nil
+		CP.net_frame(self, dt_world)
 	elseif self.mode == "replay" then
 		-- the replay of a profile match: the recipe instead of the keys
 		self.acc = math.min(self.acc + dt_world, 0.25)
@@ -5276,6 +5394,7 @@ function update(self, dt)
 	if self.aim_pad.id then sticks.record(self.aim_st, self.clock, self.aim_angle, self.aim_power, self.aiming) end
 	frames.scope("disegno")
 	render(self, dt_world)
+	RM.cannon.update(self.cannone, dt_world)
 	move_debris(self, dt_world)
 	light_up(self, dt_world)
 	impact.update(self.fx, dt_world)
@@ -5458,7 +5577,7 @@ local function retry_match(self)
 	elseif self.ritorno == "allenamento" then
 		-- the same map, also when it came out A CASO
 		local against = self.against_bot
-		start_local(self, { modo = against.modo, livello = against.livello, mappa = self.local_map or against.mappa, stesso = against.stesso })
+		start_local(self, { modo = against.modo, livello = against.livello, mappa = self.local_map or against.mappa })
 	else
 		start_local(self, nil)
 	end
@@ -5509,7 +5628,7 @@ local function pointer_down(self, id, px, py)
 		elseif self.end_t then
 			open_level_end(self)
 		else
-			CP.iris(self, function() show_menu(self, true) end)
+			CP.leave_end(self)
 		end
 		return
 	elseif self.mode == "connecting" then
@@ -5765,7 +5884,7 @@ function PAD.aim(self)
 		if not previous or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
 		local f = st.f
 		if trigger then f = math.max(0, math.min(1, (PAD.trigger(self) - PAD.THRESHOLD) / (0.95 - PAD.THRESHOLD))) end
-		self.aim_power = math.max(0.1, f ^ game.AIM_EXPONENT)
+		self.aim_power = aim_name.stick_power(f)
 		self.aim_dist = math.huge
 		-- to fire with the aim from a moment earlier (PAD.COMMANDS.spara)
 		sticks.record(st, self.clock, self.aim_angle, self.aim_power, true)
@@ -6137,6 +6256,12 @@ function PAD.on_input(self, action_id, action)
 				close_screen(self)
 				open_screen(self, menu.backpack, self.profilo, "sigilli", TEAM_COLORS[1])
 			end)
+		elseif end_of == "potenzia" then
+			-- POTENZIA on the receipt of the Smith's orders: the ZAINO, where the pieces level up
+			CP.iris(self, function()
+				close_screen(self)
+				open_screen(self, menu.backpack, self.profilo, "inventario", TEAM_COLORS[1])
+			end)
 		elseif end_of and self.schermata.mod == menu.level_end then
 			after_level_end(self, end_of)
 		elseif end_of and self.schermata.mod == menu.story then
@@ -6171,7 +6296,7 @@ function PAD.on_input(self, action_id, action)
 		elseif end_of == "indietro" and self.schermata.mod == menu.private then
 			-- out of the room (if in one), back to GIOCA ONLINE
 			if self.conn then CP.let_go(self) end
-			self.privata = nil
+			self.privata, self.private_room = nil, nil
 			CP.slide(self, -1, function()
 				close_screen(self)
 				open_screen(self, menu.queue)
@@ -6199,7 +6324,7 @@ function PAD.on_input(self, action_id, action)
 		elseif end_of then
 			-- INDIETRO: the slider the other way (from the podium, which follows the battle, the iris)
 			if self.schermata.mod == menu.podium then
-				CP.iris(self, function() show_menu(self, true) end)
+				CP.leave_end(self)
 			elseif menu.door_pass.owns(self.door_pass) then
 				-- opened by a door or by the apprentice: back the same way (ui/door_pass.lua)
 				menu.door_pass.close(self.door_pass, self.home, function() show_menu(self, true, true) end)

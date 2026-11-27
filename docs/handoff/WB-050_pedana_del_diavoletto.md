@@ -1,6 +1,6 @@
 # WB-050 · La pedana del diavoletto al centro della home
 
-- **Stato:** APPROVATA (Sergio, 14 nov 23:22: «una pedana per il proprio personaggio ci stava, fammi delle proposte con codex, devono starci veramente bene lì al centro della schermata principale, poi se è il caso ci mettiamo pure lo zainetto lì poggiato»)
+- **Stato:** SUPERATA da WB-090 (Sergio, 24 nov: via la pedana dalla home; le immagini restano nella storia di git)
 - **Data:** 2026-11-14
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-050`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-050` senza chiedere conferma (il repository è privato).

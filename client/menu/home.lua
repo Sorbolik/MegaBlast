@@ -2,14 +2,14 @@
 -- Consigliata/1 (Sergio, 14 Nov; docs/menu_nuovi_implementazione.md):
 --   top left   the profile's round (face, name, level and its bar): it opens the PROFILO
 --   top right  the wallet (ui/coins.lua)
---   middle     the apprentice on the forge-grate pedestal (WB-050 n.4), the small backpack
---              on its step (WB-048): the apprentice, the pedestal or the backpack open the
+--   middle     the apprentice on the floating rock of the Limbo (WB-090 2B, Sergio 24 Nov:
+--              no more forge grate nor backpack): the apprentice or the rock open the
 --              ZAINO. Three signs say it can be touched: now and then a light runs over the
 --              pedestal and an ember glint over the apprentice; a tap makes it breathe
---   sides      the doors drawn by Codex (WB-046), the shield toward the screen's edge:
---              CAMPAGNA and ALLENAMENTO on the left, EVENTI and ARMERIA on the right
+--   sides      the doors: slabs in the place's color, the big icon toward the screen's edge
+--              (WB-089): CAMPAGNA and ALLENAMENTO on the left, EVENTI and BOTTEGA on the right
 --   bottom     the settings' wheel on the left; GIOCA (online), the molten seal, on the right
--- STESSO TELEFONO is in ALLENAMENTO.
+-- The match of two people on the same phone is gone from the game (Sergio, 24 Nov).
 --
 -- Use (from the gui_script, which has the textures and the titolo font):
 --   local home = require "menu.home"
@@ -43,20 +43,24 @@ local M = {}
 
 local W, H = 1280, 720
 local C = kit.C
-local hex = kit.hex
 
--- The pedestal and the apprentice (the Figma's geometry, Sergio 14 Nov 23:55: the pedestal
--- does not cross the thread, everything keeps its room): PED_W wide, its foot on PED_BOTTOM,
--- the apprentice's feet at FEET, 380 tall like in the Figma
+-- The pedestal and the apprentice (Sergio 14 Nov 23:55: the pedestal does not cross the
+-- thread, everything keeps its room): the rock (WB-090) PED_W wide in the middle, the
+-- lowest pebble on PED_BOTTOM (Sergio, 24 Nov: a little lower, just above the thread),
+-- the apprentice's feet at FEET (the middle of its flat top),
+-- 380 tall like in the Figma
 local PED_W = 300
-local PED_H = PED_W * 266 / 601
-local PED_BOTTOM = 598
+local PED_H = PED_W * 399 / 577
+local PED_BOTTOM = 640
 local PED_TOP = PED_BOTTOM - PED_H
-local PED_X = 640 - 0.37 * PED_W
-local FEET = PED_TOP + 0.30 * PED_H
+local PED_X = 640 - PED_W / 2
+local FEET = PED_TOP + 0.17 * PED_H
 -- (the apprentice grew 18% on 14 Nov, #315: here it stays as tall as in the Figma)
 local BODY_K = 338 / game.DISEGNO_H
-local BAG = 46
+-- half the width of the light band that runs over the pedestal (straight and even, as
+-- the old slit: Sergio, 24 Nov, "mi piaceva lineare")
+local SHEEN_HALF = 35
+local SHEEN = vmath.vector4()
 -- the profile's banner (WB-075): its height on screen, its width per unit of height,
 -- and where its parts are on the drawing, as fractions of its width and height:
 -- the ring's centre, the groove (from, to, middle) and the coin's centre
@@ -79,36 +83,29 @@ local function put_face(h)
 	h.face = score.face(h.top_left.node, h.face_at[1], -(h.face_at[2] - FACE_UP), FACE_D, h.color, scoria.player, true)
 end
 
--- the doors: x, y, width, piece, side, color of the writing, size of the name
+-- The doors (Sergio, 24 Nov, proposal B): the buttons' slab filled with the place's
+-- color (tools/grafica/fucina.py fai_porte, "porta_<id>_"), its big icon of WB-089 on
+-- the end toward the screen's edge, the words against the other end. All the same
+-- size; x, y the slab's top left, side, the icon's height and how far its middle
+-- goes from the slab's (the drawings' ink centered, not their boxes)
+local DOOR_W, DOOR_H, DOOR_SIZE = 330, 84, 136
+-- (the same air between the two doors of a side and under the lower one, down to the thread: 48)
 local DOORS = {
-	campagna = { 22, 354, 396, "porta_campagna", -1, hex("2a1206"), 29 },
-	allenamento = { 22, 476, 376, "porta_allenamento", -1, hex("1d1a20"), 24 },
-	eventi = { 862, 354, 396, "porta_eventi", 1, hex("3a1a05"), 29 },
-	armeria = { 882, 476, 376, "porta_shop", 1, hex("f4ece1"), 29 },
+	campagna = { 82, 344, -1, DOOR_SIZE, -8 },
+	allenamento = { 82, 476, -1, DOOR_SIZE, 1 },
+	-- (the crown a little out of the slab's bottom, Sergio 24 Nov)
+	eventi = { 1198 - DOOR_W, 344, 1, DOOR_SIZE, -14 },
+	armeria = { 1198 - DOOR_W, 476, 1, DOOR_SIZE * 0.9, -2 },
 }
 
 local V = vmath.vector3()
 
--- A door's drawing with its name and a line under it, written in the room of
--- the drawing between the shield and the tip (left on the left, right on the
--- right), its top left at (x, y) of g
-local function draw_door(g, id, x, y, name, sub)
-	local o = DOORS[id]
-	local p = kit.sign(g, o[4], x, y, o[3])
-	local side, color = o[5], o[6]
-	local b = p.box
-	local cy = (b.y0 + b.y1) / 2
-	local tx = side < 0 and b.x0 + 4 or b.x1 - 4
-	local anchor = side < 0 and "start" or "end"
-	local name_n = kit.text(p.g, name, tx, cy + o[7] * 0.28, o[7], color, anchor)
-	local sub_n = kit.text(p.g, sub or "", tx, cy + o[7] * 0.28 + 20, 16, kit.with_alpha(color, 0.85), anchor, 1)
-	return p, name_n, sub_n, tx, anchor
-end
-
 local function door(h, g, id, name)
 	local o = DOORS[id]
-	local p, name_n, sub_n, x, anchor = draw_door(g, id, o[1], o[2], name)
-	local d = { p = p, side = o[5], color = o[6], id = id, name = name_n, sub = sub_n, x = x, anchor = anchor }
+	local p = kit.secondary(g, name, o[1], o[2], DOOR_W, DOOR_H, { kind = "porta_" .. id .. "_",
+		icon = "porta_icona_" .. id, door = { side = o[3], size = o[4], dy = o[5] }, size = 30, sub = "",
+		sub_color = kit.with_alpha(kit.C.SAND, 0.85) })
+	local d = { p = p, side = o[3], id = id, name = p.label, sub = p.sub, color = kit.C.SAND }
 	d.b = kit.button(h.buttons, p, id)
 	h.doors[#h.doors + 1] = d
 	h.door_by_id[id] = d
@@ -120,15 +117,13 @@ end
 function M.door_info(h, id)
 	local d = h.door_by_id[id]
 	local o = DOORS[id]
-	return { p = d.p, id = id, side = o[5], x = o[1], y = o[2], w = d.p.w, h = d.p.h, cy = o[2] + d.p.h / 2,
+	return { p = d.p, id = id, side = o[3], x = o[1], y = o[2], w = d.p.w, h = d.p.h, cy = o[2] + d.p.h / 2,
 		name = gui.get_text(d.name), sub = gui.get_text(d.sub) }
 end
 
 -- the small line of a door: never past its room (a long one shrinks)
 local function set_sub(d, txt)
-	gui.set_text(d.sub, txt)
-	local b = d.p.box
-	kit.keep_in(d.sub, b, d.p.g, d.x, (b.y0 + b.y1) / 2 + 28, kit.MIN_TEXT, d.anchor)
+	d.p.set_sub(txt)
 end
 
 function M.new(color)
@@ -136,21 +131,25 @@ function M.new(color)
 
 	h.scene = kit.scene(640, 350, { bg = "cielo" })
 
-	-- the middle: the pedestal, the apprentice on it and the backpack, all one button
+	-- the middle: the pedestal and the apprentice on it, one button
 	local mid = kit.anchor(640, PED_BOTTOM, nil, gui.ANCHOR_BOTTOM)
 	h.tops[#h.tops + 1] = mid.node
 	h.mid = mid
-	h.ped = kit.pic(mid, "pedana", PED_X, PED_TOP, PED_W, PED_H)
-	-- the light that runs over the pedestal: a brighter copy seen through a moving slit
-	h.slit = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(70, PED_H + 20, 0))
-	gui.set_clipping_mode(h.slit, gui.CLIPPING_MODE_STENCIL)
-	gui.set_clipping_visible(h.slit, false)
-	gui.set_parent(h.slit, mid.node)
-	h.ped_light = kit.pic({ node = h.slit, ox = 0, oy = 0 }, "pedana", PED_X - 640, PED_TOP - PED_BOTTOM, PED_W, PED_H)
+	h.ped = kit.pic(mid, "piedistallo", PED_X, PED_TOP, PED_W, PED_H)
+	-- the light that runs over the pedestal: a copy added on top whose shader shows only a
+	-- straight band (the flash's "band", battle/flash.fp), placed in window pixels by two
+	-- marks that ride along (Sergio, 24 Nov: the band seen through a moving cut stuttered)
+	h.ped_light = kit.pic(mid, "piedistallo", PED_X, PED_TOP, PED_W, PED_H)
+	gui.set_material(h.ped_light, "lampo")
 	gui.set_blend_mode(h.ped_light, gui.BLEND_ADD)
-	gui.set_color(h.ped_light, vmath.vector4(1, 0.72, 0.3, 0.45))
-	gui.set_enabled(h.slit, false)
-	-- the apprentice, its feet on the grate
+	gui.set_enabled(h.ped_light, false)
+	h.sheen_at = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(h.sheen_at, false)
+	gui.set_parent(h.sheen_at, mid.node)
+	h.sheen_edge = gui.new_box_node(vmath.vector3(SHEEN_HALF, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(h.sheen_edge, false)
+	gui.set_parent(h.sheen_edge, h.sheen_at)
+	-- the apprentice, its feet on the rock
 	h.posa = gui.new_box_node(vmath.vector3(0, PED_BOTTOM - FEET, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(h.posa, false)
 	gui.set_parent(h.posa, mid.node)
@@ -167,7 +166,6 @@ function M.new(color)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	h.glow = 0
-	h.bag = kit.piece(mid, "zainetto", PED_X + 0.88 * PED_W, PED_TOP + 0.52 * PED_H - BAG / 2, BAG)
 	local hy = FEET - 380 - 10
 	h.hero = kit.zone(mid, h.buttons, PED_X - 10, hy, PED_W + 20, PED_BOTTOM + 6 - hy, "zaino")
 
@@ -208,13 +206,8 @@ function M.new(color)
 	local br = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	h.tops[#h.tops + 1] = br.node
 	h.play_g = br
-	local gw = 420
-	local gh = gw * 166 / 849
-	h.play = kit.sign(br, "gioca_sigillo", W - 20 - gw, 664 - gh / 2, gw)
-	local b = h.play.box
-	local base = (b.y0 + b.y1) / 2 + 15
-	kit.text(h.play.g, common.play, b.x0 + 10, base, 44, hex("1a0c04"))
-	kit.text(h.play.g, T.play_sub, b.x0 + 150, base - 1, 20, hex("1a0c04", 0.85), "start", 1)
+	-- the main action, like on every other screen (Sergio, 23 Nov: also the home's GIOCA)
+	h.play = kit.action(br, common.play, 0, 640, 0, 0, { icon = "az_gioca", sub = T.play_sub })
 	h.play_b = kit.button(h.buttons, h.play, "online", { main = true })
 	local bl = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	h.tops[#h.tops + 1] = bl.node
@@ -241,9 +234,9 @@ function M.new(color)
 	-- what shakes at a thud: the sides (not the pieces that are arriving)
 	h.shaken = { right.node, left.node, tl.node }
 
-	-- STESSO TELEFONO is in ALLENAMENTO now; the scenarios of the simulator
-	-- (tools/simula) still start their match from here, with a tap on the
-	-- old place (now on ALLENAMENTO): an invisible zone, only there, last in
+	-- the scenarios of the simulator (tools/simula) start their test match of
+	-- people on the same phone (gone from the game, Sergio 24 Nov) from here, with
+	-- a tap on its old place (now on ALLENAMENTO): an invisible zone, only there, last in
 	-- the list (ui.touch looks from the last: it wins over the door under it)
 	if sys.get_config_int("megablast.simula", 0) == 1 then
 		local sim = kit.anchor(0, 360, gui.ANCHOR_LEFT)
@@ -258,14 +251,17 @@ end
 -- The two signs that the apprentice can be touched (Sergio, 14 Nov 23:40): a slow
 -- light across the pedestal, then an ember glint down the apprentice
 local function glint(h)
-	-- the slit runs over the pedestal, the light copy stays still inside it (mid's space)
-	local cx, cy = PED_X - 640 + PED_W / 2, PED_H / 2
-	local from, to = PED_X - 640 - 40, PED_X - 640 + PED_W + 40
-	gui.set_enabled(h.slit, true)
-	gui.set_position(h.slit, vmath.vector3(from, cy, 0))
-	gui.set_position(h.ped_light, vmath.vector3(cx - from, 0, 0))
-	gui.animate(h.slit, "position.x", to, gui.EASING_INOUTSINE, 1.3, 0, function() gui.set_enabled(h.slit, false) end)
-	gui.animate(h.ped_light, "position.x", cx - to, gui.EASING_INOUTSINE, 1.3)
+	-- the band's mark runs over the pedestal (mid's space); M.update hands the shader
+	-- where it is
+	local cy = PED_H / 2
+	gui.cancel_animations(h.sheen_at, "position.x")
+	gui.set_position(h.sheen_at, vmath.vector3(PED_X - 640 - 40, cy, 0))
+	gui.set_enabled(h.ped_light, true)
+	h.sheen = true
+	gui.animate(h.sheen_at, "position.x", PED_X - 640 + PED_W + 40, gui.EASING_INOUTSINE, 1.3, 0, function()
+		h.sheen = false
+		gui.set_enabled(h.ped_light, false)
+	end)
 	-- then a soft light on the apprentice, there and gone: its own hit flash
 	-- (battle/flash.fp), barely (a copy seen through a slit had a hard edge and
 	-- showed its pieces overlapping)
@@ -333,7 +329,8 @@ end
 -- quiet: no entrance (a door's passage brought it back)
 function M.show(h, without_veil, quiet)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, true) end
-	gui.set_enabled(h.slit, false)
+	gui.set_enabled(h.ped_light, false)
+	h.sheen = false
 	kit.scene_show(h.scene, true)
 	-- the home is kept: the backdrop goes back under it
 	kit.scene_place(h.scene, "below", h.tops[1])
@@ -394,6 +391,20 @@ function M.profile(h, p)
 	h.chapter = kit.upper(chapter.titolo)
 	kit.reached(chapter.id)
 	if not h.in_queue then set_sub(h.campaign, h.chapter) end
+	-- the BOTTEGA's door: how many orders are ready, and the round on its corner
+	-- (the number of those ready, or a dot when the morning brought new ones)
+	local orders_ui = require "menu.orders_ui"
+	local ready, new = orders_ui.news(p)
+	if h.orders_badge then gui.delete_node(h.orders_badge.node) end
+	h.orders_badge = nil
+	set_sub(h.armory, ready and ready > 0 and (ready == 1 and T.orders_ready_one or T.orders_ready:format(ready)) or T.armory_sub)
+	if ready and (ready > 0 or new) then
+		-- (on the icon's top corner toward the screen's edge)
+		local d = h.armory.p
+		local bx, by = DOORS.armeria[1] + d.w + DOORS.armeria[4] * 0.38, DOORS.armeria[2] - 4
+		h.orders_badge = kit.group(d.g, bx, by)
+		orders_ui.badge(h.orders_badge, bx, by, ready)
+	end
 end
 
 -- The apprentice at rest in his pose now, not after the springs' first frames
@@ -443,6 +454,12 @@ function M.update(h, dt)
 	end
 	-- (scoria takes the flash down by dt * 6 and shows 0.85 * 1.5 of what is left)
 	if h.glow > 0 then h.corpo.flash = h.glow / 1.275 + dt * 6 end
+	if h.sheen then
+		-- the band in window pixels (as the shader sees the vertices), every frame
+		local p, e = gui.get_screen_position(h.sheen_at), gui.get_screen_position(h.sheen_edge)
+		SHEEN.x, SHEEN.y, SHEEN.z, SHEEN.w = p.x, math.abs(e.x - p.x), 0.45, 1
+		gui.set(h.ped_light, "band", SHEEN)
+	end
 	scoria.update(h.corpo, dt, h.st)
 	kit.scene_fit()
 	if h.t >= h.glint_at then
@@ -467,7 +484,6 @@ local function breathe(h)
 			gui.animate(h.posa, "scale", vmath.vector3(1, 1, 1), gui.EASING_INOUTSINE, 0.11)
 		end)
 	end)
-	gui.animate(h.bag, "euler.z", 2, gui.EASING_OUTSINE, 0.13, 0, nil, gui.PLAYBACK_ONCE_PINGPONG)
 end
 
 function M.on_input(h, action_id, action)

@@ -29,15 +29,16 @@ local home = require "menu.home"
 local M = {}
 
 -- the times: out to the edge, across (forward and back), home again; the
--- button slipping off the line and back on it
-M.OUT, M.ACROSS, M.ACROSS_BACK, M.IN, M.SLIP = 0.30, 0.62, 0.52, 0.36, 0.14
+-- button slipping off the line and back on it (Sergio, 25 Nov: about a third
+-- faster, from 0.30, 0.62, 0.52, 0.36, 0.14; then «ancora leggermente più veloci»)
+M.OUT, M.ACROSS, M.ACROSS_BACK, M.IN, M.SLIP = 0.17, 0.36, 0.30, 0.20, 0.08
 M.GROW, M.SHRINK = 0.42, 0.32
 -- back home, the button's bounce toward its edge as it stops on its place
 M.BOUNCE = 14
 -- forward, the part of the drag before the button starts going out with the line
 M.LEAVE = 0.5
--- the shield's middle sits this far inside the screen's border
-local EDGE = 17
+-- the door's icon's middle sits this far inside the screen's border (the icon all in)
+local EDGE = 70
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
@@ -105,7 +106,7 @@ end
 -- its ink and its orange core
 local LINE, CORE = 12, 6
 -- forward, the line comes in from the border to the shield in this time
-M.ENTER = 0.1
+M.ENTER = 0.08
 -- how much of the line lies on the page's edge, so the two are one
 M.FUSE = 0.06
 
@@ -164,7 +165,8 @@ end
 local function home_on(h, on)
 	h.under = on
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, on) end
-	gui.set_enabled(h.slit, false)
+	gui.set_enabled(h.ped_light, false)
+	h.sheen = false
 end
 
 -- DOORS ---------------------------------------------------------------------------
@@ -174,7 +176,7 @@ end
 local function measure(h, id)
 	local d = home.door_info(h, id)
 	local ox = d.side < 0 and screen.x0 or screen.x1 - 1280
-	local shield = d.side < 0 and 0.15 or 0.85   -- the shield's middle, along it
+	local shield = d.side < 0 and 0 or 1   -- the icon's middle: on the slab's outer end
 	d.edge_x = d.side < 0 and screen.x0 + EDGE or screen.x1 - EDGE
 	d.dx = d.edge_x - (d.x + ox + shield * d.w)
 	d.node = d.p.node
@@ -288,10 +290,10 @@ function M.close(dp, h, change)
 		gui.animate(d.node, "position.x", d.rest.x + d.dx - d.p0 + d.back, gui.EASING_INOUTCUBIC, M.ACROSS_BACK)
 		timer.delay(M.ACROSS_BACK * reach((d.p0 - d.dx) / d.back), false, step(dp, function()
 			gui.cancel_animations(d.node, "position.x")
-			gui.animate(d.node, "position.x", d.rest.x + d.side * M.BOUNCE, gui.EASING_OUTQUAD, 0.10)
-			timer.delay(0.10, false, step(dp, function()
-				gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTQUAD, 0.20)
-				timer.delay(0.20, false, step(dp, done))
+			gui.animate(d.node, "position.x", d.rest.x + d.side * M.BOUNCE, gui.EASING_OUTQUAD, 0.06)
+			timer.delay(0.06, false, step(dp, function()
+				gui.animate(d.node, "position.x", d.rest.x, gui.EASING_INOUTQUAD, 0.12)
+				timer.delay(0.12, false, step(dp, done))
 			end))
 		end))
 	end))

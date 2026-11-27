@@ -99,6 +99,11 @@ local READY_W, READY_H = 132, 48              -- PREPARATI: right of the right-h
 -- last lap: the banner and the warning before it
 local BANNER_DURATION, BANNER_W, BANNER_H = 2.6, 760, 112
 local NOTICE_BEFORE = 60 * 60                -- game ticks before the last lap
+-- two teams, your turn (Sergio, 23 Nov): when points are made the two scores come
+-- back for a moment as two big numbers in the team colors at the top center, the
+-- points fly into theirs, which swells and counts; HOLD seconds after the last one
+-- lands they slide up and away. Center below the top, half distance, ui.title scale
+local BURST_Y, BURST_DX, BURST_SCALE, BURST_HOLD, BURST_RISE = 62, 64, 1.4, 1, 40
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(1, 1, 1, 1)
@@ -355,6 +360,15 @@ function M.new(palette, tick)
 	gui.set_inherit_alpha(p.banner, true)
 	gui.set_enabled(p.banner, false)
 
+	-- the two big numbers of your turn (BURST_*)
+	p.burst = { root = root_node(HALF, 720 - BURST_Y), nums = {}, display = {}, bump = {}, k = 0, hold = 0 }
+	for i = 1, 2 do
+		local n = ui.title("0", (i == 1 and -1 or 1) * BURST_DX, 0, BURST_SCALE, ui.C.TEXT, p.burst.root)
+		gui.set_adjust_mode(n, gui.ADJUST_FIT)
+		p.burst.nums[i] = n
+	end
+	gui.set_enabled(p.burst.root, false)
+
 	-- the flying numbers, on top of everything else
 	for i = 1, NUMBERS do
 		local n = { nodo = ui.text("", 0, 0, FLIGHT_SCALE, ui.C.TEXT), colore = vmath.vector4(1, 1, 1, 1), wait = 0 }
@@ -428,6 +442,7 @@ function M.set_enabled(p, on)
 	if not on then
 		for _, n in ipairs(p.numeri) do n.is_active = false; gui.set_enabled(n.nodo, false) end
 	end
+	if not punti then p.burst.k, p.burst.hold = 0, 0; gui.set_enabled(p.burst.root, false) end
 end
 
 -- team -> real points (or, with flight, minus those still in the air)
@@ -472,7 +487,13 @@ function M.match(p, g, name_list, plates)
 	if p.rope_on then
 		gui.set_color(p.rope_a, p.gettoni[p.lista[1]].colore)
 		gui.set_color(p.rope_b, p.gettoni[p.lista[2]].colore)
+		for i = 1, 2 do
+			gui.set_text(p.burst.nums[i], "0")
+			p.burst.display[i], p.burst.bump[i] = 0, 0
+		end
 	end
+	p.burst.k, p.burst.hold = 0, 0
+	gui.set_enabled(p.burst.root, false)
 	p.rope_f, p.line_ticks = 0.5, 0
 	p.banner_time, p.ultimo = 0, nil
 	for _, gt in ipairs(p.gettoni) do
@@ -496,8 +517,13 @@ end
 
 -- a number is born at x, y (screen); if the same robot has one just born
 -- from the same hit (damage and kill together) it adds to that one
+local function bursting(p)
+	return p.rope_on and (p.slid or 0) > 0
+end
+
 function M.points(p, e, x, y)
 	if not p.squadre or p.nascosti or e.amount == 0 then return end
+	if bursting(p) then p.burst.hold = BORN_WAIT + SPAWN_T + FLIGHT_T + BURST_HOLD end
 	local r = e.robot
 	p.volo[r] = (p.volo[r] or 0) + e.amount
 	for _, n in ipairs(p.numeri) do
@@ -579,6 +605,11 @@ local function target_pt(p, g, r)
 	local rb = g.robots[r]
 	local gt = rb and p.gettoni[rb.team]
 	if not gt then return 0, Y end
+	-- on your turn: into the big number of its team
+	if p.burst.k > 0 then
+		local i = rb.team == p.lista[1] and 1 or 2
+		return HALF + (i == 1 and -1 or 1) * BURST_DX, (p.y1 or 720) - BURST_Y
+	end
 	-- pending points go into their token, next to the box
 	if gt.waiting_on then return gt.x + gt.waiting_x, Y end
 	return gt.x + (gt.w == GET_W and gt.w / 2 - 22 or 0), Y
@@ -629,6 +660,7 @@ local function numbers(p, dt, g)
 				if k >= 1 then
 					arrives(p, n)
 					if rb and p.gettoni[rb.team] then p.gettoni[rb.team].bump = 1 end
+					if rb and p.burst.k > 0 then p.burst.bump[rb.team == p.lista[1] and 1 or 2] = 1 end
 				end
 			end
 			if n.is_active then
@@ -841,6 +873,44 @@ function M.update(p, dt, g, my_own, human, looks, views)
 		-- the Crown on the token that is first alone, once its points arrived
 		-- (and after the first laps without a Crown, like game:leader)
 		gui.set_enabled(gt.crown, pos[t] == 1 and firsts == 1 and (g.round or 1) > (g.score.crown_rounds or 0))
+	end
+
+	if p.rope_on then
+		local b = p.burst
+		b.hold = max(0, b.hold - dt)
+		-- the full points of each team as they land (also those still pending)
+		local all = team_points(p, g, true)
+		local busy = false
+		for _, n in ipairs(p.numeri) do if n.is_active then busy = true end end
+		if busy and bursting(p) then b.hold = max(b.hold, BURST_HOLD) end
+		local target = (b.hold > 0 and bursting(p)) and 1 or 0
+		b.k = b.k + (target - b.k) * min(1, dt * (target > b.k and 14 or 7))
+		if b.k < 0.01 and target == 0 then b.k = 0 end
+		gui.set_enabled(b.root, b.k > 0)
+		if b.k > 0 then
+			position(b.root, HALF, (p.y1 or 720) - BURST_Y + BURST_RISE * (1 - b.k) * (1 - target))
+			for i = 1, 2 do
+				-- (the root is invisible and passes no alpha down)
+				local c = p.gettoni[p.lista[i]].colore
+				C.x, C.y, C.z, C.w = c.x, c.y, c.z, b.k
+				gui.set_color(b.nums[i], C)
+				local val = round_off(all[p.lista[i]])
+				if b.display[i] ~= val then
+					local d = val - b.display[i]
+					local step = max(1, abs(d) * dt * 8, 40 * dt)
+					b.display[i] = abs(d) <= step and val or b.display[i] + (d > 0 and step or -step)
+					gui.set_text(b.nums[i], tostring(round_off(b.display[i])))
+				end
+				b.bump[i] = max(0, b.bump[i] - dt * 3)
+				scale(b.nums[i], BURST_SCALE * (0.8 + 0.2 * b.k) * (1 + 0.35 * math.sin(math.pi * b.bump[i])))
+			end
+		else
+			-- hidden: it shows the right score as soon as it appears
+			for i = 1, 2 do
+				local val = round_off(all[p.lista[i]])
+				if b.display[i] ~= val then b.display[i] = val; gui.set_text(b.nums[i], tostring(val)) end
+			end
+		end
 	end
 
 	faces(p, g, human, looks, views)

@@ -1,7 +1,6 @@
 # IL MIO PROFILO nelle impostazioni (passo 6 dei profili ospite): il nome e il
 # codice per ritrovare il profilo, chiesto al server vero; HO GIÀ UN PROFILO
 # col codice scritto dalla tastiera, un codice sbagliato, poi ANNULLA.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_identita 1
 
 server 2v2 0

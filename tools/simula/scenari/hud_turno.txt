@@ -1,18 +1,20 @@
 # HUD in partita (Sergio, 21 Nov): quello che hai in mano ha sempre la stessa identità
 # (anche Rampino e teletrasporto), il punteggio se ne va nel tuo turno e la mappa sale,
 # gli ultimi 8 secondi la scena si avvicina e si scalda, nel turno del bot i tasti sono
-# trasparenti ma si tocca lo stesso (l'Uovo preparato). Telefono: Rampino e teletrasporto
-# ad arco attorno alla levetta della mira.
+# trasparenti ma si tocca lo stesso (l'Uovo preparato). Telefono: teletrasporto sopra la
+# levetta della mira con Giano a sinistra e Rampino sopra, accanto agli OGGETTI (23 nov).
 imposta prova_armi 1
 imposta comandi telefono
 
 aspetta 2
 tocca 220 172                      # ALLENAMENTO
 aspetta 1
-tocca 547 470                       # 1 CONTRO 1
-tocca 840 382                       # DIFFICILE
+tocca_bordo 520 55 alto sinistra   # 1 CONTRO 1
+tocca 846 542                       # DIFFICILE
 aspetta 1
-tocca 1151 249                       # LA FOSSA DEL FABBRO
+trascina 1100 328 388 328 0.6          # la fila delle mappe a sinistra
+aspetta 0.3
+tocca 972 328                       # LA FOSSA DEL FABBRO
 aspetta 0.3
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5
@@ -23,10 +25,10 @@ foto 02_lanciarune
 premi 2
 aspetta 0.4
 foto 03_uovo
-tocca_bordo 239 236 basso destra    # Rampino
+tocca_bordo 122 375 basso destra    # Rampino
 aspetta 0.4
 foto 04_rampino
-tocca_bordo 145 286 basso destra     # teletrasporto
+tocca_bordo 58 286 basso destra      # teletrasporto
 aspetta 0.4
 foto 05_teletrasporto
 premi 1

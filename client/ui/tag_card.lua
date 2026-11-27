@@ -18,6 +18,7 @@
 
 local ui = require "ui.ui"
 local kit = require "ui.kit"
+local P = require "ui.pieces"
 local game = require "sim.game"
 local skills = require "sim.skills"
 local milestones = require "menu.milestones"
@@ -102,8 +103,47 @@ function M.TALL(opt)
 		+ RESOURCES + (opt.tree == "line" and TREE_LINE or TREE) + PAD - 4
 end
 
+-- A client's badge (sim/orders.lua badges, Sergio 23 Nov): a disc d wide with the
+-- ring in the metal of the trust's thread, the client's bust on it (WB-086/087,
+-- tools/grafica/fucina.py): from the disc's base, the head free to stick out above
+-- and to the sides, like the face of the profile's round
+function M.client_badge(id, grade, x, y, d, parent)
+	local root_node = box(x, y, 0, 0, C.LIGHT, parent)
+	gui.set_visible(root_node, false)
+	ui.disc(0, 0, d, C.BOTTOM, root_node)
+	ui.disc(0, 0, d * 0.9, C.GRADI[grade] or C.OFF, root_node)
+	local inner = d * 0.76
+	ui.disc(0, 0, inner, with_alpha(C.BOTTOM, 0.95), root_node)
+	local m = P["badge_" .. id]
+	if m then
+		-- the pieces' disc is 128 wide; the box says where its middle is in the picture
+		local k = inner / 128
+		local n = gui.new_box_node(vec((m.w / 2 - m.box[1]) * k, (m.box[2] - m.h / 2) * k), vec(m.w * k, m.h * k))
+		gui.set_texture(n, "fucina")
+		gui.play_flipbook(n, "badge_" .. id)
+		gui.set_parent(n, root_node)
+	end
+	return root_node
+end
+
+-- A Forge's medal (the jackpot's, WB-094; the knocks', WB-095): the medal itself, d
+-- wide (fornace_jackpot: medaglia_jackpot, fornace_rintocchi_6: medaglia_rintocchi_6)
+function M.forge_badge(id, x, y, d, parent)
+	local name = "medaglia_" .. id:sub(#"fornace_" + 1)
+	local m = P[name]
+	local n = gui.new_box_node(vec(x, y), vec(d * 1.08, d * 1.08 * m.h / m.w))
+	gui.set_texture(n, "fucina")
+	gui.play_flipbook(n, name)
+	gui.set_parent(n, parent)
+	return n
+end
+
 -- A badge: the stat's shape in the grade's color, with the grade written inside
+-- (a client's: M.client_badge)
 function M.badge(b, x, y, d, parent)
+	if b.id:match("^fornace_") then return M.forge_badge(b.id, x, y, d, parent) end
+	local cl = b.id:match("^cl_(%a+)$")
+	if cl then return M.client_badge(cl, b.grado, x, y, d, parent) end
 	local s = milestones.BY_ID[b.id]
 	local col = C.GRADI[b.grado] or C.OFF
 	local root_node = box(x, y, 0, 0, col, parent)
@@ -142,7 +182,6 @@ function M.new(v, x, y, opt, parent)
 	gui.set_visible(c.root, false)
 	gui.set_scale(c.root, vmath.vector3(k, k, 1))
 	kit.panel(c.root, W, H, opt.tu and "pannello_caldo" or "pannello")
-	if opt.tu then kit.panel(c.root, W - 10, H - 10, "pannello") end
 	-- the kit's coordinates on the card: x from its left, y from its top
 	local g = { node = c.root, ox = W / 2, oy = H / 2 }
 	local sx, wide = PAD, W - 2 * PAD

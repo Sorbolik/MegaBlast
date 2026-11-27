@@ -5,11 +5,10 @@
 # schermata come le altre (Sergio, 17 nov): la freccia in basso a sinistra esce
 # dalla coda, la piastra a destra torna ai menu restando in coda. Tocchi ai bordi: va anche con
 # --schermo 1600x720 e 960x720.
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 1
-tocca_bordo 222 148 mezzo sinistra                     # STESSO TELEFONO
+tocca_bordo 222 148 mezzo sinistra                     # PARTITA DI PROVA (zona nascosta della home)
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 foto 00_partita_prima

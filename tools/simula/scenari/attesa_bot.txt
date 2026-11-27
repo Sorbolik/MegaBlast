@@ -3,7 +3,6 @@
 # chiama i bot dopo 6 s invece di 25. La sala conta BOT TRA N s, poi arriva
 # lo schieramento con due cartellini BOT (il finto è in squadra contro di noi),
 # e in partita i bot giocano il loro turno da soli.
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 1 bot_dopo=6s

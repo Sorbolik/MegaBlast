@@ -1,0 +1,20 @@
+# La Fornace sul telefono: la levetta di mira a destra come in partita (battle/stick_pad.lua),
+# si accende oltre il 20% della corsa e lasciando il pollice parte il tiro.
+# (tocca_centro: Y dal basso)
+imposta prova_test prova
+imposta prova_fornace_centra 1
+imposta comandi telefono
+
+aspetta 4
+tocca_bordo 210 170 mezzo destra    # la porta BOTTEGA
+aspetta 8
+tocca_bordo 556 50 alto sinistra    # FORNACE
+aspetta 3
+tocca_bordo 178 49 basso destra     # COLA
+aspetta 4.5
+foto 01_levetta_a_destra
+trascina 1120 140 1190 210 0.6 02_mira_con_la_levetta
+aspetta 1.6
+foto 03_il_lancio
+aspetta 4
+foto 04_di_nuovo_la_levetta

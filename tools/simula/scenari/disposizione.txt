@@ -12,10 +12,10 @@ foto 01_impostazioni
 tocca_centro 782 657                # DISPOSIZIONE TASTI
 aspetta 1.5
 foto 02_editor
-tocca 1135 286                      # il teletrasporto
+tocca 1222 286                      # il teletrasporto
 aspetta 0.3
 foto 03_scelto
-trascina 1135 286 1010 380 0.6      # più in alto e a sinistra
+trascina 1222 286 1010 330 0.6      # più a sinistra
 aspetta 0.3
 aspetta 0.3
 tocca 800 608                       # GRANDEZZA quasi al massimo
@@ -35,8 +35,8 @@ premi Escape                        # di nuovo alla home
 aspetta 1.2
 tocca 220 172                       # ALLENAMENTO
 aspetta 1
-tocca 547 470                       # 1 CONTRO 1
-tocca 840 382                       # DIFFICILE
+tocca_bordo 520 55 alto sinistra   # 1 CONTRO 1
+tocca 846 542                       # DIFFICILE
 aspetta 1
 tocca_bordo 175 52 basso destra     # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5

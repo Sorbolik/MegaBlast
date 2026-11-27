@@ -20,7 +20,6 @@ aspetta 1.5
 foto 02_home
 tocca 220 172                       # ALLENAMENTO
 aspetta 1
-tocca 761 551                       # STESSO TELEFONO
 aspetta 0.3
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 8

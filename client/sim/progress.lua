@@ -16,6 +16,8 @@ local profile = require "sim.profile"
 local wallet = require "sim.wallet"
 local equip = require "sim.gear"
 local campaign = require "sim.campaign"
+local orders = require "sim.orders"
+local forge = require "sim.forge"
 
 local M = {}
 
@@ -112,6 +114,12 @@ function DO.partita(p, a, today)
 	local c = clean_tally(a.conta)
 	if c then profile.add_stats(p, c) end
 	gain.coins = match_coins(p, r, stats_before, gain, today)
+	-- the Smith's orders move only with the online matches (a.commesse: sim/orders.lua
+	-- summary, made by the server): their rows go to the podium's receipt
+	if r.online then
+		local s = orders.clean(a.commesse, r.mvp)
+		if s then gain.commesse = orders.match(p, s, today) end
+	end
 	return gain
 end
 
@@ -140,6 +148,7 @@ end
 -- the BOTTEGA's piece of today (offer: at its price) or the CATALOGO's
 function DO.compra(p, a, today)
 	if not piece_ok(a) then return nil, "shop" end
+	if a.frammenti == true then return orders.buy(orders.init(p), a.set, a.slot) end
 	return wallet.buy(p, a.set, a.slot, a.offer == true and today or nil)
 end
 
@@ -150,12 +159,68 @@ end
 
 function DO.potenzia(p, a)
 	if not piece_ok(a) then return nil, "max" end
+	if a.frammenti == true then return orders.upgrade(orders.init(p), a.set, a.slot) end
 	return wallet.upgrade(p, a.set, a.slot)
 end
 
 function DO.firma(p, a)
 	if not piece_ok(a) then return nil, "max" end
 	return wallet.light(p, a.set, a.slot)
+end
+
+-- The Smith's orders (sim/orders.lua, docs/commesse.md). Each one first tells
+-- the board what day it is, so the phone and the server hang the same cards.
+-- The day turns at 5 in the morning (wallet.today, accounts.go today).
+-- bacheca: the board is looked at (the day's refill)
+function DO.bacheca(p, a, today)
+	orders.refresh(p, today)
+	return true
+end
+
+-- consegna: order n is delivered (set: the family, for the Smith's own)
+function DO.consegna(p, a, today)
+	orders.refresh(p, today)
+	if type(a.n) ~= "number" then return nil, "commessa" end
+	local set = type(a.set) == "string" and equip.BY_ID[a.set] and a.set or nil
+	return orders.deliver(p, a.n, set)
+end
+
+-- scambia: TRADE of a material (da) for one of another (a)
+function DO.scambia(p, a, today)
+	orders.refresh(p, today)
+	if type(a.da) ~= "string" or type(a.a) ~= "string" then return nil, "materiale" end
+	return orders.trade(p, a.da, a.a)
+end
+
+-- cambia: the day's free change of a client's card
+function DO.cambia(p, a, today)
+	orders.refresh(p, today)
+	if type(a.n) ~= "number" then return nil, "commessa" end
+	return orders.change(p, a.n, today)
+end
+
+-- chiama: a client is called for tomorrow
+function DO.chiama(p, a, today)
+	orders.refresh(p, today)
+	if type(a.cliente) ~= "string" then return nil, "cliente" end
+	return orders.call(p, a.cliente, today)
+end
+
+-- The Forge (sim/forge.lua, docs/commesse.md "La Fornace").
+-- colata: a pour on the wall the phone sees (muro: "date#shift")
+function DO.colata(p, a, today)
+	return forge.pour(p, a.muro, today)
+end
+
+-- tiro: a throw of the pour (angolo in radians, forza 0..1); the result is
+-- computed here, never said by the phone
+function DO.tiro(p, a)
+	return forge.throw(p, a.angolo, a.forza)
+end
+
+-- fondi: 4 fragments of da for 1 of a, or (no a) 1 of da for Scaglie
+function DO.fondi(p, a)
+	return forge.melt(p, a.da, a.a)
 end
 
 -- the ZAINO: the loadouts (pieces worn, Sigilli) and the active ones
@@ -165,8 +230,8 @@ function DO.zaino(p, a)
 	return true
 end
 
--- Does action a on p (today: the date, for the day's counts and the
--- BOTTEGA). Returns what its rule returns (nil and why when it can't)
+-- Does action a on p (today: the date, for the day's counts, the BANCO and the
+-- Smith's orders). Returns what its rule returns (nil and why when it can't)
 function M.act(p, a, today)
 	local f = type(a) == "table" and DO[a.k]
 	if not f then return nil, "azione" end

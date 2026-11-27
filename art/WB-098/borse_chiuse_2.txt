@@ -1,0 +1,9 @@
+Image 1 shows on the left an open purse of our game and on the right a rough sketch of the same purse once it is taken: CLOSED, tied and sealed. Image 2 shows our usurers and their purses: copy EXACTLY that STYLE: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic. Image 3 shows the five family colors.
+
+Draw the SAME SIX purses as the open ones (round fat purses of worn brown leather #84492A, the same size, about 230 px wide, the same flat shield coat of arms on the front: gold #FFB703, ice blue #8FD8F5, fire orange #F26419, sea green #5CDBB8, violet #C49CFF, iron grey #8A8F98, in this order, top row then bottom row), on plain green (#00FF00), well apart, each whole. Now each purse is CLOSED and a little fuller: its mouth is gathered up into a puckered leather tuft with soft folds, tied tight at the neck with several turns of thick rope (#D6A062), and on the knot sits a big round RED WAX SEAL (#B0221C, shadow #78120F) with wavy squashed edges and an EMPTY flat round center a little darker, where the game will put an icon. The rope goes up from the knot and stops a little above it, cut clean and straight (the game continues it). It must read at a glance as "taken, closed, done", very different from the open one but clearly the same purse.
+Nothing else: no icons in the seal, no letters, no coins, no shadow on the ground, no glow halo.
+
+Riferimenti in ordine: art/WB-098/riferimenti/R2_borsa_aperta_e_chiusa.png, art/WB-097/usurai_vuoti_2.png, art/WB-084/frammenti_1.png
+ImageGen. PNG nativo da 1536×1024.
+Un tentativo. Sei borse chiuse da circa 337 px, con stemmi in ordine e sigilli senza icona. Verde campionato #02F903.
+Il fondo si discosta da #00FF00 esatto.

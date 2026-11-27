@@ -1,0 +1,33 @@
+# Cannonata (Sergio, 22 nov: il diavoletto diventa la palla di cannone): il cannone
+# salta a terra e cresce, il diavoletto ci salta dentro, la miccia sfrigola (0,95 s,
+# config.CANNON.windup), BUM, vola la palla di ferro con la sua testa dietro (corna sopra,
+# occhi nella feritoia), all'arrivo la palla si spacca e lui salta fuori.
+imposta prova_secondaria cannon
+imposta zoom 1
+
+aspetta 2
+tocca 222 148                      # PARTITA DI PROVA (zona nascosta della home)
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+premi 3                             # Cannonata
+aspetta 0.4
+mira 150 90 0.1                     # verso il nemico, in alto
+aspetta_evento cannon 2
+aspetta 0.12
+zoom 01_cannone_cresce 2
+aspetta 0.25
+zoom 02_salta_dentro 2
+aspetta 0.3
+zoom 03_miccia 2
+aspetta_evento cannon_fire 2
+aspetta 0.05
+zoom 04_bum 2
+aspetta 0.15
+foto 05_palla_in_volo
+aspetta 0.15
+zoom 06_palla_da_vicino 5
+aspetta_evento cannon_land 3
+aspetta 0.1
+zoom 07_gusci 2
+aspetta 0.6
+zoom 08_dopo 2

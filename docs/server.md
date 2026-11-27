@@ -14,8 +14,8 @@ connessione (goroutine) ──hello──► Lobby (una coda per modalità)
         │ input                         ▼
         └──────────► Room.in ──► worker (uno per core, ticker a 60 Hz)
                                   └─ a ogni tick, per ogni sua stanza:
-                                     legge gli input, Step della sim,
-                                     eventi e stato ai giocatori
+                                     i tasti di chi è di turno, Step
+                                     della sim, tasti e stato ai giocatori
 ```
 
 - **Stanze sui worker** (`sched.go`): un worker per core, ognuno con un solo
@@ -25,11 +25,12 @@ connessione (goroutine) ──hello──► Lobby (una coda per modalità)
 - **Simulazione in LuaJIT** (`proc.go`, `worker.lua`, dal 9 nov): ogni worker ha
   un processo `luajit` con le partite (e le scelte delle armi) delle sue stanze,
   per id. A ogni tick le stanze scrivono i loro comandi in un solo pacchetto
-  (`open`, `draft`, `pick`, `ready`, `start`, `tick`, `resume`, `remove`, `free`: tabelle
+  (`open`, `draft`, `pick`, `ready`, `start`, `tick`, `remove`, `free`: tabelle
   Lua, una riga ogni 200 comandi), il worker lo manda al processo e legge le
   risposte: un solo giro per worker e tick, non uno per stanza. Ogni risposta ha
-  una testa piccola che legge il Go (chi è di turno, se è finita) e i messaggi già
-  in JSON (eventi, stato, scelta), che il Go manda ai giocatori così come sono. Le
+  una testa piccola che legge il Go (chi è di turno, se è finita, i tasti
+  applicati) e i messaggi già in JSON (stato, scelta), che il Go manda ai
+  giocatori così come sono. Le
   risposte arrivano nelle callback delle stanze, sullo stesso worker, prima del
   tick dopo: niente lock. Se il processo muore le partite del worker si chiudono
   con `error` e il tick dopo ne parte un altro. Un processo a parte (con lock)
@@ -85,10 +86,12 @@ c'è almeno una persona. Le code degli eventi non hanno bot.
 
 
 Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`):
-ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","rd":[0,1],"you":1,"tok":…,"players":[{"team":1},…],"vetrine":[{"liv":12,"bdg":[…]},…],"left":1200}`
+ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","rd":[0,1],"you":1,"tok":…,"players":[{"team":1,"eq":{…}},{"team":2,"bot":4,"eq":{…}},…],"vetrine":[{"liv":12,"bdg":[…]},…],"left":1200}`
 (`offer` le primarie, `offer2` le secondarie; `p` e `p2` le **sue** scelte:
 quelle degli altri non si mandano, Sergio 30 ott; `rd` chi ha premuto PRONTO,
-1 o 0 per ogni robot; `left` i tick rimasti;
+1 o 0 per ogni robot; `left` i tick rimasti; `players` squadra, grado dei bot e
+`eq`, quello che indossa ognuno: i bot sono forti quanto le persone, come in allenamento,
+fatti dal server con `sim/loadout.lua` `dress_bots`, Sergio 22 nov;
 `vetrine` il cartellino di ognuno, livello, badge e pezzi indossati, arrivati col `hello` e
 controllati dal server) e
 manda `{"t":"pick","w":"shards"}` per ognuna (l'arma dice la categoria; si può
@@ -121,7 +124,7 @@ mostra con la schermata dello stesso telefono (`client/menu/pick.lua`). Nello st
 porta la sua secondaria in `sw` (i suoi colpi in `ss`), l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
 `hx`, `hy`; `gs`: il suo uncino del Rampino è in volo, in `gx`, `gy`; `kn`: sbalzato da un colpo; `tr`: piedi bloccati da una trappola; `la`: direzione dello scatto
-dell'Affondo). Il Giano (attrezzo di scambio, `fire.weapon = "janus"`) non ha campi suoi: in volo è il proiettile `p` con `k = "janus"`, lo scambio arriva come evento `janus_swap` e le posizioni nello stato dopo. Nelle casse (`c`) il contenuto resta segreto, tranne per gli attrezzi che cadono sulla mappa
+dell'Affondo). Il Giano (attrezzo di scambio, `fire.weapon = "janus"`) non ha campi suoi: in volo è il proiettile `p` con `k = "janus"` (i colpi più vecchi ancora in volo, quando se ne tira un altro, stanno in `pf` con gli stessi campi), lo scambio arriva come evento `janus_swap` e le posizioni nello stato dopo. Nelle casse (`c`) il contenuto resta segreto, tranne per gli attrezzi che cadono sulla mappa
 (trappola, scudo, Molla, dal 9 nov): `w` è l'attrezzo, e l'evento `crate` lo porta in `item`. Ogni trampolino posato
 (`pl`) porta in `d` il lato verso cui è inclinato (1 destra, -1 sinistra).
 Il pericolo della mappa (`hz`, `client/sim/hazards.lua`) va nello stato così com'è, una tabella di numeri e liste: `dir` (la bufera: da che parte soffierà la prossima raffica), `marks` e `stones` (la grandine e la pioggia di fuoco: le ombre dove cadranno i chicchi e quelli in volo con `x`, `y`), `rocks` (i massi di Avarizia in corsa: `x`, `y`, `dir`, `v`, `hit`), `level` e `rise` (l'acqua di Ira: la superficie e se salirà a fine giro), `phase` (le tombe di Eresia: quale metà è aperta), `t` e `solid` (i ponti che crollano: tick che mancano, -1 = caduto), `vel` e `prev` (il ghiaccio, per robot); nelle mappe senza pericolo manca. La raffica e la grandine arrivano anche come eventi `gust`, `hail`, `boulders`, `water` e `tombs` (solo per i messaggi); il crollo di un ponte arriva come eventi `carve` (cerchietti, il client scava uguale) e `collapse`, più `bridge_shaking` e `wings`. Gravità, fango, sangue, punti di partenza dei massi, livello iniziale dell'acqua, rettangoli delle tombe, ponti e ghiaccio stanno nei dati della mappa, che il client ha già. Ricetta: [pericoli_mappe.md](pericoli_mappe.md).
@@ -146,6 +149,19 @@ prende il loro: così si sceglie la squadra, con o contro i bot) e
 vuota sparisce. Col `via` la stanza diventa una stanza normale (`newRoom` con
 i posti come sono, `seatSpec`): scelta delle armi, schieramento e partita come
 in coda; con dei bot gira sui worker dei bot.
+
+La stanza resta finché c'è qualcuno (Sergio, 22 nov: «non facciamo ricreare la
+stanza ogni volta»). Durante la partita il codice resta suo e chi prova a
+entrare riceve `{"t":"error","e":"partita"}`. Quando la partita si chiude (fine
+normale, avversari usciti, errore) il server non chiude le connessioni di chi
+è ancora collegato: tornano nella stessa stanza, negli stessi posti, con gli
+stessi bot e lo stesso host (`privateOver`, chiamata da `closeExcept`); i posti
+di chi è uscito o caduto diventano bot. Chi torna ha `"podio":true` nel suo
+posto finché il telefono, chiuso il podio, non manda `{"t":"torna"}`: fino ad
+allora il `via` aspetta, così nessuno viene tirato fuori dai risultati. Nel
+gioco il podio (o il tocco a fine partita) porta di nuovo alla stanza invece
+che alla home (`CP.leave_end`). Nessun cambio di versione: un client vecchio a
+fine partita chiude la connessione ed esce dalla stanza come prima.
 
 ## Eventi
 
@@ -199,14 +215,17 @@ Regola permanente di Sergio (29 ottobre): il server è sempre in pari con
 server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
 `client/sim/`), ma ogni volta si controlla:
 
-1. **Stato** (`net.lua`, `N.snapshot`): ogni campo di robot o partita nuovo che
-   il client legge (`apply_state` in `client/main/game.gui_script`, HUD,
-   personaggio) va nello stato; altrimenti online resta fermo al valore
-   iniziale. Lo stesso per gli eventi che cambiano il terreno (`N.events`,
-   `N.sync`).
-2. **Messaggi** (`room.go`, `server.go`): un comando nuovo del giocatore (arma,
-   attrezzo, oggetto) passa da `fire.w` o da un messaggio nuovo; il server lo
-   deve accettare.
+1. **Tasti** (`client/sim/netkeys.lua`): dal 22 nov online ogni telefono gioca
+   la stessa partita coi tasti di ogni tick, quindi la simulazione nuova arriva
+   da sola su telefono e server. Un campo nuovo dell'input di `game:step` (un
+   tasto, un dato dello sparo) va nel codice di `netkeys`, se no online non
+   arriva a nessuno. Un'arma nuova passa da sola (`f<arma>,…`, se è in
+   `game.WEAPONS`).
+2. **Messaggi** (`room.go`, `server.go`): niente di quello che il telefono
+   cambia nella partita deve stare fuori dai tasti (`game:step`): online gli
+   altri non lo saprebbero e le partite si separano (l'impronta se ne accorge,
+   e il telefono si ricollega ogni volta). Lo stato (`N.snapshot`) serve solo
+   al controllo e ai test.
 3. **Dati del client**: quello che il client passa a `game.new` o a
    `draft.new` solo in locale (assetto, profilo) online deve arrivare col
    `hello` o restare fuori consapevolmente. Dal 18 nov le statistiche
@@ -227,7 +246,7 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
 
 ## Protocollo
 
-Il primo messaggio del client è `{"t":"hello","v":10,"mode":"2v2","profilo":"12.<chiave>"}` (dal 19 nov; prima `v` 9 con `vetrina` ed `eq` dichiarati dal telefono). Fino al 18 nov era `{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
+Il primo messaggio del client è `{"t":"hello","v":11,"mode":"2v2","profilo":"12.<chiave>"}` (dal 22 nov la versione 11: online in lockstep coi tasti, vedi sotto; dal 19 nov la 10; prima `v` 9 con `vetrina` ed `eq` dichiarati dal telefono). Col profilo di prova (FINE GIOCO, DA ZERO) il telefono non manda `profilo` ma `"prova":{eq}`, quello che indossa: online conta, anche per vestire i bot, e non paga premi (Sergio, 22 nov; da chiudere prima del lancio, chi lo sceglie entra con tutto). Fino al 18 nov era `{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
 (`mode`: la coda scelta in DOVE GIOCHI?, o la `coda` di un evento; `vetrina`:
 livello e al massimo tre badge, il server tiene solo i valori validi, livello
 1-999, badge di lettere minuscole con grado 1-4; dal 16 nov anche `"pz":[{"set":"corvo","liv":24},…]`,
@@ -237,7 +256,13 @@ mostrarli sui cartellini, online non cambiano ancora le statistiche, e senza pro
 può sapere se il giocatore li possiede; un client vecchio non manda `pz` e ignora quello degli altri,
 la versione del protocollo resta 9). Se la
 versione non è quella del server la risposta è `{"t":"error","e":"version"}` e
-il client chiede di aggiornare il gioco. La versione (`protocolVersion` in
+il client chiede di aggiornare il gioco. **Stessa simulazione** (23 nov): l'APK e la build web
+portano l'impronta della loro `client/sim` (`git rev-parse HEAD:client/sim`, scritta da
+`apk.yml` e `tools/web/build.sh` in `megablast.sim`) e la mandano nel saluto (`"sim":"…"`); il
+server calcola la sua dai file che incorpora (`server/simtree.go`, è lo stesso hash di git) e, se
+sono diverse, risponde `{"t":"error","e":"sim"}`: il telefono dice di aggiornare il gioco invece di
+entrare in una partita che si separerebbe da quella del server. Chi non manda `sim` (simulatore,
+build dall'editor) non è controllato. La versione (`protocolVersion` in
 `server.go`, `PROTOCOL` nel client) va alzata quando i messaggi cambiano in un
 modo che un client vecchio non capirebbe. Gli altri messaggi sono in
 [design.md](design.md#5-rete-e-protocollo).
@@ -246,26 +271,33 @@ modo che un client vecchio non capirebbe. Gli altri messaggi sono in
 
 Con `start` il client riceve un gettone. Se la connessione cade (sui telefoni
 succede, per questo il server manda anche un ping ogni 10 s), gli altri
-ricevono `away`, i tasti tenuti premuti si lasciano e la partita va avanti: se
-era il suo turno, il tempo scorre. **Un bot al suo posto, il posto resta suo** (Sergio, 17 nov): in
+ricevono `away` e la partita va avanti: se era il suo turno, il tempo scorre
+(un telefono che guida e tace per più di 5 s vale come assente). **Un bot al suo posto, il posto resta suo** (Sergio, 17 nov): in
 partita il posto è del giocatore fino alla fine. Se quando arriva il suo turno è assente da
 più di 5 s (`StandInTicks`; anche a turno già cominciato) lo gioca un bot col suo stesso
 robot, armi e pezzi, del grado dei bot della stanza o di quello della coda per quelle
 persone (`Room.standIn`, `N.stand_in`). Può tornare in qualsiasi momento: se rientra a metà
-del suo turno il bot lo finisce (nello stato `si`: il client lascia i comandi al bot e lo
+del suo turno il bot lo finisce (`si` nei tasti: il client lascia i comandi al bot e lo
 dice) e dal turno dopo i tasti sono di nuovo suoi. La stanza resta aperta finché almeno una
 persona c'è; se sono tutte assenti da più di 60 s (`EmptyTicks`) si chiude (Sergio, 18 nov:
 i bot non la giocano fino alla fine per nessuno) e chi torna dopo trova il gettone scaduto; chi esce con ESCI DALLA PARTITA
 (`leave`) invece è fuori subito, come prima. Si può tornare anche durante la scelta
 dell'arma (il gettone arriva già col primo `draft`): lì dopo 20 s (`ReconnectTicks`) senza
 tornare il giocatore è fuori (`left`). Il client riprova da solo per tutta la partita con
-`{"t":"hello","v":9,"tok":…}`; il server gli rimanda `start` con
-`"resume":true`, gli scavi del terreno e i Bastioni posati o crollati, in ordine (`sync`) e lo stato.
-**Il guardiano del client**: se in partita non arriva uno stato per 5 s, o la coda dà un
-errore, il gioco chiude la connessione e rientra così (`CP.resync`): non resta mai fermo
-su una connessione che non porta più niente. Al rientro dice al server perché era caduto
-(`{"t":"nota","w":"…"}`: motivo, turno, coda), e il server lo scrive nel log insieme a
-«ha perso la connessione» e «è tornato dopo N s».
+`{"t":"hello","v":11,"tok":…}`; il server gli rimanda `start` con
+`"resume":true` e tutti i tasti dall'inizio (`k` con `n` 0): il telefono rifà la partita
+dal seed e li rigioca senza disegnarli (un pezzo per frame), poi riprende da dov'è.
+**Il guardiano del client**: se in partita non arriva niente per 8 s, o qualcosa non torna
+(i tasti che ha guidato applicati diversi, l'impronta dello stato diversa, tick mancanti),
+il gioco chiude la connessione e rientra così (`CP.resync`): non resta mai fermo
+né su una partita diversa da quella del server. Al rientro dice al server perché era caduto
+(`{"t":"nota","w":"…"}`: motivo, turno, tick, coda), e il server lo scrive nel log insieme a
+«ha perso la connessione» e «è tornato dopo N s». Questi log si leggono senza entrare sul VPS: Actions >
+«Log del server» > Run workflow (`log.yml`; testo `nota del client`, oppure la data, per esempio
+`2026-11-23`, per avere tutte le righe). **Mai un giro di rientri** (Sergio, 23 nov: 17 cadute in
+due minuti, sempre «stato diverso»): se la partita torna diversa dopo un rientro, prima che un
+controllo sia andato bene, rientrare la rigiocherebbe di nuovo fino allo stesso punto; il telefono
+allora si ferma, manda la nota, lascia il posto a un bot e torna al menu (`CP.give_up`).
 
 ## Numeri
 
@@ -487,8 +519,9 @@ che tocca `server/` o `client/sim/` il workflow **Server sul VPS** lo ricompila,
 lo riavvia (lo spegnimento aspetta la fine delle partite, `KillMode=mixed` lascia
 vivi i processi `luajit` fino ad allora) e controlla `/health`. Script, segreti e
 variabili in [tools/vps/README.md](../tools/vps/README.md). L'APK cerca il server
-nella variabile `SERVER_URL` di GitHub; editor, simulatore e build web del PC
-restano su `127.0.0.1`. Allo stesso indirizzo Caddy serve anche il gioco web
+nella variabile `SERVER_URL` di GitHub; editor e build del PC lo cercano sul VPS
+(`client/game.project`, 25 nov: niente server in locale sul PC), il simulatore
+sul suo server di prova (`127.0.0.1:8090`, `tools/simula/simula.py`). Allo stesso indirizzo Caddy serve anche il gioco web
 (workflow **Gioco web sul VPS**, a ogni merge che tocca il client): chi gioca dal
 browser, come Gabri, apre `http://49.13.44.34/`.
 

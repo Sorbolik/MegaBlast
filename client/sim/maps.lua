@@ -31,12 +31,24 @@ end
 -- (menu/training.lua).
 local PAVIMENTO_SPAWNS = { { x = 225, from = 300 }, { x = 1650, from = 585 }, { x = 630, from = 390 }, { x = 1260, from = 300 } }
 
+-- respawns: where you come back after dying (game:spawn_spot), 12 points on the iron of each
+-- map, asymmetric like the iron (Sergio, 26 November 2026: Forgia A, Fossa B, Cortile A of the
+-- proposals); x and the top of the steel under the feet, in the world (y upwards)
 add("pavimento", "La Forgia", { spawns = PAVIMENTO_SPAWNS,
+	respawns = { { x = 518, y = 810 }, { x = 714, y = 870 }, { x = 844, y = 870 }, { x = 1112, y = 465 }, { x = 1156, y = 585 },
+		{ x = 1264, y = 585 }, { x = 1484, y = 525 }, { x = 1612, y = 525 }, { x = 1740, y = 525 }, { x = 520, y = 330 },
+		{ x = 760, y = 330 }, { x = 1020, y = 240 } },
 	build = function(t) t:load(mapdata.pavimento) end })
 add("fossa", "La fossa del Fabbro", { spawns = PAVIMENTO_SPAWNS,
+	respawns = { { x = 220, y = 630 }, { x = 310, y = 630 }, { x = 1112, y = 465 }, { x = 1496, y = 735 }, { x = 1596, y = 735 },
+		{ x = 510, y = 330 }, { x = 610, y = 330 }, { x = 810, y = 330 }, { x = 980, y = 240 }, { x = 714, y = 870 },
+		{ x = 844, y = 870 }, { x = 1220, y = 585 } },
 	build = function(t) t:load(mapdata.fossa) end })
 
 add("cortile", "Il cortile", { spawns = { { x = 210, from = 450 }, { x = 1710, from = 450 }, { x = 600, from = 380 }, { x = 1320, from = 380 } },
+	respawns = { { x = 130, y = 585 }, { x = 220, y = 585 }, { x = 2006, y = 510 }, { x = 456, y = 465 }, { x = 1274, y = 735 },
+		{ x = 140, y = 330 }, { x = 284, y = 330 }, { x = 560, y = 240 }, { x = 680, y = 240 }, { x = 960, y = 870 },
+		{ x = 780, y = 537 }, { x = 1070, y = 537 } },
 	build = function(t) t:load(mapdata.cortile) end })
 
 -- The first circles of the campaign (docs/campagna_gironi.md): one map for each, shared by its

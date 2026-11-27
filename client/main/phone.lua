@@ -1,7 +1,7 @@
 -- What the game asks of the phone (Sergio, 21 Nov): the screen never dims while
 -- the game is open, the sound goes quiet in the background (a call, another
 -- app), the vibrations (with their switch in IMPOSTAZIONI) and the frame rate:
--- matches at the screen's best (90/120 Hz where it has them), menus at 60 and
+-- matches and the Fornace's pours at the screen's best (90/120 Hz where it has them), menus at 60 and
 -- at 30 when nobody touches them for a while, so the phone doesn't heat up in
 -- the home. Android's game mode "risparmio batteria" caps matches at 60.
 -- On Android through client/vibra (Java), in the browser navigator.vibrate;

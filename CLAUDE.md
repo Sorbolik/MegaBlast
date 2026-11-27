@@ -34,7 +34,7 @@ bash tools/controlli/tutti.sh
 ```
 
 Deve finire con `OK` (sintassi e globali del Lua, controlli dell'editor, tutti i
-test Lua, le miniature delle missioni in pari con mappe e dipinti, `go vet`, `gofmt`, `go test ./server/`). Lo stesso controllo gira su
+test Lua, le miniature delle missioni e le cartoline delle mappe in pari con mappe e dipinti, `go vet`, `gofmt`, `go test ./server/`). Lo stesso controllo gira su
 GitHub dopo ogni merge su `main` (`.github/workflows/controlli.yml`); prima di una
 versione online si lancia a mano sul ramo (Actions > Controlli > Run workflow).
 Se diventa rosso su main, il thread che ha mergiato lo sistema subito.
@@ -60,6 +60,11 @@ La simulazione conta anche i frame (`simulazione/fotogrammi.txt`) e fallisce se 
 tiene fermo un frame più di 150 ms (300 sotto l'iride): misure, contatore FPS nel gioco e regole in
 [docs/prestazioni.md](docs/prestazioni.md).
 Dettagli e comandi degli scenari: [tools/simula/README.md](tools/simula/README.md).
+
+Ogni elemento grafico dei menù è catalogato **per scopo** in [docs/ui-catalogo.md](docs/ui-catalogo.md)
+(Sergio, 23 nov: uno scopo = un pezzo del kit = un aspetto; anche su Figma): prima di disegnare un
+pulsante, una card, una barra, un tab o una pillola usa il pezzo del suo scopo, e se aggiungi o
+cambi un elemento aggiorna il catalogo nella stessa PR.
 
 Niente si deve mai deformare (Sergio, 29 ott): ogni nodo GUI è `gui.ADJUST_FIT`, mai
 `ADJUST_STRETCH` (lo controlla `controlla.py`). Il gioco è disegnato a 1280 x 720 al
@@ -87,6 +92,11 @@ tutte per quando si farà la schermata delle impostazioni.
 La storia delle decisioni (prese, scartate, aperte) è in [docs/decisioni/](docs/decisioni/README.md):
 leggi [regole.md](docs/decisioni/regole.md) e **solo il file dell'area che tocchi**; quando
 decidi o scarti qualcosa, aggiorna quel file e `cronologia.md` nella stessa PR.
+
+Le Commesse del Fabbro (come si spende l'Ossidiana: clienti, materiali, bacheca, frammenti di
+famiglia, fiducia, la porta BOTTEGA con COMMESSE e BANCO) hanno le regole in
+[docs/commesse.md](docs/commesse.md): leggilo prima di toccare valute, premi, pezzi, podio, shop o
+sblocchi della campagna, e se una scelta nuova lo contraddice dillo a Sergio e aggiornalo.
 
 Per progettare, valutare, bilanciare e implementare meccaniche ci sono le skill
 in [.claude/skills/](.claude/skills/README.md).
@@ -253,7 +263,9 @@ nel gioco non cambia niente").
 Il bot (`client/sim/bot.lua`) preme gli stessi tasti di un giocatore e pensa
 provando le mosse su copie della partita (`bot.world`, `game:advance`): se
 cambi la fisica il bot la segue da solo. Deve restare deterministico: niente tempo vero,
-niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio.
+niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio, niente `^` nella
+simulazione (`x * x` o `game.ipow`: l'interprete e il JIT di LuaJIT non danno la stessa ultima
+cifra); lo controlla `tools/confronta/identica.py` in `tutti.sh`.
 Ogni partita ha la sua ricetta (`client/sim/replay.lua`) con le impronte dello
 stato: rigiocandola devono tornare tutte. L'arena (`tools/arena/`, vedi il
 README) fa giocare i bot tra loro su tutti i core e scrive il rapporto per il

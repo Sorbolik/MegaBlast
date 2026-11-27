@@ -1,0 +1,15 @@
+Image 1 is a rough draft of a minigame of our cartoon game: on the wooden counter of a money changer the player's loot piles up in heaps (one heap of gold coins and one heap of crystal fragments for each family color), and a glass jar holds the glass beads made by missed drops of molten metal that fell in the sand. Image 2 shows the STYLE of our game: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic. Image 3 shows the crystal fragments of our game and their style.
+
+Draw these separate objects on plain green (#00FF00), well apart, each whole and with a FLAT BOTTOM edge so they can sit on a plank:
+1. THREE HEAPS OF GOLD COINS, small, medium and big (the big one about three times wider than the small one): rounded mounds of flat gold coins (#F4B42A, highlight #FFD36A, rims #8A5A10), a few coins standing on their edge, one or two sliding down the side.
+2. THREE HEAPS OF CRYSTAL FRAGMENTS, small, medium and big, all in WHITE and very light grey (#F2F2F2, shadow #C9C9C9) because the game colors them for each family: rounded mounds of small faceted crystals like the ones in image 3.
+3. THE DROP: one round drop of molten obsidian, deep violet-black (#2A1438) with a hot glowing core (#FF70D0 and #FF7A1A) seen through cracks, one flat white highlight: round, and stretched in flight pointing right.
+4. A GLASS BEAD: one small round bead of clear pale blue glass (#9FE3FF) with a white shine, the drop of metal cooled in the sand; and a small splash of sand and sparks where it lands.
+5. THE JAR: a tall clear glass jar with a wooden lid, empty, seen from the front, its glass pale blue and almost transparent with two white shines.
+6. THREE FLAKES OF FIRE: soft falling flame flakes, orange-yellow, like burning snowflakes, small, medium and big.
+No letters, no numbers, no plank, no characters, no shadow on the ground, no glow halo.
+
+Riferimenti in ordine: art/WB-097/riferimenti/R2_bozza_bancone.png, art/WB-087/malacoda_2.png, art/WB-084/frammenti_1.png
+ImageGen. Tre tentativi, selezionato il secondo. Ridimensionato in proporzione e centrato su tela verde da 1536×1024.
+Tre mucchi di monete, tre di frammenti bianchi, vaso e tre falde. La perla è disegnata nello schizzo di sabbia. C'è una sola posa allungata della goccia, con la coda a destra.
+Verde campionato: #02F804, diverso da #00FF00 esatto.

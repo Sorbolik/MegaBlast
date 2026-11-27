@@ -1,6 +1,7 @@
--- Glue between the server and the simulation: passes inputs to the game and
--- prepares state and events as simple Lua tables, which server/worker.lua
--- writes as JSON. It runs in the server's LuaJIT processes (server/proc.go).
+-- Glue between the server and the simulation: passes inputs to the game (and
+-- tells which input it applied: every phone steps its copy of the match with
+-- the same, sim/netkeys.lua) and prepares the state as a simple Lua table,
+-- which server/worker.lua writes as JSON. It runs in the server's LuaJIT processes (server/proc.go).
 local game = require "sim.game"
 local maps = require "sim.maps"
 local config = require "sim.config"
@@ -8,6 +9,7 @@ local draft = require "sim.draft"
 local rules = require "sim.rules"
 local bot = require "sim.bot"
 local loadout = require "sim.loadout"
+local netkeys = require "sim.netkeys"
 
 local N = {}
 
@@ -17,7 +19,7 @@ local N = {}
 -- on gopher-lua it had 100 and thought over more ticks. After THINK_MAX ticks
 -- of thinking it plays the best move found so far, so it never stands still
 -- for long (Sergio, 9 Nov). Its moves can differ from the phone's: fine, online
--- the client only follows the server's state and these matches are not replayed.
+-- the phones receive the keys it pressed (N.step), they don't think for it.
 N.THINK_MAX = 120
 local BOTS = setmetatable({}, { __mode = "k" })
 
@@ -57,7 +59,6 @@ end
 function N.new(seed, map, players, r)
 	local g = game.new(seed, map, rules.options(r, { players = players, random_spawns = true, intro = game.INTRO_TICKS }))
 	g:pop_events()
-	g.carves = {} -- terrain digs, for whoever reconnects
 	for i, p in ipairs(players or {}) do
 		if p.bot then
 			local b = bot.new(i, p.bot, seed)
@@ -69,17 +70,35 @@ function N.new(seed, map, players, r)
 	return g
 end
 
--- hold: jump is still held down (releasing it while rising makes the jump short)
-function N.step(g, left, right, jump, hold, angle, power, weapon)
-	-- a bot's turn: the keys are its own (the server passes none)
+-- The input of one tick. code: the keys of the person on turn (sim/netkeys.lua),
+-- applied only if lead (their robot) is the one on turn and no bot plays for
+-- it; a bot's turn uses its own keys. Returns the code of the input applied
+-- (the phones step with exactly that), the input itself (decode(encode(input)):
+-- the server steps with the same) and whether a bot played it.
+function N.input(g, code, lead)
 	local b = BOTS[g] and BOTS[g][g.current]
+	local input
 	if b then
-		g:step(bot.input(b, g))
-		return
+		input = bot.input(b, g)
+	elseif code and g.current == lead then
+		input = netkeys.decode(code)
 	end
-	local fire = nil
-	if angle then fire = { angle = angle, power = power, weapon = game.WEAPONS[weapon] and weapon or "missile" } end
-	g:step({ left = left, right = right, jump = jump, hold = hold, fire = fire })
+	local applied, clean = netkeys.clean(input)
+	return applied, clean, b ~= nil
+end
+
+-- One tick with those keys (tests); returns the code applied
+function N.step(g, code, lead)
+	local applied, clean = N.input(g, code, lead)
+	g:step(clean)
+	return applied
+end
+
+-- Where the bot on turn is aiming (nil if no bot plays or nobody aims): the
+-- phones show it, the human's aim comes from their phone (room.go, "k")
+function N.bot_aim(g)
+	local b = BOTS[g] and BOTS[g][g.current]
+	if b and g.phase == "aim" then return bot.shown_aim(b) end
 end
 
 function N.current(g)
@@ -135,6 +154,7 @@ function N.snapshot(g, aim)
 		-- pl: parachutes left; st: turns left of the effects (burn + 10 x slow + 100 x cracked armour)
 		-- sw: the secondary picked at the start (besides the Lama, "" if none), ss: its shots;
 		-- lu: ticks left of the Affondo, la: angle of its dash;
+		-- cn: Cannonata, ticks left of the fuse (-1 in flight, 0 none), ca: its angle;
 		-- kn: knocked by a hit (doesn't run by itself); tr: feet locked by a trap;
 		-- hk: who's pulling it with the Rampino (0 nobody, -1 if hanging from the terrain at hx, hy);
 		-- gs: its Rampino hook is in flight, at gx, gy; ml: tick of the Maglio swing,
@@ -164,9 +184,14 @@ function N.snapshot(g, aim)
 		r.tr = rb.trapped or false
 		r.la, r.gn = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, rb.gone or false
 		r.gd = rb.round_done
+		local cannon = rb.cannon
+		r.cn, r.ca = cannon and (cannon.wait > 0 and cannon.wait or -1) or 0, cannon and cannon.angle or 0
 	end
 	-- k: "missile", "grenade", "sniper", "boomerang", "drill", "tar", "petard" or "vortex", fu: ticks before the Uovo blows up
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }
+	-- pf: the older shots still in flight (game.flying), the same fields
+	local pf = {}
+	for i, q in ipairs(g.flying) do pf[i] = { x = q.x, y = q.y, k = q.kind, fu = q.fuse or 0 } end
 	-- o: the teleport orbs in flight (i = orb number, to follow it from one state to the next)
 	local orbs = {}
 	for i, ob in ipairs(g.orbs) do orbs[i] = { i = ob.id, x = ob.x, y = ob.y } end
@@ -204,28 +229,20 @@ function N.snapshot(g, aim)
 	local b = BOTS[g] and BOTS[g][g.current]
 	if b then aim = bot.shown_aim(b) end
 	if g.phase ~= "aim" then aim = nil end
+	-- n, fp: the tick and the fingerprint (game:fingerprint): the phones, that
+	-- step the same match with the same keys, check they have the same
 	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0) + (g.used.tool and 4 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
 		u = used, mt = g.match_left, ai = g.intro > 0 and g.intro or nil, fr = g.final_round, gr = g.round,
-		av = g.ahead, ab = g.ahead_base, r = robots, p = p, o = orbs, s = shards,
+		av = g.ahead, ab = g.ahead_base, r = robots, p = p, pf = pf, o = orbs, s = shards,
 		c = crates, pl = placed, hl = heals, pp = pools, hz = g.hz, aim = aim,
-		si = b and b.stand_in or nil }
+		si = b and b.stand_in or nil, n = g.tick, fp = g:fingerprint() }
 end
 
--- Events since the last tick (a list, empty if none happened)
+-- Events since the last tick (a list, empty if none happened): only for the
+-- server's own counts (sim/tally.lua), the phones make their own
 function N.events(g)
-	local list = g:pop_events()
-	for _, e in ipairs(list) do
-		e.t = "ev"
-		if e.type == "explosion" or e.type == "carve" then g.carves[#g.carves + 1] = { e.x, e.y, e.r } end
-	end
-	return list
-end
-
--- The digs made so far: whoever reconnects redoes them on their terrain, in
--- the same order
-function N.sync(g)
-	return { t = "sync", x = g.carves }
+	return g:pop_events()
 end
 
 -- Start-of-match draft (sim/draft.lua), before N.new --------------------
@@ -255,7 +272,8 @@ end
 
 -- bots: the grade (sim/bot.lua GRADES) of the robots that are bots, by robot;
 -- they pick at once, like on the phone. eq: what each player wears, by robot
--- (N.equip_stats); the bots have the base stats
+-- (N.equip_stats); the bots wear as much as the people, like in training
+-- (Sergio, 22 Nov: every online mode; sim/loadout.lua dress_bots)
 function N.draft_new(seed, mode, r, bots, eq)
 	local players = {}
 	for i, p in ipairs(config.MODES[mode]) do
@@ -263,10 +281,19 @@ function N.draft_new(seed, mode, r, bots, eq)
 		players[i] = { team = p.team, bot = b }
 		if not b and eq then players[i].stats, players[i].eq = N.equip_stats(eq[i]) end
 	end
+	local ok = pcall(loadout.dress_bots, players, seed)
+	for _, p in ipairs(players) do
+		if p.bot then
+			if ok and p.eq then p.stats, p.eq = N.equip_stats(p.eq) else p.eq = nil end
+		end
+	end
 	local d = draft.new(seed, players, rules.weapons(r))
 	for i, p in ipairs(players) do
 		if p.bot then bot.choose(d, i, seed) end
 	end
+	-- the map the match will have (game.new picks it from the seed): the lineup
+	-- shows what drops there for the Smith's orders
+	d.map = maps.pick(seed)
 	return d
 end
 
@@ -297,11 +324,18 @@ end
 
 -- The two fans (offer: primaries, offer2: secondaries) and the picks of robot i
 -- (p, p2, or ""): the others' picks aren't sent (Sergio, 30 Oct), only who
--- has pressed PRONTO (rd: 1 or 0 for each robot)
+-- has pressed PRONTO (rd: 1 or 0 for each robot); map: the match's map
 function N.draft_state(d, i)
 	local rd = {}
 	for k = 1, #d.players do rd[k] = d.ready[k] and 1 or 0 end
-	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = d.picks[i] or "", p2 = d.picks2[i] or "", rd = rd }
+	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = d.picks[i] or "", p2 = d.picks2[i] or "", rd = rd,
+		map = d.map }
+end
+
+-- The draft's players for the draft message: teams, the bots' grades and what
+-- everyone wears (eq), so the lineup shows the bots as strong as they are
+function N.draft_players(d)
+	return N.start_players(d.players)
 end
 
 -- The match players for the start message: team, draft picks and what they wear

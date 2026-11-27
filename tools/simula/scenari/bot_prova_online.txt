@@ -1,0 +1,24 @@
+# Il profilo di prova online conta coi suoi pezzi (Sergio, 22 nov): FINE GIOCO
+# (livello 50) coi quattro pezzi del Corvo forgiati manda quello che indossa col
+# saluto, il server lo usa e i bot di riempimento sono vestiti come lui
+# (sim/loadout.lua dress_bots). Lo schieramento li mostra, in partita li indossano.
+imposta prova_test prova
+imposta prova_vuoto 2
+imposta prova_famiglia corvo
+
+aspetta 3
+server 2v2 0 bot_dopo=6s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca 1105 52                      # GIOCA
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
+aspetta_stato modo=scelta_online 30
+aspetta 1
+foto 00_schieramento_prova          # noi e i tre bot: livello 50, pezzi forgiati, vita sopra 100
+aspetta_stato modo=online 20
+aspetta 5
+foto 01_partita
+aspetta_stato modo=online turno=2 60
+aspetta 2.5
+foto 02_turno_del_bot_vestito

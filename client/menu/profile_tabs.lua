@@ -34,6 +34,8 @@ local maps = require "sim.maps"
 local profile = require "menu.profile"
 local milestones = require "menu.milestones"
 local tag = require "ui.tag_card"
+local orders = require "sim.orders"
+local TO = require("lang.text").orders
 local T = require("lang.text").profile_tabs
 local TH = require("lang.text").home
 local common = require("lang.text").common
@@ -48,6 +50,15 @@ local MEDALS = { "medaglia_bronzo", "medaglia_argento", "medaglia_oro", "medagli
 local GOLD = kit.hex("ffc83d")
 -- the modes of the stats, as the Figma's chips (all of them first)
 local MODES = { "tutte", "2v2", "1v1", "torneo", "campagna" }
+
+-- the name of a Forge's medal (nil for the others): short under the badge, long when it
+-- is the only one in the list
+local function forge_name(id, long)
+	local b = orders.FORGE_BADGE[id]
+	if not b then return nil end
+	if b.knocks then return (long and T.knocks_badge_long or T.knocks_badge):format(b.knocks) end
+	return long and T.jackpot_badge_long or T.jackpot_badge
+end
 
 local function thousands(n)
 	local s = tostring(math.floor(n or 0))
@@ -92,21 +103,31 @@ local function sheet_stats(s)
 	fit(kit.text(g, T.xp:format(thousands(p.xp or 0), thousands(need)), 164, 190, 16, KC.MUTE, "start", 0.4), 148)
 	-- the medals next to your name: the chosen ones, then an empty place
 	kit.text(g, T.next_to_name, 50, 250, 16, KC.HOT, "start", 0.6)
+	-- (the clients' badges too: sim/orders.lua badges)
+	local client_grade = {}
+	for _, b in ipairs(orders.badges(p)) do client_grade[b.id] = b.grado end
 	local shown = {}
 	for _, id in ipairs(p.badge) do
 		local t = milestones.BY_ID[id]
-		local grade = t and t.thresholds and milestones.grade(t, all[id] or 0) or 0
-		if grade > 0 and #shown < milestones.SHOWN then shown[#shown + 1] = { t = t, grade = grade } end
+		local grade = t and t.thresholds and milestones.grade(t, all[id] or 0) or client_grade[id] or 0
+		if grade > 0 and #shown < milestones.SHOWN then shown[#shown + 1] = { id = id, t = t, grade = grade } end
 	end
 	for i = 1, milestones.SHOWN do
 		local x = 50 + (i - 1) * 88
 		local b = shown[i]
 		if b then
 			kit.card(g, x, 264, 76, 80, KC.ROSE, { sel = true })
-			kit.piece(g, MEDALS[b.grade], x + 38, 292, 36)
-			kit.text(g, ROMAN[b.grade], x + 38, 298, 16, KC.INK, "middle")
-			fit(kit.text(g, b.t.badge, x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
-			kit.zone(g, s.buttons, x, 264, 76, 80, "badge:" .. b.t.id)
+			if b.t then
+				kit.piece(g, MEDALS[b.grade], x + 38, 292, 36)
+				kit.text(g, ROMAN[b.grade], x + 38, 298, 16, KC.INK, "middle")
+				fit(kit.text(g, b.t.badge, x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
+			else
+				tag.badge({ id = b.id, grado = b.grade }, x + 38 - g.ox, g.oy - 298, 40, g.node)
+				local cl = b.id:sub(#orders.BADGE + 1)
+				local name = forge_name(b.id) or kit.upper(TO.clients[cl])
+				fit(kit.text(g, name, x + 38, 332, 16, KC.SAND, "middle", 0.3), 64)
+			end
+			kit.zone(g, s.buttons, x, 264, 76, 80, "badge:" .. b.id)
 		else
 			kit.card(g, x, 264, 76, 80, KC.ROSE, { off = true })
 			kit.text(g, "+", x + 38, 316, 34, KC.MUTE, "middle")
@@ -115,10 +136,12 @@ local function sheet_stats(s)
 	-- won and lost: one bar, ember and ice
 	kit.text(g, kit.upper(thousands(won) .. " " .. T.won), 50, 390, 18, KC.HOT, "start", 0.4)
 	kit.text(g, kit.upper(thousands(matches - won) .. " " .. T.lost), 310, 390, 18, KC.STEEL, "end", 0.4)
-	kit.strip(g, "riga_scura", 50, 400, 260, 24)
+	-- (the bar of every bar: kit.bar_parts, the home's groove and strip)
 	local wf = matches > 0 and won / matches or 0
-	if matches > won then kit.strip(g, "barra_gelo", 52, 402, 256, 20) end
-	if won > 0 then kit.strip(g, "barra_brace", 52, 402, math.max(20, 256 * wf), 20) end
+	local parts = {}
+	if won > 0 then parts[#parts + 1] = { 0, math.max(16, 256 * wf), KC.HOT } end
+	if matches > won then parts[#parts + 1] = { won > 0 and math.max(16, 256 * wf) or 0, 256, KC.ICE } end
+	kit.bar_parts(g, 52, 404, 256, 16, parts)
 	kit.text(g, kit.upper(T.won_share:format(math.floor(wf * 100 + 0.5))), 180, 448, 16, KC.MUTE, "middle", 0.4)
 	-- best streak and stars
 	for i, b in ipairs({ { thousands(st.serie or 0), T.best_streak, KC.HOT }, { thousands(profile.total_stars(p)), T.stars, KC.SAND } }) do
@@ -162,6 +185,37 @@ local function sheet_stats(s)
 				math.max(10, cw - 102 - nw))
 		end
 	end
+	-- the clients' badges (Sergio, 23 Nov: chosen here like the others), in the place
+	-- after the records: a row of up to four, two rows from five
+	if p.commesse and p.commesse.aperta then
+		local i = #milestones.WHITELIST
+		local x = 350 + (i % 2) * (cw + 14)
+		local y = 160 + math.floor(i / 2) * (ch + 12)
+		local list = orders.badges(p)
+		kit.card(g, x, y, cw, ch, KC.ROSE, { off = #list == 0 })
+		if #list == 0 then
+			local lines = kit.wrap(g, T.clients_none, 16, cw - 24)
+			for k = 1, math.min(2, #lines) do kit.text(g, lines[k], x + cw / 2, y + 30 + (k - 1) * 20, 16, KC.MUTE, "middle", 0.3) end
+		else
+			-- up to four: a row and under it the name, like the records'; from five, two rows
+			local two = #list > 4
+			local d = two and 26 or 34
+			local label = #list == 1 and forge_name(list[1].id, true) or T.clients_badges
+			if not two then fit(kit.text(g, label, x + 14, y + 57, 16, KC.SAND, "start", 0.3), cw - 28) end
+			-- (two rows: as many columns as half of them, up to 8 clients and 4 Forge's
+			-- medals, inside the card)
+			local cols = two and math.ceil(#list / 2) or 4
+			for k, b in ipairs(list) do
+				local col, row = (k - 1) % cols, two and math.floor((k - 1) / cols) or 0
+				local bx = x + 14 + d / 2 + col * ((cw - 28 - d) / (cols - 1))
+				local by = y + (two and 18 + row * 33 or 26)
+				-- (the jackpot's is already a gold medal: no gold disc behind it, Sergio 24 Nov)
+				if picked[b.id] and not orders.FORGE_BADGE[b.id] then kit.dot(g, bx, by, d + 10, GOLD) end
+				tag.badge(b, bx - g.ox, g.oy - by, d, g.node)
+				kit.zone(g, s.buttons, bx - (d + 8) / 2, by - (d + 8) / 2, d + 8, d + 8, "badge:" .. b.id)
+			end
+		end
+	end
 	-- how the medals work: at the foot, where there is room to read it
 	kit.foot_text(s.low, kit.upper(T.badge_hint:format(milestones.SHOWN)), 140, 674, 19, KC.MUTE, 1080, 0.5)
 
@@ -172,9 +226,8 @@ local function sheet_stats(s)
 	kit.text(r, T.damage_by_weapon, x + 24, 140, 22, KC.HOT, "start", 1)
 	-- what the two colours of the bars say (Sergio, 17 Nov)
 	local lx = x + 24
-	for _, l in ipairs({ { "barra_brace", T.legend_primary }, { "barra_gelo", T.legend_secondary } }) do
-		kit.strip(r, "riga_scura", lx, 154, 30, 16)
-		kit.strip(r, l[1], lx + 2, 156, 26, 12)
+	for _, l in ipairs({ { KC.HOT, T.legend_primary }, { KC.ICE, T.legend_secondary } }) do
+		kit.bar(r, lx + 2, 157, 26, 10, 1, l[1])
 		lx = lx + 38
 		lx = lx + kit.width(kit.text(r, l[2], lx, 168, 16, KC.MUTE, "start", 0.3)) + 22
 	end
@@ -198,8 +251,7 @@ local function sheet_stats(s)
 		gui.play_flipbook(ic, a.w .. "_icona")
 		fit(kit.text(r, kit.upper(T.weapons[a.w] or a.w), x + 76, y + 14, 18, KC.SAND), 220)
 		kit.text(r, thousands(a.n), x + w - 24, y + 14, 18, KC.MUTE, "end")
-		kit.strip(r, "riga_scura", x + 76, y + 22, w - 100, 22)
-		kit.strip(r, game.SECONDARY[a.w] and "barra_gelo" or "barra_brace", x + 78, y + 24, math.max(18, (w - 104) * a.n / first), 18)
+		kit.bar(r, x + 80, y + 26, w - 108, 14, a.n / first, game.SECONDARY[a.w] and KC.ICE or KC.HOT)
 	end
 end
 

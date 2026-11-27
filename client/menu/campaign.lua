@@ -436,7 +436,7 @@ local function build_map(c)
 		kit.zone(tr, c.buttons, 1120, y - step / 2, 160, step, "girone:" .. i)
 	end
 	c.play = nil
-	c.action = kit.action(c.right, common.play, 930, 572, 270, 84, { size = 54, sub = T.coming_sub:format(T.rings[RING_AT][2]), off = true })
+	c.action = kit.action(c.right, common.play, 930, 572, 270, 84, { icon = "az_gioca", size = 54, sub = T.coming_sub:format(T.rings[RING_AT][2]), off = true })
 	kit.button(c.buttons, c.action, "gioca", { main = true, spento = true })
 end
 
@@ -489,8 +489,7 @@ local function build(c)
 	local tabs_end = kit.tabs(g, c.buttons, 440, 104, tabs, active, KC.HOT)
 	-- the story seen so far, to read again: a small plate after the tabs
 	if c.storia then
-		local p = kit.plate(g, tabs_end + 30, 104, 190, 58, KC.ROSE, { sk = 0, d = 4, piece = "piastrina" })
-		kit.text(p.g, TS.read_again, tabs_end + 30 + 95, 140, 19, KC.SAND, "middle", 0.5)
+		local p = kit.secondary(g, TS.read_again, tabs_end + 40, 102, 210, 52, { icon = "az_rileggi" })
 		kit.button(c.buttons, p, "storia")
 	end
 	guide(c, chosen)
@@ -502,7 +501,7 @@ local function build(c)
 		local id = c.next_id or list[#list].id
 		local name = ""
 		for _, l in ipairs(list) do if l.id == id then name = kit.upper(l.titolo) end end
-		act = { id = id, sub = c.next_id and T.play_new:format(name) or T.replay_final }
+		act = { id = id, sub = c.next_id and { T.play_new:format(name), name } or T.replay_final }
 	else
 		local prev
 		for _, cp in ipairs(payload.CAPITOLI) do
@@ -521,7 +520,7 @@ local function build(c)
 		act.sub = kit.upper(T.done_count:format(done, tot))
 	end
 	c.play = act.id
-	c.action = kit.action(c.right, common.play, 930, 560, 270, 84, { size = 54, sub = act.sub, off = act.off })
+	c.action = kit.action(c.right, common.play, 930, 560, 270, 84, { icon = "az_gioca", size = 54, sub = act.sub, off = act.off })
 	kit.button(c.buttons, c.action, "gioca", { main = true, spento = act.off })
 end
 

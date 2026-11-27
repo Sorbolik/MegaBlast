@@ -175,6 +175,44 @@ def trave(x, y, w, h, m):
     return "".join(s)
 
 
+def fascia(punti, h, r=16, passi=10):
+    """La striscia di una trave piegata: la linea di sopra coi gomiti arrotondati (la stessa trave
+    curvata, non due unite ad angolo) e il poligono alto h sotto di lei, in verticale."""
+    import math
+    sopra = [punti[0]]
+    for a, b, c in zip(punti, punti[1:], punti[2:]):
+        def verso(u, v, d):
+            l = math.hypot(v[0] - u[0], v[1] - u[1]) or 1
+            return (u[0] + (v[0] - u[0]) * min(d, l / 2) / l, u[1] + (v[1] - u[1]) * min(d, l / 2) / l)
+        p0, p2 = verso(b, a, r), verso(b, c, r)
+        for i in range(passi + 1):
+            t = i / passi
+            sopra.append(((1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * b[0] + t * t * p2[0],
+                          (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * b[1] + t * t * p2[1]))
+    sopra.append(punti[-1])
+    return sopra, sopra + [(x, y + h) for x, y in reversed(sopra)]
+
+
+def trave_piegata(punti, h, m):
+    """Una trave d'acciaio piegata lungo punti (la linea di sopra): lo stesso linguaggio di trave(),
+    lamiera, bordo, luce in alto e bulloni ogni 34 lungo la mezzeria."""
+    import math
+    sopra, poli = fascia(punti, h)
+    q = lambda pts: " ".join("%.1f,%.1f" % p for p in pts)
+    s = ['<polygon points="%s" fill="%s" stroke="%s" stroke-width="3" stroke-linejoin="round"/>' % (q(poli), m["acciaio"], m["bordo"])]
+    s.append('<polyline points="%s" fill="none" stroke="%s" stroke-width="3" stroke-linejoin="round"/>'
+             % (q([(x, y + 3.5) for x, y in sopra]), m["acciaio_luce"]))
+    fatto, dopo = 0.0, 12.0
+    for (x0, y0), (x1, y1) in zip(sopra, sopra[1:]):
+        l = math.hypot(x1 - x0, y1 - y0)
+        while l > 0 and fatto + l >= dopo:
+            t = (dopo - fatto) / l
+            s.append('<circle cx="%.1f" cy="%.1f" r="2.6" fill="%s"/>' % (x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + h / 2, m["acciaio_luce"]))
+            dopo += 34
+        fatto += l
+    return "".join(s)
+
+
 def diavoletto(x, y, col, s=1.0):
     """Sagoma di misura (46 px di mondo dai piedi alla fiammella), non il disegno vero."""
     return ('<g transform="translate(%.1f,%.1f) scale(%.2f)">'

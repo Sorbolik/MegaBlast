@@ -23,13 +23,13 @@
 --   fotogrammi.fine()              -- at the bottom of the same update (also a small collector step)
 --   fotogrammi.segna("dipinto")    -- from whoever does heavy work (also from other scripts)
 --   fotogrammi.testo()             -- the line to show (nil if it hasn't changed)
---   fotogrammi.rete(gap)           -- online: seconds between this state from the server and the previous one
+--   fotogrammi.rete(gap)           -- online: seconds between this message from the server and the previous one
 --   fotogrammi.scope("bot") ... fotogrammi.scope_end()   -- a named bar in Defold's web profiler
 --
--- Online the line also says RETE: the longest wait between two states from
--- the server in the last 10 seconds (normally 33 ms). The drawing hides the
--- waits up to four states (main/playout.lua); a longer one is a stop you see
--- even if the FPS are fine.
+-- Online the line also says RETE: the longest wait between two messages from
+-- the server in the last 10 seconds (normally 17 ms). Out of our turn the
+-- drawing hides the waits up to a few ticks (CP.net_frame); a longer one is a
+-- stop you see even if the FPS are fine.
 
 local T = require("lang.text").frames
 

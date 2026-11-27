@@ -71,13 +71,23 @@ ARMI = {
     "vortex": (-1.0, -4.5, 10, 9),
     "cannon": (-11.5, -8.5, 16, 6.5),
     "petard": (-1.5, -4.5, 10, 11),
+    # il Mestolo della Fornace (WB-093, tools/grafica/fornace.py), capovolto: la coppa in
+    # fondo, grande (Sergio, 24 nov: «fallo bello grande»), il manico di legno a x = 0
+    "mestolo": (-18.54, -7.51, 107.46, 10.22),
 }
 # il lanciarampino si taglia dove finisce l'asta (il resto del foglio è l'uncino)
 SENZA_PUNTA = {"hook": 0.75}
 # pezzi che non si impugnano, grandi come in mano: l'uncino del Rampino (in canna e in
-# volo, battle/rope.lua)
+# volo, battle/rope.lua). Con la Cannonata (battle/cannon.lua) il cannone grande piantato a
+# terra (lo stesso disegno di quello in mano, 1,9 volte), la palla e i suoi due gusci
+# (stesso riquadro della palla: partono da dove sta lei). nome -> scatola, o
+# (pezzo ricalcato, scatola)
 PEZZI = {
     "uncino": (-2, -8, 12.5, 8),
+    "cannone_grande": ("cannon", (-21.85, -16.15, 30.4, 12.35)),
+    "palla_cannonata": (-12, -12, 12, 12),
+    "guscio_su": (-12, -12, 12, 12),
+    "guscio_giu": (-12, -12, 12, 12),
 }
 # i colpi in volo: nome -> (pezzo ricalcato, scatola)
 COLPI = {
@@ -253,7 +263,8 @@ def main():
     lua.append("\t},")
     lua.append("\tpieces = {")
     for nome, box in PEZZI.items():
-        base, tinta, w, h, box = da_ricalco(nome, ricalcato(nome), box, PX, immagini, sempre_tinta=False)
+        pz, box = box if isinstance(box[0], str) else (nome, box)
+        base, tinta, w, h, box = da_ricalco(nome, ricalcato(pz), box, PX, immagini, sempre_tinta=False)
         riga(nome, tinta, box)
     lua.append("\t},")
     lua.append("\tshots = {")

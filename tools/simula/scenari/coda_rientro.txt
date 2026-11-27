@@ -4,7 +4,6 @@
 # main/ws_socket.lua lo fa): la chiusura ritardata della coda vecchia non deve
 # chiudere quella nuova. Si esce dalla sala e si rientra subito, poi di nuovo
 # dalla pillola; alla fine arrivano i bot.
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 0 bot_dopo=4s

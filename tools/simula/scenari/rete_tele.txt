@@ -2,8 +2,8 @@
 # telefono, Sergio 4 nov: "il primo sparo che faccio del teletrasporto scatta
 # più volte"): la rete finta li tiene fermi fino a 120 ms e poi li dà tutti
 # insieme. Il globo in volo e il diavoletto devono andare lisci lo stesso
-# (main/playout.lua), e il contatore dice RETE.
-imposta server_url ws://127.0.0.1:8090/ws
+# (dal 22 nov i tasti degli altri aspettano qualche tick in coda, CP.net_frame),
+# e il contatore dice RETE.
 imposta prova_rete 120
 imposta prova_fps 1
 aspetta 1

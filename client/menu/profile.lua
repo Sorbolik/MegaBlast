@@ -110,8 +110,9 @@ end
 
 -- The end-game test profile (Sergio, 14 Nov: "voglio provare l'end game",
 -- to tune the top of the progression and then go back down): a second save,
--- picked in the settings, that never touches the real one. Online it changes
--- nothing: the server plays everyone with the base stats.
+-- picked in the settings, that never touches the real one. Online it counts
+-- with what it wears, sent with the greeting (Sergio, 22 Nov; server.go cards),
+-- and pays nothing.
 -- (false: the real profile; "prova": the end game; "risorse": every resource
 -- and no upgrade, below)
 M.test = false
@@ -141,6 +142,9 @@ function M.endgame(p, fresh)
 	-- the gifts count as given, so they don't pop up
 	wallet.gifts(p, M.statistics(p, "tutte"), p.livello)
 	p.scaglie, p.ossidiana, p.buoni = M.TEST_COINS, M.TEST_COINS, M.TEST_VOUCHERS
+	-- the Smith's orders: FINE GIOCO starts with every client and a bit of every
+	-- state, DA ZERO from the first time (menu/orders_bench.lua, test-only)
+	if not fresh then require("menu.orders_bench").fill(p, wallet.today()) end
 	return p
 end
 
@@ -216,6 +220,15 @@ function M.save(p)
 	sys.save(file(), p)
 end
 
+-- The day the profile lives in: the game's day, or, for a test profile that
+-- moved its days ahead on the orders' test bench, that made-up day
+-- (menu/orders_bench.lua, test-only)
+function M.today(p)
+	local real = wallet.today()
+	if M.test and p.commesse and p.commesse.prova then return require("menu.orders_bench").today(p, real) end
+	return real
+end
+
 -- What changes the progress goes through here (sim/progress.lua): done at
 -- once on the phone and saved, then, when it worked, on_act(p, a) sends it to
 -- the server, whose profile counts (game.gui_script, main/account.lua).
@@ -223,7 +236,7 @@ end
 -- receipt waits for the server's word on it). here: only on the phone (an
 -- online match: the server counts it itself)
 function M.act(p, a, here)
-	local r, why = progress.act(p, a, wallet.today())
+	local r, why = progress.act(p, a, M.today(p))
 	M.save(p)
 	local n
 	if r and M.on_act and not here then n = M.on_act(p, a) end

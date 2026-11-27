@@ -8,7 +8,6 @@ aspetta 3
 foto 01_home
 tocca 220 172                      # ALLENAMENTO
 aspetta 3
-tocca 770 548                      # STESSO TELEFONO
 aspetta 1
 tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato turno=1 fase=aim 12

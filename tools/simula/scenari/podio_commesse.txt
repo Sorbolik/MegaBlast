@@ -1,0 +1,22 @@
+# Lo scontrino del podio con la parte COMMESSE (docs/commesse.md): col profilo di prova
+# FINE GIOCO una partita che per le commesse vale come una online con un compagno
+# (prova_commesse 1): il materiale caduto e una riga per ogni commessa che si è mossa.
+imposta prova_test prova
+imposta prova_durata 3
+imposta prova_commesse 1
+
+aspetta 2
+tocca 222 148                      # PARTITA DI PROVA (zona nascosta della home)
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 150 100 0.4
+aspetta_evento fire 5
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_stato turno=1 fase=aim 40
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_evento over 60
+aspetta 6
+foto 01_scontrino_commesse

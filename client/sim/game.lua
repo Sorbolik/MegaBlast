@@ -181,6 +181,11 @@ M.PUNCH_HOP = 15 * M.U      -- the attacker rises a little with the uppercut
 M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true, bellows = true,
 	vortex = true, cannon = true, petard = true }
 M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows", "vortex", "cannon", "petard" }
+-- weapons (and the Giano) that fly as self.projectile: firing one while another
+-- shot still flies moves the old one to self.flying, where it goes on until it
+-- bursts (it used to be replaced, and vanished without exploding: Sergio, 26 Nov)
+M.SHOOTS = { missile = true, grenade = true, tar = true, petard = true, sniper = true, vortex = true,
+	boomerang = true, drill = true, janus = true }
 -- weapons that don't use up shots
 M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill" }
@@ -226,14 +231,22 @@ M.RESPAWN_TICKS = math.floor(C.RESPAWN_SECONDS * 60)
 M.SETTLE_TICKS = 60      -- 1 s between one turn and the next
 M.MAX_SETTLE_TICKS = 5 * 60
 
--- Online the server sends a state every SNAPSHOT_TICKS ticks (30 per second)
-M.SNAPSHOT_TICKS = 2
-
 -- Controls (used by the client). Shot power comes from how far the finger is:
 -- f = distance / reach (0..1). Below AIM_DEADZONE it doesn't count, then it
 -- grows with exponent AIM_EXPONENT (2: quadratic, more precise on short shots).
 M.AIM_DEADZONE = 0.2
 M.AIM_EXPONENT = 2
+
+-- x to the whole power n (n >= 0), by multiplying. The simulation never uses ^:
+-- LuaJIT computes x ^ n with pow() in the interpreter and by multiplying in the
+-- compiled code (older versions), and the last digit can differ, so the same
+-- match came out different by how much of it got compiled (Sergio's PC, 26 Nov:
+-- registra.lua with CRLF line ends). tools/confronta/identica.py checks it.
+function M.ipow(x, n)
+	local out = 1
+	for _ = 1, n do out = out * x end
+	return out
+end
 -- how much of the gap between aim and finger is recovered each frame (at 60 Hz); 1 = at once
 M.AIM_SMOOTH = 0.2
 -- Short jump (like Hollow Knight): releasing jump while rising multiplies the
@@ -250,7 +263,7 @@ M.JUMP_BUFFER_TICKS = 6
 function M.aim_power(f)
 	f = math.max(0, math.min(1, f))
 	if M.AIM_DEADZONE > 0 then f = math.max(0, (f - M.AIM_DEADZONE) / (1 - M.AIM_DEADZONE)) end
-	return math.max(0.1, f ^ M.AIM_EXPONENT)
+	return math.max(0.1, M.ipow(f, M.AIM_EXPONENT))
 end
 
 local NO_INPUT = {}
@@ -342,7 +355,7 @@ function M.new(seed, map_id, opts)
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.GRID_W, M.WORLD_H / M.CELL, M.CELL, M.MARGIN_CELLS)
 	map.build(g.terrain, seed)
-	g.spawn_spots = M.find_spawn_spots(g.terrain)
+	g.spawn_spots = map.respawns or M.find_spawn_spots(g.terrain)
 	local players = opts.players or C.MODES["1v1"]
 	assert(#players >= 2 and #players <= M.MAX_PLAYERS, "da 2 a " .. M.MAX_PLAYERS .. " giocatori")
 	g.robots = {}
@@ -411,6 +424,7 @@ function M.new(seed, map_id, opts)
 	g.events = {}
 	g.tick = 0
 	g.orbs = {}              -- teleport orbs in flight, oldest first
+	g.flying = {}            -- older shots still in flight (self.projectile is the last fired), oldest first
 	g.orb_seq = 0
 	g.match_left = M.MATCH_TICKS
 	g.current = 1
@@ -588,11 +602,19 @@ function M:credit(rb, by)
 	if by and enemies(by, rb) then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
 end
 
+-- What nobody's hand does to rb (a fall, the map's hazard, a heal): amount is
+-- for the base life and grows with rb's life, so it takes or gives the same
+-- share to everybody (Sergio, 23 Nov: with four times the life a fall or a
+-- heal counted a quarter). Not rounded.
+function M.nature(rb, amount)
+	return amount * rb.max_hp / C.STATS.max_hp
+end
+
 -- Attack, Defense and the signatures of the pieces (sim/gear.lua) on a hit
 -- of by on rb with weapon (nil: not known): the damage that is left. With the
--- base stats nothing changes.
+-- base stats nothing changes. A hit of nobody (by nil) grows with rb's life.
 function M:power(rb, amount, by, weapon)
-	if not by then return amount end
+	if not by then return math.floor(M.nature(rb, amount) + 0.5) end
 	local a, d = by.stats, rb.stats
 	local m = 1
 	if by == rb then
@@ -607,7 +629,7 @@ function M:power(rb, amount, by, weapon)
 			by.first_hit = self.turn_no
 			up = up + a.sig_first
 		end
-		if a.sig_fury > 0 and by.hp < C.SIG.fury_hp then up = up + a.sig_fury end
+		if a.sig_fury > 0 and by.hp < by.max_hp * C.SIG.fury_hp then up = up + a.sig_fury end
 		if a.sig_air_fire > 0 and not by.grounded then up = up + a.sig_air_fire end
 		if a.sig_ambush > 0 and by.blink == self.turn_no and by.id == self.current then up = up + a.sig_ambush end
 		-- in the air when hit (an explosion has already lifted it: air_hit says how it was)
@@ -644,7 +666,8 @@ function M:hurt(rb, amount, by, reason, weapon)
 		self:emit({ type = "shield_hit", robot = rb.id, amount = absorbed, left = rb.shield })
 		-- parry: whoever carries the shield earns points for the enemy damage it stops
 		if foe then
-			local p = math.min(self.score.parry_max - rb.parried, absorbed * self.score.parry)
+			-- (in hundredths of the carrier's life, like the points of the damage)
+			local p = math.min(self.score.parry_max - rb.parried, absorbed * C.STATS.max_hp / rb.max_hp * self.score.parry)
 			if p > 0 then
 				rb.parried = rb.parried + p
 				self:add_points(rb, p, "parry", by)
@@ -674,7 +697,7 @@ function M:hurt(rb, amount, by, reason, weapon)
 			-- Morsa (the Leviatano's gloves): after hitting in your turn, pushes move you less until your next one
 			if by.stats.sig_grip > 0 and by.id == self.current then by.grip = true end
 			-- Brace addosso: whoever hits you up close catches fire
-			if weapon and C.MELEE[weapon] and rb.stats.sig_thorns > 0 then self:add_status(by, "burn", rb) end
+			if weapon and C.MELEE[weapon] and rb.stats.sig_thorns > 0 then self:add_status(by, "burn", rb, rb.stats.sig_thorns) end
 		end
 	end
 	-- if they were first before the hit, the Crown stays even if the hit makes the killer first
@@ -686,15 +709,17 @@ end
 -- They last until the end of the next turn of whoever suffers them (or longer,
 -- with stats.status_turns of whoever gives them). Numbers in config.STATUS.
 
-function M:add_status(rb, kind, by)
+function M:add_status(rb, kind, by, power)
 	if rb.dead then return end
 	if kind == "burn" and rb.stats.burn_immune > 0 then return end
 	local turns = by and by.stats.status_turns or 1
 	local s = rb.status[kind]
 	if s then
 		s.turns, s.by = math.max(s.turns, turns), by and by.id
+		-- the stronger one stays (power nil: whole)
+		if s.power then s.power = power and math.max(s.power, power) or nil end
 	else
-		rb.status[kind] = { turns = turns, by = by and by.id }
+		rb.status[kind] = { turns = turns, by = by and by.id, power = power }
 	end
 	self:emit({ type = "status", robot = rb.id, kind = kind, turns = rb.status[kind].turns })
 end
@@ -802,38 +827,60 @@ function M.find_spawn_spots(t)
 	return #out > 0 and out or nil
 end
 
--- rb's respawn point: random among the free ones, far from living enemies
--- (SPAWN_FAR) and from traps; if there are none, the one furthest from enemies.
--- Without steel points, a random free point.
+-- rb's respawn point (Sergio, 26 November 2026: "può capitare che spawni 10 volte nello stesso
+-- posto"). The map's own points (maps.lua respawns: 12 on the iron of the good maps), else the
+-- steel ones found in the terrain. Every free point gets a weight, like Halo's spawns: none
+-- within SPAWN_FAR of a living enemy (unless no point is that far), more the farther the
+-- nearest enemy (up to SPAWN_CALM), more near a living teammate (SPAWN_MATE), much less near
+-- where rb has just died (SPAWN_GRAVE), never the point it came back on last time; then a draw
+-- weighted by the match generator (client and server agree). Without points, a random free one.
+M.SPAWN_CALM, M.SPAWN_MATE, M.SPAWN_GRAVE = 700, 350, 250
 function M:spawn_spot(rb)
 	local spots = self.spawn_spots
 	if not spots then
 		return self:surface_spot(function(x, gy) return not self:robot_collides(x, gy, rb) end)
 	end
-	local ok, best, best_d = {}, nil, -1
-	for _, s in ipairs(spots) do
-		if not self:robot_collides(s.x, s.y, rb) then
-			local d = math.huge
-			for _, o in ipairs(self.robots) do
-				if o ~= rb and not o.dead and o.team ~= rb.team then
-					local dx, dy = o.x - s.x, o.y - s.y
-					d = math.min(d, math.sqrt(dx * dx + dy * dy))
-				end
-			end
-			local trap_name = false
-			for _, o in ipairs(self.placed) do
-				if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAP and math.abs(o.y - s.y) < M.SPAWN_TRAP then
-					trap_name = true
-				end
-			end
-			if not trap_name then
-				if d >= M.SPAWN_FAR then ok[#ok + 1] = s end
-				if d > best_d then best, best_d = s, d end
+	local cand, far_enough = {}, false
+	for i, s in ipairs(spots) do
+		local trapped = false
+		for _, o in ipairs(self.placed) do
+			if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAP and math.abs(o.y - s.y) < M.SPAWN_TRAP then
+				trapped = true
 			end
 		end
+		if not trapped and i ~= rb.last_spawn and not self:robot_collides(s.x, s.y, rb) then
+			local enemy, mate = math.huge, math.huge
+			for _, o in ipairs(self.robots) do
+				if o ~= rb and not o.dead then
+					local dx, dy = o.x - s.x, o.y - s.y
+					local d = math.sqrt(dx * dx + dy * dy)
+					if o.team ~= rb.team then enemy = math.min(enemy, d) else mate = math.min(mate, d) end
+				end
+			end
+			local w = math.min(enemy, M.SPAWN_CALM) / M.SPAWN_CALM
+			if mate < M.SPAWN_MATE then w = w * 1.5 end
+			local gx, gy = rb.x - s.x, rb.y - s.y
+			if gx * gx + gy * gy < M.SPAWN_GRAVE * M.SPAWN_GRAVE then w = w * 0.2 end
+			cand[#cand + 1] = { i = i, w = w, far = enemy >= M.SPAWN_FAR }
+			if enemy >= M.SPAWN_FAR then far_enough = true end
+		end
 	end
-	local s = #ok > 0 and ok[1 + math.floor(self.rng:next() * #ok)] or best
-	if s then return s.x, s.y end
+	local total = 0
+	for _, c in ipairs(cand) do
+		if far_enough and not c.far then c.w = 0 end
+		total = total + c.w
+	end
+	if #cand == 0 then return nil end
+	local pick = cand[#cand]
+	if total > 0 then
+		local r = self.rng:next() * total
+		for _, c in ipairs(cand) do
+			r = r - c.w
+			if c.w > 0 and r < 0 then pick = c break end
+		end
+	end
+	rb.last_spawn = pick.i
+	return spots[pick.i].x, spots[pick.i].y
 end
 
 -- Start-of-match points of the real matches (training, same phone, online, private
@@ -901,7 +948,8 @@ local function start_unevenness(placed)
 		local best = math.huge
 		for _, o in ipairs(placed) do
 			if o.team ~= p.team then
-				best = math.min(best, math.sqrt((p.x - o.x) ^ 2 + (p.y - o.y) ^ 2))
+				local dx, dy = p.x - o.x, p.y - o.y
+				best = math.min(best, math.sqrt(dx * dx + dy * dy))
 			end
 		end
 		sum[p.team], n[p.team] = (sum[p.team] or 0) + best, (n[p.team] or 0) + 1
@@ -964,6 +1012,9 @@ function M:remove(id)
 		-- the next one is already in their place in the order: end_turn passes to them
 		self.order_pos = pos - 1
 		if self.projectile and self.projectile.owner == id then self.projectile = nil end
+		for i = #self.flying, 1, -1 do
+			if self.flying[i].owner == id then table.remove(self.flying, i) end
+		end
 		self:end_turn()
 	end
 end
@@ -1292,7 +1343,7 @@ function M:update_grenade(p)
 				self.projectile = nil
 				return
 			end
-			self:bounce_on_robot(p, hit, M.GRENADE_BOUNCE, M.GRENADE_FRICTION)
+			self:bounce_on_robot(p, hit, M.GRENADE_BOUNCE, M.GRENADE_FRICTION, M.GRENADE_R)
 			break
 		end
 		if self:spring(p, p.y + sy, M.GRENADE_R) then break end
@@ -1498,21 +1549,51 @@ end
 -- Whoever threw it doesn't touch it in the first OWNER_SAFE_TICKS.
 function M:body_hits_robot(o, x, y, r)
 	for _, rb in ipairs(self.robots) do
-		if not rb.dead and (rb.id ~= o.owner or o.age > M.OWNER_SAFE_TICKS) and M.hurt_at(rb, x, y, r) then
+		if not rb.dead and (rb.id ~= o.owner or o.age > M.OWNER_SAFE_TICKS) and rb.id ~= o.pass and M.hurt_at(rb, x, y, r) then
 			return rb
 		end
 	end
 end
 
--- Body o bounces on the box of robot hit and, if it comes in hard, moves it a tiny bit
-function M:bounce_on_robot(o, hit, bounce, friction)
-	local sx, sy = 0, 1
-	if o.y < hit.y + M.ROBOT_H - 2 then sx, sy = o.x < hit.x and -1 or 1, 0 end
+-- The orb is round on terrain too (Sergio, 22 Nov 2026: it got stuck in walls,
+-- slits and characters): its centre and 8 points of its rim
+local RIM = {}
+for k = 0, 7 do RIM[k + 1] = { math.cos(k * math.pi / 4) * M.ORB_R, math.sin(k * math.pi / 4) * M.ORB_R } end
+local function orb_touches(t, x, y)
+	if t:solid(x, y) then return true end
+	for i = 1, #RIM do
+		if t:solid(x + RIM[i][1], y + RIM[i][2]) then return true end
+	end
+	return false
+end
+local function point_solid(t, x, y) return t:solid(x, y) end
+
+-- Body o (radius r) bounces on the round body of robot hit, like on a ball: it
+-- rolls off heads and shoulders. If it is already inside (the robot walked into
+-- it) it goes back out first, straight out or sideways along the ground, where
+-- blocked(terrain, x, y) (the terrain point if not given) lets it. Coming in hard
+-- it moves the robot a tiny bit.
+function M:bounce_on_robot(o, hit, bounce, friction, r, blocked)
+	local cx, cy = hit.x, hit.y + M.HURT_Y
+	local dx, dy = o.x - cx, o.y - cy
+	local d = math.sqrt(dx * dx + dy * dy)
+	if d < 1e-6 then dx, dy, d = 0, 1, 1 end
+	local sx, sy = dx / d, dy / d
+	local out = M.HURT_R + r + 0.01
+	if d < out then
+		blocked = blocked or point_solid
+		local t = self.terrain
+		if not blocked(t, cx + sx * out, cy + sy * out) then
+			o.x, o.y = cx + sx * out, cy + sy * out
+		elseif math.abs(dy) < out then
+			local px = cx + (dx < 0 and -1 or 1) * math.sqrt(out * out - dy * dy)
+			if not blocked(t, px, o.y) then o.x = px end
+		end
+	end
 	local vn = o.vx * sx + o.vy * sy
 	if vn < -40 then
-		local d = (o.vx < 0 and -1 or 1)
-		if sy == 0 then d = -sx end
-		step_x(self, hit, d * M.ORB_NUDGE)
+		local side = math.abs(sx) > 0.5 and -sx or o.vx
+		step_x(self, hit, (side < 0 and -1 or 1) * M.ORB_NUDGE)
 	end
 	if vn < 0 then
 		local e = vn < -60 and bounce or 0
@@ -1523,30 +1604,69 @@ function M:bounce_on_robot(o, hit, bounce, friction)
 	o.touched = true
 end
 
+-- An orb that leans still on a robot for this long (or is wedged against it)
+-- passes through that robot until it is out of it: it never stays on a character
+M.ORB_LEAN_TICKS = 20
+M.ORB_LEAN_SPEED = 30     -- px/s: slower than this it counts as still
+-- How far an orb inside the terrain (crumbled ground, a robot that pushed it)
+-- looks for a free spot to get out
+M.ORB_ESCAPE = 15
+
+-- Where the orb sliding towards (x, y) ends up: there or, on the steps of the
+-- terrain cells, lifted at most a cell off the surface. nil if there is no way
+-- (plus the robot that blocks it, if it is a robot)
+function M:orb_slide(o, x, y)
+	local wedge = self:body_hits_robot(o, x, y, M.ORB_R)
+	if wedge then return nil, nil, wedge end
+	local t = self.terrain
+	if not orb_touches(t, x, y) then return x, y end
+	local sx, sy = surface_normal(t, x, y)
+	for lift = 1, M.CELL do
+		local lx, ly = x + sx * lift, y + sy * lift
+		if not orb_touches(t, lx, ly) then
+			if self:body_hits_robot(o, lx, ly, M.ORB_R) then return end
+			return lx, ly
+		end
+	end
+end
+
 -- Updates an orb; returns false when it's done (teleport done)
 function M:update_orb(o)
 	local rb = self.robots[o.owner]
 	if rb.dead then return false end
 	o.age = (o.age or 0) + 1
-	-- flies like the missile; when it touches terrain it bounces and rolls.
+	-- flies like the missile; when it touches terrain or a robot it bounces and
+	-- slides along it, it never stays hanging.
 	-- If it leaves the map it keeps falling: the teleport takes you there anyway.
 	local t = self.terrain
+	local pass = o.pass and self.robots[o.pass]
+	if pass and (pass.dead or not M.hurt_at(pass, o.x, o.y, M.ORB_R + M.CELL)) then o.pass = nil end
+	if orb_touches(t, o.x, o.y) then
+		for _, f in ipairs(teleport_offsets(M.ORB_ESCAPE)) do
+			if not orb_touches(t, o.x + f[1], o.y + f[2]) then
+				o.x, o.y = o.x + f[1], o.y + f[2]
+				break
+			end
+		end
+	end
 	o.vy = o.vy - self.gravity * M.ORB_GRAVITY * M.DT
 	if o.touched and M.ORB_DAMPING > 0 then
 		local k = 1 / (1 + M.DT * M.ORB_DAMPING)
 		o.vx, o.vy = o.vx * k, o.vy * k
 	end
-	local mx, my = o.vx * M.DT, o.vy * M.DT
-	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
+	local steps = math.max(1, math.ceil(math.max(math.abs(o.vx), math.abs(o.vy)) * M.DT / M.CELL))
+	local h = M.DT / steps
+	local leaning, x0, y0 = nil, o.x, o.y
 	for _ = 1, steps do
-		local nx, ny = o.x + mx / steps, o.y + my / steps
+		local nx, ny = o.x + o.vx * h, o.y + o.vy * h
 		local hit = self:body_hits_robot(o, nx, ny, M.ORB_R)
+		local ground = not hit and orb_touches(t, nx, ny)
 		if hit then
-			self:bounce_on_robot(o, hit, M.ORB_BOUNCE, M.ORB_FRICTION)
-			break
+			self:bounce_on_robot(o, hit, M.ORB_BOUNCE, M.ORB_FRICTION, M.ORB_R, orb_touches)
+			leaning = hit
 		elseif self:spring(o, ny, M.ORB_R) then
 			break
-		elseif t:solid(nx, ny) then
+		elseif ground then
 			local sx, sy = surface_normal(t, nx, ny)
 			local vn = o.vx * sx + o.vy * sy
 			if vn < 0 then
@@ -1558,10 +1678,26 @@ function M:update_orb(o)
 				o.vy = ty * M.ORB_FRICTION - e * vn * sy
 			end
 			o.touched = true
-			break
+		end
+		if hit or ground then
+			-- after the bounce the step goes on with the new speed: it slides along the
+			-- terrain or round the robot. Wedged with no way out it stops, and if a
+			-- robot blocks it, it passes through that robot
+			local wedge
+			nx, ny, wedge = self:orb_slide(o, o.x + o.vx * h, o.y + o.vy * h)
+			if not nx then
+				o.vx, o.vy = 0, 0
+				if wedge then o.pass, leaning = wedge.id, nil end
+				break
+			end
 		end
 		o.x, o.y = nx, ny
 	end
+	-- leaning still (a robot pushing it along doesn't count)
+	local mx, my, slow = o.x - x0, o.y - y0, M.ORB_LEAN_SPEED * M.DT
+	local still = mx * mx + my * my < slow * slow
+	o.leans = leaning and still and (o.leans or 0) + 1 or 0
+	if o.leans >= M.ORB_LEAN_TICKS then o.pass, o.leans = leaning.id, 0 end
 	o.timer = o.timer - 1
 	if o.timer <= 0 then
 		-- the orb is at the centre of the robot, the robot's position is at the feet
@@ -1633,10 +1769,14 @@ end
 -- One tick of flight: it starts fast and slows down (drag), gravity grows
 -- little by little up to drop times the robots' gravity in drop_ramp seconds,
 -- so at first it goes almost straight and then drops more and more
+-- the speed kept each tick (drag per second to the power DT), computed once per drag;
+-- DT is not whole, so ^ is pow() in the interpreter and in the compiled code alike
+local sniper_drag, sniper_k
 local function sniper_step(gravity, vx, vy, age)
 	local s = C.SNIPER
 	local g = gravity * s.drop * math.min(1, age / (s.drop_ramp * 60))
-	local k = s.drag ^ M.DT
+	if sniper_drag ~= s.drag then sniper_drag, sniper_k = s.drag, s.drag ^ M.DT end -- pow ok
+	local k = sniper_k
 	return vx * k, (vy - g * M.DT) * k
 end
 
@@ -1659,7 +1799,7 @@ function M:update_sniper(p)
 			p.bounces = p.bounces + 1
 			p.vx, p.vy = bounce(t, nx, ny, p.vx, p.vy)
 			-- too many bounces or almost still: it dies out there
-			if p.bounces > C.SNIPER.bounces or p.vx * p.vx + p.vy * p.vy < C.SNIPER.min_speed ^ 2 then
+			if p.bounces > C.SNIPER.bounces or p.vx * p.vx + p.vy * p.vy < C.SNIPER.min_speed * C.SNIPER.min_speed then
 				self:emit({ type = "sniper_end", x = p.x, y = p.y })
 				self.projectile = nil
 				return
@@ -2001,24 +2141,33 @@ function M:fire_vortex(angle, power)
 end
 
 -- Cannonata (config.CANNON) -----------------------------------------------------
--- The user flies as a ballistic body, in place of the normal physics
--- (update_robot), through the robots (each hit once) and stops against terrain.
+-- The user stands still for the windup (wait ticks: into the cannon, the fuse),
+-- then flies as a ballistic body, in place of the normal physics (update_robot),
+-- through the robots (each hit once) and stops against terrain.
 
 function M:start_cannon(angle, power)
 	local rb = self.robots[self.current]
 	local s = C.CANNON
 	local speed = s.speed * math.max(s.min_power, math.min(1, power or 1))
 	rb.facing = math.cos(angle) < 0 and -1 or 1
-	rb.cannon = { vx = math.cos(angle) * speed, vy = math.sin(angle) * speed, hit = {} }
+	rb.cannon = { vx = math.cos(angle) * speed, vy = math.sin(angle) * speed, hit = {}, angle = angle,
+		wait = math.floor(s.windup / M.DT + 0.5) }
 	rb.vx, rb.vy = 0, 0
-	rb.y = rb.y + 1
-	rb.grounded, rb.knocked, rb.fall_top = false, false, nil
 	self:emit({ type = "cannon", robot = rb.id, angle = angle })
 end
 
 function M:update_cannon(rb)
 	local c = rb.cannon
 	local s = C.CANNON
+	if c.wait > 0 then
+		c.wait = c.wait - 1
+		if c.wait > 0 then return end
+		-- BOOM: off it goes
+		rb.y = rb.y + 1
+		rb.grounded, rb.knocked, rb.fall_top = false, false, nil
+		self:emit({ type = "cannon_fire", robot = rb.id, angle = c.angle, x = rb.x, y = rb.y + M.DISEGNO_H / 2 })
+		return
+	end
 	c.vy = c.vy - self.gravity * s.gravity * M.DT
 	local mx, my = c.vx * M.DT, c.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
@@ -2497,7 +2646,7 @@ end
 function M:update_lunge(rb)
 	local mx, my = rb.lunge_vx * M.DT, rb.lunge_vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
-	local len = math.sqrt(rb.lunge_vx ^ 2 + rb.lunge_vy ^ 2)
+	local len = math.sqrt(rb.lunge_vx * rb.lunge_vx + rb.lunge_vy * rb.lunge_vy)
 	local ux, uy = rb.lunge_vx / len, rb.lunge_vy / len
 	local stopped = false
 	for _ = 1, steps do
@@ -2823,7 +2972,7 @@ function M:apply_heals()
 		for _, rb in ipairs(self.robots) do
 			local dx, dy = rb.x - h.x, rb.y - h.y
 			if not rb.dead and dx * dx + dy * dy <= r2 and rb.hp < rb.max_hp then
-				local amount = math.min(math.floor(C.HEAL.hp * rb.stats.heal_mul + 0.5), rb.max_hp - rb.hp)
+				local amount = math.min(math.floor(M.nature(rb, C.HEAL.hp) * rb.stats.heal_mul + 0.5), rb.max_hp - rb.hp)
 				rb.hp = rb.hp + amount
 				used = true
 				self:emit({ type = "heal", id = h.id, robot = rb.id, amount = amount })
@@ -2861,13 +3010,14 @@ function M:use_tool(kind, fire)
 		self:fire_hook(fire.angle)
 		return
 	elseif kind == "janus" then
+		self:park_shot()
 		self.used.tool = true
 		self:throw_janus(fire.angle, fire.power)
 		return
 	end
 	rb.ammo[kind] = rb.ammo[kind] - 1
 	if kind == "shield" then
-		rb.shield, rb.parried = math.floor(C.SHIELD.hp * rb.stats.shield_mul + 0.5), 0
+		rb.shield, rb.parried = math.floor(M.nature(rb, C.SHIELD.hp) * rb.stats.shield_mul + 0.5), 0
 		self:emit({ type = "shield", robot = rb.id })
 		return
 	end
@@ -2929,7 +3079,7 @@ end
 local function spring_vy(b, o)
 	local tr = C.TRAMPOLINE
 	local chain = b.bounced_on == o.id and (b.bounces or 0) or 0
-	local vy = tr.launch_vy * (o.power or 1) * tr.decay ^ chain
+	local vy = tr.launch_vy * (o.power or 1) * M.ipow(tr.decay, chain)
 	if vy < tr.min_vy then return nil end
 	b.bounced_on, b.bounces = o.id, chain + 1
 	return vy
@@ -3142,9 +3292,40 @@ function M:blast_on(rb, x, y, blast, owner)
 	local imp = blast.impulse * self:knock_mul(rb, by or nil)
 	if by then
 		imp = imp * by.stats.blast_push
-		if by.stats.finisher > 0 and rb.hp < C.FINISHER_HP then imp = imp * 2 end
+		if by.stats.finisher > 0 and rb.hp < rb.max_hp * C.FINISHER_HP then imp = imp * 2 end
 	end
 	return dmg, dx * imp * f, dy * imp * f
+end
+
+-- A new shot is about to take self.projectile: the one still flying goes on
+-- among the older ones
+function M:park_shot()
+	if self.projectile then
+		self.flying[#self.flying + 1] = self.projectile
+		self.projectile = nil
+	end
+end
+
+-- The older shots move like the last one: each in turn takes self.projectile
+-- for its tick (the update functions only know that one)
+function M:update_flying()
+	local last, n = self.projectile, 0
+	local list = self.flying
+	for i = 1, #list do
+		self.projectile = list[i]
+		self:update_projectile()
+		if self.projectile then
+			n = n + 1
+			list[n] = self.projectile
+		end
+	end
+	for i = #list, n + 1, -1 do list[i] = nil end
+	self.projectile = last
+end
+
+-- Any shot in flight, the last or an older one
+function M:shots_flying()
+	return self.projectile ~= nil or #self.flying > 0
 end
 
 function M:update_projectile()
@@ -3217,7 +3398,7 @@ function M:start_turn(player)
 	local burn = rb.status.burn
 	if burn then
 		local by = burn.by and self.robots[burn.by]
-		self:hurt(rb, math.floor(C.STATUS.burn.damage * (by and by.stats.burn_mul or 1) + 0.5), by, "burn")
+		self:hurt(rb, math.floor(C.STATUS.burn.damage * (burn.power or 1) * (by and by.stats.burn_mul or 1) + 0.5), by, "burn")
 	end
 	-- every crate_every turns a crate drops
 	self.turn_no = self.turn_no + 1
@@ -3246,6 +3427,8 @@ function M:can_use(weapon)
 	if self.permitted and not self.permitted(weapon) then return false end
 	local rb = self.robots[self.current]
 	if rb.dead then return false end
+	-- inside the cannon, waiting for the fuse: nothing else
+	if rb.cannon and rb.cannon.wait > 0 then return false end
 	if weapon == "parachute" then
 		-- only in the air
 		if rb.grounded then return false end
@@ -3293,6 +3476,7 @@ end
 -- The robot on turn attacks with weapon (already checked with can_use)
 function M:attack(weapon, fire)
 	local rb = self.robots[self.current]
+	if M.SHOOTS[weapon] then self:park_shot() end
 	local first = not (self.used.primary or self.used.secondary)
 	if M.SECONDARY[weapon] then self.used.secondary = true else self.used.primary = true end
 	if not M.FREE_WEAPONS[weapon] then rb.ammo[weapon] = rb.ammo[weapon] - 1 end
@@ -3402,6 +3586,7 @@ function M:fingerprint()
 	end
 	local p = self.projectile
 	if p then h = shuffle(shuffle(h, p.x * 16), p.y * 16) end
+	for _, q in ipairs(self.flying) do h = shuffle(shuffle(h, q.x * 16), q.y * 16) end
 	h = shuffle(h, #self.orbs)
 	h = shuffle(h, #self.placed)
 	return h
@@ -3497,6 +3682,7 @@ function M:advance(input, can_move)
 		if rb.dead then rb.cannon = nil end
 		if rb.hook_shot then self:update_hook_shot(rb) end
 	end
+	if #self.flying > 0 then self:update_flying() end
 	if self.projectile then self:update_projectile() end
 	if self.burst then self:update_burst() end
 	self:update_shards()
@@ -3564,7 +3750,7 @@ function M:step(input)
 	elseif self.phase == "settle" then
 		-- wait for shots, orbs and robots to settle
 		self.settle_total = self.settle_total + 1
-		local still = #self.orbs == 0 and not self.projectile and not self:shards_flying() and not hazards.busy(self)
+		local still = #self.orbs == 0 and not self:shots_flying() and not self:shards_flying() and not hazards.busy(self)
 		for _, o in ipairs(self.placed) do
 			if o.flying then still = false end
 		end

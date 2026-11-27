@@ -161,6 +161,23 @@ do
 	for _ = 1, 400 do q:step() if not a.cannon then break end end
 	check(hp - b.hp == config.CANNON.damage and b.vx > 0 or b.hp < hp, "the Cannonata hits who it crosses")
 end
+-- Cannonata: first the fuse (windup), standing still and with nothing else to use, then BOOM
+do
+	local q, a = arena("cannon", 500, 900)
+	local x, y = a.x, a.y
+	fire(q, "cannon", math.rad(45), 1)
+	local wait = math.floor(config.CANNON.windup * 60 + 0.5)
+	local fired
+	for i = 1, wait - 1 do
+		q:step({ right = true, jump = true })
+		for _, e in ipairs(q:pop_events()) do if e.type == "cannon_fire" then fired = i end end
+	end
+	check(not fired and a.x == x and a.y == y and a.cannon.wait > 0, "during the fuse the user stays in the cannon")
+	check(not q:can_use("teleport") and not q:can_use("hook"), "inside the cannon nothing else can be used")
+	q:step()
+	for _, e in ipairs(q:pop_events()) do if e.type == "cannon_fire" then fired = e end end
+	check(fired and a.cannon.wait == 0, "after the windup the cannon fires")
+end
 
 -- Petardo: blows up on a robot, pushes, no crater
 do

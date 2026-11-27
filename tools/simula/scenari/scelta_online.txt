@@ -6,7 +6,6 @@
 # verde nella striscia); il nostro PRONTO è l'ultimo: si parte senza aspettare
 # il tempo. Prima cambiamo idea su un'arma (dopo PRONTO toglierebbe il segno
 # verde: lo prova TestDraftReady del server).
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 3                          # il gioco è entrato (col server già compilato il comando sotto torna subito)
 server 2v2 3

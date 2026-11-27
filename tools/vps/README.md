@@ -50,8 +50,9 @@ Senza dominio Caddy risponde sulla porta 80 dell'IP, senza TLS: va bene per la
 prima prova, non per giocare davvero (le password e i salvataggi che verranno
 viaggerebbero in chiaro).
 
-Il gioco in casa non cambia: `client/game.project` resta su `127.0.0.1` (editor,
-simulatore, build web servita dal PC), l'APK prende `SERVER_URL`; un APK di
+Editor e build del PC cercano il server sul VPS (`client/game.project`, 25 nov),
+il simulatore il suo server di prova sulla porta 8090; l'APK prende `SERVER_URL`. Un server
+in locale si usa solo apposta, cambiando `server_url` in `game.project`; un APK di
 prova verso il PC si chiede a mano da Actions > APK su Telegram con
 `server_url` = `ws://192.168.1.9:8080/ws`.
 

@@ -1,0 +1,28 @@
+# Online si vedono anche i pezzi di chi gioca col profilo di prova (Sergio, 23
+# nov: "ognuno vedeva i propri oggetti e quelli dei bot, ma non quelli
+# dell'altro giocatore"). Il profilo di prova (FINE GIOCO) non ha cartellino sul
+# server: i pezzi degli altri si prendono da quello che indossano, controllato
+# dal server (eq), come le loro statistiche. I tre finti sono profili di prova
+# coi quattro pezzi del Leviatano al 30 (entrano prima di noi: siamo Blu 2).
+imposta prova_vignette no
+
+aspetta 3
+server 2v2 3 pezzi=prova:leviatano
+tocca 1105 52                      # GIOCA
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
+aspetta_stato modo=scelta_online 25
+aspetta 1
+foto 00_schieramento                # i cartellini dei finti coi pezzi del Leviatano
+tocca 640 360                       # un tocco: alle armi
+aspetta 0.4
+tocca 559 410                       # primaria
+aspetta 0.5
+tocca 815 410                       # secondaria
+aspetta 0.5
+tocca_bordo 175 52 basso destra    # PRONTO
+aspetta_stato modo=online 30
+aspetta 5
+aspetta_stato turno=2 fase=aim 40
+aspetta 2.5
+foto 01_il_finto                    # Blu 1 col Leviatano addosso

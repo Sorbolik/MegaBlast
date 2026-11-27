@@ -2,7 +2,6 @@
 # mio personaggio in aria, come tutto il resto", e non è più ripartito): il
 # gioco si riconnette da solo, la partita riparte da dov'era e i turni vanno
 # avanti. prova_cade 8: la connessione cade da sola 8 secondi dopo l'inizio.
-imposta server_url ws://127.0.0.1:8090/ws
 imposta prova_cade 8
 imposta prova_vignette no
 aspetta 1

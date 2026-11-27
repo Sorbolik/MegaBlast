@@ -24,16 +24,19 @@ end
 local last = r.impronte[#r.impronte]
 
 -- training against the bots: the bots wear what the server builds from the
--- player's eq and the seed (sim/loadout.lua, rival), not what the phone says
+-- player's eq and the seed (sim/loadout.lua, dress_bots), not what the phone says
 local players = type(r.opzioni) == "table" and type(r.opzioni.players) == "table" and r.opzioni.players or {}
 local mine = type(players[1]) == "table" and players[1].eq
 if mine then
 	local loadout = require "sim.loadout"
+	local seats = {}
 	for i, p in ipairs(players) do
-		if i > 1 and type(p) == "table" and p.bot then
-			local ok, eq = pcall(loadout.rival, mine, r.seme, i)
-			p.eq = ok and eq or nil
-		end
+		-- in training only the first robot is a person
+		seats[i] = { team = type(p) == "table" and p.team, bot = i > 1 or nil, eq = i == 1 and mine or nil }
+	end
+	local ok = pcall(loadout.dress_bots, seats, r.seme)
+	for i, p in ipairs(players) do
+		if i > 1 and type(p) == "table" and p.bot then p.eq = ok and seats[i].eq or nil end
 	end
 end
 

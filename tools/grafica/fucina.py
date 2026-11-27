@@ -11,12 +11,14 @@
 #       dei gironi (art/WB-026)
 #   client/paintings/backdrops/*.jpg, client/ui/backdrops.lua   gli sfondi dei menu
 #       (art/WB-028 e la campagna di art/WB-027)
+#   client/paintings/clients/*.jpg     i busti dei clienti delle Commesse (WB-086, WB-087)
 #   client/ui/pieces.lua                le misure di ogni pezzo (generato)
 #   client/ui/fucina.atlas              l'atlante (generato)
 # Servono numpy, scipy e Pillow.
+import math
 import os
 import numpy as np
-from PIL import Image, ImageChops, ImageDraw
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 from scipy import ndimage as ndi
 
 QUI = os.path.dirname(os.path.abspath(__file__))
@@ -67,6 +69,7 @@ def salva(im, nome):
 
 
 MISURE = {}
+BUSTI = os.path.join(RADICE, "client", "paintings", "clients")
 
 
 def intero(nome, arr, h):
@@ -86,7 +89,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome not in ("guscio", "barra_brace", "barra_gelo", "barra_chiara", "barra_stendardo") and not nome.startswith("primario"):    # (sfumati, e il primario: il suo spazio e' misurato, SPAZI_PRIMARIO)
+    if nome not in ("barra_stendardo", "barra_stendardo_chiara", "solco", "filo_fondo", "filo_bordo"):    # (sfumati)
         SPAZI[nome] = spazio(im)
 
 
@@ -137,9 +140,8 @@ def fai_pezzi():
     # (il lingotto di WB-022 non c'e' piu': il pulsante primario e' quello di WB-052)
     tre("scheggia", pezzi(senza_verde(os.path.join(p, "pezzo_ghiaccio.png")))[0][2], 200, 0.2)
     pan = pezzi(senza_verde(os.path.join(p, "pezzo_pannello.png")))[0][2]
-    nove("pannello", pan, 480)
-    # il bordo caldo di una carta scelta e la targa chiara alta (un ritratto)
-    nove("pannello_caldo", caldo(pan), 480)
+    # (pannello e pannello_caldo: la card minimale disegnata in vettori, fai_card_filo;
+    # di questo foglio resta la targa chiara alta, un ritratto)
     # (il pannello e' piu' scuro delle piastre: schiarito prima, cosi' viene avorio)
     su = pan.astype(float)
     su[..., :3] = np.where(su[..., :3].mean(axis=2, keepdims=True) > 18, su[..., :3] + 30, su[..., :3])
@@ -174,6 +176,187 @@ def fai_monete():
     intero("buono", secondo[1][2], 120)
 
 
+def fai_commesse():
+    """I frammenti di famiglia e i materiali delle Commesse (WB-084, 23 nov): frammenti_1
+    (fabbro, corvo, fornace, leviatano, vuoto), materiali_a_1 (due file da tre) e materiali_b_2.
+    Il verde si toglie solo fuori dalla china (l'Acqua dello Stige e il Leviatano sono verdi
+    dentro). Ognuno al centro di un quadrato, cosi' in una griglia hanno tutti lo stesso
+    ingombro: 192 px, il doppio della misura piu' grande sullo schermo (96)."""
+    p = os.path.join(ART, "WB-084")
+
+    def fuori(percorso):
+        rgb = np.array(Image.open(percorso).convert("RGB"))
+        o = senza_verde(percorso)
+        lab, _ = ndi.label(o[..., 3] < 255)
+        bordo = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+        sfondo = np.isin(lab, bordo[bordo > 0])
+        o[~sfondo, :3] = rgb[~sfondo]
+        o[~sfondo, 3] = 255
+        return o
+
+    def quadrato(nome, arr, lato=192):
+        im = Image.fromarray(arr, "RGBA")
+        k = (lato - 4) / max(im.size)
+        im = im.resize((round(im.size[0] * k), round(im.size[1] * k)), Image.LANCZOS)
+        q = Image.new("RGBA", (lato, lato), (0, 0, 0, 0))
+        q.paste(im, ((lato - im.size[0]) // 2, (lato - im.size[1]) // 2))
+        salva(q, nome)
+        MISURE[nome] = (lato, lato)
+
+    fr = sorted(pezzi(fuori(os.path.join(p, "frammenti_1.png"))), key=lambda t: t[1])
+    assert len(fr) == 5, len(fr)
+    for nome, t in zip(FAMIGLIE, fr):
+        quadrato("frammento_" + nome, t[2])
+    a = pezzi(fuori(os.path.join(p, "materiali_a_1.png")))
+    assert len(a) == 6, len(a)
+    ymid = np.mean([t[0] for t in a])
+    a = sorted([t for t in a if t[0] < ymid], key=lambda t: t[1]) + sorted([t for t in a if t[0] >= ymid], key=lambda t: t[1])
+    b = sorted(pezzi(fuori(os.path.join(p, "materiali_b_2.png"))), key=lambda t: t[1])
+    assert len(b) == 5, len(b)
+    nomi = ["scoria", "piuma", "vento", "grandine", "scheggia", "stige", "tomba", "sangue", "sabbia", "pece", "ghiaccio"]
+    for nome, t in zip(nomi, a + b):
+        quadrato("materiale_" + nome, t[2])
+
+
+def fai_bottega():
+    """La carta dei cartellini e il Fabbro al banco delle Commesse (WB-085, 23 nov).
+    Il cartellino e' il foglio largo di cartellino_1 in nove parti, con gli angoli quadrati
+    presi alla misura di Codex (100 px: sullo schermo 34, il doppio e' 68) cosi' la china
+    e l'orecchia non si deformano; il lato alto viene dal tratto liscio prima del rinforzo
+    del foro, e il rinforzo e' un pezzo a parte (cartellino_foro) che il gioco mette al
+    centro, sotto il chiodo. Il Fabbro e' la variante 1, senza la pergamena del fondo
+    (tolta solo dove tocca il bordo del foglio: i baffi hanno quasi lo stesso colore),
+    alto 1000: sullo schermo 500."""
+    p = os.path.join(ART, "WB-085")
+    o = senza_verde(os.path.join(p, "cartellino_1.png"))
+    x0, y0, x1, y1, c = 799, 302, 1430, 718, 100
+    xs = [(x0, x0 + c), (x0 + c, 1060), (x1 - c, x1)]
+    ys = [(y0, y0 + c), (y0 + c, y1 - c), (y1 - c, y1)]
+    k = 1
+    for r, (ya, yb) in enumerate(ys):
+        for q, (xa, xb) in enumerate(xs):
+            # (sotto e in mezzo il tratto intero: solo in alto c'e' il rinforzo da saltare)
+            if q == 1 and r > 0:
+                xb = x1 - c
+            salva(Image.fromarray(o[ya:yb, xa:xb], "RGBA"), "cartellino_%d" % k)
+            k += 1
+    MISURE["cartellino"] = (x1 - x0, y1 - y0, c)
+    foro = Image.fromarray(o[y0:372, 1064:1176], "RGBA")
+    salva(foro, "cartellino_foro")
+    MISURE["cartellino_foro"] = foro.size
+
+    rgb = np.array(Image.open(os.path.join(p, "fabbro_al_banco_1.png")).convert("RGB")).astype(float)
+    fondo = np.median(np.concatenate([rgb[:8].reshape(-1, 3), rgb[-8:].reshape(-1, 3)]), axis=0)
+    dist = np.abs(rgb - fondo).sum(axis=2)
+    lab, _ = ndi.label(dist < 60)
+    bordo = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+    # (e la pergamena chiusa fra il braccio destro e il fianco)
+    fuori = np.isin(lab, bordo[bordo > 0]) | (lab == lab[895, 746])
+    # il contorno: i pixel fra pergamena e china, sfumati e ripuliti dal colore del fondo
+    vicino = ndi.binary_dilation(fuori, iterations=3) & ~fuori
+    alfa = np.where(fuori, 0.0, 1.0)
+    alfa[vicino] = np.clip((255 - rgb[vicino].mean(axis=1)) / 200, 0, 1)
+    col = rgb.copy()
+    m = vicino & (alfa > 0.02)
+    col[m] = np.clip((rgb[m] - (1 - alfa[m])[:, None] * fondo) / alfa[m][:, None], 0, 255)
+    arr = np.dstack([col, alfa * 255]).astype(np.uint8)
+    ys_, xs_ = np.where(arr[..., 3] > 20)
+    intero("fabbro_al_banco", arr[ys_.min():ys_.max() + 1, xs_.min():xs_.max() + 1], 1000)
+
+    # i busti dei clienti (WB-086: Caronte, variante 2 scelta da Sergio il 23 nov): chiede,
+    # contento, fiero; dentro la cornice di china (il gioco la ridisegna), alla misura di
+    # Codex (366 x 485: il ritratto piu' grande sullo schermo e' 180 x 240)
+    # e gli altri sette (WB-087, 23 nov): le varianti consigliate da Claude, da confermare
+    # con Sergio. I riquadri dei busti stanno sempre da x 390, 773, 1156 (373 di larghezza);
+    # l'alto della cornice si cerca (la riga di china piu' lunga), poi 485 in giu': stessa
+    # misura per tutti, il taglio sotto e' il petto
+    fogli = {"caronte": ("WB-086", 2), "minosse": ("WB-087", 2), "cerbero": ("WB-087", 1),
+             "plutone": ("WB-087", 1), "flegias": ("WB-087", 1), "medusa": ("WB-087", 1),
+             "minotauro": ("WB-087", 1), "malacoda": ("WB-087", 2)}
+    for cliente, (scheda, variante) in fogli.items():
+        cs = Image.open(os.path.join(ART, scheda, "%s_%d.png" % (cliente, variante))).convert("RGBA")
+        scuro = np.asarray(cs.convert("RGB")).astype(int).sum(axis=2) < 360
+        righe = np.where(scuro[:, 400:750].sum(axis=1) > 245)[0]
+        alto = int(righe.min()) + 4
+        # chiede (i cartellini), contento e fiero (la scena della consegna, 23 nov): non
+        # nell'atlante (sarebbe salito a 8192) ma JPEG in client/paintings/clients/, caricati
+        # solo quando si vedono (ui/illustrations.lua): il fondo del busto e' carta piena
+        for nome, x in (("chiede", 394), ("contento", 777), ("fiero", 1160)):
+            im = cs.crop((x, alto, x + 366, alto + 485)).convert("RGB")
+            im.save(os.path.join(BUSTI, "%s_%s.jpg" % (cliente, nome)), quality=92)
+
+
+def fai_badge_clienti():
+    """Il badge di ogni cliente a 10 perle (Sergio, 23 nov): come il cerchietto del profilo,
+    la testa parte dalla base del cerchio e sopra (e di lato) puo' uscire. Il busto chiede
+    ritagliato dalla carta (la carta che tocca i bordi e le macchie grandi chiuse), messo
+    con la testa al centro del disco; sotto la linea di mezzo si taglia col cerchio, sopra
+    no. Il disco e l'anello del colore del filo li disegna il gioco (ui/tag_card.lua):
+    qui il disco e' D = 128 (2x il badge piu' grande, 64 nel profilo), centro a (CX, CY)."""
+    from scipy import ndimage
+    D, W, H = 128, 360, 208
+    CX, CY = W // 2, H - D // 2 - 4
+    # dove sta la testa nel busto (366 x 485): centro x, y e larghezza, a occhio
+    teste = {"caronte": (150, 175, 170), "minosse": (172, 150, 190), "cerbero": (183, 125, 260),
+             "plutone": (165, 135, 190), "flegias": (150, 160, 200), "medusa": (170, 140, 170),
+             "minotauro": (195, 170, 230), "malacoda": (115, 150, 150)}
+    for cliente, (hx, hy, hw) in teste.items():
+        im = np.asarray(Image.open(os.path.join(BUSTI, cliente + "_chiede.jpg")).convert("RGB")).astype(int)
+        fondo = np.median(np.concatenate([im[0], im[:, 0], im[:, -1]]), axis=0)
+        carta = np.abs(im - fondo).sum(axis=2) < 60
+        lab, n = ndimage.label(carta)
+        bordo = set(np.unique(np.concatenate([lab[0], lab[:, 0], lab[:, -1]]))) - {0}
+        grandi = {i + 1 for i, k in enumerate(ndimage.sum(carta, lab, range(1, n + 1))) if k > 400}
+        fuori = np.isin(lab, list(bordo | grandi))
+        figura = ndimage.binary_opening(~fuori, iterations=1)
+        lab2, n2 = ndimage.label(figura)
+        figura = lab2 == (np.argmax(ndimage.sum(figura, lab2, range(1, n2 + 1))) + 1)
+        alfa = Image.fromarray((figura * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.8))
+        busto = Image.fromarray(np.dstack([im.astype(np.uint8), np.asarray(alfa)]), "RGBA")
+        k = D * 0.95 / hw
+        busto = busto.resize((round(busto.size[0] * k), round(busto.size[1] * k)), Image.LANCZOS)
+        tela = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        tela.alpha_composite(busto, (round(CX - hx * k), round(CY - D * 0.12 - hy * k)))
+        a = np.asarray(tela).copy()
+        yy, xx = np.mgrid[0:H, 0:W]
+        dentro = (xx - CX + 0.5) ** 2 + (yy - CY + 0.5) ** 2 <= (D / 2) ** 2
+        # fuori dal cerchio resta solo la testa (sopra la linea di mezzo, attaccata al
+        # centro della testa): non il remo o la lancia che spuntano di lato
+        sopra = (yy < CY) & (a[..., 3] > 40) & ~dentro | (yy < CY) & dentro & (a[..., 3] > 40)
+        lab3, _ = ndimage.label(sopra, structure=np.ones((3, 3)))
+        testa = lab3 == lab3[round(CY - D * 0.12), CX]
+        a[..., 3] = np.where(dentro | testa, a[..., 3], 0)
+        ys, xs = np.where(a[..., 3] > 0)
+        x0, x1 = xs.min(), xs.max() + 1
+        # il pezzo si ritaglia ai bordi veri; il centro del disco il gioco lo legge
+        # dal box (sinistra e alto = dove sta il centro, destra e basso il resto)
+        y0 = ys.min()
+        out = Image.fromarray(a[y0:, x0:x1], "RGBA")
+        salva(out, "badge_" + cliente)
+        MISURE["badge_" + cliente] = (out.size[0], out.size[1])
+        SPAZI["badge_" + cliente] = (CX - x0, CY - y0, x1 - CX, H - CY)
+
+
+def fai_medaglia_jackpot():
+    """La medaglia del jackpot della Fornace (WB-094, Sergio 24 nov): un badge del profilo,
+    il disco d'oro intero largo 128 (2x il badge più grande, 64 nel profilo), ritagliato
+    come i pezzi della Fornace (tools/grafica/fornace.py)."""
+    import sys
+    sys.path.insert(0, QUI)
+    from fornace import ritaglia, stretto
+    im = stretto(ritaglia(os.path.join(ART, "WB-094", "medaglia_jackpot_1.png")))
+    im = im.resize((128, round(im.size[1] * 128 / im.size[0])), Image.LANCZOS)
+    salva(im, "medaglia_jackpot")
+    MISURE["medaglia_jackpot"] = im.size
+    # le medaglie dei rintocchi (WB-095, Sergio 24 nov: 6 e 10 colpi sugli stampi in un tiro)
+    md = ritaglia(os.path.join(ART, "WB-095", "medaglie_rintocchi_1.png"))
+    for nome, box in (("medaglia_rintocchi_6", (0, 0, 760, 1024)), ("medaglia_rintocchi_10", (760, 0, 1536, 1024))):
+        im = stretto(md.crop(box))
+        im = im.resize((128, round(im.size[1] * 128 / im.size[0])), Image.LANCZOS)
+        salva(im, nome)
+        MISURE[nome] = im.size
+
+
 def fai_perle():
     """Le perle del livello e lo slot della firma di WB-074 (Sergio, 18 nov: il modo ufficiale
     di mostrare gli upgrade). Dal foglio perle_2: sopra le tre perline (vuota, piena grigia che
@@ -199,6 +382,31 @@ def fai_stendardo():
     intero("stendardo", st[2], 224)
     barra = sorted(pezzi(senza_verde(os.path.join(p, "barra_2.png"))), key=lambda t: t[0])
     tre("barra_stendardo", barra[1][2], 16, 0.03)
+    # la stessa striscia senza tinta: il gioco le da' il colore (gelo, menta, viola)
+    tre("barra_stendardo_chiara", neutro(barra[1][2]), 16, 0.03)
+    fai_solco()
+
+
+def fai_solco():
+    """Il solco di tutte le barre (Sergio, 23 nov: «tutte le barre di progresso devono essere
+    lineari, prendendo esattamente l'asset [...] dell'esperienza»): l'incavo dello stendardo
+    della home ridisegnato in vettori, da solo, per allungarlo. Misure in sedicesimi
+    dell'altezza come nel disegno di WB-075: contorno d'inchiostro, il gradino chiaro in
+    alto dentro, il fondo scuro dove sta la striscia (da 8 a 27 su 32), il labbro chiaro
+    sotto. Il gioco lo usa con kit.bar."""
+    S, U = 4, 4                     # quattro volte, e 4 pixel per unita' (alto 32 unita')
+    W, G = 160, 32
+    k = S * U
+    im = Image.new("RGBA", (W * k, G * k), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    def pill(x0, y0, x1, y1, col):
+        d.rounded_rectangle((x0 * k, y0 * k, x1 * k - 1, y1 * k - 1), (y1 - y0) / 2 * k, fill=col)
+    pill(0, 3, W, 32, (0x74, 0x5F, 0x76, 255))        # il labbro sotto
+    pill(0, 0, W, 29, (0x00, 0x00, 0x00, 255))        # l'inchiostro
+    pill(2, 2, W - 2, 27, (0x3A, 0x2E, 0x3E, 255))    # il gradino
+    pill(2, 8, W - 2, 27, (0x17, 0x10, 0x16, 255))    # il fondo
+    im = im.resize((W * U, G * U), Image.LANCZOS)
+    tre("solco", np.asarray(im), G * U, 0.1)
 
 
 def fai_secondario():
@@ -209,34 +417,210 @@ def fai_secondario():
     un po' storta (Sergio, 18 nov, «moneta che sporge»). Disegnato qui in vettori (quattro volte piu' grande, poi
     ridotto), in tre parti come gli altri pezzi lunghi. Premuto: la faccia scende e lo
     spessore sparisce; spento: ferro freddo grigio-blu."""
-    S = 4                       # il disegno a quattro volte, ridotto: bordi lisci
-    W, FACE, R, INK = 520, 108, 30, 7
     stati = {
-        # nome: (altezza in tutto, ferro, luce)
-        "acceso": (120, (0x3A, 0x33, 0x40), (0x50, 0x48, 0x5A)),
-        "premuto": (114, (0x33, 0x2D, 0x39), (0x44, 0x3D, 0x4C)),
-        "spento": (120, (0x4A, 0x55, 0x60), (0x5C, 0x67, 0x72)),
+        # nome: (altezza in tutto, ferro, luce). «chiaro»: col mouse o la luce del controller
+        # sopra (Sergio, 23 nov: «all'hover cambino sfumatura di colore»), una tinta piatta
+        # piu' chiara, niente aloni. «principale»: lo stesso disegno in ferro rovente
+        # (Sergio, 23 nov: «come il secondario [...] ma di un colore leggermente diverso»)
+        "secondario_acceso": (120, (0x3A, 0x33, 0x40), (0x50, 0x48, 0x5A)),
+        "secondario_chiaro": (120, (0x46, 0x3E, 0x4E), (0x61, 0x57, 0x6D)),
+        "secondario_premuto": (114, (0x33, 0x2D, 0x39), (0x44, 0x3D, 0x4C)),
+        "secondario_spento": (120, (0x4A, 0x55, 0x60), (0x5C, 0x67, 0x72)),
+        "principale_acceso": (120, (0x4C, 0x28, 0x1F), (0x6C, 0x2B, 0x19)),
+        "principale_chiaro": (120, (0x5C, 0x30, 0x25), (0x83, 0x34, 0x1E)),
+        "principale_premuto": (114, (0x44, 0x27, 0x1F), (0x5B, 0x29, 0x1C)),
+        "principale_spento": (120, (0x4A, 0x55, 0x60), (0x5C, 0x67, 0x72)),
     }
-    nero = (0x0A, 0x08, 0x0B, 255)
-    for stato, (h, ferro, luce) in stati.items():
-        im = Image.new("RGBA", (W * S, h * S), (0, 0, 0, 0))
-        d = ImageDraw.Draw(im)
-        top = 0                 # la faccia in alto, sotto lo spessore (12, premuto 6)
-        # lo spessore: l'inchiostro sotto la faccia
-        d.rounded_rectangle((0, top * S + 8 * S, W * S - 1, h * S - 1), R * S, fill=nero)
-        # la faccia: contorno, ferro, la luce in alto (solo dentro il ferro)
-        d.rounded_rectangle((0, top * S, W * S - 1, (top + FACE) * S - 1), R * S, fill=nero)
-        dentro = (INK * S, (top + INK) * S, (W - INK) * S - 1, (top + FACE - INK) * S - 1)
-        d.rounded_rectangle(dentro, (R - INK) * S, fill=ferro + (255,))
-        maschera = Image.new("L", im.size, 0)
-        ImageDraw.Draw(maschera).rounded_rectangle(dentro, (R - INK) * S, fill=255)
-        banda = Image.new("L", im.size, 0)
-        ImageDraw.Draw(banda).rectangle((0, 0, W * S, (top + INK + (FACE - 2 * INK) * 0.34) * S), fill=255)
-        im.paste(Image.new("RGBA", im.size, luce + (255,)), (0, 0), ImageChops.multiply(maschera, banda))
-        im = im.resize((W, h), Image.LANCZOS)
-        tre("secondario_" + stato, np.asarray(im), h, 0.26)
+    for nome, (h, ferro, luce) in stati.items():
+        lastra(nome, h, ferro, luce)
     # le scritte dopo la moneta, lontano dai bordi
     SPAZI["secondario_acceso"] = (118, 14, 26, 24)
+    SPAZI["principale_acceso"] = (118, 14, 26, 24)
+    # la freccina dell'indietro (Sergio, 23 nov: «tutta bianca come prima, basta che non si
+    # incontri cosi' male in punta, e che sia ben definito il <»): un pezzo solo, la punta
+    # unita ad angolo vivo, i capi tondi, niente contorno
+    fai_freccina()
+
+
+def lastra(nome, h, ferro, luce):
+    """La lastra del Ferro liscio (fai_secondario) coi colori dati, alta h (premuta 114)."""
+    S = 4                       # il disegno a quattro volte, ridotto: bordi lisci
+    W, FACE, R, INK = 520, 108, 30, 7
+    nero = (0x0A, 0x08, 0x0B, 255)
+    im = Image.new("RGBA", (W * S, h * S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    top = 0                 # la faccia in alto, sotto lo spessore (12, premuto 6)
+    # lo spessore: l'inchiostro sotto la faccia
+    d.rounded_rectangle((0, top * S + 8 * S, W * S - 1, h * S - 1), R * S, fill=nero)
+    # la faccia: contorno, ferro, la luce in alto (solo dentro il ferro)
+    d.rounded_rectangle((0, top * S, W * S - 1, (top + FACE) * S - 1), R * S, fill=nero)
+    dentro = (INK * S, (top + INK) * S, (W - INK) * S - 1, (top + FACE - INK) * S - 1)
+    d.rounded_rectangle(dentro, (R - INK) * S, fill=ferro + (255,))
+    maschera = Image.new("L", im.size, 0)
+    ImageDraw.Draw(maschera).rounded_rectangle(dentro, (R - INK) * S, fill=255)
+    banda = Image.new("L", im.size, 0)
+    ImageDraw.Draw(banda).rectangle((0, 0, W * S, (top + INK + (FACE - 2 * INK) * 0.34) * S), fill=255)
+    im.paste(Image.new("RGBA", im.size, luce + (255,)), (0, 0), ImageChops.multiply(maschera, banda))
+    im = im.resize((W, h), Image.LANCZOS)
+    tre(nome, np.asarray(im), h, 0.26)
+
+
+# Le porte della home (Sergio, 24 nov: proposta B, «i pulsanti riempiti col colore»): il
+# Ferro liscio tinto del colore del posto, e la sua icona grande di WB-089 senza cornice
+# che sporge dal capo verso il bordo. (porta, colore, foglio, posto da 0 a 3 nella riga)
+PORTE = [
+    ("campagna", (214, 62, 42), "porte_scenette_2", 0),
+    ("allenamento", (90, 200, 170), "porte_oggetti_2", 1),
+    ("eventi", (240, 190, 60), "porte_scenette_1", 2),
+    ("armeria", (176, 124, 70), "porte_oggetti_2", 3),
+]
+
+
+def tinta(rgb, col, quanto=0.75):
+    """Il ferro tinto: mescolato al colore del posto (come la proposta B approvata)."""
+    base = np.array(rgb, float)
+    chiaro = base + (255 - base) * 0.35
+    molt = chiaro * np.array(col, float) / 255
+    return tuple(int(round(v)) for v in base + (molt - base) * quanto)
+
+
+def fai_porte():
+    for porta, col, foglio, posto in PORTE:
+        for stato, (h, ferro, luce) in {
+            "acceso": (120, (0x3A, 0x33, 0x40), (0x50, 0x48, 0x5A)),
+            "chiaro": (120, (0x46, 0x3E, 0x4E), (0x61, 0x57, 0x6D)),
+            "premuto": (114, (0x33, 0x2D, 0x39), (0x44, 0x3D, 0x4C)),
+        }.items():
+            lastra("porta_%s_%s" % (porta, stato), h, tinta(ferro, col), tinta(luce, col))
+        # l'icona: il verde tolto come per le icone delle azioni, via i puntini staccati
+        o = senza_verde(os.path.join(ART, "WB-089", foglio + ".png"))
+        w = o.shape[1] // 4
+        cella = o[:, posto * w:(posto + 1) * w].copy()
+        lab, n = ndi.label(cella[..., 3] > 40)
+        if n:
+            grandi = ndi.sum(np.ones_like(lab), lab, range(1, n + 1))
+            for i, g in enumerate(grandi):
+                if g < 400:
+                    cella[lab == i + 1, 3] = 0
+        if porta == "armeria":
+            # la bancarella aperta mostrava la home dietro (Sergio, 24 nov): i buchi chiusi
+            # di legno scuro finche' Codex non la rifa' col fondo di assi (WB-091)
+            dentro = cella[..., 3] > 40
+            lab, _ = ndi.label(~dentro)
+            fuori = set(lab[0, :]) | set(lab[-1, :]) | set(lab[:, 0]) | set(lab[:, -1])
+            buchi = ~dentro & ~np.isin(lab, list(fuori))
+            cella[buchi] = (58, 34, 24, 255)
+        ys, xs = np.nonzero(cella[..., 3] > 40)
+        pezzo = cella[max(0, ys.min() - 4):ys.max() + 5, max(0, xs.min() - 4):xs.max() + 5]
+        # alta il doppio di come la mostra la home (136 px a 1280 x 720): nitida fino a 2560
+        intero("porta_icona_" + porta, pezzo, 280)
+    fai_azioni()
+    fai_card_filo()
+    fai_filo_corto()
+
+
+# le icone delle azioni (WB-088, Sergio 23 nov: «ogni singolo tasto deve avere la sua
+# iconcina alla sinistra»): (nome, foglio, variante, posto da 0 a 7 nella griglia 4 x 2).
+# Scelta di Claude fra le due varianti, icona per icona
+AZIONI = [
+    ("gioca", 1, 2, 0), ("indossa", 1, 1, 1), ("potenzia", 1, 2, 2), ("consegna", 1, 1, 3),
+    ("pronto", 1, 1, 4), ("salva", 1, 1, 5), ("torna", 1, 2, 6), ("esci", 1, 2, 7),
+    ("chiama", 2, 2, 0), ("scambia", 2, 1, 1), ("cambia", 2, 1, 2), ("prova", 2, 2, 3),
+    ("riprova", 2, 1, 4), ("elenco", 2, 2, 5), ("salta", 2, 2, 6), ("vedi", 2, 2, 7),
+    ("mira", 3, 2, 0), ("rileggi", 3, 2, 1), ("tasti", 3, 1, 2), ("profilo", 3, 1, 3),
+    ("annulla", 3, 1, 4), ("ripristina", 3, 1, 5), ("uno_contro_uno", 3, 1, 6), ("via", 3, 1, 7),
+]
+
+
+def fai_azioni():
+    p = os.path.join(ART, "WB-088")
+    fogli = {}
+    for nome, foglio, var, posto in AZIONI:
+        k = (foglio, var)
+        if k not in fogli:
+            fogli[k] = senza_verde(os.path.join(p, "azioni_%d_%d.png" % k))
+        o = fogli[k]
+        h, w = o.shape[0] // 2, o.shape[1] // 4
+        cella = o[(posto // 4) * h:(posto // 4 + 1) * h, (posto % 4) * w:(posto % 4 + 1) * w]
+        ys, xs = np.nonzero(cella[..., 3] > 40)
+        pezzo = cella[max(0, ys.min() - 4):ys.max() + 5, max(0, xs.min() - 4):xs.max() + 5]
+        # quadrato, il disegno in mezzo: tutte le icone della stessa grandezza sul pulsante
+        lato = max(pezzo.shape[:2])
+        q = np.zeros((lato, lato, 4), np.uint8)
+        y0, x0 = (lato - pezzo.shape[0]) // 2, (lato - pezzo.shape[1]) // 2
+        q[y0:y0 + pezzo.shape[0], x0:x0 + pezzo.shape[1]] = pezzo
+        intero("az_" + nome, q, 160)
+
+
+def fai_card_filo():
+    """La card minimale (Sergio, 23 nov: «minimale, magari con dei fili nelle cornici e dei
+    punti negli angoli», al posto del pannello coi quattro chiodini): il fondo scuro, un filo
+    sottile dentro la cornice e un punto in ogni angolo, colori pieni e niente aloni (come
+    il Ferro liscio). Il colore del filo dice lo stato: ferro (riposo), oro (scelta, il tuo),
+    gelo (un evento), brace, spento (chiusa). In nove parti, gli angoli 48 su 192: il gioco
+    li disegna a circa 22, la meta'."""
+    S, L, C = 4, 192, 48
+    fondo = (0x18, 0x14, 0x1C)
+    stati = {
+        # nome: (filo, punto, spessore del filo, raggio del punto, opacita' del fondo)
+        "pannello": ((0x4A, 0x45, 0x50), (0xF4, 0xEC, 0xE1), 4, 8, 240),
+        "pannello_caldo": ((0xFF, 0xB7, 0x03), (0xFF, 0xB7, 0x03), 6, 10, 245),
+        "pannello_gelo": ((0x38, 0xB6, 0xFF), (0x38, 0xB6, 0xFF), 5, 9, 240),
+        "pannello_brace": ((0xF2, 0x64, 0x19), (0xF2, 0x64, 0x19), 5, 9, 240),
+        "pannello_spento": ((0x34, 0x30, 0x38), (0x4A, 0x45, 0x50), 4, 8, 170),
+    }
+    for nome, (filo, punto, spessore, raggio, alfa) in stati.items():
+        im = Image.new("RGBA", (L * S, L * S), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        d.rounded_rectangle((0, 0, L * S - 1, L * S - 1), 10 * S, fill=fondo + (alfa,))
+        i = 5
+        d.rounded_rectangle((i * S, i * S, (L - i) * S - 1, (L - i) * S - 1), 6 * S,
+                            outline=filo + (255,), width=spessore * S)
+        c = i + spessore / 2
+        for cx, cy in ((c, c), (L - c, c), (c, L - c), (L - c, L - c)):
+            d.ellipse(((cx - raggio) * S, (cy - raggio) * S, (cx + raggio) * S, (cy + raggio) * S), fill=(0x0A, 0x08, 0x0B, 255))
+            r2 = raggio - 3
+            d.ellipse(((cx - r2) * S, (cy - r2) * S, (cx + r2) * S, (cy + r2) * S), fill=punto + (255,))
+        nove(nome, np.asarray(im), L, C / L)
+
+
+def fai_filo_corto():
+    """Le etichette e i filtri (Sergio, 23 nov, scopo 7 di docs/ui-catalogo.md): un filo
+    sottile intorno alla parola, sul fondo scuro della card minimale, al posto delle
+    piastrine. Due pezzi in tre parti: il fondo e il filo bianco, che il gioco tinge."""
+    S, W, H = 4, 256, 64
+    for nome, filo in (("filo_fondo", False), ("filo_bordo", True)):
+        im = Image.new("RGBA", (W * S, H * S), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        if filo:
+            d.rounded_rectangle((2 * S, 2 * S, (W - 2) * S - 1, (H - 2) * S - 1), 18 * S,
+                                outline=(255, 255, 255, 255), width=4 * S)
+        else:
+            d.rounded_rectangle((2 * S, 2 * S, (W - 2) * S - 1, (H - 2) * S - 1), 18 * S,
+                                fill=(0x18, 0x14, 0x1C, 235))
+        tre(nome, np.asarray(im.resize((W, H), Image.LANCZOS)), H, 0.125)
+
+
+def fai_freccina():
+    S, W, H, T = 4, 56, 80, 14      # misure del disegno, T lo spessore del tratto
+    im = Image.new("RGBA", (W * S, H * S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    tip, top, bot = (12.0, H / 2), (W - 12.0, 10.0), (W - 12.0, H - 10.0)
+    ux, uy = top[0] - tip[0], top[1] - tip[1]
+    l = math.hypot(ux, uy)
+    ux, uy = ux / l, uy / l
+    nx, ny = -uy, ux                # normale del braccio in alto (verso l'interno, giu')
+    h = T / 2
+    # il gomito: dove si incontrano i bordi dei due bracci (simmetrici sull'asse orizzontale)
+    sin_a = abs(uy)
+    out_tip = (tip[0] - h / sin_a, tip[1])
+    in_tip = (tip[0] + h / sin_a, tip[1])
+    poli = [out_tip, (top[0] - nx * h, top[1] - ny * h), (top[0] + nx * h, top[1] + ny * h), in_tip,
+            (bot[0] + nx * h, bot[1] - ny * h), (bot[0] - nx * h, bot[1] + ny * h)]
+    d.polygon([(x * S, y * S) for x, y in poli], fill=(0xF4, 0xEC, 0xE1, 255))
+    for cx, cy in (top, bot):
+        d.ellipse(((cx - h) * S, (cy - h) * S, (cx + h) * S, (cy + h) * S), fill=(0xF4, 0xEC, 0xE1, 255))
+    intero("freccina", np.asarray(im), 96)
     # (le monete del foglio monete_* non sono piaciute a Sergio: si rifanno con WB-072)
 
 
@@ -268,11 +652,8 @@ def fai_piccoli():
     for nome, a in zip(["stella", "stella_spenta", "medaglia", "ingranaggio", "corona", "freccia"], segni):
         intero(nome, a, 128)
     barre = griglia(os.path.join(p, "pezzo_barre_1.png"), [1, 1, 1, 1, 1], 600)
-    # (alto il doppio: la targa del profilo della home lo disegna a 76, Sergio 17 nov)
-    tre("guscio", barre[0], 128, 0.12)
-    tre("barra_brace", barre[1], 44, 0.1)
-    tre("barra_gelo", barre[2], 44, 0.1)
-    tre("barra_chiara", neutro(barre[1]), 44, 0.1)
+    # (guscio e barre di questo foglio non si usano piu': le barre sono il solco della
+    # home, fai_solco, Sergio 23 nov)
     intero("tacca", barre[3], 72)
     tondi = griglia(os.path.join(p, "pezzo_tondi_1.png"), [2, 2])
     for nome, a in zip(["tondo_ferro", "tondo_oro"], tondi):
@@ -373,18 +754,10 @@ def fai_sfondi():
 # grande a cui lo mostra il Figma (1280 x 720), cosi' resta nitido fino a 2560 x 1440.
 # (nome nell'atlante, file, altezza in pixel, cartella)
 MENU_INTERI = [
-    # la home: le porte (WB-046, a destra lo scudo verso il bordo), GIOCA, pedana e zainetto
-    ("porta_campagna", "porta_campagna", 236, "WB-046"),
-    ("porta_allenamento", "porta_allenamento", 226, "WB-046"),
-    # lo striscione EVENTI: il nastro con la piega di WB-061 (Sergio, 15 nov; fra tre
-    # idee), accorciato nel mezzo liscio per avere l'ingombro di quello di WB-046
-    ("porta_eventi", "porta_eventi_piega", 236, "WB-061"),
-    # lo SHOP al posto di ARMERIA (WB-080, Sergio 18 nov: il banco col tendone), accorciato
-    # nel mezzo liscio per avere l'ingombro della porta di ARMERIA di WB-046
-    ("porta_shop", "porta_shop", 226, "WB-080"),
-    ("gioca_sigillo", "gioca_sigillo", 166, "WB-046"),
-    ("pedana", "pedana_griglia_1", 266, "WB-050"),
-    ("zainetto", "zaino_chiuso_1", 124, "WB-048"),
+    # la home: il piedistallo (le porte: fai_porte)
+    # il piedistallo dell'apprendista nel cielo del Limbo (WB-090, Sergio 24 nov: la 2B, la
+    # roccia coi due sassolini; al posto della grata di WB-050 e dello zainetto di WB-048)
+    ("piedistallo", "piedistallo_roccia_2", 399, "WB-090"),
     # le caselle dei pezzi, dritte (WB-078, Sergio 18 nov: al posto di quelle di WB-044 in
     # ogni posto): la cornice, la linguetta del tipo in alto a sinistra col suo simbolo,
     # la fascia INDOSSATO in basso; i simboli rifatti in WB-079 dalle icone dei nostri pezzi
@@ -417,28 +790,11 @@ MENU_INTERI = [
     # il cartello ARMERIA che scende dal taglio delle schede dello zaino (WB-080)
     ("cartello_armeria", "cartello_armeria", 180, "WB-080"),
 ]
-# dove si scrive sulle porte e su GIOCA: la striscia piena fra lo scudo (o il sigillo) e la
-# punta, misurata sul disegno a quell'altezza (margini sinistra, alto, destra, basso). Le
-# porte hanno sfumature e graffi apposta, e la misura automatica (spazio) non le trova.
-SPAZI_MISURATI = {
-    "porta_campagna": (240, 50, 189, 51),
-    "porta_allenamento": (225, 44, 166, 37),
-    "porta_eventi": (185, 52, 252, 58),   # (a destra 12 px dal medaglione, come ARMERIA)
-    "porta_shop": (214, 52, 240, 58),
-    "gioca_sigillo": (180, 28, 149, 48),
-}
-# dove si scrive sul pulsante primario (la gemma di WB-054): la faccia piena davanti, senza
-# la fiamma a sinistra e i cristalli a destra; sullo spento solo la parte grigia, prima del
-# ghiaccio (Sergio, 17 nov: la scritta mai sopra i disegni del tasto). Misurati con spazio()
-# sul disegno intero, con la tinta presa dalla faccia.
-SPAZI_PRIMARIO = {
-    "primario_acceso": (99, 79, 79, 48),
-    "primario_premuto": (71, 62, 78, 33),
-    "primario_spento": (59, 78, 178, 39),
-}
+# dove si scrive su un pezzo, misurato sul disegno (margini sinistra, alto, destra, basso),
+# quando la misura automatica (spazio) non lo trova
+SPAZI_MISURATI = {}
 # i pezzi lunghi in tre parti (nome, file, altezza, capo, cartella): si allunga solo il mezzo
 MENU_TRE = [
-    ("riga_scura", "riga_scura", 140, 0.08, "WB-044"),
     ("pillola", "pillola", 104, 0.2, "WB-044"),
 ]
 FAMIGLIE = ["fabbro", "corvo", "fornace", "leviatano", "vuoto"]
@@ -501,19 +857,6 @@ def scheda(nome, arr, fregio=None):
         SPAZI[nome + "_fregio"] = fuori
 
 
-def fai_schede():
-    """Le schede di GIOCA ONLINE (WB-060): brace, ferro, gelo e ferro spento, normali
-    e scelte (col bordo acceso). Tenuti i fogli 1: china piu' pulita e lati piu' dritti."""
-    p = os.path.join(ART, "WB-060")
-    fregi = {"brace": ("fiamma", 235, 170), "gelo": ("cristalli", 200, 95), "gelo_scelta": ("cristalli", 250, 95)}
-    for foglio, coda in (("schede_modalita_1", ""), ("schede_scelte_1", "_scelta")):
-        cs = griglia(os.path.join(p, foglio + ".png"), [2, 2], 20000)
-        # in ordine di lettura: brace e ferro sopra, gelo e spenta sotto
-        for tipo, a in zip(["brace", "ferro", "gelo", "spenta"], cs):
-            n = tipo + coda
-            scheda("scheda_" + n, a, fregi.get(n) or fregi.get(tipo))
-
-
 def fai_segni():
     """I segni di chi sale e chi scende (WB-061, foglio 1: piatto, senza il riflesso
     bianco): avorio, il gioco li tinge."""
@@ -544,20 +887,7 @@ def fai_menu():
     intero("spunta_verde", verde(ritaglio("WB-044", "spunta")), 56)
     for nome, f, h, c, d in MENU_TRE:
         tre(nome, ritaglio(d, f), h, c)
-    # il pulsante primario dei menu: la gemma di brace di WB-054 (E, Sergio 15 nov),
-    # acceso, premuto e spento, in tre parti (si allunga solo il mezzo). Alti come nel
-    # disegno rispetto all'acceso: il premuto e' piu' basso apposta. PRIMARIO=tizzone,
-    # crosta (le altre di WB-054) o brace (la C di WB-052) per rivederne un'altra
-    scelta = os.environ.get("PRIMARIO", "gemma")
-    if scelta == "brace":
-        for stato, h in (("acceso", 200), ("premuto", 130), ("spento", 165)):
-            tre("primario_" + stato, ritaglio("WB-052", "primario_%s_1" % stato), h, 0.3)
-    else:
-        acceso_h = ritaglio("WB-054", "primario_%s_acceso" % scelta).shape[0]
-        for stato in ("acceso", "premuto", "spento"):
-            r = ritaglio("WB-054", "primario_%s_%s" % (scelta, stato))
-            tre("primario_" + stato, r, round(200 * r.shape[0] / acceso_h), 0.3)
-            SPAZI["primario_" + stato] = SPAZI_PRIMARIO["primario_" + stato]
+    # (il pulsante primario e' il Ferro liscio in ferro rovente: fai_secondario)
     # le icone dei pezzi (WB-043): base e forgiata per famiglia e posto; il posto vuoto
     for f in FAMIGLIE:
         for p in POSTI:
@@ -736,20 +1066,25 @@ def fai_misure():
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
+    os.makedirs(BUSTI, exist_ok=True)
     fai_pezzi()
     fai_monete()
+    fai_commesse()
+    fai_bottega()
     fai_perle()
     fai_stendardo()
     fai_secondario()
+    fai_porte()
     fai_piccoli()
     fai_menu()
-    fai_schede()
     fai_segni()
     fai_bivio()
     fai_profilo()
     fai_fette()
     fai_sfondi()
     fai_filo()
+    fai_badge_clienti()
+    fai_medaglia_jackpot()
     fai_misure()
     fai_atlante()
     print("OK")

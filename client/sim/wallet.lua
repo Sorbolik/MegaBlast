@@ -76,16 +76,22 @@ M.key = key
 -- BOTTEGA has a piece of the day per slot (among those you don't own), the
 -- CATALOGO always has all of them for more; the Smith's hand lowers both.
 -- Ossidiana never buys pieces. 20% lower since the gloves (Sergio, 19 Nov:
--- five pieces in the time of four).
-M.PRICE_SHOP, M.PRICE_CATALOG = 3200, 4800
+-- five pieces in the time of four); 50% higher since 23 Nov (the stronger
+-- maximum and the longer road, sim/gear.lua).
+M.PRICE_SHOP, M.PRICE_CATALOG = 4800, 7200
 
 -- the Smith's vouchers and the gifts (choice 23A; fewer since 17 Nov, a
 -- piece is worth much more now): the Battle of the Forge gives the Smith's
 -- boots, the levels of VOUCHER_LEVELS give a voucher. GIFT_MISSIONS: campaign
--- levels by id, with the piece they give and/or the vouchers (the finale of
--- each girone: one voucher, to be added here as the girone arrives).
+-- levels by id, with the piece they give or the vouchers (the finale of
+-- each girone: one voucher, to be added here as the girone arrives); key:
+-- the gift's own name in p.regali, when it is not "missione_" .. id.
+-- Since 23 Nov (docs/commesse.md, step 1 bis) the boots come at Forge 6 (Il
+-- Fabbro, with the BOTTEGA) and the Battle of the Forge gives the Smith's
+-- voucher: the boots it gave before keep the old key, so nobody gets them twice.
 M.GIFT_MISSIONS = {
-	{ id = "battaglia_forgia", piece = { "fabbro", "legs" } },
+	{ id = "il_fabbro", piece = { "fabbro", "legs" }, key = "stivali_fabbro" },
+	{ id = "battaglia_forgia", buoni = 1, key = "buono_battaglia_forgia" },
 }
 M.VOUCHER_LEVELS = { 50 }
 
@@ -189,7 +195,9 @@ function M.gifts(p, stats, level)
 		if p.stelle and p.stelle[g.id] and p.stelle[g.id][1] then
 			local row = g.piece and { key = "piece", set = g.piece[1], slot = g.piece[2] }
 				or { key = "voucher", why = "mission", id = g.id }
-			once("missione_" .. g.id, row, function()
+			-- the boots given by the Battle before 23 Nov: already owned, no row
+			if g.piece and M.owns(p, g.piece[1], g.piece[2]) then p.regali[g.key or ("missione_" .. g.id)] = true end
+			once(g.key or ("missione_" .. g.id), row, function()
 				if g.piece then give(p, g.piece[1], g.piece[2]) end
 				p.buoni = p.buoni + (g.buoni or 0)
 			end)
@@ -428,8 +436,12 @@ function M.apply(p, rows)
 end
 
 -- the date for the first win of the day (local time of the phone)
+-- The day of the rules (first win, BANCO del giorno, the Smith's orders) turns
+-- at 5 in the morning, not at midnight (Sergio, 23 Nov: nobody should stay up
+-- for it); the server's is Italy's (accounts.go, today)
+M.DAY_HOUR = 5
 function M.today()
-	return os.date("%Y-%m-%d")
+	return os.date("%Y-%m-%d", os.time() - M.DAY_HOUR * 3600)
 end
 
 return M

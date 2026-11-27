@@ -1,0 +1,20 @@
+# La Fornace col muro specchiato (Sergio, 24 nov: l'apprendista a destra nel 50% dei muri;
+# forge.mirrored): vetrina, mira (i numeri si leggono dritti), un tiro sicuro, il muro in fondo.
+imposta prova_test prova
+imposta prova_fornace_centra 1
+imposta prova_fornace_specchio si
+
+aspetta 4
+tocca_bordo 210 170 mezzo destra    # la porta BOTTEGA
+aspetta 8
+tocca_bordo 556 50 alto sinistra    # FORNACE
+aspetta 3
+foto 01_vetrina_specchiata
+tocca_bordo 178 49 basso destra     # COLA
+aspetta 4.5
+foto 02_muro_specchiato
+trascina 980 300 900 380 0.4 03_mira_specchiata
+aspetta 1.4
+foto 04_in_volo
+aspetta 4
+foto 05_dopo

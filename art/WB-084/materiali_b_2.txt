@@ -1,0 +1,14 @@
+Image 1 shows two currency icons of our game (a gold eight-sided coin and a round dark iron token): copy their visual size, their thickness and their relief. Image 2 is a button of the same game and is the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, soft hand-drawn slightly crooked shapes, like a cartoon comic.
+
+Draw FIVE separate icons in one row, well apart, all the same visual size, on plain green (#00FF00). They are crafting materials picked up in the circles of a cartoon hell; each is one chunky object with a bold silhouette, very different from the others in shape AND in color:
+1. TOMB DUST: a small heap of grey-violet dust (#8E86A3, shadow #5B546E) with a tiny cracked piece of gravestone sticking out of it.
+2. BOILING BLOOD: one fat drop of bright red liquid (#D62839, highlight #FF7A85, shadow #8C1420) with two round bubbles popping on top.
+3. BURNING SAND: a small cone-shaped heap of sand, yellow-orange (#F2B84B, shadow #C9822A), with three glowing embers (#F26419) in it.
+4. PITCH: a thick black sticky blob dripping down (#1E1A22, highlight #4A3F57), glossy, with one long drip.
+5. ICE OF COCYTUS: a sharp crystal of deep blue ice (#4FA8E0, highlight #CFEFFF, shadow #2A5F9E), with three or four flat faces.
+Each icon must read at 24 pixels: one bold full silhouette, no thin details. No letters, no numbers, no shadow on the ground, no glow outside the ink, no sparkles.
+
+Riferimenti in ordine: art/WB-072/scavate_2.png, art/WB-072/riferimenti/R3_stile.png
+Variante 2. Un tentativo con ImageGen. Uscita 2172×724 ridimensionata in proporzione e centrata su tela verde 1536×1024.
+Cinque materiali separati nell'ordine della scheda. A 24 px le sagome si distinguono e gli elementi interni perdono dettaglio.
+Verde campionato a (5, 5): #02F807. Il fondo non è esattamente #00FF00. Lievi variazioni tonali nelle campiture.

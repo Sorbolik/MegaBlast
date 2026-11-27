@@ -133,11 +133,12 @@ func (l *Lobby) announce(name string, q []*Player, of int) {
 }
 
 func (l *Lobby) start(mode Mode, players []*Player) {
-	l.open(mode, queueSeats(mode, players, botGrade(players)))
+	l.open(mode, queueSeats(mode, players, botGrade(players)), nil)
 }
 
-// open creates the room of a full queue or of a private room (private.go)
-func (l *Lobby) open(mode Mode, specs []seatSpec) {
+// open creates the room of a full queue or of a private room (private.go,
+// priv: the room its people go back to when the match closes)
+func (l *Lobby) open(mode Mode, specs []seatSpec, priv *Private) {
 	r, err := newRoom(l.srv, mode, specs, time.Now().UnixNano()%2147483646+1)
 	if err != nil {
 		log.Printf("errore simulazione: %v", err)
@@ -147,8 +148,12 @@ func (l *Lobby) open(mode Mode, specs []seatSpec) {
 				sp.p.Close()
 			}
 		}
+		if priv != nil {
+			l.privateOver(priv, make([]*Player, len(specs))) // nobody back: it closes
+		}
 		return
 	}
+	r.private = priv
 	// rooms with bots on their own workers: a bot thinking (peaks of 20 ms)
 	// must not slow down the matches between people
 	bots := false
@@ -191,6 +196,9 @@ func (l *Lobby) Drain() {
 		delete(l.queues, name)
 	}
 	for code, r := range l.privates {
+		if r.playing {
+			continue // its match goes on; at its end the people are let go (privateOver)
+		}
 		for _, p := range r.people() {
 			p.private = nil
 			p.Send([]byte(`{"t":"error","e":"draining"}`))

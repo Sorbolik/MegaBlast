@@ -271,7 +271,7 @@ rl.orbs = { { x = rr.x + 30, y = gy + 40, vx = 120, vy = -100, owner = 1, timer 
 local touched_x
 for _ = 1, 40 do
 	rl:step()
-	if rl.orbs[1] and not touched_x and rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y - 3) then touched_x = rl.orbs[1].x end
+	if rl.orbs[1] and not touched_x and rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y - game.ORB_R - 1) then touched_x = rl.orbs[1].x end
 end
 check(touched_x and rl.orbs[1] and rl.orbs[1].x > touched_x + 10, "the orb rolls after touching ground")
 check(rl.orbs[1] and not rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y), "the orb doesn't go into the terrain")
@@ -900,9 +900,9 @@ do
 		run(d, 60)
 		local from_pt = d.robots[1]
 		d.robots[2].x = -1000
-		-- a hole of radius 150 px in the terrain, to have room on all sides
-		d.terrain:carve(640, 400, 150)
-		place(from_pt, 640, 400 - game.ROBOT_H / 2)
+		-- a hole of radius 150 px in the terrain, to have room on all sides (away from the iron)
+		d.terrain:carve(640, 600, 150)
+		place(from_pt, 640, 600 - game.ROBOT_H / 2)
 		local x0, y0 = from_pt.x, from_pt.y
 		d:step({ fire = { angle = math.rad(deg), power = 1, weapon = "eagle" } })
 		run(d, config.EAGLE.recoil_ticks)
@@ -2138,6 +2138,52 @@ local gap_round, gr = slope_gap()
 -- terrain cell; a rectangle would stay a whole half width above
 check(gr and gap_round < math.min(game.ROBOT_HALF_W * 0.42 + game.CELL, game.ROBOT_HALF_W), string.format("capsule: at the centre it's as far above the slope as the edge of the circle (%.1f px)", gap_round))
 
+-- The orb never gets stuck (Sergio, 22 Nov 2026): not beside or on top of a
+-- robot, not in a wall, a slit or the terrain, not between a robot and a wall
+do
+local function orb_world(ground, robot_x)
+	local q = shaped_world(ground)
+	q.robots[1].x, q.robots[1].y = -5000, 5000
+	local r2 = q.robots[2]
+	if robot_x then place(r2, robot_x, ground(robot_x)); r2.grounded = true else r2.x = 5000 end
+	return q, r2
+end
+local function orb_after(q, x, y, vx, vy, ticks)
+	q.orbs = { { id = 1, x = x, y = y, vx = vx, vy = vy, owner = 1, timer = 100000, age = 100 } }
+	local o = q.orbs[1]
+	for _ = 1, ticks do q:update_orbs() end
+	return o
+end
+local floor100 = function() return 100 end
+local wall = function(x) return x > 700 and 400 or 100 end
+local hy = 100 + game.HURT_Y
+local q1 = orb_world(floor100, 600)
+local o1 = orb_after(q1, 600 - game.HURT_R - game.ORB_R + 1, hy, 0, -10, 120)
+check(o1.y < 100 + game.ORB_R + 2, string.format("orb beside a robot: it falls to the ground (%.0f)", o1.y))
+local q2 = orb_world(floor100, 600)
+local o2 = orb_after(q2, 601, hy + game.HURT_R + game.ORB_R + 3, 0, -50, 180)
+check(o2.y < 100 + game.ORB_R + 2, string.format("orb on a robot's head: it doesn't stay up there (%.0f)", o2.y))
+local q3 = orb_world(wall, 700 - game.ROBOT_HALF_W - 1)
+local o3 = orb_after(q3, 698, hy + game.HURT_Y + 20, 0, -20, 180)
+check(o3.y < 100 + game.ORB_R + 2, string.format("orb between a robot and a wall: it gets down (%.0f)", o3.y))
+local q4 = orb_world(floor100)
+local o4 = orb_after(q4, 600, 97, 40, 0, 60)
+check(not q4.terrain:solid(o4.x, o4.y) and o4.x > 610, "orb inside the terrain: it comes out and goes on")
+local q5 = orb_world(function(x) return (x > 600 and x < 606) and 40 or 100 end)
+local o5 = orb_after(q5, 603, 140, 0, -10, 120)
+check(o5.y > 100, string.format("orb on a narrow slit: it doesn't fall in (%.0f)", o5.y))
+local q6 = orb_world(wall)
+local o6 = orb_after(q6, 650, 250, 300, 50, 180)
+check(o6.x < 700 - game.ORB_R and o6.y < 100 + game.ORB_R + 2, "orb against a wall: it bounces and slides down")
+local q7 = orb_world(function(x) return 100 + math.max(0, x - 400) * 0.3 end)
+local o7 = orb_after(q7, 800, 100 + 400 * 0.3 + 12, 0, 0, 180)
+check(o7.x < 760, string.format("orb on a slope: it rolls down (%.0f)", o7.x))
+local q8, w8 = orb_world(floor100, 560)
+local o8 = orb_after(q8, 600, 100 + game.ORB_R + 0.5, 0, 0, 10)
+for _ = 1, 60 do w8.x = w8.x + 1; q8:update_orbs() end
+check(o8.x > w8.x + game.HURT_R * 0.8, "a robot walking into a resting orb pushes it along")
+end
+
 -- Short jump: releasing the button at once rises much less
 local function jump_top(hold_ticks)
 	local q = shaped_world(function() return 100 end)
@@ -2511,6 +2557,67 @@ do
 	local base = game.base_stats()
 	check(g.robots[2].stats.attack == loadout.net_stats(a, base).attack and g.robots[1].max_hp == loadout.net_stats(loadout.net_clean(mine), base).max_hp,
 		"recipe: eq gives the stats")
+	-- online too every bot is someone's rival (dress_bots): the people of the
+	-- other teams in turn, else of its own; training is the case of one person
+	local P = function(team, bot, eq) return { team = team, bot = bot, eq = eq } end
+	local enc = function(x) return x and replay.encode({ x = x }) end
+	local other = { liv = 7 }
+	local t = loadout.dress_bots({ P(1, nil, mine), P(2, 4), P(1, 4), P(2, 4) }, 1234)
+	check(enc(t[2].eq) == enc(a) and t[3].eq and t[4].eq and t[3].eq.liv == 30, "dress_bots: training, every bot the player's rival")
+	t = loadout.dress_bots({ P(1, nil, mine), P(2, 4), P(1, nil, other), P(2, 4) }, 5)
+	check(t[2].eq.liv == 30 and t[4].eq.liv == 7, "dress_bots: two people against two bots, one copy each")
+	t = loadout.dress_bots({ P(1, nil, mine), P(2, nil, other), P(1, 4), P(2, 4) }, 5)
+	check(t[3].eq.liv == 7 and t[4].eq.liv == 30, "dress_bots: a person and a bot each, the bot copies the other team's person")
+	t = loadout.dress_bots({ P(1, nil, nil), P(2, 4) }, 5)
+	check(t[2].eq == nil, "dress_bots: whoever wears nothing gets a bare bot")
+end
+
+-- A second attack that flies (Petardo, Voragine) while the first shot is still in
+-- flight: both go on and both burst (the second used to replace the first, which
+-- vanished without exploding: Sergio's video, 26 Nov)
+do
+	local m = game.new(42, "pavimento")
+	run(m, 120)
+	local rb = m.robots[m.current]
+	rb.secondary, rb.ammo.petard = "petard", 2
+	m:pop_events()
+	m:step({ fire = { weapon = "missile", angle = math.rad(85), power = 1 } })
+	run(m, 20)
+	check(m.projectile and m.projectile.kind == "missile" and m:can_use("petard"), "the Petardo can go while the missile flies")
+	m:step({ fire = { weapon = "petard", angle = math.rad(20), power = 0.5 } })
+	check(m.projectile and m.projectile.kind == "petard" and #m.flying == 1 and m.flying[1].kind == "missile",
+		"two shots in flight: the Petardo and the missile")
+	local booms = 0
+	for _ = 1, 900 do
+		m:step()
+		for _, e in ipairs(m:pop_events()) do
+			if e.type == "explosion" or e.type == "petard" or e.type == "petard_blast" then booms = booms + 1 end
+		end
+		if not m:shots_flying() then break end
+	end
+	check(not m:shots_flying() and #m.flying == 0, "both shots end")
+	check(booms >= 2, "both shots burst (" .. booms .. ")")
+end
+
+-- The video: an Uovo rolling on the ground, then the Voragine; the Uovo still blows up
+do
+	local m = game.new(42, "pavimento")
+	run(m, 120)
+	local rb = m.robots[m.current]
+	rb.ammo.grenade, rb.secondary, rb.ammo.vortex = 1, "vortex", 2
+	m:pop_events()
+	m:step({ fire = { weapon = "grenade", angle = math.rad(10), power = 0.3 } })
+	run(m, 120)
+	m:step({ fire = { weapon = "vortex", angle = math.rad(85), power = 1 } })
+	local kinds = {}
+	for _ = 1, 900 do
+		m:step()
+		for _, e in ipairs(m:pop_events()) do
+			if e.type == "explosion" then kinds[#kinds + 1] = e.r end
+		end
+		if not m:shots_flying() then break end
+	end
+	check(#kinds == 2, "the Uovo on the ground and the Voragine both blow up (" .. #kinds .. ")")
 end
 
 if failures > 0 then

@@ -21,7 +21,7 @@ import (
 // Protocol version: change it together with PROTOCOL in
 // client/main/game.gui_script every time the messages change in a way an old
 // client wouldn't understand.
-const protocolVersion = 10
+const protocolVersion = 11
 
 type Config struct {
 	Node           string // node name, goes into tokens: a load balancer can send whoever comes back to the right node
@@ -158,7 +158,7 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.CloseNow()
-	conn.SetReadLimit(1024) // client messages are a few tens of bytes
+	conn.SetReadLimit(4096) // client messages are small: the keys of a few ticks at most ("k")
 	s.online.Add(1)
 	defer s.online.Add(-1)
 
@@ -213,9 +213,9 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 }
 
 // rateLimit: at most msgRate messages a second per connection, with bursts
-// up to msgBurst; the rest is dropped before it's even read. A client sends a
-// few a second (keys when they change, the aim at most 10, the shot), so only
-// a broken or hostile client hits it: it can't fill its room's queue and make
+// up to msgBurst; the rest is dropped before it's even read. On its turn a
+// client sends its keys once per frame with ticks (60 a second, "k"), so only a
+// broken or hostile client hits it: it can't fill its room's queue and make
 // the others' keys get lost.
 type rateLimit struct {
 	tokens float64
@@ -223,8 +223,8 @@ type rateLimit struct {
 }
 
 const (
-	msgRate  = 30
-	msgBurst = 60
+	msgRate  = 90
+	msgBurst = 120
 )
 
 func (l *rateLimit) allow(now time.Time) bool {
@@ -245,6 +245,12 @@ func (l *rateLimit) allow(now time.Time) bool {
 func (s *Server) hello(p *Player, m clientMsg) bool {
 	if m.T != "hello" || m.V != protocolVersion {
 		p.Send(fmt.Appendf(nil, `{"t":"error","e":"version","v":%d}`, protocolVersion))
+		return false
+	}
+	// same messages, another simulation: the match would split from ours (simtree.go)
+	if m.Sim != "" && m.Sim != simTree {
+		log.Printf("telefono con un'altra simulazione (%.12s, il server ha %.12s): deve aggiornare", m.Sim, simTree)
+		p.Send([]byte(`{"t":"error","e":"sim"}`))
 		return false
 	}
 	if m.Tok != "" {
@@ -279,7 +285,7 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	if !ok {
 		mode = modes["2v2"]
 	}
-	s.cards(p, m.Profile)
+	s.cards(p, m.Profile, m.Test)
 	// a private room (private.go): "nuova" opens one, a code joins it
 	if m.Private == "nuova" {
 		s.lobby.NewPrivate(p)
@@ -293,8 +299,16 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 
 // cards: the card and what the player wears come from their profile on the
 // server ("profilo": "<id>.<chiave>", accounts.go), never from what the phone
-// says; without a profile (a test one, profiles off) the base card and stats
-func (s *Server) cards(p *Player, profile string) {
+// says; without a profile (profiles off, nothing sent) the base card and stats.
+// A test profile (FINE GIOCO, DA ZERO) has no profile on the server: what it
+// wears (test) comes from the phone and counts online, so the bots wear as
+// much too (Sergio, 22 Nov); its matches pay nothing (no account). To close
+// before the launch: whoever picks the test profile plays with everything.
+func (s *Server) cards(p *Player, profile string, test json.RawMessage) {
+	if profile == "" && test != nil {
+		p.equip = equipLua(test)
+		return
+	}
 	if s.accounts == nil || profile == "" {
 		return
 	}

@@ -1,0 +1,13 @@
+Image 1 is a rough draft of a minigame of our cartoon game set on a burning desert of sand in hell: a little devil stands on a stone block on the left, the floor is the stone embankment of a boiling river, some targets stand on top of thin rock pinnacles, a rock wall closes the right side. Image 2 shows the STYLE of our game: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, hand-drawn like a cartoon comic.
+
+Draw four separate pieces on plain green (#00FF00), well apart, each whole:
+1. THE LEDGE: a sturdy block of big square-cut stones, as wide as it is tall, where the little devil stands to throw, with a FLAT TOP and a thin warm orange rim of light on its left side. Stone #6C5A4E, shadow #3A2D26.
+2. THE EMBANKMENT: a long strip of the stone embankment of a river, four times wider than tall: a FLAT TOP edge of dressed stone with a thin layer of orange sand on it, and below it the vertical FACE of the embankment made of big square stone blocks, darker towards the bottom (#6C5A4E to #2E241F). Its left and right ends are cut straight so the game can repeat it side by side seamlessly. The middle of the face is calm: the game puts a counter on it.
+3. THE PINNACLE: one straight vertical piece of a thin rock column of dark red stone (#7C3A22, shadow #5C2614), about four times taller than wide, with cracks and ledges, its top and bottom cut flat so the game can stack pieces seamlessly; and next to it a separate TOP for it, a small flat rock platform where a seated figure can sit.
+4. THE ROCK WALL: one straight vertical piece of a rough cliff of dark red rock (#5A2A1C), about three times taller than wide, top and bottom cut flat so the game can stack it; its LEFT face is smooth enough to bounce on.
+Thick black ink outline on all, flat colors. No characters, no letters, no shadow on the ground, no glow halo.
+
+Riferimenti in ordine: art/WB-097/riferimenti/R1_bozza_usurai.png, art/WB-087/malacoda_2.png
+ImageGen. Un tentativo. Ridimensionato in proporzione e centrato su tela verde da 1536×1024.
+Sporgenza, argine, pinnacolo e sommità separata, più la parete. Giunzioni non verificate.
+Verde campionato: #04F907, diverso da #00FF00 esatto.

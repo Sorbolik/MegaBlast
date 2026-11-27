@@ -1,0 +1,25 @@
+# Punti nel tuo turno (Sergio, 23 nov): il punteggio è già uscito in alto, quando
+# fai punti tornano per un attimo i due numeri grandi coi colori delle squadre, il
+# numero vola in quello della tua squadra, che si gonfia e conta, poi se ne vanno.
+imposta zoom 2
+imposta prova_vicino 50
+
+aspetta 2
+tocca 222 148                      # PARTITA DI PROVA (zona nascosta della home)
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 2.5
+foto 01_punteggio_uscito
+premi 2                             # Lama di Nucleo
+aspetta 0.4
+mira 120 0 0.6
+aspetta_evento points 3
+aspetta 0.1
+foto 02_numeri_e_nasce
+aspetta 0.7
+foto 03_vola
+aspetta 0.35
+foto 04_si_gonfia
+aspetta 0.9
+foto 05_resta
+aspetta 1.5
+foto 06_se_ne_va

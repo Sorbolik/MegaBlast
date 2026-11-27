@@ -2,7 +2,6 @@
 # scenari/eventi_prova.json: una scheda per evento in corso (il Maglio e il Torneo),
 # podio e classifica mondiale come segnaposto, il tuo evento, CALENDARIO col dettaglio.
 # Gira anche con --schermo 1600x720 e 960x720.
-imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server evento:maglio 3 eventi_prova.json

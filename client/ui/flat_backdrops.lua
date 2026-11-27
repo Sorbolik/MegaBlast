@@ -11,7 +11,6 @@
 --   (live false: a still copy, nothing moves)
 
 local screen = require "ui.screen"
-local clock = require "ui.clock"
 local ui = require "ui.ui"
 
 local M = {}
@@ -190,151 +189,13 @@ THEMES.camerino = {
 	end,
 }
 
--- HOME: the sky of the Limbo (Sergio, 18 Nov: «il cielo ci siamo»): small
--- four-pointed stars twinkling and drifting left, a falling star every 7 s, and
--- comic clouds (tools/grafica/cielo.py) passing now and then on two planes: the
--- far ones small, darker and slow behind the stars, the near ones in front.
--- Everything is a function of one clock that never restarts (ui/clock.lua): leaving
--- the home and coming back, or a copy of the backdrop during a transition,
--- shows the sky where it would have been («deve restare costante, senza
--- resettarsi»). The clouds look random but come from a hash of their lane and
--- of the turn, so they too are where the clock says
-
--- a fixed sequence of numbers from 0 to 1
-local function sequence(seed)
-	local x = seed
-	return function()
-		x = (x * 1103515245 + 12345) % 2147483648
-		return x / 2147483648
-	end
-end
-
--- a number from 0 to 1 for (a, b, c), always the same
-local function hash(a, b, c)
-	local h = math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453
-	return h - math.floor(h)
-end
-
-local function pic(id, w, h, parent, color)
-	local n = gui.new_box_node(vmath.vector3(0, -999, 0), vmath.vector3(w, h, 0))
-	gui.set_texture(n, id)
-	gui.set_parent(n, parent)
-	gui.set_inherit_alpha(n, true)
-	if color then gui.set_color(n, color) end
-	return n
-end
-
-local STARS, STAR_DRIFT, STREAK_T = 110, 6, 7
--- the cloud lanes: { far, turn in seconds }; one cloud at a time on each, it
--- waits a random while in its turn, then crosses at its own speed
-local SHIFTS = {}
-local LANES = { { false, 95 }, { false, 120 }, { false, 140 }, { true, 170 }, { true, 210 }, { true, 250 } }
-
+-- HOME: the sky of the Limbo at the hour of the phone (ui/limbo_sky.lua): the
+-- evening is the sky of 18 Nov, morning, noon, afternoon and night its variants
+local sky = require "ui.limbo_sky"
 THEMES.cielo = {
-	base = c("0F0E1A"),
+	base = sky.BASE,
 	build = function(root, live)
-		local shapes = {}
-		for i = 1, 6 do
-			local id, w, h = texture("nuvola_" .. i)
-			-- drawn at twice the size they are shown at
-			if id then shapes[#shapes + 1] = { id, w / 2, h / 2 } end
-		end
-		local lanes = {}
-		-- the cloud of lane i in its turn: its shape, size, height, side, speed,
-		-- and when in the turn it starts and how long it takes to cross
-		local function crossing(i, l, turn, half)
-			local c = { shape = shapes[1 + math.floor(hash(i, turn, 2) * #shapes) % #shapes] }
-			c.k = l.far and 0.4 + hash(i, turn, 3) * 0.25 or 0.7 + hash(i, turn, 3) * 0.45
-			c.w = c.shape[2] * c.k
-			c.path = 2 * half + c.w + 20
-			local speed = l.far and 4 + hash(i, turn, 4) * 4 or 9 + hash(i, turn, 4) * 8
-			-- it waits at most what leaves it the time to cross in its turn
-			c.cross = math.min(c.path / speed, l.turn * 0.95)
-			c.start = hash(i, turn, 5) * (l.turn - c.cross)
-			c.y = 300 + hash(i, turn, 6) * 480
-			c.flip = hash(i, turn, 7) < 0.5 and -1 or 1
-			return c
-		end
-		local function lane(i)
-			local l = LANES[i]
-			local far = l[1]
-			lanes[i] = { far = far, turn = l[2] }
-			-- where each lane is in its turn, fixed for the whole game: the first
-			-- near and far ones are half way across when the home first shows
-			if not SHIFTS[i] then
-				SHIFTS[i] = hash(i, 0, 1) * l[2]
-				if shapes[1] and (i == 1 or i == 4) then
-					local c = crossing(i, lanes[i], 0, screen.width() / 2)
-					SHIFTS[i] = c.start + c.cross * (i == 1 and 0.55 or 0.3) - clock.now()
-				end
-			end
-			lanes[i].shift = SHIFTS[i]
-			if shapes[1] then
-				lanes[i].n = pic(shapes[1][1], shapes[1][2], shapes[1][3], root, far and vmath.vector4(0.72, 0.72, 0.78, 1) or nil)
-			end
-		end
-		-- the far clouds first, under the stars
-		for i = 1, #LANES do if LANES[i][1] then lane(i) end end
-		local star_id = texture("stella")
-		local r = sequence(9)
-		local stars = {}
-		local tints = { c("55497A"), c("3E3760"), c("6E5F96") }
-		for i = 1, STARS do
-			stars[i] = { star_id and pic(star_id, 1, 1, root, tints[i % 3 + 1]), x = -900 + r() * 1800, y = 140 + r() * 760,
-				s = 8 + r() * 18, ph = r() * 6.28, sp = 0.4 + r() * 0.8 }
-		end
-		local streak = box(0, -999, 140, 2, c("6A5E90"), root)
-		gui.set_rotation(streak, vmath.vector3(0, 0, -30))
-		local streak_col = c("6A5E90")
-		for i = 1, #LANES do if not LANES[i][1] then lane(i) end end
-		local v = vmath.vector3()
-		local away = vmath.vector3(0, -999, 0)
-		local function place(t)
-			local half = screen.width() / 2
-			for _, e in ipairs(stars) do
-				if e[1] then
-					local x = (e.x + 900 - t * STAR_DRIFT) % 1800 - 900
-					v.x, v.y, v.z = x, e.y, 0
-					gui.set_position(e[1], v)
-					local s = e.s * (0.6 + 0.4 * math.sin(t * e.sp + e.ph))
-					v.x, v.y = s, s
-					gui.set_size(e[1], v)
-				end
-			end
-			local q = (t % STREAK_T) / 1.2
-			if q <= 1 then
-				local k = math.floor(t / STREAK_T)
-				v.x, v.y, v.z = -500 + (k * 389) % 900 + q * 420, 800 - q * 240, 0
-				gui.set_position(streak, v)
-				streak_col.w = math.sin(q * math.pi)
-				gui.set_color(streak, streak_col)
-			else
-				gui.set_position(streak, away)
-			end
-			for i, l in ipairs(lanes) do
-				if l.n then
-					local turn = math.floor((t + l.shift) / l.turn)
-					local c = crossing(i, l, turn, half)
-					local p = ((t + l.shift) - turn * l.turn - c.start) / c.cross
-					if p < 0 or p > 1 then
-						gui.set_position(l.n, away)
-					else
-						gui.set_texture(l.n, c.shape[1])
-						v.x, v.y, v.z = c.shape[2], c.shape[3], 0
-						gui.set_size(l.n, v)
-						v.x, v.y, v.z = half + c.w / 2 + 10 - p * c.path, c.y, 0
-						gui.set_position(l.n, v)
-						v.x, v.y, v.z = c.flip * c.k, c.k, 1
-						gui.set_scale(l.n, v)
-					end
-				end
-			end
-		end
-		place(clock.now())
-		if not live then return end
-		return function()
-			place(clock.now())
-		end
+		return sky.build(root, live, texture)
 	end,
 }
 

@@ -1,7 +1,8 @@
 // Giocatori finti per provare l'online nel simulatore (comando "server" degli
 // scenari, tools/simula/README.md): entrano in coda, nel draft prendono
 // l'ultima carta di primarie e secondarie, premono PRONTO e in partita, quando tocca a loro,
-// sparano un colpo.
+// sparano un colpo. Nel loro turno fanno come un telefono: mandano i tasti di
+// ogni tick ("k", 60 al secondo), e la partita li aspetta.
 //
 //	go run ./tools/simula/finti -url ws://127.0.0.1:8090/ws -modo 2v2 -n 3
 package main
@@ -39,7 +40,11 @@ func main() {
 		// secondo forgiato: il server li taglia al livello 20, server/accounts.go):
 		// il cartellino e le statistiche del robot online vengono da lì
 		vetrina := ""
-		if len(famiglie) > 0 {
+		if len(famiglie) > 0 && strings.HasPrefix(famiglie[i%len(famiglie)], "prova:") {
+			// "prova:corvo": il profilo di prova delle IMPOSTAZIONI (FINE GIOCO), senza
+			// profilo sul server: manda col saluto quello che indossa e nessun cartellino
+			vetrina = prova(strings.TrimPrefix(famiglie[i%len(famiglie)], "prova:"))
+		} else if len(famiglie) > 0 {
 			f, liv := famiglie[i%len(famiglie)], 1+29*(i%2)
 			id, err := profilo(*url, f, liv, 5+i)
 			if err != nil {
@@ -57,6 +62,16 @@ func main() {
 		time.Sleep(100 * time.Millisecond)
 	}
 	wg.Wait()
+}
+
+// prova: il saluto di un profilo di prova coi quattro pezzi di una famiglia al 30
+func prova(famiglia string) string {
+	var gear, lv []string
+	for _, p := range []string{"mask", "chest", "legs", "cloak"} {
+		gear = append(gear, fmt.Sprintf(`%q:%q`, p, famiglia))
+		lv = append(lv, fmt.Sprintf(`%q:30`, p))
+	}
+	return fmt.Sprintf(`,"prova":{"liv":30,"gear":{%s},"lv":{%s}}`, strings.Join(gear, ","), strings.Join(lv, ","))
 }
 
 // profilo crea sul server il profilo ospite di un finto (POST /profilo/nuovo,
@@ -98,8 +113,34 @@ func gioca(url, modo, vetrina string) error {
 	defer c.CloseNow()
 	c.SetReadLimit(1 << 20)
 	manda := func(s string) { c.Write(ctx, websocket.MessageText, []byte(s)) }
-	manda(fmt.Sprintf(`{"t":"hello","v":10,"mode":%q%s}`, modo, vetrina))
+	manda(fmt.Sprintf(`{"t":"hello","v":11,"mode":%q%s}`, modo, vetrina))
 	scelto, sparato, you := false, -1, 0
+	// il tick da giocare, di chi è il turno e se sparare: li legge il ciclo
+	// dei messaggi, li usa quello che manda i tasti
+	var mu sync.Mutex
+	cur, next, spara := 0, 0, false
+	go func() {
+		t := time.NewTicker(100 * time.Millisecond)
+		defer t.Stop()
+		for range t.C {
+			mu.Lock()
+			if you == 0 || cur != you {
+				mu.Unlock()
+				continue
+			}
+			codes := []string{"", "", "", "", "", ""}
+			if spara {
+				codes[0], spara = "fmissile,1.2,0.5", false
+			}
+			k, _ := json.Marshal(codes)
+			msg := fmt.Sprintf(`{"t":"k","n":%d,"k":%s}`, next, k)
+			next += len(codes)
+			mu.Unlock()
+			if c.Write(ctx, websocket.MessageText, []byte(msg)) != nil {
+				return
+			}
+		}
+	}()
 	for {
 		_, data, err := c.Read(ctx)
 		if err != nil {
@@ -111,6 +152,9 @@ func gioca(url, modo, vetrina string) error {
 			Offer  []string `json:"offer"`
 			Offer2 []string `json:"offer2"`
 			Cur    int      `json:"cur"`
+			N      int      `json:"n"`
+			K      []string `json:"k"`
+			Resume bool     `json:"resume"`
 			Robot  int      `json:"robot"`
 			Phase  string   `json:"phase"`
 			Robots []struct {
@@ -120,6 +164,7 @@ func gioca(url, modo, vetrina string) error {
 		if json.Unmarshal(data, &m) != nil {
 			continue
 		}
+		mu.Lock()
 		if m.You > 0 {
 			you = m.You // in draft e start
 		}
@@ -131,14 +176,26 @@ func gioca(url, modo, vetrina string) error {
 				manda(fmt.Sprintf(`{"t":"pick","w":%q}`, m.Offer2[len(m.Offer2)-1]))
 				manda(`{"t":"ready"}`) // PRONTO: senza aspettare il tempo
 			}
+		case "start":
+			if !m.Resume {
+				cur, next = m.Cur, 0
+			}
+		case "k":
+			// i tasti giocati: chi è di turno, e da che tick si continua
+			// (quelli già mandati restano in coda sul server)
+			if m.Cur != cur || m.N+len(m.K) > next {
+				next = m.N + len(m.K)
+			}
+			cur = m.Cur
 		case "left":
 			// nel log del server (scenari/esci_online.txt): chi è uscito lo sappiamo subito
 			log.Printf("finto %d: il giocatore %d è uscito", you, m.Robot)
 		case "state":
 			if m.Cur == you && m.Phase == "aim" && len(m.Robots) >= you && m.Robots[you-1].Tu != sparato {
 				sparato = m.Robots[you-1].Tu
-				manda(`{"t":"fire","a":1.2,"p":0.5}`)
+				spara = true
 			}
 		}
+		mu.Unlock()
 	}
 }
