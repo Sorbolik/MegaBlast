@@ -70,10 +70,14 @@ nel fango non rimbalza (Gola, scheda della campagna).
 La leva sta su una delle 20 borchie d'acciaio della mappa (indistruttibili), su qualsiasi faccia,
 anche quelle sotto: chi gioca deve pesare se vale un colpo. La colpisci (con un colpo, che conta
 come attacco) o la tocchi col corpo entrandoci, e alla fine del tick **la mappa si capovolge
-davvero**: le righe di celle si scambiano con la loro specchiata e così tutto quello che c'è sopra
-(robot coi piedi in basso, colpi, globi, schegge, casse, trappole; cerchi di cura e pozze di pece
-cadono sul terreno sotto o spariscono). Non si gioca mai a testa in giù. Poi il tempo si ferma per
-`LEVER.freeze` = 60 tick (1 s): niente si muove, nemmeno il cronometro del turno, e un anello con la
+davvero, di mezzo giro attorno al centro** (Sergio: «ruota a 360 gradi, non si flippa a specchio»):
+ogni cella si scambia con quella opposta, così si invertono alto e basso **e destra e sinistra**, e
+così tutto quello che c'è sopra (robot coi piedi in basso, colpi, globi, schegge, casse, trappole;
+cerchi di cura e pozze di pece cadono sul terreno sotto o spariscono). Non si gioca mai a testa in
+giù. Il client lo fa vedere girando la mappa e lo sfondo attorno al centro dello schermo in 0,7 s
+(il mondo rimpicciolisce un po' a metà giro, i diavoletti e le targhe restano dritti), poi la leva
+vola in 0,55 s dalla borchia vecchia alla nuova. Poi il tempo si ferma per
+`LEVER.freeze` = 90 tick (1,5 s): niente si muove, nemmeno il cronometro del turno, e un anello con la
 freccia mostra dove atterrerà ognuno (`hz.lx`, `hz.ly`, -1 se cade fuori). Poi tutti cadono, col
 danno da caduta normale. Le rinascite stanno sulle 8 travi d'acciaio libere sopra e sotto: a ogni
 capovolgimento passano all'altra faccia (`y2`). La leva non scatta da sola (Sergio: «resta ferma
@@ -88,6 +92,11 @@ atterra lì vicino la tira subito di nuovo). Il client cambia dipinto (`limbo_so
 disegno specchiato con la luce dall'alto: `tools/grafica/mappe_dipinte.py`, `limbo(True)`),
 ridisegna la maschera specchiata coi crateri e disegna la leva di Codex (`docs/handoff/WB-099`, ritagliata
 da `tools/grafica/leva.py`). I bot non la vedono ancora (niente `risk`): non la tirano apposta.
+
+La leva disegnata è una volta e mezza quella di prima (piastra 45, manico 67,5, pomo a 53 dal perno,
+`LEVER.out`), ritagliata di nuovo dal foglio di Codex senza ingrandire. Il 27 nov (Sergio) via le
+isole 8 e 19 e la 7 spostata a sinistra, perché si cada più spesso dopo il giro; la rinascita a terra
+sta su una trave d'acciaio incassata.
 
 ## Violenza, Frode, Tradimento e Lucifero (terzo blocco)
 

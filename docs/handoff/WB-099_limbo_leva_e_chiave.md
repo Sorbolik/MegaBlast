@@ -88,3 +88,5 @@ inclinato di 35 gradi da una parte e, dopo ogni scatto, dall'altra. La simulazio
 il punto che si colpisce, dove sta nel disegno (`LEVER.out` = 35, `LEVER.tilt`). Al posto della leva
 disegnata nel codice ora c'è quella di Codex. Foto da vicino: `leva_vicina_A_dritta.jpg` e
 `leva_vicina_B_capovolta.jpg` nei file del progetto (`limbo_leva/`).
+
+27 nov: piastra e manico ritagliati di nuovo dal foglio 1 una volta e mezza più grandi (piastra 45, manico 67,5, Sergio: «più evidente»): il foglio è più grande, niente ingrandimento.

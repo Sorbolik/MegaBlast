@@ -497,7 +497,7 @@ KINDS.tombs = {
 -- is touching the knob (the body pulls it on entering, not standing there).
 local function lever_spot(g, hz, i)
 	local s = g.levers[i]
-	if hz.flip == 1 then return s.x, g.terrain.h * g.terrain.cell - s.y, s.dx, -s.dy end
+	if hz.flip == 1 then return g.WORLD_W - s.x, g.terrain.h * g.terrain.cell - s.y, -s.dx, -s.dy end
 	return s.x, s.y, s.dx, s.dy
 end
 
@@ -519,24 +519,29 @@ end
 -- under the same floor, now a ceiling, and falls); what lies on the ground drops to the ground
 -- below it, what can't is gone.
 local function mirror(g)
+	-- half a turn around the middle of the map (Sergio, 27 Nov: the map turns, it isn't mirrored):
+	-- the grid's cells swap with the one opposite (top and bottom, left and right; the side margins
+	-- are the same on both sides, so the middle of the grid is the middle of the map)
 	local t = g.terrain
 	local w, h, data = t.w, t.h, t.data
-	local H = h * t.cell
-	for cy = 0, math.floor(h / 2) - 1 do
-		local a, b = cy * w, (h - 1 - cy) * w
-		for i = 1, w do
-			data[a + i], data[b + i] = data[b + i], data[a + i]
-		end
+	local H, W = h * t.cell, g.WORLD_W
+	local n = w * h
+	for i = 1, math.floor(n / 2) do
+		local k = n + 1 - i
+		data[i], data[k] = data[k], data[i]
 	end
 	local function point(o)
-		o.y = H - o.y
+		o.x, o.y = W - o.x, H - o.y
+		if o.vx then o.vx = -o.vx end
 		if o.vy then o.vy = -o.vy end
 	end
 	for _, rb in ipairs(g.robots) do
 		if not rb.dead then
-			rb.y = H - rb.y - g.ROBOT_H
-			rb.vy = -(rb.vy or 0)
+			rb.x, rb.y = W - rb.x, H - rb.y - g.ROBOT_H
+			rb.vx, rb.vy = -(rb.vx or 0), -(rb.vy or 0)
+			if rb.recoil_vx then rb.recoil_vx = -rb.recoil_vx end
 			if rb.recoil_vy then rb.recoil_vy = -rb.recoil_vy end
+			if rb.facing then rb.facing = -rb.facing end
 			rb.grounded, rb.fall_top = false, nil
 			rb.hooked, rb.hook_shot = nil, nil
 		end
@@ -547,19 +552,20 @@ local function mirror(g)
 	for i = 1, g.SHARD_COUNT do
 		if g.shards[i] then point(g.shards[i]) end
 	end
-	if g.burst then g.burst.angle = -g.burst.angle end
+	if g.burst then g.burst.angle = g.burst.angle + math.pi end
 	for _, c in ipairs(g.crates) do
-		c.y, c.vy, c.landed = H - c.y - g.CRATE_H, 0, false
+		c.x, c.y, c.vy, c.landed = W - c.x, H - c.y - g.CRATE_H, 0, false
 	end
 	for _, o in ipairs(g.placed) do
-		o.y = H - o.y - 2 * (o.r or g.GRENADE_R)
-		if o.flying then o.vy = -(o.vy or 0) else o.vy = 0 end
+		o.x, o.y = W - o.x, H - o.y - 2 * (o.r or g.GRENADE_R)
+		if o.flying then o.vx, o.vy = -(o.vx or 0), -(o.vy or 0) else o.vy = 0 end
 	end
 	-- the healing circles and the pools of pitch lie on the ground: they drop to the one below
 	for _, list in ipairs({ { g.heals, "heal_gone" }, { g.pools, "pool_gone" } }) do
 		local items = list[1]
 		for i = #items, 1, -1 do
 			local o = items[i]
+			o.x = W - o.x
 			local gy = t:ground_below(o.x, H - o.y - 1)
 			if gy then
 				o.y = gy
@@ -569,9 +575,9 @@ local function mirror(g)
 			end
 		end
 	end
-	-- the respawns are on beams free on both faces: the other face is the top now
+	-- the respawns are on steel free on both faces: the other face is the top now
 	for i, s in ipairs(g.spawn_spots) do
-		g.spawn_spots[i] = { x = s.x, y = s.y2, y2 = s.y }
+		g.spawn_spots[i] = { x = W - s.x, y = s.y2, y2 = s.y }
 	end
 end
 

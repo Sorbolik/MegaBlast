@@ -412,3 +412,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 27 nov | **POTENZIA: X in rilievo senza lastra, Scaglie e frammenti accanto alla X, un solo +1 LIVELLO con l'interruttore SCAGLIE/FRAMMENTI** (Sergio, scelte B e C). | interfaccia.md, ui-catalogo.md, questa PR |
 | 27 nov | **Il Limbo capovolto**: al posto della gravità ridotta la leva che specchia la mappa (colpo o corpo, 1 s fermo per vedere dove atterri, poi danno da caduta normale), mappa nuova grande come la fossa con 12 rinascite su travi a due facce, primo livello del Limbo col Fabbro in squadra (Sergio). | gameplay.md, questa PR |
 | 27 nov | **Uccisioni tue con la leva e con la spinta del corpo** (Sergio), su tutte le mappe. | gameplay.md, questa PR |
+| 27 nov | **Il Limbo ruota di mezzo giro con lo sfondo, la leva vola al posto nuovo ed è più grande, via le isole 8 e 19** (Sergio). | gameplay.md, questa PR |

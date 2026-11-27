@@ -17,6 +17,7 @@
 in mediump vec2 var_uv;
 in highp vec2 var_schermo;
 in highp float var_zoom;
+in highp vec2 var_giro;
 
 out vec4 out_fragColor;
 
@@ -37,6 +38,8 @@ uniform fs_uniforms
     highp vec4 striscia1;
     highp vec4 striscia2;
     highp vec4 striscia3;
+    // x = 1: la mappa del Limbo è girata di mezzo giro e lo sfondo con lei (Sergio, 27 nov)
+    mediump vec4 giro;
 };
 
 const mediump vec2 CELLA = vec2(1.0 / 760.0, 1.0 / 360.0);
@@ -67,9 +70,14 @@ highp float caso(highp float n)
 // Dove si vede il punto di una fila lontana: con la camera si sposta di
 // "quanto" (0 = ferma, 1 = come la mappa), e anche lo zoom la ingrandisce meno
 // var_schermo e var_zoom sono stirati su 1280 x 720: qui tornano senza deformazioni
+// Lo sfondo gira con la mappa (la leva del Limbo, Sergio 27 nov): il punto torna nel verso della
+// mappa (contro il giro della vista) e, a mappa girata, di mezzo giro in più
 highp vec2 schermo()
 {
-    return CENTRO + (var_schermo - CENTRO) * opzioni.zw;
+    highp vec2 p = (var_schermo - CENTRO) * opzioni.zw;
+    p = vec2(var_giro.x * p.x + var_giro.y * p.y, var_giro.x * p.y - var_giro.y * p.x);
+    if (giro.x > 0.5) p = -p;
+    return CENTRO + p;
 }
 
 highp float zoom()
@@ -114,7 +122,8 @@ mediump vec3 striscia(mediump vec3 col, mediump sampler2D img, highp vec4 s, hig
 mediump vec3 sfondo()
 {
     // il punto del mondo al centro dello schermo
-    highp vec2 camera = var_uv * MONDO - (schermo() - CENTRO) / zoom();
+    highp vec2 uv = giro.x > 0.5 ? vec2(1.0) - var_uv : var_uv;
+    highp vec2 camera = uv * MONDO - (schermo() - CENTRO) / zoom();
     highp float lz = log2(zoom());
     highp vec2 q = fila(camera, 0.02, lz) / MONDO;
     mediump vec3 col = texture(cielo, clamp(q, 0.0, 1.0)).rgb;

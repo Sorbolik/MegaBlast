@@ -1,6 +1,6 @@
-# Il Limbo capovolto: il primo robot entra nella leva (borchia 14, sul ponte ad arco), la mappa si
-# specchia, il tempo si ferma un secondo con gli anelli dove si atterra, poi tutti cadono
-# (docs/pericoli_mappe.md, la leva del Limbo)
+# Il Limbo capovolto: il primo robot entra nella leva (borchia 14, sul ponte ad arco), la mappa fa
+# mezzo giro attorno al centro con lo sfondo, la leva vola alla borchia nuova mentre il tempo è fermo
+# (gli anelli dicono dove si atterra), poi tutti cadono (docs/pericoli_mappe.md, la leva del Limbo)
 imposta prova_vignette no
 imposta prova_mappa limbo
 imposta prova_leva 14
@@ -12,7 +12,11 @@ aspetta 2.5
 foto 01_dritta
 cammina destra 560 4
 aspetta_evento flip 6
-aspetta 0.4
-foto 02_fermo_dove_atterri
+aspetta 0.3
+foto 02_gira
+aspetta 0.6
+foto 03_leva_vola
+aspetta 0.5
+foto 04_fermo_dove_atterri
 aspetta 2.5
-foto 03_capovolta
+foto 05_capovolta

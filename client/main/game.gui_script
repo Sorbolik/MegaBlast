@@ -406,7 +406,8 @@ local function paint_terrain(self)
 		self.mask_tex = resource.create_texture(MASK_PATH, mask_params(TW, TH), buf)
 	end
 	-- the Limbo upside down has its own painting (battle/hazards.lua)
-	msg.post("/terreno#script", "maschera", { path = self.mask_tex, mappa = require("battle.hazards").painting(self.g) })
+	local HZ = require("battle.hazards")
+	msg.post("/terreno#script", "maschera", { path = self.mask_tex, mappa = HZ.painting(self.g), giro = HZ.turned(self.g) })
 end
 
 -- Updates the mask in the given rectangle (cell coordinates); fresh: the
@@ -940,12 +941,17 @@ RM.SIGN = {
 	shell = { 0.3, 0.25, 0.3 }, clay = { 0.78, 0.41, 0.23 }, pitch = { 0.36, 0.28, 0.4 },
 	paper = { 0.95, 0.79, 0.3 }, void = { 0.55, 0.4, 0.9 },
 }
--- The lever turned the map upside down (sim/hazards.lua, lever): the craters go to their mirror, the
--- mask is redrawn from the flipped cells with the painting upside down (battle/hazards.lua painting),
--- and robots, shots and crates jump to their new place without sliding there
+-- The lever turned the map half a turn (sim/hazards.lua, lever): the craters go to their place, the
+-- mask is redrawn from the turned cells with the painting turned (battle/hazards.lua painting), robots,
+-- shots and crates jump to their new place without sliding there, and the world spins into place
 function RM.flip(self, e)
-	local H = game.WORLD_H
-	for _, k in ipairs(CR.list(self)) do k.y = H - k.y end
+	local H, W2 = game.WORLD_H, game.WORLD_W
+	-- the map turned half a turn around its middle: so do the craters and the camera's point, and the
+	-- world is drawn turned back, then turns into place (battle/hazards.lua spin)
+	for _, k in ipairs(CR.list(self)) do k.x, k.y = W2 - k.x, H - k.y end
+	local c = self.cam
+	camera.jump(c, W2 - c.x, H - c.y, c.s)
+	RM.hazards.flip(self.pericoli, e, self.clock)
 	draw_terrain(self)
 	-- the next match on this map starts the right way up: the whole mask again
 	self.drawn_map = nil
@@ -2961,15 +2967,15 @@ start_local_match = function(self, picked)
 		local y = self.g.terrain:ground_below(a.x + near, a.y + 3 * game.ROBOT_H)
 		if y then b.x, b.y, b.grounded = a.x + near, y, true end
 	end
-	-- prova_leva N: the Limbo's lever on stud N and the first robot on the ground 45 px to its left
+	-- prova_leva N: the Limbo's lever on stud N and the first robot on the ground 90 px to its left (past the knob)
 	-- (scenario leva.txt: it walks into it)
 	local lever = SIMULATE and config_int("megablast.prova_leva", 0) or 0
 	local hz = self.g.hz
 	if lever > 0 and hz and self.g.levers and self.g.levers[lever] then
 		hz.at = lever
 		local s, a = self.g.levers[lever], self.g.robots[1]
-		local y = self.g.terrain:ground_below(s.x - 45, s.y + 3 * game.ROBOT_H)
-		if y then a.x, a.y, a.grounded = s.x - 45, y, true end
+		local y = self.g.terrain:ground_below(s.x - 90, s.y + 3 * game.ROBOT_H)
+		if y then a.x, a.y, a.grounded = s.x - 90, y, true end
 	end
 	CP.begin(self, 1, nil, nil, true)
 	self.mode = "local"
@@ -4121,6 +4127,9 @@ end
 -- the render view, where the terrain mesh is drawn. Labels and arrow grow
 -- less than the world, so up close they don't become huge.
 local CAM_POS, CAM_SCALE, LABEL_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1), vmath.vector3(1, 1, 1)
+local CAM_EULER = vmath.vector3(0, 0, 0)
+-- around the turning map (outside the terrain's rectangle) the Limbo's dark sky (docs/campagna_gironi.md)
+local SPIN_CLEAR = vmath.vector4(0.11, 0.145, 0.133, 1)
 local function apply_camera(self)
 	local c = self.cam
 	if self.zoom_point then ZM.display(self) end
@@ -4128,19 +4137,33 @@ local function apply_camera(self)
 	-- the zoom punch scales about the center of the screen
 	-- the last seconds of your turn close in a little (battle/turn_focus.lua)
 	local k = (self.sc_k or 1) * self.focus.zoom
+	-- the Limbo's lever: the world turns half a turn around the middle of the screen, smaller
+	-- halfway so it fits (battle/hazards.lua spin); the background turns with it (terrain.fp)
+	local phi = self.spin or 0
+	if (phi ~= 0) ~= (self.spin_clear == true) then
+		self.spin_clear = phi ~= 0
+		msg.post("@render:", "clear_color", { color = self.spin_clear and SPIN_CLEAR or vmath.vector4(
+			sys.get_config_number("render.clear_color_red", 0), sys.get_config_number("render.clear_color_green", 0),
+			sys.get_config_number("render.clear_color_blue", 0), sys.get_config_number("render.clear_color_alpha", 0)) })
+	end
+	k = k * (1 - 0.44 * math.abs(math.sin(phi)))
 	tx, ty = W / 2 + (tx - W / 2) * k + self.sc_ox, H / 2 + (ty - H / 2) * k + self.sc_oy
 	local cs = c.s * k
-	if tx == self.cam_tx and ty == self.cam_ty and cs == self.cam_s then return end
-	self.cam_tx, self.cam_ty, self.cam_s = tx, ty, cs
-	CAM_POS.x, CAM_POS.y = tx, ty
+	if tx == self.cam_tx and ty == self.cam_ty and cs == self.cam_s and phi == self.cam_phi then return end
+	self.cam_tx, self.cam_ty, self.cam_s, self.cam_phi = tx, ty, cs, phi
+	local co, si = math.cos(phi), math.sin(phi)
+	local rx, ry = (tx - W / 2) * co - (ty - H / 2) * si, (tx - W / 2) * si + (ty - H / 2) * co
+	CAM_POS.x, CAM_POS.y = W / 2 + rx, H / 2 + ry
 	gui.set_position(self.mondo, CAM_POS)
 	CAM_SCALE.x, CAM_SCALE.y = cs, cs
 	gui.set_scale(self.mondo, CAM_SCALE)
+	CAM_EULER.z = math.deg(phi)
+	gui.set_euler(self.mondo, CAM_EULER)
 	-- the render stretches 1280 x 720 over the whole screen: the view compensates,
 	-- so the terrain has the same proportions as the nodes (ui/screen.lua)
 	local view, kx, ky = self.cam_msg.view, screen.kx, screen.ky
-	view.m00, view.m11 = cs / kx, cs / ky
-	view.m03, view.m13 = W / 2 + (tx - W / 2) / kx, H / 2 + (ty - H / 2) / ky
+	view.m00, view.m01, view.m10, view.m11 = cs * co / kx, -cs * si / kx, cs * si / ky, cs * co / ky
+	view.m03, view.m13 = W / 2 + rx / kx, H / 2 + ry / ky
 	msg.post("@render:", "set_view_projection", self.cam_msg)
 	local l = c.s ^ -0.65
 	LABEL_SCALE.x, LABEL_SCALE.y = 0.7 * FONT_K * l, 0.7 * FONT_K * l
@@ -4357,9 +4380,11 @@ function RM.prev_shot(pa, src)
 	if pa.has_p and pa.p_src == src then return pa.p end
 end
 
+local ROBOT_EULER = vmath.vector3(0, 0, 0)
 local function render(self, dt)
 	self.clock = self.clock + dt
 	local g = self.g
+	self.spin = g and g.hazard == "lever" and RM.hazards.spin(self.pericoli, self.clock) or 0
 	-- no match (home, screens, connecting): nothing to move
 	if not g then return end
 	if g.intro and (g.intro > 0 or self.count_n) then CR.countdown(self, dt) end
@@ -4425,6 +4450,18 @@ local function render(self, dt)
 		end
 		-- above the horns: 3 in the world and 4 screen pixels
 		plate.update(r.plate, dt, v.x, v.y + scoria.top(r.rig) + CP.PLATE_GAP / self.cam.s, plate.scale(self.cam))
+		-- while the world spins (the Limbo's lever) the name stays upright above the upright devil
+		if self.spin ~= 0 or r.plate_spun then
+			local h, sp = game.DISEGNO_H / 2, self.spin
+			local o = scoria.top(r.rig) + CP.PLATE_GAP / self.cam.s - h
+			local P = vmath.vector3(v.x - math.sin(sp) * o, v.y + h + math.cos(sp) * o, 0)
+			ROBOT_EULER.z = -math.deg(sp)
+			for _, n in ipairs({ r.plate.bars, r.plate.texts }) do
+				gui.set_position(n, P)
+				gui.set_euler(n, ROBOT_EULER)
+			end
+			r.plate_spun = sp ~= 0
+		end
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -4528,6 +4565,16 @@ local function render(self, dt)
 		RM.cannon.rig(self.cannone, i, rb, st, dt)
 		if st.rannicchia or st.nascosto or st.palla then scoria.empty_hands(r.rig, true) end
 		scoria.update(r.rig, dt, st)
+		-- while the world spins (the Limbo's lever) the devils stay upright, turning about their middle
+		if self.spin ~= 0 or r.spun then
+			local h = game.DISEGNO_H / 2
+			ROBOT_EULER.z = -math.deg(self.spin)
+			gui.set_euler(r.rig.root, ROBOT_EULER)
+			if self.spin ~= 0 then
+				gui.set_position(r.rig.root, vmath.vector3(st.x - math.sin(self.spin) * h, st.y + h - math.cos(self.spin) * h, 0))
+			end
+			r.spun = self.spin ~= 0
+		end
 	end
 
 	-- the Grapple's rope: while the hook flies it stretches from the hand to it;
