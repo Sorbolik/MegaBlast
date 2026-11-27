@@ -3,7 +3,7 @@
 -- blows, all round long) is a pill of the HUD; the hail's shadows (where the stones will fall
 -- at the end of the round) and the stones in flight are in the world, like the boulders rolling
 -- (Avarizia), the water with the line it will rise to (Ira) and the tombs' flames and lids
--- (Eresia). The mud is painted in the map; the low gravity needs no drawing.
+-- (Eresia). The mud is painted in the map. The Limbo's lever: below.
 --
 --   local o = hazards.new()                    -- all the nodes, hidden until a match has the hazard
 --   hazards.nodes(o)                           -- the world nodes, to put in the "mondo" node
