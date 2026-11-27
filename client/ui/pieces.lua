@@ -54,6 +54,8 @@ return {
 	cornice_pezzo_fondo = { w = 192, h = 192, c = 48 },
 	cornice_pezzo_luce = { w = 192, h = 192, c = 48 },
 	corona = { w = 175, h = 128 },
+	croce = { w = 97, h = 112 },
+	croce_premuta = { w = 97, h = 112 },
 	fabbro_al_banco = { w = 651, h = 1000 },
 	fiamma = { w = 92, h = 120 },
 	filo_bordo = { w = 256, h = 64, c = 32 },

@@ -487,6 +487,9 @@ local function run_cmd(s, ui_action)
 		if s.sel and s.sel[2] == x then s.sel = nil end
 	elseif kind == "chiudi" then
 		s.modal = nil
+	elseif kind == "paga" then
+		-- POTENZIA's PAGA CON: the coin the +1 LIVELLO is paid with
+		s.pay = x
 	elseif kind == "potenzia" or kind == "firma" or kind == "frammenti" then
 		bench.run(s, kind, s.modal)
 		-- a worn piece that reaches gold changes look on the apprentice at once

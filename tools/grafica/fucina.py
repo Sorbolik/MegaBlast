@@ -440,6 +440,7 @@ def fai_secondario():
     # incontri cosi' male in punta, e che sia ben definito il <»): un pezzo solo, la punta
     # unita ad angolo vivo, i capi tondi, niente contorno
     fai_freccina()
+    fai_croce()
 
 
 def lastra(nome, h, ferro, luce):
@@ -662,6 +663,50 @@ def fai_freccina():
         d.ellipse(((cx - h) * S, (cy - h) * S, (cx + h) * S, (cy + h) * S), fill=(0xF4, 0xEC, 0xE1, 255))
     intero("freccina", np.asarray(im), 96)
     # (le monete del foglio monete_* non sono piaciute a Sergio: si rifanno con WB-072)
+
+
+def fai_croce():
+    # la X che chiude le finestre (Sergio, 27 nov: «una bella x fatta bene», senza lastra
+    # ma col rilievo dei pulsanti): contorno d'inchiostro spesso, faccia di ferro chiara con
+    # la luce in alto, l'ombra nera sotto come la lastra. croce_premuta: scesa sull'ombra
+    S, W, H = 8, 40, 46             # misure del disegno (la X sta in 40 x 40, 6 sotto per l'ombra)
+
+    def tratti(dy, spess, colore, im):
+        d = ImageDraw.Draw(im)
+        r = spess / 2
+        for (x0, y0), (x1, y1) in (((10, 10), (30, 30)), ((30, 10), (10, 30))):
+            d.line(((x0 * S, (y0 + dy) * S), (x1 * S, (y1 + dy) * S)), fill=colore, width=round(spess * S))
+            for cx, cy in ((x0, y0 + dy), (x1, y1 + dy)):
+                d.ellipse(((cx - r) * S, (cy - r) * S, (cx + r) * S, (cy + r) * S), fill=colore)
+
+    def croce(giu):
+        im = Image.new("RGBA", (W * S, H * S), (0, 0, 0, 0))
+        if not giu:
+            tratti(4, 15, (0, 0, 0, 255), im)
+        dy = 3 if giu else 0
+        tratti(dy, 15, (0x0B, 0x08, 0x0D, 255), im)
+        # la faccia: dal bianco caldo in alto al ferro in basso
+        faccia = Image.new("L", im.size, 0)
+        tratti(dy, 8, 255, faccia)
+        y = np.linspace(0, 1, H * S)[:, None]
+        top, mid, bot = np.array([255, 246, 230.]), np.array([227, 216, 198.]), np.array([169, 157, 140.])
+        k = np.clip(((y * H) - (10 + dy - 4)) / 28, 0, 1)[..., None]
+        col = np.where(k < 0.55, top + (mid - top) * (k / 0.55), mid + (bot - mid) * ((k - 0.55) / 0.45))
+        col = np.broadcast_to(col, (H * S, W * S, 3))
+        if giu:
+            col = col * 0.9
+        f = np.dstack([col, np.asarray(faccia)]).astype(np.uint8)
+        im.alpha_composite(Image.fromarray(f, "RGBA"))
+        # il filo di luce sulle due metà in alto
+        luce = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(luce)
+        for a, b in (((11.5, 10.5 + dy), (19, 18 + dy)), ((28.5, 10.5 + dy), (22, 17 + dy))):
+            d.line(((a[0] * S, a[1] * S), (b[0] * S, b[1] * S)), fill=(255, 255, 255, 215), width=round(2.2 * S))
+        im.alpha_composite(luce)
+        return np.asarray(im)
+
+    intero("croce", croce(False), 112)
+    intero("croce_premuta", croce(True), 112)
 
 
 def griglia(percorso, per_riga, minimo=1500):
