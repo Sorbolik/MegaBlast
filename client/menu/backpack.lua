@@ -1,11 +1,11 @@
 -- The ZAINO (Figma "RIORGANIZZAZIONE MENU · 14 nov", Consigliata/2 and /3;
 -- Sergio, 14 Nov): it opens from the apprentice in the home. Two tabs:
---   INVENTARIO  on the left the loadouts of the pieces and the apprentice with
---               its four pieces labeled on it; in the middle every piece you
---               own as a slot (four in a row, big, the grid scrolls), filtered by
---               slot; on the right the
---               stats (with "a → b" for the piece chosen); at the bottom the
---               piece chosen and INDOSSA
+--   INVENTARIO  on the left the loadouts and the apprentice, beside it the column of
+--               what you wear (small piece cards); in the middle every piece you
+--               own as a big card with its rows (two in a row, the list scrolls),
+--               filtered by slot; on the right the stats (with "a → b" for the piece
+--               tried on); at the bottom how it works and INDOSSA. Holding a card
+--               opens POTENZIA (menu/bench.lua)
 --   SIGILLI     the loadouts of the Sigilli (apart from the pieces'), the three
 --               paths as rows of pips with a round at each threshold, the open
 --               one's forks and their two powers under them; on the right the
@@ -30,6 +30,8 @@ local progress = require "sim.progress"
 local gear_ui = require "menu.gear_ui"
 local outline = require "menu.outline"
 local bench = require "menu.bench"
+local card_list = require "menu.card_list"
+local sheen = require "ui.sheen"
 local T = require("lang.text").backpack
 local TG = require("lang.text").gear_ui
 local TP = require("lang.text").pieces
@@ -38,9 +40,6 @@ local common = require("lang.text").common
 local M = {}
 
 local KC = kit.C
--- how wide the lines of the piece chosen are, in the band: they stop before the action
--- POTENZIA in the band: left of the action (Figma x of the right side)
-local UP_X, UP_W = 700, 200
 -- the paths of the Sigilli: their color (Figma: movement ice, defense mint, arsenal ember)
 local PATH_COLOR = { wings = KC.STEEL, armor = KC.MINT, forge = KC.HOT_BOTTOM }
 
@@ -73,220 +72,105 @@ end
 
 -- INVENTARIO ------------------------------------------------------------------------
 
--- The grid of the pieces in a window (VIEW, Figma), moved by s.scroll: the slots are
--- cut at its edges (stencil) and their zones work only inside it
-local VIEW = { x = 418, y = 160, w = 612, h = 400 }
-local CELL, GAP, ROW = 124, 26, 154
-local GRID_X, GRID_Y = 432, 172
+-- The pieces as big cards with their rows inside (Sergio, 27 Nov), two in a row in a
+-- window that scrolls (menu/card_list.lua): the ones you wear first, under them a gold
+-- line, then the others. No piece is chosen when you come in: a tap tries one on (the
+-- apprentice wears it, its stats compared), a second tap takes it off; holding it
+-- opens POTENZIA (menu/bench.lua, the window); INDOSSA keeps it on.
+local VIEW = { x = 418, y = 146, w = 612, h = 460 }
+local COLS, TOP, GAP = { 430, 726 }, 152, 10
+-- how long a finger stays on a card to open POTENZIA (seconds)
+local HOLD = 0.52
+-- the column of what you wear: x, the first top, the size, the gap (choice B)
+local TOK_X, TOK_Y, TOK_S, TOK_GAP = 336, 180, 66, 12
 
-local function grid_height(n)
-	return math.ceil(n / 4) * ROW - (ROW - CELL) + 24
-end
-
--- the rows that leave the window at the top or the bottom fade out (the grid goes on)
-local function grid_fade(s)
-	for _, c in ipairs(s.cells or {}) do
-		local top = c.y - (s.scroll or 0)
-		local a = 1
-		if top + CELL > VIEW.y + VIEW.h then a = math.max(0.15, math.min(1, (VIEW.y + VIEW.h - top) / CELL)) end
-		if top < VIEW.y then a = math.max(0.15, math.min(1, (top + CELL - VIEW.y) / CELL)) end
-		gui.set_alpha(c.g.node, a)
-	end
-	if s.thumb then
-		local max = s.scroll_max or 0
-		local len = VIEW.h * VIEW.h / (VIEW.h + max)
-		local y0 = VIEW.y + (max > 0 and (s.scroll / max) * (VIEW.h - len) or 0)
-		gui.set_position(s.thumb.node, vmath.vector3(0, -(y0 - VIEW.y), 0))
-	end
-end
-
-local function grid(s, g, items, a)
-	local p = s.prof
-	local clip = gui.new_box_node(vmath.vector3(VIEW.x + VIEW.w / 2 - g.ox, g.oy - (VIEW.y + VIEW.h / 2), 0),
-		vmath.vector3(VIEW.w, VIEW.h, 0))
-	gui.set_parent(clip, g.node)
-	gui.set_clipping_mode(clip, gui.CLIPPING_MODE_STENCIL)
-	gui.set_clipping_visible(clip, false)
-	gui.set_adjust_mode(clip, gui.ADJUST_FIT)
-	local view = { node = clip, ox = VIEW.x + VIEW.w / 2, oy = VIEW.y + VIEW.h / 2 }
-	s.view_clip = clip
-	s.scroll_max = math.max(0, GRID_Y - VIEW.y + grid_height(#items) - VIEW.h)
-	s.scroll = math.max(0, math.min(s.scroll or 0, s.scroll_max))
-	s.grid = kit.group(view, view.ox, view.oy)
-	gui.set_position(s.grid.node, vmath.vector3(0, s.scroll, 0))
-	s.cells = {}
-	for i, it in ipairs(items) do
-		local c, r = (i - 1) % 4, math.floor((i - 1) / 4)
-		local x, y = GRID_X + c * (CELL + GAP), GRID_Y + r * ROW
-		local set, slot = it[1], it[2]
-		local cg = kit.group(s.grid, x, y)
-		local made = gear_ui.slot(cg, x, y, CELL, { set = set, slot = slot, level = wallet.level(p, set, slot),
-			worn = a.gear[slot] == set, sel = s.sel and s.sel[1] == set and s.sel[2] == slot })
-		for _, n in ipairs(made) do gui.set_inherit_alpha(n, true) end
-		local b = kit.zone(cg, s.buttons, x - 8, y - 8, CELL + 16, CELL + 16, "pezzo:" .. set .. ":" .. slot)
-		b.inside = clip
-		s.cells[#s.cells + 1] = { g = cg, y = y }
-	end
-	if #items == 0 then
-		kit.text(g, kit.upper(T.nothing), VIEW.x + VIEW.w / 2, 300, 18, KC.MUTE, "middle", 1)
-	end
-	-- a thin track on the right of the window, when there is more than it shows
-	s.thumb = nil
-	if s.scroll_max > 0 then
-		local tx = VIEW.x + VIEW.w - 8
-		kit.line(g, tx, VIEW.y + 12, tx, VIEW.y + VIEW.h - 12, 6, KC.INK)
-		local len = VIEW.h * VIEW.h / (VIEW.h + s.scroll_max)
-		s.thumb = kit.group(g, 0, 0)
-		kit.line(s.thumb, tx, VIEW.y + 12, tx, VIEW.y + math.max(24, len) - 12, 6, KC.STEEL)
-	end
-	grid_fade(s)
-end
-
--- a drag inside the window moves the grid (and is not a tap on a piece)
-local WHEEL_UP, WHEEL_DOWN, WHEEL_STEP = hash("zoom_avanti"), hash("zoom_indietro"), 60
-
-local function grid_drag(s, action_id, action)
-	-- on a desktop the mouse wheel scrolls the grid, as in a browser
-	if (action_id == WHEEL_UP or action_id == WHEEL_DOWN) and s.grid and not s.card and not s.sheet
-		and s.tab ~= "sigilli" and (s.scroll_max or 0) > 0 then
-		if action.pressed then
-			local step = action_id == WHEEL_UP and -WHEEL_STEP or WHEEL_STEP
-			s.scroll = math.max(0, math.min(s.scroll_max, (s.scroll or 0) + step))
-			gui.set_position(s.grid.node, vmath.vector3(0, s.scroll, 0))
-			grid_fade(s)
-		end
-		return true
-	end
-	if action_id ~= ui.TOUCH or not s.grid or s.card or s.sheet or s.tab == "sigilli" then return false end
-	if action.pressed then
-		s.drag = nil
-		if s.scroll_max and s.scroll_max > 0 and gui.pick_node(s.view_clip, action.x, action.y) then
-			s.drag = { y = action.y, from = s.scroll, moved = false }
-		end
-		return false
-	end
-	local d = s.drag
-	if not d then return false end
-	if action.released then
-		s.drag = nil
-		return d.moved
-	end
-	local dy = action.y - d.y
-	if not d.moved and math.abs(dy) > 10 then
-		d.moved = true
-		local b = s.buttons.held_down
-		if b then gui.set_scale(b.nodo, vmath.vector3(1, 1, 1)) end
-		s.buttons.held_down = nil
-	end
-	if d.moved then
-		-- the grid follows the finger (Sergio, 18 Nov: it went the other way)
-		s.scroll = math.max(0, math.min(s.scroll_max, d.from + dy))
-		gui.set_position(s.grid.node, vmath.vector3(0, s.scroll, 0))
-		grid_fade(s)
-	end
-	return d.moved
-end
+local function same_piece(a, b) return a and b and a[1] == b[1] and a[2] == b[2] end
 
 local function inventory(s)
 	local p = s.prof
 	local a = profile.active_loadout(p)
 	gear_ui.loadouts(s, s.left, 36, 96, p.is_active, "assetto", T.loadout)
-	gear_ui.devil(s, s.left, 215, 600, 395)
-	gear_ui.worn(s, s.left, a, 215, 600, 395, 36, { 208, 310, 412, 514 }, 68, s.slot)
-
-	-- the stats: with the piece chosen on, what changes; VEDI TUTTE opens all of them
-	-- in the middle, in place of the pieces
-	local items = owned(s)
-	if not s.sel and items[1] then s.sel = items[1] end
+	-- the piece tried on: on the apprentice, in its place in the column, in the stats
+	local try = s.sel and a.gear[s.sel[2]] ~= s.sel[1] and s.sel or nil
+	local gear, look = gear_ui.tried(s, a, try)
+	s.gear_on = gear
+	gear_ui.devil(s, s.left, 215, 600, 395, look)
+	gear_ui.light_try(s, try)
+	s.sheen = sheen.new(s.mid, 330, 1050)
+	s.tokens = gear_ui.tokens(s, s.left, a, try, TOK_X, TOK_Y, TOK_S, TOK_GAP, s.sheen)
+	if try then
+		kit.text(s.left, kit.upper(T.trying), 24, 184, 20, KC.HOT, "start", 0.5)
+		kit.text(s.left, kit.upper(T.trying_line), 24, 206, 16, KC.SAND, "start", 0.5)
+	end
 	local a2
-	if s.sel and a.gear[s.sel[2]] ~= s.sel[1] then
+	if try then
 		a2 = copy(a)
-		a2.gear[s.sel[2]] = s.sel[1]
+		a2.gear[try[2]] = try[1]
 	end
 	local g = s.mid
 	if s.sheet then
 		gear_ui.sheet(s, g, a, a2, TG.back_to_pieces)
 	else
-		-- the filters: the slot
+		-- the filters: the slots as the symbols of their type (Sergio, 19 Nov)
 		local list = { { T.all, "filtro:" } }
-		-- the slots as the symbols of their type (Sergio, 19 Nov: six words didn't fit)
 		for _, sl in ipairs(equip.SLOTS) do list[#list + 1] = { sl.name, "filtro:" .. sl.id, slot = sl.id } end
 		local active = 1
 		for i, sl in ipairs(equip.SLOTS) do if s.slot == sl.id then active = i + 1 end end
-		-- (as wide as the four cards under them)
 		gear_ui.chips(s, g, 430, 100, list, active, 578)
 
-		-- the pieces, four in a row and big (Sergio, 18 Nov: «non facciamo tutto
-		-- striminzito»): with many of them the grid scrolls, the row cut at the bottom fades
-		grid(s, g, items, a)
-		gear_ui.stats_short(s, s.rt, 1040, 106, 210, a, a2)
-	end
-
-	-- the piece chosen, at the bottom: its name, its level as the notches of the
-	-- bench, its effects; POTENZIA opens its card here (the bench of the armory,
-	-- Sergio 18 Nov: you upgrade without leaving the ZAINO), then INDOSSA
-	if s.sel then
-		local set, slot = s.sel[1], s.sel[2]
-		local level = wallet.level(p, set, slot)
-		local worn = a.gear[slot] == set
-		gear_ui.slot(s.low, 140, 630, 64, { set = set, slot = slot })
-		local name = kit.text(s.low, gear_ui.name(set, slot), 220, 648, 26, KC.SAND)
-		local tier = equip.tier(level)
-		local effects = kit.upper(gear_ui.effects(set, slot, level))
-		-- the room of the lines: up to POTENZIA, which sits left of the action
-		local room = screen.width() - (1280 - UP_X) - 14 - 220
-		do
-			-- the level and grade beside the name, the beads under it across the band
-			-- (the queue's pill sits on the thread: the band is free, Sergio 23 Nov)
-			kit.text(s.low, kit.upper(T.piece_line:format(level, gear_ui.ROMAN[tier], TP.grades[tier])), 220 + kit.width(name) + 16, 646, 17,
-				ui.C.GRADI[tier], "start", 0.5)
-			bench.ingots(s.low, 220, 656, math.min(460, room), 20, level, wallet.sign(p, set, slot))
-			-- the rows on one line, or on two when they don't fit, coloured by kind
-			local lines, made = gear_ui.effect_row(s.low, 220, 688, set, slot, level, wallet.sign(p, set, slot), room, 22)
-			if lines == 1 then
-				-- (Sergio, 19 Nov: the bigger numbers wanted room under the beads)
-				for _, n in ipairs(made) do gui.set_position(n, gui.get_position(n) - vmath.vector3(0, 7, 0)) end
-			end
+		local worn, others = {}, {}
+		for _, it in ipairs(owned(s)) do
+			if a.gear[it[2]] == it[1] then worn[#worn + 1] = it else others[#others + 1] = it end
 		end
-		-- POTENZIA: the plate of the secondary actions (as ACCENDI LA FIRMA in the armory)
-		local nxt = wallet.next(p, set, slot)
-		local ub = kit.secondary(s.right, TP.upgrade_here, UP_X, 640, UP_W, 62,
-			{ icon = "az_potenzia", sub_color = KC.HOT, sub = kit.upper(nxt and T.up_line:format(level, nxt.level) or TP.at_max) })
-		kit.button(s.buttons, ub, "scheda", {})
-		s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { icon = "az_indossa", size = 44, off = worn })
-		kit.button(s.buttons, s.action, "indossa", { main = true, spento = worn })
-	end
-end
-
--- The card of the piece chosen: the armory's bench in the middle, the pieces
--- worn on the left, on the right the stats with +1 LIVELLO; the footer of the
--- bench (ACCENDI LA FIRMA, the price, +1 LIVELLO). The arrow goes back to the pieces
-local function card(s)
-	local p = s.prof
-	local a = profile.active_loadout(p)
-	gear_ui.loadouts(s, s.left, 36, 96, p.is_active, "assetto", T.loadout)
-	gear_ui.devil(s, s.left, 215, 600, 395)
-	gear_ui.worn(s, s.left, a, 215, 600, 395, 36, { 208, 310, 412, 514 }, 68, s.sel[2])
-	bench.draw(s, s.mid, s.sel)
-	bench.footer(s, s.low2, s.right, s.sel)
-	-- the stats: what +1 LIVELLO changes (worn), or what wearing it changes
-	local set, slot = s.sel[1], s.sel[2]
-	local nxt = wallet.next(p, set, slot)
-	local a2
-	if a.gear[slot] ~= set then
-		a2 = copy(a)
-		a2.gear[slot] = set
-	elseif nxt then
-		a2 = copy(a)
-		a2.levels = wallet.levels(p, a)
-		a2.levels[slot] = nxt.level
-	end
-	if s.sheet then
-		gui.set_enabled(s.mid.node, false)
-		s.over = kit.anchor(0, 0)
-		gear_ui.sheet(s, s.over, a, a2, TG.back_to_pieces)
-	else
+		s.list = card_list.new(g, VIEW, s.list and s.list.scroll or s.scroll)
+		s.cards = {}
+		local y = TOP
+		local function place(items)
+			for i, it in ipairs(items) do
+				local x, cy = COLS[(i - 1) % 2 + 1], y + math.floor((i - 1) / 2) * (gear_ui.CARD_H + GAP)
+				local set, slot = it[1], it[2]
+				local level = wallet.level(p, set, slot)
+				local cg = card_list.item(s.list, x, cy, gear_ui.CARD_H)
+				local card, icon = gear_ui.card(cg, x, cy, { set = set, slot = slot, level = level, lit = wallet.sign(p, set, slot),
+					worn = a.gear[slot] == set, sel = same_piece(s.sel, it), sheen = s.sheen })
+				if same_piece(s.sel, it) then gui.set_position(card.node, gui.get_position(card.node) + vmath.vector3(0, 5, 0)) end
+				local action = "pezzo:" .. set .. ":" .. slot
+				card_list.zone(s.list, s.buttons, x, cy, gear_ui.CARD_W, gear_ui.CARD_H, action)
+				s.cards[action] = { node = card.node, icon = icon }
+			end
+			if #items > 0 then y = y + math.ceil(#items / 2) * (gear_ui.CARD_H + GAP) - GAP end
+		end
+		place(worn)
+		if #worn > 0 and #others > 0 then
+			-- the gold line under what you wear, a dot at each end
+			local ly = y + 12
+			local lg = card_list.item(s.list, COLS[1], ly - 4, 8)
+			kit.line(lg, COLS[1], ly, COLS[2] + gear_ui.CARD_W, ly, 2, KC.HOT)
+			kit.dot(lg, COLS[1], ly, 8, KC.HOT)
+			kit.dot(lg, COLS[2] + gear_ui.CARD_W, ly, 8, KC.HOT)
+			y = ly + 2 + 12
+		elseif #worn > 0 then
+			y = y + GAP
+		end
+		place(others)
+		if #worn + #others == 0 then
+			kit.text(g, kit.upper(T.nothing), VIEW.x + VIEW.w / 2, 300, 18, KC.MUTE, "middle", 1)
+		end
+		card_list.done(s.list, g, y)
 		gear_ui.stats_short(s, s.rt, 1040, 106, 210, a, a2)
+	end
+
+	-- at the bottom: how it works, and INDOSSA (lit only with a piece tried on)
+	local room = screen.width() - (1280 - 980) - 24 - 140
+	kit.foot_text(s.low, T.hint_try, 140, 652, 21, KC.SAND, room)
+	kit.foot_text(s.low, T.hint_hold, 140, 680, 17, KC.MUTE, room)
+	s.action = kit.action(s.right, T.wear, 980, 628, 276, 80, { icon = "az_indossa", size = 44, off = not try })
+	kit.button(s.buttons, s.action, "indossa", { main = true, spento = not try })
+	-- POTENZIA: the window over everything, its buttons the only ones
+	if s.modal then
+		s.buttons = {}
+		s.over = kit.anchor(640, 360)
+		bench.window(s, s.over, s.modal)
 	end
 end
 
@@ -490,162 +374,23 @@ end
 
 -- Screen ----------------------------------------------------------------------------
 
--- THE PASS INTO THE ARMERIA (Sergio, 18 Nov: the mock-up he liked, artifact
--- DrdyDpUrGgYQW5uFNfJA6D, then «le catene falle partire da sotto la parola
--- inventario», not over the card): a blade cuts INVENTARIO, which stays cut, and
--- from under it the sign ARMERIA (WB-080) comes down on its chains and swings.
--- SIGILLI stays whole, and the sign is a little bigger, centered under the word
--- (Sergio, 19 Nov)
-local TABS_X, SIGN_W = 300, 170
--- where the chains come out, behind the bottom of INVENTARIO: the board clears the card's badge
-local SIGN_TOP = 46
-local SPARK = vmath.vector4(1, 0.95, 0.69, 1)
-local V0 = vmath.vector3()
-
-local function moved(n, dx, dy)
-	local at = gui.get_position(n)
-	V0.x, V0.y, V0.z = at.x + dx, at.y + dy, at.z
-	return vmath.vector3(V0)
-end
-
--- the sign hanging under INVENTARIO: a node at the chains' top (it turns around
--- there), the board and ARMERIA written on its face. Made before the tags, so the
--- word stays over it: it comes out from behind INVENTARIO
-local function sign(g)
-	-- the middle of INVENTARIO, as kit.tabs puts it
-	local SIGN_X = TABS_X + (#T.tab_inventory * 14 + 64) / 2
-	local m_h = SIGN_W * 180 / 386
-	local hook = kit.group(g, SIGN_X, SIGN_TOP)
-	gui.set_inherit_alpha(hook.node, true)
-	local board = kit.pic(hook, "cartello_armeria", SIGN_X - SIGN_W / 2, SIGN_TOP, SIGN_W, m_h)
-	gui.set_inherit_alpha(board, true)
-	local word = kit.text(hook, common.armory, SIGN_X, SIGN_TOP + m_h * 0.79, 19, KC.HOT, "middle", 1)
-	gui.set_inherit_alpha(word, true)
-	return hook.node, m_h
-end
-
--- the halves apart, as they stay once cut: the top a little up, the bottom down
--- and turned, so the cut reads on both words
-local function open_halves(cut, t, delay)
-	for i, c in ipairs(cut) do
-		local d = delay + (i - 1) * 0.07
-		local top, bottom = moved(c.top, -2, 3), moved(c.bottom, 4, -7)
-		local turn = vmath.vector3(0, 0, kit.CUT_SLANT - 2.5)
-		if t == 0 then
-			gui.set_position(c.top, top)
-			gui.set_position(c.bottom, bottom)
-			gui.set_rotation(c.bottom, turn)
-		else
-			gui.animate(c.top, "position", top, gui.EASING_OUTBACK, t, d)
-			gui.animate(c.bottom, "position", bottom, gui.EASING_OUTBOUNCE, t + 0.15, d + 0.03)
-			gui.animate(c.bottom, "euler", turn, gui.EASING_OUTBACK, t + 0.15, d + 0.03)
-		end
-	end
-end
-
--- a few sparks off the blade where it cuts a word: they fall and go out
-local function sparks(g, x, y, delay)
-	for k = 1, 6 do
-		local n = gui.new_box_node(vmath.vector3(x - g.ox + (k - 3.5) * 9, g.oy - y, 0), vmath.vector3(4, 4, 0))
-		gui.set_adjust_mode(n, gui.ADJUST_FIT)
-		gui.set_color(n, vmath.vector4(SPARK.x, SPARK.y, SPARK.z, 0))
-		gui.set_parent(n, g.node)
-		local to = moved(n, (k - 3.5) * 8, -(18 + (k % 3) * 10))
-		gui.animate(n, "color.w", 1, gui.EASING_LINEAR, 0.01, delay)
-		gui.animate(n, "position", to, gui.EASING_OUTQUAD, 0.35, delay)
-		gui.animate(n, "color", vmath.vector4(0.95, 0.39, 0.1, 0), gui.EASING_INQUAD, 0.35, delay, function() gui.delete_node(n) end)
-	end
-end
-
--- the tags cut, the sign hanging; animate: the blade runs now (POTENZIA)
-local function armory_pass(s, cut, animate)
-	local g = s.head.top_left
-	local n, m_h = s.sign, s.sign_h
-	if not animate then
-		open_halves(cut, 0, 0)
-		return
-	end
-	-- the blade through the middle of every word: from left of the first to past the last
-	local a, b = cut[1], cut[#cut]
-	local k = a == b and math.tan(math.rad(kit.CUT_SLANT)) or (a.cut_y - b.cut_y) / (b.mid - a.mid)
-	local x0 = a.mid - 112
-	local len = (b.mid - x0 + 80) / math.cos(math.atan(k))
-	local y0 = a.cut_y + (a.mid - x0) * k
-	local speed = 0.2 / len
-	-- each word flashes white-hot as the blade goes through it, then goes cold
-	for i, c in ipairs(cut) do
-		local at = (c.mid - x0) * speed
-		for _, t in ipairs({ c.top_text, c.bottom_text }) do
-			gui.set_color(t, i == 1 and kit.TAB_HOT or kit.TAB_COLD)
-			gui.animate(t, "color", SPARK, gui.EASING_OUTQUAD, 0.05, at)
-			gui.animate(t, "color", kit.TAB_COLD, gui.EASING_OUTQUAD, 0.3, at + 0.05)
-		end
-		sparks(g, c.mid, c.cut_y + 4, at)
-	end
-	open_halves(cut, 0.3, (cut[1].mid - x0) * speed)
-	-- the blade: a white-hot line along the cut, quick, then gone
-	local blade = gui.new_box_node(vmath.vector3(x0 - g.ox, g.oy - y0, 0), vmath.vector3(0, 4, 0))
-	gui.set_adjust_mode(blade, gui.ADJUST_FIT)
-	gui.set_pivot(blade, gui.PIVOT_W)
-	gui.set_color(blade, SPARK)
-	gui.set_rotation(blade, vmath.vector3(0, 0, math.deg(math.atan(k))))
-	gui.set_parent(blade, g.node)
-	gui.animate(blade, "size.x", len, gui.EASING_LINEAR, 0.2)
-	gui.animate(blade, "size.y", 1, gui.EASING_INQUAD, 0.16, 0.2)
-	gui.animate(blade, "color.w", 0, gui.EASING_INQUAD, 0.16, 0.2, function() gui.delete_node(blade) end)
-	-- the sign comes out from under INVENTARIO, chains first, already swinging,
-	-- and settles on its chains; the word's bottom half takes the jolt
-	local drop = 0.32
-	local drop0 = drop
-	local rest = gui.get_position(n)
-	gui.set_position(n, moved(n, 0, m_h * 0.6))
-	gui.set_rotation(n, vmath.vector3(0, 0, -7))
-	gui.set_color(n, vmath.vector4(1, 1, 1, 0))
-	gui.animate(n, "color.w", 1, gui.EASING_OUTQUAD, 0.12, drop0)
-	gui.animate(n, "position", rest, gui.EASING_OUTBACK, 0.42, drop)
-	gui.animate(n, "euler.z", 0, gui.EASING_OUTELASTIC, 1.5, drop + 0.12)
-	local jolt = cut[1].bottom
-	gui.animate(jolt, "position.y", gui.get_position(jolt).y - 7 - 3, gui.EASING_OUTQUAD, 0.08, drop + 0.4, function()
-		gui.animate(jolt, "position.y", gui.get_position(jolt).y + 3, gui.EASING_OUTBACK, 0.25)
-	end)
-end
-
--- back to the pieces: the sign goes back up behind the word and fades (a copy,
--- over the screen rebuilt)
-local function sign_away(s)
-	local n, m_h = s.sign, s.sign_h
-	gui.animate(n, "position", moved(n, 0, m_h * 0.6), gui.EASING_INBACK, 0.3)
-	gui.animate(n, "euler.z", 5, gui.EASING_INQUAD, 0.3)
-	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.3, 0, function() gui.delete_node(n) end)
-end
-
+local TABS_X = 300
 local GROUPS = { "left", "mid", "rt", "right", "low", "low2", "over" }
 
 local function build(s)
 	if s.head then kit.header_delete(s.head) end
-	s.grid, s.cells, s.thumb, s.view_clip, s.drag = nil, nil, nil, nil, nil
 	for _, k in ipairs(GROUPS) do
 		if s[k] then gui.delete_node(s[k].node) end
 		s[k] = nil
 	end
-	s.buttons, s.figure, s.action = {}, nil, nil
-	s.outline = nil
+	s.buttons, s.figure, s.action, s.list, s.cards, s.tokens, s.sheen = {}, nil, nil, nil, nil, nil, nil
+	s.outline, s.pose = nil, nil
 	local p = s.prof
-	local in_card = s.tab ~= "sigilli" and s.card and s.sel
-	-- the ARMERIA has the forge's backdrop, the pieces the dressing room's: the
-	-- one comes in over the other when POTENZIA opens it or the arrow closes it
-	local passing = s.just == "open" or s.closing
-	if s.back then kit.scene_bg(s.back, in_card and "fucina" or "camerino", passing and 0.35 or nil) end
-	-- in the ARMERIA the arrow goes back to the pieces, and says so
-	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", in_card and kit.upper(T.title) or common.home)
+	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", common.home)
 	s.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(s.head.top_right, 1110, 44).node, 0, 0)
 	coins.vouchers(s.wallet, p.buoni or 0)
-	local cut = in_card and {} or nil
-	-- the sign ARMERIA, under the tags (made first, so the word is over it)
-	s.sign, s.sign_h = nil, nil
-	if cut or s.closing then s.sign, s.sign_h = sign(s.head.top_left) end
 	kit.tabs(s.head.top_left, s.buttons, TABS_X, 28, { { T.tab_inventory, "scheda:inventario" }, { T.tab_seals, "scheda:sigilli" } },
-		s.tab == "sigilli" and 2 or 1, KC.PURPLE, true, cut)
+		s.tab == "sigilli" and 2 or 1, KC.PURPLE, true)
 
 	-- the left column sticks to the left edge, the stats to the right one, the rest in the middle
 	s.left = kit.anchor(0, 0, gui.ANCHOR_LEFT)
@@ -656,21 +401,11 @@ local function build(s)
 	s.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
 	if s.tab == "sigilli" then
 		seals_tab(s)
-	elseif in_card then
-		card(s)
 	else
 		inventory(s)
 	end
-	if cut then
-		-- the chains hang from the base of INVENTARIO: the sign follows its bottom
-		-- half in everything, the cut, the turn and the last jolt (Sergio, 19 Nov)
-		gui.set_parent(s.sign, cut[1].bottom, true)
-		-- centered under the word it hangs over the card's corner: in front of it
-		gui.move_above(s.head.top_left.node, s.mid.node)
-		armory_pass(s, cut, s.just == "open")
-	end
-	if s.closing then sign_away(s) end
-	s.closing = nil
+	-- a piece changed on the apprentice: it shows
+	gear_ui.swap_check(s, s.left, s.tab ~= "sigilli" and s.gear_on or nil, 215, 600, 395, s.just == "worn")
 end
 
 function M.new(prof, tab, color)
@@ -681,27 +416,54 @@ function M.new(prof, tab, color)
 	return s
 end
 
-function M.update(s, dt)
-	if s.figure then scoria.update(s.figure, dt, s.st) end
-	if s.outline then outline.update(s.outline) end
-	bench.update(s, dt)
-end
-
 -- what you wear shows at once on the apprentice here (and in every menu after)
 local function dress(p)
 	local a = profile.active_loadout(p)
 	scoria.set_player(scoria.look_of(a.gear, profile.tier(p, a)))
 end
 
+-- POTENZIA opens over the screen, from the card (bench.after brings it in)
+local function open_window(s, set, slot)
+	local c = s.cards and s.cards["pezzo:" .. set .. ":" .. slot]
+	s.window_from = c and gui.get_screen_position(c.node) or nil
+	s.sel, s.modal, s.sheet, s.just = { set, slot }, { set, slot }, nil, "open"
+	build(s)
+	bench.after(s)
+end
+
+function M.update(s, dt)
+	if s.figure then scoria.update(s.figure, dt, s.st) end
+	if s.outline then outline.update(s.outline) end
+	sheen.update(s.sheen, dt)
+	bench.update(s, dt)
+	-- a finger kept on a card: it sinks a little, then POTENZIA opens
+	local b = s.buttons and s.buttons.held_down
+	local held = b and not s.modal and b.ui_action and b.ui_action:match("^pezzo:") and b or nil
+	if held ~= s.held then
+		if s.held and s.cards and s.cards[s.held.ui_action] then
+			gui.animate(s.cards[s.held.ui_action].node, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.15)
+		end
+		s.held, s.held_t = held, 0
+	end
+	if held then
+		s.held_t = s.held_t + dt
+		local c = s.cards and s.cards[held.ui_action]
+		local k = math.min(1, s.held_t / HOLD)
+		if c then gui.set_scale(c.node, vmath.vector3(1 - 0.06 * k, 1 - 0.06 * k, 1)) end
+		if s.held_t >= HOLD then
+			s.buttons.held_down, s.held = nil, nil
+			local set, slot = held.ui_action:match("^pezzo:([^:]*):(.*)$")
+			open_window(s, set, slot)
+		end
+	end
+end
+
 local function run_cmd(s, ui_action)
 	local kind, x = ui_action:match("^(%a+):?(.*)$")
 	local p = s.prof
 	local a, b = x:match("^([^:]*):?(.*)$")
-	if kind == "scheda" and x == "" then
-		-- the card of the piece chosen
-		s.card, s.sheet, s.just = true, nil, "open"
-	elseif kind == "scheda" then
-		s.tab, s.sheet, s.card = x, nil, nil
+	if kind == "scheda" then
+		s.tab, s.sheet, s.sel, s.modal = x, nil, nil, nil
 		s.draft = copy(profile.active_loadout(p).tree or {})
 	elseif kind == "assetto" then
 		p.is_active = tonumber(x)
@@ -713,25 +475,24 @@ local function run_cmd(s, ui_action)
 		s.draft = copy(profile.active_loadout(p).tree or {})
 	elseif kind == "filtro" then
 		s.slot = x ~= "" and x or nil
-		s.scroll = 0
-	elseif kind == "posto" then
-		-- a piece worn, on the left: it is the piece chosen (its lines at the
-		-- bottom), the grid shows its slot; in the card, its card
-		s.slot, s.sheet = x, nil
-		local set = profile.active_loadout(p).gear[x]
-		if set then s.sel = { set, x } end
+		if s.list then s.list.scroll = 0 end
 	elseif kind == "pezzo" then
-		-- only POTENZIA opens the card (Sergio, 18 Nov: not a second tap on the piece)
-		s.sel = { a, b }
+		-- a tap tries it on, a second tap takes it off (Sergio, 26 Nov)
+		s.sel = not same_piece(s.sel, { a, b }) and { a, b } or nil
+	elseif kind == "gettone" then
+		-- a place of the column: the piece tried there goes back to the one you wear
+		if s.sel and s.sel[2] == x then s.sel = nil end
+	elseif kind == "chiudi" then
+		s.modal = nil
 	elseif kind == "potenzia" or kind == "firma" or kind == "frammenti" then
-		bench.run(s, kind, s.sel)
+		bench.run(s, kind, s.modal)
 		-- a worn piece that reaches gold changes look on the apprentice at once
-		-- (Sergio, 19 Nov: you had to take it off and on again)
 		dress(p)
 	elseif kind == "indossa" and s.sel then
 		profile.active_loadout(p).gear[s.sel[2]] = s.sel[1]
 		profile.act(p, progress.backpack(p))
 		dress(p)
+		s.sel, s.just = nil, "worn"
 	elseif kind == "via" then
 		s.path = x
 	elseif kind == "meno" or kind == "piu" then
@@ -756,31 +517,24 @@ local function run_cmd(s, ui_action)
 	end
 	build(s)
 	bench.after(s)
+	s.just = nil
 end
 
--- the card goes away and the pieces come back from the left, where it goes out
-local function close_card(s)
-	s.card, s.sheet, s.closing = nil, nil, true
-	build(s)
-	local at = gui.get_position(s.mid.node)
-	gui.set_position(s.mid.node, at - vmath.vector3(70, 0, 0))
-	gui.animate(s.mid.node, "position", at, gui.EASING_OUTCUBIC, 0.22)
-end
-
--- POTENZIA opens the ARMERIA inside the ZAINO (Sergio, 18 Nov evening: the
--- armory and the upgrade card were the same screen, so the armory is this one):
--- the backdrop of the forge, and only the arrow or the tab INVENTARIO go back
--- to the pieces (no more "touch anywhere to close")
 function M.on_input(s, action_id, action)
 	if bench.input(s, action_id, action) then return nil end
-	if grid_drag(s, action_id, action) then return nil end
-	local in_card = s.card and s.tab ~= "sigilli"
-	local ui_action = ui.touch(s.buttons, action_id, action)
-	-- the arrow, or the tab INVENTARIO (still cut), go back to the pieces
-	if in_card and (ui_action == "indietro" or ui_action == "scheda:inventario") then
-		close_card(s)
+	if not s.modal and card_list.input(s.list, s.buttons, action_id, action) then return nil end
+	-- the controller: Y on a card opens POTENZIA (the long press of the finger)
+	if action_id == ui.PAD and action.pressed and action.ui == "scheda" and not s.modal then
+		local b = ui.lit_up(s.buttons)
+		local set, slot = b and b.ui_action and b.ui_action:match("^pezzo:([^:]*):(.*)$")
+		if set then open_window(s, set, slot) end
 		return nil
 	end
+	local ui_action = ui.touch(s.buttons, action_id, action)
+	-- the arrow closes POTENZIA first
+	if s.modal and ui_action == "indietro" then ui_action = "chiudi" end
+	-- (a tap on the window, not on its buttons)
+	if ui_action == "finestra" then return nil end
 	if ui_action == "indietro" then return ui_action end
 	if ui_action then return run_cmd(s, ui_action) end
 	return nil

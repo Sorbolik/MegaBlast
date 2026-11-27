@@ -1,7 +1,8 @@
 # Gli scatti nelle animazioni dello SHOP e dello ZAINO (Sergio, 19 nov: «il gioco mi
 # segnala tanti scatti quando faccio le animazioni dello shop e dello zaino»).
 # Porta SHOP e ritorno, tocchi nella Bottega; lo ZAINO che cresce dall'apprendista,
-# la griglia che scorre, POTENZIA (lama e cartello), di nuovo i pezzi, SIGILLI.
+# la lista che scorre, POTENZIA (la finestra tenendo premuta una card), SIGILLI.
+# (tocca_centro e trascina: y dal basso)
 # Meglio con --senza-video: si leggono gli scatti in simulazione/fotogrammi.txt.
 imposta prova_profilo 4
 imposta prova_vignette no
@@ -23,18 +24,18 @@ aspetta 2.5
 tocca_centro 640 300                # l'apprendista: lo ZAINO
 aspetta 2
 foto 02_zaino
-trascina 700 220 700 470 1          # la griglia scorre
+trascina 700 220 700 470 1          # la lista scorre
 aspetta 1
 trascina 700 470 700 170 1
 aspetta 1
-tocca_bordo 480 50 basso destra     # POTENZIA: lama e cartello
-aspetta 2
-foto 03_armeria
-tocca_bordo 36 60 basso sinistra    # la freccia: di nuovo i pezzi
+trascina 572 500 572 500 1.2        # una card tenuta premuta: POTENZIA
 aspetta 1.5
-tocca_bordo 480 50 basso destra     # POTENZIA
-aspetta 2
-tocca_bordo 36 60 basso sinistra
+foto 03_potenzia
+tocca_bordo 36 60 basso sinistra    # la freccia: chiude la finestra
+aspetta 1.5
+trascina 572 354 572 354 1.2        # POTENZIA di un'altra
+aspetta 1.5
+tocca_centro 1010 630               # CHIUDI
 aspetta 1.5
 tocca_bordo 580 53 alto sinistra    # SIGILLI
 aspetta 1.5

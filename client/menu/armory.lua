@@ -1,9 +1,10 @@
 -- The SHOP (Sergio, 18 Nov: the ARMERIA went into the ZAINO, behind POTENZIA; the
 -- home's door is now the Smith's shop, WB-080): the Smith's four offers (one per
 -- slot, among the pieces you don't have, at the shop's price) and the ten pieces of
--- the day (at the full price); USA UN BUONO and COMPRA.
--- On the left the devil with its pieces labeled (the ware chosen tried on), on the
--- right the stats. Rebuilt at every tap.
+-- the day (at the full price), as the big piece cards with their rows and price
+-- (menu/gear_ui.lua); USA UN BUONO and COMPRA. On the left the apprentice really
+-- wearing the ware chosen, beside it the column of what you wear; on the right the
+-- stats. Rebuilt at every tap.
 --
 --   local a = armeria.new(profile, from)
 --   armeria.update(a, dt)
@@ -22,6 +23,8 @@ local outline = require "menu.outline"
 local orders_ui = require "menu.orders_ui"
 local forge_ui = require "menu.forge_ui"
 local orders = require "sim.orders"
+local card_list = require "menu.card_list"
+local sheen = require "ui.sheen"
 local T = require("lang.text").armory
 local TG = require("lang.text").gear_ui
 local TP = require("lang.text").pieces
@@ -42,52 +45,6 @@ end
 
 -- BOTTEGA ---------------------------------------------------------------------------
 
--- moves a text made at x = 0 to start at x
-local function shift(n, x)
-	local pos = gui.get_position(n)
-	pos.x = pos.x + x
-	gui.set_position(n, pos)
-end
-
--- a ware w x h at (x, y): the piece in its slot frame (the same as in the ZAINO,
--- WB-078: no family line, Sergio 18 Nov), under it the family and the price
-local function ware(a, x, y, w, h, set, slot, price, o)
-	local g = a.mid
-	local named = h >= 130
-	local s = math.min(w, h - (named and 56 or 32))
-	gear_ui.slot(g, x + (w - s) / 2, y, s, { set = set, slot = slot, sel = o.sel })
-	if named then
-		kit.text(g, equip.BY_ID[set].name, x + w / 2, y + s + 22, 17, KC.SAND, "middle")
-	end
-	local py = y + h - 28
-	if o.owned then
-		kit.text(g, kit.upper(T.yours), x + w / 2, py + 18, 18, KC.MUTE, "middle")
-	elseif o.old and w >= 130 then
-		-- old price, coin and new price as one group, centered under the frame
-		local on = kit.text(g, coins.format(o.old), 0, py + 17, 16, KC.SAND)
-		local nn = kit.text(g, coins.format(price), 0, py + 17, 18, KC.HOT)
-		local ow, nw = kit.width(on), kit.width(nn)
-		local left = x + (w - (ow + 10 + 24 + nw)) / 2
-		shift(on, left)
-		-- the stroke across it, as wide as the number (never deformed)
-		kit.pic(g, "barrato", left + ow / 2 - 16, py + 5, 32, 32 * 34 / 78)
-		kit.piece(g, "scaglia", left + ow + 20, py + 10, 20)
-		shift(nn, left + ow + 10 + 24)
-	else
-		-- (a narrow offer: only the new price, hot; the badge says the discount)
-		local nn = kit.text(g, coins.format(price), 0, py + 17, 18, o.old and KC.HOT or KC.SAND)
-		local nw = kit.width(nn)
-		local left = x + (w - (24 + nw)) / 2
-		kit.piece(g, "scaglia", left + 10, py + 10, 20)
-		shift(nn, left + 24)
-	end
-	if o.badge then
-		kit.pic(g, "sconto", x + w - 72, y - 12, 80, 32)
-		kit.text(g, o.badge, x + w - 32, y + 10, 18, KC.SAND, "middle")
-	end
-	if not o.owned then kit.zone(g, a.buttons, x, y, w, h, "merce:" .. set .. ":" .. slot) end
-end
-
 -- time until the shop changes: the day turns at wallet.DAY_HOUR in the morning
 local function until_change()
 	local t = os.date("*t", os.time() - wallet.DAY_HOUR * 3600)
@@ -95,13 +52,22 @@ local function until_change()
 	return string.format("%dH %dM", math.floor(left / 60), left % 60)
 end
 
+-- The wares as the big piece cards of the ZAINO, with their rows and their price
+-- (Sergio, 27 Nov: in the shop the values are worth seeing), two in a row in a window
+-- that scrolls (menu/card_list.lua): the Smith's offers first (hot price, the discount's
+-- badge), then the pieces of the day (one you have: TUO, its gold line if you wear it).
+-- A tap tries the ware on the apprentice, a second tap takes it off
+local VIEW = { x = 418, y = 160, w = 612, h = 446 }
+local COLS, TOP, GAP = { 430, 726 }, 176, 14
+local TOK_X, TOK_Y, TOK_S, TOK_GAP = 336, 180, 66, 12
+
 local function shop(a)
 	local p = a.prof
 	local g = a.mid
 	local x = 430
 	local today = wallet.today()
-	-- the Smith and his offers, one per slot (five since the gloves: in the
-	-- columns of the pieces of the day)
+	local act = profile.active_loadout(p)
+	-- the Smith and his offers, one per slot
 	kit.pic(g, "tondo_oro", x - 6, 92, 58, 58)
 	local face = gui.new_pie_node(vmath.vector3(x + 23 - g.ox, g.oy - 121, 0), vmath.vector3(50, 50, 0))
 	gui.set_clipping_mode(face, gui.CLIPPING_MODE_STENCIL)
@@ -112,27 +78,49 @@ local function shop(a)
 	gui.set_parent(img, face)
 	kit.text(g, T.offers, x + 60, 120, 26, KC.HOT, "start", 1)
 	kit.text(g, kit.upper(T.change_in:format(until_change())), x + 62, 143, 18, KC.MUTE, "start", 0.5)
-	local offers = wallet.shop(p, today)
-	local full = wallet.PRICE_CATALOG
-	local i = 0
+
+	a.list = card_list.new(g, VIEW, a.list and a.list.scroll or a.scroll)
+	a.cards = {}
+	local y = TOP
+	local function place(items)
+		for i, it in ipairs(items) do
+			local cx, cy = COLS[(i - 1) % 2 + 1], y + math.floor((i - 1) / 2) * (gear_ui.CARD_H + GAP)
+			local set, slot = it.set, it.slot
+			local own = wallet.owns(p, set, slot)
+			local sel = a.ware and a.ware[1] == set and a.ware[2] == slot and (a.ware[3] ~= nil) == it.offer
+			local cg = card_list.item(a.list, cx, cy - 12, gear_ui.CARD_H + 12)
+			local card = gear_ui.card(cg, cx, cy, { set = set, slot = slot, level = own and wallet.level(p, set, slot) or nil,
+				lit = own and wallet.sign(p, set, slot) or 0, worn = own and act.gear[slot] == set, sel = sel, sheen = a.sheen,
+				own = own, price = not own and { it.price, it.offer } or nil, badge = not own and it.badge or nil })
+			if sel then gui.set_position(card.node, gui.get_position(card.node) + vmath.vector3(0, 5, 0)) end
+			if not own then
+				card_list.zone(a.list, a.buttons, cx, cy, gear_ui.CARD_W, gear_ui.CARD_H, "merce:" .. set .. ":" .. slot .. ":" .. (it.offer and 1 or 0))
+			end
+		end
+		if #items > 0 then y = y + math.ceil(#items / 2) * (gear_ui.CARD_H + GAP) - GAP end
+	end
+	local offers, full, list = wallet.shop(p, today), wallet.PRICE_CATALOG, {}
 	for _, sl in ipairs(equip.SLOTS) do
 		local set = offers[sl.id]
 		if set then
 			local price = wallet.price(p, set, sl.id, true)
-			local off = math.floor((1 - price / full) * 100 + 0.5)
-			ware(a, x + i * 117, 166, 109, 154, set, sl.id, price, { hot = true, old = full, badge = "−" .. off .. "%",
-				sel = a.ware and a.ware[1] == set and a.ware[2] == sl.id and a.ware[3] })
-			i = i + 1
+			list[#list + 1] = { set = set, slot = sl.id, price = price, offer = true,
+				badge = "−" .. math.floor((1 - price / full) * 100 + 0.5) .. "%" }
 		end
 	end
-	-- the pieces of the day
-	kit.text(g, T.day, x, 358, 22, KC.SAND, "start", 1)
-	kit.text(g, kit.upper(T.day_line), x + 226, 358, 17, KC.MUTE, "start", 0.5)
-	for k, it in ipairs(wallet.day(today)) do
-		local set, slot = it[1], it[2]
-		ware(a, x + ((k - 1) % 5) * 117, 372 + math.floor((k - 1) / 5) * 118, 109, 110, set, slot, wallet.price(p, set, slot, false),
-			{ owned = wallet.owns(p, set, slot), sel = a.ware and a.ware[1] == set and a.ware[2] == slot and not a.ware[3] })
+	place(list)
+	-- the pieces of the day, under their title
+	local tg = card_list.item(a.list, x, y + 18, 34)
+	kit.text(tg, T.day, x, y + 46, 22, KC.SAND, "start", 1)
+	kit.text(tg, kit.upper(T.day_line), x + 226, y + 46, 17, KC.MUTE, "start", 0.5)
+	y = y + 64 + 12
+	list = {}
+	for _, it in ipairs(wallet.day(today)) do
+		list[#list + 1] = { set = it[1], slot = it[2], price = wallet.price(p, it[1], it[2], false), offer = false }
 	end
+	place(list)
+	card_list.done(a.list, g, y)
+
 	-- pay with a voucher, or with Scaglie
 	local w = a.ware
 	-- without the network nothing is bought (the server keeps the progress, choice 2A)
@@ -169,7 +157,7 @@ local function build(a)
 		if a[k] then gui.delete_node(a[k].node) end
 		a[k] = nil
 	end
-	a.buttons, a.figure, a.action = {}, nil, nil
+	a.buttons, a.figure, a.action, a.list, a.sheen = {}, nil, nil, nil, nil
 	a.outline = nil
 	orders_ui.release(a)
 	local p = a.prof
@@ -198,6 +186,7 @@ local function build(a)
 	a.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	a.low2 = kit.anchor(0, 720, nil, gui.ANCHOR_BOTTOM)
 	if a.tab ~= "fornace" then forge_ui.release(a, true) end
+	if a.tab ~= "banco" then a.look = nil end
 	if a.tab == "commesse" then
 		outline.off()
 		orders_ui.board(a)
@@ -209,14 +198,24 @@ local function build(a)
 		return
 	end
 	local act = profile.active_loadout(p)
-	gear_ui.devil(a, a.left, 215, 600, 395)
-	local try, focus
-	local w = shop(a)
-	-- the ware chosen: tried on the devil
-	if w then try, focus = { w[1], w[2] }, w[2] end
-	gear_ui.worn(a, a.left, act, 215, 600, 395, 36, { 130, 248, 366, 484 }, 72, focus, try, true)
+	-- the ware chosen: really on the apprentice (Sergio, 27 Nov), lit in its slot's
+	-- colour, in its place in the column of what you wear, in the stats
+	local w = a.ware
+	local try = w and not wallet.owns(p, w[1], w[2]) and { w[1], w[2] } or nil
+	local gear, look = gear_ui.tried(a, act, try)
+	gear_ui.devil(a, a.left, 215, 600, 395, look)
+	gear_ui.light_try(a, try)
+	a.sheen = sheen.new(a.mid, 330, 1050)
+	gear_ui.tokens(a, a.left, act, try, TOK_X, TOK_Y, TOK_S, TOK_GAP, a.sheen)
+	if try then
+		kit.text(a.left, kit.upper(T.trying), 24, 184, 20, KC.HOT, "start", 0.5)
+		kit.text(a.left, kit.upper(T.not_yours), 24, 206, 16, KC.SAND, "start", 0.5)
+	end
+	shop(a)
+	gear_ui.swap_check(a, a.left, gear, 215, 600, 395, a.just == "bought")
+	a.just = nil
 	local a2
-	if try and act.gear[try[2]] ~= try[1] then
+	if try then
 		a2 = copy(act)
 		a2.gear[try[2]] = try[1]
 	end
@@ -248,21 +247,38 @@ local function run_cmd(a, ui_action)
 	elseif kind == "foglio" then
 		a.sheet = not a.sheet
 	elseif kind == "merce" then
-		-- an offer is bought at the shop's price; the day's pieces at the full one
-		local offer = wallet.shop(p, wallet.today())[s2] == s1
-		a.ware = { s1, s2, offer and wallet.today() or nil }
-	elseif kind == "compra" and a.ware then
-		if profile.act(p, { k = "compra", set = a.ware[1], slot = a.ware[2], offer = a.ware[3] ~= nil }) then sound.play("#scaglia") end
-	elseif kind == "frammenti" and a.ware then
-		if profile.act(p, { k = "compra", set = a.ware[1], slot = a.ware[2], frammenti = true }) then sound.play("#scaglia") end
-	elseif kind == "buono" and a.ware then
-		profile.act(p, { k = "buono", set = a.ware[1], slot = a.ware[2] })
+		-- an offer is bought at the shop's price; the day's pieces at the full one; a
+		-- second tap takes it off the apprentice
+		local set, slot, offer = x:match("^([^:]*):([^:]*):(%d)$")
+		offer = offer == "1" and wallet.shop(p, wallet.today())[slot] == set
+		local w = a.ware
+		if w and w[1] == set and w[2] == slot and (w[3] ~= nil) == offer then
+			a.ware = nil
+		else
+			a.ware = { set, slot, offer and wallet.today() or nil }
+		end
+	elseif kind == "gettone" then
+		-- its place in the column: the ware tried there comes off
+		if a.ware and a.ware[2] == x then a.ware = nil end
+	elseif (kind == "compra" or kind == "frammenti" or kind == "buono") and a.ware then
+		local w = a.ware
+		local done
+		if kind == "buono" then
+			done = profile.act(p, { k = "buono", set = w[1], slot = w[2] })
+		else
+			done = profile.act(p, { k = "compra", set = w[1], slot = w[2], offer = kind == "compra" and w[3] ~= nil or nil,
+				frammenti = kind == "frammenti" or nil })
+			if done then sound.play("#scaglia") end
+		end
+		-- bought: it's yours, in the ZAINO (off the apprentice, the card says TUO)
+		if done then a.ware, a.just = nil, "bought" end
 	end
 	build(a)
 end
 
 function M.update(a, dt)
 	if a.figure then scoria.update(a.figure, dt, a.st) end
+	sheen.update(a.sheen, dt)
 	-- the delivery's scene: at the receipt the screen is made again, with its buttons
 	if a.tab == "commesse" and orders_ui.update(a, dt) then build(a) end
 	if a.tab == "fornace" and forge_ui.update(a, dt) then build(a) end
@@ -273,6 +289,7 @@ end
 function M.on_input(a, action_id, action)
 	-- while the Forge plays, the finger is its own
 	if forge_ui.input(a, action_id, action) then return nil end
+	if a.tab == "banco" and not a.sheet and card_list.input(a.list, a.buttons, action_id, action) then return nil end
 	local ui_action = ui.touch(a.buttons, action_id, action)
 	if ui_action == "indietro" then
 		-- (a window of the COMMESSE closes first)

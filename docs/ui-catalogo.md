@@ -84,14 +84,15 @@ tasti, profilo, annulla, ripristina, uno_contro_uno, via.
 |---|---|---|
 | `kit.thread_chip`: un filo sottile intorno (`filo_fondo` + `filo_bordo` tinto), oro l'attivo | filtri di ZAINO e PROFILO (`gear_ui.chips`) | ✅ |
 | `kit.label(..., backed)`: la parola in un filo del suo colore | CAMPAGNA (BERSAGLI, DUELLO, RECORD), podio | ✅ |
-| etichette dei pezzi indossati sul diavoletto | ZAINO | ⚠️ |
 
 ## 8. Card da scegliere e 9. card da leggere
 
 | Pezzo | Dove | Oggi |
 |---|---|---|
 | card minimale (`pannello`, a vettori in `fai_card_filo`): fondo scuro, un filo nella cornice, un punto in ogni angolo. Il filo dice lo stato: ferro (riposo), oro `pannello_caldo` (scelta, il tuo), gelo, brace, spento | `kit.card`, `kit.panel`, `kit.mode_card` (GIOCA ONLINE): la cornice del muro e SUL MURO della FORNACE, le famiglie da fondere, mappe (ALLENAMENTO: grandi, in una fila che scorre col dito, la rotella o la luce del controller, senza frecce), missioni, armi, posti, record, partite, statistiche, eventi, impostazioni, cartellini dei giocatori (il tuo in oro), conto | ✅ |
-| caselle dei pezzi `casella/casella_scelta` | ZAINO, BOTTEGA BANCO | ✅ (oggetti) |
+| card dei pezzi grande `gear_ui.card` (27 nov, `fai_cornice_pezzo`): fondo scuro, cornice d'inchiostro con la fascia nel colore del posto (`gear_ui.TINT`, accesa sulla card scelta), la luce che passa su tutte insieme (`ui/sheen.lua`, la fascia del piedistallo), una linea d'oro dentro se lo indossi, il livello come «+24» in alto a destra (niente pallino: sembrava una notifica), dentro le righe del pezzo (nomi corti `armory.stats_short`); nella BOTTEGA il prezzo (o TUO) sotto il disegno e il bollino dello sconto. Due per riga in una finestra che scorre (`menu/card_list.lua`), quelle indossate prima e una linea d'oro coi punti | ZAINO INVENTARIO, BOTTEGA BANCO | ✅ (oggetti) |
+| card dei pezzi piccola `gear_ui.mini`: la stessa cornice, solo il disegno e il «+N»; vuota: l'ombra del posto | colonna di quello che indossi (`gear_ui.tokens`, ZAINO e BOTTEGA: il pezzo in prova al suo posto, che ondeggia), finestra POTENZIA, cartellini dei giocatori | ✅ (oggetti) |
+| finestra POTENZIA (`bench.window`): `kit.card` grande su un velo scuro, esce dalla card tenuta premuta | ZAINO | ✅ |
 | `kit.drawn_plate("bivio_piastra_*")` (WB-062) | ZAINO SIGILLI | ✅ |
 | `kit.paper`: il cartellino di carta col chiodo (WB-085) | COMMESSE, FORNACE (la regola della colata) | ✅ (oggetto del Fabbro) |
 | `kit.plate(..., fill = SAND)` → `pannello_chiaro` | CAMPAGNA (ritratto), storia (didascalie), targhette ROSSO / BLU | ⚠️ piastre chiare |

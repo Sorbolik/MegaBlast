@@ -221,12 +221,12 @@ function M.new(v, x, y, opt, parent)
 		yy = yy + room
 	end
 
-	-- the pieces worn: the slots of the ZAINO, each with its picture and level
-	-- (an empty slot: the shadow of what goes there)
+	-- the pieces worn: the small piece cards (menu/gear_ui.lua, mini), each with its
+	-- picture and its +N (an empty slot: the shadow of what goes there)
 	local ps = piece_size(W)
 	local pgap = (wide - SLOTS * ps) / (SLOTS - 1)
 	for i, p in ipairs(v.pezzi or {}) do
-		gear_ui.slot(g, sx + (i - 1) * (ps + pgap), yy, ps,
+		gear_ui.mini(g, sx + (i - 1) * (ps + pgap), yy, ps,
 			{ set = p.set, slot = p.slot, level = p.set and p.livello or nil })
 	end
 	yy = yy + ps + 14

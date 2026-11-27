@@ -22,7 +22,6 @@ return {
 		stick_side = { dx = "di destra", sx = "di sinistra" },
 		bot = "BOT",
 		training = "ALLENAMENTO",
-		armory = "ARMERIA",
 		-- the Smith's shop, the home's door that was ARMERIA (18 Nov)
 		shop = "BOTTEGA",
 		stats = "STATISTICHE",
@@ -409,15 +408,18 @@ return {
 			trap_radius = "Raggio trappole", status_turns = "Turni degli effetti", burning_blasts = "Colpi brucianti",
 			blast_push = "Spinta dei colpi",
 		},
+		-- the same, short, for the rows inside the piece cards (they must stay in the card)
+		stats_short = { teleport_ticks = "Teletrasp.", blast_push = "Spinta colpi", fall_damage_mul = "Danno caduta",
+			status_turns = "Turni effetti", trap_radius = "Raggio trappole", burning_blasts = "Colpi brucianti" },
 		yes = "sì",
 		no = "no",
 		seconds = "%.1f s",
-		-- POTENZIA: no piece in the chosen slot
-		nothing_here = "niente qui: prendilo in bottega",
 		-- grade in roman numbers, its name
 		grade = "GRADO %s · %s",
 		level_to = "LIVELLO %d › %d",
 		level_top = "LIVELLO %d · AL MASSIMO",
+		-- POTENZIA: over what the piece does at the next level
+		at_level = "il pezzo al livello %d",
 		-- the signature (how far it is lit: the gems beside it; under it its name and
 		-- what it gives); it is lit with Ossidiana, a grade for each step done
 		sign = "firma",
@@ -434,10 +436,6 @@ return {
 		sign_cost = "%d ossidiana",
 		sign_needs = "dallo scatto %d",
 		sign_top = "al massimo",
-		-- the other pieces of the slot (the slot in uppercase)
-		others = "I TUOI %s",
-		-- the slots in the plural
-		plural = { mask = "ELMI", chest = "CORAZZE", cloak = "MANTELLI", legs = "STIVALI", gloves = "GUANTI" },
 		-- the SHOP
 		yours = "tuo",
 		offers = "OFFERTE DEL FABBRO",
@@ -445,6 +443,9 @@ return {
 		change_in = "cambiano tra %s",
 		day = "PEZZI DEL GIORNO",
 		day_line = "cambiano domani",
+		-- the ware tried on the apprentice
+		trying = "IN PROVA",
+		not_yours = "non è ancora tuo",
 		use_voucher = "USA UN BUONO",
 		you_have = "ne hai %d",
 	},
@@ -668,7 +669,7 @@ return {
 		proof_first = "prima la prova",
 		-- (not POTENZIA: that is the tab already, Sergio 15 Nov)
 		upgrade = "+1 LIVELLO",
-		-- in the ZAINO: opens the piece's card, with +1 LIVELLO
+		-- in the ZAINO: the title of the window of a piece held (menu/bench.lua)
 		upgrade_here = "POTENZIA",
 		missing = "mancano %s",
 		-- without the network the Armeria can be looked at, not used (the server keeps the progress)
@@ -677,8 +678,6 @@ return {
 		in_wardrobe = "ce l'hai già",
 		buy = "COMPRA",
 		price_only = "%s SCAGLIE",
-		-- the price of +1 LIVELLO, beside it: what it buys
-		price_for = "per il livello %d",
 		step_title = "SCATTO!",
 		-- the grade in roman numbers, its name
 		step_grade = "GRADO %s · %s",
@@ -766,8 +765,6 @@ return {
 		back_to_pieces = "TORNA AI PEZZI",
 		-- a loadout still closed: from which level
 		loadout_locked = "DAL LIV %d",
-		-- the band at the bottom of the slot of a piece you wear
-		worn = "INDOSSATO",
 	},
 
 	-- menu/backpack.lua: the ZAINO (from the apprentice), INVENTARIO and SIGILLI
@@ -779,11 +776,13 @@ return {
 		seal_loadout = "ASSETTO SIGILLI",
 		all = "TUTTI",
 		nothing = "nessun pezzo qui: li trovi in armeria",
-		-- under the piece chosen: level, grade and what it does
-		piece_line = "liv %d · grado %s %s",
 		wear = "INDOSSA",
-		-- under POTENZIA: the level now and the next one
-		up_line = "liv %d › %d",
+		-- the piece being tried on the devil, not worn yet
+		trying = "IN PROVA",
+		trying_line = "non ancora indossato",
+		-- the footer of the INVENTARIO
+		hint_try = "Tocca un pezzo per provarlo addosso",
+		hint_hold = "tienilo premuto per potenziarlo",
 		-- the Sigilli: the points still to spend (a flame each) and those used
 		free = "PUNTI LIBERI",
 		used = "%d / %d USATI",

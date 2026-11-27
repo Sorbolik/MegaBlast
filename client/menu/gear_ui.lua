@@ -1,19 +1,21 @@
--- The pieces shared by the ZAINO and the ARMERIA (Figma "RIORGANIZZAZIONE MENU ·
--- 14 nov", Consigliata/2..5): the square slot with a piece's icon (WB-043/044),
--- the pieces worn with their labels on the devil, the column of the stats, the
--- loadouts 1 2 3, the filters. Everything placed with the Figma's coordinates
+-- The pieces shared by the ZAINO, the BOTTEGA and the players' tags: the piece cards
+-- (big with their rows, small with only the picture), the apprentice wearing a piece
+-- tried on, the column of what you wear, the column of the stats, the loadouts 1 2 3,
+-- the filters. Everything placed with the Figma's coordinates
 -- (ui/kit.lua: x from the left, y from the top).
 --
 --   local gear_ui = require "menu.gear_ui"
---   gear_ui.slot(g, x, y, s, opt)        -- opt: set, slot, level, worn, sel, empty_slot
---   gear_ui.worn(s, g, cx, feet, h, x, ys, size, sel)   -- the labels of the pieces worn
+--   gear_ui.card(g, x, y, opt) / gear_ui.mini(g, x, y, s, opt)   -- the piece cards, big and small
+--   gear_ui.devil(s, g, cx, feet, h, look)              -- the apprentice (s.figure), wearing look
+--   gear_ui.tokens(s, g, a, try, x, y0, size, gap, sh)  -- the column of what you wear
 --   gear_ui.stats(s, g, x, y, w, now, after, o)         -- the column of the stats, all in one screen
 --   gear_ui.stats_short(s, g, x, y, w, a, a2)           -- only the rows that change, and VEDI TUTTE
 --   gear_ui.sheet(s, g, a, a2, back)                    -- all the stats, big, in the middle
 --   gear_ui.loadouts(s, g, x, y, active, prefix, label) -- the three loadouts
 --   gear_ui.chips(s, g, x, y, list, active)             -- a row of filters
 --   gear_ui.effects(set, slot, level)                   -- "+4% IN ARIA  −2% VITA"
---   gear_ui.devil(s, g, cx, feet, h)                    -- the apprentice, s.figure
+--   gear_ui.tried(s, a, try) / gear_ui.light_try(s, try) -- the gear with a piece tried on, lit
+--   gear_ui.swap_check(s, g, gear, cx, feet, h, strong) -- a piece changed on the apprentice shows
 
 local ui = require "ui.ui"
 local kit = require "ui.kit"
@@ -25,6 +27,8 @@ local loadout = require "sim.loadout"
 local scoria = require "battle.scoria"
 local outline = require "menu.outline"
 local clock = require "ui.clock"
+local sheen = require "ui.sheen"
+local coins = require "ui.coins"
 local wallet = require "sim.wallet"
 local TA = require("lang.text").armory
 local T = require("lang.text").gear_ui
@@ -155,136 +159,238 @@ local function fit(g, name, x, y, w, h)
 	return kit.pic(g, name, x + (w - m.w * k) / 2, y + (h - m.h * k) / 2, m.w * k, m.h * k)
 end
 
--- A square slot s wide at the Figma point (x, y), with the straight frames of WB-078
--- (Sergio, 18 Nov): the frame (lit when chosen), the piece's picture in the middle, on
--- the top left corner the tab with the symbol of its type, its level on the top right,
--- and the band INDOSSATO at the bottom when it is worn. Without a set: the empty frame
--- with the shadow of the slot and its type. Everything grows with s. Returns its nodes
-function M.slot(g, x, y, s, opt)
-	opt = opt or {}
-	local made = {}
-	local function keep(n) made[#made + 1] = n return n end
-	local frame = opt.sel and "casella_scelta" or opt.set and "casella" or "casella_vuota"
-	keep(kit.pic(g, frame, x - s * 0.04, y - s * 0.04, s * 1.08, s * 1.08))
+-- THE PIECE CARDS (Sergio, 27 Nov; docs/ui-catalogo.md, scopo 6): an ink frame with a band
+-- in the colour of the piece's slot (M.TINT: lit on the chosen card, deeper at rest), the
+-- light of ui/sheen.lua running over the band, a gold line inside when the piece is worn,
+-- its level as "+24" in the top right corner (Sergio: a round badge looked like a
+-- notification). The big card (ZAINO, BOTTEGA) has the piece's rows inside; the small one
+-- (the players' tags, the column of what you wear) only its picture.
+M.CARD_W, M.CARD_H = 284, 136
+local CARD_C = 22
+local ROWS_X, ROWS_PAD = 103, 23
+
+local function mixed(c, k, white)
+	return vmath.vector4(c.x * k + (1 - c.x * k) * white, c.y * k + (1 - c.y * k) * white, c.z * k + (1 - c.z * k) * white, 1)
+end
+-- the band's colour: lit, at rest, empty; the light that runs over it
+function M.band_color(slot, lit, empty)
+	local t = M.TINT[slot] or KC.SAND
+	return empty and mixed(t, 0.32, 0) or lit and t or mixed(t, 0.62, 0)
+end
+function M.light_color(slot)
+	return mixed(M.TINT[slot] or KC.SAND, 1, 0.55)
+end
+
+-- the frame in the box x, y, w, h with corners c: the dark ground, the band, its
+-- light (in sh), the gold line inset `gold` when worn. Returns the band's parts
+local function frame(g, x, y, w, h, c, slot, o, sh)
+	kit.drawn_plate(g, "cornice_pezzo_fondo", x, y, w, h, c)
+	local band = kit.drawn_plate(g, "cornice_pezzo", x, y, w, h, c)
+	local col = M.band_color(slot, o.sel, o.empty)
+	for _, n in ipairs(band.parts) do gui.set_color(n, col) end
+	if sh and not o.empty then
+		local light = kit.drawn_plate(g, "cornice_pezzo_luce", x, y, w, h, c)
+		local lc = M.light_color(slot)
+		for _, n in ipairs(light.parts) do sheen.add(sh, n, lc) end
+	end
+	if o.worn then
+		local i = c * 0.68
+		local ring = kit.drawn_plate(g, "anello_oro", x + i, y + i, w - 2 * i, h - 2 * i, c * 0.55)
+		for _, n in ipairs(ring.parts) do gui.set_color(n, KC.HOT) end
+	end
+	return band
+end
+
+-- "+24": the level in the top right corner, right edge at x, baseline at y
+local function level_mark(g, level, x, y, size)
+	local top = level >= equip.LIVELLO_MAX
+	return kit.text(g, "+" .. level, x, y, size, top and KC.HOT or KC.SAND, "end")
+end
+
+-- a row of a piece in the card: its value and the short name of its stat
+function M.effect_short(e)
+	local v = M.effect_parts(e)
+	return v .. " " .. kit.upper(TA.stats_short[e.stat] or TA.stats[e.stat] or e.stat)
+end
+
+-- The big card at (x, y) of g. opt: set, slot, level (the +N; nil: none), form (the level
+-- that picks the picture), worn, sel, lit (the signature, for the rows), sheen, and in
+-- the BOTTEGA price = { cost, hot } or own (TUO), badge ("−33%"). Returns the nodes'
+-- group { node, g } and the picture's node
+function M.card(g, x, y, opt)
+	local w, h = M.CARD_W, M.CARD_H
+	local cx, cy = x + w / 2, y + h / 2
+	local root = gui.new_box_node(vmath.vector3(cx - g.ox, g.oy - cy, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(root, false)
+	gui.set_parent(root, g.node)
+	local cg = { node = root, ox = cx, oy = cy }
+	local set, slot = opt.set, opt.slot
+	frame(cg, x, y, w, h, CARD_C, slot, opt, opt.sheen)
+	local shop = opt.price or opt.own
+	local icon = fit(cg, M.icon(set, slot, opt.form or opt.level), x + 23, y + (shop and 18 or 32), 72, 72)
+	if opt.level then level_mark(cg, opt.level, x + w - ROWS_PAD, y + 38, 21) end
+	local room = w - ROWS_X - ROWS_PAD
+	local name = kit.text(cg, equip.BY_ID[set].name, x + ROWS_X, y + 40, 20, KC.SAND)
+	-- (the name leaves room to the +N)
+	local nroom = room - (opt.level and 44 or 0)
+	if kit.width(name) > nroom then gui.set_scale(name, gui.get_scale(name) * nroom / kit.width(name)); kit.check_small(name) end
+	local ry = y + 59
+	for _, e in ipairs(equip.piece(set, slot, opt.form or opt.level or 1, opt.lit)) do
+		if e.row ~= "sign" then
+			local n = kit.text(cg, M.effect_short(e), x + ROWS_X, ry, 16, M.ROW_COLOR[e.row] or KC.SAND)
+			if kit.width(n) > room then gui.set_scale(n, gui.get_scale(n) * room / kit.width(n)); kit.check_small(n) end
+			ry = ry + 17
+		end
+	end
+	if opt.own then
+		kit.text(cg, kit.upper(TA.yours), x + 59, y + 115, 17, KC.MUTE, "middle", 0.5)
+	elseif opt.price then
+		local num = kit.text(cg, coins.format(opt.price[1]), 0, y + 115, 18, opt.price[2] and KC.HOT or KC.SAND)
+		local nw = kit.width(num)
+		local left = x + 59 - (24 + nw) / 2
+		kit.piece(cg, "scaglia", left + 10, y + 108, 20)
+		local pos = gui.get_position(num)
+		pos.x = pos.x + left + 24
+		gui.set_position(num, pos)
+	end
+	if opt.badge then
+		kit.pic(cg, "sconto", x + w - 72, y - 12, 80, 32)
+		kit.text(cg, opt.badge, x + w - 32, y + 10, 18, KC.SAND, "middle")
+	end
+	return cg, icon
+end
+
+-- The small card s wide at (x, y) of g: the frame, the picture, the +N over its top
+-- right corner. opt: set, slot, level, form, worn, sel, sheen; without a set the
+-- shadow of the slot in a dim frame. Returns the group { node, ox, oy }
+function M.mini(g, x, y, s, opt)
+	local cx, cy = x + s / 2, y + s / 2
+	local root = gui.new_box_node(vmath.vector3(cx - g.ox, g.oy - cy, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(root, false)
+	gui.set_parent(root, g.node)
+	local cg = { node = root, ox = cx, oy = cy }
+	local o = { worn = opt.worn and opt.set, sel = opt.sel, empty = not opt.set }
+	local c = math.max(8, s * 0.2)
+	frame(cg, x, y, s, s, c, opt.slot, o, opt.set and opt.sheen)
 	if opt.set then
-		-- opt.form: the level that picks the picture (base or forged) without the badge
-		keep(fit(g, M.icon(opt.set, opt.slot, opt.form or opt.level), x + s * 0.12, y + s * 0.12, s * 0.76, s * 0.76))
-	elseif opt.slot and M.ART[opt.slot] then
-		keep(fit(g, "vuoto_" .. M.ART[opt.slot], x + s * 0.16, y + s * 0.16, s * 0.68, s * 0.68))
+		cg.icon = fit(cg, M.icon(opt.set, opt.slot, opt.form or opt.level), x + s * 0.17, y + s * 0.17, s * 0.66, s * 0.66)
+		if opt.level and s >= 100 then
+			-- a big one (POTENZIA): inside its top right corner, as on the big card
+			local size = s * 0.15
+			level_mark(cg, opt.level, x + s - c * 0.75, y + c * 0.75 + size * 0.72, size)
+		elseif opt.level then
+			local size = math.max(kit.MIN_TEXT, s * 0.27)
+			level_mark(cg, opt.level, x + s + size * 0.25, y + size * 0.3, size)
+		end
+	elseif M.ART[opt.slot] then
+		local n = fit(cg, "vuoto_" .. M.ART[opt.slot], x + s * 0.2, y + s * 0.2, s * 0.6, s * 0.6)
+		gui.set_color(n, vmath.vector4(1, 1, 1, 0.5))
 	end
-	local tab = s * 0.34
-	if opt.slot and TYPE[opt.slot] then
-		keep(kit.pic(g, "linguetta", x - s * 0.05, y - s * 0.05, tab, tab))
-		local sym = keep(fit(g, TYPE[opt.slot], x - s * 0.05 + tab * 0.18, y - s * 0.05 + tab * 0.16, tab * 0.64, tab * 0.64))
-		gui.set_color(sym, M.TINT[opt.slot])
-	end
-	if not opt.set then return made end
-	if opt.level then
-		local top = opt.level >= equip.LIVELLO_MAX
-		local d = math.max(30, s * 0.34)
-		keep(kit.pic(g, top and "livello_oro" or "livello_ferro", x + s - d + d * 0.25, y - d * 0.25, d, d))
-		local fs = math.max(16, d * 0.45)
-		keep(kit.text(g, tostring(opt.level), x + s - d / 2 + d * 0.25, y + d * 0.25 + fs * 0.37, fs,
-			top and KC.INK or KC.SAND, "middle"))
-	end
-	if opt.worn then
-		local bw = s * 0.94
-		local bh = bw * P.fascia_indossato.h / P.fascia_indossato.w
-		local by = y + s - bh - s * 0.03
-		keep(kit.pic(g, "fascia_indossato", x + s * 0.03, by, bw, bh))
-		local fs = math.max(16, s * 0.15)
-		local n = keep(kit.text(g, T.worn, x + s / 2, by + bh / 2 + fs * 0.37, fs, KC.INK, "middle"))
-		local w = kit.width(n)
-		if w > bw * 0.9 then gui.set_scale(n, gui.get_scale(n) * (bw * 0.9 / w)) end
-	end
-	return made
+	return cg
 end
 
--- where the pieces sit on the devil (feet at (cx, feet), h tall)
-local function body(cx, feet, h)
-	local k = h / 380
-	return { mask = { cx - 10 * k, feet - 330 * k }, chest = { cx + 8 * k, feet - 190 * k },
-		cloak = { cx - 70 * k, feet - 175 * k }, legs = { cx - 30 * k, feet - 18 * k } }
-end
-
--- The apprentice h tall, its feet at the Figma point (cx, feet), on the group g
-function M.devil(s, g, cx, feet, h)
+-- The apprentice h tall, its feet at the Figma point (cx, feet), on the group g;
+-- look: what it wears (a piece tried on: scoria.look_of), else the player's
+function M.devil(s, g, cx, feet, h, look)
 	local pose = kit.group(g, cx, feet)
 	-- (the apprentice of the Figma is 380 tall at 338 / DISEGNO_H: menu/home.lua)
 	local k = 338 * h / 380 / game.DISEGNO_H
 	gui.set_scale(pose.node, vmath.vector3(k, k, 1))
-	s.figure = scoria.new(s.colore, scoria.player)
+	s.figure = scoria.new(s.colore, look or scoria.player)
 	clock.sync(s.figure)
 	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	scoria.update(s.figure, 0, s.st)
 	gui.set_parent(s.figure.root, pose.node)
 	scoria.set_enabled(s.figure, true)
-	s.outline = outline.new(s.figure, pose.node, scoria.player)
+	s.outline = outline.new(s.figure, pose.node, look or scoria.player)
+	s.pose, s.pose_k = pose, k
 	return pose
 end
 
--- The pieces worn by the loadout a, each in its slot in the column x (tops at ys),
--- with a line and a nail to where it sits on the devil. Tapping one: "posto:<slot>".
--- sel: the slot chosen (lit). try: { set, slot } a piece tried on instead
-M.LABEL = "secondario_acceso"
+-- the places of the gear in the drawings' categories (menu/outline.lua)
+M.CAT = { mask = "elmo", chest = "corazza", cloak = "mantello", legs = "stivali", gloves = "guanti" }
 
--- moves a text made at x = 0 to start at x
-local function shift(n, x)
-	local pos = gui.get_position(n)
-	pos.x = pos.x + x
-	gui.set_position(n, pos)
+-- gear (the loadout's) with the piece try = { set, slot } on instead, and the
+-- look of it (a worn piece from gold on has its forged shape)
+function M.tried(s, a, try)
+	local gear, tiers = {}, {}
+	for k, v in pairs(a.gear) do gear[k] = v end
+	if try then gear[try[2]] = try[1] end
+	for _, sl in ipairs(equip.SLOTS) do
+		if gear[sl.id] then tiers[sl.id] = equip.tier(wallet.level(s.prof, gear[sl.id], sl.id)) end
+	end
+	return gear, scoria.look_of(gear, tiers)
 end
 
-function M.worn(s, g, a, cx, feet, h, x, ys, size, sel, try, bare)
-	local k = h / 380
-	-- where each level sits, next to its piece, and the zone that opens it
-	-- (Sergio, 18 Nov: helmet, armour and gloves on the right, the gloves by the
-	-- hand behind; cloak and boots on the left)
-	local at = { mask = { 88, -318, 190, 120 }, chest = { 92, -205, 150, 110 }, gloves = { 96, -120, 110, 80 },
-		cloak = { -128, -150, 90, 150 }, legs = { -118, -40, 230, 80 } }
-	local left = { cloak = true, legs = true }
-	local cats = { mask = "elmo", chest = "corazza", cloak = "mantello", legs = "stivali", gloves = "guanti" }
-	local colors = {}
-	for _, sl in ipairs(equip.SLOTS) do
-		local set = a.gear[sl.id]
-		if try and try[2] == sl.id then set = try[1] end
-		local level = set and wallet.level(s.prof, set, sl.id)
-		local p = at[sl.id]
-		local bx, by = cx + p[1] * k, feet + p[2] * k
-		-- only the piece chosen is lit (Sergio, 18 Nov)
-		if sel == sl.id then colors[cats[sl.id]] = vmath.vector4(1, 0.62, 0.12, 1) end
-		-- one label, shaped like a button: the type's symbol and the level, or
-		-- only the dimmed symbol on an empty place (Sergio, 18 Nov); on the outer side, never over
-		-- the devil. Symbol, number and arrow are measured, then the label is as
-		-- wide as them with even padding; all centered on the plate's face (2 px
-		-- above its middle: the shadow under it), the arrow sits 2 px lower
-		-- bare: no labels (the SHOP, Sergio 18 Nov: «lì non vuoi potenziare niente»)
-		if TYPE[sl.id] and not bare then
-			local top = level and level >= equip.LIVELLO_MAX
-			local lh, pad, sym, gap = 44, 16, 26, 8
-			local cy = by - 2
-			-- empty: only the symbol, dimmed (no number, no arrow: Sergio, 18 Nov)
-			local num = level and kit.text(g, tostring(level), 0, cy + 7, 19, top and KC.HOT or KC.SAND)
-			local arrow = level and kit.text(g, "›", 0, cy + 5, 19, KC.MUTE)
-			local nw, aw = num and kit.width(num) or 0, arrow and kit.width(arrow) or 0
-			local lw = level and pad + sym + gap + nw + 6 + aw + pad or pad + sym + pad
-			local lx = left[sl.id] and math.max(screen.x0 + 12, bx + 17 - lw) or bx - 17
-			local plate = kit.strip(g, M.LABEL, lx, by - lh / 2, lw, lh)
-			local icon = fit(g, TYPE[sl.id], lx + pad, cy - sym / 2, sym, sym)
-			if num then
-				gui.move_below(plate.node, num)
-				shift(num, lx + pad + sym + gap)
-				shift(arrow, lx + pad + sym + gap + nw + 6)
-			end
-			local tint = M.TINT[sl.id]
-			gui.set_color(icon, num and tint or vmath.vector4(tint.x, tint.y, tint.z, 0.45))
-			-- the label opens the place too
-			kit.zone(g, s.buttons, lx, by - lh / 2, lw, lh, "posto:" .. sl.id)
-		end
-		local zx = sl.id == "cloak" and cx - 150 * k or cx - p[3] / 2 * k
-		kit.zone(g, s.buttons, zx, by - p[4] / 2 * k, p[3] * k, p[4] * k, "posto:" .. sl.id)
+-- The piece tried on is lit on the devil: its exact contour, in its slot's colour
+function M.light_try(s, try)
+	if not s.outline then return end
+	outline.colors(s.outline, try and { [M.CAT[try[2]]] = M.TINT[try[2]] } or {})
+end
+
+-- where each place sits on the devil drawn by M.devil(s, g, cx, feet, h)
+local SPOT = { mask = { -10, -330 }, chest = { 8, -200 }, cloak = { -80, -170 }, legs = { -15, -20 }, gloves = { 70, -135 } }
+function M.spot(cx, feet, h, slot)
+	local k, p = h / 380, SPOT[slot] or SPOT.chest
+	return cx + p[1] * k, feet + p[2] * k
+end
+
+-- A piece changed on you (tried, taken off, worn): the apprentice squashes from its
+-- feet and bounces back, a flash lights it, sparks in the slot's colour fly from
+-- where the piece sits (Sergio, 27 Nov). strong: INDOSSA (bigger)
+function M.swap_fx(s, slot, at, strong)
+	local pose, k = s.pose and s.pose.node, s.pose_k
+	if pose then
+		gui.cancel_animations(pose, "scale")
+		gui.set_scale(pose, vmath.vector3(k * 1.05, k * (strong and 0.9 or 0.93), 1))
+		gui.animate(pose, "scale", vmath.vector3(k, k, 1), gui.EASING_OUTELASTIC, strong and 0.55 or 0.42)
 	end
-	if s.outline then outline.colors(s.outline, colors) end
+	if s.figure then s.figure.flash = (strong and 0.7 or 0.45) + 0.1 end
+	if at then kit.burst_at(at, strong and 16 or 10, M.TINT[slot]) end
+end
+
+-- After a screen is built with gear on the apprentice drawn by M.devil(s, g, cx, feet, h):
+-- the first place that changed since the last build (another piece, or its level)
+-- shows with M.swap_fx. s.look keeps what it wore; gear nil forgets it
+function M.swap_check(s, g, gear, cx, feet, h, strong)
+	if not gear then s.look = nil return end
+	local now = {}
+	for i, slot in ipairs(M.TOKEN_ORDER) do
+		now[i] = (gear[slot] or "-") .. "." .. (gear[slot] and wallet.level(s.prof, gear[slot], slot) or 0)
+	end
+	for i, slot in ipairs(M.TOKEN_ORDER) do
+		if s.look and s.look[i] ~= now[i] then
+			local x, y = M.spot(cx, feet, h, slot)
+			M.swap_fx(s, slot, kit.group(g, x, y).node, strong)
+			break
+		end
+	end
+	s.look = now
+end
+
+-- The column of what you wear, beside the apprentice (Sergio, 27 Nov, choice B): one
+-- small card per slot, head to feet, with the gold line of a worn piece and its +N;
+-- the piece tried on sits in its place, without the gold line, and bobs. A tap on
+-- one: "gettone:<slot>". Returns the small cards by slot
+M.TOKEN_ORDER = { "mask", "chest", "cloak", "gloves", "legs" }
+function M.tokens(s, g, a, try, x, y0, size, gap, sh)
+	local made = {}
+	for i, slot in ipairs(M.TOKEN_ORDER) do
+		local y = y0 + (i - 1) * (size + gap)
+		local set = a.gear[slot]
+		local trying = try and try[2] == slot and try[1] ~= set
+		if trying then set = try[1] end
+		local level = set and wallet.level(s.prof, set, slot)
+		local cg = M.mini(g, x, y, size, { set = set, slot = slot, level = level, worn = not trying,
+			sel = trying, sheen = sh })
+		if trying then
+			local at = gui.get_position(cg.node)
+			gui.animate(cg.node, "position.y", at.y + 4, gui.EASING_INOUTSINE, 0.5, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
+		end
+		if set then kit.zone(g, s.buttons, x - 4, y - 4, size + 8, size + 8, "gettone:" .. slot) end
+		made[slot] = cg
+	end
+	return made
 end
 
 -- the stats shown, in this order, and how each is written

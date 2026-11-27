@@ -200,13 +200,13 @@ end
 
 -- A drawn plate in nine parts (the powers of the Sigilli, WB-062: name
 -- "bivio_piastra_acceso" ...) filling the Figma box x..x+w, y..y+h; the corners
--- at most a third of the height. Returns { node, g } like a card
-function M.drawn_plate(g, name, x, y, w, h)
+-- at most a third of the height, or c wide (the frames of the piece cards draw
+-- theirs as big as the card asks). Returns { node, g, parts } like a card
+function M.drawn_plate(g, name, x, y, w, h, c)
 	local cx, cy = x + w / 2, y + h / 2
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
-	local c = math.min(P[name].c, h * 0.34)
-	nine(n, name, w, h, c)
-	return { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+	local parts = nine(n, name, w, h, c or math.min(P[name].c, h * 0.34))
+	return { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h, parts = parts }
 end
 
 -- A whole piece h tall centered at (x, y) of parent
