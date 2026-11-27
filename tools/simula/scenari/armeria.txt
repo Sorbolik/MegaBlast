@@ -1,25 +1,26 @@
-# L'ARMERIA del 14 novembre (Figma Consigliata/4 e /5): POTENZIA col pezzo indossato,
-# BOTTEGA con le 4 offerte del Fabbro e i 10 pezzi del giorno, i buoni nel portafoglio.
+# La BOTTEGA con le card dei pezzi (Sergio, 27 nov): le offerte del Fabbro e i pezzi
+# del giorno come card grandi con le righe e il prezzo, in due colonne che scorrono;
+# un tocco prova la merce addosso all'apprendista (davvero), COMPRA la mette nello ZAINO.
+# (tocca_centro e trascina: y dal basso)
 # Gira anche con --schermo 1600x720 e 960x720.
 imposta prova_profilo 1
 
 aspetta 4
-tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
+tocca_bordo 210 170 mezzo destra    # la porta SHOP
 aspetta 10
-foto 01_potenzia
-tocca_bordo 543 53 alto sinistra    # BOTTEGA
+tocca_bordo 543 53 alto sinistra    # BANCO
 aspetta 8
-foto 02_bottega
-tocca_centro 485 311               # il primo pezzo del giorno
-aspetta 3
-foto 03_pezzo_scelto
+foto 01_bottega
+tocca_centro 572 476                # la prima offerta: in prova
+aspetta 0.08
+foto 02_prova_colpo
+aspetta 2
+foto 03_in_prova
+trascina 870 200 870 560 1.2        # la lista scorre: i pezzi del giorno
+aspetta 2
+foto 04_pezzi_del_giorno
+trascina 870 560 870 200 1.2
+aspetta 2
 tocca_bordo 178 52 basso destra     # COMPRA
 aspetta 3
-foto 04_comprato
-# la firma si accende con l'Ossidiana (17 nov): l'elmo ha il primo grado, il secondo costa 320
-tocca_bordo 374 53 alto sinistra    # POTENZIA
-aspetta 3
-foto 05_firma_da_accendere
-tocca_centro 560 50                # ACCENDI LA FIRMA
-aspetta 3
-foto 06_firma_accesa
+foto 05_comprato

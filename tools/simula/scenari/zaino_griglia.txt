@@ -1,7 +1,6 @@
-# La griglia dei pezzi dello ZAINO (18 nov): cornici dritte di WB-078, il simbolo del
-# tipo in alto a sinistra, INDOSSATO sui pezzi addosso, quattro per riga e grandi;
-# con tanti pezzi la griglia scorre (la riga tagliata in basso sfuma). Niente filtro
-# delle famiglie. Gira anche con --schermo 1600x720 e 960x720.
+# Le card dei pezzi dello ZAINO con tutti i pezzi (27 nov): due per riga, prima quelli
+# indossati e la linea d'oro; la lista scorre col dito (la riga tagliata in basso sfuma)
+# e la barretta a destra dice quanto ce n'è. Gira anche con --schermo 1600x720 e 960x720.
 imposta prova_profilo 4
 
 aspetta 4

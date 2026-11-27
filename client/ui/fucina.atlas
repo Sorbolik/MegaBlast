@@ -1,4 +1,31 @@
 images {
+  image: "/assets/fucina/anello_oro_1.png"
+}
+images {
+  image: "/assets/fucina/anello_oro_2.png"
+}
+images {
+  image: "/assets/fucina/anello_oro_3.png"
+}
+images {
+  image: "/assets/fucina/anello_oro_4.png"
+}
+images {
+  image: "/assets/fucina/anello_oro_5.png"
+}
+images {
+  image: "/assets/fucina/anello_oro_6.png"
+}
+images {
+  image: "/assets/fucina/anello_oro_7.png"
+}
+images {
+  image: "/assets/fucina/anello_oro_8.png"
+}
+images {
+  image: "/assets/fucina/anello_oro_9.png"
+}
+images {
   image: "/assets/fucina/az_annulla.png"
 }
 images {
@@ -111,9 +138,6 @@ images {
 }
 images {
   image: "/assets/fucina/barra_stendardo_sx.png"
-}
-images {
-  image: "/assets/fucina/barrato.png"
 }
 images {
   image: "/assets/fucina/bivio_binario_acceso_cx.png"
@@ -260,28 +284,94 @@ images {
   image: "/assets/fucina/cartellino_foro.png"
 }
 images {
-  image: "/assets/fucina/cartello_armeria.png"
-}
-images {
-  image: "/assets/fucina/casella.png"
-}
-images {
-  image: "/assets/fucina/casella_scelta.png"
-}
-images {
-  image: "/assets/fucina/casella_vuota.png"
-}
-images {
   image: "/assets/fucina/chiodo.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_1.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_2.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_3.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_4.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_5.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_6.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_7.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_8.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_9.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_fondo_1.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_fondo_2.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_fondo_3.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_fondo_4.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_fondo_5.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_fondo_6.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_fondo_7.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_fondo_8.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_fondo_9.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_luce_1.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_luce_2.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_luce_3.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_luce_4.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_luce_5.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_luce_6.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_luce_7.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_luce_8.png"
+}
+images {
+  image: "/assets/fucina/cornice_pezzo_luce_9.png"
 }
 images {
   image: "/assets/fucina/corona.png"
 }
 images {
   image: "/assets/fucina/fabbro_al_banco.png"
-}
-images {
-  image: "/assets/fucina/fascia_indossato.png"
 }
 images {
   image: "/assets/fucina/fiamma.png"
@@ -504,15 +594,6 @@ images {
 }
 images {
   image: "/assets/fucina/ingranaggio.png"
-}
-images {
-  image: "/assets/fucina/linguetta.png"
-}
-images {
-  image: "/assets/fucina/livello_ferro.png"
-}
-images {
-  image: "/assets/fucina/livello_oro.png"
 }
 images {
   image: "/assets/fucina/lucchetto.png"

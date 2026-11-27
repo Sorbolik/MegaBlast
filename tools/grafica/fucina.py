@@ -516,6 +516,7 @@ def fai_porte():
         intero("porta_icona_" + porta, pezzo, 280)
     fai_azioni()
     fai_card_filo()
+    fai_cornice_pezzo()
     fai_filo_corto()
 
 
@@ -582,6 +583,45 @@ def fai_card_filo():
             r2 = raggio - 3
             d.ellipse(((cx - r2) * S, (cy - r2) * S, (cx + r2) * S, (cy + r2) * S), fill=punto + (255,))
         nove(nome, np.asarray(im), L, C / L)
+
+
+def fai_cornice_pezzo():
+    """La card dei pezzi (Sergio, 27 nov, scopo 6 di docs/ui-catalogo.md): una cornice d'inchiostro
+    con dentro una fascia bianca, che il gioco tinge col colore del posto (gear_ui.TINT), e il
+    fondo scuro a parte. Quattro pezzi in nove parti, angoli 48 su 192 (il gioco li disegna a
+    circa 22): il fondo, la cornice (fascia bianca fra due inchiostri, dentro vuota), la luce
+    (solo la fascia, per la luce che passa: battle/flash.fp) e l'anello sottile della linea
+    d'oro dei pezzi indossati. Colori pieni, niente aloni, come il Ferro liscio."""
+    S, L, C = 4, 192, 48
+    INK = (0x0B, 0x08, 0x0D, 255)
+    R, A, B = 30, 6.5, 21.5          # il raggio fuori, dove comincia e finisce la fascia
+
+    def rr(d, i, r, **kw):
+        d.rounded_rectangle((i * S, i * S, (L - i) * S - 1, (L - i) * S - 1), max(1, r) * S, **kw)
+
+    def giu(im):
+        return np.asarray(im.resize((L, L), Image.LANCZOS))
+
+    im = Image.new("RGBA", (L * S, L * S), (0, 0, 0, 0))
+    rr(ImageDraw.Draw(im), 0, R, fill=(0x14, 0x0F, 0x18, 255))
+    nove("cornice_pezzo_fondo", giu(im), L, C / L)
+
+    def anello(da, a, colore):
+        im = Image.new("RGBA", (L * S, L * S), (0, 0, 0, 0))
+        rr(ImageDraw.Draw(im), da, R - da, fill=colore)
+        buco = Image.new("L", (L * S, L * S), 0)
+        rr(ImageDraw.Draw(buco), a, max(2, R - a), fill=255)
+        im.putalpha(ImageChops.subtract(im.getchannel("A"), buco))
+        return im
+
+    cornice = anello(0, B + 4.5, INK)
+    cornice.alpha_composite(anello(A, B, (255, 255, 255, 255)))
+    nove("cornice_pezzo", giu(cornice), L, C / L)
+    nove("cornice_pezzo_luce", giu(anello(A, B, (255, 255, 255, 255))), L, C / L)
+
+    im = Image.new("RGBA", (L * S, L * S), (0, 0, 0, 0))
+    rr(ImageDraw.Draw(im), 4, 12, outline=(255, 255, 255, 255), width=round(4.4 * S))
+    nove("anello_oro", giu(im), L, C / L)
 
 
 def fai_filo_corto():
@@ -758,14 +798,9 @@ MENU_INTERI = [
     # il piedistallo dell'apprendista nel cielo del Limbo (WB-090, Sergio 24 nov: la 2B, la
     # roccia coi due sassolini; al posto della grata di WB-050 e dello zainetto di WB-048)
     ("piedistallo", "piedistallo_roccia_2", 399, "WB-090"),
-    # le caselle dei pezzi, dritte (WB-078, Sergio 18 nov: al posto di quelle di WB-044 in
-    # ogni posto): la cornice, la linguetta del tipo in alto a sinistra col suo simbolo,
-    # la fascia INDOSSATO in basso; i simboli rifatti in WB-079 dalle icone dei nostri pezzi
-    ("casella", "cornice", 324, "WB-078"),
-    ("casella_scelta", "cornice_scelta", 324, "WB-078"),
-    ("casella_vuota", "cornice_vuota", 324, "WB-078"),
-    ("linguetta", "linguetta", 112, "WB-078"),
-    ("fascia_indossato", "fascia_indossato", 64, "WB-078"),
+    # i simboli dei tipi dei pezzi (WB-079, dalle icone dei nostri pezzi: i filtri dello
+    # ZAINO); le caselle di WB-078 hanno lasciato il posto alle card dei pezzi (27 nov,
+    # fai_cornice_pezzo)
     ("tipo_elmo", "tipo_elmo", 80, "WB-079"),
     ("tipo_corazza", "tipo_corazza", 80, "WB-079"),
     ("tipo_mantello", "tipo_mantello", 80, "WB-079"),
@@ -773,8 +808,6 @@ MENU_INTERI = [
     ("tipo_guanti", "tipo_guanti", 80, "WB-079"),
     # livelli, segni (WB-044)
     ("chiodo", "chiodo", 40, "WB-044"),
-    ("livello_ferro", "livello_ferro", 80, "WB-044"),
-    ("livello_oro", "livello_oro", 80, "WB-044"),
     ("sconto", "sconto", 64, "WB-044"),
     ("podio_1", "podio_1", 420, "WB-044"),
     ("podio_2", "podio_2", 352, "WB-044"),
@@ -786,9 +819,6 @@ MENU_INTERI = [
     ("ic_torneo", "ic_torneo", 128, "WB-047"),
     ("ic_maglio", "ic_maglio", 140, "WB-047"),
     ("ic_notte", "ic_notte", 108, "WB-047"),
-    ("barrato", "barrato", 34, "WB-047"),
-    # il cartello ARMERIA che scende dal taglio delle schede dello zaino (WB-080)
-    ("cartello_armeria", "cartello_armeria", 180, "WB-080"),
 ]
 # dove si scrive su un pezzo, misurato sul disegno (margini sinistra, alto, destra, basso),
 # quando la misura automatica (spazio) non lo trova

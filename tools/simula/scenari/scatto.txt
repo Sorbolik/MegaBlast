@@ -1,17 +1,19 @@
-# Lo SCATTO di un pezzo (livello 20 della corazza Fornace) e dopo: l'armeria deve
-# ritrovare il suo sfondo, la home il suo, e la porta dell'ARMERIA deve riaprirsi
-# intera (Sergio, 18 nov: dopo lo scatto sfondi neri e la porta ferma a metà).
+# Lo SCATTO di un pezzo (livello 20 della corazza Fornace) e dopo: lo ZAINO deve
+# ritrovare il suo sfondo e la home il suo (Sergio, 18 nov: dopo lo scatto sfondi neri).
 # Le foto seguono le battute dello scatto approvato il 18 nov (ui/step_scene.lua):
 # carica, colpi, attesa, sagoma, pezzo nuovo, rivelazione (più lento di 2 secondi dal 19 nov).
+# Dal 27 nov si potenzia nella finestra POTENZIA, tenendo premuta la card nello ZAINO.
+# (tocca_centro e trascina: y dal basso)
 imposta prova_profilo 1
+imposta prova_vignette no
 
 aspetta 4
-tocca_bordo 210 170 mezzo destra    # la porta ARMERIA
-aspetta 1.5
-tocca_bordo 72 280 alto sinistra    # CORAZZA (Fornace, livello 19, prova fatta)
+tocca_centro 640 300                # l'apprendista: lo zaino
+aspetta 4                           # (la porta finita: il dito tenuto si conta da lì)
+trascina 572 354 572 354 1.2        # la CORAZZA (Fornace, livello 19) tenuta premuta: POTENZIA
 aspetta 0.8
 foto 01_corazza
-tocca_bordo 208 48 basso destra     # +1 LIVELLO: lo scatto al 20
+tocca_centro 948 140                # +1 LIVELLO: lo scatto al 20
 aspetta 1.25
 foto 02_carica
 aspetta 1.45
@@ -25,12 +27,10 @@ foto 06_pezzo_nuovo
 aspetta 1.3
 foto 07_rivelazione
 aspetta 3
-foto 08_armeria_dopo
+foto 08_zaino_dopo
+tocca_centro 1010 630               # CHIUDI
+aspetta 0.8
+foto 09_zaino_chiusa
 tocca_bordo 72 60 basso sinistra    # HOME
 aspetta 1.5
-foto 09_home_dopo
-tocca_bordo 210 170 mezzo destra    # di nuovo la porta ARMERIA
-aspetta 0.45
-foto 10_porta_a_meta
-aspetta 1.5
-foto 11_armeria_di_nuovo
+foto 10_home_dopo

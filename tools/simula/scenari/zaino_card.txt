@@ -1,0 +1,45 @@
+# Lo ZAINO con le card dei pezzi (Sergio, 27 nov): nessun pezzo scelto all'ingresso,
+# un tocco prova il pezzo addosso (stats a confronto, il suo gettone nella colonna di
+# quello che indossi), un altro tocco lo toglie; tenuto premuto apre POTENZIA, la
+# finestra che esce dalla card; INDOSSA lo mette (l'apprendista si schiaccia e scintilla).
+# (tocca_centro e trascina: y dal basso)
+# Gira anche con --schermo 1600x720 e 960x720.
+imposta prova_profilo 1
+imposta prova_vignette no
+
+aspetta 4
+tocca_centro 640 300                # l'apprendista: lo zaino
+aspetta 1.5
+foto 01_zaino
+tocca_centro 868 192                # il VUOTO (non indossato): in prova
+aspetta 0.08
+foto 02_prova_colpo
+aspetta 0.6
+foto 03_in_prova
+tocca_centro 868 192                # di nuovo: torna quello di prima
+aspetta 0.6
+foto 04_tolto
+trascina 572 500 572 500 0.58       # l'elmo CORVO tenuto premuto: POTENZIA
+foto 05_finestra_entra
+aspetta 0.15
+foto 06_finestra_atterra
+aspetta 0.8
+foto 07_finestra
+tocca_centro 948 140                # +1 LIVELLO
+aspetta 0.1
+foto 08_tacca_colpo
+aspetta 0.6
+foto 09_livello_fatto
+tocca_centro 1010 630               # CHIUDI
+aspetta 0.6
+foto 10_chiusa
+tocca_centro 868 192                # il VUOTO in prova
+aspetta 0.4
+tocca_bordo 176 52 basso destra     # INDOSSA
+aspetta 0.1
+foto 11_indossa_colpo
+aspetta 0.8
+foto 12_indossato
+tocca_bordo 580 53 alto sinistra    # SIGILLI
+aspetta 1
+foto 13_sigilli
