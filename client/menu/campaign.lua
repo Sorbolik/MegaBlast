@@ -23,6 +23,7 @@ local T = require("lang.text").campaign
 local TS = require("lang.text").story
 local common = require("lang.text").common
 local TV = require("lang.text").vignette
+local board = require "menu.limbo_board"
 
 local M = {}
 
@@ -457,6 +458,7 @@ local function build(c)
 	c.buttons = {}
 	c.from = {}
 	c.next_id = nil
+	c.board = nil
 	c.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	c.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	c.radice = ui.root()
@@ -492,9 +494,12 @@ local function build(c)
 		local p = kit.secondary(g, TS.read_again, tabs_end + 40, 102, 210, 52, { icon = "az_rileggi" })
 		kit.button(c.buttons, p, "storia")
 	end
-	guide(c, chosen)
 	local act = { off = true }
-	if is_opened(c, chosen) then
+	if chosen.id == "girone_2" and is_opened(c, chosen) then
+		-- the Limbo is a board game on its slice, walked by the two pawns
+		act = board.build(c, chosen)
+	elseif is_opened(c, chosen) then
+		guide(c, chosen)
 		card_list(c, chosen)
 		-- the one action: the next mission to do (all done: the final again)
 		local list = chosen.missioni
@@ -503,6 +508,7 @@ local function build(c)
 		for _, l in ipairs(list) do if l.id == id then name = kit.upper(l.titolo) end end
 		act = { id = id, sub = c.next_id and { T.play_new:format(name), name } or T.replay_final }
 	else
+		guide(c, chosen)
 		local prev
 		for _, cp in ipairs(payload.CAPITOLI) do
 			if cp == chosen then break end
@@ -525,7 +531,7 @@ local function build(c)
 end
 
 function M.new(choice, stars, story, records)
-	local c = { scelta = choice, stelle = stars or {}, storia = story, records = records or {} }
+	local c = { scelta = choice, stelle = stars or {}, storia = story, records = records or {}, rebuild = build }
 	-- the first time, the last chapter opened
 	if not choice.chapter then
 		for _, cap in ipairs(payload.CAPITOLI) do
@@ -560,6 +566,7 @@ function M.on_input(c, action_id, action)
 	local kind, value = ui_action:match("^(%a+):(.*)$")
 	if ui_action == "gioca" then return c.play and { missione = c.play, da = c.from[c.play] } or nil end
 	if kind == "missione" then return { missione = value, da = c.from[value] } end
+	if kind == "luogo" then return board.touch(c, value) end
 	if ui_action == "mappa" then
 		c.scelta.view = nil
 	elseif kind == "girone" then

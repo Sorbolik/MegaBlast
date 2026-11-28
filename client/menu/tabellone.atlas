@@ -1,0 +1,36 @@
+images {
+  image: "/assets/tabellone/limbo_bottega.png"
+}
+images {
+  image: "/assets/tabellone/limbo_castello.png"
+}
+images {
+  image: "/assets/tabellone/limbo_castello_acceso.png"
+}
+images {
+  image: "/assets/tabellone/limbo_crepa.png"
+}
+images {
+  image: "/assets/tabellone/limbo_ponte.png"
+}
+images {
+  image: "/assets/tabellone/limbo_pontile.png"
+}
+images {
+  image: "/assets/tabellone/limbo_porta.png"
+}
+images {
+  image: "/assets/tabellone/limbo_prato.png"
+}
+images {
+  image: "/assets/tabellone/pedina_apprendista.png"
+}
+images {
+  image: "/assets/tabellone/pedina_fabbro.png"
+}
+images {
+  image: "/assets/tabellone/pietra.png"
+}
+margin: 2
+extrude_borders: 2
+inner_padding: 0

@@ -1,6 +1,6 @@
 # WB-101 · Il Limbo come tabellone: le pedine e i luoghi sulla fetta
 
-- **Stato:** APPROVATA (Sergio, 28 nov 2026: «per i personaggi voglio una loro versione in pedina, non voglio che si muovano con le animazioni, per il resto va bene la A, non c'è bisogno che sia in movimento o che sia troppo complesso, e i disegni di codex basta che siano semplici e nello stile del cerchio proprio del girone, vai»)
+- **Stato:** IMPLEMENTATA (28 nov, PR #449). APPROVATA (Sergio, 28 nov 2026: «per i personaggi voglio una loro versione in pedina, non voglio che si muovano con le animazioni, per il resto va bene la A, non c'è bisogno che sia in movimento o che sia troppo complesso, e i disegni di codex basta che siano semplici e nello stile del cerchio proprio del girone, vai»)
 - **Data:** 2026-11-28
 - **Ramo della scheda:** `claude/project-thread-t9n34l` (Codex la esegue da qui: `git fetch origin claude/project-thread-t9n34l`, non serve che sia su `main`) · **Ramo delle immagini:** `design/WB-101`
 - **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-101` senza chiedere conferma (il repository è privato).
@@ -153,3 +153,12 @@ Un tentativo per immagine, salvo l'apprendista 2 (tre tentativi, selezionato il 
 Controllati margini e leggibilità nelle anteprime ridotte. Le quattro pedine sono ferme su basi tonde, i luoghi sono interi e privi di scritte. Per il castello acceso ho allegato R1 e l'uscita originale del castello spento. Le tre finestre passano da scuro a giallo, con lievi differenze di sagoma e campiture tra i due PNG. Lo scontorno, l'allineamento dei due castelli e la resa sulla fetta in gioco restano da verificare.
 
 ## Resoconto di Claude
+
+Tutte le immagini sono buone e sono nel gioco (28 nov): scontorno pulito, nessun bordo verde, i due
+castelli combaciano. Delle pedine ho preso la variante 1 di tutte e due (nella 1 corna e occhialoni
+sono più netti). `tools/grafica/tabellone.py` le taglia al doppio della misura sullo schermo (mai
+ingrandite) nell'atlante `client/menu/tabellone.atlas` (con le mipmap) e scrive le misure in
+`client/menu/board_pieces.lua`. Il tabellone è `client/menu/limbo_board.lua`: la fetta di WB-085,
+i luoghi al loro posto, il sentiero di pietre fra un luogo e l'altro (velate fin dove è chiuso), il castello si accende quando vinci i Sette muri; le pedine saltellano da un luogo
+all'altro, il Fabbro un passo dietro. Non usate: le varianti 2 delle pedine; la pietra azzurra e quella d'oro restano in `art/` per le scorciatoie e le medaglie. Manca il ruscello sotto
+il ponte (il ponte sta sul terreno): se serve, una scheda piccola dopo.

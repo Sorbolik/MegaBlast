@@ -174,3 +174,18 @@ sotto una cornice a stampo (in vetrina la cornice del muro, mentre si tira tutto
 | la medaglia «Jackpot della Fornace» (Codex WB-094): salta fuori al centro al primo jackpot, ed è l'icona della sua riga nel riepilogo; nel PROFILO è un badge (atlante `fucina`, 128 px), dopo quelli dei clienti, e si mette accanto al nome | FORNACE, PROFILO | ✅ |
 | il riepilogo della colata: `kit.card` sul velo, titolo incandescente, una riga per premio (icona, nome, numero) che entra una alla volta, COLA ANCORA (`kit.secondary` con la gemma) e INCASSA (`kit.secondary`): tutti e due incassano il bancone | FORNACE | ✅ |
 | le scritte che saltano (3 SU 3!, DOPPIO!, PERLA DI VETRO): parola incandescente con l'ombra d'inchiostro | FORNACE | ✅ |
+
+## 18. Il tabellone del girone
+
+Il capitolo di un girone nella CAMPAGNA come gioco da tavola (`client/menu/limbo_board.lua`, per ora
+solo il Limbo; Sergio, 28 nov, proposta A): la fetta del girone grande, i luoghi dei livelli sopra, le
+due pedine che ci vanno a saltelli.
+
+| Pezzo | Dove | Oggi |
+|---|---|---|
+| la fetta del girone (WB-085) con i luoghi di Codex (WB-101, atlante `tabellone`, con le mipmap): ognuno al suo posto, velato se chiuso, col lucchetto | CAMPAGNA | ✅ |
+| il nome del luogo «N · NOME» sotto, a 16, e la brace del livello (accesa se vinto) | CAMPAGNA | ✅ |
+| il sentiero di pietre fra i luoghi (velato fin dove è chiuso) | CAMPAGNA | ✅ |
+| le pedine dell'apprendista e del Fabbro (WB-101): saltellano traballando da un luogo all'altro, il Fabbro un passo dietro; su un luogo chiuso l'apprendista fa no | CAMPAGNA | ✅ |
+| il nome del livello e la riga sotto in basso a sinistra, GIOCA a destra (`kit.primary`) | CAMPAGNA | ✅ |
+
