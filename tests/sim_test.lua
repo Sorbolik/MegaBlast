@@ -2620,6 +2620,21 @@ do
 	check(#kinds == 2, "the Uovo on the ground and the Voragine both blow up (" .. #kinds .. ")")
 end
 
+
+-- A body push counts as a hit: whoever falls off soon after is the pusher's kill (Sergio, 27 Nov)
+do
+	local q = game.new(42, "pavimento")
+	run(q, 5)
+	local a, b = q.robots[1], q.robots[2]
+	local y = sky_spot(q, 900, 2 * game.ROBOT_HALF_W + 8)
+	place(a, 900, y); place(b, 900 + 2 * game.ROBOT_HALF_W + 1, y)
+	b.last_hit = nil
+	check(q:push(a, 2) and b.last_hit == a.id, "pushing an enemy with the body counts as hitting them")
+	b.team = a.team; b.last_hit = nil
+	q:push(a, 2)
+	check(b.last_hit == nil, "pushing a teammate counts for nothing")
+end
+
 if failures > 0 then
 	print(failures .. " tests failed")
 	os.exit(1)

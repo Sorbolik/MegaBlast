@@ -117,26 +117,28 @@ LIMBO_ISOLE = [
     [(120, 330), (330, 330), (330, 350), (300, 372), (150, 372), (120, 350)],
     [(560, 380), (720, 380), (720, 446), (692, 446), (692, 412), (588, 412), (588, 446), (560, 446)],
     [(930, 300), (1150, 300), (1150, 322), (1082, 322), (1060, 346), (1000, 346), (978, 322), (930, 322)],
-    [(400, 250), (480, 250), (480, 268), (400, 268)],
-    [(800, 486), (884, 486), (884, 504), (800, 504)],
+    [(360, 235), (440, 235), (440, 253), (360, 253)],   # più lontana dalla trave sotto (Sergio, 27 nov)
     [(0, 580), (150, 580), (150, 552), (190, 552), (190, 522), (300, 522), (340, 562), (430, 562), (430, 720), (0, 720)],
     arco(520, 562, 330, 158, 40, 60),
     [(920, 602), (1010, 602), (1050, 562), (1140, 562), (1140, 522), (1280, 522), (1280, 720), (920, 720)],
 ]
 LIMBO_TRAVI = [(40, 200, 110, 16), (230, 440, 120, 16), (470, 300, 90, 16), (590, 250, 110, 16),
-               (760, 350, 90, 16), (880, 450, 130, 16), (1150, 220, 100, 16), (1180, 420, 80, 16)]
+               (760, 350, 90, 16), (880, 450, 130, 16), (1150, 220, 100, 16),
+               # la rinascita a terra (Sergio, 27 nov: via la trave più a destra): acciaio incastrato nel
+               # gradino alto e, per la mappa girata, nella volta sopra
+               (1234, 522, 46, 16), (1234, 76, 46, 16)]
 # le borchie della leva: il centro, sul bordo della faccia (il gioco: maps.lua, levers)
 LIMBO_BORCHIE = [(150, 80), (280, 122), (700, 196), (600, 120), (1100, 130), (900, 70), (200, 330), (120, 340),
-                 (640, 412), (640, 380), (1030, 346), (1150, 310), (190, 537), (380, 562), (685, 602), (850, 640),
-                 (1090, 562), (1140, 542), (1220, 92), (60, 580)]
+                 (640, 412), (640, 380), (1030, 346), (1150, 310), (450, 58), (380, 562), (685, 602), (850, 640),
+                 (1090, 562), (1000, 100), (1220, 92), (60, 580)]
 
 
 def limbo(capovolto):
-    """Il Limbo dritto o specchiato in verticale (scena 720 di altezza)."""
-    isole = [[(x, 720 - y) for x, y in p] if capovolto else p for p in LIMBO_ISOLE]
+    """Il Limbo dritto o girato di mezzo giro attorno al centro (Sergio, 27 nov: la mappa ruota)."""
+    isole = [[(1280 - x, 720 - y) for x, y in p] if capovolto else p for p in LIMBO_ISOLE]
     travi = LIMBO_TRAVI + [(x - 10, y - 10, 20, 20) for x, y in LIMBO_BORCHIE]
     if capovolto:
-        travi = [(x, 720 - y - h, w, h) for x, y, w, h in travi]
+        travi = [(1280 - x - w, 720 - y - h, w, h) for x, y, w, h in travi]
     return dict(LIMBO, isole=isole, travi=travi, stile="")
 
 

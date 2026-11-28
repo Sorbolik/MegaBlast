@@ -8,6 +8,8 @@ out mediump vec2 var_uv;
 // riporta alle proporzioni vere) e zoom della camera, per lo sfondo in parallasse
 out highp vec2 var_schermo;
 out highp float var_zoom;
+// coseno e seno del giro della vista (la mappa del Limbo che ruota: game.gui_script, giro della leva)
+out highp vec2 var_giro;
 
 uniform vs_uniforms
 {
@@ -21,5 +23,8 @@ void main()
     var_schermo = (gl_Position.xy / gl_Position.w * 0.5 + 0.5) * vec2(1280.0, 720.0);
     // proiezione 2 / 1280 per lo zoom della vista, per 1,5: lo sfondo è fatto
     // sulla mappa di prima (1280 x 720), più piccola di 1,5 volte (game.CELL 3 / 2)
-    var_zoom = view_proj[0][0] * 960.0;
+    // la vista può essere girata: lo zoom è la lunghezza della riga, non il suo primo numero
+    highp float l = length(vec2(view_proj[0][0], view_proj[1][0]));
+    var_zoom = l * 960.0;
+    var_giro = vec2(view_proj[0][0], -view_proj[1][0]) / max(l, 1e-6);
 }

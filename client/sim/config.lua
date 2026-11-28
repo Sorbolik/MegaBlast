@@ -309,14 +309,15 @@ C.BRIDGE = { delay = 150 }
 C.ICE = { decay = 0.97, max = 1.2, min = 0.05 }
 -- The lever (Limbo, Sergio 27 Nov 2026): it sits on a steel stud, sticking out of its face by out
 -- (world units); whoever hits it with a shot or touches it with the body flips the whole map upside
--- down (a vertical mirror: you never play upside down), then time stops for freeze ticks to show
+-- down (half a turn around the middle of the map, Sergio 27 Nov: you never play upside down), then
+-- time stops for freeze ticks (1.5 s: the map turns, the lever flies to its new stud) to show
 -- (the handle leans tilt off the face, to one side and after every flip to the other; out is from
 -- the hinge to the middle of the gold knob, as drawn by tools/grafica/leva.py)
 -- where everyone will land. r is the reach of the knob, melee the reach of a melee hit from the
 -- attacker's middle, cool the ticks after the freeze during which it can't be pulled again. The
 -- next stud is drawn with weights: min(d, far) / far from where the puller lands, times near_mul
 -- within near of it, times mate_mul within mate of one of their teammates.
-C.LEVER = { out = 35, tilt = math.rad(35), r = 22, melee = 52, freeze = 60, cool = 90, far = 700, near = 250, near_mul = 0.2,
+C.LEVER = { out = 53, tilt = math.rad(35), r = 22, melee = 52, freeze = 90, cool = 90, far = 700, near = 250, near_mul = 0.2,
 	mate = 350, mate_mul = 0.5 }
 
 -- Which weapon gives which effect (our choice). Burn comes from the Uova of

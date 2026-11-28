@@ -19,8 +19,8 @@ from fornace import ritaglia, stretto   # noqa: E402
 FOGLIO = os.path.join(RADICE, "art", "WB-099", "leva_e_chiave_1.png")
 FX = os.path.join(RADICE, "client", "assets", "fx")
 PX = 3.2          # pixel per unità del mondo: lo zoom più vicino per due (come la Fornace)
-PIASTRA = 30      # larga come la borchia
-MANICO = 45       # lungo una volta e mezza la piastra (la scheda: 60 e 90 pixel allo zoom più vicino)
+PIASTRA = 45      # una volta e mezza la borchia (Sergio, 27 nov: la leva si deve vedere)
+MANICO = 67.5     # lungo una volta e mezza la piastra
 
 
 def pezzi(im):

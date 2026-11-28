@@ -86,20 +86,26 @@ do
 	local before = {}
 	for i = 1, #g.terrain.data do before[i] = g.terrain.data[i] end
 	local rb = g.robots[1]
-	local y0 = rb.y
+	local x0, y0 = rb.x, rb.y
 	local kx, ky = hazards.lever_knob(g, hz)
 	local at = hz.at
 	hazards.blast(g, kx, ky, 10, 1)
 	g:step()
 	check(hz.flip == 1 and hz.n == 1, "limbo: a blast on the knob flips the map")
+	local credit = true
+	for _, o in ipairs(g.robots) do
+		if (o.team ~= rb.team) ~= (o.last_hit == rb.id) then credit = false end
+	end
+	check(credit, "limbo: whoever pulls the lever hit all their enemies (the falls are their kills)")
 	local w, h, same = g.terrain.w, g.terrain.h, true
 	for _, cy in ipairs({ 0, 40, 100, 200, 359 }) do
 		for cx = 0, w - 1, 7 do
-			if g.terrain.data[cy * w + cx + 1] ~= before[(h - 1 - cy) * w + cx + 1] then same = false end
+			if g.terrain.data[cy * w + cx + 1] ~= before[(h - 1 - cy) * w + (w - 1 - cx) + 1] then same = false end
 		end
 	end
-	check(same, "limbo: the terrain is the mirror of the one before")
-	check(math.abs(rb.y - (g.WORLD_H - y0 - g.ROBOT_H)) < 1e-6 and not rb.grounded, "limbo: the robots are mirrored and fall")
+	check(same, "limbo: the terrain is the one before turned half a turn")
+	check(math.abs(rb.y - (g.WORLD_H - y0 - g.ROBOT_H)) < 1e-6 and math.abs(rb.x - (g.WORLD_W - x0)) < 1e-6 and not rb.grounded,
+		"limbo: the robots turn with the map and fall")
 	check(hz.at ~= at, "limbo: the lever jumps to another stud")
 	check(hz.freeze == C.LEVER.freeze - 1 or hz.freeze == C.LEVER.freeze, "limbo: time stops for a second")
 	-- in the freeze nothing moves, not even the turn clock
@@ -110,7 +116,8 @@ do
 	run(g, C.LEVER.freeze)
 	check(rb.y < ry, "limbo: after the freeze everyone falls")
 	-- the respawns swapped face
-	check(g.spawn_spots[1].y == map.respawns[1].y2, "limbo: the respawns are on the other face of the beams")
+	check(g.spawn_spots[1].y == map.respawns[1].y2 and g.spawn_spots[1].x == g.WORLD_W - map.respawns[1].x,
+		"limbo: the respawns are on the other face of the beams, on the other side")
 	-- in the cool down nothing pulls it, then a body does
 	kx, ky = hazards.lever_knob(g, hz)
 	hazards.blast(g, kx, ky, 10, 1)

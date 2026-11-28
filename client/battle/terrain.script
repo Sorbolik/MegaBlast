@@ -105,6 +105,8 @@ function init(self)
 	-- x = 1 background only (the home), y = seconds (rising embers),
 	-- zw = screen proportions (ui/screen.lua: kx, ky)
 	self.opzioni = vmath.vector4(0, 0, 1, 1)
+	-- x = 1: the Limbo's map is turned half a turn, and the background with it
+	self.giro = vmath.vector4(0, 0, 0, 0)
 	self.texture, self.misura, self.n = {}, {}, 0
 	self.mesh = msg.url("#mesh")
 end
@@ -128,11 +130,15 @@ local function apply(self)
 	local background = self.home or self.map_background
 	if background then set_background(self, background) end
 	self.opzioni.x = self.home and 1 or 0
+	-- the home's background is always the right way up
+	self.giro.x = (self.turned and not self.home) and 1 or 0
+	go.set("#mesh", "giro", self.giro)
 end
 
 local function handle_message(self, message_id, message)
 	if message_id == MSG_MASK then
 		go.set("#mesh", "texture1", message.path)
+		self.turned = message.giro
 		local map_name = message.mappa
 		self.map_background = paintings.maps[map_name]
 		if not self.map_background then print("ERROR: la mappa " .. tostring(map_name) .. " non ha il dipinto") end

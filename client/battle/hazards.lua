@@ -15,8 +15,12 @@
 -- warning over the rectangle of the one that is about to fall (the crumbling is announced).
 -- The lever (Limbo) sits on its steel stud: a plate with the hinge and the handle, which snaps to
 -- the other side at every flip (Codex's drawings, WB-099); during the second of stopped time a
--- ring with an arrow marks where each robot will land.
+-- ring with an arrow marks where each robot will land. At the flip the whole map turns half a turn
+-- (spin) and the lever flies from its old stud to the new one.
 --   hazards.painting(g)                        -- the map's painting: the Limbo upside down has its own
+--   hazards.turned(g)                          -- is the Limbo's map turned half a turn (the background too)
+--   hazards.flip(o, e, clock)                  -- the "flip" event: the turn and the lever's flight start
+--   local a = hazards.spin(o, clock)           -- how much the world is still turned back (radians, 0: still)
 
 local config = require "sim.config"
 local sim_hazards = require "sim.hazards"
@@ -46,7 +50,11 @@ local FLAME_CORE = vmath.vector4(1, 0.82, 0.3, 0.95)
 local ROCKS, TOMBS, FLAMES = 4, 4, 3
 -- the lever's drawings in the world (Codex, WB-099; numbers printed by tools/grafica/leva.py): the
 -- plate as wide as the stud, the handle with the middle of its eye eye_x, eye_y from its top left
-local LEVER_ART = { plate_w = 30, plate_h = 30.2, handle_w = 45, handle_h = 11.3, eye_x = 4.0, eye_y = 5.6 }
+local LEVER_ART = { plate_w = 45, plate_h = 45.4, handle_w = 67.5, handle_h = 17.0, eye_x = 6.1, eye_y = 8.4 }
+-- after the flip (Sergio, 27 Nov): the map turns half a turn around the middle of the screen in SPIN
+-- seconds (game.gui_script turns the world and the background with M.spin), then the lever leaves
+-- its old stud and flies in FLY seconds to the new one, while everyone still hangs in stopped time
+local SPIN, FLY, FLY_ARC = 0.7, 0.55, 140
 local LANDING = vmath.vector4(1, 0.88, 0.5, 0.95)
 local LEVER_TILT = config.LEVER.tilt
 local MAX_ROBOTS = 4
@@ -189,6 +197,20 @@ function M.nodes(o)
 	return list
 end
 
+local function ease(t)
+	return t < 0.5 and 2 * t * t or 1 - (2 - 2 * t) * (2 - 2 * t) / 2
+end
+
+function M.flip(o, e, clock)
+	o.flip_clock, o.from = clock, e.from
+end
+
+function M.spin(o, clock)
+	local t = o.flip_clock and (clock - o.flip_clock) / SPIN or 1
+	if t >= 1 then return 0 end
+	return -math.pi * (1 - ease(math.max(t, 0)))
+end
+
 function M.hud(o)
 	return o.pill
 end
@@ -198,6 +220,11 @@ function M.place(o, x, y)
 end
 
 -- The terrain painting to show (client/paintings/maps): the map's, or its upside down one
+-- is the map turned half a turn (the Limbo's lever)? The background turns with it
+function M.turned(g)
+	return g.hazard == "lever" and g.hz ~= nil and g.hz.flip == 1
+end
+
 function M.painting(g)
 	if g.hazard == "lever" and g.hz and g.hz.flip == 1 then return g.map .. "_sotto" end
 	return g.map
@@ -230,10 +257,24 @@ function M.update(o, g, clock)
 	if kind == "lever" and hz then
 		-- the handle leans to one side of its face, and snaps to the other at every flip
 		local x, y, dx, dy = sim_hazards.lever_spot(g, hz, hz.at)
-		pos(o.lever, x, y)
 		local want = hz.n % 2 == 0 and LEVER_TILT or -LEVER_TILT
-		o.tilt = o.tilt + (want - o.tilt) * 0.35
-		S.x, S.y, S.z = 0, 0, math.deg(math.atan2(dy, dx) + o.tilt)
+		local angle = math.atan2(dy, dx) + want
+		local t = o.flip_clock and hz.freeze > 0 and clock - o.flip_clock or nil
+		if t and o.from and o.from >= 1 and t < SPIN + FLY then
+			-- just flipped: the lever is on its old stud (turned with the map), then flies to the new one
+			local fx, fy, fdx, fdy = sim_hazards.lever_spot(g, hz, o.from)
+			local a0 = math.atan2(fdy, fdx) - want
+			local k = ease(math.max(0, t - SPIN) / FLY)
+			local a1 = angle + 2 * math.pi
+			x, y = fx + (x - fx) * k, fy + (y - fy) * k + math.sin(math.pi * k) * FLY_ARC
+			angle = a0 + (a1 - a0) * k
+			o.tilt = want
+		else
+			o.tilt = o.tilt + (want - o.tilt) * 0.35
+			angle = math.atan2(dy, dx) + o.tilt
+		end
+		pos(o.lever, x, y)
+		S.x, S.y, S.z = 0, 0, math.deg(angle)
 		gui.set_euler(o.handle, S)
 		for i, l in ipairs(o.landing) do
 			local ly = hz.freeze > 0 and hz.ly[i] or -1
