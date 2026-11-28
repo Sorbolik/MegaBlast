@@ -1,0 +1,5 @@
+Image 1 shows the style and the point of view. Image 2 is the apprentice devil of the game. Draw him as a BOARD GAME PAWN: a small chunky painted figurine of this exact character, like a toy piece of a board game, simplified into round soft volumes: big head with the two small horns and the little flame on top, big yellow eyes, red skin, cream belly, red scarf, short legs, the tail curled close to the body. He stands still and straight, arms down along the body, calm smile, like a carved and painted piece, not alive: no action pose, no motion, no running. He stands on a round flat pawn base, a thick disc seen from a bit above, painted dark red #7E1F16 with a lighter red top #C0392B. Front three-quarter view, facing slightly to the right. Same thick black ink outline and flat cartoon colors as image 1 and image 2. Only this one pawn. 
+
+Riferimenti in ordine: art/WB-101/riferimenti/R1_fetta_limbo.png, art/WB-101/riferimenti/R2_apprendista.png
+ImageGen. Tre tentativi, selezionato il terzo per le corna visibili. Base rossa.
+Output trasparente composto su #00FF00 e ridimensionato in proporzione.

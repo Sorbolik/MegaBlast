@@ -143,4 +143,13 @@ Approvata da Sergio il 28 nov 2026 (proposta A, pedine al posto dei personaggi a
 
 ## Consegna di Codex
 
+In `art/WB-101/` sono stati pubblicati 13 PNG con i rispettivi `.txt` (prompt originali, riferimenti e note):
+
+- `pedina_apprendista_1.png`, `pedina_apprendista_2.png`, `pedina_fabbro_1.png`, `pedina_fabbro_2.png`.
+- `limbo_porta.png`, `limbo_castello.png`, `limbo_castello_acceso.png`, `limbo_bottega.png`, `limbo_ponte.png`, `limbo_prato.png`, `limbo_pontile.png`, `limbo_pietre.png`, `limbo_crepa.png`.
+
+Un tentativo per immagine, salvo l'apprendista 2 (tre tentativi, selezionato il terzo per le corna visibili). I PNG rispettano le dimensioni della tabella. Le pedine sono state generate su trasparente, ridimensionate in proporzione e composte su verde #00FF00. Gli altri PNG sono stati adattati in proporzione dove necessario. Il loro verde generato differisce leggermente da #00FF00. Nel prompt del Fabbro «Image 3» indica R3, allegato come seconda immagine secondo la tabella.
+
+Controllati margini e leggibilità nelle anteprime ridotte. Le quattro pedine sono ferme su basi tonde, i luoghi sono interi e privi di scritte. Per il castello acceso ho allegato R1 e l'uscita originale del castello spento. Le tre finestre passano da scuro a giallo, con lievi differenze di sagoma e campiture tra i due PNG. Lo scontorno, l'allineamento dei due castelli e la resa sulla fetta in gioco restano da verificare.
+
 ## Resoconto di Claude
