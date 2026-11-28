@@ -271,7 +271,7 @@ return {
 		-- (only the ones reached open). The circles are placeholders until their levels are written:
 		-- { numeral, name, keeper, hazard, what it does }
 		rings = {
-			{ "I", "LIMBO", "CARONTE", "GRAVITÀ RIDOTTA", "SALTI E COLPI VOLANO PIÙ LONTANO" },
+			{ "I", "LIMBO", "CARONTE", "LA LEVA", "CHI LA TOCCA CAPOVOLGE LA MAPPA" },
 			{ "II", "LUSSURIA", "MINOSSE", "LA BUFERA", "A FINE GIRO SPOSTA TUTTI DI UN PASSO" },
 			{ "III", "GOLA", "CERBERO", "LA GRANDINE", "CADE DOVE L'OMBRA L'ANNUNCIA" },
 			{ "IV", "AVARIZIA", "PLUTONE", "I MASSI", "ROTOLANO DAI PENDII VERSO IL CENTRO" },
@@ -292,6 +292,13 @@ return {
 		coming_sub = "%s · IN ARRIVO",
 		rings_back = "GIRONI",
 		cortile = "IL CORTILE",
+		-- the Limbo as a board (Sergio, 28 Nov, WB-101): the places on the slice, walked by the two pawns
+		board = {
+			porta = "LA PORTA", leva = "LA LEVA", muri = "SETTE MURI", ruscello = "RUSCELLO",
+			spiriti = "SPIRITI MAGNI", caronte = "CARONTE", scendi = "SCENDI",
+		},
+		board_place = "%s · %s",
+		board_coming = "IN ARRIVO",
 	},
 
 	-- ui/level_types.lua: what kind of level a mission is (Sergio, 6 Nov), on its

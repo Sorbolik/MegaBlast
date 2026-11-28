@@ -1,0 +1,27 @@
+# Il Limbo come tabellone (Sergio, 28 nov, WB-101): il capitolo del Limbo non è la bacheca
+# con le carte ma la sua fetta grande, coi luoghi di Codex (la porta, la leva, il castello
+# dalle sette mura, il ponte, il prato, il pontile di Caronte, la crepa) uniti da un sentiero
+# di pietre. Apprendista e Fabbro sono due pedine: toccando un luogo aperto ci vanno a
+# saltelli, il Fabbro un passo dietro; toccando un luogo chiuso l'apprendista fa no e il
+# lucchetto trema. Con prova_profilo 3 il livello 1 è vinto: la leva è aperta, IN ARRIVO.
+imposta prova_vignette no
+imposta prova_profilo 3
+aspetta 2
+tocca_bordo 220 294 mezzo sinistra  # CAMPAGNA: la mappa dei gironi
+aspetta 1.4
+tocca_bordo 520 54 basso sinistra   # LA FORGIA: la bacheca, coi capitoli in alto
+aspetta 0.8
+foto 01_bacheca
+tocca_bordo 980 130 alto sinistra   # IL LIMBO: il tabellone, le pedine sulla leva (IN ARRIVO)
+aspetta 0.8
+foto 02_tabellone
+tocca_bordo 302 342 alto sinistra   # 1 · LA PORTA: le pedine tornano a saltelli
+aspetta 0.45
+foto 03_saltelli
+aspetta 2
+foto 04_alla_porta
+tocca_bordo 404 254 alto sinistra   # 3 · SETTE MURI, chiuso: no
+aspetta 0.15
+foto 05_no
+tocca_bordo 36 60 basso sinistra    # GIRONI: la mappa
+aspetta 0.6

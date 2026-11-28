@@ -32,6 +32,10 @@ textures {
   texture: "/ui/fette.atlas"
 }
 textures {
+  name: "tabellone"
+  texture: "/menu/tabellone.atlas"
+}
+textures {
   name: "mappe"
   texture: "/ui/maps.atlas"
 }
