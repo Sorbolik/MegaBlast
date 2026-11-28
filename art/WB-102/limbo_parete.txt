@@ -1,0 +1,8 @@
+Image 1 is the STYLE to copy: the Limbo circle of the game, a slice of rock seen from the side. Copy its thick slightly irregular black ink outline, flat colors with one flat highlight and one flat shadow, cartoon comic style, and the colors of its rock wall: very dark green-grey #1D2522, #2A3430 and #3E4C46.
+Draw ONLY a long horizontal band of that rock wall, seen straight from the front, filling the whole width of the picture from the left border to the right border, about 340 pixels tall, centered vertically. It is made of big simple rock blocks and vertical cracks, darker at the bottom and a bit lighter at the top. The top edge of the band is one straight horizontal thick black line. The bottom edge is a thick black line with a few big round irregular lumps of rock hanging a little.
+The band must REPEAT SEAMLESSLY: the left border and the right border must match exactly, so that the band can be placed many times side by side without any visible joint. Nothing else: no grass, no roads, no light on top.
+Above and below the band only flat pure green (#00FF00). No text, letters, numbers or symbols. No texture, no soft gradients, no realistic lighting, no glow, no cast shadow.
+
+Riferimenti in ordine: art/WB-102/riferimenti/R1_fetta_limbo.png
+ImageGen. Tre tentativi, selezionato il primo per la migliore corrispondenza dei pixel ai lati. Ridimensionato in proporzione e centrato su tela 1536×1024. Fascia alta circa 220 px ai bordi. Affiancando due copie, si nota una lieve discontinuità lungo il margine inferiore. Verde campionato #04FA03.
+Il verde differisce leggermente da #00FF00.

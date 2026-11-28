@@ -110,7 +110,13 @@ Approvata da Claude il 28 nov 2026 su indicazione di Sergio (vedi Stato): immagi
 
 ## Consegna di Codex
 
-_(la scrive Codex)_
+- `art/WB-102/limbo_faccia_1.png` e `limbo_faccia_2.png`, con i rispettivi `.txt` — 1536×1024, un tentativo per variante.
+- `art/WB-102/limbo_parete.png` e `limbo_parete.txt` — 1536×1024, tre tentativi, selezionato il primo.
+- `art/WB-102/pedina_fabbro_1.png` e `pedina_fabbro_2.png`, con i rispettivi `.txt` — 1024×1024, un tentativo per variante.
+
+Prompt originali eseguiti con ImageGen e riferimenti nell'ordine indicato. Parete e pedine ridimensionate in proporzione. Nelle due facce l'ovale è chiuso e intero e gli estremi misurati del contorno sono entro circa 2 px da R2. Le strade seguono il tracciato generale, con variazioni locali: la corrispondenza esatta per sovrapporre i marker resta da verificare. Non si vedono i punti fucsia, scritte o strutture alte. I Fabbri mantengono le corna, i baffi, la fornace, il camino e il martello nelle anteprime da 70 px.
+
+La parete ha il bordo superiore diritto. Ai lati è alta circa 220 px rispetto ai 340 px richiesti e, affiancando due copie, il profilo inferiore presenta una lieve discontinuità alla giunta. I fondi verdi si discostano da #00FF00 e alcune campiture hanno variazioni tonali. Il ritaglio, la luce sul bordo e la resa in gioco restano da verificare.
 
 ## Resoconto di Claude
 
